@@ -50,6 +50,21 @@
     </div>
     <!-- loader ends-->
     @yield('content')
+
+    <!-- footer start-->
+    @if(!request()->is('adminlogin'))
+    <footer class="footer">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12 footer-copyright text-center">
+                    <p class="mb-0">Copyright 2025 ©</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    @endif
+
+
     <!-- latest jquery-->
     <script src="admin/assets/js/jquery.min.js"></script>
     <!-- Bootstrap js-->
