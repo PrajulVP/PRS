@@ -9,7 +9,7 @@
     </ul>
 </div>
 
-<form id="login-form" method="POST" action="{{ route('api.login') }}" novalidate>
+<form id="login-form" method="POST" action="{{ route('admin.login') }}" novalidate>
     @csrf
     @method('POST')
     <div class="mb-3">
@@ -94,7 +94,7 @@
             success: function(data) {
                 if(data.success) {
                     localStorage.setItem('authToken', data.token);
-                    window.location.href = "{{ route('api.admindashboard') }}";
+                    window.location.href = "{{ route('admin.dashboard') }}";
                 }
             },
             error: function(data) {

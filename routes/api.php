@@ -4,11 +4,19 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 
-Route::post('/login', [AdminController::class, 'login'])->name('api.login');
-Route::get('/adminlogin', [AdminController::class, 'showLogin'])->name('adminlogin');
-Route::middleware('auth:sanctum')->group(function(){
-    Route::get('/admindashboard', [AdminController::class, 'index'])->name('api.admindashboard');
-    Route::post('/users', [AdminController::class, 'store']);
-    //logout
-    Route::post('/logout', [AdminController::class, 'logout'])->name('api.logout');
+Route::prefix('admin')->name('admin.')->group(function () {
+    // Admin login routes (no auth:sanctum middleware)
+
+    Route::post('/login', [AdminController::class, 'login'])->name('login');
+
+    // Authenticated admin routes (with auth:sanctum middleware)
+    Route::middleware('auth:sanctum')->group(function(){
+        Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+        Route::post('/users', [AdminController::class, 'store']);
+        Route::post('/logout', [AdminController::class, 'logout'])->name('logout');
+    });
 });
+
+Route::get('/', function () {
+    return view('welcome');
+})->name('welcome');
