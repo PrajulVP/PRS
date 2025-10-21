@@ -7,6 +7,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/login', [AdminController::class, 'showLogin'])->name('login');
+Route::get('/adminlogin', [AdminController::class, 'showLogin'])->name('adminlogin');
 
-Route::get('/admindashboard', [AdminController::class, 'dashboardData'])->name('admindashboard');
+Route::middleware('auth')->group(function() {
+    Route::get('/admindashboard', [AdminController::class, 'dashboardData'])->name('admindashboard');
+});

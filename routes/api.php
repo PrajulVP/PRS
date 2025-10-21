@@ -4,8 +4,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 
-Route::post('/adminlogin', [AdminController::class, 'login'])->name('api.adminlogin');
-
+Route::post('/login', [AdminController::class, 'login'])->name('api.login');
+Route::get('/adminlogin', [AdminController::class, 'showLogin'])->name('adminlogin');
 Route::middleware('auth:sanctum')->group(function(){
     Route::get('/admindashboard', [AdminController::class, 'index'])->name('api.admindashboard');
     Route::post('/users', [AdminController::class, 'store']);

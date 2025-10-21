@@ -9,9 +9,9 @@
     </ul>
 </div>
 
-<form id="login-form" method="POST" action="{{ route('api.adminlogin') }}" novalidate>
+<form id="login-form" method="POST" action="{{ route('api.login') }}" novalidate>
     @csrf
-    
+    @method('POST')
     <div class="mb-3">
         <label for="email" class="form-label">Email or Username</label>
         <input id="email" type="text"
@@ -62,6 +62,13 @@
 <script src="{{ asset('admin/assets/js/bootstrap.bundle.min.js') }}"></script>
 <script>
 (function(){
+
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+    });
+
     document.querySelectorAll('.show-pass').forEach(function(btn){
         btn.addEventListener('click', function(){
             var input = this.parentElement.querySelector('input');
@@ -79,17 +86,16 @@
         e.preventDefault();
         var form = $(this);
         var url = form.attr('action');
-        
+        console.log('Submitting to URL:', url);
         $.ajax({
-            type: "POST",
+            method: "POST",
             url: url,
             data: form.serialize(),
-            success: function(data)
-            {
+            success: function(data) {
                 if(data.success) {
                     localStorage.setItem('authToken', data.token);
                     window.location.href = "{{ route('api.admindashboard') }}";
-                } 
+                }
             },
             error: function(data) {
                 var errors = data.responseJSON.errors;
@@ -107,5 +113,6 @@
         });
     });
 })();
+
 </script>
 @endsection

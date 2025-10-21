@@ -25,43 +25,41 @@ class AdminController extends Controller
 
     public function login(Request $request)
     {
+        // If GET request → show form for web
+        if ($request->isMethod('get')) {
+            return view('admin/login');
+        }
+
+        // Validate POST data
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
+            'email' => 'required|email',
+            'password' => 'required',
         ]);
 
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-            $token = $user->createToken('authToken')->plainTextToken;
-
-            // Web request → redirect to dashboard
-            if (!$request->wantsJson()) {
-                return redirect()->route('admindashboard');
+        if (!Auth::attempt($credentials)) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Invalid credentials'], 401);
             }
+            return back()->withErrors(['message' => 'Invalid Credentials']);
+        }
 
-            // API request → return JSON (Flutter/App)
+        $user = Auth::user();
+
+        // API login → return token
+        if ($request->expectsJson()) {
+            $token = $user->createToken('authToken')->plainTextToken;
             return response()->json([
                 'success' => true,
                 'user' => $user,
                 'token' => $token,
                 'message' => 'Login successful.'
             ]);
-             // ✅ If request is from normal Web Browser
-            return redirect()->route('admin.dashboard');
         }
 
-        // Failed login
-        if (!$request->wantsJson()) {
-            return back()->withErrors([
-                'email' => 'Invalid credentials.'
-            ])->withInput();
-        }
-
-        return response()->json([
-            'success' => false,
-            'message' => 'The provided credentials do not match our records.',
-        ], 401);
+        // Web login → redirect
+        return redirect()->route('admindashboard');
     }
+
 
 
     public function logout(Request $request)
