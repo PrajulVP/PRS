@@ -49687,7 +49687,9 @@ html[dir=rtl] body.dark-only .page-wrapper .page-body-wrapper .page-body .card:n
     width: 67%;
   }
 }
-
+.bg-gradient-pb{
+  background-image: linear-gradient(to right top, #0c0160, #3e005c, #620150, #6c083a, #520114) !important;
+}
 /**=====================
   5.9 Box-layout CSS Ends
 ==========================**/
