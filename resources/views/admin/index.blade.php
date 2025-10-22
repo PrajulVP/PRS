@@ -297,12 +297,12 @@
           </div>
         </div>
       </div>
-      <!-- Page Header Ends                              -->
+      <!-- Page Header Ends-->
       <!-- Page Body Start-->
       <div class="page-body-wrapper">
         <!-- Page Sidebar Start-->
-        <div class="sidebar-wrapper" data-layout="stroke-svg">
-          <div class="logo-wrapper"><a href="index.html"><img class="img-fluid" src="../../admin/assets/images/logo/logo.png" alt=""></a>
+        <div class="sidebar-wrapper bg-gradient-pb" data-layout="stroke-svg">
+          <div class="logo-wrapper"><a href="index.html"><img class="img-fluid" src="admin/assets/images/logo/logo.png" alt=""></a>
             <div class="back-btn"><i class="fa fa-angle-left"> </i></div>
             <div class="toggle-sidebar"><i class="status_toggle middle sidebar-toggle" data-feather="grid"> </i></div>
           </div>
