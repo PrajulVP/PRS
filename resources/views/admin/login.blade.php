@@ -9,33 +9,33 @@
     </ul>
 </div>
 
-<form id="login-form" method="POST" action="{{ route('admin.login') }}" novalidate>
+<form id="login-form" method="POST" action="{{ route('admin.login.post') }}" novalidate>
     @csrf
     @method('POST')
     <div class="mb-3">
         <label for="email" class="form-label">Email or Username</label>
         <input id="email" type="text"
-               class="form-control @error('email') is-invalid @enderror"
+               class="form-control"
                name="email"
                value="{{ old('email') }}"
-               required autofocus>
-        @error('email')
-            <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
+               required>
+      
+            <div class="invalid-feedback"></div>
+       
     </div>
 
     <div class="mb-3">
         <label for="password" class="form-label">Password</label>
         <div class="input-group">
             <input id="password" type="password"
-                   class="form-control @error('password') is-invalid @enderror"
+                   class="form-control"
                    name="password" required autocomplete="current-password">
             <button type="button" class="btn btn-outline-secondary show-pass" tabindex="-1" title="Show/Hide">
                 <i class="fa fa-eye"></i>
             </button>
-            @error('password')
-                <div class="invalid-feedback d-block">{{ $message }}</div>
-            @enderror
+           
+                <div class="invalid-feedback d-block"></div>
+          
         </div>
     </div>
 
@@ -89,12 +89,16 @@
         console.log('Submitting to URL:', url);
         $.ajax({
             method: "POST",
-            url: url,
+            url: "{{ route('admin.login.post') }}",
             data: form.serialize(),
+            headers: {
+                'Accept': 'application/json', // <---- THIS IS MANDATORY
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
             success: function(data) {
+                console.log( data.redirect_url);
                 if(data.success) {
-                    localStorage.setItem('authToken', data.token);
-                    window.location.href = "{{ route('admin.dashboard') }}";
+                    window.location.href = data.redirect_url;
                 }
             },
             error: function(data) {

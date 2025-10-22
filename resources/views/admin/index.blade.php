@@ -27,7 +27,7 @@
           <div class="left-header col-xxl-5 col-xl-6 col-lg-5 col-md-4 col-sm-3 p-0">
             <div> <a class="toggle-sidebar" href="#"> <i class="iconly-Category icli"> </i></a>
               <div class="d-flex align-items-center gap-2 ">
-                <h4 class="f-w-600">Welcome Admin</h4><img class="mt-0" src="admin/assets/images/hand.gif" alt="hand-gif">
+                <h4 class="f-w-600">Welcome Admin</h4><img class="mt-0" src="../../admin/assets/images/hand.gif" alt="hand-gif">
               </div>
             </div>
             <div class="welcome-content d-xl-block d-none"><span class="text-truncate col-12">Here’s what’s happening with your store today. </span></div>
@@ -38,7 +38,7 @@
                 <div class="form search-form mb-0">
                   <div class="input-group"><span class="input-icon">
                       <svg>
-                        <use href="admin/assets/svg/icon-sprite.svg#search-header"></use>
+                        <use href="../../admin/assets/svg/icon-sprite.svg#search-header"></use>
                       </svg>
                       <input class="w-100" type="search" placeholder="Search"></span></div>
                 </div>
@@ -47,7 +47,7 @@
                 <div class="form search-form mb-0">
                   <div class="input-group"> <span class="input-show"> 
                       <svg id="searchIcon">
-                        <use href="admin/assets/svg/icon-sprite.svg#search-header"></use>
+                        <use href="../../admin/assets/svg/icon-sprite.svg#search-header"></use>
                       </svg>
                       <div id="searchInput">
                         <input type="search" placeholder="Search">
@@ -56,7 +56,7 @@
               </li>
               <li class="onhover-dropdown">
                 <svg>
-                  <use href="admin/assets/svg/icon-sprite.svg#star"></use>
+                  <use href="../../admin/assets/svg/icon-sprite.svg#star"></use>
                 </svg>
                 <div class="onhover-show-div bookmark-flip">
                   <div class="flip-card">
@@ -106,7 +106,7 @@
               <li class="onhover-dropdown notification-down">
                 <div class="notification-box"> 
                   <svg> 
-                    <use href="admin/assets/svg/icon-sprite.svg#notification-header"></use>
+                    <use href="../../admin/assets/svg/icon-sprite.svg#notification-header"></use>
                   </svg><span class="badge rounded-pill badge-secondary">4 </span>
                 </div>
                 <div class="onhover-show-div notification-dropdown"> 
@@ -290,7 +290,7 @@
                   <li><a href="user-profile.html"><i data-feather="user"></i><span>My Profile</span></a></li>
                   <li><a href="letter-box.html"><i data-feather="mail"></i><span>Inbox</span></a></li>
                   <li> <a href="edit-profile.html"> <i data-feather="settings"></i><span>Settings</span></a></li>
-                  <li><a id="logout-button" class="btn btn-pill btn-outline-primary btn-sm" href="#">Log Out</a></li>
+                  <li><a id="logout-button" class="btn btn-pill btn-outline-primary btn-sm" href="{{ route('admin.logout') }}">Log Out</a></li>
                 </ul>
               </li>
             </ul>
@@ -302,7 +302,7 @@
       <div class="page-body-wrapper">
         <!-- Page Sidebar Start-->
         <div class="sidebar-wrapper" data-layout="stroke-svg">
-          <div class="logo-wrapper"><a href="index.html"><img class="img-fluid" src="admin/assets/images/logo/logo.png" alt=""></a>
+          <div class="logo-wrapper"><a href="index.html"><img class="img-fluid" src="../../admin/assets/images/logo/logo.png" alt=""></a>
             <div class="back-btn"><i class="fa fa-angle-left"> </i></div>
             <div class="toggle-sidebar"><i class="status_toggle middle sidebar-toggle" data-feather="grid"> </i></div>
           </div>
@@ -632,46 +632,29 @@
         
       </div>
     </div>
-@endsection
+
 
 @section('scripts')
 <script>
 (function(){
     const token = localStorage.getItem('authToken');
     if (!token) {
-        window.location.href = "{{ route('adminlogin') }}";
+        window.location.href = "{{ route('login') }}";
     }
 
-    $.ajax({
-        url: "{{ route('api.admindashboard') }}",
-        type: 'GET',
-        headers: {
-            'Authorization': 'Bearer ' + token
-        },
-        success: function(data) {
-            console.log(data);
-        },
-        error: function(err) {
-            console.error(err);
-            // If token is invalid, redirect to login
-            if (err.status === 401) {
-                localStorage.removeItem('authToken');
-                window.location.href = "{{ route('adminlogin') }}";
-            }
-        }
-    });
+   
 
     $('#logout-button').on('click', function(e) {
         e.preventDefault();
         $.ajax({
-            url: "{{ route('api.logout') }}",
+            url: "{{ url('api/admin/logout') }}",
             type: 'POST',
             headers: {
                 'Authorization': 'Bearer ' + token
             },
             success: function(data) {
                 localStorage.removeItem('authToken');
-                window.location.href = "{{ route('adminlogin') }}";
+                window.location.href = "{{ route('login') }}";
             },
             error: function(err) {
                 console.error(err);
