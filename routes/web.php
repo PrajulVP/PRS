@@ -1,15 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AdminController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
-Route::get('/admindashboard', function () {
-    return view('admin/index');
-});
-
-Route::get('/adminlogin', function () {
-    return view('admin/login');
+Route::prefix('admin')->group(function () {
+    Route::get('/login', [AdminController::class, 'showLogin'])->name('admin.login.view');
 });

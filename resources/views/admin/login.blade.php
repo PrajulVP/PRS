@@ -4,19 +4,14 @@
 
 <div class="login-card">
 
-@if($errors->any())
-<div class="alert alert-danger">
+<div id="error-messages" class="alert alert-danger" style="display: none;">
     <ul class="mb-0">
-        @foreach($errors->all() as $error)
-            <li>{{ $error }}</li>
-        @endforeach
     </ul>
 </div>
-@endif
 
-<form method="POST" action="" novalidate>
+<form id="login-form" method="POST" action="{{ route('admin.login') }}" novalidate>
     @csrf
-
+    @method('POST')
     <div class="mb-3">
         <label for="email" class="form-label">Email or Username</label>
         <input id="email" type="text"
@@ -67,6 +62,13 @@
 <script src="{{ asset('admin/assets/js/bootstrap.bundle.min.js') }}"></script>
 <script>
 (function(){
+
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+    });
+
     document.querySelectorAll('.show-pass').forEach(function(btn){
         btn.addEventListener('click', function(){
             var input = this.parentElement.querySelector('input');
@@ -79,6 +81,38 @@
             }
         });
     });
+
+    $('#login-form').on('submit', function(e) {
+        e.preventDefault();
+        var form = $(this);
+        var url = form.attr('action');
+        console.log('Submitting to URL:', url);
+        $.ajax({
+            method: "POST",
+            url: url,
+            data: form.serialize(),
+            success: function(data) {
+                if(data.success) {
+                    localStorage.setItem('authToken', data.token);
+                    window.location.href = "{{ route('admin.dashboard') }}";
+                }
+            },
+            error: function(data) {
+                var errors = data.responseJSON.errors;
+                var errorMessages = $('#error-messages ul');
+                errorMessages.empty();
+                if (errors) {
+                    $.each(errors, function(key, value){
+                        errorMessages.append('<li>'+value+'</li>');
+                    });
+                } else {
+                    errorMessages.append('<li>'+data.responseJSON.message+'</li>');
+                }
+                $('#error-messages').show();
+            }
+        });
+    });
 })();
+
 </script>
 @endsection
