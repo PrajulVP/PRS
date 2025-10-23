@@ -1,4 +1,4 @@
-@extends('layout.admin')
+@extends('layouts.admin')
 
 @section('content')
 
@@ -9,7 +9,7 @@
     </ul>
 </div>
 
-<form id="login-form" method="POST" action="{{ route('admin.login.post') }}" novalidate>
+<form id="login-form" method="POST" action="{{ route('admin.login') }}" novalidate>
     @csrf
     @method('POST')
     <div class="mb-3">
@@ -58,19 +58,14 @@
 
 </div> <!-- close .login-card -->
 
-<script src="{{ asset('admin/assets/js/jquery.min.js') }}"></script>
-<script src="{{ asset('admin/assets/js/bootstrap.bundle.min.js') }}"></script>
+<script src="/admin/assets/js/jquery.min.js"></script>
+<script src="/admin/assets/js/bootstrap.bundle.min.js"></script>
 <script>
 (function(){
-
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
-
+    console.log('Password toggle script executed.');
     document.querySelectorAll('.show-pass').forEach(function(btn){
         btn.addEventListener('click', function(){
+            console.log('Show/hide button clicked.');
             var input = this.parentElement.querySelector('input');
             if(input.type === 'password'){
                 input.type = 'text';
@@ -81,42 +76,6 @@
             }
         });
     });
-
-    $('#login-form').on('submit', function(e) {
-        e.preventDefault();
-        var form = $(this);
-        var url = form.attr('action');
-        console.log('Submitting to URL:', url);
-        $.ajax({
-            method: "POST",
-            url: "{{ route('admin.login.post') }}",
-            data: form.serialize(),
-            headers: {
-                'Accept': 'application/json', // <---- THIS IS MANDATORY
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(data) {
-                console.log( data.redirect_url);
-                if(data.success) {
-                    window.location.href = data.redirect_url;
-                }
-            },
-            error: function(data) {
-                var errors = data.responseJSON.errors;
-                var errorMessages = $('#error-messages ul');
-                errorMessages.empty();
-                if (errors) {
-                    $.each(errors, function(key, value){
-                        errorMessages.append('<li>'+value+'</li>');
-                    });
-                } else {
-                    errorMessages.append('<li>'+data.responseJSON.message+'</li>');
-                }
-                $('#error-messages').show();
-            }
-        });
-    });
 })();
-
 </script>
 @endsection

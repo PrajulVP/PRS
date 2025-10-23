@@ -17,10 +17,11 @@ class AuthMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        Log::info('AuthMiddleware: User authenticated: ' . (string) Auth::guard('web')->check());
-        if(Auth::guard('web')->check()){
+        Log::info('AuthMiddleware: User authenticated: ' . (string) Auth::guard('admin')->check());
+        if(Auth::guard('admin')->check()){
+             dd('✅ Logged in, middleware passed');  // DEBUG HERE  
             return $next($request);
         }
-        return redirect()->route('login')->with('error', 'You are not logged in.');
+        return redirect()->route('admin.login')->with('error', 'You are not logged in.');
     }
 }

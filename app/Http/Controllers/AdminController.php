@@ -3,65 +3,81 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Admin;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 
 class AdminController extends Controller
 {
-    public function index()
+    // Dashboard
+    public function index(Request $request)
     {
-        dd("hi");
-        return view('admin.index');
-    }
-
-    public function login(Request $request)
-    {
-        // If GET request → show form for web
-        if ($request->isMethod('get')) {
-            return view('admin.login');
+        if ($request->expectsJson()) {
+            // API request → JWT guard
+            $admin = Auth::guard('admin')->user();
+            return response()->json([
+                'message' => 'Welcome to admin dashboard',
+                'admin' => $admin
+            ]);
         }
 
-        // Validate POST data
+        // Web request → session guard
+        $admin = Auth::guard('web')->user();
+        return view('admin.index', compact('admin'));
+    }
+
+    // Show web login form
+    public function showLogin()
+    {
+        return view('admin.login');
+    }
+
+    // Handle login (web + API)
+    public function login(Request $request)
+    {
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
 
-        if (!Auth::attempt($credentials)) {
-            Log::info('Admin login failed for email: ' . $request->email . ' - Invalid credentials');
-            if ($request->expectsJson()) {
-                return response()->json(['success' => false, 'message' => 'Invalid credentials'], 401);
-            }
-            return back()->withErrors(['email' => 'These credentials do not match our records.']);
-        }
-
-        $user = Auth::user();
-        Log::info('Admin login successful for user ID: ' . $user->id);
-        // API login → return token
+        // API login
         if ($request->expectsJson()) {
-           
-            return response()->json([
-            'success' => true,
-            'user' => $user,
-            'message' => 'Login successful.',
-            'redirect_url' => route('admin.dashboard') 
-            ]);
-            
+            if (!$token = Auth::guard('admin')->attempt($credentials)) {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+            return $this->respondWithToken($token);
         }
 
-        // Web login → redirect
-        Log::info('Attempting to redirect admin user ID: ' . $user->id . ' to dashboard');
+       // Web login
+        $admin = Admin::where('email', $request->email)->first();
+        if (!$admin || !password_verify($request->password, $admin->password)) {
+            return back()->withErrors(['email' => 'Invalid credentials']);
+        }
+
+        // Use **admin guard** for web session
+        Auth::guard('admin')->login($admin);
+
         return redirect()->route('admin.dashboard');
     }
 
-
-
+    // Logout
     public function logout(Request $request)
     {
-        Auth::guard('web')->logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        if ($request->expectsJson()) {
+            Auth::guard('admin')->logout();
+            return response()->json(['message' => 'Successfully logged out']);
+        }
 
-        return redirect('/'); // Redirect to home or login page
+        Auth::guard('web')->logout();
+        return redirect()->route('login')->with('success', 'Logged out successfully');
+    }
+
+    // JWT token response
+    protected function respondWithToken($token)
+    {
+        return response()->json([
+            'access_token' => $token,
+            'token_type'   => 'bearer',
+            'expires_in'   => Auth::guard('admin')->factory()->getTTL() * 60
+        ]);
     }
 }
