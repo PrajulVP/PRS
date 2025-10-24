@@ -24,6 +24,16 @@ class DistrictController extends Controller
         return view('admin.districts.index', compact('districts'));
     }
 
+    public function create()
+    {
+        return view('admin.districts.create');
+    }
+
+    public function edit(District $district)
+    {
+        return view('admin.districts.edit', compact('district'));
+    }
+
     // Store district
     public function store(Request $request) {
         $validated = $request->validate([

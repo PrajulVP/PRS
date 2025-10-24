@@ -10,24 +10,25 @@
             <div class="loader4"></div>
         </div>
     </div>
-
+    <!-- tap on top starts-->
+    <div class="tap-top"><i data-feather="chevrons-up"></i></div>
+    
     <!-- Main Content -->
     @yield('content')
 
-    @if(!request()->is('admin.login'))
+    @auth('admin')
+        <!-- page-wrapper Start-->
         <div class="page-wrapper compact-wrapper" id="pageWrapper">
             @include('layouts.partials.header')
             <div class="page-body-wrapper">
-                @if(request()->is('admin.login'))
-                    @include('layouts.partials.sidebar')
-                @endif
+                @include('layouts.partials.sidebar')
                 <div class="page-body">
                     @yield('page-body')
                 </div>
+                @include('layouts.partials.footer')
             </div>
         </div>
-        @include('layouts.partials.footer')
         @include('layouts.partials.scripts')
-    @endif
+    @endauth
 </body>
 </html>

@@ -22,9 +22,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
-            'auth' => \App\Http\Middleware\AuthMiddleware::class,
-            'jwt.auth' => \Tymon\JWTAuth\Http\Middleware\Authenticate::class,
-            'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'auth.admin' => \App\Http\Middleware\AuthMiddleware::class, // ✅ custom admin guard
+            'jwt.auth'   => \Tymon\JWTAuth\Http\Middleware\Authenticate::class,
+            'admin'      => \App\Http\Middleware\AdminMiddleware::class, // optional
         ]);
 
         $middleware->encryptCookies(except: [

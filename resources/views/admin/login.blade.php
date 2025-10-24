@@ -1,15 +1,18 @@
-@extends('layouts.admin')
+@extends('layouts.admin-login')
 
 @section('content')
 
 <div class="login-card">
 
-<div id="error-messages" class="alert alert-danger" style="display: none;">
+<div id="error-messages" class="alert alert-danger" @if(!$errors->any()) style="display:none;" @endif>
     <ul class="mb-0">
+        @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
     </ul>
 </div>
 
-<form id="login-form" method="POST" action="{{ route('admin.login') }}" novalidate>
+<form id="login-form" method="POST" action="{{ route('login.post') }}" novalidate>
     @csrf
     @method('POST')
     <div class="mb-3">
@@ -19,9 +22,7 @@
                name="email"
                value="{{ old('email') }}"
                required>
-      
-            <div class="invalid-feedback"></div>
-       
+        <div class="invalid-feedback"></div>
     </div>
 
     <div class="mb-3">
@@ -33,9 +34,7 @@
             <button type="button" class="btn btn-outline-secondary show-pass" tabindex="-1" title="Show/Hide">
                 <i class="fa fa-eye"></i>
             </button>
-           
-                <div class="invalid-feedback d-block"></div>
-          
+            <div class="invalid-feedback d-block"></div>
         </div>
     </div>
 
@@ -58,14 +57,12 @@
 
 </div> <!-- close .login-card -->
 
-<script src="/admin/assets/js/jquery.min.js"></script>
-<script src="/admin/assets/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('admin/assets/js/jquery.min.js') }}"></script>
+<script src="{{ asset('admin/assets/js/bootstrap.bundle.min.js') }}"></script>
 <script>
 (function(){
-    console.log('Password toggle script executed.');
     document.querySelectorAll('.show-pass').forEach(function(btn){
         btn.addEventListener('click', function(){
-            console.log('Show/hide button clicked.');
             var input = this.parentElement.querySelector('input');
             if(input.type === 'password'){
                 input.type = 'text';

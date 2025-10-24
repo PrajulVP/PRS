@@ -21,7 +21,7 @@ class AdminController extends Controller
         }
 
         // Web request → session guard
-        $admin = Auth::guard('web')->user();
+        $admin = Auth::guard('admin')->user();
         return view('admin.index', compact('admin'));
     }
 
@@ -34,41 +34,34 @@ class AdminController extends Controller
     // Handle login (web + API)
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
-
-        // API login
-        if ($request->expectsJson()) {
-            if (!$token = Auth::guard('admin')->attempt($credentials)) {
-                return response()->json(['error' => 'Unauthorized'], 401);
+        $credentials = $request->only('email', 'password'); 
+        if (Auth::guard('admin')->attempt($credentials)) {
+            if ($request->expectsJson()) {
+                // API request → generate JWT token
+                $token = auth('admin-api')->attempt($credentials);
+                return $this->respondWithToken($token);
             }
-            return $this->respondWithToken($token);
+            return redirect()->route('admin.dashboard');
         }
 
-       // Web login
-        $admin = Admin::where('email', $request->email)->first();
-        if (!$admin || !password_verify($request->password, $admin->password)) {
-            return back()->withErrors(['email' => 'Invalid credentials']);
-        }
-
-        // Use **admin guard** for web session
-        Auth::guard('admin')->login($admin);
-
-        return redirect()->route('admin.dashboard');
+        return back()->withErrors(['email' => 'Invalid credentials']);
     }
+
+
 
     // Logout
     public function logout(Request $request)
     {
+        // Logout from admin guard
+        Auth::guard('admin')->logout();
+
+        // In case of AJAX/JSON request, return JSON response
         if ($request->expectsJson()) {
-            Auth::guard('admin')->logout();
-            return response()->json(['message' => 'Successfully logged out']);
+            return response()->json(['message' => 'Logged out successfully']);
         }
 
-        Auth::guard('web')->logout();
-        return redirect()->route('login')->with('success', 'Logged out successfully');
+        // For normal web request, redirect to admin login
+        return redirect()->route('admin.login')->with('success', 'Logged out successfully');
     }
 
     // JWT token response
@@ -77,7 +70,7 @@ class AdminController extends Controller
         return response()->json([
             'access_token' => $token,
             'token_type'   => 'bearer',
-            'expires_in'   => Auth::guard('admin')->factory()->getTTL() * 60
+            'expires_in'   => auth('admin-api')->factory()->getTTL() * 60
         ]);
     }
 }

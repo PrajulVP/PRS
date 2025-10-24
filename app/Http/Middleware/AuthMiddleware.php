@@ -18,10 +18,13 @@ class AuthMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         Log::info('AuthMiddleware: User authenticated: ' . (string) Auth::guard('admin')->check());
-        if(Auth::guard('admin')->check()){
-             dd('✅ Logged in, middleware passed');  // DEBUG HERE  
+
+        if (Auth::guard('admin')->check()) {
+          
             return $next($request);
         }
+
         return redirect()->route('admin.login')->with('error', 'You are not logged in.');
     }
+
 }
