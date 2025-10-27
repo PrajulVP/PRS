@@ -20,7 +20,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable(); // TIMESTAMP NULL
             $table->string('password', 255); // VARCHAR(255)
             $table->rememberToken(); // VARCHAR(100) NULL (for "remember me" sessions)
-            $table->string('usertype', 20)->default('user');
+            $table->string('role', 20)->default('user');
             $table->timestamps(); // created_at, updated_at (TIMESTAMP)
         });
 

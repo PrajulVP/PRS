@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.admin-login')
 
 @section('content')
 
@@ -6,7 +6,7 @@
 
 
 
-<form id="login-form" method="POST" action="{{ route('login.post.web') }}" novalidate>
+<form id="login-form" method="POST" action="{{ route('login.post') }}" novalidate>
     @csrf
     @method('POST')
     <div class="mb-3">

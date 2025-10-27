@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('chemists', function (Blueprint $table) {
+        Schema::create('retailers', function (Blueprint $table) {
             $table->id();
+            $table->string('shop_name');
             $table->string('name');
             $table->string('gst')->unique();
             $table->string('contact_no');
@@ -28,11 +29,9 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('chemists');
+        Schema::dropIfExists('retailers');
     }
+
 };

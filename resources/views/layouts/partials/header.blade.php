@@ -20,7 +20,7 @@
           <div class="left-header col-xxl-5 col-xl-6 col-lg-5 col-md-4 col-sm-3 p-0">
             <div> <a class="toggle-sidebar" href="#"> <i class="iconly-Category icli"> </i></a>
               <div class="d-flex align-items-center gap-2 ">
-                <h4 class="f-w-600">Welcome Alex</h4><img class="mt-0" src="../../admin/assets/images/hand.gif" alt="hand-gif">
+                <h4 class="f-w-600">Welcome {{ Auth::guard('admin')->user()->name }}</h4><img class="mt-0" src="../../admin/assets/images/hand.gif" alt="hand-gif">
               </div>
             </div>
             <div class="welcome-content d-xl-block d-none"><span class="text-truncate col-12">Here’s what’s happening with your store today. </span></div>

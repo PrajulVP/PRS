@@ -57,10 +57,10 @@
                     </svg>
                     <svg class="fill-icon">
                       <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
-                    </svg><span>Chemists</span></a>
+                    </svg><span>Chemists (Retailer)</span></a>
                   <ul class="sidebar-submenu">
-                    <li><a href="{{ route('chemists.index') }}">Chemists List</a></li>
-                    <li><a href="{{ route('chemists.create') }}">Create chemists</a></li>
+                    <li><a href="{{ route('retailers.index') }}">Chemists List</a></li>
+                    <li><a href="{{ route('retailers.create') }}">Create chemists</a></li>
                   </ul>
                 </li>
                 <li class="sidebar-main-title">
