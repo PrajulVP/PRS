@@ -45,6 +45,18 @@
                     </svg>
                     <svg class="fill-icon">
                       <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
+                    </svg><span>Managers</span></a>
+                  <ul class="sidebar-submenu">
+                    <li><a href="{{ route('managers.index') }}">Managers List</a></li>
+                    <li><a href="{{ route('managers.create') }}">Create Managers</a></li>
+                  </ul>
+                </li>
+                <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+                    <svg class="stroke-icon">
+                      <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
+                    </svg>
+                    <svg class="fill-icon">
+                      <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
                     </svg><span>Distributors</span></a>
                   <ul class="sidebar-submenu">
                     <li><a href="{{ route('distributors.index') }}">Distributors List</a></li>
@@ -57,10 +69,22 @@
                     </svg>
                     <svg class="fill-icon">
                       <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
-                    </svg><span>Chemists (Retailer)</span></a>
+                    </svg><span>Field Staff</span></a>
                   <ul class="sidebar-submenu">
-                    <li><a href="{{ route('retailers.index') }}">Chemists List</a></li>
-                    <li><a href="{{ route('retailers.create') }}">Create chemists</a></li>
+                    <li><a href="{{ route('fieldstaffs.index') }}">Field Staff List</a></li>
+                    <li><a href="{{ route('fieldstaffs.create') }}">Create Field Staff</a></li>
+                  </ul>
+                </li>
+                <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+                    <svg class="stroke-icon">
+                      <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
+                    </svg>
+                    <svg class="fill-icon">
+                      <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
+                    </svg><span>Retailer (Chemists)</span></a>
+                  <ul class="sidebar-submenu">
+                    <li><a href="{{ route('retailers.index') }}">Retailers List</a></li>
+                    <li><a href="{{ route('retailers.create') }}">Create Retailers</a></li>
                   </ul>
                 </li>
                 <li class="sidebar-main-title">
@@ -93,6 +117,35 @@
                   </ul>
                 </li>
                 <li class="sidebar-main-title">
+                  <div>
+                    <h6 class="lan-10">Orders</h6>
+                  </div>
+                </li>
+                <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+                    <svg class="stroke-icon">
+                      <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
+                    </svg>
+                    <svg class="fill-icon">
+                      <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
+                    </svg><span>Orders</span></a>
+                  <ul class="sidebar-submenu">
+                    <li><a href="{{ route('orders.index') }}">Order List</a></li>
+                    <li><a href="{{ route('orders.create') }}">Create Order</a></li>
+                  </ul>
+                </li>
+                <!-- <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+                    <svg class="stroke-icon">
+                      <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
+                    </svg>
+                    <svg class="fill-icon">
+                      <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
+                    </svg><span>Areas</span></a>
+                  <ul class="sidebar-submenu">
+                    <li><a href="{{ route('areas.index') }}">Area List</a></li>
+                    <li><a href="{{ route('areas.create') }}">Create Area</a></li>
+                  </ul>
+                </li> -->
+                <!-- <li class="sidebar-main-title">
                   <div>
                     <h6 class="lan-8">Applications</h6>
                   </div>
@@ -185,7 +238,7 @@
                     </svg>
                     <svg class="fill-icon">
                       <use href="../../admin/assets/svg/icon-sprite.svg#fill-calender"></use>
-                    </svg><span>Calendar</span></a></li>
+                    </svg><span>Calendar</span></a></li> -->
                 <!-- <li class="sidebar-main-title"> 
                   <div>
                     <h6>Forms & Table</h6>
@@ -229,7 +282,7 @@
                     </li>
                   </ul>
                 </li> -->
-                <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+                <!-- <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
                     <svg class="stroke-icon">
                       <use href="../../admin/assets/svg/icon-sprite.svg#stroke-table"></use>
                     </svg>
@@ -369,7 +422,7 @@
                     </svg>
                     <svg class="fill-icon">
                       <use href="../../admin/assets/svg/icon-sprite.svg#fill-support-tickets"></use>
-                    </svg><span>Support Ticket</span></a></li>
+                    </svg><span>Support Ticket</span></a></li> -->
               </ul>
               <div class="right-arrow" id="right-arrow"><i data-feather="arrow-right"></i></div>
             </div>

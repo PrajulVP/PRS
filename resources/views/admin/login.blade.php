@@ -6,7 +6,7 @@
 
 
 
-<form id="login-form" method="POST" action="{{ route('login.post.web') }}" novalidate>
+<form id="login-form" method="POST" action="{{ route('login.post') }}" novalidate>
     @csrf
     @method('POST')
     <div class="mb-3">
@@ -52,7 +52,7 @@
 </div> <!-- close .login-card -->
 
 <script src="{{ asset('admin/assets/js/jquery.min.js') }}"></script>
-<script src="{{ asset('admin/assets/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ asset('admin/assets/js/bootstrap/bootstrap.bundle.min.js') }}"></script>
 <script>
 (function(){
     document.querySelectorAll('.show-pass').forEach(function(btn){

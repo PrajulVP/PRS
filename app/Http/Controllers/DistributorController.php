@@ -12,6 +12,22 @@ class DistributorController extends Controller
 {
     public function index()
     {
+        // // Distributor\DashboardController@index
+        // $distributor = Auth::user(); // distributor guard
+        // $month = now()->month;
+        // $year = now()->year;
+
+        // // target
+        // $target = $distributor->targets()->where('year',$year)->where('month',$month)->first();
+        // $targetValue = $target->target_value ?? 0;
+
+        // // achievement — sum of delivered orders in month
+        // $achievement = $distributor->orders()
+        //     ->where('status','delivered')
+        //     ->whereYear('delivered_at', $year)
+        //     ->whereMonth('delivered_at', $month)
+        //     ->sum('total_value');
+
         $distributors = Distributor::with('district', 'area')->latest()->get();
         return view('admin.distributors.index', compact('distributors'));
     }
@@ -29,7 +45,7 @@ class DistributorController extends Controller
             'gst' => 'required|unique:distributors',
             'contact_no' => 'required',
             'email' => 'required|email|unique:distributors',
-            'password' => 'required|min:6',
+            'password' => 'required|min:4',
             'district_id' => 'required',
             'area_id' => 'required',
             'route' => 'required',
@@ -57,7 +73,7 @@ class DistributorController extends Controller
             'gst' => 'required|unique:distributors,gst,'.$distributor->id,
             'contact_no' => 'required',
             'email' => 'required|email|unique:distributors,email,'.$distributor->id,
-            'password' => 'nullable|min:6',
+            'password' => 'nullable|min:4',
             'district_id' => 'required',
             'area_id' => 'required',
             'route' => 'required',

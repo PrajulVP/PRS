@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('retailers', function (Blueprint $table) {
             $table->id();
-            $table->string('shop_name');
             $table->string('name');
             $table->string('gst')->unique();
             $table->string('contact_no');

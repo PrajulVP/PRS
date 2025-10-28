@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 @section('page-body')
 <div class="container p-4">
-    <h2>Create Chemist</h2>
+    <h2>Create Retailer</h2>
 
     @if($errors->any())
     <div class="alert alert-danger">
@@ -9,7 +9,7 @@
     </div>
     @endif
 
-    <form action="{{ route('chemists.store') }}" method="POST">
+    <form action="{{ route('retailers.store') }}" method="POST">
         @csrf
 
         <div class="mb-3">
@@ -83,27 +83,9 @@
             <input type="text" name="pincode" class="form-control" value="{{ old('pincode') }}" required>
         </div>
 
-        <button class="btn btn-success">Create Chemist</button>
+        <button class="btn btn-success">Create Retailer</button>
     </form>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-$('#district_id').change(function(){
-    let districtId = $(this).val();
-    $('#area_id').html('<option value="">Loading...</option>');
 
-    if(districtId){
-        $.get('/get-areas/'+districtId, function(data){
-            let options = '<option value="">Select Area</option>';
-            $.each(data, function(i, area){
-                options += `<option value="${area.id}">${area.name}</option>`;
-            });
-            $('#area_id').html(options);
-        });
-    } else {
-        $('#area_id').html('<option value="">Select Area</option>');
-    }
-});
-</script>
 @endsection

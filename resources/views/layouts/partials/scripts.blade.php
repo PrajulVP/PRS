@@ -25,6 +25,7 @@
 <script src="{{ asset('admin/assets/js/dashboard/dashboard_2.js') }}"></script>
 <script src="{{ asset('admin/assets/js/animation/wow/wow.min.js') }}"></script>
 <script src="{{ asset('admin/assets/js/script.js') }}"></script>
+<script src="{{ asset('admin/assets/js/custom.js') }}"></script>
 <script>
     new WOW().init();
 </script>

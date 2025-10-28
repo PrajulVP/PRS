@@ -4,64 +4,69 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use App\Models\Chemist;
+use App\Models\Retailer;
 use App\Models\District;
 use App\Models\Area;
 use App\Models\Distributor;
 
-class ChemistController extends Controller
+class RetailerController extends Controller
 {
     public function index()
     {
-        $chemists = Chemist::with('district','area','distributor')->latest()->get();
-        return view('admin.chemists.index', compact('chemists'));
+        $retailers = Retailer::with('district','area','distributor')->latest()->get();
+        return view('admin.retailers.index', compact('retailers'));
     }
 
     public function create()
     {
+        $Retailer = null;  // NEW — since this is create, there is no existing retailer
         $districts = District::all();
+        $areas = Area::all();   // NEW — you forgot this
         $distributors = Distributor::all();
-        return view('admin.chemists.create', compact('districts','distributors'));
+
+        return view('admin.retailers.create', compact('Retailer', 'districts', 'areas', 'distributors'));
     }
+
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name'=>'required',
-            'gst'=>'required|unique:chemists',
-            'contact_no'=>'required',
-            'email'=>'required|email|unique:chemists',
-            'password'=>'required|min:6',
-            'district_id'=>'required',
-            'area_id'=>'required',
-            'distributor_id'=>'required',
-            'route'=>'nullable|string',
-            'address'=>'required',
-            'pincode'=>'required'
+            'name' => 'required',
+            'gst' => 'required|unique:Retailers',
+            'contact_no' => 'required',
+            'email' => 'required|email|unique:Retailers',
+            'password' => 'required|min:4',
+            'district_id' => 'required',
+            'area_id' => 'required',
+            'distributor_id' => 'required',
+            'route' => 'nullable|string',
+            'address' => 'required',
+            'pincode' => 'required'
         ]);
 
         $data['password'] = Hash::make($data['password']);
-        Chemist::create($data);
+        Retailer::create($data);
 
-        return redirect()->route('chemists.index')->with('success','Chemist added successfully!');
+        return redirect()->route('retailers.index')->with('success', 'Retailer added successfully!');
     }
 
-    public function edit(Chemist $chemist)
+
+    public function edit(Retailer $Retailer)
     {
         $districts = District::all();
         $distributors = Distributor::all();
-        $areas = Area::where('district_id', $chemist->district_id)->get();
-        return view('admin.chemists.edit', compact('chemist','districts','areas','distributors'));
+        $areas = Area::where('district_id', $Retailer->district_id)->get();
+        return view('admin.retailers.edit', compact('Retailer','districts','areas','distributors'));
     }
 
-    public function update(Request $request, Chemist $chemist)
+    public function update(Request $request, Retailer $Retailer)
     {
         $data = $request->validate([
             'name'=>'required',
-            'gst'=>'required|unique:chemists,gst,'.$chemist->id,
+            'gst'=>'required|unique:Retailers,gst,'.$Retailer->id,
             'contact_no'=>'required',
-            'email'=>'required|email|unique:chemists,email,'.$chemist->id,
-            'password'=>'nullable|min:6',
+            'email'=>'required|email|unique:Retailers,email,'.$Retailer->id,
+            'password'=>'nullable|min:4',
             'district_id'=>'required',
             'area_id'=>'required',
             'distributor_id'=>'required',
@@ -76,15 +81,15 @@ class ChemistController extends Controller
             unset($data['password']);
         }
 
-        $chemist->update($data);
+        $Retailer->update($data);
 
-        return redirect()->route('chemists.index')->with('success','Chemist updated successfully!');
+        return redirect()->route('retailers.index')->with('success','Retailer updated successfully!');
     }
 
-    public function destroy(Chemist $chemist)
+    public function destroy(Retailer $Retailer)
     {
-        $chemist->delete();
-        return redirect()->route('chemists.index')->with('success','Chemist deleted successfully!');
+        $Retailer->delete();
+        return redirect()->route('retailers.index')->with('success','Retailer deleted successfully!');
     }
 
     // AJAX to get areas for selected district

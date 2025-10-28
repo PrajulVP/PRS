@@ -5,11 +5,11 @@
 </head>
 <body>
     <!-- Loader -->
-    <div class="loader-wrapper">
+    <!-- <div class="loader-wrapper">
         <div class="loader">
             <div class="loader4"></div>
         </div>
-    </div>
+    </div> -->
     <div class="tap-top"><i data-feather="chevrons-up"></i></div>
 
     {{-- If NOT authenticated as admin → show only login content --}}

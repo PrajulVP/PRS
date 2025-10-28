@@ -148,5 +148,26 @@
                 </div>
               </div>
             </div>
+            <div class="col-md-4 p-3">
+                <h5>Target vs Achievement</h5>
+                <canvas id="targetChart" width="400" height="200"></canvas> {{-- ✅ THIS GOES IN BODY --}}
+            </div>
           </div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('targetChart').getContext('2d');
+const target = {{ $targetValue }};
+const achievement = {{ $achievement }};
+new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Achievement','Remaining'],
+        datasets: [{
+            data: [achievement, Math.max(target - achievement, 0)],
+            backgroundColor: ['#f6b000','#e0e0e0']
+        }]
+    },
+    options: { responsive: true }
+});
+</script>
 @endsection

@@ -20,7 +20,9 @@
           <div class="left-header col-xxl-5 col-xl-6 col-lg-5 col-md-4 col-sm-3 p-0">
             <div> <a class="toggle-sidebar" href="#"> <i class="iconly-Category icli"> </i></a>
               <div class="d-flex align-items-center gap-2 ">
+                @auth('admin')
                 <h4 class="f-w-600">Welcome {{ Auth::guard('admin')->user()->name }}</h4><img class="mt-0" src="../../admin/assets/images/hand.gif" alt="hand-gif">
+                @endauth
               </div>
             </div>
             <div class="welcome-content d-xl-block d-none"><span class="text-truncate col-12">Here’s what’s happening with your store today. </span></div>
@@ -287,7 +289,6 @@
 
                 <ul class="profile-dropdown onhover-show-div">
                   <li><a href="user-profile.html"><i data-feather="user"></i><span>My Profile</span></a></li>
-                  <li><a href="letter-box.html"><i data-feather="mail"></i><span>Inbox</span></a></li>
                   <li> <a href="edit-profile.html"> <i data-feather="settings"></i><span>Settings</span></a></li>
                   <li>
                     <form id="logout-form" action="{{ route('admin.logout') }}" method="POST" class="d-inline">

@@ -13,5 +13,8 @@ class Distributor extends Model
 
     public function district() { return $this->belongsTo(District::class); }
     public function area()     { return $this->belongsTo(Area::class); }
-    public function chemists() { return $this->hasMany(Chemist::class);}
+    public function chemists() { return $this->hasMany(Retailer::class);}
+    public function orders() { return $this->hasMany(Order::class); }
+    public function targets() { return $this->hasMany(SalesTarget::class); }
+
 }

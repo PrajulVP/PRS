@@ -1,13 +1,13 @@
 @extends('layouts.admin')
 @section('page-body')
 <div class="container p-4">
-    <h2>Chemists</h2>
+    <h2>Retailer</h2>
 
     @if(session('success'))
     <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
-    <a href="{{ route('chemists.create') }}" class="btn btn-primary mb-3">Add Chemist</a>
+    <a href="{{ route('retailers.create') }}" class="btn btn-primary mb-3">Add retailer</a>
 
     <table class="table table-bordered table-striped">
         <thead>
@@ -27,22 +27,22 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($chemists as $key => $chemist)
+            @foreach($retailers as $key => $retailer)
             <tr>
                 <td>{{ $key + 1 }}</td>
-                <td>{{ $chemist->name }}</td>
-                <td>{{ $chemist->gst }}</td>
-                <td>{{ $chemist->distributor->company_name ?? '-' }}</td>
-                <td>{{ $chemist->district->name ?? '' }}</td>
-                <td>{{ $chemist->area->name ?? '' }}</td>
-                <td>{{ $chemist->route ?? '-' }}</td>
-                <td>{{ $chemist->contact_no }}</td>
-                <td>{{ $chemist->email }}</td>
-                <td>{{ $chemist->address }}</td>
-                <td>{{ $chemist->pincode }}</td>
+                <td>{{ $retailer->name }}</td>
+                <td>{{ $retailer->gst }}</td>
+                <td>{{ $retailer->distributor->company_name ?? '-' }}</td>
+                <td>{{ $retailer->district->name ?? '' }}</td>
+                <td>{{ $retailer->area->name ?? '' }}</td>
+                <td>{{ $retailer->route ?? '-' }}</td>
+                <td>{{ $retailer->contact_no }}</td>
+                <td>{{ $retailer->email }}</td>
+                <td>{{ $retailer->address }}</td>
+                <td>{{ $retailer->pincode }}</td>
                 <td>
-                    <a href="{{ route('chemists.edit', $chemist->id) }}" class="btn btn-sm btn-primary">Edit</a>
-                    <form action="{{ route('chemists.destroy', $chemist->id) }}" method="POST" style="display:inline-block;">
+                    <a href="{{ route('retailers.edit', $retailer->id) }}" class="btn btn-sm btn-primary">Edit</a>
+                    <form action="{{ route('retailers.destroy', $retailer->id) }}" method="POST" style="display:inline-block;">
                         @csrf
                         @method('DELETE')
                         <button class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
