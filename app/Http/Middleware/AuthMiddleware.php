@@ -17,14 +17,18 @@ class AuthMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        Log::info('AuthMiddleware: User authenticated: ' . (string) Auth::guard('admin')->check());
+        Log::info('AuthMiddleware: Request Path: ' . $request->path());
+        Log::info('AuthMiddleware: Session ID: ' . $request->session()->getId());
+        Log::info('AuthMiddleware: Auth::guard(\'admin\')->check(): ' . (string) Auth::guard('admin')->check());
 
         if (Auth::guard('admin')->check()) {
-          
+            $user = Auth::guard('admin')->user();
+            Log::info('AuthMiddleware: User authenticated. User ID: ' . $user->id . ', Role: ' . $user->role);
             return $next($request);
         }
 
-        return redirect()->route('admin.login')->with('error', 'You are not logged in.');
+        Log::info('AuthMiddleware: User not authenticated. Redirecting to admin.login.');
+        return redirect()->route('login')->with('error', 'You are not logged in.');
     }
 
 }

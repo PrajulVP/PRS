@@ -20,9 +20,20 @@
           <div class="left-header col-xxl-5 col-xl-6 col-lg-5 col-md-4 col-sm-3 p-0">
             <div> <a class="toggle-sidebar" href="#"> <i class="iconly-Category icli"> </i></a>
               <div class="d-flex align-items-center gap-2 ">
-                @auth('admin')
-                <h4 class="f-w-600">Welcome {{ Auth::guard('admin')->user()->name }}</h4><img class="mt-0" src="../../admin/assets/images/hand.gif" alt="hand-gif">
-                @endauth
+                @php
+                    $loggedInRole = null;
+                    $guards = ['superadmin', 'admin', 'manager', 'distributor', 'fieldstaff', 'retailer'];
+                    foreach ($guards as $guard) {
+                        if (Auth::guard($guard)->check()) {
+                            $loggedInRole = $guard;
+                            break;
+                        }
+                    }
+                @endphp
+
+                @if ($loggedInRole)
+                    <h4 class="f-w-600">Welcome {{ Auth::guard($loggedInRole)->user()->name }}</h4><img class="mt-0" src="{{ asset('admin/assets/images/hand.gif') }}" alt="hand-gif">
+                @endif
               </div>
             </div>
             <div class="welcome-content d-xl-block d-none"><span class="text-truncate col-12">Here’s what’s happening with your store today. </span></div>
@@ -274,31 +285,41 @@
                   </div>
                 </div>
               </li>
-              <li class="profile-nav onhover-dropdown"> 
-                <div class="media profile-media">
-                    <img class="b-r-10" src="{{ asset('admin/assets/images/dashboard/profile.png') }}" alt="Profile Picture">
-                    <div class="media-body d-xxl-block d-none box-col-none">
-                      @auth('admin')
-                          <div class="d-flex align-items-center justify-content-between gap-2">
-                              <span>{{ Auth::guard('admin')->user()->name }}</span>
-                              <i class="middle fa fa-angle-down"></i>
-                          </div>
-                      @endauth
-                  </div>
-                </div>
-
-                <ul class="profile-dropdown onhover-show-div">
-                  <li><a href="user-profile.html"><i data-feather="user"></i><span>My Profile</span></a></li>
-                  <li> <a href="edit-profile.html"> <i data-feather="settings"></i><span>Settings</span></a></li>
-                  <li>
-                    <form id="logout-form" action="{{ route('admin.logout') }}" method="POST" class="d-inline">
-                        @csrf
-                        <button type="submit" class="btn btn-pill btn-outline-primary btn-sm">Log Out</button>
-                    </form>
-                </li>
-                </ul>
-              </li>
-            </ul>
+                            <li class="profile-nav onhover-dropdown">
+                              <div class="media profile-media">
+                                  <img class="b-r-10" src="{{ asset('admin/assets/images/dashboard/profile.png') }}" alt="Profile Picture">
+                                  <div class="media-body d-xxl-block d-none box-col-none">
+                                    @php
+                                        $loggedInRole = null;
+                                        $guards = ['superadmin', 'admin', 'manager', 'distributor', 'fieldstaff', 'retailer'];
+                                        foreach ($guards as $guard) {
+                                            if (Auth::guard($guard)->check()) {
+                                                $loggedInRole = $guard;
+                                                break;
+                                            }
+                                        }
+                                    @endphp
+              
+                                    @if ($loggedInRole)
+                                        <div class="d-flex align-items-center justify-content-between gap-2">
+                                            <span>{{ Auth::guard($loggedInRole)->user()->name }}</span>
+                                            <i class="middle fa fa-angle-down"></i>
+                                        </div>
+                                    @endif
+                                </div>
+                              </div>
+              
+                              <ul class="profile-dropdown onhover-show-div">
+                                <li><a href="user-profile.html"><i data-feather="user"></i><span>My Profile</span></a></li>
+                                <li> <a href="edit-profile.html"> <i data-feather="settings"></i><span>Settings</span></a></li>
+                                <li>
+                                  <form id="logout-form" action="{{ route('admin.logout') }}" method="POST" class="d-inline">
+                                      @csrf
+                                      <button type="submit" class="btn btn-pill btn-outline-primary btn-sm">Log Out</button>
+                                  </form>
+                              </li>
+                              </ul>
+                            </li>            </ul>
           </div>
           <script class="result-template" type="text/x-handlebars-template">
             <div class="ProfileCard u-cf">                        

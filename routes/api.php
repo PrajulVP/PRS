@@ -15,27 +15,27 @@ use Illuminate\Support\Facades\Route;
 
 // Web Authentication (Session-based)
 Route::middleware(['web', 'guest:admin'])->group(function () {
-    Route::get('/admin/login', [AdminController::class, 'showLogin'])->name('admin.login');
-    Route::post('/admin/login', [AdminController::class, 'login'])->name('login.post');
+    Route::get('login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 });
 
 Route::middleware(['web', 'auth.admin'])->group(function () {
     Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
-    Route::post('/admin/logout', [AdminController::class, 'logout'])->name('admin.logout');
+    Route::post('/admin/logout', [AdminController::class, 'logout'])->name('logout');
 
     Route::resource('districts', DistrictController::class);
 
     Route::resource('areas', AreaController::class);
 
-    Route::resource('distributors', DistributorController::class);
+    Route::resource('distributors', DistributorController::class)->middleware('role:superadmin,admin,manager');
     // AJAX route to get areas by district
     Route::get('/get-areas/{district}', [DistributorController::class, 'getAreas']);
 
-    Route::resource('retailers', RetailerController::class);
+    Route::resource('retailers', RetailerController::class)->middleware('role:superadmin,admin,manager');
 
-    Route::resource('managers', ManagerController::class);
+    Route::resource('managers', ManagerController::class)->middleware('role:superadmin,admin');
 
-    Route::resource('fieldstaffs', FieldStaffController::class);
+    Route::resource('fieldstaffs', FieldStaffController::class)->middleware('role:superadmin,admin,manager');
     Route::get('/get-distributors/{district}', [FieldStaffController::class, 'getDistributors']);
 
     Route::resource('orders', OrderController::class);

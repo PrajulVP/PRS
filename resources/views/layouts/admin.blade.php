@@ -10,15 +10,9 @@
             <div class="loader4"></div>
         </div>
     </div> -->
-    <div class="tap-top"><i data-feather="chevrons-up"></i></div>
-
-    {{-- If NOT authenticated as admin → show only login content --}}
-    @guest('admin')
-        @yield('content')
-    @endguest
-
-    {{-- If authenticated as admin → show full dashboard layout --}}
-    @auth('admin')
+ 
+    {{-- If authenticated as any role → show full dashboard layout --}}
+    @if(Auth::guard('superadmin')->check() || Auth::guard('admin')->check() || Auth::guard('manager')->check() || Auth::guard('distributor')->check() || Auth::guard('fieldstaff')->check() || Auth::guard('retailer')->check())
     <div class="page-wrapper compact-wrapper" id="pageWrapper">
         @include('layouts.partials.header')
         <div class="page-body-wrapper">
@@ -30,6 +24,9 @@
         </div>
     </div>
     @include('layouts.partials.scripts')
-    @endauth
+    @else
+        {{-- If NOT authenticated as any role → show only login content --}}
+        @yield('content')
+    @endif
 </body>
 </html>

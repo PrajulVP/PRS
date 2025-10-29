@@ -4,10 +4,10 @@
 namespace App\Http\Controllers;
 
 
+use App\Models\User;
 use App\Models\Area;
 use App\Models\District;
 use App\Models\Distributor;
-use App\Models\FieldStaff;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -16,7 +16,7 @@ class FieldStaffController extends Controller
 {
     public function index()
     {
-        $fieldstaffs = FieldStaff::with('district', 'area', 'distributor')->latest()->get();
+        $fieldstaffs = User::where('role', 'fieldstaff')->with('district', 'area', 'distributor')->latest()->get();
         return view('admin.fieldstaffs.index', compact('fieldstaffs'));
     }
 
@@ -33,7 +33,7 @@ class FieldStaffController extends Controller
     {
         $data = $request->validate([
         'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:fieldstaffs,email',
+        'email' => 'required|email|unique:users,email',
         'password' => 'required|min:4',
         'contact_no' => 'nullable|string',
         'district_id' => 'required|exists:districts,id',
@@ -45,16 +45,17 @@ class FieldStaffController extends Controller
 
 
         $data['password'] = Hash::make($data['password']);
+        $data['role'] = 'fieldstaff';
 
 
-    FieldStaff::create($data);
+    User::create($data);
 
 
         return redirect()->route('fieldstaffs.index')->with('success', 'Field staff added successfully!');
     }
 
 
-    public function edit(FieldStaff $fieldstaff)
+    public function edit(User $fieldstaff)
     {
         $districts = District::all();
         $distributors = Distributor::all();
@@ -63,11 +64,11 @@ class FieldStaffController extends Controller
     }
 
 
-    public function update(Request $request, FieldStaff $fieldstaff)
+    public function update(Request $request, User $fieldstaff)
     {
         $data = $request->validate([
         'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:fieldstaffs,email,' . $fieldstaff->id,
+        'email' => 'required|email|unique:users,email,' . $fieldstaff->id,
         'password' => 'nullable|min:4',
         'contact_no' => 'nullable|string',
         'district_id' => 'required|exists:districts,id',
@@ -83,5 +84,15 @@ class FieldStaffController extends Controller
     } else {
         unset($data['password']);
     }
+
+    $fieldstaff->update($data);
+
+    return redirect()->route('fieldstaffs.index')->with('success', 'Field staff updated successfully!');
+    }
+
+    public function destroy(User $fieldstaff)
+    {
+        $fieldstaff->delete();
+        return redirect()->route('fieldstaffs.index')->with('success', 'Field staff deleted successfully!');
     }
 }

@@ -1,7 +1,10 @@
 @extends('layouts.admin')
 
 @section('page-body')
-          <div class="container-fluid">
+                     
+                        @if(auth()->check())
+                            @if(auth()->user()->hasRole('superadmin'))
+                                <div class="container-fluid">
             <div class="page-title">
               <div class="row">
                 <div class="col-6">
@@ -153,5 +156,50 @@
                 <canvas id="targetChart" width="400" height="200"></canvas> {{-- ✅ THIS GOES IN BODY --}}
             </div> -->
           </div>
+                            @endif
 
+                            @if(auth()->user()->hasRole('admin'))
+                                <p>As an Admin, you can manage users (excluding superadmin), orders, and other operational tasks.</p>
+                                <a href="{{ route('admin.users') }}" class="btn btn-info">View Users</a>
+                                {{-- Add more admin specific links/content here --}}
+                            @endif
+
+                            @if(auth()->user()->hasRole('manager'))
+                                <p>As a Manager, you can oversee distributors and field staff.</p>
+                            @endif
+
+                            @if(auth()->user()->hasRole('distributor'))
+                                <p>As a Distributor, you can manage your retailers and orders.</p>
+                            @endif
+
+                            @if(auth()->user()->hasRole('fieldstaff'))
+                                <p>As a Field Staff, you can manage your assigned retailers and orders.</p>
+                            @endif
+
+                            @if(auth()->user()->hasRole('retailer'))
+                                <p>As a Retailer, you can place and view your orders.</p>
+                            @endif
+
+                            <hr>
+
+                            {{-- Example of permission-based content --}}
+                            @if(auth()->user()->can('view orders'))
+                                <p>You have permission to view orders.</p>
+                                <a href="/orders" class="btn btn-success">View Orders</a>
+                            @endif
+
+                            @if(auth()->user()->can('create orders'))
+                                <p>You have permission to create orders.</p>
+                                <a href="/orders/create" class="btn btn-warning">Create New Order</a>
+                            @endif
+
+                        @else
+                            <p>Please log in to access the dashboard features.</p>
+                        @endif
+                   
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Container-fluid Ends-->
 @endsection

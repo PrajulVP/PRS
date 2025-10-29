@@ -27,8 +27,6 @@ return [
 
     'secret' => env('JWT_SECRET'),
 
-    'cookie' => 'jwt',
-
     /*
     |--------------------------------------------------------------------------
     | JWT Authentication Keys

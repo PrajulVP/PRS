@@ -29,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.admin' => \App\Http\Middleware\AuthMiddleware::class, // custom admin session guard
             // 'jwt.auth'   => \Tymon\JWTAuth\Http\Middleware\Authenticate::class, // JWT guard
             'admin'      => \App\Http\Middleware\AdminMiddleware::class, // optional view-only redirect guard
+            'role'       => \App\Http\Middleware\RoleMiddleware::class,
         ]);
 
         // ✅ Prevent "jwt" cookie from being encrypted (optional)

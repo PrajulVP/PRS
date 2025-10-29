@@ -6,12 +6,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Tymon\JWTAuth\Contracts\JWTSubject;
+use Spatie\Permission\Traits\HasRoles; // Added this line
 
-class User extends Authenticatable implements JWTSubject
+class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasRoles; // Added HasRoles here
 
     /**
      * The attributes that are mass assignable.
@@ -22,7 +22,19 @@ class User extends Authenticatable implements JWTSubject
         'name',
         'email',
         'password',
-        'usertype',
+        'role',
+        'company_name',
+        'gst',
+        'regulations',
+        'contact_no',
+        'address',
+        'pincode',
+        'district_id',
+        'area_id',
+        'route',
+        'distributor_id',
+        'assigned_distributor_id',
+        'status',
     ];
 
     /**
@@ -48,23 +60,14 @@ class User extends Authenticatable implements JWTSubject
         ];
     }
 
-    /**
-     * Get the identifier that will be stored in the subject claim of the JWT.
-     *
-     * @return mixed
-     */
-    public function getJWTIdentifier()
-    {
-        return $this->getKey();
-    }
+    public function district() { return $this->belongsTo(District::class); }
+    public function area()     { return $this->belongsTo(Area::class); }
+    // public function chemists() { return $this->hasMany(Retailer::class);}
+    public function orders() { return $this->hasMany(Order::class); }
+    public function targets() { return $this->hasMany(SalesTarget::class); }
 
-    /**
-     * Return a key value array, containing any custom claims to be added to the JWT.
-     *
-     * @return array
-     */
-    public function getJWTCustomClaims()
-    {
-        return [];
-    }
+    // public function distributor()
+    // {
+    //     return $this->belongsTo(Distributor::class, 'distributor_id');
+    // }
 }

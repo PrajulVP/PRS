@@ -1,142 +1,165 @@
 <?php
 
-// namespace App\Http\Controllers;
+namespace App\Http\Controllers;
 
-// use Illuminate\Http\Request;
-// use Illuminate\Support\Facades\Auth;
-// use Illuminate\Support\Facades\Validator;
-// use Illuminate\Validation\ValidationException;
-// use Tymon\JWTAuth\Facades\JWTAuth;
-// use Tymon\JWTAuth\Exceptions\JWTException;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
+use Tymon\JWTAuth\Facades\JWTAuth;
+use Tymon\JWTAuth\Exceptions\JWTException;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
-// class AuthController extends Controller
-// {
-//     /**
-//      * Show login view (used for /admin/login and /login).
-//      */
-//     public function showLogin()
-//     {
-//         return view('auth.login'); // create resources/views/auth/login.blade.php
-//     }
+class AuthController extends Controller
+{
+    /**
+     * Show login view (used for /admin/login and /login).
+     */
+    public function showLogin()
+    {
+        // Check if any of the custom guards are authenticated
+        if (Auth::guard('superadmin')->check() ||
+            Auth::guard('admin')->check() ||
+            Auth::guard('manager')->check() ||
+            Auth::guard('distributor')->check() ||
+            Auth::guard('fieldstaff')->check() ||
+            Auth::guard('retailer')->check()) {
+            return redirect()->route('dashboard'); // Redirect to the dashboard
+        }
 
-//     /**
-//      * Web login (session-based). Accepts email + password.
-//      * Works for web form POST to /admin/login or /login
-//      */
-//     public function login(Request $request)
-//     {
-//         $credentials = $request->validate([
-//             'email'    => ['required','email'],
-//             'password' => ['required'],
-//         ]);
+        return view('auth.login'); // Show login form if not authenticated
+    }
 
-//         if (Auth::attempt($credentials, $request->boolean('remember'))) {
-//             $request->session()->regenerate();
+    /**
+     * Web login (session-based). Accepts email + password.
+     * Works for web form POST to /admin/login or /login
+     */
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'email'    => ['required','email'],
+            'password' => ['required'],
+        ]);
 
-//             // If you want to redirect to a role-specific url:
-//             return redirect()->route('dashboard');
-//         }
+        // Attempt to find the user by email
+        $user = User::where('email', $credentials['email'])->first();
 
-//         // back with error
-//         return back()->withErrors(['email' => 'The provided credentials are incorrect.']);
-//     }
+        if (!$user) {
+            return back()->withErrors(['email' => 'This email is not registered.']);
+        }
 
-//     /**
-//      * Dashboard entrypoint. Use a single blade with role-based conditional UI,
-//      * or redirect to role-specific route if you prefer.
-//      */
-//     public function dashboard(Request $request)
-//     {
-//         $user = $request->user();
+        if (!Hash::check($credentials['password'], $user->password)) {
+            return back()->withErrors(['password' => 'Incorrect password.']);
+        }
 
-//         // Option: redirect to role-specific route
-//         switch ($user->role) {
-//             case 'superadmin':
-//                 return redirect()->route('dashboard.superadmin');
-//             case 'admin':
-//                 return redirect()->route('dashboard.admin');
-//             case 'manager':
-//                 return redirect()->route('dashboard.manager');
-//             case 'distributor':
-//                 return redirect()->route('dashboard.distributor');
-//             case 'fieldstaff':
-//                 return redirect('/dashboard/fieldstaff');
-//             case 'retailer':
-//                 return redirect()->route('dashboard.retailer');
-//             default:
-//                 // fallback to generic dashboard view
-//                 return view('dashboard', compact('user'));
-//         }
-//     }
+        // Determine the guard based on the user's primary role
+        // Assuming the first role returned by getRoleNames() is the primary role and matches a guard name.
+        $guard = $user->getRoleNames()->first();
 
-//     /**
-//      * Web logout (session).
-//      */
-//     public function logout(Request $request)
-//     {
-//         Auth::logout();
-//         $request->session()->invalidate();
-//         $request->session()->regenerateToken();
+        // If no role is assigned, or the role doesn't match a guard, authentication cannot proceed.
+        if (!$guard) {
+            return back()->withErrors(['email' => 'No role assigned to this user, or role does not match a guard.']);
+        }
 
-//         return redirect()->route('admin.login')->with('success', 'Logged out successfully.');
-//     }
+        if (Auth::guard($guard)->attempt($credentials, $request->boolean('remember'))) {
+            $request->session()->regenerate();
+            return redirect()->route('dashboard');
+        }
 
-//     /**
-//      * API: Login using JWT. Returns token + user.
-//      * POST /api/login  { email, password }
-//      */
-//     public function apiLogin(Request $request)
-//     {
-//         $validator = Validator::make($request->all(), [
-//             'email'    => 'required|email',
-//             'password' => 'required'
-//         ]);
+        // Fallback error if authentication fails for other reasons (e.g., guard misconfiguration)
+        return back()->withErrors(['email' => 'Authentication failed. Please try again.']);
+    }
 
-//         if ($validator->fails()) {
-//             return response()->json(['errors' => $validator->errors()], 422);
-//         }
+    /**
+     * Dashboard entrypoint. Use a single blade with role-based conditional UI,
+     * or redirect to role-specific route if you prefer.
+     */
+    public function dashboard(Request $request)
+    {
+        // Check if any of the custom guards are authenticated
+        if (Auth::guard('superadmin')->check() ||
+            Auth::guard('admin')->check() ||
+            Auth::guard('manager')->check() ||
+            Auth::guard('distributor')->check() ||
+            Auth::guard('fieldstaff')->check() ||
+            Auth::guard('retailer')->check()) {
+            return view('admin.dashboard'); // Render the single unified dashboard
+        }
 
-//         $credentials = $request->only('email', 'password');
+        return redirect()->route('login');
+    }
 
-//         try {
-//             if (! $token = JWTAuth::attempt($credentials)) {
-//                 return response()->json(['error' => 'Invalid credentials'], 401);
-//             }
-//         } catch (JWTException $e) {
-//             return response()->json(['error' => 'Could not create token'], 500);
-//         }
+    /**
+     * Web logout (session).
+     */
+    public function logout(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
-//         $user = auth()->user(); // JWTAuth set the user
+        return redirect()->route('login')->with('success', 'Logged out successfully.');
+    }
 
-//         return response()->json([
-//             'access_token' => $token,
-//             'token_type'   => 'bearer',
-//             'expires_in'   => auth('api')->factory()->getTTL() * 60 ?? null,
-//             'user'         => $user,
-//         ]);
-//     }
+    /**
+     * API: Login using JWT. Returns token + user.
+     * POST /api/login  { email, password }
+     */
+    public function apiLogin(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email'    => 'required|email',
+            'password' => 'required'
+        ]);
 
-//     /**
-//      * API: get profile (protected)
-//      */
-//     public function apiProfile(Request $request)
-//     {
-//         return response()->json(auth()->user());
-//     }
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
 
-//     /**
-//      * API: logout — invalidate token
-//      */
-//     public function apiLogout(Request $request)
-//     {
-//         try {
-//             $token = JWTAuth::getToken();
-//             if ($token) {
-//                 JWTAuth::invalidate($token);
-//             }
-//             return response()->json(['message' => 'Token invalidated. Logged out.']);
-//         } catch (JWTException $e) {
-//             return response()->json(['error' => 'Failed to logout, token invalidation error.'], 500);
-//         }
-//     }
-// }
+        $credentials = $request->only('email', 'password');
+
+        try {
+            if (! $token = JWTAuth::attempt($credentials)) {
+                return response()->json(['error' => 'Invalid credentials'], 401);
+            }
+        } catch (JWTException $e) {
+            return response()->json(['error' => 'Could not create token'], 500);
+        }
+
+        $user = auth()->user(); // JWTAuth set the user
+
+        return response()->json([
+            'access_token' => $token,
+            'token_type'   => 'bearer',
+            'expires_in'   => auth('api')->factory()->getTTL() * 60 ?? null,
+            'user'         => $user,
+        ]);
+    }
+
+    /**
+     * API: get profile (protected)
+     */
+    public function apiProfile(Request $request)
+    {
+        return response()->json(auth()->user());
+    }
+
+    /**
+     * API: logout — invalidate token
+     */
+    public function apiLogout(Request $request)
+    {
+        try {
+            $token = JWTAuth::getToken();
+            if ($token) {
+                JWTAuth::invalidate($token);
+            }
+            return response()->json(['message' => 'Token invalidated. Logged out.']);
+        } catch (JWTException $e) {
+            return response()->json(['error' => 'Failed to logout, token invalidation error.'], 500);
+        }
+    }
+
+    
+}

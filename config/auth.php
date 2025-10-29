@@ -51,6 +51,31 @@ return [
             'provider' => 'admins',
         ],
 
+        'superadmin' => [
+            'driver' => 'session',
+            'provider' => 'admins',
+        ],
+
+        'manager' => [
+            'driver' => 'session',
+            'provider' => 'admins',
+        ],
+
+        'distributor' => [
+            'driver' => 'session',
+            'provider' => 'admins',
+        ],
+
+        'fieldstaff' => [
+            'driver' => 'session',
+            'provider' => 'admins',
+        ],
+
+        'retailer' => [
+            'driver' => 'session',
+            'provider' => 'admins',
+        ],
+
         'admin-api' => [
             'driver' => 'jwt',           // <-- JWT for API
             'provider' => 'admins',
@@ -77,12 +102,12 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\Admin::class),
+            'model' => App\Models\User::class,
         ],
 
         'admins' => [
             'driver' => 'eloquent',
-            'model' => App\Models\Admin::class,
+            'model' => App\Models\User::class,
         ],
     ],
 

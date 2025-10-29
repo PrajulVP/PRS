@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Manager;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -10,7 +10,7 @@ class ManagerController extends Controller
 {
     public function index()
     {
-        $managers = Manager::latest()->get();
+        $managers = User::where('role', 'manager')->latest()->get();
         return view('admin.managers.index', compact('managers'));
     }
 
@@ -23,26 +23,27 @@ class ManagerController extends Controller
     {
         $data = $request->validate([
             'name' => 'required',
-            'email' => 'required|email|unique:managers',
+            'email' => 'required|email|unique:users',
             'password' => 'required|min:4',
         ]);
 
         $data['password'] = Hash::make($data['password']);
-        Manager::create($data);
+        $data['role'] = 'manager';
+        User::create($data);
 
         return redirect()->route('managers.index')->with('success', 'Manager added successfully!');
     }
 
-    public function edit(Manager $manager)
+    public function edit(User $manager)
     {
         return view('admin.managers.edit', compact('manager'));
     }
 
-    public function update(Request $request, Manager $manager)
+    public function update(Request $request, User $manager)
     {
         $data = $request->validate([
             'name' => 'required',
-            'email' => 'required|email|unique:managers,email,' . $manager->id,
+            'email' => 'required|email|unique:users,email,' . $manager->id,
             'password' => 'nullable|min:4',
         ]);
 
@@ -57,7 +58,7 @@ class ManagerController extends Controller
         return redirect()->route('managers.index')->with('success', 'Manager updated successfully!');
     }
 
-    public function destroy(Manager $manager)
+    public function destroy(User $manager)
     {
         $manager->delete();
         return redirect()->route('managers.index')->with('success', 'Manager deleted successfully!');
