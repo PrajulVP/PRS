@@ -19,4 +19,9 @@ class District extends Model
     {
         return $this->hasMany(Area::class);
     }
+
+    public function distributors(): HasMany
+    {
+        return $this->hasMany(Distributor::class);
+    }
 }

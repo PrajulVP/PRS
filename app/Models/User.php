@@ -23,19 +23,24 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'company_name',
-        'gst',
         'regulations',
-        'contact_no',
-        'address',
-        'pincode',
-        'district_id',
-        'area_id',
-        'route',
-        'distributor_id',
-        'assigned_distributor_id',
-        'status',
+        'profile_pic',
     ];
+
+    public function distributor()
+    {
+        return $this->hasOne(Distributor::class);
+    }
+
+    public function fieldStaff()
+    {
+        return $this->hasOne(FieldStaff::class);
+    }
+
+    public function retailer()
+    {
+        return $this->hasOne(Retailer::class);
+    }
 
     /**
      * The attributes that should be hidden for serialization.

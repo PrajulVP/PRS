@@ -31,13 +31,13 @@
 @foreach($fieldstaffs as $key => $staff)
 <tr>
 <td>{{ $key + 1 }}</td>
-<td>{{ $staff->name }}</td>
+<td>{{ $staff->user->name }}</td>
 <td>{{ $staff->distributor->company_name ?? '-' }}</td>
-<td>{{ $staff->district->name ?? '' }}</td>
-<td>{{ $staff->area->name ?? '' }}</td>
-<td>{{ $staff->contact_no }}</td>
-<td>{{ $staff->email }}</td>
-<td>{{ $staff->address }}</td>
+<td>{{ $staff->user->district->name ?? '' }}</td>
+<td>{{ $staff->user->area->name ?? '' }}</td>
+<td>{{ $staff->user->contact_no }}</td>
+<td>{{ $staff->user->email }}</td>
+<td>{{ $staff->user->address }}</td>
 <td>{{ ucfirst($staff->status) }}</td>
 <td>
 <a href="{{ route('fieldstaffs.edit', $staff->id) }}" class="btn btn-sm btn-primary">Edit</a>

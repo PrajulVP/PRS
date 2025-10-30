@@ -13,16 +13,15 @@ return new class extends Migration
     {
         Schema::create('distributors', function (Blueprint $table) {
             $table->id();
-            $table->string('gst')->unique();
-            $table->string('regulations')->nullable();
-            $table->string('contact_no');
-            $table->string('address');
-            $table->string('pincode');
-            $table->foreignId('district_id')->constrained();
-            $table->foreignId('area_id')->constrained();
+            $table->foreignId('user_id')->unique()->constrained()->onDelete('cascade');
+            $table->string('gst')->nullable();
+            $table->string('truck_license_number')->nullable();
+            $table->string('contact_no')->nullable();
+            $table->string('address')->nullable();
+            $table->string('pincode')->nullable();
+            $table->foreignId('district_id')->nullable()->constrained()->onDelete('set null');
+            $table->foreignId('area_id')->nullable()->constrained()->onDelete('set null');
             $table->string('route')->nullable();
-            $table->string('email')->unique();
-            $table->string('password');
             $table->timestamps();
         });
     }

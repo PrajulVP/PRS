@@ -2,12 +2,15 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ManagerController;
+use App\Http\Controllers\DistributorController;
+use App\Http\Controllers\FieldStaffController;
+use App\Http\Controllers\RetailerController;
+use App\Http\Controllers\DistrictController;
+use App\Http\Controllers\AreaController;
+use App\Http\Controllers\OrderController;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes (session-based)
-|--------------------------------------------------------------------------
-*/
+
 
 // Public / guest
 Route::middleware(['web', 'guest'])->group(function () {
@@ -27,11 +30,31 @@ Route::middleware(['auth:superadmin,admin,manager,distributor,fieldstaff,retaile
 
     // User Management
     Route::get('/admin/users', [App\Http\Controllers\UserController::class, 'index'])->name('admin.users');
-    Route::get('/admin/users/create', [App\Http\Controllers\UserController::class, 'create'])->name('admin.users.create')->middleware('role:superadmin');
-    Route::post('/admin/users', [App\Http\Controllers\UserController::class, 'store'])->name('admin.users.store')->middleware('role:superadmin');
-    Route::get('/admin/users/{user}/edit', [App\Http\Controllers\UserController::class, 'edit'])->name('admin.users.edit')->middleware('role:superadmin');
-    Route::put('/admin/users/{user}', [App\Http\Controllers\UserController::class, 'update'])->name('admin.users.update')->middleware('role:superadmin');
-    Route::delete('/admin/users/{user}', [App\Http\Controllers\UserController::class, 'destroy'])->name('admin.users.destroy')->middleware('role:superadmin');
+    Route::get('/admin/users/create', [App\Http\Controllers\UserController::class, 'create'])->name('admin.users.create')->middleware('role:superadmin|admin');
+    Route::post('/admin/users', [App\Http\Controllers\UserController::class, 'store'])->name('admin.users.store')->middleware('role:superadmin|admin');
+    Route::get('/admin/users/{user}/edit', [App\Http\Controllers\UserController::class, 'edit'])->name('admin.users.edit');
+    Route::put('/admin/users/{user}', [App\Http\Controllers\UserController::class, 'update'])->name('admin.users.update');
+    Route::delete('/admin/users/{user}', [App\Http\Controllers\UserController::class, 'destroy'])->name('admin.users.destroy');
+
+    Route::resource('managers', ManagerController::class);
+    Route::resource('distributors', DistributorController::class);
+    Route::resource('fieldstaffs', FieldStaffController::class);
+    Route::resource('retailers', RetailerController::class);
+    Route::resource('districts', DistrictController::class);
+    Route::resource('areas', AreaController::class);
+    Route::resource('orders', OrderController::class);
+
+    // AJAX: Get areas for selected district
+    Route::get('/distributors/get-areas/{district}', [DistributorController::class, 'getAreas'])->name('distributors.getAreas');
+    // AJAX: Get areas for selected district for Field Staff
+    Route::get('/fieldstaffs/get-areas/{district}', [FieldStaffController::class, 'getAreas'])->name('fieldstaffs.getAreas');
+    // AJAX: Get areas for selected district for Retailers
+    Route::get('/retailers/get-areas/{district}', [RetailerController::class, 'getAreas'])->name('retailers.getAreas');
+
+    // AJAX: Get distributors for selected district for Retailers
+    Route::get('/retailers/get-distributors/{district}', [RetailerController::class, 'getDistributors'])->name('retailers.getDistributors');
+    // AJAX: Get distributors for selected district for Field Staff
+    Route::get('/fieldstaffs/get-distributors/{district}', [FieldStaffController::class, 'getDistributors'])->name('fieldstaffs.getDistributors');
 
     // Logout (session)
     Route::post('/admin/logout', [AuthController::class, 'logout'])->name('admin.logout');

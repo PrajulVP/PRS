@@ -30,15 +30,15 @@
             @foreach($retailers as $key => $retailer)
             <tr>
                 <td>{{ $key + 1 }}</td>
-                <td>{{ $retailer->name }}</td>
+                <td>{{ $retailer->user->name }}</td>
                 <td>{{ $retailer->gst }}</td>
                 <td>{{ $retailer->distributor->company_name ?? '-' }}</td>
-                <td>{{ $retailer->district->name ?? '' }}</td>
-                <td>{{ $retailer->area->name ?? '' }}</td>
+                <td>{{ $retailer->user->district->name ?? '' }}</td>
+                <td>{{ $retailer->user->area->name ?? '' }}</td>
                 <td>{{ $retailer->route ?? '-' }}</td>
-                <td>{{ $retailer->contact_no }}</td>
-                <td>{{ $retailer->email }}</td>
-                <td>{{ $retailer->address }}</td>
+                <td>{{ $retailer->user->contact_no }}</td>
+                <td>{{ $retailer->user->email }}</td>
+                <td>{{ $retailer->user->address }}</td>
                 <td>{{ $retailer->pincode }}</td>
                 <td>
                     <a href="{{ route('retailers.edit', $retailer->id) }}" class="btn btn-sm btn-primary">Edit</a>

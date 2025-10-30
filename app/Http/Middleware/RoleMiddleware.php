@@ -23,7 +23,7 @@ class RoleMiddleware
                 return response()->json(['message' => 'Unauthenticated.'], 401);
             }
             // For web requests, redirect to login
-            return redirect()->route('admin.login'); // Or a general login route
+            return redirect()->route('login'); // Or a general login route
         }
 
         if (!in_array($request->user()->role, $roles)) {

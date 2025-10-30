@@ -12,13 +12,18 @@
     <form class="container p-4" action="{{ route('distributors.store') }}" method="POST">
         @csrf
         <div class="mb-3">
-            <label>Company Name</label>
-            <input type="text" name="company_name" class="form-control" value="{{ old('company_name') }}" required>
+            <label>Name</label>
+            <input type="text" name="name" class="form-control" value="{{ old('name') }}" required>
         </div>
 
         <div class="mb-3">
             <label>GST</label>
             <input type="text" name="gst" class="form-control" value="{{ old('gst') }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label>Truck License Number</label>
+            <input type="text" name="truck_license_number" class="form-control" value="{{ old('truck_license_number') }}">
         </div>
 
         <div class="mb-3">
@@ -55,7 +60,7 @@
 
         <div class="mb-3">
             <label>Route</label>
-            <input type="text" name="route" class="form-control" value="{{ old('route', $distributor->route ?? '') }}">
+            <input type="text" name="route" class="form-control" value="{{ old('route') }}">
         </div>
 
 
@@ -73,5 +78,32 @@
     </form>
 </div>
 
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const districtSelect = document.getElementById('district_id');
+        const areaSelect = document.getElementById('area_id');
+
+        districtSelect.addEventListener('change', function () {
+            const districtId = this.value;
+            areaSelect.innerHTML = '<option value="">Select Area</option>'; // Clear previous areas
+
+            if (districtId) {
+                fetch(`/distributors/get-areas/${districtId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(area => {
+                            const option = document.createElement('option');
+                            option.value = area.id;
+                            option.textContent = area.name;
+                            areaSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching areas:', error));
+            }
+        });
+    });
+</script>
+@endpush
 
 @endsection

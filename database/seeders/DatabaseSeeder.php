@@ -21,7 +21,8 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class, // Call RoleSeeder first
             SuperAdminSeeder::class,
             AdminSeeder::class,
-            DistrictSeeder::class
+            DistrictSeeder::class,
+            RolesAndGuardsSeeder::class,
         ]);
     }
 }

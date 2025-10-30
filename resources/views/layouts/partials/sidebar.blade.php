@@ -1,10 +1,10 @@
 <!-- Page Sidebar Start-->
         <div class="sidebar-wrapper" data-layout="stroke-svg">
-          <div class="logo-wrapper"><a href="{{ route('admin.dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/logo.png') }}" alt=""></a>
+          <div class="logo-wrapper"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/logo.png') }}" alt=""></a>
             <div class="back-btn"><i class="fa fa-angle-left"> </i></div>
             <div class="toggle-sidebar"><i class="status_toggle middle sidebar-toggle" data-feather="grid"> </i></div>
           </div>
-          <div class="logo-icon-wrapper"><a href="{{ route('admin.dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/logo-icon.png') }}" alt=""></a></div>
+          <div class="logo-icon-wrapper"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/logo-icon.png') }}" alt=""></a></div>
           <nav class="sidebar-main">
             <div class="left-arrow" id="left-arrow"><i data-feather="arrow-left"></i></div>
             <div id="sidebar-menu">
@@ -22,7 +22,7 @@
                     <h6 class="lan-1">General</h6>
                   </div>
                 </li>
-                <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.dashboard') }}">
+                <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('dashboard') }}">
                     <svg class="stroke-icon">
                       <use href="{{ asset('admin/assets/svg/icon-sprite.svg#stroke-home') }}"></use>
                     </svg>
@@ -72,9 +72,9 @@
                     </svg><span>Managers</span></a>
                   <ul class="sidebar-submenu">
                     <li><a href="{{ route('managers.index') }}">Managers List</a></li>
-                    @role('superadmin','admin')
+                    @hasanyrole('superadmin|admin')
                     <li><a href="{{ route('managers.create') }}">Create Managers</a></li>
-                    @endrole
+                    @endhasanyrole
                   </ul>
                 </li>
                 <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
@@ -86,9 +86,9 @@
                     </svg><span>Distributors</span></a>
                   <ul class="sidebar-submenu">
                     <li><a href="{{ route('distributors.index') }}">Distributors List</a></li>
-                    @role('superadmin','admin','manager')
+                    @hasanyrole('superadmin|admin|manager')
                     <li><a href="{{ route('distributors.create') }}">Create Distributors</a></li>
-                    @endrole
+                    @endhasanyrole
                   </ul>
                 </li>
                 <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
@@ -100,9 +100,9 @@
                     </svg><span>Field Staff</span></a>
                   <ul class="sidebar-submenu">
                     <li><a href="{{ route('fieldstaffs.index') }}">Field Staff List</a></li>
-                    @role('superadmin','admin','manager')
+                    @hasanyrole('superadmin|admin|manager|distributor')
                     <li><a href="{{ route('fieldstaffs.create') }}">Create Field Staff</a></li>
-                    @endrole
+                    @endhasanyrole
                   </ul>
                 </li>
                 <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
@@ -114,9 +114,9 @@
                     </svg><span>Retailer (Chemists)</span></a>
                   <ul class="sidebar-submenu">
                     <li><a href="{{ route('retailers.index') }}">Retailers List</a></li>
-                    @role('superadmin','admin','manager')
+                    @hasanyrole('superadmin|admin|manager|distributor')
                     <li><a href="{{ route('retailers.create') }}">Create Retailers</a></li>
-                    @endrole
+                    @endhasanyrole
                   </ul>
                 </li>
                 <li class="sidebar-main-title">

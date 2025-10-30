@@ -77,16 +77,22 @@ class AuthController extends Controller
      */
     public function dashboard(Request $request)
     {
-        // Check if any of the custom guards are authenticated
-        if (Auth::guard('superadmin')->check() ||
-            Auth::guard('admin')->check() ||
-            Auth::guard('manager')->check() ||
-            Auth::guard('distributor')->check() ||
-            Auth::guard('fieldstaff')->check() ||
-            Auth::guard('retailer')->check()) {
-            return view('admin.dashboard'); // Render the single unified dashboard
-        }
+        // Determine which guard is active and logged in
+        $guards = ['superadmin', 'admin', 'manager', 'distributor', 'fieldstaff', 'retailer'];
 
+        foreach ($guards as $guard) {
+            if (Auth::guard($guard)->check()) {
+                $user = Auth::guard($guard)->user();
+
+                // ✅ Option 1: Single dashboard with role-based sections
+                return view('admin.dashboard', [
+                    'user' => $user,
+                    'role' => $guard,
+                ]);
+            }
+        }
+                
+        // If no role authenticated, go back to login
         return redirect()->route('login');
     }
 
@@ -95,7 +101,13 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        Auth::logout();
+        $guards = ['superadmin', 'admin', 'manager', 'distributor', 'fieldstaff', 'retailer', 'web'];
+        foreach ($guards as $guard) {
+            if (Auth::guard($guard)->check()) {
+                Auth::guard($guard)->logout();
+            }
+        }
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

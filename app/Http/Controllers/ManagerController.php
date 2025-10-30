@@ -10,7 +10,7 @@ class ManagerController extends Controller
 {
     public function index()
     {
-        $managers = User::where('role', 'manager')->latest()->get();
+        $managers = User::role('manager')->latest()->get();
         return view('admin.managers.index', compact('managers'));
     }
 
@@ -29,7 +29,8 @@ class ManagerController extends Controller
 
         $data['password'] = Hash::make($data['password']);
         $data['role'] = 'manager';
-        User::create($data);
+        $manager = User::create($data);
+        $manager->assignRole('manager');
 
         return redirect()->route('managers.index')->with('success', 'Manager added successfully!');
     }

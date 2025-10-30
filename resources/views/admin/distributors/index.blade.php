@@ -13,8 +13,8 @@
         <thead>
             <tr>
                 <th>#</th>
-                <th>Company Name</th>
                 <th>GST</th>
+                <th>Truck License Number</th>
                 <th>District</th>
                 <th>Area</th>
                 <th>Route</th>
@@ -31,11 +31,12 @@
                 <td>{{ $key + 1 }}</td>
                 <td>{{ $distributor->company_name }}</td>
                 <td>{{ $distributor->gst }}</td>
+                <td>{{ $distributor->truck_license_number ?? '-' }}</td>
                 <td>{{ $distributor->district->name ?? '' }}</td>
                 <td>{{ $distributor->area->name ?? '' }}</td>
                 <td>{{ $distributor->route ?? '-' }}</td>
                 <td>{{ $distributor->contact_no }}</td>
-                <td>{{ $distributor->email }}</td>
+                <td>{{ $distributor->user->email }}</td>
                 <td>{{ $distributor->address }}</td>
                 <td>{{ $distributor->pincode }}</td>
                 <td>

@@ -8,88 +8,125 @@ use App\Models\User;
 use App\Models\District;
 use App\Models\Area;
 use App\Models\Distributor;
+use App\Models\Retailer; // Added
 
 class RetailerController extends Controller
 {
     public function index()
     {
-        $retailers = User::where('role', 'retailer')->with('district','area','distributor')->latest()->get();
+        $retailers = Retailer::with('user', 'distributor.user')->latest()->get(); // Changed
         return view('admin.retailers.index', compact('retailers'));
     }
 
     public function create()
     {
-        $Retailer = null;  // NEW — since this is create, there is no existing retailer
+        $retailer = null;  // Changed variable name
         $districts = District::all();
-        $areas = Area::all();   // NEW — you forgot this
+        $areas = Area::all();
         $distributors = Distributor::all();
 
-        return view('admin.retailers.create', compact('Retailer', 'districts', 'areas', 'distributors'));
+        return view('admin.retailers.create', compact('retailer', 'districts', 'areas', 'distributors'));
     }
 
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'name' => 'required',
-            'gst' => 'required|unique:users',
-            'contact_no' => 'required',
-            'email' => 'required|email|unique:users',
+        // Separate validation for User and Retailer fields
+        $userData = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
             'password' => 'required|min:4',
-            'district_id' => 'required',
-            'area_id' => 'required',
-            'distributor_id' => 'required',
+            'contact_no' => 'required',
+            'district_id' => 'required|exists:districts,id',
+            'area_id' => 'required|exists:areas,id',
             'route' => 'nullable|string',
             'address' => 'required',
-            'pincode' => 'required'
+            'pincode' => 'required',
         ]);
 
-        $data['password'] = Hash::make($data['password']);
-        $data['role'] = 'retailer';
-        User::create($data);
+        $retailerData = $request->validate([
+            'gst' => 'required|unique:retailers',
+            'distributor_id' => 'required|exists:distributors,id',
+        ]);
+
+        // Create User
+        $user = User::create([
+            'name' => $userData['name'],
+            'email' => $userData['email'],
+            'password' => Hash::make($userData['password']),
+            'role' => 'retailer', // Keep for consistency if other parts rely on it
+            'contact_no' => $userData['contact_no'],
+            'district_id' => $userData['district_id'],
+            'area_id' => $userData['area_id'],
+            'route' => $userData['route'],
+            'address' => $userData['address'],
+            'pincode' => $userData['pincode'],
+        ]);
+        $user->assignRole('retailer');
+
+        // Create Retailer profile
+        $retailer = new Retailer($retailerData);
+        $retailer->user_id = $user->id;
+        $retailer->save();
 
         return redirect()->route('retailers.index')->with('success', 'Retailer added successfully!');
     }
 
 
-public function edit(User $Retailer)
+    public function edit(Retailer $retailer) // Changed type-hint and variable name
     {
         $districts = District::all();
         $distributors = Distributor::all();
-        $areas = Area::where('district_id', $Retailer->district_id)->get();
-        return view('admin.retailers.edit', compact('Retailer','districts','areas','distributors'));
+        $areas = Area::where('district_id', $retailer->user->district_id)->get(); // Changed
+        return view('admin.retailers.edit', compact('retailer','districts','areas','distributors'));
     }
 
-    public function update(Request $request, User $Retailer)
+    public function update(Request $request, Retailer $retailer) // Changed type-hint and variable name
     {
-        $data = $request->validate([
-            'name'=>'required',
-            'gst'=>'required|unique:users,gst,'.$Retailer->id,
-            'contact_no'=>'required',
-            'email'=>'required|email|unique:users,email,'.$Retailer->id,
-            'password'=>'nullable|min:4',
-            'district_id'=>'required',
-            'area_id'=>'required',
-            'distributor_id'=>'required',
-            'route'=>'nullable|string',
-            'address'=>'required',
-            'pincode'=>'required'
+        // Separate validation for User and Retailer fields
+        $userData = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $retailer->user->id,
+            'password' => 'nullable|min:4',
+            'contact_no' => 'required',
+            'district_id' => 'required|exists:districts,id',
+            'area_id' => 'required|exists:areas,id',
+            'route' => 'nullable|string',
+            'address' => 'required',
+            'pincode' => 'required',
         ]);
 
-        if(!empty($data['password'])){
-            $data['password'] = Hash::make($data['password']);
-        } else {
-            unset($data['password']);
-        }
+        $retailerData = $request->validate([
+            'gst' => 'required|unique:retailers,gst,' . $retailer->id,
+            'distributor_id' => 'required|exists:distributors,id',
+        ]);
 
-        $Retailer->update($data);
+        // Update User
+        $userUpdateData = [
+            'name' => $userData['name'],
+            'email' => $userData['email'],
+            'role' => 'retailer', // Keep for consistency
+            'contact_no' => $userData['contact_no'],
+            'district_id' => $userData['district_id'],
+            'area_id' => $userData['area_id'],
+            'route' => $userData['route'],
+            'address' => $userData['address'],
+            'pincode' => $userData['pincode'],
+        ];
+        if (!empty($userData['password'])) {
+            $userUpdateData['password'] = Hash::make($userData['password']);
+        }
+        $retailer->user->update($userUpdateData);
+
+        // Update Retailer profile
+        $retailer->update($retailerData);
 
         return redirect()->route('retailers.index')->with('success','Retailer updated successfully!');
     }
 
-    public function destroy(User $Retailer)
+    public function destroy(Retailer $retailer) // Changed type-hint and variable name
     {
-        $Retailer->delete();
+        $retailer->delete(); // This will cascade delete the User due to foreign key constraint
         return redirect()->route('retailers.index')->with('success','Retailer deleted successfully!');
     }
 
@@ -98,4 +135,11 @@ public function edit(User $Retailer)
     {
         return response()->json($district->areas);
     }
+
+    public function getDistributors(District $district)
+    {
+        // Assuming a distributor has a district_id
+        $distributors = Distributor::where('district_id', $district->id)->get();
+        return response()->json($distributors);
+    }   
 }

@@ -53,17 +53,36 @@
                                             <td>{{ $user->name }}</td>
                                             <td>{{ $user->email }}</td>
                                             <td>
-                                                @role('superadmin')
-                                                    <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-sm btn-primary">Edit</a>
+                                                @role('superadmin|admin|manager|distributor')
 
-                                                    {{-- prevent deleting another superadmin --}}
-                                                    @if (!$user->hasRole('superadmin'))
+                                                {{-- Edit button --}}
+                                                @if (
+                                                    auth()->id() === $user->id || 
+                                                    (auth()->user()->hasRole('superadmin') && !$user->hasRole('superadmin')) || 
+                                                    (auth()->user()->hasRole('admin') && $user->hasAnyRole(['manager', 'distributor', 'fieldstaff', 'retailer'])) ||
+                                                    (auth()->user()->hasRole('manager') && $user->hasAnyRole(['distributor', 'fieldstaff', 'retailer'])) ||
+                                                    (auth()->user()->hasRole('distributor') && $user->hasAnyRole(['fieldstaff', 'retailer']))
+                                                )
+                                                    <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-sm btn-primary">Edit</a>
+                                                @endif
+
+                                                {{-- Delete button --}}
+                                                @if (
+                                                    (auth()->user()->hasRole('superadmin') && !$user->hasRole('superadmin')) ||
+                                                    (auth()->user()->hasRole('admin') && in_array($user->role, ['manager', 'distributor', 'fieldstaff', 'retailer'])) ||
+                                                    (auth()->user()->hasRole('manager') && in_array($user->role, ['distributor', 'fieldstaff', 'retailer'])) ||
+                                                    (auth()->user()->hasRole('distributor') && in_array($user->role, ['fieldstaff', 'retailer']))
+
+                                                )
                                                     <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="d-inline">
-                                                        @csrf @method('DELETE')
+                                                        @csrf
+                                                        @method('DELETE')
                                                         <button class="btn btn-sm btn-danger" onclick="return confirm('Delete user?')">Delete</button>
                                                     </form>
-                                                    @endif
-                                                @endrole
+                                                @endif
+
+                                            @endrole
+
                                             </td>
                                         </tr>
                                     @empty

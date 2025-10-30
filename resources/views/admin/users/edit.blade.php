@@ -26,7 +26,7 @@
                         <h5>Edit User: {{ $user->name }}</h5>
                     </div>
                     <div class="card-body">
-                        <form action="{{ route('admin.users.update', $user->id) }}" method="POST">
+                        <form action="{{ route('admin.users.update', $user->id) }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             @method('PUT')
                             <div class="mb-3">
@@ -65,6 +65,16 @@
                                     @endforeach
                                 </select>
                                 @error('role')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="profile_pic">Profile Picture</label>
+                                <input class="form-control" id="profile_pic" type="file" name="profile_pic">
+                                @if ($user->profile_pic)
+                                    <img src="{{ asset('storage/' . $user->profile_pic) }}" alt="Profile Picture" class="img-thumbnail mt-2" width="100">
+                                @endif
+                                @error('profile_pic')
                                     <div class="text-danger">{{ $message }}</div>
                                 @enderror
                             </div>

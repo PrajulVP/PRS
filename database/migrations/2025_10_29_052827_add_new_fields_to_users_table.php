@@ -15,9 +15,6 @@ return new class extends Migration
             if (!Schema::hasColumn('users', 'role')) {
                 $table->string('role')->nullable();
             }
-            if (!Schema::hasColumn('users', 'company_name')) {
-                $table->string('company_name')->nullable();
-            }
             if (!Schema::hasColumn('users', 'gst')) {
                 $table->string('gst')->nullable();
             }
@@ -61,7 +58,6 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn('role');
-            $table->dropColumn('company_name');
             $table->dropColumn('gst');
             $table->dropColumn('regulations');
             $table->dropColumn('contact_no');

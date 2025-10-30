@@ -38,15 +38,8 @@
         </div>
 
         <div class="mb-3">
-            <label>Distributor</label>
-            <select name="assigned_distributor_id" class="form-select" required>
-                <option value="">Select Distributor</option>
-                @foreach($distributors as $distributor)
-                    <option value="{{ $distributor->id }}" {{ old('assigned_distributor_id') == $distributor->id ? 'selected' : '' }}>
-                        {{ $distributor->company_name }}
-                    </option>
-                @endforeach
-            </select>
+            <label>Address</label>
+            <textarea name="address" class="form-control">{{ old('address') }}</textarea>
         </div>
 
         <div class="mb-3">
@@ -67,8 +60,15 @@
         </div>
 
         <div class="mb-3">
-            <label>Address</label>
-            <textarea name="address" class="form-control">{{ old('address') }}</textarea>
+            <label>Distributor</label>
+            <select name="assigned_distributor_id" id="assigned_distributor_id" class="form-select" required>
+                <option value="">Select Distributor</option>
+                @foreach($distributors as $distributor)
+                    <option value="{{ $distributor->id }}" {{ old('assigned_distributor_id') == $distributor->id ? 'selected' : '' }}>
+                        {{ $distributor->company_name }}
+                    </option>
+                @endforeach
+            </select>
         </div>
 
         <div class="mb-3">
@@ -83,24 +83,62 @@
     </form>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+@push('scripts')
 <script>
-$('#district_id').change(function(){
-    let districtId = $(this).val();
-    $('#area_id').html('<option value="">Loading...</option>');
+document.addEventListener('DOMContentLoaded', function () {
+    const districtSelect = document.getElementById('district_id');
+    const areaSelect = document.getElementById('area_id');
+    const distributorSelect = document.getElementById('assigned_distributor_id');
 
-    if(districtId){
-        $.get('/get-areas/'+districtId, function(data){
-            let options = '<option value="">Select Area</option>';
-            $.each(data, function(i, area){
-                options += `<option value="${area.id}">${area.name}</option>`;
-            });
-            $('#area_id').html(options);
-        });
-    } else {
-        $('#area_id').html('<option value="">Select Area</option>');
-    }
+    function fetchAreas(districtId) {
+        areaSelect.innerHTML = '<option value="">Select Area</option>';
+
+                    if (districtId) {
+                        fetch(`{{ route('fieldstaffs.getAreas', ['district' => '__districtId__']) }}`.replace('__districtId__', districtId))
+                            .then(response => response.json())
+                            .then(data => {
+                                data.forEach(area => {
+                                    const option = document.createElement('option');
+                                    option.value = area.id;
+                                    option.textContent = area.name;
+                                    areaSelect.appendChild(option);
+                                });
+                            })
+                            .catch(error => console.error('Error fetching areas:', error));
+                    }    }
+
+    function fetchDistributors(districtId) {
+        distributorSelect.innerHTML = '<option value="">Select Distributor</option>';
+
+                    if (districtId) {
+                        fetch(`{{ route('fieldstaffs.getDistributors', ['district' => '__districtId__']) }}`.replace('__districtId__', districtId))
+                            .then(response => response.json())
+                            .then(data => {
+                                if (!data.length) {
+                                    const option = document.createElement('option');
+                                    option.textContent = 'No distributors found';
+                                    distributorSelect.appendChild(option);
+                                    return;
+                                }
+                                data.forEach(distributor => {
+                                    const option = document.createElement('option');
+                                    option.value = distributor.id;
+                                    option.textContent = distributor.company_name || `Distributor #${distributor.id}`;
+                                    distributorSelect.appendChild(option);
+                                });
+                            })
+                            .catch(error => console.error('Error fetching distributors:', error));
+                    }    }
+
+    districtSelect.addEventListener('change', function () {
+        const districtId = this.value;
+        console.log('Selected District ID:', districtId);
+        fetchAreas(districtId);
+        fetchDistributors(districtId);
+    });
 });
 </script>
+@endpush
+
 
 @endsection

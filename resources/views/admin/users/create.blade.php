@@ -26,7 +26,7 @@
                         <h5>Add New User</h5>
                     </div>
                     <div class="card-body">
-                        <form action="{{ route('admin.users.store') }}" method="POST">
+                        <form action="{{ route('admin.users.store') }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             <div class="mb-3">
                                 <label class="form-label" for="name">Name</label>
@@ -64,6 +64,13 @@
                                     @endforeach
                                 </select>
                                 @error('role')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="profile_pic">Profile Picture</label>
+                                <input class="form-control" id="profile_pic" type="file" name="profile_pic">
+                                @error('profile_pic')
                                     <div class="text-danger">{{ $message }}</div>
                                 @enderror
                             </div>
