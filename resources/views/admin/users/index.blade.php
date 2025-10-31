@@ -31,66 +31,54 @@
 
                 <div id="collapse{{ $key }}" class="accordion-collapse collapse {{ $key == 0 ? 'show' : '' }}" data-bs-parent="#roleAccordion">
                     <div class="accordion-body">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th width="50">#</th>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th width="120">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @php
-                                        $roleUsers = $users->filter(fn($user) => $user->hasRole($role->name));
-                                        $i = 1; // ← Reset index here
-                                    @endphp
+                        <div class="row">
+                            @php
+                                $roleUsers = $users->filter(fn($user) => $user->hasRole($role->name));
+                            @endphp
 
-                                    @forelse ($roleUsers as $user)
-                                        <tr>
-                                            <td>{{ $i++ }}</td>
-                                            <td>{{ $user->name }}</td>
-                                            <td>{{ $user->email }}</td>
-                                            <td>
-                                                @role('superadmin|admin|manager|distributor')
+                            @forelse ($roleUsers as $user)
+                            <div class="col-md-4 mb-4">
+                                <div class="card p-4">
+                                    <h5 class="card-title">{{ $user->name }}</h5>
+                                    <p class="card-text"><strong>Email:</strong> {{ $user->email }}</p>
+                                    <div class="d-flex justify-content-between">
+                                        @role('superadmin|admin|manager|distributor')
 
-                                                {{-- Edit button --}}
-                                                @if (
-                                                    auth()->id() === $user->id || 
-                                                    (auth()->user()->hasRole('superadmin') && !$user->hasRole('superadmin')) || 
-                                                    (auth()->user()->hasRole('admin') && $user->hasAnyRole(['manager', 'distributor', 'fieldstaff', 'retailer'])) ||
-                                                    (auth()->user()->hasRole('manager') && $user->hasAnyRole(['distributor', 'fieldstaff', 'retailer'])) ||
-                                                    (auth()->user()->hasRole('distributor') && $user->hasAnyRole(['fieldstaff', 'retailer']))
-                                                )
-                                                    <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-sm btn-primary">Edit</a>
-                                                @endif
+                                        {{-- Edit button --}}
+                                        @if (
+                                            auth()->id() === $user->id || 
+                                            (auth()->user()->hasRole('superadmin') && !$user->hasRole('superadmin')) || 
+                                            (auth()->user()->hasRole('admin') && $user->hasAnyRole(['manager', 'distributor', 'fieldstaff', 'retailer'])) ||
+                                            (auth()->user()->hasRole('manager') && $user->hasAnyRole(['distributor', 'fieldstaff', 'retailer'])) ||
+                                            (auth()->user()->hasRole('distributor') && $user->hasAnyRole(['fieldstaff', 'retailer']))
+                                        )
+                                            <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-sm btn-primary">Edit</a>
+                                        @endif
 
-                                                {{-- Delete button --}}
-                                                @if (
-                                                    (auth()->user()->hasRole('superadmin') && !$user->hasRole('superadmin')) ||
-                                                    (auth()->user()->hasRole('admin') && in_array($user->role, ['manager', 'distributor', 'fieldstaff', 'retailer'])) ||
-                                                    (auth()->user()->hasRole('manager') && in_array($user->role, ['distributor', 'fieldstaff', 'retailer'])) ||
-                                                    (auth()->user()->hasRole('distributor') && in_array($user->role, ['fieldstaff', 'retailer']))
+                                        {{-- Delete button --}}
+                                        @if (
+                                            (auth()->user()->hasRole('superadmin') && !$user->hasRole('superadmin')) ||
+                                            (auth()->user()->hasRole('admin') && in_array($user->role, ['manager', 'distributor', 'fieldstaff', 'retailer'])) ||
+                                            (auth()->user()->hasRole('manager') && in_array($user->role, ['distributor', 'fieldstaff', 'retailer'])) ||
+                                            (auth()->user()->hasRole('distributor') && in_array($user->role, ['fieldstaff', 'retailer']))
 
-                                                )
-                                                    <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="d-inline">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button class="btn btn-sm btn-danger" onclick="return confirm('Delete user?')">Delete</button>
-                                                    </form>
-                                                @endif
+                                        )
+                                            <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button class="btn btn-sm btn-danger" onclick="return confirm('Delete user?')">Delete</button>
+                                            </form>
+                                        @endif
 
-                                            @endrole
-
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr><td colspan="4" class="text-center">No users found</td></tr>
-                                    @endforelse
-
-                                </tbody>
-                            </table>
+                                        @endrole
+                                    </div>
+                                </div>
+                            </div>
+                            @empty
+                            <div class="col-12">
+                                <p class="text-center">No users found</p>
+                            </div>
+                            @endforelse
                         </div>
                     </div>
                 </div>

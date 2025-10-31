@@ -19,8 +19,8 @@
     </div>
     <!-- Container-fluid starts-->
     <div class="container-fluid">
-        <div class="row">
-            <div class="col-sm-12">
+        <div class="row justify-content-center">
+            <div class="col-md-8 p-4">
                 <div class="card">
                     <div class="card-header">
                         <h5>Add New User</h5>

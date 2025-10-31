@@ -20,7 +20,7 @@ class OrderController extends Controller
     // Admin: show create form
     public function create()
     {
-        $retailers = Retailer::orderBy('name')->get();
+        $retailers = Retailer::with('user')->get()->sortBy('user.name');
         return view('admin.orders.create', compact('retailers'));
     }
 
@@ -54,7 +54,7 @@ class OrderController extends Controller
     // Admin: edit form
     public function edit(Order $order)
     {
-        $retailers = Retailer::orderBy('name')->get();
+        $retailers = Retailer::with('user')->get()->sortBy('user.name');
         return view('admin.orders.edit', compact('order','retailers'));
     }
 

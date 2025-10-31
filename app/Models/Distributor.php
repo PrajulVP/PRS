@@ -9,7 +9,7 @@ class Distributor extends Model
     protected $fillable = [
         'user_id',
         'gst',
-        'truck_license_number',
+        'drug_license_number',
         'contact_no',
         'address',
         'pincode',

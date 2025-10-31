@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ManagerController;
@@ -43,6 +45,7 @@ Route::middleware(['auth:superadmin,admin,manager,distributor,fieldstaff,retaile
     Route::resource('districts', DistrictController::class);
     Route::resource('areas', AreaController::class);
     Route::resource('orders', OrderController::class);
+Route::resource('products', ProductController::class);
 
     // AJAX: Get areas for selected district
     Route::get('/distributors/get-areas/{district}', [DistributorController::class, 'getAreas'])->name('distributors.getAreas');

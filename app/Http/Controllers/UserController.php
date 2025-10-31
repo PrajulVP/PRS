@@ -11,9 +11,15 @@ use Illuminate\Support\Facades\Storage; // Added
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::all();
+        $query = User::query();
+
+        if ($request->has('role')) {
+            $query->role($request->role);
+        }
+
+        $users = $query->get();
         return view('admin.users.index', compact('users'));
     }
 
@@ -32,6 +38,11 @@ class UserController extends Controller
             'role' => 'required|string|exists:roles,name',
             'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Added
         ]);
+
+        // Prevent admin from assigning superadmin role
+        if (Auth::user()->hasRole('admin') && $request->role === 'superadmin') {
+            return back()->withInput()->withErrors(['role' => 'Admins cannot assign the Super Admin role.']);
+        }
 
         $uniqueRoles = ['superadmin', 'admin', 'manager'];
         if (in_array($request->role, $uniqueRoles)) {
@@ -119,6 +130,11 @@ class UserController extends Controller
             'role' => 'required|string|exists:roles,name',
             'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Added
         ]);
+
+        // Prevent admin from assigning superadmin role
+        if (Auth::user()->hasRole('admin') && $request->role === 'superadmin') {
+            return back()->withInput()->withErrors(['role' => 'Admins cannot assign the Super Admin role.']);
+        }
 
         $uniqueRoles = ['superadmin', 'admin', 'manager'];
         if (in_array($request->role, $uniqueRoles)) {

@@ -287,7 +287,11 @@
               </li>
                             <li class="profile-nav onhover-dropdown">
                               <div class="media profile-media">
-                                  <img class="b-r-10" src="{{ asset('admin/assets/images/dashboard/profile.png') }}" alt="Profile Picture">
+                                <img class="b-r-10"
+                                    src="{{ Auth::guard($loggedInRole)->user()->profile_pic 
+                                            ? asset('storage/' . Auth::guard($loggedInRole)->user()->profile_pic)
+                                            : asset('admin/assets/images/dashboard/profile.png') }}" width="45" height="45"
+                                    alt="Profile Picture">
                                   <div class="media-body d-xxl-block d-none box-col-none">
                                     @php
                                         $loggedInRole = null;

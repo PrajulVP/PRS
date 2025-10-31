@@ -1,40 +1,39 @@
 @extends('layouts.admin')
 @section('page-body')
-<div class="container p-4">
-    <h2>Managers</h2>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>Managers</h5>
+                    <a href="{{ route('managers.create') }}" class="btn btn-primary">Add Manager</a>
+                </div>
+                <div class="card-body">
+                    @if(session('success'))
+                    <div class="alert alert-success">{{ session('success') }}</div>
+                    @endif
 
-    @if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
-    <a href="{{ route('managers.create') }}" class="btn btn-primary mb-3 mt-2">Add Manager</a>
-
-    <table class="table table-bordered table-striped">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($managers as $key => $manager)
-            <tr>
-                <td>{{ $key + 1 }}</td>
-                <td>{{ $manager->name }}</td>
-                <td>{{ $manager->email }}</td>
-                <td>
-                    <a href="{{ route('managers.edit', $manager->id) }}" class="btn btn-sm btn-primary">Edit</a>
-                    <form action="{{ route('managers.destroy', $manager->id) }}" method="POST" style="display:inline-block;">
-                        @csrf
-                        @method('DELETE')
-                        <button class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
-                    </form>
-                </td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
+                    <div class="row">
+                        @foreach($managers as $manager)
+                        <div class="col-md-4 mb-4">
+                            <div class="card p-4">
+                                <h5 class="card-title">{{ $manager->name }}</h5>
+                                <p class="card-text"><strong>Email:</strong> {{ $manager->email }}</p>
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ route('managers.edit', $manager->id) }}" class="btn btn-primary">Edit</a>
+                                    <form action="{{ route('managers.destroy', $manager->id) }}" method="POST" style="display: inline-block;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
