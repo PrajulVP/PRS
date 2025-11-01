@@ -58,8 +58,8 @@
                                 <select class="form-select" id="role" name="role" required>
                                     <option value="">Select Role</option>
                                     @foreach ($roles as $role)
-                                        <option value="{{ $role->name }}" {{ old('role') == $role->name ? 'selected' : '' }}>
-                                            {{ ucfirst($role->name) }}
+                                        <option value="{{ $role }}" {{ old('role') == $role ? 'selected' : '' }}>
+                                            {{ ucfirst($role) }}
                                         </option>
                                     @endforeach
                                 </select>

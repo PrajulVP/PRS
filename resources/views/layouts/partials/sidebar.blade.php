@@ -57,68 +57,67 @@
                   <span>Users</span></a>
                 <ul class="sidebar-submenu">
                     <li><a href="{{ route('admin.users') }}">All Users</a></li>
-                    @hasanyrole('superadmin|admin')
-                    <li><a href="{{ route('admin.users.create') }}">Add User</a></li>
-                    @endhasanyrole
-                </ul>
-              </li>
-
-
-                <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
-                    <svg class="stroke-icon">
-                      <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
-                    </svg>
-                    <svg class="fill-icon">
-                      <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
-                    </svg><span>Managers</span></a>
-                  <ul class="sidebar-submenu">
-                    <li><a href="{{ route('managers.index') }}">Managers List</a></li>
-                    @hasanyrole('superadmin|admin')
-                    <li><a href="{{ route('managers.create') }}">Create Managers</a></li>
-                    @endhasanyrole
-                  </ul>
-                </li>
-                <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
-                    <svg class="stroke-icon">
-                      <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
-                    </svg>
-                    <svg class="fill-icon">
-                      <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
-                    </svg><span>Distributors</span></a>
-                  <ul class="sidebar-submenu">
-                    <li><a href="{{ route('distributors.index') }}">Distributors List</a></li>
-                    @hasanyrole('superadmin|admin|manager')
-                    <li><a href="{{ route('distributors.create') }}">Create Distributors</a></li>
-                    @endhasanyrole
-                  </ul>
-                </li>
-                <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
-                    <svg class="stroke-icon">
-                      <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
-                    </svg>
-                    <svg class="fill-icon">
-                      <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
-                    </svg><span>Field Staff</span></a>
-                  <ul class="sidebar-submenu">
-                    <li><a href="{{ route('fieldstaffs.index') }}">Field Staff List</a></li>
-                    @hasanyrole('superadmin|admin|manager|distributor')
-                    <li><a href="{{ route('fieldstaffs.create') }}">Create Field Staff</a></li>
-                    @endhasanyrole
-                  </ul>
-                </li>
-                <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
-                    <svg class="stroke-icon">
-                      <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
-                    </svg>
-                    <svg class="fill-icon">
-                      <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
-                    </svg><span>Retailer (Chemists)</span></a>
-                  <ul class="sidebar-submenu">
-                    <li><a href="{{ route('retailers.index') }}">Retailers List</a></li>
-                    @hasanyrole('superadmin|admin|manager|distributor')
-                    <li><a href="{{ route('retailers.create') }}">Create Retailers</a></li>
-                    @endhasanyrole
-                  </ul>
+                                                            @if(Auth::guard('web')->check() && (Auth::guard('web')->user()->role === 'superadmin' || Auth::guard('web')->user()->role === 'admin'))
+                                                            <li><a href="{{ route('admin.users.create') }}">Add User</a></li>
+                                                            @endif
+                                                        </ul>
+                                                      </li>
+                                        
+                                        
+                                                        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+                                                            <svg class="stroke-icon">
+                                                              <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
+                                                            </svg>
+                                                            <svg class="fill-icon">
+                                                              <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
+                                                            </svg><span>Managers</span></a>
+                                                          <ul class="sidebar-submenu">
+                                                            <li><a href="{{ route('managers.index') }}">Managers List</a></li>
+                                                            @if(Auth::guard('web')->check() && (Auth::guard('web')->user()->role === 'superadmin' || Auth::guard('web')->user()->role === 'admin'))
+                                                            <li><a href="{{ route('managers.create') }}">Create Managers</a></li>
+                                                            @endif
+                                                          </ul>
+                                                        </li>
+                                                        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+                                                            <svg class="stroke-icon">
+                                                              <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
+                                                            </svg>
+                                                            <svg class="fill-icon">
+                                                              <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
+                                                            </svg><span>Distributors</span></a>
+                                                          <ul class="sidebar-submenu">
+                                                            <li><a href="{{ route('distributors.index') }}">Distributors List</a></li>
+                                                            @if(Auth::guard('web')->check() && (Auth::guard('web')->user()->role === 'superadmin' || Auth::guard('web')->user()->role === 'admin' || Auth::guard('web')->user()->role === 'manager'))
+                                                            <li><a href="{{ route('distributors.create') }}">Create Distributors</a></li>
+                                                            @endif
+                                                          </ul>
+                                                        </li>
+                                                        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+                                                            <svg class="stroke-icon">
+                                                              <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
+                                                            </svg>
+                                                            <svg class="fill-icon">
+                                                              <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
+                                                            </svg><span>Field Staff</span></a>
+                                                          <ul class="sidebar-submenu">
+                                                            <li><a href="{{ route('fieldstaffs.index') }}">Field Staff List</a></li>
+                                                            @if(Auth::guard('web')->check() && (Auth::guard('web')->user()->role === 'superadmin' || Auth::guard('web')->user()->role === 'admin' || Auth::guard('web')->user()->role === 'manager' || Auth::guard('web')->user()->role === 'distributor'))
+                                                            <li><a href="{{ route('fieldstaffs.create') }}">Create Field Staff</a></li>
+                                                            @endif
+                                                          </ul>
+                                                        </li>
+                                                        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+                                                            <svg class="stroke-icon">
+                                                              <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
+                                                            </svg>
+                                                            <svg class="fill-icon">
+                                                              <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
+                                                            </svg><span>Retailer (Chemists)</span></a>
+                                                          <ul class="sidebar-submenu">
+                                                            <li><a href="{{ route('retailers.index') }}">Retailers List</a></li>
+                                                            @if(Auth::guard('web')->check() && (Auth::guard('web')->user()->role === 'superadmin' || Auth::guard('web')->user()->role === 'admin' || Auth::guard('web')->user()->role === 'manager' || Auth::guard('web')->user()->role === 'distributor'))
+                                                            <li><a href="{{ route('retailers.create') }}">Create Retailers</a></li>
+                                                            @endif                  </ul>
                 </li>
                 <li class="sidebar-main-title">
                   <div>

@@ -18,13 +18,8 @@ class AuthController extends Controller
      */
     public function showLogin()
     {
-        // Check if any of the custom guards are authenticated
-        if (Auth::guard('superadmin')->check() ||
-            Auth::guard('admin')->check() ||
-            Auth::guard('manager')->check() ||
-            Auth::guard('distributor')->check() ||
-            Auth::guard('fieldstaff')->check() ||
-            Auth::guard('retailer')->check()) {
+        // Check if the user is authenticated under the default web guard
+        if (Auth::guard('web')->check()) {
             return redirect()->route('dashboard'); // Redirect to the dashboard
         }
 
@@ -42,33 +37,14 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        // Attempt to find the user by email
-        $user = User::where('email', $credentials['email'])->first();
-
-        if (!$user) {
-            return back()->withErrors(['email' => 'This email is not registered.']);
-        }
-
-        if (!Hash::check($credentials['password'], $user->password)) {
-            return back()->withErrors(['password' => 'Incorrect password.']);
-        }
-
-        // Determine the guard based on the user's primary role
-        // Assuming the first role returned by getRoleNames() is the primary role and matches a guard name.
-        $guard = $user->getRoleNames()->first();
-
-        // If no role is assigned, or the role doesn't match a guard, authentication cannot proceed.
-        if (!$guard) {
-            return back()->withErrors(['email' => 'No role assigned to this user, or role does not match a guard.']);
-        }
-
-        if (Auth::guard($guard)->attempt($credentials, $request->boolean('remember'))) {
+        if (Auth::guard('web')->attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
             return redirect()->route('dashboard');
         }
 
-        // Fallback error if authentication fails for other reasons (e.g., guard misconfiguration)
-        return back()->withErrors(['email' => 'Authentication failed. Please try again.']);
+        return back()->withErrors([
+            'email' => 'Authentication failed. Please try again.',
+        ]);
     }
 
     /**
@@ -77,22 +53,16 @@ class AuthController extends Controller
      */
     public function dashboard(Request $request)
     {
-        // Determine which guard is active and logged in
-        $guards = ['superadmin', 'admin', 'manager', 'distributor', 'fieldstaff', 'retailer'];
+        if (Auth::guard('web')->check()) {
+            $user = Auth::guard('web')->user();
+            $role = $user->getRoleNames()->first();
 
-        foreach ($guards as $guard) {
-            if (Auth::guard($guard)->check()) {
-                $user = Auth::guard($guard)->user();
-
-                // ✅ Option 1: Single dashboard with role-based sections
-                return view('admin.dashboard', [
-                    'user' => $user,
-                    'role' => $guard,
-                ]);
-            }
+            return view('admin.dashboard', [
+                'user' => $user,
+                'role' => $role,
+            ]);
         }
-                
-        // If no role authenticated, go back to login
+
         return redirect()->route('login');
     }
 
@@ -101,12 +71,7 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $guards = ['superadmin', 'admin', 'manager', 'distributor', 'fieldstaff', 'retailer', 'web'];
-        foreach ($guards as $guard) {
-            if (Auth::guard($guard)->check()) {
-                Auth::guard($guard)->logout();
-            }
-        }
+        Auth::guard('web')->logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

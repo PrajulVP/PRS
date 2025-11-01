@@ -25,4 +25,8 @@ class Product extends Model
         'discount',
         'net_amount',
     ];
+
+    protected $casts = [
+        'expiry' => 'date',
+    ];
 }

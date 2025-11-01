@@ -11,21 +11,15 @@ use Illuminate\Support\Facades\Storage; // Added
 
 class UserController extends Controller
 {
-    public function index(Request $request)
-    {
-        $query = User::query();
-
-        if ($request->has('role')) {
-            $query->role($request->role);
+        public function index(Request $request)
+        {
+            $users = User::all()->groupBy('role');
+            return view('admin.users.index', compact('users'));
         }
-
-        $users = $query->get();
-        return view('admin.users.index', compact('users'));
-    }
 
     public function create()
     {
-        $roles = Role::all();
+        $roles = ['superadmin', 'admin', 'manager', 'distributor', 'fieldstaff', 'retailer'];
         return view('admin.users.create', compact('roles'));
     }
 
@@ -40,14 +34,14 @@ class UserController extends Controller
         ]);
 
         // Prevent admin from assigning superadmin role
-        if (Auth::user()->hasRole('admin') && $request->role === 'superadmin') {
+        if (Auth::guard('web')->check() && Auth::guard('web')->user()->role === 'admin' && $request->role === 'superadmin') {
             return back()->withInput()->withErrors(['role' => 'Admins cannot assign the Super Admin role.']);
         }
 
         $uniqueRoles = ['superadmin', 'admin', 'manager'];
         if (in_array($request->role, $uniqueRoles)) {
             // Check if any other user already has this role
-            $existingUserWithRole = User::role($request->role, $request->role)->first();
+            $existingUserWithRole = User::where('role', $request->role)->first();
             if ($existingUserWithRole) {
                 return back()->withInput()->withErrors(['role' => 'The ' . $request->role . ' role can only be assigned to one user.']);
             }
@@ -66,12 +60,10 @@ class UserController extends Controller
 
         $user = User::create($userData);
 
-        $role = Role::where('name', $request->role)->where('guard_name', $request->role)->first();
-
-        if ($role) {
-            $user->assignRole($role);
-        } else {
-            return back()->withInput()->withErrors(['role' => 'The selected role is invalid or not configured correctly.']);
+        if ($request->role === 'retailer') {
+            Retailer::create([
+                'user_id' => $user->id,
+            ]);
         }
 
         return redirect()->route('admin.users')->with('success', 'User created successfully!');
@@ -79,18 +71,22 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $loggedInUser = Auth::user();
+        $loggedInUser = Auth::guard('web')->user();
+
+        if (! $loggedInUser) {
+            abort(403, 'Unauthorized action.');
+        }
 
         $canEdit = false;
         if ($loggedInUser->id === $user->id) {
             $canEdit = true;
-        } elseif ($loggedInUser->hasRole('superadmin') && !$user->hasRole('superadmin')) {
+        } elseif ($loggedInUser->role === 'superadmin' && $user->role !== 'superadmin') {
             $canEdit = true;
-        } elseif ($loggedInUser->hasRole('admin') && $user->hasAnyRole(['manager', 'distributor', 'fieldstaff', 'retailer'])) {
+        } elseif ($loggedInUser->role === 'admin' && in_array($user->role, ['manager', 'distributor', 'fieldstaff', 'retailer'])) {
             $canEdit = true;
-        } elseif ($loggedInUser->hasRole('manager') && $user->hasAnyRole(['distributor', 'fieldstaff', 'retailer'])) {
+        } elseif ($loggedInUser->role === 'manager' && in_array($user->role, ['distributor', 'fieldstaff', 'retailer'])) {
             $canEdit = true;
-        } elseif ($loggedInUser->hasRole('distributor') && $user->hasAnyRole(['fieldstaff', 'retailer'])) {
+        } elseif ($loggedInUser->role === 'distributor' && in_array($user->role, ['fieldstaff', 'retailer'])) {
             $canEdit = true;
         }
 
@@ -98,24 +94,28 @@ class UserController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $roles = Role::all();
+        $roles = ['superadmin', 'admin', 'manager', 'distributor', 'fieldstaff', 'retailer'];
         return view('admin.users.edit', compact('user', 'roles'));
     }
 
     public function update(Request $request, User $user)
     {
-        $loggedInUser = Auth::user();
+        $loggedInUser = Auth::guard('web')->user();
+
+        if (! $loggedInUser) {
+            abort(403, 'Unauthorized action.');
+        }
 
         $canEdit = false;
         if ($loggedInUser->id === $user->id) {
             $canEdit = true;
-        } elseif ($loggedInUser->hasRole('superadmin') && !$user->hasRole('superadmin')) {
+        } elseif ($loggedInUser->role === 'superadmin' && $user->role !== 'superadmin') {
             $canEdit = true;
-        } elseif ($loggedInUser->hasRole('admin') && $user->hasAnyRole(['manager', 'distributor', 'fieldstaff', 'retailer'])) {
+        } elseif ($loggedInUser->role === 'admin' && in_array($user->role, ['manager', 'distributor', 'fieldstaff', 'retailer'])) {
             $canEdit = true;
-        } elseif ($loggedInUser->hasRole('manager') && $user->hasAnyRole(['distributor', 'fieldstaff', 'retailer'])) {
+        } elseif ($loggedInUser->role === 'manager' && in_array($user->role, ['distributor', 'fieldstaff', 'retailer'])) {
             $canEdit = true;
-        } elseif ($loggedInUser->hasRole('distributor') && $user->hasAnyRole(['fieldstaff', 'retailer'])) {
+        } elseif ($loggedInUser->role === 'distributor' && in_array($user->role, ['fieldstaff', 'retailer'])) {
             $canEdit = true;
         }
 
@@ -132,14 +132,14 @@ class UserController extends Controller
         ]);
 
         // Prevent admin from assigning superadmin role
-        if (Auth::user()->hasRole('admin') && $request->role === 'superadmin') {
+        if (Auth::guard('web')->user()->role === 'admin' && $request->role === 'superadmin') {
             return back()->withInput()->withErrors(['role' => 'Admins cannot assign the Super Admin role.']);
         }
 
         $uniqueRoles = ['superadmin', 'admin', 'manager'];
         if (in_array($request->role, $uniqueRoles)) {
             // Check if any other user already has this role
-            $existingUserWithRole = User::role($request->role, $request->role)->first();
+            $existingUserWithRole = User::where('role', $request->role)->first();
             if ($existingUserWithRole && ($user->id !== $existingUserWithRole->id)) {
                 return back()->withInput()->withErrors(['role' => 'The ' . $request->role . ' role can only be assigned to one user.']);
             }
@@ -164,25 +164,27 @@ class UserController extends Controller
 
         $user->update($userData);
 
-        $user->syncRoles([$request->role]); // Sync roles using Spatie package
-
         return redirect()->route('admin.users')->with('success', 'User updated successfully!');
     }
 
     public function destroy(User $user)
     {
-        $loggedInUser = Auth::user();
+        $loggedInUser = Auth::guard('web')->user();
+
+        if (! $loggedInUser) {
+            abort(403, 'Unauthorized action.');
+        }
 
         $canDelete = false;
         if ($loggedInUser->id === $user->id) { // Cannot delete self
             $canDelete = false;
-        } elseif ($loggedInUser->hasRole('superadmin') && !$user->hasRole('superadmin')) {
+        } elseif ($loggedInUser->role === 'superadmin' && $user->role !== 'superadmin') {
             $canDelete = true;
-        } elseif ($loggedInUser->hasRole('admin') && $user->hasAnyRole(['manager', 'distributor', 'fieldstaff', 'retailer'])) {
+        } elseif ($loggedInUser->role === 'admin' && in_array($user->role, ['manager', 'distributor', 'fieldstaff', 'retailer'])) {
             $canDelete = true;
-        } elseif ($loggedInUser->hasRole('manager') && $user->hasAnyRole(['distributor', 'fieldstaff', 'retailer'])) {
+        } elseif ($loggedInUser->role === 'manager' && in_array($user->role, ['distributor', 'fieldstaff', 'retailer'])) {
             $canDelete = true;
-        } elseif ($loggedInUser->hasRole('distributor') && $user->hasAnyRole(['fieldstaff', 'retailer'])) {
+        } elseif ($loggedInUser->role === 'distributor' && in_array($user->role, ['fieldstaff', 'retailer'])) {
             $canDelete = true;
         }
 
@@ -202,5 +204,16 @@ class UserController extends Controller
 
         $user->delete();
         return redirect()->route('admin.users')->with('success', 'User deleted successfully!');
+    }
+
+    public function getUsersByRole(Request $request)
+    {
+        $request->validate([
+            'role' => 'required|string',
+        ]);
+
+        $users = User::where('role', $request->role)->get();
+
+        return response()->json($users);
     }
 }

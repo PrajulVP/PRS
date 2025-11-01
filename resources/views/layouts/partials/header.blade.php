@@ -20,20 +20,16 @@
           <div class="left-header col-xxl-5 col-xl-6 col-lg-5 col-md-4 col-sm-3 p-0">
             <div> <a class="toggle-sidebar" href="#"> <i class="iconly-Category icli"> </i></a>
               <div class="d-flex align-items-center gap-2 ">
-                @php
+                <?php
                     $loggedInRole = null;
-                    $guards = ['superadmin', 'admin', 'manager', 'distributor', 'fieldstaff', 'retailer'];
-                    foreach ($guards as $guard) {
-                        if (Auth::guard($guard)->check()) {
-                            $loggedInRole = $guard;
-                            break;
-                        }
+                    if (Auth::guard('web')->check()) {
+                        $loggedInRole = Auth::guard('web')->user()->getRoleNames()->first();
                     }
-                @endphp
+                ?>
 
-                @if ($loggedInRole)
-                    <h4 class="f-w-600">Welcome {{ Auth::guard($loggedInRole)->user()->name }}</h4><img class="mt-0" src="{{ asset('admin/assets/images/hand.gif') }}" alt="hand-gif">
-                @endif
+                <?php if(Auth::guard('web')->check()): ?>
+                    <h4 class="f-w-600">Welcome <?php echo e(Auth::guard('web')->user()->name); ?></h4><img class="mt-0" src="<?php echo e(asset('admin/assets/images/hand.gif')); ?>" alt="hand-gif">
+                <?php endif; ?>
               </div>
             </div>
             <div class="welcome-content d-xl-block d-none"><span class="text-truncate col-12">Here’s what’s happening with your store today. </span></div>
@@ -288,27 +284,17 @@
                             <li class="profile-nav onhover-dropdown">
                               <div class="media profile-media">
                                 <img class="b-r-10"
-                                    src="{{ Auth::guard($loggedInRole)->user()->profile_pic 
-                                            ? asset('storage/' . Auth::guard($loggedInRole)->user()->profile_pic)
+                                    src="{{ Auth::guard('web')->user()->profile_pic 
+                                            ? asset('storage/' . Auth::guard('web')->user()->profile_pic)
                                             : asset('admin/assets/images/dashboard/profile.png') }}" width="45" height="45"
                                     alt="Profile Picture">
                                   <div class="media-body d-xxl-block d-none box-col-none">
-                                    @php
-                                        $loggedInRole = null;
-                                        $guards = ['superadmin', 'admin', 'manager', 'distributor', 'fieldstaff', 'retailer'];
-                                        foreach ($guards as $guard) {
-                                            if (Auth::guard($guard)->check()) {
-                                                $loggedInRole = $guard;
-                                                break;
-                                            }
-                                        }
-                                    @endphp
-              
-                                    @if ($loggedInRole)
+                                    @if(Auth::guard('web')->check())
                                         <div class="d-flex align-items-center justify-content-between gap-2">
-                                            <span>{{ Auth::guard($loggedInRole)->user()->name }}</span>
+                                            <span>{{ Auth::guard('web')->user()->name }}</span>
                                             <i class="middle fa fa-angle-down"></i>
                                         </div>
+                                        <p class="mb-0 font-roboto">{{ $loggedInRole }}</p>
                                     @endif
                                 </div>
                               </div>

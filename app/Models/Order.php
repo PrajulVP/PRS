@@ -17,6 +17,10 @@ class Order extends Model
         'status',
         'placed_at',
         'notes',
+        'prescription_photo',
+        'delivery_notes',
+        'distributor_id',
+        'fieldstaff_id',
     ];
 
     protected $dates = ['placed_at','approved_at','delivered_at'];

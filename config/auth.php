@@ -46,36 +46,6 @@ return [
             'provider' => 'admins',
         ],
 
-        'admin' => [
-            'driver' => 'session',
-            'provider' => 'admins',
-        ],
-
-        'superadmin' => [
-            'driver' => 'session',
-            'provider' => 'admins',
-        ],
-
-        'manager' => [
-            'driver' => 'session',
-            'provider' => 'admins',
-        ],
-
-        'distributor' => [
-            'driver' => 'session',
-            'provider' => 'admins',
-        ],
-
-        'fieldstaff' => [
-            'driver' => 'session',
-            'provider' => 'admins',
-        ],
-
-        'retailer' => [
-            'driver' => 'session',
-            'provider' => 'admins',
-        ],
-
         'admin-api' => [
             'driver' => 'jwt',           // <-- JWT for API
             'provider' => 'admins',

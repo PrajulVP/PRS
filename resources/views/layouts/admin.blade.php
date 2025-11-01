@@ -12,7 +12,7 @@
     </div> -->
  
     {{-- If authenticated as any role → show full dashboard layout --}}
-    @if(Auth::guard('superadmin')->check() || Auth::guard('admin')->check() || Auth::guard('manager')->check() || Auth::guard('distributor')->check() || Auth::guard('fieldstaff')->check() || Auth::guard('retailer')->check())
+    @if(Auth::guard('web')->check())
     <div class="page-wrapper compact-wrapper" id="pageWrapper">
         @include('layouts.partials.header')
         <div class="page-body-wrapper">
@@ -24,6 +24,7 @@
         </div>
     </div>
     @include('layouts.partials.scripts')
+    @stack('scripts')
     @else
         {{-- If NOT authenticated as any role → show only login content --}}
         @yield('content')
