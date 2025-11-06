@@ -184,6 +184,22 @@ class OrderController extends Controller
         $order->delete();
         return redirect()->route('admin.orders.index')->with('success','Order deleted.');
     }
+
+    // Retailer: list orders
+    public function retailerIndex()
+    {
+        $retailer = Auth::guard('web')->user()->load('retailer')->retailer;
+
+        if (!$retailer) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $orders = Order::with('retailer')
+                        ->where('retailer_id', $retailer->id)
+                        ->latest()->paginate(25);
+
+        return view('admin.orders.retailer_index', compact('orders'));
+    }
 }
 
 

@@ -3,7 +3,7 @@
 @section('page-body')
     <div class="container-fluid">
     <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-md-8 p-4">
             <div class="card">
                 <div class="card-header">
                     <h5>Create New District</h5>

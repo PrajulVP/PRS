@@ -15,8 +15,12 @@ return new class extends Migration
             $table->id(); // BIGINT UNSIGNED (Primary Key)
             $table->string('name', 100); // VARCHAR(100)
             $table->string('email', 150)->unique(); // VARCHAR(150) UNIQUE
-            $table->string('phone', 20)->unique()->nullable(); // VARCHAR(20) UNIQUE
+            $table->string('contact_no', 20)->unique()->nullable(); // VARCHAR(20) UNIQUE
             $table->string('address', 255)->nullable(); // VARCHAR(255) NULL
+            $table->string('pincode')->nullable();
+            $table->foreignId('district_id')->nullable()->constrained()->onDelete('cascade');
+            $table->foreignId('area_id')->nullable()->constrained()->onDelete('cascade');
+            $table->string('profile_pic')->nullable();
             $table->timestamp('email_verified_at')->nullable(); // TIMESTAMP NULL
             $table->string('password', 255); // VARCHAR(255)
             $table->rememberToken(); // VARCHAR(100) NULL (for "remember me" sessions)

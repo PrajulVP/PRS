@@ -47,6 +47,16 @@
                     <h6 class="lan-10">User Management</h6>
                   </div>
                 </li>
+                @if(Auth::guard('web')->check() && Auth::guard('web')->user()->role === 'superadmin')
+                <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.permissions.index') }}">
+                    <svg class="stroke-icon">
+                      <use href="{{ asset('admin/assets/svg/icon-sprite.svg#stroke-home') }}"></use>
+                    </svg>
+                    <svg class="fill-icon">
+                      <use href="{{ asset('admin/assets/svg/icon-sprite.svg#fill-home') }}"></use>
+                    </svg><span>Manage Permissions</span></a>
+                </li>
+                @endif
                 <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
                   <svg class="stroke-icon">
                     <use href="{{ asset('admin/assets/svg/icon-sprite.svg#stroke-user') }}"></use>
@@ -57,9 +67,9 @@
                   <span>Users</span></a>
                 <ul class="sidebar-submenu">
                     <li><a href="{{ route('admin.users') }}">All Users</a></li>
-                                                            @if(Auth::guard('web')->check() && (Auth::guard('web')->user()->role === 'superadmin' || Auth::guard('web')->user()->role === 'admin'))
+                                                            @can('add user')
                                                             <li><a href="{{ route('admin.users.create') }}">Add User</a></li>
-                                                            @endif
+                                                            @endcan
                                                         </ul>
                                                       </li>
                                         
@@ -73,9 +83,9 @@
                                                             </svg><span>Managers</span></a>
                                                           <ul class="sidebar-submenu">
                                                             <li><a href="{{ route('managers.index') }}">Managers List</a></li>
-                                                            @if(Auth::guard('web')->check() && (Auth::guard('web')->user()->role === 'superadmin' || Auth::guard('web')->user()->role === 'admin'))
+                                                            @can('create managers')
                                                             <li><a href="{{ route('managers.create') }}">Create Managers</a></li>
-                                                            @endif
+                                                            @endcan
                                                           </ul>
                                                         </li>
                                                         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
@@ -87,9 +97,9 @@
                                                             </svg><span>Distributors</span></a>
                                                           <ul class="sidebar-submenu">
                                                             <li><a href="{{ route('distributors.index') }}">Distributors List</a></li>
-                                                            @if(Auth::guard('web')->check() && (Auth::guard('web')->user()->role === 'superadmin' || Auth::guard('web')->user()->role === 'admin' || Auth::guard('web')->user()->role === 'manager'))
+                                                            @can('create distributors')
                                                             <li><a href="{{ route('distributors.create') }}">Create Distributors</a></li>
-                                                            @endif
+                                                            @endcan
                                                           </ul>
                                                         </li>
                                                         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
@@ -101,9 +111,9 @@
                                                             </svg><span>Field Staff</span></a>
                                                           <ul class="sidebar-submenu">
                                                             <li><a href="{{ route('fieldstaffs.index') }}">Field Staff List</a></li>
-                                                            @if(Auth::guard('web')->check() && (Auth::guard('web')->user()->role === 'superadmin' || Auth::guard('web')->user()->role === 'admin' || Auth::guard('web')->user()->role === 'manager' || Auth::guard('web')->user()->role === 'distributor'))
+                                                            @can('create fieldstaff')
                                                             <li><a href="{{ route('fieldstaffs.create') }}">Create Field Staff</a></li>
-                                                            @endif
+                                                            @endcan
                                                           </ul>
                                                         </li>
                                                         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
@@ -115,10 +125,10 @@
                                                             </svg><span>Retailer (Chemists)</span></a>
                                                           <ul class="sidebar-submenu">
                                                             <li><a href="{{ route('retailers.index') }}">Retailers List</a></li>
-                                                            @if(Auth::guard('web')->check() && (Auth::guard('web')->user()->role === 'superadmin' || Auth::guard('web')->user()->role === 'admin' || Auth::guard('web')->user()->role === 'manager' || Auth::guard('web')->user()->role === 'distributor'))
+                                                            @can('create retailers')
                                                             <li><a href="{{ route('retailers.create') }}">Create Retailers</a></li>
-                                                            @endif                  </ul>
-                </li>
+                                                            @endcan
+                                                          </ul>
                 <li class="sidebar-main-title">
                   <div>
                     <h6 class="lan-10">Regions & Areas</h6>
@@ -163,6 +173,9 @@
                   <ul class="sidebar-submenu">
                     <li><a href="{{ route('orders.index') }}">Order List</a></li>
                     <li><a href="{{ route('orders.create') }}">Create Order</a></li>
+                    @can('view my orders')
+                    <li><a href="{{ route('retailer.orders.index') }}">My Orders</a></li>
+                    @endcan
                   </ul>
                 </li>
                 <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">

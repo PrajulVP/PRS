@@ -57,6 +57,10 @@ class AuthController extends Controller
             $user = Auth::guard('web')->user();
             $role = $user->getRoleNames()->first();
 
+            if ($role === 'retailer') {
+                return redirect()->route('retailer.orders.index');
+            }
+
             return view('admin.dashboard', [
                 'user' => $user,
                 'role' => $role,

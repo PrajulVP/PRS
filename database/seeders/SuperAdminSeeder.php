@@ -21,7 +21,7 @@ class SuperAdminSeeder extends Seeder
         );
 
         // Create the 'superadmin' role if it doesn't exist for the 'superadmin' guard
-        $role = Role::firstOrCreate(['name' => 'superadmin', 'guard_name' => 'superadmin']);
+        $role = Role::firstOrCreate(['name' => 'superadmin', 'guard_name' => 'web']);
 
         // Assign the 'superadmin' role to the user
         $superAdmin->assignRole($role);

@@ -11,10 +11,15 @@ use App\Http\Controllers\RetailerController;
 use App\Http\Controllers\DistrictController;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PermissionController;
 
 
 
 // Public / guest
+Route::get('/', function () {
+    return redirect()->route('login');
+});
+
 Route::middleware(['web', 'guest'])->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('admin.login.post');
@@ -49,6 +54,8 @@ Route::middleware(['auth:web'])->group(function () {
     Route::resource('orders', OrderController::class);
     Route::resource('products', ProductController::class);
 
+    Route::post('admin/orders/{order}/assign-distributor', [OrderController::class, 'assignDistributor'])->name('admin.orders.assignDistributor')->middleware('role:superadmin|admin');
+
     // Order Workflow Routes
     Route::prefix('manager')->name('manager.')->middleware('role:manager')->group(function () {
         Route::get('/orders', [OrderController::class, 'managerIndex'])->name('orders.index');
@@ -65,6 +72,10 @@ Route::middleware(['auth:web'])->group(function () {
         Route::post('/orders/{order}/update-delivery-status', [OrderController::class, 'updateDeliveryStatus'])->name('orders.updateDeliveryStatus');
     });
 
+    Route::prefix('retailer')->name('retailer.')->middleware('role:retailer')->group(function () {
+        Route::get('/orders', [OrderController::class, 'retailerIndex'])->name('orders.index');
+    });
+
     // AJAX: Get areas for selected district
     Route::get('/distributors/get-areas/{district}', [DistributorController::class, 'getAreas'])->name('distributors.getAreas');
     // AJAX: Get areas for selected district for Field Staff
@@ -78,7 +89,12 @@ Route::middleware(['auth:web'])->group(function () {
     Route::get('/fieldstaffs/get-distributors/{district}', [FieldStaffController::class, 'getDistributors'])->name('fieldstaffs.getDistributors');
 
     // Logout (session)
-    Route::post('/admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
+    Route::post('admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
 
-    
+    Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['role:superadmin']], function () {
+        Route::get('permissions', [PermissionController::class, 'index'])->name('permissions.index');
+        Route::get('permissions/{role}/edit', [PermissionController::class, 'edit'])->name('permissions.edit');
+        Route::put('permissions/{role}', [PermissionController::class, 'update'])->name('permissions.update');
+    });
+
 });

@@ -13,17 +13,9 @@ return new class extends Migration
     {
         Schema::create('retailers', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('gst')->unique();
-            $table->string('contact_no');
-            $table->string('email')->unique();
-            $table->string('password');
-            $table->foreignId('district_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('area_id')->constrained()->cascadeOnDelete();
             $table->foreignId('distributor_id')->constrained()->cascadeOnDelete();
-            $table->string('route')->nullable();
-            $table->string('address');
-            $table->string('pincode');
             $table->timestamps();
         });
     }

@@ -23,7 +23,11 @@ class Order extends Model
         'fieldstaff_id',
     ];
 
-    protected $dates = ['placed_at','approved_at','delivered_at'];
+    protected $casts = [
+        'placed_at' => 'datetime',
+        'approved_at' => 'datetime',
+        'delivered_at' => 'datetime',
+    ];
 
     public function items(): HasMany
     {
