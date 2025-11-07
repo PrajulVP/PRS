@@ -10,6 +10,7 @@ use App\Models\District;
 use App\Models\Distributor;
 use App\Models\FieldStaff; // Added
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // Added
 use Illuminate\Support\Facades\Hash;
 
 
@@ -17,7 +18,19 @@ class FieldStaffController extends Controller
 {
     public function index()
     {
-        $fieldstaffs = FieldStaff::with('user', 'distributor.user')->latest()->get(); // Changed
+        $query = FieldStaff::with('user', 'distributor.user');
+
+        if (Auth::user()->hasRole('distributor')) {
+            $distributor = Auth::user()->distributor; // Assuming a distributor relationship on User model
+            if ($distributor) {
+                $query->whereHas('user', function ($q) use ($distributor) {
+                    $q->where('district_id', $distributor->district_id)
+                      ->where('area_id', $distributor->area_id);
+                });
+            }
+        }
+
+        $fieldstaffs = $query->latest()->get();
         return view('admin.fieldstaffs.index', compact('fieldstaffs'));
     }
 

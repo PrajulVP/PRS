@@ -3,8 +3,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\FieldStaff;
 use App\Models\Order;
 use App\Models\Retailer;
+use App\Http\Requests\StoreOrderRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -25,21 +27,9 @@ class OrderController extends Controller
     }
 
     // Admin: store order
-    public function store(Request $request)
+    public function store(StoreOrderRequest $request)
     {
-        $request->validate([
-            'product_name' => 'required|string|max:255',
-            'quantity' => 'required|integer|min:1',
-            'unit_price' => 'required|numeric|min:0',
-            'prescription_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'notes' => 'nullable|string',
-        ]);
-
-        $retailer = Auth::guard('web')->user()->load('retailer')->retailer; // Assuming a retailer relationship on User model
-
-        if (!$retailer) {
-            return back()->withErrors(['retailer' => 'Only retailers can place orders.']);
-        }
+        $retailer = Auth::user()->retailer;
 
         $data = $request->all();
         $data['retailer_id'] = $retailer->id;
@@ -75,6 +65,10 @@ class OrderController extends Controller
             'status' => 'assigned_to_distributor',
         ]);
 
+        if ($request->ajax()) {
+            return response()->json(['success' => 'Order assigned to distributor successfully!']);
+        }
+
         return back()->with('success', 'Order assigned to distributor successfully!');
     }
 
@@ -99,13 +93,21 @@ class OrderController extends Controller
     public function assignFieldStaff(Request $request, Order $order)
     {
         $request->validate([
-            'fieldstaff_id' => 'required|exists:field_staff,id',
+            'fieldstaff_id' => 'required|exists:fieldstaffs,id',
         ]);
 
         $order->update([
             'fieldstaff_id' => $request->fieldstaff_id,
             'status' => 'assigned_to_fieldstaff',
         ]);
+
+        if ($request->ajax()) {
+            $fieldstaffName = FieldStaff::find($request->fieldstaff_id)->user->name;
+            return response()->json([
+                'success' => 'Order assigned to field staff successfully!',
+                'fieldstaff_name' => $fieldstaffName,
+            ]);
+        }
 
         return back()->with('success', 'Order assigned to field staff successfully!');
     }

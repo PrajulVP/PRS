@@ -9,6 +9,7 @@ class Retailer extends Model
     protected $fillable = [
         'user_id',
         'distributor_id',
+        'gst',
     ];
 
     public function user()

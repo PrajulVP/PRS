@@ -9,12 +9,25 @@ use App\Models\District;
 use App\Models\Area;
 use App\Models\Distributor;
 use App\Models\Retailer; // Added
+use Illuminate\Support\Facades\Auth;
 
 class RetailerController extends Controller
 {
     public function index()
     {
-        $retailers = Retailer::with('user', 'distributor.user')->latest()->get(); // Changed
+        $query = Retailer::with('user', 'distributor.user');
+
+        if (Auth::user()->hasRole('distributor')) {
+            $distributor = Auth::user()->distributor; // Assuming a distributor relationship on User model
+            if ($distributor) {
+                $query->whereHas('user', function ($q) use ($distributor) {
+                    $q->where('district_id', $distributor->district_id)
+                      ->where('area_id', $distributor->area_id);
+                });
+            }
+        }
+
+        $retailers = $query->latest()->get();
         return view('admin.retailers.index', compact('retailers'));
     }
 

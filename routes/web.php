@@ -36,7 +36,7 @@ Route::middleware(['auth:web'])->group(function () {
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
 
     // User Management
-    Route::get('/admin/users', [App\Http\Controllers\UserController::class, 'index'])->name('admin.users');
+    Route::get('/admin/users', [App\Http\Controllers\UserController::class, 'index'])->name('admin.users')->middleware('role:superadmin|admin');
     Route::get('/admin/users/create', [App\Http\Controllers\UserController::class, 'create'])->name('admin.users.create')->middleware('role:superadmin|admin');
     Route::post('/admin/users', [App\Http\Controllers\UserController::class, 'store'])->name('admin.users.store')->middleware('role:superadmin|admin');
     Route::get('/admin/users/{user}/edit', [App\Http\Controllers\UserController::class, 'edit'])->name('admin.users.edit');
@@ -45,7 +45,9 @@ Route::middleware(['auth:web'])->group(function () {
 
     Route::get('/admin/users/get-by-role', [App\Http\Controllers\UserController::class, 'getUsersByRole'])->name('admin.users.getByRole');
 
-    Route::resource('managers', ManagerController::class);
+    Route::group(['middleware' => ['role:superadmin|admin']], function () {
+        Route::resource('managers', ManagerController::class);
+    });
     Route::resource('distributors', DistributorController::class);
     Route::resource('fieldstaffs', FieldStaffController::class);
     Route::resource('retailers', RetailerController::class);
@@ -54,7 +56,7 @@ Route::middleware(['auth:web'])->group(function () {
     Route::resource('orders', OrderController::class);
     Route::resource('products', ProductController::class);
 
-    Route::post('admin/orders/{order}/assign-distributor', [OrderController::class, 'assignDistributor'])->name('admin.orders.assignDistributor')->middleware('role:superadmin|admin');
+    Route::post('admin/orders/{order}/assign-distributor', [OrderController::class, 'assignDistributor'])->name('admin.orders.assign_distributor')->middleware('role:superadmin|admin|manager');
 
     // Order Workflow Routes
     Route::prefix('manager')->name('manager.')->middleware('role:manager')->group(function () {

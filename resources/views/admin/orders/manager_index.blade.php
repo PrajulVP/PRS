@@ -4,7 +4,7 @@
 <div class="container-fluid">
     <div class="page-title">
         <div class="row">
-            <div class="col-6">
+            <div class="col-6 p-4">
                 <h3>Manager Dashboard - Pending Orders</h3>
             </div>
             <div class="col-6">
@@ -19,7 +19,7 @@
 </div>
 
 <div class="container-fluid">
-    <div class="card">
+    <div class="card p-4">
         <div class="card-body">
             @if(session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
@@ -50,37 +50,19 @@
                             <td>{{ ucfirst(str_replace('_', ' ', $order->status)) }}</td>
                             <td>{{ $order->placed_at->format('Y-m-d H:i') }}</td>
                             <td>
-                                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#assignDistributorModal{{ $order->id }}">Assign Distributor</button>
-
-                                <!-- Assign Distributor Modal -->
-                                <div class="modal fade" id="assignDistributorModal{{ $order->id }}" tabindex="-1" aria-labelledby="assignDistributorModalLabel{{ $order->id }}" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <form action="{{ route('manager.orders.assignDistributor', $order->id) }}" method="POST">
-                                                @csrf
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title" id="assignDistributorModalLabel{{ $order->id }}">Assign Distributor to Order #{{ $order->id }}</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <div class="mb-3">
-                                                        <label for="distributor_id" class="form-label">Select Distributor</label>
-                                                        <select class="form-select" id="distributor_id" name="distributor_id" required>
-                                                            <option value="">-- Select --</option>
-                                                            @foreach(App\Models\Distributor::all() as $distributor)
-                                                                <option value="{{ $distributor->id }}">{{ $distributor->user->name }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                    <button type="submit" class="btn btn-primary">Assign</button>
-                                                </div>
-                                            </form>
-                                        </div>
+                                <form class="assign-distributor-form">
+                                    @csrf
+                                    <input type="hidden" name="order_id" value="{{ $order->id }}">
+                                    <div class="input-group">
+                                        <select class="form-select" name="distributor_id" required>
+                                            <option value="">-- Select Distributor --</option>
+                                            @foreach(App\Models\Distributor::all() as $distributor)
+                                                <option value="{{ $distributor->id }}">{{ $distributor->user->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <button type="submit" class="btn btn-primary">Assign</button>
                                     </div>
-                                </div>
+                                </form>
                             </td>
                         </tr>
                         @empty
@@ -95,4 +77,50 @@
         </div>
     </div>
 </div>
-@endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const forms = document.querySelectorAll('.assign-distributor-form');
+        forms.forEach(form => {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const orderId = this.querySelector('input[name="order_id"]').value;
+                const distributorId = this.querySelector('select[name="distributor_id"]').value;
+                const token = this.querySelector('input[name="_token"]').value;
+
+                if (!distributorId) {
+                    alert('Please select a distributor.');
+                    return;
+                }
+
+                fetch(`/admin/orders/${orderId}/assign-distributor`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': token,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ distributor_id: distributorId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.success);
+                        // Optionally, remove the row from the table
+                        this.closest('tr').remove();
+                    } else {
+                        alert('Something went wrong.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Something went wrong.');
+                });
+            });
+        });
+    });
+</script>
+@endpush
+

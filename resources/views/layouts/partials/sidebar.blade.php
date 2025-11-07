@@ -42,6 +42,7 @@
                     <li><a href="chart-widget.html">Chart</a></li>
                   </ul>
                 </li>
+                @if(Auth::user()->hasAnyRole(['superadmin', 'admin']))
                 <li class="sidebar-main-title">
                   <div>
                     <h6 class="lan-10">User Management</h6>
@@ -72,8 +73,10 @@
                                                             @endcan
                                                         </ul>
                                                       </li>
+                @endif
                                         
                                         
+                                                        @if(Auth::user()->hasAnyRole(['superadmin', 'admin']))
                                                         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
                                                             <svg class="stroke-icon">
                                                               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
@@ -88,6 +91,8 @@
                                                             @endcan
                                                           </ul>
                                                         </li>
+                                                        @endif
+                                                        @if(Auth::user()->hasAnyRole(['superadmin', 'admin']))
                                                         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
                                                             <svg class="stroke-icon">
                                                               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
@@ -102,6 +107,8 @@
                                                             @endcan
                                                           </ul>
                                                         </li>
+                                                        @endif
+                                                        @if(Auth::user()->hasAnyRole(['superadmin', 'admin']))
                                                         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
                                                             <svg class="stroke-icon">
                                                               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
@@ -116,6 +123,8 @@
                                                             @endcan
                                                           </ul>
                                                         </li>
+                                                        @endif
+                                                        @if(Auth::user()->hasAnyRole(['superadmin', 'admin']))
                                                         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
                                                             <svg class="stroke-icon">
                                                               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
@@ -129,6 +138,8 @@
                                                             <li><a href="{{ route('retailers.create') }}">Create Retailers</a></li>
                                                             @endcan
                                                           </ul>
+                                                        </li>
+                                                        @endif
                 <li class="sidebar-main-title">
                   <div>
                     <h6 class="lan-10">Regions & Areas</h6>

@@ -51,37 +51,19 @@
                             <td>{{ $order->fieldStaff->user->name ?? 'Not Assigned' }}</td>
                             <td>
                                 @if($order->status === 'assigned_to_distributor')
-                                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#assignFieldStaffModal{{ $order->id }}">Assign Field Staff</button>
-
-                                <!-- Assign Field Staff Modal -->
-                                <div class="modal fade" id="assignFieldStaffModal{{ $order->id }}" tabindex="-1" aria-labelledby="assignFieldStaffModalLabel{{ $order->id }}" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <form action="{{ route('distributor.orders.assignFieldStaff', $order->id) }}" method="POST">
-                                                @csrf
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title" id="assignFieldStaffModalLabel{{ $order->id }}">Assign Field Staff to Order #{{ $order->id }}</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <div class="mb-3">
-                                                        <label for="fieldstaff_id" class="form-label">Select Field Staff</label>
-                                                        <select class="form-select" id="fieldstaff_id" name="fieldstaff_id" required>
-                                                            <option value="">-- Select --</option>
-                                                            @foreach(App\Models\FieldStaff::all() as $fieldstaff)
-                                                                <option value="{{ $fieldstaff->id }}">{{ $fieldstaff->user->name }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                    <button type="submit" class="btn btn-primary">Assign</button>
-                                                </div>
-                                            </form>
-                                        </div>
+                                <form class="assign-fieldstaff-form">
+                                    @csrf
+                                    <input type="hidden" name="order_id" value="{{ $order->id }}">
+                                    <div class="input-group">
+                                        <select class="form-select" name="fieldstaff_id" required>
+                                            <option value="">-- Select Field Staff --</option>
+                                            @foreach(App\Models\FieldStaff::all() as $fieldstaff)
+                                                <option value="{{ $fieldstaff->id }}">{{ $fieldstaff->user->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <button type="submit" class="btn btn-primary">Assign</button>
                                     </div>
-                                </div>
+                                </form>
                                 @else
                                     <span class="badge bg-info">{{ ucfirst(str_replace('_', ' ', $order->status)) }}</span>
                                 @endif
@@ -99,4 +81,51 @@
         </div>
     </div>
 </div>
-@endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const forms = document.querySelectorAll('.assign-fieldstaff-form');
+        forms.forEach(form => {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const orderId = this.querySelector('input[name="order_id"]').value;
+                const fieldstaffId = this.querySelector('select[name="fieldstaff_id"]').value;
+                const token = this.querySelector('input[name="_token"]').value;
+
+                if (!fieldstaffId) {
+                    alert('Please select a field staff.');
+                    return;
+                }
+
+                fetch(`/distributor/orders/${orderId}/assign-fieldstaff`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': token,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ fieldstaff_id: fieldstaffId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.success);
+                        // Optionally, update the row
+                        this.closest('tr').querySelector('td:nth-child(7)').textContent = data.fieldstaff_name;
+                        this.closest('td').innerHTML = `<span class="badge bg-info">Assigned To Fieldstaff</span>`;
+                    } else {
+                        alert('Something went wrong.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Something went wrong.');
+                });
+            });
+        });
+    });
+</script>
+@endpush
+

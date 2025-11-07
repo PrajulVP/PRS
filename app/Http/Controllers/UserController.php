@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Retailer;
+use App\Models\Distributor;
+use App\Models\FieldStaff;
+use App\Models\Manager;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role; // Added for roles
@@ -14,7 +17,7 @@ class UserController extends Controller
 {
         public function index(Request $request)
         {
-            $users = User::all()->groupBy('role');
+            $users = User::with('roles')->get();
             return view('admin.users.index', compact('users'));
         }
 
@@ -61,8 +64,30 @@ class UserController extends Controller
 
         $user = User::create($userData);
 
+        // Assign the role to the user using spatie/laravel-permission
+        $user->assignRole($request->role);
+
         if ($request->role === 'retailer') {
+            $request->validate([
+                'gst' => 'required|string|unique:retailers',
+                'distributor_id' => 'required|exists:distributors,id',
+            ]);
+
             Retailer::create([
+                'user_id' => $user->id,
+                'gst' => $request->gst,
+                'distributor_id' => $request->distributor_id,
+            ]);
+        } elseif ($request->role === 'distributor') {
+            Distributor::create([
+                'user_id' => $user->id,
+            ]);
+        } elseif ($request->role === 'fieldstaff') {
+            FieldStaff::create([
+                'user_id' => $user->id,
+            ]);
+        } elseif ($request->role === 'manager') {
+            Manager::create([
                 'user_id' => $user->id,
             ]);
         }
@@ -81,13 +106,7 @@ class UserController extends Controller
         $canEdit = false;
         if ($loggedInUser->id === $user->id) {
             $canEdit = true;
-        } elseif ($loggedInUser->role === 'superadmin' && $user->role !== 'superadmin') {
-            $canEdit = true;
-        } elseif ($loggedInUser->role === 'admin' && in_array($user->role, ['manager', 'distributor', 'fieldstaff', 'retailer'])) {
-            $canEdit = true;
-        } elseif ($loggedInUser->role === 'manager' && in_array($user->role, ['distributor', 'fieldstaff', 'retailer'])) {
-            $canEdit = true;
-        } elseif ($loggedInUser->role === 'distributor' && in_array($user->role, ['fieldstaff', 'retailer'])) {
+        } elseif ($loggedInUser->hasAnyRole(['superadmin', 'admin'])) {
             $canEdit = true;
         }
 
@@ -110,13 +129,7 @@ class UserController extends Controller
         $canEdit = false;
         if ($loggedInUser->id === $user->id) {
             $canEdit = true;
-        } elseif ($loggedInUser->role === 'superadmin' && $user->role !== 'superadmin') {
-            $canEdit = true;
-        } elseif ($loggedInUser->role === 'admin' && in_array($user->role, ['manager', 'distributor', 'fieldstaff', 'retailer'])) {
-            $canEdit = true;
-        } elseif ($loggedInUser->role === 'manager' && in_array($user->role, ['distributor', 'fieldstaff', 'retailer'])) {
-            $canEdit = true;
-        } elseif ($loggedInUser->role === 'distributor' && in_array($user->role, ['fieldstaff', 'retailer'])) {
+        } elseif ($loggedInUser->hasAnyRole(['superadmin', 'admin'])) {
             $canEdit = true;
         }
 
@@ -205,16 +218,5 @@ class UserController extends Controller
 
         $user->delete();
         return redirect()->route('admin.users')->with('success', 'User deleted successfully!');
-    }
-
-    public function getUsersByRole(Request $request)
-    {
-        $request->validate([
-            'role' => 'required|string',
-        ]);
-
-        $users = User::where('role', $request->role)->get();
-
-        return response()->json($users);
     }
 }
