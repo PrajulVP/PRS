@@ -6,8 +6,8 @@
         <div class="col-sm-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5><i class="fa fa-shopping-bag me-2"></i>Distributor Orders</h5>
-                    <a href="{{ route('distributor-orders.create') }}" class="btn btn-primary"><i class="fa fa-plus me-1"></i>Create Distributor Order</a>
+                    <h5><i class="fa fa-shopping-bag me-2"></i>Retailer Orders (Managed)</h5>
+                    <a href="{{ route('retailer-orders-management.create') }}" class="btn btn-primary"><i class="fa fa-plus me-1"></i>Create Retailer Order</a>
                 </div>
                 <div class="card-body">
                     @if(session('success'))
@@ -63,7 +63,7 @@
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: "{{ route('distributor-orders.index') }}",
+                    url: "{{ route('retailer-orders-management.index') }}",
                     type: 'GET'
                 },
                 columns: [
@@ -107,9 +107,9 @@
                         orderable: false,
                         searchable: false,
                         render: function(data, type, row) {
-                            var viewUrl = "{{ route('distributor-orders.show', ':id') }}".replace(':id', row.id);
-                            var editUrl = "{{ route('distributor-orders.edit', ':id') }}".replace(':id', row.id);
-                            var deleteUrl = "{{ route('distributor-orders.destroy', ':id') }}".replace(':id', row.id);
+                            var viewUrl = "{{ route('retailer-orders-management.show', ':id') }}".replace(':id', row.id);
+                            var editUrl = "{{ route('retailer-orders-management.edit', ':id') }}".replace(':id', row.id);
+                            var deleteUrl = "{{ route('retailer-orders-management.destroy', ':id') }}".replace(':id', row.id);
                             var csrfToken = "{{ csrf_token() }}";
 
                             return `

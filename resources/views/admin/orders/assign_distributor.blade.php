@@ -6,10 +6,10 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Assign Distributor to Order #{{ $order->id }}</h3>
+                    <h3 class="card-title">Assign Distributor to Order #{{ $retailerOrder->id }}</h3>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('admin.orders.assign_distributor', $order) }}" method="POST">
+                    <form action="{{ route('admin.orders.assign_distributor', $retailerOrder) }}" method="POST">
                         @csrf
 
                         <div class="form-group">

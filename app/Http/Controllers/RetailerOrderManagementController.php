@@ -4,29 +4,29 @@
 namespace App\Http\Controllers;
 
 use App\Models\FieldStaff;
-use App\Models\DistributorOrder; // Use the new DistributorOrder model
+use App\Models\RetailerOrder; // Use the new RetailerOrder model
 use App\Models\Retailer;
-use App\Http\Requests\StoreOrderRequest;
+use App\Http\Requests\StoreDistributorOrderRequest; // Use the new StoreDistributorOrderRequest
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
-class DistributorOrderController extends Controller
+class RetailerOrderManagementController extends Controller
 {
     // Admin: list all orders
     public function index(Request $request)
     {
         if ($request->ajax()) {
             try {
-                $totalData = DistributorOrder::count();
+                $totalData = RetailerOrder::count();
 
-                $query = DistributorOrder::with('retailer.user');
+                $query = RetailerOrder::with('retailer.user');
 
                 // Apply search filter
                 if ($request->has('search') && !empty($request->input('search')['value'])) {
                     $searchValue = $request->input('search')['value'];
                     $query->where(function ($q) use ($searchValue) {
-                        $q->where('distributor_orders.id', 'like', "%{$searchValue}%")
+                        $q->where('retailer_orders.id', 'like', "%{$searchValue}%")
                           ->orWhere('product_name', 'like', "%{$searchValue}%")
                           ->orWhere('status', 'like', "%{$searchValue}%")
                           ->orWhereHas('retailer.user', function ($subQuery) use ($searchValue) {
@@ -46,13 +46,13 @@ class DistributorOrderController extends Controller
                     // Map DataTables column names to database column names
                     switch ($columnName) {
                         case 'id':
-                            $query->orderBy('distributor_orders.id', $sortDirection);
+                            $query->orderBy('retailer_orders.id', $sortDirection);
                             break;
                         case 'retailer_name':
-                            $query->join('retailers', 'distributor_orders.retailer_id', '=', 'retailers.id')
+                            $query->join('retailers', 'retailer_orders.retailer_id', '=', 'retailers.id')
                                  ->join('users', 'retailers.user_id', '=', 'users.id')
                                  ->orderBy('users.name', $sortDirection)
-                                 ->select('distributor_orders.*'); // Select distributor_orders.* to avoid ambiguity
+                                 ->select('retailer_orders.*'); // Select retailer_orders.* to avoid ambiguity
                             break;
                         case 'product_name':
                             $query->orderBy('product_name', $sortDirection);
@@ -73,11 +73,11 @@ class DistributorOrderController extends Controller
                             $query->orderBy('placed_at', $sortDirection);
                             break;
                         default:
-                            $query->orderBy('distributor_orders.id', 'desc');
+                            $query->orderBy('retailer_orders.id', 'desc');
                             break;
                     }
                 } else {
-                    $query->orderBy('distributor_orders.id', 'desc'); // Default sort
+                    $query->orderBy('retailer_orders.id', 'desc'); // Default sort
                 }
 
                 // Apply pagination
@@ -106,7 +106,7 @@ class DistributorOrderController extends Controller
                     'data' => $formattedOrders,
                 ]);
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Error in DistributorOrderController@index: ' . $e->getMessage());
+                \Illuminate\Support\Facades\Log::error('Error in RetailerOrderManagementController@index: ' . $e->getMessage());
                 return response()->json([
                     'error' => 'An error occurred while processing your request.'
                 ], 500);
@@ -123,7 +123,7 @@ class DistributorOrderController extends Controller
     }
 
     // Admin: store order
-    public function store(StoreOrderRequest $request)
+    public function store(StoreDistributorOrderRequest $request)
     {
         $retailer = Auth::user()->retailer;
 
@@ -137,7 +137,7 @@ class DistributorOrderController extends Controller
             $data['prescription_photo'] = $request->file('prescription_photo')->store('prescriptions', 'public');
         }
 
-        DistributorOrder::create($data);
+        RetailerOrder::create($data);
 
         return redirect()->route('dashboard')->with('success', 'Medicine requirement sent successfully!');
     }
@@ -146,9 +146,9 @@ class DistributorOrderController extends Controller
     public function managerIndex(Request $request)
     {
         if ($request->ajax()) {
-            $totalData = DistributorOrder::where('status', 'pending')->count();
+            $totalData = RetailerOrder::where('status', 'pending')->count();
 
-            $query = DistributorOrder::with('retailer.user')->where('status', 'pending');
+            $query = RetailerOrder::with('retailer.user')->where('status', 'pending');
 
             // Apply search filter
             if ($request->has('search') && !empty($request->input('search')['value'])) {
@@ -205,7 +205,7 @@ class DistributorOrderController extends Controller
     }
 
     // Manager: assign order to distributor
-    public function assignDistributor(Request $request, DistributorOrder $order)
+    public function assignDistributor(Request $request, RetailerOrder $order)
     {
         $request->validate([
             'distributor_id' => 'required|exists:distributors,id',
@@ -233,7 +233,7 @@ class DistributorOrderController extends Controller
                 return response()->json(['error' => 'Unauthorized action.'], 403);
             }
 
-            $query = DistributorOrder::with('retailer.user', 'fieldStaff.user')
+            $query = RetailerOrder::with('retailer.user', 'fieldStaff.user')
                 ->where('distributor_id', $distributor->id)
                 ->whereIn('status', ['assigned_to_distributor', 'assigned_to_fieldstaff', 'out_for_delivery']);
 
@@ -294,7 +294,7 @@ class DistributorOrderController extends Controller
     }
 
     // Distributor: assign order to field staff
-    public function assignFieldStaff(Request $request, DistributorOrder $order)
+    public function assignFieldStaff(Request $request, RetailerOrder $order)
     {
         $request->validate([
             'fieldstaff_id' => 'required|exists:fieldstaffs,id',
@@ -326,7 +326,7 @@ class DistributorOrderController extends Controller
                 return response()->json(['error' => 'Unauthorized action.'], 403);
             }
 
-            $query = DistributorOrder::with('retailer.user')
+            $query = RetailerOrder::with('retailer.user')
                 ->where('fieldstaff_id', $fieldStaff->id)
                 ->whereIn('status', ['assigned_to_fieldstaff', 'out_for_delivery']);
 
@@ -386,7 +386,7 @@ class DistributorOrderController extends Controller
     }
 
     // Field Staff: update delivery status
-    public function updateDeliveryStatus(Request $request, DistributorOrder $order)
+    public function updateDeliveryStatus(Request $request, RetailerOrder $order)
     {
         $request->validate([
             'status' => 'required|in:out_for_delivery,delivered,cancelled',
@@ -403,21 +403,21 @@ class DistributorOrderController extends Controller
     }
 
     // Admin: show single order
-    public function show(DistributorOrder $order)
+    public function show(RetailerOrder $order)
     {
         $order->load('retailer');
         return view('admin.orders.show', compact('order'));
     }
 
     // Admin: edit form
-    public function edit(DistributorOrder $order)
+    public function edit(RetailerOrder $order)
     {
         $retailers = Retailer::with('user')->get()->sortBy('user.name');
         return view('admin.orders.edit', compact('order','retailers'));
     }
 
     // Admin: update
-    public function update(Request $request, DistributorOrder $order)
+    public function update(Request $request, RetailerOrder $order)
     {
         $data = $request->validate([
             'retailer_id' => 'required|exists:retailers,id',
@@ -437,7 +437,7 @@ class DistributorOrderController extends Controller
     }
 
     // Admin: delete
-    public function destroy(DistributorOrder $order)
+    public function destroy(RetailerOrder $order)
     {
         $order->delete();
         return redirect()->route('admin.orders.index')->with('success','Order deleted.');

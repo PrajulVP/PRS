@@ -26,7 +26,7 @@
             @endif
 
             <div class="table-responsive">
-                <table class="display table table-striped table-hover" id="manager-orders-table">
+                <table class="display table table-striped table-hover" id="retailer-orders-table">
                     <thead>
                         <tr>
                             <th>Order ID</th>
@@ -77,7 +77,7 @@
 
     <script>
         $(document).ready(function() {
-            var table = $('#manager-orders-table').DataTable({
+            var table = $('#retailer-orders-table').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {
@@ -135,7 +135,7 @@
                 ]
             });
 
-            $('#manager-orders-table').on('submit', '.assign-distributor-form', function(e) {
+            $('#retailer-orders-table').on('submit', '.assign-distributor-form', function(e) {
                 e.preventDefault();
 
                 var form = $(this);

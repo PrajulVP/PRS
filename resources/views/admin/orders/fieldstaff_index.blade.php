@@ -26,7 +26,7 @@
             @endif
 
             <div class="table-responsive">
-                <table class="display table table-striped table-hover" id="fieldstaff-orders-table">
+                <table class="display table table-striped table-hover" id="retailer-orders-table">
                     <thead>
                         <tr>
                             <th>Order ID</th>
@@ -76,7 +76,7 @@
 
     <script>
         $(document).ready(function() {
-            var table = $('#fieldstaff-orders-table').DataTable({
+            var table = $('#retailer-orders-table').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {

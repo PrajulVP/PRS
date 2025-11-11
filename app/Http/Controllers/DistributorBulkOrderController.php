@@ -1,0 +1,184 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\DistributorOrder;
+use App\Models\Distributor;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class DistributorBulkOrderController extends Controller
+{
+    // Admin/Distributor: list all bulk orders
+    public function index(Request $request)
+    {
+        if ($request->ajax()) {
+            try {
+                $query = DistributorOrder::with('distributor.user');
+
+                // Filter by distributor if authenticated user is a distributor
+                if (Auth::user()->hasRole('distributor')) {
+                    $distributor = Auth::user()->distributor;
+                    $query->where('distributor_id', $distributor->id);
+                }
+
+                $totalData = $query->count();
+
+                // Apply search filter
+                if ($request->has('search') && !empty($request->input('search')['value'])) {
+                    $searchValue = $request->input('search')['value'];
+                    $query->where(function ($q) use ($searchValue) {
+                        $q->where('distributor_orders.id', 'like', "%{$searchValue}%")
+                          ->orWhere('product_name', 'like', "%{$searchValue}%")
+                          ->orWhere('status', 'like', "%{$searchValue}%")
+                          ->orWhereHas('distributor.user', function ($subQuery) use ($searchValue) {
+                              $subQuery->where('name', 'like', "%{$searchValue}%");
+                          });
+                    });
+                }
+
+                $totalFiltered = $query->count();
+
+                // Apply order (sorting)
+                if ($request->has('order') && !empty($request->input('order'))) {
+                    $columnIndex = $request->input('order')[0]['column'];
+                    $columnName = $request->input('columns')[$columnIndex]['data'];
+                    $sortDirection = $request->input('order')[0]['dir'];
+
+                    switch ($columnName) {
+                        case 'id':
+                            $query->orderBy('distributor_orders.id', $sortDirection);
+                            break;
+                        case 'distributor_name':
+                            $query->join('distributors', 'distributor_orders.distributor_id', '=', 'distributors.id')
+                                 ->join('users', 'distributors.user_id', '=', 'users.id')
+                                 ->orderBy('users.name', $sortDirection)
+                                 ->select('distributor_orders.*');
+                            break;
+                        case 'product_name':
+                            $query->orderBy('product_name', $sortDirection);
+                            break;
+                        case 'quantity':
+                            $query->orderBy('quantity', $sortDirection);
+                            break;
+                        case 'total_amount':
+                            $query->orderBy('total_amount', $sortDirection);
+                            break;
+                        case 'status':
+                            $query->orderBy('status', $sortDirection);
+                            break;
+                        case 'placed_at':
+                            $query->orderBy('placed_at', $sortDirection);
+                            break;
+                        default:
+                            $query->orderBy('distributor_orders.id', 'desc');
+                            break;
+                    }
+                } else {
+                    $query->orderBy('distributor_orders.id', 'desc'); // Default sort
+                }
+
+                // Apply pagination
+                $start = $request->input('start');
+                $length = $request->input('length');
+                $orders = $query->offset($start)->limit($length)->get();
+
+                $formattedOrders = $orders->map(function ($order) {
+                    return [
+                        'id' => $order->id,
+                        'distributor_name' => $order->distributor->user->name ?? 'N/A',
+                        'product_name' => $order->product_name,
+                        'quantity' => $order->quantity,
+                        'total_amount' => number_format($order->total_amount, 2),
+                        'status' => ucfirst($order->status),
+                        'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d H:i:s') : '-',
+                        'actions' => null,
+                    ];
+                });
+
+                return response()->json([
+                    'draw' => intval($request->input('draw')),
+                    'recordsTotal' => $totalData,
+                    'recordsFiltered' => $totalFiltered,
+                    'data' => $formattedOrders,
+                ]);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Error in DistributorBulkOrderController@index: ' . $e->getMessage());
+                return response()->json([
+                    'error' => 'An error occurred while processing your request.'
+                ], 500);
+            }
+        }
+
+        return view('admin.distributor_bulk_orders.index');
+    }
+
+    // Admin/Distributor: show create form
+    public function create()
+    {
+        $distributors = Distributor::with('user')->get();
+        return view('admin.distributor_bulk_orders.create', compact('distributors'));
+    }
+
+    // Admin/Distributor: store bulk order
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'distributor_id' => 'required|exists:distributors,id',
+            'product_name' => 'required|string|max:255',
+            'sku' => 'nullable|string|max:100',
+            'quantity' => 'required|integer|min:1',
+            'unit_price' => 'required|numeric|min:0',
+            'notes' => 'nullable|string',
+        ]);
+
+        $data['total_amount'] = $data['quantity'] * $data['unit_price'];
+        $data['placed_at'] = now();
+        $data['status'] = 'pending'; // Default status for bulk orders
+
+        DistributorOrder::create($data);
+
+        return redirect()->route('distributor-bulk-orders.index')->with('success', 'Bulk order placed successfully!');
+    }
+
+    // Admin/Distributor: show single bulk order
+    public function show(DistributorOrder $distributorBulkOrder)
+    {
+        $distributorBulkOrder->load('distributor.user');
+        return view('admin.distributor_bulk_orders.show', compact('distributorBulkOrder'));
+    }
+
+    // Admin/Distributor: edit form
+    public function edit(DistributorOrder $distributorBulkOrder)
+    {
+        $distributors = Distributor::with('user')->get();
+        return view('admin.distributor_bulk_orders.edit', compact('distributorBulkOrder', 'distributors'));
+    }
+
+    // Admin/Distributor: update
+    public function update(Request $request, DistributorOrder $distributorBulkOrder)
+    {
+        $data = $request->validate([
+            'distributor_id' => 'required|exists:distributors,id',
+            'product_name' => 'required|string|max:255',
+            'sku' => 'nullable|string|max:100',
+            'quantity' => 'required|integer|min:1',
+            'unit_price' => 'required|numeric|min:0',
+            'status' => 'required|in:pending,accepted,dispatched,delivered,cancelled',
+            'notes' => 'nullable|string',
+        ]);
+
+        $data['total_amount'] = $data['quantity'] * $data['unit_price'];
+
+        $distributorBulkOrder->update($data);
+
+        return redirect()->route('distributor-bulk-orders.index')->with('success','Bulk order updated.');
+    }
+
+    // Admin/Distributor: delete
+    public function destroy(DistributorOrder $distributorBulkOrder)
+    {
+        $distributorBulkOrder->delete();
+        return redirect()->route('distributor-bulk-orders.index')->with('success','Bulk order deleted.');
+    }
+}

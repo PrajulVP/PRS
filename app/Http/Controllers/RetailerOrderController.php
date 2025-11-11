@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\RetailerOrder;
 use App\Models\Retailer;
-use App\Http\Requests\StoreOrderRequest; // Assuming this request is still relevant or will be adapted
+use App\Http\Requests\StoreDistributorOrderRequest; // Assuming this request is still relevant or will be adapted
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;

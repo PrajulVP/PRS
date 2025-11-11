@@ -10,7 +10,6 @@ class DistributorOrder extends Model
     protected $table = 'distributor_orders';
 
     protected $fillable = [
-        'retailer_id',
         'product_name',
         'sku',
         'quantity',
@@ -34,11 +33,6 @@ class DistributorOrder extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
-    }
-
-    public function retailer(): BelongsTo
-    {
-        return $this->belongsTo(Retailer::class);
     }
 
     public function distributor(): BelongsTo
