@@ -175,8 +175,8 @@
               <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
             </svg><span>Distributor Bulk Orders</span></a>
           <ul class="sidebar-submenu">
-            <li><a href="{{ route('distributor-bulk-orders.index') }}">Bulk Order List</a></li>
-            <li><a href="{{ route('distributor-bulk-orders.create') }}">Create Bulk Order</a></li>
+            <li><a href="{{ route('distributor-bulk-orders.index') }}">Order List</a></li>
+            <li><a href="{{ route('distributor-bulk-orders.create') }}">Create Order</a></li>
           </ul>
         </li>
         @endcan
