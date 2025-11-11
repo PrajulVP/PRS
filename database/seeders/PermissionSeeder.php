@@ -26,11 +26,12 @@ class PermissionSeeder extends Seeder
             foreach ($actions as $action) {
                 $enableFlag = 'enable_' . $action;
                 if ($category->$enableFlag) {
-                    $permissionName = $action . ' ' . $category->short_code;
-                    Permission::firstOrCreate(
+                    Permission::updateOrCreate(
                         [
-                            'name' => $permissionName,
+                            'name' => $action . ' ' . $category->short_code,
                             'guard_name' => 'web',
+                        ],
+                        [
                             'permission_category_id' => $category->id,
                         ]
                     );
@@ -69,11 +70,12 @@ class PermissionSeeder extends Seeder
             foreach ($actions as $action) {
                 $enableFlag = 'enable_' . $action;
                 if ($category->$enableFlag) {
-                    $permissionName = $action . ' ' . $category->short_code;
-                    Permission::firstOrCreate(
+                    Permission::updateOrCreate(
                         [
-                            'name' => $permissionName,
+                            'name' => $action . ' ' . $category->short_code,
                             'guard_name' => 'web',
+                        ],
+                        [
                             'permission_category_id' => $category->id,
                         ]
                     );
@@ -88,13 +90,16 @@ class PermissionSeeder extends Seeder
                 'assign_distributor retailer_orders',
                 'assign_fieldstaff retailer_orders',
                 'update_delivery_status retailer_orders',
+                'view my orders', // Added this permission
             ];
 
             foreach ($specificRetailerOrderPermissions as $permissionName) {
-                Permission::firstOrCreate(
+                Permission::updateOrCreate(
                     [
                         'name' => $permissionName,
                         'guard_name' => 'web',
+                    ],
+                    [
                         'permission_category_id' => $retailerOrdersCategory->id,
                     ]
                 );
