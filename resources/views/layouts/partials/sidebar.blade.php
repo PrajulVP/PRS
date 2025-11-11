@@ -82,7 +82,6 @@
           </ul>
         </li>
         @endif
-        @if(Auth::user()->hasAnyRole(['superadmin', 'admin']))
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
             <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
@@ -91,13 +90,14 @@
               <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
             </svg><span>Field Staff</span></a>
           <ul class="sidebar-submenu">
+            @can('view field_staff')
             <li><a href="{{ route('fieldstaffs.index') }}">Field Staff List</a></li>
-            @can('create fieldstaff')
+            @endcan
+            @can('add field_staff')
             <li><a href="{{ route('fieldstaffs.create') }}">Create Field Staff</a></li>
             @endcan
           </ul>
         </li>
-        @endif
         @if(Auth::user()->hasAnyRole(['superadmin', 'admin']))
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
             <svg class="stroke-icon">
