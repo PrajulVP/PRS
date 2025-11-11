@@ -154,13 +154,25 @@
             </svg>
             <svg class="fill-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
-            </svg><span>Orders</span></a>
+            </svg><span>Retailer Orders</span></a>
           <ul class="sidebar-submenu">
-            <li><a href="{{ route('distributor-orders.index') }}">Order List</a></li>
-            <li><a href="{{ route('distributor-orders.create') }}">Create Order</a></li>
+            <li><a href="{{ route('retailer-orders-management.index') }}">Order List</a></li>
+            <li><a href="{{ route('retailer-orders-management.create') }}">Create Order</a></li>
             @can('view my orders')
             <li><a href="{{ route('retailer.orders.index') }}">My Orders</a></li>
             @endcan
+          </ul>
+        </li>
+        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+            <svg class="stroke-icon">
+              <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
+            </svg><span>Distributor Bulk Orders</span></a>
+          <ul class="sidebar-submenu">
+            <li><a href="{{ route('distributor-bulk-orders.index') }}">Bulk Order List</a></li>
+            <li><a href="{{ route('distributor-bulk-orders.create') }}">Create Bulk Order</a></li>
           </ul>
         </li>
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
