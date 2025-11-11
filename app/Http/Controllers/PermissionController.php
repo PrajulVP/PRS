@@ -20,38 +20,49 @@ class PermissionController extends Controller
 
     public function edit(Role $role)
     {
-        $permissionGroups = PermissionGroup::with('permissionCategories')->get();
-        $assignedCategoryIds = DB::table('roles_permissions')
-                                 ->where('role_id', $role->id)
-                                 ->pluck('permission_category_id')
-                                 ->toArray();
+        $permissionGroups = PermissionGroup::with('permissionCategories.permissions')->get();
+        $actions = ['view', 'add', 'edit', 'delete']; // Define the actions
 
-        return view('admin.permissions.edit_role_permissions', compact('role', 'permissionGroups', 'assignedCategoryIds'));
+        // Prepare data for the view
+        $groupedPermissions = [];
+        foreach ($permissionGroups as $group) {
+            $groupedPermissions[$group->name] = [
+                'id' => $group->id,
+                'categories' => []
+            ];
+            foreach ($group->permissionCategories as $category) {
+                $groupedPermissions[$group->name]['categories'][$category->name] = [
+                    'id' => $category->id,
+                    'short_code' => $category->short_code,
+                    'enable_view' => $category->enable_view,
+                    'enable_add' => $category->enable_add,
+                    'enable_edit' => $category->enable_edit,
+                    'enable_delete' => $category->enable_delete,
+                    'permissions' => []
+                ];
+                foreach ($category->permissions as $permission) {
+                    // Extract action from permission name (e.g., "view users" -> "view")
+                    $action = explode(' ', $permission->name)[0];
+                    $groupedPermissions[$group->name]['categories'][$category->name]['permissions'][$action] = $permission;
+                }
+            }
+        }
+
+        return view('admin.permissions.edit_role_permissions', compact('role', 'groupedPermissions', 'actions'));
     }
 
     public function update(Request $request, Role $role)
     {
-        $request->validate([
-            'permission_categories' => 'nullable|array',
-            'permission_categories.*' => 'exists:permission_categories,id',
-        ]);
+        $inputPermissions = $request->input('permissions', []); // This will be an array of permission IDs that were checked
 
-        $selectedCategoryIds = $request->input('permission_categories', []);
+        // Get all permission IDs from the request that are checked
+        $checkedPermissionIds = array_keys($inputPermissions);
 
-        // Remove existing category assignments for the role
-        DB::table('roles_permissions')->where('role_id', $role->id)->delete();
+        // Get the actual Permission models for the checked IDs
+        $permissionsToSync = Permission::whereIn('id', $checkedPermissionIds)->get();
 
-        // Insert new category assignments
-        $dataToInsert = [];
-        foreach ($selectedCategoryIds as $categoryId) {
-            $dataToInsert[] = [
-                'role_id' => $role->id,
-                'permission_category_id' => $categoryId,
-            ];
-        }
-        if (!empty($dataToInsert)) {
-            DB::table('roles_permissions')->insert($dataToInsert);
-        }
+        // Sync the permissions for the role
+        $role->syncPermissions($permissionsToSync);
 
         return redirect()->route('admin.permissions.edit', $role)->with('success', 'Permissions updated successfully.');
     }
