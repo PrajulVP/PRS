@@ -30,9 +30,11 @@
                         @foreach($roles as $role)
                             <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                                 {{ ucfirst($role->name) }}
+                                @can('edit permissions')
                                 <a href="{{ route('admin.permissions.edit', $role) }}" class="btn btn-primary btn-sm">
                                     Manage Permissions
                                 </a>
+                                @endcan
                             </div>
                         @endforeach
                     </div>
