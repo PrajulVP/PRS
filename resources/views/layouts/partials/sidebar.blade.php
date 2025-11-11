@@ -139,7 +139,9 @@
             </svg><span>Areas</span></a>
           <ul class="sidebar-submenu">
             <li><a href="{{ route('areas.index') }}">Area List</a></li>
+            @can('add areas')
             <li><a href="{{ route('areas.create') }}">Create Area</a></li>
+            @endcan
           </ul>
         </li>
         @endcan
