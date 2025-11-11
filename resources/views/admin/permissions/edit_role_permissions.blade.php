@@ -81,6 +81,7 @@
                                                         <input class="form-check-input" type="checkbox" 
                                                                name="permissions[{{ $permission->id ?? '' }}]" 
                                                                value="1" 
+                                                               style="border: 1px solid #727272ff;"
                                                                {{ $isChecked ? 'checked' : '' }}
                                                                {{ $isDisabled ? 'disabled' : '' }}>
                                                     </div>
