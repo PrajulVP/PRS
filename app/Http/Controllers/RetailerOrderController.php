@@ -76,4 +76,10 @@ class RetailerOrderController extends Controller
 
         return view('admin.orders.retailer_index');
     }
+
+    public function show(RetailerOrder $retailerOrder)
+    {
+        $retailerOrder->load('retailer');
+        return view('admin.orders.show', compact('retailerOrder'));
+    }
 }

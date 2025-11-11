@@ -77,6 +77,7 @@ Route::middleware(['auth:web'])->group(function () {
 
     Route::prefix('retailer')->name('retailer.')->middleware('role:retailer')->group(function () {
         Route::get('/orders', [RetailerOrderController::class, 'retailerIndex'])->name('orders.index');
+        Route::get('/orders/{retailerOrder}', [RetailerOrderController::class, 'show'])->name('orders.show');
     });
 
     // AJAX: Get areas for selected district
