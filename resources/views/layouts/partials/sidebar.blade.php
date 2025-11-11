@@ -156,8 +156,8 @@
               <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
             </svg><span>Orders</span></a>
           <ul class="sidebar-submenu">
-            <li><a href="{{ route('orders.index') }}">Order List</a></li>
-            <li><a href="{{ route('orders.create') }}">Create Order</a></li>
+            <li><a href="{{ route('distributor-orders.index') }}">Order List</a></li>
+            <li><a href="{{ route('distributor-orders.create') }}">Create Order</a></li>
             @can('view my orders')
             <li><a href="{{ route('retailer.orders.index') }}">My Orders</a></li>
             @endcan
