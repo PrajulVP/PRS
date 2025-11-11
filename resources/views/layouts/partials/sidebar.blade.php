@@ -46,7 +46,6 @@
         </li>
         @endcan
 
-
         @can('view managers')
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
             <svg class="stroke-icon">
@@ -79,6 +78,7 @@
           </ul>
         </li>
         @endcan
+        @can('view field_staff')
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
             <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
@@ -86,15 +86,14 @@
             <svg class="fill-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
             </svg><span>Field Staff</span></a>
-          <ul class="sidebar-submenu">
-            @can('view field_staff')
+          <ul class="sidebar-submenu">           
             <li><a href="{{ route('fieldstaffs.index') }}">Field Staff List</a></li>
-            @endcan
             @can('add field_staff')
             <li><a href="{{ route('fieldstaffs.create') }}">Create Field Staff</a></li>
             @endcan
           </ul>
         </li>
+        @endcan
         @can('view retailers')
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
             <svg class="stroke-icon">
@@ -175,8 +174,8 @@
               <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
             </svg><span>Distributor Bulk Orders</span></a>
           <ul class="sidebar-submenu">
-            <li><a href="{{ route('distributor-bulk-orders.index') }}">Order List</a></li>
-            <li><a href="{{ route('distributor-bulk-orders.create') }}">Create Order</a></li>
+            <li><a href="{{ route('distributor-bulk-orders.index') }}">Bulk Order List</a></li>
+            <li><a href="{{ route('distributor-bulk-orders.create') }}">Create Bulk Order</a></li>
           </ul>
         </li>
         @endcan
