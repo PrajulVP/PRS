@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Role;
+use Spatie\Permission\Models\Role;
+use App\Models\Permission; // Use our extended Permission model
+use App\Models\PermissionGroup;
 use App\Models\PermissionCategory;
-use Spatie\Permission\Models\Permission;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class PermissionController extends Controller
 {
@@ -17,26 +20,50 @@ class PermissionController extends Controller
 
     public function edit(Role $role)
     {
-        if ($role->name === 'superadmin') {
-            return redirect()->route('admin.permissions.index')->with('error', 'Cannot edit permissions for the superadmin role.');
+        $permissionGroups = PermissionGroup::with('permissionCategories.permissions')->get();
+        $actions = ['view', 'add', 'edit', 'delete']; // Define the actions
+
+        // Prepare data for the view
+        $groupedPermissions = [];
+        foreach ($permissionGroups as $group) {
+            $groupedPermissions[$group->name] = [
+                'id' => $group->id,
+                'categories' => []
+            ];
+            foreach ($group->permissionCategories as $category) {
+                $groupedPermissions[$group->name]['categories'][$category->name] = [
+                    'id' => $category->id,
+                    'short_code' => $category->short_code,
+                    'enable_view' => $category->enable_view,
+                    'enable_add' => $category->enable_add,
+                    'enable_edit' => $category->enable_edit,
+                    'enable_delete' => $category->enable_delete,
+                    'permissions' => []
+                ];
+                foreach ($category->permissions as $permission) {
+                    // Extract action from permission name (e.g., "view users" -> "view")
+                    $action = explode(' ', $permission->name)[0];
+                    $groupedPermissions[$group->name]['categories'][$category->name]['permissions'][$action] = $permission;
+                }
+            }
         }
 
-        $permissions = Permission::all()->groupBy(function ($permission) {
-            return explode(' ', $permission->name)[0];
-        });
-
-        return view('admin.permissions.edit', compact('role', 'permissions'));
+        return view('admin.permissions.edit_role_permissions', compact('role', 'groupedPermissions', 'actions'));
     }
 
     public function update(Request $request, Role $role)
     {
-        if ($role->name === 'superadmin') {
-            return redirect()->route('admin.permissions.index')->with('error', 'Cannot edit permissions for the superadmin role.');
-        }
+        $inputPermissions = $request->input('permissions', []); // This will be an array of permission IDs that were checked
 
-        $permissions = $request->input('permissions', []);
-        $role->syncPermissions($permissions);
+        // Get all permission IDs from the request that are checked
+        $checkedPermissionIds = array_keys($inputPermissions);
 
-        return redirect()->route('admin.permissions.edit', $role)->with('success', 'Permissions updated successfully!');
+        // Get the actual Permission models for the checked IDs
+        $permissionsToSync = Permission::whereIn('id', $checkedPermissionIds)->get();
+
+        // Sync the permissions for the role
+        $role->syncPermissions($permissionsToSync);
+
+        return redirect()->route('admin.permissions.edit', $role)->with('success', 'Permissions updated successfully.');
     }
 }

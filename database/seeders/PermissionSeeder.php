@@ -3,7 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Permission;
+use App\Models\Permission; // Use our extended Permission model
+use App\Models\PermissionCategory;
 
 class PermissionSeeder extends Seeder
 {
@@ -14,17 +15,23 @@ class PermissionSeeder extends Seeder
      */
     public function run()
     {
-        $permissions = [
-            'add user',
-            'create managers',
-            'create distributors',
-            'create fieldstaff',
-            'create retailers',
-            'view my orders',
-        ];
+        $permissionCategories = PermissionCategory::all();
+        $actions = ['view', 'add', 'edit', 'delete'];
 
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+        foreach ($permissionCategories as $category) {
+            foreach ($actions as $action) {
+                $enableFlag = 'enable_' . $action;
+                if ($category->$enableFlag) {
+                    $permissionName = $action . ' ' . $category->short_code;
+                    Permission::firstOrCreate(
+                        [
+                            'name' => $permissionName,
+                            'guard_name' => 'web',
+                            'permission_category_id' => $category->id,
+                        ]
+                    );
+                }
+            }
         }
     }
 }

@@ -10,17 +10,66 @@ use Illuminate\Database\QueryException;
 
 class AreaController extends Controller
 {
-    public function index(Request $request){
-    $query = Area::with('district');
-    if($request->district_id) $query->where('district_id',$request->district_id);
-    if($request->q) $query->where('name','like','%'.$request->q.'%');
-    $areas = $query->get();
+    public function index(Request $request)
+    {
+        if ($request->ajax()) {
+            $query = Area::with('district');
 
-    if ($request->wantsJson()) {
-        return response()->json(['status'=>true,'message'=>'Area list fetched','data'=>$areas]);
-    }
-    $districts = District::all(); // Fetch districts for the form
-    return view('admin.areas.index', compact('areas', 'districts'));
+            // Apply search filter
+            if ($request->has('search') && !empty($request->input('search')['value'])) {
+                $searchValue = $request->input('search')['value'];
+                $query->where(function ($q) use ($searchValue) {
+                    $q->where('name', 'like', "%{$searchValue}%")
+                      ->orWhereHas('district', function ($subQuery) use ($searchValue) {
+                          $subQuery->where('name', 'like', "%{$searchValue}%");
+                      });
+                });
+            }
+
+            $totalFiltered = $query->count();
+            $totalData = Area::count();
+
+            // Apply order (sorting)
+            if ($request->has('order') && !empty($request->input('order'))) {
+                $columnIndex = $request->input('order')[0]['column'];
+                $columnName = $request->input('columns')[$columnIndex]['data'];
+                $sortDirection = $request->input('order')[0]['dir'];
+
+                if ($columnName == 'district_name') {
+                    $query->join('districts', 'areas.district_id', '=', 'districts.id')
+                          ->orderBy('districts.name', $sortDirection)
+                          ->select('areas.*');
+                } else {
+                    $query->orderBy($columnName, $sortDirection);
+                }
+            } else {
+                $query->orderBy('id', 'desc'); // Default sort
+            }
+
+            // Apply pagination
+            $start = $request->input('start');
+            $length = $request->input('length');
+            $areas = $query->offset($start)->limit($length)->get();
+
+            $formattedAreas = $areas->map(function ($area) {
+                return [
+                    'id' => $area->id,
+                    'name' => $area->name,
+                    'district_name' => $area->district->name ?? 'N/A',
+                    'actions' => null, // Actions column will be rendered by DataTables
+                ];
+            });
+
+            return response()->json([
+                'draw' => intval($request->input('draw')),
+                'recordsTotal' => $totalData,
+                'recordsFiltered' => $totalFiltered,
+                'data' => $formattedAreas,
+            ]);
+        }
+
+        $districts = District::all(); // Fetch districts for the form
+        return view('admin.areas.index', compact('districts'));
     }
 
     public function create()

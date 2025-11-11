@@ -11,10 +11,66 @@ class ProductController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::all();
-        return view('admin.products.index', compact('products'));
+        if ($request->ajax()) {
+            $totalData = Product::count();
+
+            $query = Product::query();
+
+            // Apply search filter
+            if ($request->has('search') && !empty($request->input('search')['value'])) {
+                $searchValue = $request->input('search')['value'];
+                $query->where(function ($q) use ($searchValue) {
+                    $q->where('product_code', 'like', "%{$searchValue}%")
+                      ->orWhere('product_name', 'like', "%{$searchValue}%")
+                      ->orWhere('generic_name', 'like', "%{$searchValue}%")
+                      ->orWhere('batch_no', 'like', "%{$searchValue}%");
+                });
+            }
+
+            $totalFiltered = $query->count();
+
+            // Apply order (sorting)
+            if ($request->has('order') && !empty($request->input('order'))) {
+                $columnIndex = $request->input('order')[0]['column'];
+                $columnName = $request->input('columns')[$columnIndex]['data'];
+                $sortDirection = $request->input('order')[0]['dir'];
+
+                $query->orderBy($columnName, $sortDirection);
+            } else {
+                $query->orderBy('id', 'desc'); // Default sort
+            }
+
+            // Apply pagination
+            $start = $request->input('start');
+            $length = $request->input('length');
+            $products = $query->offset($start)->limit($length)->get();
+
+            $formattedProducts = $products->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'product_code' => $product->product_code,
+                    'product_name' => $product->product_name,
+                    'generic_name' => $product->generic_name,
+                    'pack_quantity' => $product->pack_quantity,
+                    'batch_no' => $product->batch_no,
+                    'expiry' => \Carbon\Carbon::parse($product->expiry)->format('Y-m-d'),
+                    'mrp' => number_format($product->mrp, 2),
+                    'net_amount' => number_format($product->net_amount, 2),
+                    'actions' => null, // Actions column will be rendered by DataTables
+                ];
+            });
+
+            return response()->json([
+                'draw' => intval($request->input('draw')),
+                'recordsTotal' => $totalData,
+                'recordsFiltered' => $totalFiltered,
+                'data' => $formattedProducts,
+            ]);
+        }
+
+        return view('admin.products.index');
     }
 
     /**

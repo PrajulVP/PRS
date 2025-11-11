@@ -14,10 +14,106 @@ use Illuminate\Support\Facades\Validator;
 class OrderController extends Controller
 {
     // Admin: list all orders
-    public function index()
+    public function index(Request $request)
     {
-        $orders = Order::with('retailer')->latest()->paginate(25);
-        return view('admin.orders.index', compact('orders'));
+        if ($request->ajax()) {
+            try {
+                $totalData = Order::count();
+
+                $query = Order::with('retailer.user');
+
+                // Apply search filter
+                if ($request->has('search') && !empty($request->input('search')['value'])) {
+                    $searchValue = $request->input('search')['value'];
+                    $query->where(function ($q) use ($searchValue) {
+                        $q->where('orders.id', 'like', "%{$searchValue}%")
+                          ->orWhere('product_name', 'like', "%{$searchValue}%")
+                          ->orWhere('status', 'like', "%{$searchValue}%")
+                          ->orWhereHas('retailer.user', function ($subQuery) use ($searchValue) {
+                              $subQuery->where('name', 'like', "%{$searchValue}%");
+                          });
+                    });
+                }
+
+                $totalFiltered = $query->count();
+
+                // Apply order (sorting)
+                if ($request->has('order') && !empty($request->input('order'))) {
+                    $columnIndex = $request->input('order')[0]['column'];
+                    $columnName = $request->input('columns')[$columnIndex]['data'];
+                    $sortDirection = $request->input('order')[0]['dir'];
+
+                    // Map DataTables column names to database column names
+                    switch ($columnName) {
+                        case 'id':
+                            $query->orderBy('orders.id', $sortDirection);
+                            break;
+                        case 'retailer_name':
+                            $query->join('retailers', 'orders.retailer_id', '=', 'retailers.id')
+                                 ->join('users', 'retailers.user_id', '=', 'users.id')
+                                 ->orderBy('users.name', $sortDirection)
+                                 ->select('orders.*'); // Select orders.* to avoid ambiguity
+                            break;
+                        case 'product_name':
+                            $query->orderBy('product_name', $sortDirection);
+                            break;
+                        case 'quantity':
+                            $query->orderBy('quantity', $sortDirection);
+                            break;
+                        case 'unit_price':
+                            $query->orderBy('unit_price', $sortDirection);
+                            break;
+                        case 'total_amount':
+                            $query->orderBy('total_amount', $sortDirection);
+                            break;
+                        case 'status':
+                            $query->orderBy('status', $sortDirection);
+                            break;
+                        case 'placed_at':
+                            $query->orderBy('placed_at', $sortDirection);
+                            break;
+                        default:
+                            $query->orderBy('orders.id', 'desc');
+                            break;
+                    }
+                } else {
+                    $query->orderBy('orders.id', 'desc'); // Default sort
+                }
+
+                // Apply pagination
+                $start = $request->input('start');
+                $length = $request->input('length');
+                $orders = $query->offset($start)->limit($length)->get();
+
+                $formattedOrders = $orders->map(function ($order) {
+                    return [
+                        'id' => $order->id,
+                        'retailer_name' => $order->retailer->user->name ?? 'N/A',
+                        'product_name' => $order->product_name,
+                        'quantity' => $order->quantity,
+                        'unit_price' => number_format($order->unit_price, 2),
+                        'total_amount' => number_format($order->total_amount, 2),
+                        'status' => ucfirst($order->status),
+                        'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d H:i:s') : '-',
+                        'actions' => null, // Actions column will be rendered by DataTables
+                    ];
+                });
+
+                return response()->json([
+                    'draw' => intval($request->input('draw')),
+                    'recordsTotal' => $totalData,
+                    'recordsFiltered' => $totalFiltered,
+                    'data' => $formattedOrders,
+                ]);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Error in OrderController@index: ' . $e->getMessage());
+                return response()->json([
+                    'error' => 'An error occurred while processing your request.'
+                ], 500);
+            }
+        }
+
+        return view('admin.orders.index');
     }
 
     // Admin: show create form
@@ -47,10 +143,65 @@ class OrderController extends Controller
     }
 
     // Manager: list all pending orders
-    public function managerIndex()
+    public function managerIndex(Request $request)
     {
-        $orders = Order::with('retailer')->where('status', 'pending')->latest()->paginate(25);
-        return view('admin.orders.manager_index', compact('orders'));
+        if ($request->ajax()) {
+            $totalData = Order::where('status', 'pending')->count();
+
+            $query = Order::with('retailer.user')->where('status', 'pending');
+
+            // Apply search filter
+            if ($request->has('search') && !empty($request->input('search')['value'])) {
+                $searchValue = $request->input('search')['value'];
+                $query->where(function ($q) use ($searchValue) {
+                    $q->where('id', 'like', "%{$searchValue}%")
+                      ->orWhere('product_name', 'like', "%{$searchValue}%")
+                      ->orWhereHas('retailer.user', function ($subQuery) use ($searchValue) {
+                          $subQuery->where('name', 'like', "%{$searchValue}%");
+                      });
+                });
+            }
+
+            $totalFiltered = $query->count();
+
+            // Apply order (sorting)
+            if ($request->has('order') && !empty($request->input('order'))) {
+                $columnIndex = $request->input('order')[0]['column'];
+                $columnName = $request->input('columns')[$columnIndex]['data'];
+                $sortDirection = $request->input('order')[0]['dir'];
+
+                $query->orderBy($columnName, $sortDirection);
+            } else {
+                $query->orderBy('id', 'desc'); // Default sort
+            }
+
+            // Apply pagination
+            $start = $request->input('start');
+            $length = $request->input('length');
+            $orders = $query->offset($start)->limit($length)->get();
+
+            $formattedOrders = $orders->map(function ($order) {
+                return [
+                    'id' => $order->id,
+                    'retailer_name' => $order->retailer->user->name ?? 'N/A',
+                    'product_name' => $order->product_name,
+                    'quantity' => $order->quantity,
+                    'total_amount' => number_format($order->total_amount, 2),
+                    'status' => ucfirst(str_replace('_', ' ', $order->status)),
+                    'placed_at' => $order->placed_at->format('Y-m-d H:i'),
+                    'actions' => null, // Actions column will be rendered by DataTables
+                ];
+            });
+
+            return response()->json([
+                'draw' => intval($request->input('draw')),
+                'recordsTotal' => $totalData,
+                'recordsFiltered' => $totalFiltered,
+                'data' => $formattedOrders,
+            ]);
+        }
+
+        return view('admin.orders.manager_index');
     }
 
     // Manager: assign order to distributor
@@ -73,20 +224,73 @@ class OrderController extends Controller
     }
 
     // Distributor: list orders assigned to them
-    public function distributorIndex()
+    public function distributorIndex(Request $request)
     {
-        $distributor = Auth::guard('web')->user()->load('distributor')->distributor;
+        if ($request->ajax()) {
+            $distributor = Auth::guard('web')->user()->load('distributor')->distributor;
 
-        if (!$distributor) {
-            abort(403, 'Unauthorized action.');
+            if (!$distributor) {
+                return response()->json(['error' => 'Unauthorized action.'], 403);
+            }
+
+            $query = Order::with('retailer.user', 'fieldStaff.user')
+                ->where('distributor_id', $distributor->id)
+                ->whereIn('status', ['assigned_to_distributor', 'assigned_to_fieldstaff', 'out_for_delivery']);
+
+            // Apply search filter
+            if ($request->has('search') && !empty($request->input('search')['value'])) {
+                $searchValue = $request->input('search')['value'];
+                $query->where(function ($q) use ($searchValue) {
+                    $q->where('id', 'like', "%{$searchValue}%")
+                        ->orWhere('product_name', 'like', "%{$searchValue}%")
+                        ->orWhereHas('retailer.user', function ($subQuery) use ($searchValue) {
+                            $subQuery->where('name', 'like', "%{$searchValue}%");
+                        });
+                });
+            }
+
+            $totalFiltered = $query->count();
+
+            // Apply order (sorting)
+            if ($request->has('order') && !empty($request->input('order'))) {
+                $columnIndex = $request->input('order')[0]['column'];
+                $columnName = $request->input('columns')[$columnIndex]['data'];
+                $sortDirection = $request->input('order')[0]['dir'];
+
+                $query->orderBy($columnName, $sortDirection);
+            } else {
+                $query->orderBy('id', 'desc'); // Default sort
+            }
+
+            $totalData = $query->count();
+
+            // Apply pagination
+            $start = $request->input('start');
+            $length = $request->input('length');
+            $orders = $query->offset($start)->limit($length)->get();
+
+            $formattedOrders = $orders->map(function ($order) {
+                return [
+                    'id' => $order->id,
+                    'retailer_name' => $order->retailer->user->name ?? 'N/A',
+                    'product_name' => $order->product_name,
+                    'quantity' => $order->quantity,
+                    'total_amount' => number_format($order->total_amount, 2),
+                    'status' => ucfirst(str_replace('_', ' ', $order->status)),
+                    'fieldstaff_name' => $order->fieldStaff->user->name ?? 'Not Assigned',
+                    'actions' => null, // Actions column will be rendered by DataTables
+                ];
+            });
+
+            return response()->json([
+                'draw' => intval($request->input('draw')),
+                'recordsTotal' => $totalData,
+                'recordsFiltered' => $totalFiltered,
+                'data' => $formattedOrders,
+            ]);
         }
 
-        $orders = Order::with('retailer', 'fieldStaff')
-                        ->where('distributor_id', $distributor->id)
-                        ->whereIn('status', ['assigned_to_distributor', 'assigned_to_fieldstaff', 'out_for_delivery'])
-                        ->latest()->paginate(25);
-
-        return view('admin.orders.distributor_index', compact('orders'));
+        return view('admin.orders.distributor_index');
     }
 
     // Distributor: assign order to field staff
@@ -113,20 +317,72 @@ class OrderController extends Controller
     }
 
     // Field Staff: list orders assigned to them
-    public function fieldStaffIndex()
+    public function fieldStaffIndex(Request $request)
     {
-        $fieldStaff = Auth::guard('web')->user()->load('fieldStaff')->fieldStaff;
+        if ($request->ajax()) {
+            $fieldStaff = Auth::guard('web')->user()->load('fieldStaff')->fieldStaff;
 
-        if (!$fieldStaff) {
-            abort(403, 'Unauthorized action.');
+            if (!$fieldStaff) {
+                return response()->json(['error' => 'Unauthorized action.'], 403);
+            }
+
+            $query = Order::with('retailer.user')
+                ->where('fieldstaff_id', $fieldStaff->id)
+                ->whereIn('status', ['assigned_to_fieldstaff', 'out_for_delivery']);
+
+            // Apply search filter
+            if ($request->has('search') && !empty($request->input('search')['value'])) {
+                $searchValue = $request->input('search')['value'];
+                $query->where(function ($q) use ($searchValue) {
+                    $q->where('id', 'like', "%{$searchValue}%")
+                        ->orWhere('product_name', 'like', "%{$searchValue}%")
+                        ->orWhereHas('retailer.user', function ($subQuery) use ($searchValue) {
+                            $subQuery->where('name', 'like', "%{$searchValue}%");
+                        });
+                });
+            }
+
+            $totalFiltered = $query->count();
+
+            // Apply order (sorting)
+            if ($request->has('order') && !empty($request->input('order'))) {
+                $columnIndex = $request->input('order')[0]['column'];
+                $columnName = $request->input('columns')[$columnIndex]['data'];
+                $sortDirection = $request->input('order')[0]['dir'];
+
+                $query->orderBy($columnName, $sortDirection);
+            } else {
+                $query->orderBy('id', 'desc'); // Default sort
+            }
+
+            $totalData = $query->count();
+
+            // Apply pagination
+            $start = $request->input('start');
+            $length = $request->input('length');
+            $orders = $query->offset($start)->limit($length)->get();
+
+            $formattedOrders = $orders->map(function ($order) {
+                return [
+                    'id' => $order->id,
+                    'retailer_name' => $order->retailer->user->name ?? 'N/A',
+                    'product_name' => $order->product_name,
+                    'quantity' => $order->quantity,
+                    'total_amount' => number_format($order->total_amount, 2),
+                    'status' => ucfirst(str_replace('_', ' ', $order->status)),
+                    'actions' => null, // Actions column will be rendered by DataTables
+                ];
+            });
+
+            return response()->json([
+                'draw' => intval($request->input('draw')),
+                'recordsTotal' => $totalData,
+                'recordsFiltered' => $totalFiltered,
+                'data' => $formattedOrders,
+            ]);
         }
 
-        $orders = Order::with('retailer')
-                        ->where('fieldstaff_id', $fieldStaff->id)
-                        ->whereIn('status', ['assigned_to_fieldstaff', 'out_for_delivery'])
-                        ->latest()->paginate(25);
-
-        return view('admin.orders.fieldstaff_index', compact('orders'));
+        return view('admin.orders.fieldstaff_index');
     }
 
     // Field Staff: update delivery status
@@ -188,19 +444,69 @@ class OrderController extends Controller
     }
 
     // Retailer: list orders
-    public function retailerIndex()
+    public function retailerIndex(Request $request)
     {
-        $retailer = Auth::guard('web')->user()->load('retailer')->retailer;
+        if ($request->ajax()) {
+            $retailer = Auth::guard('web')->user()->load('retailer')->retailer;
 
-        if (!$retailer) {
-            abort(403, 'Unauthorized action.');
+            if (!$retailer) {
+                return response()->json(['error' => 'Unauthorized action.'], 403);
+            }
+
+            $query = Order::where('retailer_id', $retailer->id);
+
+            // Apply search filter
+            if ($request->has('search') && !empty($request->input('search')['value'])) {
+                $searchValue = $request->input('search')['value'];
+                $query->where(function ($q) use ($searchValue) {
+                    $q->where('id', 'like', "%{$searchValue}%")
+                        ->orWhere('product_name', 'like', "%{$searchValue}%")
+                        ->orWhere('status', 'like', "%{$searchValue}%");
+                });
+            }
+
+            $totalFiltered = $query->count();
+
+            // Apply order (sorting)
+            if ($request->has('order') && !empty($request->input('order'))) {
+                $columnIndex = $request->input('order')[0]['column'];
+                $columnName = $request->input('columns')[$columnIndex]['data'];
+                $sortDirection = $request->input('order')[0]['dir'];
+
+                $query->orderBy($columnName, $sortDirection);
+            } else {
+                $query->orderBy('id', 'desc'); // Default sort
+            }
+
+            $totalData = $query->count();
+
+            // Apply pagination
+            $start = $request->input('start');
+            $length = $request->input('length');
+            $orders = $query->offset($start)->limit($length)->get();
+
+            $formattedOrders = $orders->map(function ($order) {
+                return [
+                    'id' => $order->id,
+                    'product_name' => $order->product_name,
+                    'quantity' => $order->quantity,
+                    'unit_price' => number_format($order->unit_price, 2),
+                    'total_amount' => number_format($order->total_amount, 2),
+                    'status' => ucfirst($order->status),
+                    'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d') : '-',
+                    'actions' => null, // Actions column will be rendered by DataTables
+                ];
+            });
+
+            return response()->json([
+                'draw' => intval($request->input('draw')),
+                'recordsTotal' => $totalData,
+                'recordsFiltered' => $totalFiltered,
+                'data' => $formattedOrders,
+            ]);
         }
 
-        $orders = Order::with('retailer')
-                        ->where('retailer_id', $retailer->id)
-                        ->latest()->paginate(25);
-
-        return view('admin.orders.retailer_index', compact('orders'));
+        return view('admin.orders.retailer_index');
     }
 }
 
