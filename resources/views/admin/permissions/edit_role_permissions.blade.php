@@ -41,51 +41,35 @@
                                     <tr>
                                         <th>Module</th>
                                         <th>Category</th>
-                                        @foreach($actions as $action)
-                                            <th class="text-center">{{ ucfirst($action) }}</th>
-                                        @endforeach
+                                        <th class="text-center">Assign Category</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($groupedPermissions as $groupName => $groupData)
+                                    @foreach($permissionGroups as $group)
                                         @php $firstCategoryInGroup = true; @endphp
-                                        @foreach($groupData['categories'] as $categoryName => $categoryData)
+                                        @foreach($group->permissionCategories as $category)
                                             <tr>
                                                 @if($firstCategoryInGroup)
-                                                    <td rowspan="{{ count($groupData['categories']) }}" class="align-middle font-weight-bold">
-                                                        {{ ucfirst($groupName) }}
+                                                    <td rowspan="{{ count($group->permissionCategories) }}" class="align-middle font-weight-bold">
+                                                        {{ ucfirst($group->name) }}
                                                     </td>
                                                     @php $firstCategoryInGroup = false; @endphp
                                                 @endif
-                                                <td>{{ ucfirst($categoryName) }}</td>
-                                                @foreach($actions as $action)
+                                                <td>{{ ucfirst($category->name) }}</td>
                                                 <td class="text-center">
                                                     @php
-                                                        $permission = $categoryData['permissions'][$action] ?? null;
-                                                        $isChecked = false;
-                                                        $isDisabled = false;
-                    
-                                                        if ($permission) {
-                                                            // For superadmin and admin, always check by default for display
-                                                            if ($role->name === 'superadmin' || $role->name === 'admin') {
-                                                                $isChecked = true;
-                                                            } else {
-                                                                $isChecked = $role->hasPermissionTo($permission->name);
-                                                            }
-                                                            $isDisabled = false; // Enabled if permission exists
-                                                        } else {
-                                                            $isDisabled = true; // Disabled if permission doesn't exist
-                                                        }
+                                                        $isChecked = in_array($category->id, $assignedCategoryIds);
+                                                        $isDisabled = ($role->name === 'superadmin' || $role->name === 'admin');
                                                     @endphp
                                                     <div class="form-check form-check-inline">
                                                         <input class="form-check-input" type="checkbox" 
-                                                               name="permissions[{{ $permission->id ?? '' }}]" 
-                                                               value="1" 
+                                                               name="permission_categories[]" 
+                                                               value="{{ $category->id }}" 
                                                                style="border: 1px solid #727272ff;"
                                                                {{ $isChecked ? 'checked' : '' }}
                                                                {{ $isDisabled ? 'disabled' : '' }}>
                                                     </div>
-                                                </td>                                                @endforeach
+                                                </td>
                                             </tr>
                                         @endforeach
                                     @endforeach
