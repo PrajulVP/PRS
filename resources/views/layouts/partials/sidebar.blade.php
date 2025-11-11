@@ -169,10 +169,10 @@
             </svg>
             <svg class="fill-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
-            </svg><span>Distributor Bulk Orders</span></a>
+            </svg><span>Distributor Orders</span></a>
           <ul class="sidebar-submenu">
-            <li><a href="{{ route('distributor-bulk-orders.index') }}">Bulk Order List</a></li>
-            <li><a href="{{ route('distributor-bulk-orders.create') }}">Create Bulk Order</a></li>
+            <li><a href="{{ route('distributor-bulk-orders.index') }}">Order List</a></li>
+            <li><a href="{{ route('distributor-bulk-orders.create') }}">Create Order</a></li>
           </ul>
         </li>
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
