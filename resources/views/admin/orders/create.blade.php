@@ -5,7 +5,7 @@
         <div class="col-md-8 p-4">
             <div class="card">
                 <div class="card-header">
-                    <h5>Send Medicine Requirement</h5>
+                    <h5>Create Distributor Order</h5>
                 </div>
                 <div class="card-body">
                     @if($errors->any())
@@ -14,7 +14,7 @@
                     </div>
                     @endif
 
-                    <form action="{{ route('orders.store') }}" method="POST" enctype="multipart/form-data">
+                    <form action="{{ route('distributor-orders.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
                         <div class="mb-3">
@@ -43,7 +43,7 @@
                             <textarea name="notes" class="form-control">{{ old('notes') }}</textarea>
                         </div>
 
-                        <button class="btn btn-success">Send Requirement</button>
+                        <button class="btn btn-success">Create Order</button>
                     </form>
                 </div>
             </div>

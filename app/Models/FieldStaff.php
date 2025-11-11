@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class FieldStaff extends Model
 {
@@ -21,5 +22,10 @@ class FieldStaff extends Model
     public function distributor()
     {
         return $this->belongsTo(Distributor::class);
+    }
+
+    public function distributorOrders(): HasMany
+    {
+        return $this->hasMany(DistributorOrder::class);
     }
 }

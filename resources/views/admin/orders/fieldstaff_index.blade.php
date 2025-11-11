@@ -116,7 +116,7 @@
                                     <div class="modal fade" id="updateStatusModal${row.id}" tabindex="-1" aria-labelledby="updateStatusModalLabel${row.id}" aria-hidden="true">
                                         <div class="modal-dialog">
                                             <div class="modal-content">
-                                                <form action="/fieldstaff/orders/${row.id}/update-delivery-status" method="POST">
+                                                <form action="{{ route('fieldstaff.orders.updateDeliveryStatus', ['order' => ':orderId']) }}".replace(':orderId', row.id) }}" method="POST">
                                                     @csrf
                                                     <div class="modal-header">
                                                         <h5 class="modal-title" id="updateStatusModalLabel${row.id}">Update Delivery Status for Order #${row.id}</h5>

@@ -11,7 +11,6 @@
                 <div class="card-body">
                     <form action="{{ route('admin.orders.assign_distributor', $order) }}" method="POST">
                         @csrf
-                        @method('PUT')
 
                         <div class="form-group">
                             <label for="distributor_id">Distributor</label>

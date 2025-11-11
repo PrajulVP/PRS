@@ -15,6 +15,6 @@
         <p><strong>Notes:</strong><br>{{ $order->notes }}</p>
     </div>
 
-    <a href="{{ route('orders.index') }}" class="btn btn-secondary">Back</a>
+    <a href="{{ route('distributor-orders.index') }}" class="btn btn-secondary">Back</a>
 </div>
 @endsection

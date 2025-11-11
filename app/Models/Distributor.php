@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Distributor extends Model
 {
@@ -31,5 +32,15 @@ class Distributor extends Model
     public function area()
     {
         return $this->belongsTo(Area::class);
+    }
+
+    public function distributorOrders(): HasMany
+    {
+        return $this->hasMany(DistributorOrder::class);
+    }
+
+    public function retailerOrders(): HasMany
+    {
+        return $this->hasMany(RetailerOrder::class);
     }
 }

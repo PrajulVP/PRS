@@ -166,7 +166,7 @@
                 }
 
                 $.ajax({
-                    url: `/distributor/orders/${orderId}/assign-fieldstaff`,
+                    url: "{{ route('distributor.orders.assignFieldStaff', ['order' => ':orderId']) }}".replace(':orderId', orderId),
                     method: 'POST',
                     data: {
                         _token: token,

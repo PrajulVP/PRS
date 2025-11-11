@@ -112,7 +112,7 @@
                         orderable: false,
                         searchable: false,
                         render: function(data, type, row) {
-                            var viewUrl = "{{ route('orders.show', ':id') }}".replace(':id', row.id);
+                            var viewUrl = "{{ route('retailer.orders.show', ':id') }}".replace(':id', row.id);
                             return `<a href="${viewUrl}" class="btn btn-sm btn-info">View</a>`;
                         }
                     }

@@ -10,7 +10,8 @@ use App\Http\Controllers\FieldStaffController;
 use App\Http\Controllers\RetailerController;
 use App\Http\Controllers\DistrictController;
 use App\Http\Controllers\AreaController;
-use App\Http\Controllers\OrderController;
+use App\Http\Controllers\DistributorOrderController; // New
+use App\Http\Controllers\RetailerOrderController;   // New
 use App\Http\Controllers\PermissionController;
 
 
@@ -53,29 +54,29 @@ Route::middleware(['auth:web'])->group(function () {
     Route::resource('retailers', RetailerController::class);
     Route::resource('districts', DistrictController::class);
     Route::resource('areas', AreaController::class);
-    Route::resource('orders', OrderController::class);
+    Route::resource('distributor-orders', DistributorOrderController::class);
     Route::resource('products', ProductController::class);
 
-    Route::post('admin/orders/{order}/assign-distributor', [OrderController::class, 'assignDistributor'])->name('admin.orders.assign_distributor')->middleware('role:superadmin|admin|manager');
+    Route::post('admin/orders/{order}/assign-distributor', [DistributorOrderController::class, 'assignDistributor'])->name('admin.orders.assign_distributor')->middleware('role:superadmin|admin|manager');
 
     // Order Workflow Routes
     Route::prefix('manager')->name('manager.')->middleware('role:manager')->group(function () {
-        Route::get('/orders', [OrderController::class, 'managerIndex'])->name('orders.index');
-        Route::post('/orders/{order}/assign-distributor', [OrderController::class, 'assignDistributor'])->name('orders.assignDistributor');
+        Route::get('/orders', [DistributorOrderController::class, 'managerIndex'])->name('orders.index');
+        Route::post('/orders/{order}/assign-distributor', [DistributorOrderController::class, 'assignDistributor'])->name('orders.assignDistributor');
     });
 
     Route::prefix('distributor')->name('distributor.')->middleware('role:distributor')->group(function () {
-        Route::get('/orders', [OrderController::class, 'distributorIndex'])->name('orders.index');
-        Route::post('/orders/{order}/assign-fieldstaff', [OrderController::class, 'assignFieldStaff'])->name('orders.assignFieldStaff');
+        Route::get('/orders', [DistributorOrderController::class, 'distributorIndex'])->name('orders.index');
+        Route::post('/orders/{order}/assign-fieldstaff', [DistributorOrderController::class, 'assignFieldStaff'])->name('orders.assignFieldStaff');
     });
 
     Route::prefix('fieldstaff')->name('fieldstaff.')->middleware('role:fieldstaff')->group(function () {
-        Route::get('/orders', [OrderController::class, 'fieldStaffIndex'])->name('orders.index');
-        Route::post('/orders/{order}/update-delivery-status', [OrderController::class, 'updateDeliveryStatus'])->name('orders.updateDeliveryStatus');
+        Route::get('/orders', [DistributorOrderController::class, 'fieldStaffIndex'])->name('orders.index');
+        Route::post('/orders/{order}/update-delivery-status', [DistributorOrderController::class, 'updateDeliveryStatus'])->name('orders.updateDeliveryStatus');
     });
 
     Route::prefix('retailer')->name('retailer.')->middleware('role:retailer')->group(function () {
-        Route::get('/orders', [OrderController::class, 'retailerIndex'])->name('orders.index');
+        Route::get('/orders', [RetailerOrderController::class, 'retailerIndex'])->name('orders.index');
     });
 
     // AJAX: Get areas for selected district

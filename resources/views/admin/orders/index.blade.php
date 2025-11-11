@@ -6,8 +6,8 @@
         <div class="col-sm-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5><i class="fa fa-shopping-bag me-2"></i>Orders</h5>
-                    <a href="{{ route('orders.create') }}" class="btn btn-primary"><i class="fa fa-plus me-1"></i>Create Order</a>
+                    <h5><i class="fa fa-shopping-bag me-2"></i>Distributor Orders</h5>
+                    <a href="{{ route('distributor-orders.create') }}" class="btn btn-primary"><i class="fa fa-plus me-1"></i>Create Distributor Order</a>
                 </div>
                 <div class="card-body">
                     @if(session('success'))
@@ -63,12 +63,12 @@
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: "{{ route('orders.index') }}",
+                    url: "{{ route('distributor-orders.index') }}",
                     type: 'GET'
                 },
                 columns: [
                     { data: 'id', name: 'id' },
-                    { data: 'retailer_name', name: 'retailer_name' },
+                    { data: 'retailer_name', name: 'retailer.user.name' },
                     { data: 'product_name', name: 'product_name' },
                     { data: 'quantity', name: 'quantity' },
                     { data: 'unit_price', name: 'unit_price' },
@@ -107,9 +107,9 @@
                         orderable: false,
                         searchable: false,
                         render: function(data, type, row) {
-                            var viewUrl = "{{ route('orders.show', ':id') }}".replace(':id', row.id);
-                            var editUrl = "{{ route('orders.edit', ':id') }}".replace(':id', row.id);
-                            var deleteUrl = "{{ route('orders.destroy', ':id') }}".replace(':id', row.id);
+                            var viewUrl = "{{ route('distributor-orders.show', ':id') }}".replace(':id', row.id);
+                            var editUrl = "{{ route('distributor-orders.edit', ':id') }}".replace(':id', row.id);
+                            var deleteUrl = "{{ route('distributor-orders.destroy', ':id') }}".replace(':id', row.id);
                             var csrfToken = "{{ csrf_token() }}";
 
                             return `

@@ -149,7 +149,7 @@
                 }
 
                 $.ajax({
-                    url: `/admin/orders/${orderId}/assign-distributor`,
+                    url: "{{ route('admin.orders.assign_distributor', ['order' => ':orderId']) }}".replace(':orderId', orderId),
                     method: 'POST',
                     data: {
                         _token: token,

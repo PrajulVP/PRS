@@ -5,8 +5,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Order extends Model
+class DistributorOrder extends Model
 {
+    protected $table = 'distributor_orders';
+
     protected $fillable = [
         'retailer_id',
         'product_name',
