@@ -19,28 +19,35 @@
       '<div class="according-menu"><i class="fa fa-angle-right"></i></div>'
     );
     $(".sidebar-title").click(function () {
-      $(".sidebar-title")
+      var $this = $(this); // Store reference to the clicked element
+      // Remove active class and reset icon for all other sidebar-titles
+      $(".sidebar-title").not($this)
         .removeClass("active")
         .find("div")
         .replaceWith(
           '<div class="according-menu"><i class="fa fa-angle-right"></i></div>'
         );
-      $(".sidebar-submenu, .menu-content").slideUp("normal");
-      $(".menu-content").slideUp("normal");
-      if ($(this).next().is(":hidden") == true) {
-        $(this).addClass("active");
-        $(this)
+      // Collapse all other submenus
+      $(".sidebar-submenu, .menu-content").not($this.next()).slideUp("normal");
+      $(".menu-content").not($this.next()).slideUp("normal");
+
+      if ($this.next().is(":hidden") == true) {
+        $this.addClass("active");
+        $this
           .find("div")
           .replaceWith(
             '<div class="according-menu"><i class="fa fa-angle-down"></i></div>'
           );
-        $(this).next().slideDown("normal");
+        $this.next().slideDown("normal");
       } else {
-        $(this)
+        // If already open, close it and remove active class
+        $this.removeClass("active");
+        $this
           .find("div")
           .replaceWith(
             '<div class="according-menu"><i class="fa fa-angle-right"></i></div>'
           );
+        $this.next().slideUp("normal");
       }
     });
     $(".sidebar-submenu, .menu-content").hide();
@@ -48,27 +55,34 @@
       '<div class="according-menu"><i class="fa fa-angle-right"></i></div>'
     );
     $(".submenu-title").click(function () {
-      $(".submenu-title")
+      var $this = $(this); // Store reference to the clicked element
+      // Remove active class and reset icon for all other submenu-titles
+      $(".submenu-title").not($this)
         .removeClass("active")
         .find("div")
         .replaceWith(
           '<div class="according-menu"><i class="fa fa-angle-right"></i></div>'
         );
-      $(".submenu-content").slideUp("normal");
-      if ($(this).next().is(":hidden") == true) {
-        $(this).addClass("active");
-        $(this)
+      // Collapse all other submenus
+      $(".submenu-content").not($this.next()).slideUp("normal");
+
+      if ($this.next().is(":hidden") == true) {
+        $this.addClass("active");
+        $this
           .find("div")
           .replaceWith(
             '<div class="according-menu"><i class="fa fa-angle-down"></i></div>'
           );
-        $(this).next().slideDown("normal");
+        $this.next().slideDown("normal");
       } else {
-        $(this)
+        // If already open, close it and remove active class
+        $this.removeClass("active");
+        $this
           .find("div")
           .replaceWith(
             '<div class="according-menu"><i class="fa fa-angle-right"></i></div>'
           );
+        $this.next().slideUp("normal");
       }
     });
     $(".submenu-content").hide();
@@ -89,27 +103,34 @@
           '<div class="according-menu"><i class="fa fa-angle-right"></i></div>'
         );
         $(".submenu-title").click(function () {
-          $(".submenu-title").removeClass("active");
-          $(".submenu-title")
+          var $this = $(this); // Store reference to the clicked element
+          // Remove active class and reset icon for all other submenu-titles
+          $(".submenu-title").not($this)
+            .removeClass("active")
             .find("div")
             .replaceWith(
               '<div class="according-menu"><i class="fa fa-angle-right"></i></div>'
             );
-          $(".submenu-content").slideUp("normal");
-          if ($(this).next().is(":hidden") == true) {
-            $(this).addClass("active");
-            $(this)
+          // Collapse all other submenus
+          $(".submenu-content").not($this.next()).slideUp("normal");
+
+          if ($this.next().is(":hidden") == true) {
+            $this.addClass("active");
+            $this
               .find("div")
               .replaceWith(
                 '<div class="according-menu"><i class="fa fa-angle-down"></i></div>'
               );
-            $(this).next().slideDown("normal");
+            $this.next().slideDown("normal");
           } else {
-            $(this)
+            // If already open, close it and remove active class
+            $this.removeClass("active");
+            $this
               .find("div")
               .replaceWith(
                 '<div class="according-menu"><i class="fa fa-angle-right"></i></div>'
               );
+            $this.next().slideUp("normal");
           }
         });
         $(".submenu-content").hide();
@@ -340,34 +361,27 @@
     $(".sidebar-wrapper nav").find("a").removeClass("active");
     $(".sidebar-wrapper nav").find("li").removeClass("active");
 
-    var current = window.location.pathname;
+    var currentPath = window.location.pathname;
     $(".sidebar-wrapper nav ul li a").filter(function () {
       var link = $(this).attr("href");
       if (link) {
-        if (current.indexOf(link) != -1) {
-          $(this).parents().children("a").addClass("active");
-          $(this).parents().parents().children("ul").css("display", "block");
+        var url = new URL(link, window.location.origin);
+        if (currentPath === url.pathname) {
           $(this).addClass("active");
-          $(this)
-            .parent()
-            .parent()
-            .parent()
-            .children("a")
-            .find("div")
-            .replaceWith(
-              '<div class="according-menu"><i class="fa fa-angle-down"></i></div>'
-            );
-          $(this)
-            .parent()
-            .parent()
-            .parent()
-            .parent()
-            .parent()
-            .children("a")
-            .find("div")
-            .replaceWith(
-              '<div class="according-menu"><i class="fa fa-angle-down"></i></div>'
-            );
+          $(this).parents("li").addClass("active"); // Add active to parent li
+          $(this).parents(".sidebar-submenu").css("display", "block"); // Open submenu
+          $(this).parents(".sidebar-list").children("a").addClass("active"); // Add active to parent link
+
+          // Add active class to the main title
+          $(this).closest('li.sidebar-list').prevAll('li.sidebar-main-title:first').addClass('active');
+
+          // Update according-menu icons for all parent levels
+          $(this).parents("li").each(function() {
+            var parentLink = $(this).children("a");
+            if (parentLink.length && parentLink.find(".according-menu").length) {
+              parentLink.find(".according-menu").replaceWith('<div class="according-menu"><i class="fa fa-angle-down"></i></div>');
+            }
+          });
           return false;
         }
       }

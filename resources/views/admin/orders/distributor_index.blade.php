@@ -144,11 +144,11 @@
                 ],
                 dom: 'Blfrtip',
                 buttons: [
-                    { extend: 'copy', className: 'btn btn-outline-secondary btn-sm' },
-                    { extend: 'csv', className: 'btn btn-outline-secondary btn-sm' },
-                    { extend: 'excel', className: 'btn btn-outline-secondary btn-sm' },
-                    { extend: 'pdf', className: 'btn btn-outline-secondary btn-sm' },
-                    { extend: 'print', className: 'btn btn-outline-secondary btn-sm' },
+                    { extend: 'copy', className: 'btn btn-primary btn-sm' },
+                    { extend: 'csv', className: 'btn btn-primary btn-sm' },
+                    { extend: 'excel', className: 'btn btn-primary btn-sm' },
+                    { extend: 'pdf', className: 'btn btn-primary btn-sm' },
+                    { extend: 'print', className: 'btn btn-primary btn-sm' },
                 ]
             });
 

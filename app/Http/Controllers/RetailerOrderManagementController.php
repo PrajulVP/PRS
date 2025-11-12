@@ -6,7 +6,7 @@ namespace App\Http\Controllers;
 use App\Models\FieldStaff;
 use App\Models\RetailerOrder; // Use the new RetailerOrder model
 use App\Models\Retailer;
-use App\Http\Requests\StoreDistributorOrderRequest; // Use the new StoreDistributorOrderRequest
+use App\Models\Product; // Added
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -119,17 +119,43 @@ class RetailerOrderManagementController extends Controller
     // Admin: show create form
     public function create()
     {
-        return view('admin.orders.create');
+        $products = \App\Models\Product::all(); // Fetch all products
+        return view('admin.orders.create', compact('products'))->with('orderType', 'retailer');
     }
 
     // Admin: store order
-    public function store(StoreDistributorOrderRequest $request)
+    public function store(Request $request) // Changed request type from StoreDistributorOrderRequest to Request
     {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|integer|min:1',
+            'prescription_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'notes' => 'nullable|string',
+        ]);
+
+        $product = Product::find($request->product_id);
+
+        if (!$product) {
+            return back()->withErrors(['product_id' => 'Selected product not found.'])->withInput();
+        }
+
+        $orderedUnits = $request->quantity * $product->pack_quantity;
+        if ($product->stock < $orderedUnits) {
+            $availablePacks = floor($product->stock / $product->pack_quantity);
+            return back()->withErrors(['quantity' => 'Ordered quantity exceeds available stock. Available packs: ' . $availablePacks])->withInput();
+        }
+
         $retailer = Auth::user()->retailer;
+
+        // Decrement product stock
+        $product->stock -= $orderedUnits;
+        $product->save();
 
         $data = $request->all();
         $data['retailer_id'] = $retailer->id;
-        $data['total_amount'] = $data['quantity'] * $data['unit_price'];
+        $data['product_name'] = $product->product_name; // Store product name from selected product
+        $data['unit_price'] = $product->mrp; // Store unit price from selected product
+        $data['total_amount'] = $request->quantity * $product->mrp;
         $data['placed_at'] = now();
         $data['status'] = 'pending';
 
@@ -170,9 +196,32 @@ class RetailerOrderManagementController extends Controller
                 $columnName = $request->input('columns')[$columnIndex]['data'];
                 $sortDirection = $request->input('order')[0]['dir'];
 
-                $query->orderBy($columnName, $sortDirection);
+                switch ($columnName) {
+                    case 'retailer_name':
+                        $query->join('retailers', 'retailer_orders.retailer_id', '=', 'retailers.id')
+                              ->join('users', 'retailers.user_id', '=', 'users.id')
+                              ->orderBy('users.name', $sortDirection)
+                              ->select('retailer_orders.*'); // Select retailer_orders.* to avoid ambiguity
+                        break;
+                    case 'fieldstaff_name':
+                        $query->leftJoin('field_staff', 'retailer_orders.fieldstaff_id', '=', 'field_staff.id')
+                              ->leftJoin('users as fs_users', 'field_staff.user_id', '=', 'fs_users.id')
+                              ->orderBy('fs_users.name', $sortDirection)
+                              ->select('retailer_orders.*'); // Select retailer_orders.* to avoid ambiguity
+                        break;
+                    case 'id':
+                    case 'product_name':
+                    case 'quantity':
+                    case 'total_amount':
+                    case 'status':
+                        $query->orderBy($columnName, $sortDirection);
+                        break;
+                    default:
+                        $query->orderBy('retailer_orders.id', 'desc');
+                        break;
+                }
             } else {
-                $query->orderBy('id', 'desc'); // Default sort
+                $query->orderBy('retailer_orders.id', 'desc'); // Default sort
             }
 
             // Apply pagination
@@ -233,9 +282,13 @@ class RetailerOrderManagementController extends Controller
                 return response()->json(['error' => 'Unauthorized action.'], 403);
             }
 
-            $query = RetailerOrder::with('retailer.user', 'fieldStaff.user')
+            $initialQuery = RetailerOrder::with('retailer.user', 'fieldStaff.user')
                 ->where('distributor_id', $distributor->id)
                 ->whereIn('status', ['assigned_to_distributor', 'assigned_to_fieldstaff', 'out_for_delivery']);
+
+            $totalData = $initialQuery->count(); // Count before applying search filter
+
+            $query = $initialQuery->newQuery(); // Create a new query instance for filtering and pagination
 
             // Apply search filter
             if ($request->has('search') && !empty($request->input('search')['value'])) {
@@ -249,7 +302,7 @@ class RetailerOrderManagementController extends Controller
                 });
             }
 
-            $totalFiltered = $query->count();
+            $totalFiltered = $query->count(); // Count after applying search filter
 
             // Apply order (sorting)
             if ($request->has('order') && !empty($request->input('order'))) {
@@ -257,12 +310,33 @@ class RetailerOrderManagementController extends Controller
                 $columnName = $request->input('columns')[$columnIndex]['data'];
                 $sortDirection = $request->input('order')[0]['dir'];
 
-                $query->orderBy($columnName, $sortDirection);
+                switch ($columnName) {
+                    case 'retailer_name':
+                        $query->join('retailers', 'retailer_orders.retailer_id', '=', 'retailers.id')
+                              ->join('users', 'retailers.user_id', '=', 'users.id')
+                              ->orderBy('users.name', $sortDirection)
+                              ->select('retailer_orders.*'); // Select retailer_orders.* to avoid ambiguity
+                        break;
+                    case 'fieldstaff_name':
+                        $query->leftJoin('field_staff', 'retailer_orders.fieldstaff_id', '=', 'field_staff.id')
+                              ->leftJoin('users as fs_users', 'field_staff.user_id', '=', 'fs_users.id')
+                              ->orderBy('fs_users.name', $sortDirection)
+                              ->select('retailer_orders.*'); // Select retailer_orders.* to avoid ambiguity
+                        break;
+                    case 'id':
+                    case 'product_name':
+                    case 'quantity':
+                    case 'total_amount':
+                    case 'status':
+                        $query->orderBy($columnName, $sortDirection);
+                        break;
+                    default:
+                        $query->orderBy('retailer_orders.id', 'desc');
+                        break;
+                }
             } else {
-                $query->orderBy('id', 'desc'); // Default sort
+                $query->orderBy('retailer_orders.id', 'desc'); // Default sort
             }
-
-            $totalData = $query->count();
 
             // Apply pagination
             $start = $request->input('start');

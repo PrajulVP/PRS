@@ -56,12 +56,6 @@
 @endpush
 
 @push('scripts')
-    <!-- jQuery (required) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    <!-- Bootstrap 5 JS (ensure already included in your layout) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
     <!-- DataTables Bootstrap 5 -->
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
@@ -127,11 +121,11 @@
                 ],
                 dom: 'Blfrtip',
                 buttons: [
-                    { extend: 'copy', className: 'btn btn-outline-secondary btn-sm' },
-                    { extend: 'csv', className: 'btn btn-outline-secondary btn-sm' },
-                    { extend: 'excel', className: 'btn btn-outline-secondary btn-sm' },
-                    { extend: 'pdf', className: 'btn btn-outline-secondary btn-sm' },
-                    { extend: 'print', className: 'btn btn-outline-secondary btn-sm' },
+                    { extend: 'copy', className: 'btn btn-primary btn-sm' },
+                    { extend: 'csv', className: 'btn btn-primary btn-sm' },
+                    { extend: 'excel', className: 'btn btn-primary btn-sm' },
+                    { extend: 'pdf', className: 'btn btn-primary btn-sm' },
+                    { extend: 'print', className: 'btn btn-primary btn-sm' },
                 ]
             });
 
@@ -172,4 +166,3 @@
         });
     </script>
 @endpush
-

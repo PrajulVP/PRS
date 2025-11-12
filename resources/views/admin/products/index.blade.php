@@ -1,4 +1,3 @@
-
 @extends('layouts.admin')
 
 @section('page-body')
@@ -23,6 +22,7 @@
                                     <th>Code</th>
                                     <th>Name</th>
                                     <th>Generic Name</th>
+                                    <th>Pack Quantity</th>
                                     <th>Stock</th>
                                     <th>Batch No</th>
                                     <th>Expiry</th>
@@ -49,12 +49,6 @@
 @endpush
 
 @push('scripts')
-    <!-- jQuery (required) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    <!-- Bootstrap 5 JS (ensure already included in your layout) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
     <!-- DataTables Bootstrap 5 -->
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
@@ -81,18 +75,18 @@
         { data: 'product_code', name: 'product_code' },
         { data: 'product_name', name: 'product_name' },
         { data: 'generic_name', name: 'generic_name' },
-        { data: 'pack_quantity', name: 'pack_quantity',
+        { data: 'pack_quantity', name: 'pack_quantity' }, // New column for pack_quantity
+        { data: 'stock', name: 'stock',
             render: function(data, type, row) {
-                var stock = parseInt(data);
+                var stockValue = parseInt(data); // Total individual units
                 var badgeClass = 'badge-danger';
                 var statusText = 'Out of Stock';
-                if (stock >= 10) {
+
+                if (stockValue > 0) { // Check if total individual units are greater than 0
                     badgeClass = 'badge-success';
-                    statusText = 'In Stock';
-                } else if (stock > 0) {
-                    badgeClass = 'badge-warning';
-                    statusText = 'Low Stock';
+                    statusText = 'In Stock (' + stockValue + ' units)'; // Simplified stock display
                 }
+
                 return `<span class="badge ${badgeClass}">${statusText}</span>`;
             }
         },
@@ -124,14 +118,13 @@
     ],
     dom: 'Blfrtip',
     buttons: [
-        { extend: 'copy', className: 'btn btn-outline-secondary btn-sm' },
-        { extend: 'csv', className: 'btn btn-outline-secondary btn-sm' },
-        { extend: 'excel', className: 'btn btn-outline-secondary btn-sm' },
-        { extend: 'pdf', className: 'btn btn-outline-secondary btn-sm' },
-        { extend: 'print', className: 'btn btn-outline-secondary btn-sm' },
+        { extend: 'copy', className: 'btn btn-primary btn-sm' },
+        { extend: 'csv', className: 'btn btn-primary btn-sm' },
+        { extend: 'excel', className: 'btn btn-primary btn-sm' },
+        { extend: 'pdf', className: 'btn btn-primary btn-sm' },
+        { extend: 'print', className: 'btn btn-primary btn-sm' },
     ]
 });
 
     </script>
 @endpush
-

@@ -40,7 +40,7 @@
                                         <div class="row">
                                             <div class="col-sm-6">
                                                 <p class="mb-1"><strong>GST:</strong> {{ $distributor->gst }}</p>
-                                                <p class="mb-1"><strong>Truck License:</strong> {{ $distributor->truck_license_number ?? '-' }}</p>
+                                                <p class="mb-1"><strong>Drug License Number:</strong> {{ $distributor->truck_license_number ?? '-' }}</p>
                                                 <p class="mb-1"><strong>Area:</strong> {{ $distributor->area->name ?? '-' }}</p>
                                                 <p class="mb-1"><strong>Route:</strong> {{ $distributor->route ?? '-' }}</p>
                                             </div>

@@ -5,7 +5,7 @@
         <div class="col-md-8 p-4">
             <div class="card">
                 <div class="card-header">
-                    <h5>Create Retailer Order</h5>
+                    <h5>Create {{ ucfirst($orderType) }} Order</h5>
                 </div>
                 <div class="card-body">
                     @if($errors->any())
@@ -14,29 +14,58 @@
                     </div>
                     @endif
 
-                    <form action="{{ route('retailer-orders-management.store') }}" method="POST" enctype="multipart/form-data">
+                    <form action="{{ $orderType == 'retailer' ? route('retailer-orders-management.store') : route('distributor-bulk-orders.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
+                        @if($orderType == 'distributor')
                         <div class="mb-3">
-                            <label>Product name</label>
-                            <input type="text" name="product_name" class="form-control" value="{{ old('product_name') }}" required>
+                            <label for="distributor_id">Distributor</label>
+                            <select name="distributor_id" id="distributor_id" class="form-control" required>
+                                <option value="">Select a distributor</option>
+                                @foreach($distributors as $distributor)
+                                    <option value="{{ $distributor->id }}" {{ old('distributor_id') == $distributor->id ? 'selected' : '' }}>
+                                        {{ $distributor->user->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @endif
+
+                        <div class="mb-3">
+                            <label for="product_id">Product</label>
+                            <select name="product_id" id="product_id" class="form-control" required>
+                                <option value="">Select a product</option>
+                                @foreach($products as $product)
+                                    <option value="{{ $product->id }}"
+                                            data-unit-price="{{ $product->mrp }}"
+                                            data-stock="{{ floor($product->stock / $product->pack_quantity) }}"
+                                            {{ old('product_id') == $product->id ? 'selected' : '' }}>
+                                        {{ $product->product_name }} ({{ $product->product_code }}) - Stock: {{ floor($product->stock / $product->pack_quantity) }} packs
+                                    </option>
+                                @endforeach
+                            </select>
+                            <input type="hidden" name="product_name" id="hidden_product_name">
+                            <input type="hidden" name="unit_price" id="hidden_unit_price">
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label>Quantity</label>
-                                <input type="number" name="quantity" class="form-control" value="{{ old('quantity',1) }}" min="1" required>
+                                <label for="quantity">Quantity</label>
+                                <input type="number" name="quantity" id="quantity" class="form-control" value="{{ old('quantity',1) }}" min="1" required>
+                                <small class="form-text text-muted">Available Stock: <span id="available_stock">0</span></small>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label>Unit price</label>
-                                <input type="number" step="0.01" name="unit_price" class="form-control" value="{{ old('unit_price',0) }}" required>
+                                <label for="display_unit_price">Unit Price (MRP)</label>
+                                <input type="text" id="display_unit_price" class="form-control" value="{{ old('unit_price',0) }}" readonly>
                             </div>
                         </div>
 
+                        @if($orderType == 'retailer')
                         <div class="mb-3">
                             <label for="prescription_photo" class="form-label">Doctor's Prescription Photo (Optional)</label>
                             <input class="form-control" type="file" id="prescription_photo" name="prescription_photo">
                         </div>
+                        @endif
 
                         <div class="mb-3">
                             <label>Notes</label>
@@ -51,3 +80,47 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    $(document).ready(function() {
+        var products = {!! json_encode($products->keyBy('id')) !!};
+        var orderType = "{{ $orderType }}"; // Get order type from Blade
+
+        $('#product_id').change(function() {
+            var productId = $(this).val();
+            var selectedProduct = products[productId];
+
+            if (selectedProduct) {
+                var availablePacks = Math.floor(selectedProduct.stock / selectedProduct.pack_quantity);
+                $('#display_unit_price').val(selectedProduct.mrp);
+                $('#hidden_unit_price').val(selectedProduct.mrp);
+                $('#available_stock').text(availablePacks); // Display available packs
+                $('#hidden_product_name').val(selectedProduct.product_name);
+                if (orderType === 'retailer') { // Only set max for retailer orders
+                    $('#quantity').attr('max', availablePacks); // Set max quantity to available packs
+                } else {
+                    $('#quantity').removeAttr('max'); // No max for distributor orders
+                }
+            } else {
+                $('#display_unit_price').val('0');
+                $('#hidden_unit_price').val('0');
+                $('#available_stock').text('0');
+                $('#hidden_product_name').val('');
+                $('#quantity').removeAttr('max');
+            }
+        }).change(); // Trigger change on load to set initial values
+
+        // Ensure quantity doesn't exceed available stock (only for retailer orders)
+        $('#quantity').on('input', function() {
+            if (orderType === 'retailer') {
+                var max = parseInt($(this).attr('max'));
+                var current = parseInt($(this).val());
+                if (current > max) {
+                    $(this).val(max);
+                }
+            }
+        });
+    });
+</script>
+@endpush

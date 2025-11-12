@@ -204,16 +204,16 @@
     
                                 <hr>
     
-                                {{-- Example of permission-based content --}}
+                                <!-- {{-- Example of permission-based content --}}
                                 @if(auth()->guard('web')->user()->can('view orders'))
-                                    <p>You have permission to view orders.</p>
+                                   
                                     <a href="/orders" class="btn btn-success">View Orders</a>
                                 @endif
     
                                 @if(auth()->guard('web')->user()->can('create orders'))
-                                    <p>You have permission to create orders.</p>
+                                   
                                     <a href="/orders/create" class="btn btn-warning">Create New Order</a>
-                                @endif
+                                @endif -->
   @else
     <p>Please log in to access the dashboard features.</p>
   @endif

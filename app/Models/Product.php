@@ -24,6 +24,7 @@ class Product extends Model
         'offer',
         'discount',
         'net_amount',
+        'stock', // Added stock to fillable
     ];
 
     protected $casts = [

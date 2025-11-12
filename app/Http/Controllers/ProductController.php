@@ -58,6 +58,7 @@ class ProductController extends Controller
                     'expiry' => \Carbon\Carbon::parse($product->expiry)->format('Y-m-d'),
                     'mrp' => number_format($product->mrp, 2),
                     'net_amount' => number_format($product->net_amount, 2),
+                    'stock' => $product->stock, // Added stock
                     'actions' => null, // Actions column will be rendered by DataTables
                 ];
             });
@@ -91,6 +92,7 @@ class ProductController extends Controller
             'product_name' => 'required|string|max:255',
             'generic_name' => 'nullable|string|max:255',
             'pack_quantity' => 'required|integer|min:1',
+            'stock' => 'required|integer|min:0', // Added stock validation
             'expiry' => 'required|date',
             'strip_size' => 'nullable|integer|min:0',
             'box_size' => 'nullable|integer|min:0',
@@ -137,6 +139,7 @@ class ProductController extends Controller
             'product_name' => 'required|string|max:255',
             'generic_name' => 'nullable|string|max:255',
             'pack_quantity' => 'required|integer|min:1',
+            'stock' => 'required|integer|min:0', // Added stock validation
             'expiry' => 'required|date',
             'strip_size' => 'nullable|integer|min:0',
             'box_size' => 'nullable|integer|min:0',
