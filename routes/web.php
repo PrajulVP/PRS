@@ -94,6 +94,8 @@ Route::middleware(['auth:web'])->group(function () {
     // AJAX: Get distributors for selected district for Field Staff
     Route::get('/fieldstaffs/get-distributors/{district}', [FieldStaffController::class, 'getDistributors'])->name('fieldstaffs.getDistributors');
 
+    Route::get('/get-products/{distributor}', [RetailerOrderManagementController::class, 'getProductsByDistributor'])->name('get-products-by-distributor');
+
     // Logout (session)
     Route::post('admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
 

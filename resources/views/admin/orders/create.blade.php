@@ -17,7 +17,7 @@
                     <form action="{{ $orderType == 'retailer' ? route('retailer-orders-management.store') : route('distributor-bulk-orders.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
-                        @if($orderType == 'distributor')
+                        @if($orderType == 'retailer')
                         <div class="mb-3">
                             <label for="distributor_id">Distributor</label>
                             <select name="distributor_id" id="distributor_id" class="form-control" required>
@@ -29,20 +29,26 @@
                                 @endforeach
                             </select>
                         </div>
+                        @elseif($orderType == 'distributor')
+                            @if(Auth::user()->distributor)
+                            <input type="hidden" name="distributor_id" value="{{ Auth::user()->distributor->id }}">
+                        @endif
                         @endif
 
                         <div class="mb-3">
                             <label for="product_id">Product</label>
-                            <select name="product_id" id="product_id" class="form-control" required>
+                            <select name="product_id" id="product_id" class="form-control" required {{ $orderType == 'retailer' ? 'disabled' : '' }}>
                                 <option value="">Select a product</option>
-                                @foreach($products as $product)
-                                    <option value="{{ $product->id }}"
-                                            data-unit-price="{{ $product->mrp }}"
-                                            data-stock="{{ floor($product->stock / $product->pack_quantity) }}"
-                                            {{ old('product_id') == $product->id ? 'selected' : '' }}>
-                                        {{ $product->product_name }} ({{ $product->product_code }}) - Stock: {{ floor($product->stock / $product->pack_quantity) }} packs
-                                    </option>
-                                @endforeach
+                                @if($orderType == 'distributor')
+                                    @foreach($products as $product)
+                                        <option value="{{ $product->id }}"
+                                                data-unit-price="{{ $product->mrp }}"
+                                                data-stock="{{ floor($product->stock / $product->pack_quantity) }}"
+                                                {{ old('product_id') == $product->id ? 'selected' : '' }}>
+                                            {{ $product->product_name }} ({{ $product->product_code }}) - Stock: {{ floor($product->stock / $product->pack_quantity) }} packs
+                                        </option>
+                                    @endforeach
+                                @endif
                             </select>
                             <input type="hidden" name="product_name" id="hidden_product_name">
                             <input type="hidden" name="unit_price" id="hidden_unit_price">
@@ -72,7 +78,7 @@
                             <textarea name="notes" class="form-control">{{ old('notes') }}</textarea>
                         </div>
 
-                        <button class="btn btn-success">Create Retailer Order</button>
+                        <button class="btn btn-success">Create Order</button>
                     </form>
                 </div>
             </div>
@@ -84,41 +90,49 @@
 @push('scripts')
 <script>
     $(document).ready(function() {
-        var products = {!! json_encode($products->keyBy('id')) !!};
-        var orderType = "{{ $orderType }}"; // Get order type from Blade
+        var orderType = "{{ $orderType }}";
+
+        if (orderType === 'retailer') {
+            $('#distributor_id').change(function() {
+                var distributorId = $(this).val();
+                var productSelect = $('#product_id');
+                productSelect.html('<option value="">Select a product</option>');
+                productSelect.prop('disabled', true);
+
+                if (distributorId) {
+                    $.ajax({
+                        url: '/get-products/' + distributorId,
+                        type: 'GET',
+                        success: function(data) {
+                            productSelect.prop('disabled', false);
+                            $.each(data, function(key, product) {
+                                var availablePacks = Math.floor(product.pivot.stock / product.pack_quantity);
+                                productSelect.append('<option value="' + product.id + '" data-unit-price="' + product.mrp + '" data-stock="' + availablePacks + '">' + product.product_name + ' (' + product.product_code + ') - Stock: ' + availablePacks + ' packs</option>');
+                            });
+                        }
+                    });
+                }
+            }).change();
+        }
 
         $('#product_id').change(function() {
-            var productId = $(this).val();
-            var selectedProduct = products[productId];
+            var selectedOption = $(this).find('option:selected');
+            var unitPrice = selectedOption.data('unit-price');
+            var stock = selectedOption.data('stock');
+            var productName = selectedOption.text().split(' (')[0];
 
-            if (selectedProduct) {
-                var availablePacks = Math.floor(selectedProduct.stock / selectedProduct.pack_quantity);
-                $('#display_unit_price').val(selectedProduct.mrp);
-                $('#hidden_unit_price').val(selectedProduct.mrp);
-                $('#available_stock').text(availablePacks); // Display available packs
-                $('#hidden_product_name').val(selectedProduct.product_name);
-                if (orderType === 'retailer') { // Only set max for retailer orders
-                    $('#quantity').attr('max', availablePacks); // Set max quantity to available packs
-                } else {
-                    $('#quantity').removeAttr('max'); // No max for distributor orders
-                }
-            } else {
-                $('#display_unit_price').val('0');
-                $('#hidden_unit_price').val('0');
-                $('#available_stock').text('0');
-                $('#hidden_product_name').val('');
-                $('#quantity').removeAttr('max');
-            }
-        }).change(); // Trigger change on load to set initial values
+            $('#display_unit_price').val(unitPrice || 0);
+            $('#hidden_unit_price').val(unitPrice || 0);
+            $('#available_stock').text(stock || 0);
+            $('#hidden_product_name').val(productName || '');
+            $('#quantity').attr('max', stock || 0);
+        }).change();
 
-        // Ensure quantity doesn't exceed available stock (only for retailer orders)
         $('#quantity').on('input', function() {
-            if (orderType === 'retailer') {
-                var max = parseInt($(this).attr('max'));
-                var current = parseInt($(this).val());
-                if (current > max) {
-                    $(this).val(max);
-                }
+            var max = parseInt($(this).attr('max'));
+            var current = parseInt($(this).val());
+            if (current > max) {
+                $(this).val(max);
             }
         });
     });

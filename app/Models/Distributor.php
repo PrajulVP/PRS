@@ -43,4 +43,9 @@ class Distributor extends Model
     {
         return $this->hasMany(RetailerOrder::class);
     }
+
+    public function products()
+    {
+        return $this->belongsToMany(Product::class)->withPivot('stock');
+    }
 }

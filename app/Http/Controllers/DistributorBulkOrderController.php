@@ -117,7 +117,10 @@ class DistributorBulkOrderController extends Controller
     // Admin/Distributor: show create form
     public function create()
     {
-        $distributors = Distributor::with('user')->get();
+        $distributors = [];
+        if (!Auth::user()->hasRole('distributor')) {
+            $distributors = Distributor::with('user')->get();
+        }
         $products = \App\Models\Product::all(); // Fetch all products
         return view('admin.orders.create', compact('distributors', 'products'))->with('orderType', 'distributor');
     }
@@ -126,11 +129,18 @@ class DistributorBulkOrderController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'distributor_id' => 'required|exists:distributors,id', // Changed from 'id' to 'distributor_id'
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1',
             'notes' => 'nullable|string',
         ]);
+
+        $distributorId = null;
+        if (Auth::user()->hasRole('distributor')) {
+            $distributorId = Auth::user()->distributor->id;
+        } else {
+            $request->validate(['distributor_id' => 'required|exists:distributors,id']);
+            $distributorId = $request->distributor_id;
+        }
 
         $product = Product::find($request->product_id);
 
@@ -138,14 +148,22 @@ class DistributorBulkOrderController extends Controller
             return back()->withErrors(['product_id' => 'Selected product not found.'])->withInput();
         }
 
-        // No stock decrement for distributors initially, pending clarification.
+        $distributor = Distributor::find($distributorId);
+        $orderedUnits = $request->quantity * $product->pack_quantity;
+
+        // Add stock to distributor
+        $distributor->products()->syncWithoutDetaching([
+            $product->id => ['stock' => \DB::raw("stock + $orderedUnits")]
+        ]);
+
 
         $data = $request->all();
-        $data['product_name'] = $product->product_name; // Store product name from selected product
-        $data['unit_price'] = $product->mrp; // Store unit price from selected product
+        $data['distributor_id'] = $distributorId;
+        $data['product_name'] = $product->product_name;
+        $data['unit_price'] = $product->mrp;
         $data['total_amount'] = $request->quantity * $product->mrp;
         $data['placed_at'] = now();
-        $data['status'] = 'pending'; // Default status for bulk orders
+        $data['status'] = 'pending';
 
         DistributorOrder::create($data);
 

@@ -11,15 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('permission_categories', function (Blueprint $table) {
+        Schema::create('permission_groups', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('perm_group_id')->nullable()->constrained('permission_groups')->cascadeOnDelete();
             $table->string('name');
             $table->string('short_code')->nullable();
-            $table->boolean('enable_view')->default(false);
-            $table->boolean('enable_add')->default(false);
-            $table->boolean('enable_edit')->default(false);
-            $table->boolean('enable_delete')->default(false);
+            $table->boolean('is_active')->default(true);
+            $table->boolean('system')->default(false); // Assuming 'system' is a boolean flag
             $table->timestamps();
         });
     }
@@ -29,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('permission_categories');
+        Schema::dropIfExists('permission_groups');
     }
 };

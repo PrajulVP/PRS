@@ -66,11 +66,10 @@
                                                         $isDisabled = false;
                     
                                                         if ($permission) {
-                                                            // For superadmin and admin, always check by default for display
-                                                            if ($role->name === 'superadmin' || $role->name === 'admin') {
+                                                            // Check if the role has this permission assigned in the custom roles_permissions table
+                                                            $assignedCategory = $assignedPermissions->get($categoryData['id']);
+                                                            if ($assignedCategory && $assignedCategory->{'can_' . $action}) {
                                                                 $isChecked = true;
-                                                            } else {
-                                                                $isChecked = $role->hasPermissionTo($permission->name);
                                                             }
                                                             $isDisabled = false; // Enabled if permission exists
                                                         } else {

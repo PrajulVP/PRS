@@ -55,13 +55,36 @@ class AuthController extends Controller
     {
         if (Auth::guard('web')->check()) {
             $user = Auth::guard('web')->user();
-            $role = $user->getRoleNames()->first();
+            $role = $user->getRoleNames()->first(); // Assuming a user has only one role for dashboard purposes
 
-            if ($role === 'retailer') {
-                return redirect()->route('retailer.orders.index');
+            $dashboardView = 'dashboard.admin'; // Default dashboard
+
+            switch ($role) {
+                case 'superadmin':
+                    $dashboardView = 'dashboard.superadmin';
+                    break;
+                case 'admin':
+                    $dashboardView = 'dashboard.admin';
+                    break;
+                case 'manager':
+                    $dashboardView = 'dashboard.manager';
+                    break;
+                case 'distributor':
+                    $dashboardView = 'dashboard.distributor';
+                    break;
+                case 'fieldstaff':
+                    $dashboardView = 'dashboard.fieldstaff';
+                    break;
+                case 'retailer':
+                    $dashboardView = 'dashboard.retailer';
+                    break;
+                default:
+                    // Handle unknown roles or redirect to a default view
+                    $dashboardView = 'dashboard.admin';
+                    break;
             }
 
-            return view('admin.dashboard', [
+            return view($dashboardView, [
                 'user' => $user,
                 'role' => $role,
             ]);

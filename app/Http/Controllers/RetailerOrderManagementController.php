@@ -120,44 +120,48 @@ class RetailerOrderManagementController extends Controller
     public function create()
     {
         $products = \App\Models\Product::all(); // Fetch all products
-        return view('admin.orders.create', compact('products'))->with('orderType', 'retailer');
+        $distributors = \App\Models\Distributor::with('user')->get();
+        return view('admin.orders.create', compact('products', 'distributors'))->with('orderType', 'retailer');
     }
 
     // Admin: store order
-    public function store(Request $request) // Changed request type from StoreDistributorOrderRequest to Request
+    public function store(Request $request)
     {
         $request->validate([
+            'distributor_id' => 'required|exists:distributors,id',
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1',
             'prescription_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'notes' => 'nullable|string',
         ]);
 
-        $product = Product::find($request->product_id);
+        $distributor = \App\Models\Distributor::find($request->distributor_id);
+        $product = $distributor->products()->find($request->product_id);
 
         if (!$product) {
-            return back()->withErrors(['product_id' => 'Selected product not found.'])->withInput();
+            return back()->withErrors(['product_id' => 'Selected product not found for this distributor.'])->withInput();
         }
 
         $orderedUnits = $request->quantity * $product->pack_quantity;
-        if ($product->stock < $orderedUnits) {
-            $availablePacks = floor($product->stock / $product->pack_quantity);
-            return back()->withErrors(['quantity' => 'Ordered quantity exceeds available stock. Available packs: ' . $availablePacks])->withInput();
+        if ($product->pivot->stock < $orderedUnits) {
+            $availablePacks = floor($product->pivot->stock / $product->pack_quantity);
+            return back()->withErrors(['quantity' => 'Ordered quantity exceeds available stock for this distributor. Available packs: ' . $availablePacks])->withInput();
         }
 
         $retailer = Auth::user()->retailer;
 
-        // Decrement product stock
-        $product->stock -= $orderedUnits;
-        $product->save();
+        // Decrement product stock for the distributor
+        $distributor->products()->updateExistingPivot($product->id, [
+            'stock' => $product->pivot->stock - $orderedUnits
+        ]);
 
         $data = $request->all();
         $data['retailer_id'] = $retailer->id;
-        $data['product_name'] = $product->product_name; // Store product name from selected product
-        $data['unit_price'] = $product->mrp; // Store unit price from selected product
+        $data['product_name'] = $product->product_name;
+        $data['unit_price'] = $product->mrp;
         $data['total_amount'] = $request->quantity * $product->mrp;
         $data['placed_at'] = now();
-        $data['status'] = 'pending';
+        $data['status'] = 'assigned_to_distributor';
 
         if ($request->hasFile('prescription_photo')) {
             $data['prescription_photo'] = $request->file('prescription_photo')->store('prescriptions', 'public');
@@ -514,11 +518,14 @@ class RetailerOrderManagementController extends Controller
     public function destroy(RetailerOrder $order)
     {
         $order->delete();
-        return redirect()->route('admin.orders.index')->with('success','Order deleted.');
-    }
-
-
-}
+                return redirect()->route('admin.orders.index')->with('success','Order deleted.');
+            }
+        
+            public function getProductsByDistributor(\App\Models\Distributor $distributor)
+            {
+                return response()->json($distributor->products);
+            }
+        }
 
 
 

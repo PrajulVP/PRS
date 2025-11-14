@@ -75,4 +75,15 @@ class User extends Authenticatable
     // {
     //     return $this->belongsTo(Distributor::class, 'distributor_id');
     // }
+
+    public function hasPermissionTo($permission, $guardName = null): bool
+    {
+        foreach ($this->roles as $role) {
+            if ($role->hasPermissionTo($permission, $guardName)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

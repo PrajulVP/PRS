@@ -30,4 +30,9 @@ class Product extends Model
     protected $casts = [
         'expiry' => 'date',
     ];
+
+    public function distributors()
+    {
+        return $this->belongsToMany(Distributor::class)->withPivot('stock');
+    }
 }
