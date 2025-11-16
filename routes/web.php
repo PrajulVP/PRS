@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Route;
@@ -35,7 +36,23 @@ Route::middleware(['web', 'guest'])->group(function () {
 Route::middleware(['auth:web'])->group(function () {
    
     // Generic dashboard entrypoint — controller will redirect or show based on role
-    Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Dashboard API routes for charts and statistics
+    Route::prefix('dashboard-api')->name('dashboard.api.')->group(function () {
+        Route::get('order-status-distribution', [DashboardController::class, 'getOrderStatusDistribution'])->name('orderStatusDistribution');
+        Route::get('orders-by-district', [DashboardController::class, 'getOrdersByDistrict'])->name('ordersByDistrict');
+        Route::get('total-orders-over-time', [DashboardController::class, 'getTotalOrdersOverTime'])->name('totalOrdersOverTime');
+        Route::get('orders-by-distributor', [DashboardController::class, 'getOrdersByDistributor'])->name('ordersByDistributor');
+        Route::get('orders-by-fieldstaff', [DashboardController::class, 'getOrdersByFieldStaff'])->name('ordersByFieldStaff');
+        Route::get('top-retailers', [DashboardController::class, 'getTopRetailers'])->name('topRetailers');
+        Route::get('top-distributors', [DashboardController::class, 'getTopDistributors'])->name('topDistributors');
+        Route::get('users-by-credit', [DashboardController::class, 'getUsersByCredit'])->name('usersByCredit');
+        Route::get('users-by-loyalty-points', [DashboardController::class, 'getUsersByLoyaltyPoints'])->name('usersByLoyaltyPoints');
+        Route::get('orders-by-retailer', [DashboardController::class, 'getOrdersByRetailer'])->name('ordersByRetailer');
+        Route::get('sales-target', [DashboardController::class, 'getSalesTarget'])->name('salesTarget');
+        Route::get('top-products', [DashboardController::class, 'getTopProducts'])->name('topProducts');
+    });
 
     // User Management
     Route::get('/admin/users', [App\Http\Controllers\UserController::class, 'index'])->name('admin.users')->middleware('role:superadmin|admin');
@@ -90,9 +107,9 @@ Route::middleware(['auth:web'])->group(function () {
     Route::get('/retailers/get-areas/{district}', [RetailerController::class, 'getAreas'])->name('retailers.getAreas');
 
     // AJAX: Get distributors for selected district for Retailers
-    Route::get('/retailers/get-distributors/{district}', [RetailerController::class, 'getDistributors'])->name('retailers.getDistributors');
+    Route::get('/retailers/get-distributors-by-district-and-area/{district}/{area}', [RetailerController::class, 'getDistributorsByDistrictAndArea'])->name('retailers.getDistributorsByDistrictAndArea');
     // AJAX: Get distributors for selected district for Field Staff
-    Route::get('/fieldstaffs/get-distributors/{district}', [FieldStaffController::class, 'getDistributors'])->name('fieldstaffs.getDistributors');
+    Route::get('/fieldstaffs/get-distributors-by-district-and-area/{district}/{area}', [FieldStaffController::class, 'getDistributorsByDistrictAndArea'])->name('fieldstaffs.getDistributorsByDistrictAndArea');
 
     // Logout (session)
     Route::post('admin/logout', [AuthController::class, 'logout'])->name('admin.logout');

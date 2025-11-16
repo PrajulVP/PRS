@@ -60,32 +60,16 @@
                                                 <td>{{ ucfirst($categoryName) }}</td>
                                                 @foreach($actions as $action)
                                                 <td class="text-center">
-                                                    @php
-                                                        $permission = $categoryData['permissions'][$action] ?? null;
-                                                        $isChecked = false;
-                                                        $isDisabled = false;
-                    
-                                                        if ($permission) {
-                                                            // For superadmin and admin, always check by default for display
-                                                            if ($role->name === 'superadmin' || $role->name === 'admin') {
-                                                                $isChecked = true;
-                                                            } else {
-                                                                $isChecked = $role->hasPermissionTo($permission->name);
-                                                            }
-                                                            $isDisabled = false; // Enabled if permission exists
-                                                        } else {
-                                                            $isDisabled = true; // Disabled if permission doesn't exist
-                                                        }
-                                                    @endphp
                                                     <div class="form-check form-check-inline">
                                                         <input class="form-check-input" type="checkbox" 
-                                                               name="permissions[{{ $permission->id ?? '' }}]" 
+                                                               name="permissions[{{ $categoryData['id'] }}][can_{{ $action }}]" 
                                                                value="1" 
                                                                style="border: 1px solid #727272ff;"
-                                                               {{ $isChecked ? 'checked' : '' }}
-                                                               {{ $isDisabled ? 'disabled' : '' }}>
+                                                               {{ $categoryData['can_' . $action] ? 'checked' : '' }}
+                                                               {{ ($role->name === 'superadmin' || ($role->name === 'admin' && !Auth::user()->hasRole('superadmin')) || ($categoryData['short_code'] === 'permissions' && !Auth::user()->hasRole('superadmin'))) ? 'disabled' : '' }}>
                                                     </div>
-                                                </td>                                                @endforeach
+                                                </td>                                                
+                                                @endforeach
                                             </tr>
                                         @endforeach
                                     @endforeach

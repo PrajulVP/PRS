@@ -32,4 +32,9 @@ class Retailer extends Model
     {
         return $this->hasMany(RetailerOrder::class);
     }
+
+    public function fieldStaff()
+    {
+        return $this->belongsTo(FieldStaff::class);
+    }
 }

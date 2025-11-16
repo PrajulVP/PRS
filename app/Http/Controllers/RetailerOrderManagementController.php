@@ -119,8 +119,17 @@ class RetailerOrderManagementController extends Controller
     // Admin: show create form
     public function create()
     {
-        $products = \App\Models\Product::all(); // Fetch all products
-        return view('admin.orders.create', compact('products'))->with('orderType', 'retailer');
+        $user = Auth::user();
+        $retailer = $user->retailer;
+
+        if (!$retailer || !$retailer->distributor) {
+            // Handle case where retailer is not found or not assigned to a distributor
+            return redirect()->back()->with('error', 'You are not assigned to a distributor or your retailer profile is incomplete.');
+        }
+
+        $distributorProducts = $retailer->distributor->products; // Get products associated with the retailer's distributor
+
+        return view('admin.orders.create', ['products' => $distributorProducts])->with('orderType', 'retailer');
     }
 
     // Admin: store order
@@ -158,6 +167,7 @@ class RetailerOrderManagementController extends Controller
         $data['total_amount'] = $request->quantity * $product->mrp;
         $data['placed_at'] = now();
         $data['status'] = 'pending';
+        $data['distributor_id'] = $retailer->distributor_id; // Add distributor_id from the retailer
 
         if ($request->hasFile('prescription_photo')) {
             $data['prescription_photo'] = $request->file('prescription_photo')->store('prescriptions', 'public');

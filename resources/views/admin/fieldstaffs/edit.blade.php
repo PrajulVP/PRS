@@ -64,11 +64,6 @@
                             <label>Area</label>
                             <select name="area_id" id="area_id" class="form-select" required>
                                 <option value="">Select Area</option>
-                                @foreach($areas as $area)
-                                    <option value="{{ $area->id }}" {{ $area->id == $fieldstaff->user->area_id ? 'selected' : '' }}>
-                                        {{ $area->name }}
-                                    </option>
-                                @endforeach
                             </select>
                         </div>
 
@@ -76,11 +71,6 @@
                             <label>Distributor</label>
                             <select name="assigned_distributor_id" id="assigned_distributor_id" class="form-select" required>
                                 <option value="">Select Distributor</option>
-                                @foreach($distributors as $distributor)
-                                    <option value="{{ $distributor->id }}" {{ old('assigned_distributor_id', $fieldstaff->assigned_distributor_id) == $distributor->id ? 'selected' : '' }}>
-                                        {{ $distributor->company_name }}
-                                    </option>
-                                @endforeach
                             </select>
                         </div>
 
@@ -107,52 +97,90 @@ document.addEventListener('DOMContentLoaded', function () {
     const areaSelect = document.getElementById('area_id');
     const distributorSelect = document.getElementById('assigned_distributor_id');
 
-    function fetchAreas(districtId) {
-        areaSelect.innerHTML = '<option value="">Select Area</option>';
+    // Store initial values for pre-selection
+    const initialDistrictId = "{{ old('district_id', $fieldstaff->user->district_id) }}";
+    const initialAreaId = "{{ old('area_id', $fieldstaff->user->area_id) }}";
+    const initialDistributorId = "{{ old('assigned_distributor_id', $fieldstaff->assigned_distributor_id) }}";
 
-                    if (districtId) {
-                        fetch(`{{ route('fieldstaffs.getAreas', ['district' => '__districtId__']) }}`.replace('__districtId__', districtId))
-                            .then(response => response.json())
-                            .then(data => {
-                                data.forEach(area => {
-                                    const option = document.createElement('option');
-                                    option.value = area.id;
-                                    option.textContent = area.name;
-                                    areaSelect.appendChild(option);
-                                });
-                            })
-                            .catch(error => console.error('Error fetching areas:', error));
-                    }    }
+    // Function to fetch and populate areas
+    function fetchAreas(districtId, selectedAreaId = null) {
+        console.log('fetchAreas called for districtId:', districtId);
+        areaSelect.innerHTML = '<option value="">Select Area</option>'; // Ensure only one default option
 
-    function fetchDistributors(districtId) {
+        if (districtId) {
+            fetch(`{{ route('fieldstaffs.getAreas', ['district' => '__districtId__']) }}`.replace('__districtId__', districtId))
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Areas data received:', data);
+                    data.forEach(area => {
+                        const option = document.createElement('option');
+                        option.value = area.id;
+                        option.textContent = area.name;
+                        if (selectedAreaId && area.id == selectedAreaId) {
+                            option.selected = true;
+                        }
+                        areaSelect.appendChild(option);
+                        console.log('Appended area:', area.name);
+                    });
+                })
+                .catch(error => console.error('Error fetching areas:', error));
+        }
+    }
+
+    // Function to fetch and populate distributors
+    function fetchDistributors(districtId, areaId, selectedDistributorId = null) {
         distributorSelect.innerHTML = '<option value="">Select Distributor</option>';
 
-                    if (districtId) {
-                        fetch(`{{ route('fieldstaffs.getDistributors', ['district' => '__districtId__']) }}`.replace('__districtId__', districtId))
-                            .then(response => response.json())
-                            .then(data => {
-                                if (!data.length) {
-                                    const option = document.createElement('option');
-                                    option.textContent = 'No distributors found';
-                                    distributorSelect.appendChild(option);
-                                    return;
-                                }
-                                data.forEach(distributor => {
-                                    const option = document.createElement('option');
-                                    option.value = distributor.id;
-                                    option.textContent = distributor.company_name || `Distributor #${distributor.id}`;
-                                    distributorSelect.appendChild(option);
-                                });
-                            })
-                            .catch(error => console.error('Error fetching distributors:', error));
-                    }    }
+        if (districtId && areaId) {
+            fetch(`{{ route('fieldstaffs.getDistributorsByDistrictAndArea', ['district' => '__districtId__', 'area' => '__areaId__']) }}`
+                .replace('__districtId__', districtId)
+                .replace('__areaId__', areaId))
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.length) {
+                        const option = document.createElement('option');
+                        option.textContent = 'No distributors found';
+                        distributorSelect.appendChild(option);
+                        return;
+                    }
+                    data.forEach(distributor => {
+                        const option = document.createElement('option');
+                        option.value = distributor.id;
+                        option.textContent = distributor.company_name || `Distributor #${distributor.id}`;
+                        if (selectedDistributorId && distributor.id == selectedDistributorId) {
+                            option.selected = true;
+                        }
+                        distributorSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching distributors:', error));
+        }
+    }
 
+    // Event listener for district change
     districtSelect.addEventListener('change', function () {
         const districtId = this.value;
         console.log('Selected District ID:', districtId);
         fetchAreas(districtId);
-        fetchDistributors(districtId);
+        // Clear distributors when district changes, as areas will change
+        distributorSelect.innerHTML = '<option value="">Select Distributor</option>';
     });
+
+    // Event listener for area change
+    areaSelect.addEventListener('change', function () {
+        const districtId = districtSelect.value;
+        const areaId = this.value;
+        console.log('Selected Area ID:', areaId);
+        fetchDistributors(districtId, areaId);
+    });
+
+    // Initial population on page load if district and area are already selected
+    if (initialDistrictId) {
+        fetchAreas(initialDistrictId, initialAreaId);
+        if (initialAreaId) {
+            fetchDistributors(initialDistrictId, initialAreaId, initialDistributorId);
+        }
+    }
 });
 </script>
 @endpush

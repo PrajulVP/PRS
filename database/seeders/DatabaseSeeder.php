@@ -3,14 +3,11 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
      */
@@ -18,7 +15,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             RoleSeeder::class, // Call RoleSeeder first
-            PermissionSeeder::class,
+            PermissionCategorySeeder::class,
+            RolePermissionSeeder::class,
             SuperAdminSeeder::class,
             DistrictSeeder::class,
         ]);

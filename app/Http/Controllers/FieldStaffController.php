@@ -141,14 +141,15 @@ class FieldStaffController extends Controller
     // AJAX: Get areas for selected district
     public function getAreas(District $district)
     {
-        return response()->json($district->areas);
+        return response()->json($district->areas->unique('name')->values()->all());
     }
 
-    // AJAX: Get distributors for selected district
-    public function getDistributors(District $district)
+    // AJAX: Get distributors for selected district and area
+    public function getDistributorsByDistrictAndArea(District $district, Area $area)
     {
-        // Assuming a distributor has a district_id
-        $distributors = Distributor::where('district_id', $district->id)->get();
+        $distributors = Distributor::where('district_id', $district->id)
+                                   ->where('area_id', $area->id)
+                                   ->get();
         return response()->json($distributors);
     }
 }

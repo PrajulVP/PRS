@@ -25,5 +25,21 @@ class SuperAdminSeeder extends Seeder
 
         // Assign the 'superadmin' role to the user
         $superAdmin->assignRole($role);
+
+        // Create or update the 'admin' user
+        $adminUser = User::updateOrCreate(
+            ['email' => 'admin@gmail.com'],
+            [
+                'name' => 'Admin',
+                'password' => Hash::make('12345'),
+                'role' => 'admin'
+            ]
+        );
+
+        // Create the 'admin' role if it doesn't exist
+        $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+
+        // Assign the 'admin' role to the admin user
+        $adminUser->assignRole($adminRole);
     }
 }

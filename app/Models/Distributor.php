@@ -43,4 +43,14 @@ class Distributor extends Model
     {
         return $this->hasMany(RetailerOrder::class);
     }
+
+    public function fieldStaffs(): HasMany
+    {
+        return $this->hasMany(FieldStaff::class, 'assigned_distributor_id');
+    }
+
+    public function products()
+    {
+        return $this->belongsToMany(Product::class, 'distributor_product');
+    }
 }

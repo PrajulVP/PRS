@@ -99,19 +99,36 @@
         const initialAreaId = "{{ old('area_id', $distributor->area_id) }}"; // Get the currently selected area
 
         function fetchAreas(districtId, selectedAreaId) {
-            areaSelect.innerHTML = '<option value="">Select Area</option>'; // Clear previous areas
+            // Clear previous areas more robustly
+            while (areaSelect.firstChild) {
+                areaSelect.removeChild(areaSelect.firstChild);
+            }
+            // Add the default "Select Area" option
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Select Area';
+            areaSelect.appendChild(defaultOption);
 
             if (districtId) {
+                console.log('Fetching areas for district:', districtId);
                 fetch(`/distributors/get-areas/${districtId}`)
                     .then(response => response.json())
                     .then(data => {
+                        console.log('Received data:', data);
+                        // Clear previous areas more robustly
+                        while (areaSelect.firstChild) {
+                            areaSelect.removeChild(areaSelect.firstChild);
+                        }
+                        // Add the default "Select Area" option
+                        const defaultOption = document.createElement('option');
+                        defaultOption.value = '';
+                        defaultOption.textContent = 'Select Area';
+                        areaSelect.appendChild(defaultOption);
+
                         data.forEach(area => {
                             const option = document.createElement('option');
                             option.value = area.id;
                             option.textContent = area.name;
-                            if (area.id == selectedAreaId) { // Select the existing area
-                                option.selected = true;
-                            }
                             areaSelect.appendChild(option);
                         });
                     })

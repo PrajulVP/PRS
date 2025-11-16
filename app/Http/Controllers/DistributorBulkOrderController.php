@@ -117,9 +117,22 @@ class DistributorBulkOrderController extends Controller
     // Admin/Distributor: show create form
     public function create()
     {
-        $distributors = Distributor::with('user')->get();
+        $user = Auth::user();
         $products = \App\Models\Product::all(); // Fetch all products
-        return view('admin.orders.create', compact('distributors', 'products'))->with('orderType', 'distributor');
+
+        $distributors = collect(); // Initialize as empty collection
+        $authenticatedDistributorId = null;
+
+        if ($user->hasRole('distributor')) {
+            $authenticatedDistributorId = $user->distributor->id ?? null;
+            // If a distributor is creating an order, they are creating it for themselves
+            // No need to select a distributor from a list
+        } else {
+            // If an admin/superadmin is creating, they need to select a distributor
+            $distributors = Distributor::with('user')->get();
+        }
+
+        return view('admin.orders.create', compact('distributors', 'products', 'authenticatedDistributorId'))->with('orderType', 'distributor');
     }
 
     // Admin/Distributor: store bulk order
@@ -142,10 +155,15 @@ class DistributorBulkOrderController extends Controller
 
         $data = $request->all();
         $data['product_name'] = $product->product_name; // Store product name from selected product
-        $data['unit_price'] = $product->mrp; // Store unit price from selected product
-        $data['total_amount'] = $request->quantity * $product->mrp;
+        $data['unit_price'] = 0; // Bulk orders are placed "without all charges"
+        $data['total_amount'] = 0; // Bulk orders are placed "without all charges"
         $data['placed_at'] = now();
         $data['status'] = 'pending'; // Default status for bulk orders
+
+        // If the authenticated user is a distributor, override the distributor_id
+        if (Auth::user()->hasRole('distributor')) {
+            $data['distributor_id'] = Auth::user()->distributor->id;
+        }
 
         DistributorOrder::create($data);
 

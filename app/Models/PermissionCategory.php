@@ -3,8 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Spatie\Permission\Models\Permission;
-
 class PermissionCategory extends Model
 {
     protected $fillable = [
@@ -20,10 +18,5 @@ class PermissionCategory extends Model
     public function permissionGroup()
     {
         return $this->belongsTo(PermissionGroup::class, 'perm_group_id');
-    }
-
-    public function permissions()
-    {
-        return $this->hasMany(Permission::class, 'permission_category_id');
     }
 }

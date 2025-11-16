@@ -18,17 +18,21 @@
                         @csrf
 
                         @if($orderType == 'distributor')
-                        <div class="mb-3">
-                            <label for="distributor_id">Distributor</label>
-                            <select name="distributor_id" id="distributor_id" class="form-control" required>
-                                <option value="">Select a distributor</option>
-                                @foreach($distributors as $distributor)
-                                    <option value="{{ $distributor->id }}" {{ old('distributor_id') == $distributor->id ? 'selected' : '' }}>
-                                        {{ $distributor->user->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+                            @if(isset($authenticatedDistributorId))
+                                <input type="hidden" name="distributor_id" value="{{ $authenticatedDistributorId }}">
+                            @else
+                                <div class="mb-3">
+                                    <label for="distributor_id">Distributor</label>
+                                    <select name="distributor_id" id="distributor_id" class="form-control" required>
+                                        <option value="">Select a distributor</option>
+                                        @foreach($distributors as $distributor)
+                                            <option value="{{ $distributor->id }}" {{ old('distributor_id') == $distributor->id ? 'selected' : '' }}>
+                                                {{ $distributor->user->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
                         @endif
 
                         <div class="mb-3">
@@ -72,7 +76,7 @@
                             <textarea name="notes" class="form-control">{{ old('notes') }}</textarea>
                         </div>
 
-                        <button class="btn btn-success">Create Retailer Order</button>
+                        <button class="btn btn-success">Create {{ ucfirst($orderType) }} Order</button>
                     </form>
                 </div>
             </div>
