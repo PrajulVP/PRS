@@ -62,7 +62,7 @@
 
     <!-- Layout B: top row: Pie | Bar -->
     <div class="row dashboard-row">
-        <div class="col-xl-6 box-col-6">
+        <div class="col-xl-4">
             <div class="card">
                 <div class="card-header"><h5>Order Status Distribution</h5></div>
                 <div class="card-body">
@@ -71,7 +71,7 @@
             </div>
         </div>
 
-        <div class="col-xl-6 box-col-6">
+        <div class="col-xl-8">
             <div class="card">
                 <div class="card-header"><h5>Orders by Retailer</h5></div>
                 <div class="card-body">

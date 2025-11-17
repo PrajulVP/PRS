@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('distributor_orders', function (Blueprint $table) {
-            $table->timestamp('placed_at')->nullable()->after('total_amount');
+            $table->string('sku', 100)->nullable()->after('product_name');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('distributor_orders', function (Blueprint $table) {
-            $table->dropColumn('placed_at');
+            $table->dropColumn('sku');
         });
     }
 };

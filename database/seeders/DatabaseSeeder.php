@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        User::truncate(); // Clear existing users
         $this->call([
             RoleSeeder::class, // Call RoleSeeder first
             PermissionCategorySeeder::class,

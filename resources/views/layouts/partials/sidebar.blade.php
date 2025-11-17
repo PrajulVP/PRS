@@ -184,8 +184,67 @@
             <h6 class="lan-10">Orders</h6>
           </div>
         </li>
+
+        @if (Auth::user()->hasRole('retailer'))
+        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+            <svg class="stroke-icon">
+              <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
+            </svg><span>Orders</span></a>
+          <ul class="sidebar-submenu">
+            <li><a href="{{ route('retailer-orders-management.index') }}">Order List</a></li>
+            @if (Auth::user()->hasPermissionToCategory('retailer_orders', 'add'))
+            <li><a href="{{ route('retailer-orders-management.create') }}">Create Order</a></li>
+            @endif
+          </ul>
+        </li>
+        @elseif (Auth::user()->hasRole('fieldstaff'))
+        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+            <svg class="stroke-icon">
+              <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
+            </svg><span>Orders</span></a>
+          <ul class="sidebar-submenu">
+            <li><a href="{{ route('distributor-bulk-orders.index') }}">Order List</a></li>
+            {{-- Field staff typically don't create distributor orders directly, but manage assigned ones --}}
+          </ul>
+        </li>
+        @elseif (Auth::user()->hasRole('distributor'))
+        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+            <svg class="stroke-icon">
+              <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
+            </svg><span>Orders</span></a>
+          <ul class="sidebar-submenu">
+            <li><a href="{{ route('distributor-bulk-orders.index') }}">Order List</a></li>
+            @if (Auth::user()->hasPermissionToCategory('distributor_orders', 'add'))
+            <li><a href="{{ route('distributor-bulk-orders.create') }}">Create Order</a></li>
+            @endif
+          </ul>
+        </li>
+        @if (Auth::user()->hasPermissionToCategory('retailer_orders', 'view'))
+        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+            <svg class="stroke-icon">
+              <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
+            </svg><span>Retailer Orders</span></a>
+          <ul class="sidebar-submenu">
+            <li><a href="{{ route('retailer-orders-management.index') }}">Order List</a></li>
+            @if (Auth::user()->hasPermissionToCategory('retailer_orders', 'add'))
+            <li><a href="{{ route('retailer-orders-management.create') }}">Create Order</a></li>
+            @endif
+          </ul>
+        </li>
         @endif
-        
+        @else {{-- Superadmin or Admin --}}
         @if (Auth::user()->hasPermissionToCategory('retailer_orders', 'view'))
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
             <svg class="stroke-icon">
@@ -218,6 +277,8 @@
             @endif
           </ul>
         </li>
+        @endif
+        @endif
         @endif
 
       </ul>

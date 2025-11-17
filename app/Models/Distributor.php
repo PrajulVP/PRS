@@ -51,6 +51,6 @@ class Distributor extends Model
 
     public function products()
     {
-        return $this->belongsToMany(Product::class, 'distributor_product');
+        return $this->belongsToMany(Product::class, 'distributor_product')->withPivot('stock');
     }
 }

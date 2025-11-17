@@ -156,18 +156,20 @@
     <div class="row size-column">
         <div class="col-xxl-12 box-col-12">
             <div class="row">
-            <div class="col-xl-6 box-col-6">
+            <div class="col-xl-4">
                 <div class="card">
                     <div class="card-header">
                         <h5>Order Status Distribution</h5>
                     </div>
                     <div class="card-body">
-                        <canvas id="orderStatusDistributionChart"></canvas>
+                        <div style="height: 300px;">
+                            <canvas id="orderStatusDistributionChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-xl-6 box-col-6">
+            <div class="col-xl-8">
                 <div class="card">
                     <div class="card-header">
                         <h5>Orders by Distributor</h5>

@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('distributor_orders', function (Blueprint $table) {
-            $table->renameColumn('order_date', 'placed_at');
+            if (Schema::hasColumn('distributor_orders', 'order_date') && !Schema::hasColumn('distributor_orders', 'placed_at')) {
+                $table->renameColumn('order_date', 'placed_at');
+            }
         });
     }
 
@@ -22,7 +24,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('distributor_orders', function (Blueprint $table) {
-            $table->renameColumn('placed_at', 'order_date');
+            if (Schema::hasColumn('distributor_orders', 'placed_at') && !Schema::hasColumn('distributor_orders', 'order_date')) {
+                $table->renameColumn('placed_at', 'order_date');
+            }
         });
     }
 };

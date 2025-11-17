@@ -142,23 +142,27 @@ class RetailerOrderManagementController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $product = Product::find($request->product_id);
-
-        if (!$product) {
-            return back()->withErrors(['product_id' => 'Selected product not found.'])->withInput();
-        }
-
-        $orderedUnits = $request->quantity * $product->pack_quantity;
-        if ($product->stock < $orderedUnits) {
-            $availablePacks = floor($product->stock / $product->pack_quantity);
-            return back()->withErrors(['quantity' => 'Ordered quantity exceeds available stock. Available packs: ' . $availablePacks])->withInput();
-        }
-
         $retailer = Auth::user()->retailer;
 
-        // Decrement product stock
-        $product->stock -= $orderedUnits;
-        $product->save();
+        if (!$retailer || !$retailer->distributor) {
+            return back()->withErrors(['retailer' => 'Retailer not assigned to a distributor.'])->withInput();
+        }
+
+        $distributor = $retailer->distributor;
+        $product = $distributor->products()->where('product_id', $request->product_id)->first();
+
+        if (!$product) {
+            return back()->withErrors(['product_id' => 'Product not available from your assigned distributor.'])->withInput();
+        }
+
+        $orderedUnits = $request->quantity * $product->pack_quantity; // Assuming pack_quantity is still relevant for product
+        if ($product->pivot->stock < $orderedUnits) {
+            $availablePacks = floor($product->pivot->stock / $product->pack_quantity);
+            return back()->withErrors(['quantity' => 'Ordered quantity exceeds available stock from distributor. Available packs: ' . $availablePacks])->withInput();
+        }
+
+        // Decrement stock from distributor_product pivot table
+        $distributor->products()->updateExistingPivot($product->id, ['stock' => $product->pivot->stock - $orderedUnits]);
 
         $data = $request->all();
         $data['retailer_id'] = $retailer->id;

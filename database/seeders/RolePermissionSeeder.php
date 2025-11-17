@@ -71,5 +71,89 @@ class RolePermissionSeeder extends Seeder
                 );
             }
         }
+
+        // Seed permissions for Retailer
+        $retailerRole = Role::where('name', 'retailer')->first();
+        if ($retailerRole) {
+            $retailerOrdersCategory = PermissionCategory::where('short_code', 'retailer_orders')->first();
+            if ($retailerOrdersCategory) {
+                DB::table('roles_permissions')->updateOrInsert(
+                    [
+                        'role_id' => $retailerRole->id,
+                        'permission_category_id' => $retailerOrdersCategory->id,
+                    ],
+                    [
+                        'can_view' => true,
+                        'can_add' => false,
+                        'can_edit' => false,
+                        'can_delete' => false,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
+            }
+        }
+
+        // Seed permissions for Field Staff
+        $fieldstaffRole = Role::where('name', 'fieldstaff')->first();
+        if ($fieldstaffRole) {
+            $distributorOrdersCategory = PermissionCategory::where('short_code', 'distributor_orders')->first();
+            if ($distributorOrdersCategory) {
+                DB::table('roles_permissions')->updateOrInsert(
+                    [
+                        'role_id' => $fieldstaffRole->id,
+                        'permission_category_id' => $distributorOrdersCategory->id,
+                    ],
+                    [
+                        'can_view' => true,
+                        'can_add' => false,
+                        'can_edit' => false,
+                        'can_delete' => false,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
+            }
+        }
+
+        // Seed permissions for Distributor
+        $distributorRole = Role::where('name', 'distributor')->first();
+        if ($distributorRole) {
+            $distributorOrdersCategory = PermissionCategory::where('short_code', 'distributor_orders')->first();
+            if ($distributorOrdersCategory) {
+                DB::table('roles_permissions')->updateOrInsert(
+                    [
+                        'role_id' => $distributorRole->id,
+                        'permission_category_id' => $distributorOrdersCategory->id,
+                    ],
+                    [
+                        'can_view' => true,
+                        'can_add' => true, // Distributors can create their own orders
+                        'can_edit' => true,
+                        'can_delete' => false,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
+            }
+            // Also give distributors view permission for retailer orders
+            $retailerOrdersCategory = PermissionCategory::where('short_code', 'retailer_orders')->first();
+            if ($retailerOrdersCategory) {
+                DB::table('roles_permissions')->updateOrInsert(
+                    [
+                        'role_id' => $distributorRole->id,
+                        'permission_category_id' => $retailerOrdersCategory->id,
+                    ],
+                    [
+                        'can_view' => true,
+                        'can_add' => false,
+                        'can_edit' => false,
+                        'can_delete' => false,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
+            }
+        }
     }
 }

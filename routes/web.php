@@ -73,6 +73,9 @@ Route::middleware(['auth:web'])->group(function () {
     Route::resource('districts', DistrictController::class);
     Route::resource('areas', AreaController::class);
     Route::resource('retailer-orders-management', RetailerOrderManagementController::class);
+    Route::post('distributor-bulk-orders/{distributor_order}/confirm-delivery', [DistributorBulkOrderController::class, 'confirmDelivery'])->name('distributor-bulk-orders.confirmDelivery');
+    Route::post('distributor-bulk-orders/{distributor_order}/accept-order', [DistributorBulkOrderController::class, 'acceptOrder'])->name('distributor-bulk-orders.acceptOrder');
+
     Route::resource('distributor-bulk-orders', DistributorBulkOrderController::class);
     Route::resource('products', ProductController::class);
 
