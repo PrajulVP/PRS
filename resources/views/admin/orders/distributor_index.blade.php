@@ -141,7 +141,9 @@
 
                             // Logic for displaying status or action buttons
                             if (status === 'pending') {
-                                if ({{ Auth::user()->hasPermissionToCategory('distributor_orders', 'edit') ? 'true' : 'false' }}) {
+                                if ({{ Auth::user()->hasRole('distributor') ? 'true' : 'false' }}) { // Distributor
+                                    output = `<button class="btn btn-danger btn-sm cancel-order-btn" data-id="${row.id}">Cancel</button>`;
+                                } else if ({{ Auth::user()->hasPermissionToCategory('distributor_orders', 'edit') ? 'true' : 'false' }}) { // Manager/Admin
                                     output = `<button class="btn btn-primary btn-sm accept-order-btn" data-id="${row.id}">Accept</button>`;
                                 } else {
                                     output = `<span class="badge badge-warning">${row.status}</span>`;
@@ -183,12 +185,6 @@
                                 switch (status) {
                                     case 'accepted':
                                         badgeClass = 'badge-success';
-                                        break;
-                                    case 'dispatched':
-                                        badgeClass = 'badge-info';
-                                        break;
-                                    case 'out_for_delivery':
-                                        badgeClass = 'badge-secondary';
                                         break;
                                     case 'delivered':
                                         badgeClass = 'badge-success';
@@ -271,6 +267,32 @@
                         error: function(xhr, status, error) {
                             console.error('Error:', error);
                             alert('An error occurred while accepting the order.');
+                        }
+                    });
+                }
+            });
+
+            // Handle Cancel Order button click
+            $('#retailer-orders-table').on('click', '.cancel-order-btn', function() {
+                var orderId = $(this).data('id');
+                if (confirm('Are you sure you want to cancel this order?')) {
+                    $.ajax({
+                        url: `/distributor-bulk-orders/${orderId}/cancel-order`,
+                        method: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                alert(response.success);
+                                table.draw(); // Redraw the table
+                            } else {
+                                alert(response.error || 'Something went wrong.');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error:', error);
+                            alert('An error occurred while cancelling the order.');
                         }
                     });
                 }

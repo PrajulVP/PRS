@@ -4,7 +4,7 @@
     <h2>Order #{{ $retailerOrder->id }}</h2>
 
     <div class="card p-3 mb-3">
-        <p><strong>Retailer:</strong> {{ $retailerOrder->retailer->name ?? $retailerOrder->retailer->email }}</p>
+        <p><strong>Retailer:</strong> {{ $retailerOrder->retailer ? ($retailerOrder->retailer->user->name ?? $retailerOrder->retailer->user->email) : 'N/A' }}</p>
         <p><strong>Product:</strong> {{ $retailerOrder->product_name }}</p>
         <p><strong>SKU:</strong> {{ $retailerOrder->sku }}</p>
         <p><strong>Quantity:</strong> {{ $retailerOrder->quantity }}</p>

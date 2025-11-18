@@ -194,9 +194,9 @@
               <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
             </svg><span>Orders</span></a>
           <ul class="sidebar-submenu">
-            <li><a href="{{ route('retailer-orders-management.index') }}">Order List</a></li>
+            <li><a href="{{ route('retailer.orders.index') }}">Order List</a></li>
             @if (Auth::user()->hasPermissionToCategory('retailer_orders', 'add'))
-            <li><a href="{{ route('retailer-orders-management.create') }}">Create Order</a></li>
+            <li><a href="{{ route('retailer.orders.create') }}">Create Order</a></li>
             @endif
           </ul>
         </li>
@@ -238,9 +238,7 @@
             </svg><span>Retailer Orders</span></a>
           <ul class="sidebar-submenu">
             <li><a href="{{ route('retailer-orders-management.index') }}">Order List</a></li>
-            @if (Auth::user()->hasPermissionToCategory('retailer_orders', 'add'))
-            <li><a href="{{ route('retailer-orders-management.create') }}">Create Order</a></li>
-            @endif
+
           </ul>
         </li>
         @endif
@@ -255,9 +253,7 @@
             </svg><span>Retailer Orders</span></a>
           <ul class="sidebar-submenu">
             <li><a href="{{ route('retailer-orders-management.index') }}">Order List</a></li>
-            @if (Auth::user()->hasPermissionToCategory('retailer_orders', 'add'))
-            <li><a href="{{ route('retailer-orders-management.create') }}">Create Order</a></li>
-            @endif
+
           </ul>
         </li>
         @endif

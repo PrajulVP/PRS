@@ -211,7 +211,7 @@ class DistributorBulkOrderController extends Controller
             'sku' => 'nullable|string|max:100',
             'quantity' => 'required|integer|min:1',
             'unit_price' => 'required|numeric|min:0',
-            'status' => 'required|in:pending,accepted,dispatched,delivered,cancelled',
+            'status' => 'required|in:pending,accepted,delivered,cancelled',
             'notes' => 'nullable|string',
         ]);
 
@@ -285,16 +285,59 @@ class DistributorBulkOrderController extends Controller
                 }
 
         
-
                 $distributorBulkOrder->status = 'accepted';
-
                 $distributorBulkOrder->save();
-
         
+                // Add product to distributor's stock
+                $product = Product::where('product_code', $distributorBulkOrder->sku)->first();
+                $distributor = $distributorBulkOrder->distributor;
+        
+                if ($product && $distributor) {
+                    $pivot = $distributor->products()->where('product_id', $product->id)->first();
+                    if ($pivot) {
+                        // If pivot record exists, increment stock
+                        $newStock = $pivot->pivot->stock + $distributorBulkOrder->quantity;
+                        $distributor->products()->updateExistingPivot($product->id, ['stock' => $newStock]);
+                    } else {
+                        // If no pivot record, create one
+                        $distributor->products()->attach($product->id, ['stock' => $distributorBulkOrder->quantity]);
+                    }
+                }
 
                 return response()->json(['success' => 'Order accepted successfully!']);
 
             }
+
+    // Distributor: Cancel a pending order
+    public function cancelOrder(DistributorOrder $distributorBulkOrder)
+    {
+        // Ensure the user is a distributor
+        if (!Auth::user()->hasRole('distributor')) {
+            return response()->json(['error' => 'You do not have permission to cancel this order.'], 403);
+        }
+
+        // Ensure the order belongs to this distributor
+        if ($distributorBulkOrder->distributor_id !== Auth::user()->distributor->id) {
+            return response()->json(['error' => 'You can only cancel your own orders.'], 403);
+        }
+
+        // Check if the order is in a 'pending' state
+        if ($distributorBulkOrder->status !== 'pending') {
+            return response()->json(['error' => 'Only pending orders can be cancelled.'], 400);
+        }
+
+        // Restore product stock
+        $product = Product::where('product_code', $distributorBulkOrder->sku)->first();
+        if ($product) {
+            $product->stock += $distributorBulkOrder->quantity;
+            $product->save();
+        }
+
+        $distributorBulkOrder->status = 'cancelled';
+        $distributorBulkOrder->save();
+
+        return response()->json(['success' => 'Order cancelled successfully!']);
+    }
 
         }
 

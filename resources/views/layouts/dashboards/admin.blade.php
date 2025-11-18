@@ -132,7 +132,7 @@
                             <span class="f-light f-w-500 f-14">Overall Achieved Sales</span>
                             <div class="project-details">
                                 <div class="project-counter">
-                                    <h2 class="f-w-600">{{ number_format($overallAchievedAmount, 2) }}</h2>
+                                    <h2 class="f-w-600">re{{ number_format($overallAchievedAmount, 2) }}</h2>
                                 </div>
                                 <div class="product-sub bg-success-light">
                                     <svg class="invoice-icon">

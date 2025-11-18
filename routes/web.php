@@ -72,11 +72,14 @@ Route::middleware(['auth:web'])->group(function () {
     Route::resource('retailers', RetailerController::class);
     Route::resource('districts', DistrictController::class);
     Route::resource('areas', AreaController::class);
-    Route::resource('retailer-orders-management', RetailerOrderManagementController::class);
-    Route::post('distributor-bulk-orders/{distributor_order}/confirm-delivery', [DistributorBulkOrderController::class, 'confirmDelivery'])->name('distributor-bulk-orders.confirmDelivery');
-    Route::post('distributor-bulk-orders/{distributor_order}/accept-order', [DistributorBulkOrderController::class, 'acceptOrder'])->name('distributor-bulk-orders.acceptOrder');
+    Route::post('retailer-orders-management/{retailerOrder}/accept-order', [RetailerOrderManagementController::class, 'acceptRetailerOrder'])->name('retailer-orders-management.acceptOrder');
+    Route::resource('retailer-orders-management', RetailerOrderManagementController::class)->except(['create', 'store']);
+    Route::post('distributor-bulk-orders/{distributor_bulk_order}/confirm-delivery', [DistributorBulkOrderController::class, 'confirmDelivery'])->name('distributor-bulk-orders.confirmDelivery');
+    Route::post('distributor-bulk-orders/{distributor_bulk_order}/accept-order', [DistributorBulkOrderController::class, 'acceptOrder'])->name('distributor-bulk-orders.acceptOrder');
+    Route::post('distributor-bulk-orders/{distributor_bulk_order}/cancel-order', [DistributorBulkOrderController::class, 'cancelOrder'])->name('distributor-bulk-orders.cancelOrder');
 
     Route::resource('distributor-bulk-orders', DistributorBulkOrderController::class);
+    Route::get('admin/retailer-orders/create', [RetailerOrderController::class, 'create'])->name('admin.retailer-orders.create');
     Route::resource('products', ProductController::class);
 
     Route::post('admin/orders/{order}/assign-distributor', [RetailerOrderManagementController::class, 'assignDistributor'])->name('admin.orders.assign_distributor')->middleware('role:superadmin|admin|manager');
@@ -99,6 +102,8 @@ Route::middleware(['auth:web'])->group(function () {
 
     Route::prefix('retailer')->name('retailer.')->middleware('role:retailer')->group(function () {
         Route::get('/orders', [RetailerOrderController::class, 'retailerIndex'])->name('orders.index');
+        Route::get('/orders/create', [RetailerOrderController::class, 'create'])->name('orders.create');
+        Route::post('/orders', [RetailerOrderController::class, 'store'])->name('orders.store');
         Route::get('/orders/{retailerOrder}', [RetailerOrderController::class, 'show'])->name('orders.show');
     });
 

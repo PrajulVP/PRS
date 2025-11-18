@@ -14,7 +14,7 @@
                     </div>
                     @endif
 
-                    <form action="{{ $orderType == 'retailer' ? route('retailer-orders-management.store') : route('distributor-bulk-orders.store') }}" method="POST" enctype="multipart/form-data">
+                    <form action="{{ $orderType == 'retailer' ? route('retailer.orders.store') : route('distributor-bulk-orders.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
                         @if($orderType == 'distributor')
@@ -42,9 +42,18 @@
                                 @foreach($products as $product)
                                     <option value="{{ $product->id }}"
                                             data-unit-price="{{ $product->mrp }}"
-                                            data-stock="{{ floor($product->stock / $product->pack_quantity) }}"
+                                            @if($orderType == 'retailer')
+                                                data-stock="{{ floor($product->pivot->stock / ($product->pack_quantity ?: 1)) }}"
+                                            @else
+                                                data-stock="{{ floor($product->stock / ($product->pack_quantity ?: 1)) }}"
+                                            @endif
                                             {{ old('product_id') == $product->id ? 'selected' : '' }}>
-                                        {{ $product->product_name }} ({{ $product->product_code }}) - Stock: {{ floor($product->stock / $product->pack_quantity) }} packs
+                                        {{ $product->product_name }} ({{ $product->product_code }}) - Stock: 
+                                        @if($orderType == 'retailer')
+                                            {{ $product->pivot->stock }} units
+                                        @else
+                                            {{ $product->stock }} units
+                                        @endif
                                     </option>
                                 @endforeach
                             </select>
@@ -54,9 +63,9 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="quantity">Quantity</label>
+                                <label for="quantity">Quantity (units)</label>
                                 <input type="number" name="quantity" id="quantity" class="form-control" value="{{ old('quantity',1) }}" min="1" required>
-                                <small class="form-text text-muted">Available Stock: <span id="available_stock">0</span></small>
+                                <small class="form-text text-muted">Available Stock: <span id="available_stock">0</span> units</small>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="display_unit_price">Unit Price (MRP)</label>
@@ -96,16 +105,19 @@
             var selectedProduct = products[productId];
 
             if (selectedProduct) {
-                var availablePacks = Math.floor(selectedProduct.stock / selectedProduct.pack_quantity);
+                var stock = (orderType === 'retailer' && selectedProduct.pivot) ? selectedProduct.pivot.stock : selectedProduct.stock;
+                
                 $('#display_unit_price').val(selectedProduct.mrp);
                 $('#hidden_unit_price').val(selectedProduct.mrp);
-                $('#available_stock').text(availablePacks); // Display available packs
+                $('#available_stock').text(stock);
                 $('#hidden_product_name').val(selectedProduct.product_name);
-                if (orderType === 'retailer') { // Only set max for retailer orders
-                    $('#quantity').attr('max', availablePacks); // Set max quantity to available packs
+
+                if (orderType === 'retailer') {
+                    $('#quantity').attr('max', stock);
                 } else {
-                    $('#quantity').removeAttr('max'); // No max for distributor orders
+                    $('#quantity').removeAttr('max');
                 }
+
             } else {
                 $('#display_unit_price').val('0');
                 $('#hidden_unit_price').val('0');
@@ -113,9 +125,8 @@
                 $('#hidden_product_name').val('');
                 $('#quantity').removeAttr('max');
             }
-        }).change(); // Trigger change on load to set initial values
+        }).change();
 
-        // Ensure quantity doesn't exceed available stock (only for retailer orders)
         $('#quantity').on('input', function() {
             if (orderType === 'retailer') {
                 var max = parseInt($(this).attr('max'));
