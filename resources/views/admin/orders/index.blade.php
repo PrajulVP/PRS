@@ -194,11 +194,11 @@
                         var csrfToken = "{{ csrf_token() }}";
                         var output = '';
 
-                                                                                                                        if (row.status === 'Pending') {
-
-                                                                                                                            output += `<button class="btn btn-primary btn-sm open-assign-modal-btn" data-id="${row.id}" data-bs-toggle="modal" data-bs-target="#assignFieldStaffModal">Accept</button>`;
-
-                                                                                                                        }
+                        if (row.status === 'Pending') {
+                            output += `<button class="btn btn-success btn-sm accept-order-btn" data-id="${row.id}">Accept Order</button>`;
+                        } else if (row.status === 'Accepted By Distributor') {
+                            output += `<button class="btn btn-primary btn-sm open-assign-modal-btn" data-id="${row.id}" data-bs-toggle="modal" data-bs-target="#assignFieldStaffModal">Assign Field Staff</button>`;
+                        }
                                             
 
                                                                         output += `
@@ -248,6 +248,31 @@
                                                             ]
 
                                                         });
+            // Handle Accept Order button click
+            $('#orders-table').on('click', '.accept-order-btn', function() {
+                var orderId = $(this).data('id');
+                if (confirm('Are you sure you want to accept this order?')) {
+                    $.ajax({
+                        url: "{{ route('retailer-orders-management.acceptOrder', ['retailerOrder' => ':id']) }}".replace(':id', orderId),
+                        method: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                alert(response.success);
+                                table.draw(); // Redraw the table
+                            } else {
+                                alert(response.error || 'Something went wrong.');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error:', error);
+                            alert('An error occurred while accepting the order.');
+                        }
+                    });
+                }
+            });
                                  
                                                         // Populate field staff dropdown when modal opens
                                                         $('#assignFieldStaffModal').on('show.bs.modal', function (event) {
@@ -275,7 +300,7 @@
                                                                 return;
                                                             }
 
-                                                            var url = "{{ route('retailer-orders-management.acceptAndAssignFieldStaff', ['retailerOrder' => ':id']) }}".replace(':id', orderId);
+                                                            var url = "{{ route('retailer-orders-management.assignFieldStaff', ['retailerOrder' => ':id']) }}".replace(':id', orderId);
 
                                                             $.ajax({
                                                                 url: url,
