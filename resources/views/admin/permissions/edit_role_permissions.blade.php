@@ -60,25 +60,6 @@
                                                 <td>{{ ucfirst($categoryName) }}</td>
                                                 @foreach($actions as $action)
                                                 <td class="text-center">
-<<<<<<< HEAD
-                                                    @php
-                                                        $permission = $categoryData['permissions'][$action] ?? null;
-                                                        $isChecked = false;
-                                                        $isDisabled = false;
-                    
-                                                        if ($permission) {
-                                                            // Check if the role has this permission assigned in the custom roles_permissions table
-                                                            $assignedCategory = $assignedPermissions->get($categoryData['id']);
-                                                            if ($assignedCategory && $assignedCategory->{'can_' . $action}) {
-                                                                $isChecked = true;
-                                                            }
-                                                            $isDisabled = false; // Enabled if permission exists
-                                                        } else {
-                                                            $isDisabled = true; // Disabled if permission doesn't exist
-                                                        }
-                                                    @endphp
-=======
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
                                                     <div class="form-check form-check-inline">
                                                         <input class="form-check-input" type="checkbox" 
                                                                name="permissions[{{ $categoryData['id'] }}][can_{{ $action }}]" 

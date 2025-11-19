@@ -23,7 +23,7 @@ class RetailerOrder extends Model
         'status',
         'placed_at',
         'notes',
-        'fieldstaff_id',
+        'field_staff_id',
         'delivered_at',
     ];
 

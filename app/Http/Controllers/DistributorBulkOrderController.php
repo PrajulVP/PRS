@@ -84,7 +84,7 @@ class DistributorBulkOrderController extends Controller
                 $length = $request->input('length');
                 $orders = $query->offset($start)->limit($length)->get();
 
-                $formattedOrders = $orders->map(function ($order) {
+                $formattedOrders = $orders->map(function (  $order) {
                     \Illuminate\Support\Facades\Log::info('DistributorBulkOrderController@index: Order ID ' . $order->id . ' - Status: ' . $order->status);
                     return [
                         'id' => $order->id,

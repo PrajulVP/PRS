@@ -61,6 +61,8 @@ class RetailerController extends Controller
             'gst' => 'required|unique:retailers',
             'distributor_id' => 'required|exists:distributors,id',
         ]);
+        $retailerData['district_id'] = $userData['district_id']; // Add district_id
+        $retailerData['area_id'] = $userData['area_id'];     // Add area_id
 
         // Create User
         $user = User::create([
@@ -79,6 +81,8 @@ class RetailerController extends Controller
 
         // Create Retailer profile
         $retailer = new Retailer($retailerData);
+        $retailer->district_id = $userData['district_id']; // ADDED
+        $retailer->area_id = $userData['area_id'];     // ADDED
         $retailer->user_id = $user->id;
         $retailer->save();
 
@@ -132,6 +136,8 @@ class RetailerController extends Controller
         $retailer->user->update($userUpdateData);
 
         // Update Retailer profile
+        $retailerData['district_id'] = $userData['district_id']; // ADDED
+        $retailerData['area_id'] = $userData['area_id'];     // ADDED
         $retailer->update($retailerData);
 
         return redirect()->route('retailers.index')->with('success','Retailer updated successfully!');
