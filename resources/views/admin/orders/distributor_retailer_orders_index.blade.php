@@ -161,8 +161,10 @@
 
                             // Logic for displaying status or action buttons
                             if (status === 'Pending') {
-                                output = `<button class="btn btn-primary btn-sm open-assign-modal-btn" data-id="${row.id}" data-bs-toggle="modal" data-bs-target="#assignFieldStaffModal">Accept & Assign</button>`;
-                            } else if (status === 'Dispatched' && row.fieldstaff_name !== 'Not Assigned') {
+                                output = `<button class="btn btn-success btn-sm accept-order-btn" data-id="${row.id}">Accept Order</button>`;
+                            } else if (status === 'Accepted By Distributor') {
+                                output = `<button class="btn btn-primary btn-sm open-assign-modal-btn" data-id="${row.id}" data-bs-toggle="modal" data-bs-target="#assignFieldStaffModal">Assign Field Staff</button>`;
+                            } else if (status === 'Assigned To Fieldstaff' || status === 'Dispatched') {
                                 output = `<span class="badge badge-info">Assigned to Field Staff / Dispatched</span>`;
                             } else {
                                 // Default status display for other states
@@ -204,6 +206,32 @@
                     { extend: 'pdf', className: 'btn btn-primary btn-sm' },
                     { extend: 'print', className: 'btn btn-primary btn-sm' },
                 ]
+            });
+
+            // Handle Accept Order button click
+            $('#retailer-orders-table').on('click', '.accept-order-btn', function() {
+                var orderId = $(this).data('id');
+                if (confirm('Are you sure you want to accept this order?')) {
+                    $.ajax({
+                        url: "{{ route('retailer-orders-management.acceptOrder', ['retailerOrder' => ':id']) }}".replace(':id', orderId),
+                        method: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                alert(response.success);
+                                table.draw(); // Redraw the table
+                            } else {
+                                alert(response.error || 'Something went wrong.');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error:', error);
+                            alert('An error occurred while accepting the order.');
+                        }
+                    });
+                }
             });
 
                         // Populate field staff dropdown when modal opens
@@ -258,7 +286,7 @@
 
             
 
-                            var url = "{{ route('retailer-orders-management.acceptAndAssignFieldStaff', ['retailerOrder' => ':id']) }}".replace(':id', orderId);
+                            var url = "{{ route('retailer-orders-management.assignFieldStaff', ['retailerOrder' => ':id']) }}".replace(':id', orderId);
 
             
 

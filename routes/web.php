@@ -72,7 +72,8 @@ Route::middleware(['auth:web'])->group(function () {
     Route::resource('retailers', RetailerController::class);
     Route::resource('districts', DistrictController::class);
     Route::resource('areas', AreaController::class);
-    Route::post('retailer-orders-management/{retailerOrder}/accept-and-assign', [RetailerOrderManagementController::class, 'acceptAndAssignFieldStaff'])->name('retailer-orders-management.acceptAndAssignFieldStaff'); // New route
+    Route::post('retailer-orders-management/{retailerOrder}/accept', [RetailerOrderManagementController::class, 'acceptOrder'])->name('retailer-orders-management.acceptOrder');
+    Route::post('retailer-orders-management/{retailerOrder}/assign-fieldstaff', [RetailerOrderManagementController::class, 'assignFieldStaff'])->name('retailer-orders-management.assignFieldStaff');
     Route::resource('retailer-orders-management', RetailerOrderManagementController::class)->except(['create', 'store'])->parameters([
         'retailer-orders-management' => 'retailerOrder'
     ]);

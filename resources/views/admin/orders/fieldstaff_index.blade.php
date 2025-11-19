@@ -141,9 +141,8 @@
                                                         <div class="mb-3">
                                                             <label for="status" class="form-label">Select Status</label>
                                                             <select class="form-select" id="status" name="status" required>
-                                                                <option value="out_for_delivery" ${row.status.toLowerCase().replace(/ /g, '_') === 'out_for_delivery' ? 'selected' : ''}>Out for Delivery</option>
-                                                                <option value="delivered" ${row.status.toLowerCase().replace(/ /g, '_') === 'delivered' ? 'selected' : ''}>Delivered</option>
-                                                                <option value="cancelled" ${row.status.toLowerCase().replace(/ /g, '_') === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                                                ${row.status.toLowerCase().replace(/ /g, '_') === 'assigned_to_fieldstaff' ? '<option value="out_for_delivery">Out for Delivery</option><option value="cancelled">Cancelled</option>' : ''}
+                                                                ${row.status.toLowerCase().replace(/ /g, '_') === 'out_for_delivery' ? '<option value="delivered">Delivered</option><option value="cancelled">Cancelled</option>' : ''}
                                                             </select>
                                                         </div>
                                                         <div class="mb-3">

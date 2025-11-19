@@ -295,7 +295,7 @@ class RetailerOrderManagementController extends Controller
 
             $initialQuery = RetailerOrder::with('retailer.user', 'fieldStaff.user')
                 ->where('distributor_id', $distributor->id)
-                ->whereIn('status', ['pending', 'dispatched', 'delivered', 'cancelled']);
+                ->whereIn('status', ['pending', 'accepted_by_distributor', 'assigned_to_fieldstaff', 'dispatched', 'delivered', 'cancelled']);
 
             $totalData = $initialQuery->count(); // Count before applying search filter
 
@@ -381,7 +381,7 @@ class RetailerOrderManagementController extends Controller
 
             $query = RetailerOrder::with('retailer.user')
                 ->where('fieldstaff_id', $fieldStaff->id)
-                ->whereIn('status', ['accepted', 'dispatched']);
+                ->whereIn('status', ['assigned_to_fieldstaff', 'dispatched', 'delivered', 'cancelled']);
 
             // Apply search filter
             if ($request->has('search') && !empty($request->input('search')['value'])) {
@@ -442,7 +442,7 @@ class RetailerOrderManagementController extends Controller
     public function updateDeliveryStatus(Request $request, RetailerOrder $retailerOrder)
     {
         $request->validate([
-            'status' => 'required|in:dispatched,delivered,cancelled',
+            'status' => 'required|in:assigned_to_fieldstaff,dispatched,delivered,cancelled',
             'delivery_notes' => 'nullable|string',
         ]);
 
@@ -462,16 +462,40 @@ class RetailerOrderManagementController extends Controller
         return view('admin.orders.show', compact('retailerOrder'));
     }
 
-    public function acceptAndAssignFieldStaff(Request $request, RetailerOrder $retailerOrder)
+    public function acceptOrder(RetailerOrder $retailerOrder)
     {
-        // Validate permissions
+        // Validate permissions (Distributor, Admin, Superadmin can accept)
         if (!Auth::user()->hasRole(['distributor', 'admin', 'superadmin'])) {
-            return response()->json(['error' => 'You do not have permission to accept and assign retailer orders.'], 403);
+            return response()->json(['error' => 'You do not have permission to accept retailer orders.'], 403);
         }
 
         // If the user is a distributor, check if the order belongs to them
         if (Auth::user()->hasRole('distributor') && $retailerOrder->distributor_id !== Auth::user()->distributor->id) {
-            return response()->json(['error' => 'You can only accept and assign orders assigned to your distributorship.'], 403);
+            return response()->json(['error' => 'You can only accept orders assigned to your distributorship.'], 403);
+        }
+
+        // Check if the order is in a pending state
+        if ($retailerOrder->status !== 'pending') {
+            return response()->json(['error' => 'Only pending retailer orders can be accepted.'], 400);
+        }
+
+        $retailerOrder->update([
+            'status' => 'accepted_by_distributor',
+        ]);
+
+        return response()->json(['success' => 'Retailer order accepted by distributor successfully!']);
+    }
+
+    public function assignFieldStaff(Request $request, RetailerOrder $retailerOrder)
+    {
+        // Validate permissions (Distributor, Admin, Superadmin can assign)
+        if (!Auth::user()->hasRole(['distributor', 'admin', 'superadmin'])) {
+            return response()->json(['error' => 'You do not have permission to assign field staff to retailer orders.'], 403);
+        }
+
+        // If the user is a distributor, check if the order belongs to them
+        if (Auth::user()->hasRole('distributor') && $retailerOrder->distributor_id !== Auth::user()->distributor->id) {
+            return response()->json(['error' => 'You can only assign field staff to orders assigned to your distributorship.'], 403);
         }
 
         // Validate request
@@ -479,18 +503,18 @@ class RetailerOrderManagementController extends Controller
             'fieldstaff_id' => 'required|exists:fieldstaffs,id',
         ]);
 
-        // Check if the order is in a pending state
-        if ($retailerOrder->status !== 'pending') {
-            return response()->json(['error' => 'Only pending retailer orders can be accepted and assigned.'], 400);
+        // Check if the order is in the accepted_by_distributor state
+        if ($retailerOrder->status !== 'accepted_by_distributor') {
+            return response()->json(['error' => 'Only retailer orders accepted by the distributor can be assigned to field staff.'], 400);
         }
 
         // Update order status and assign field staff
         $retailerOrder->update([
             'fieldstaff_id' => $request->fieldstaff_id,
-            'status' => 'dispatched', // Directly set to dispatched as per user's request
+            'status' => 'assigned_to_fieldstaff',
         ]);
 
-        return response()->json(['success' => 'Retailer order accepted and assigned to field staff successfully!']);
+        return response()->json(['success' => 'Retailer order assigned to field staff successfully!']);
     }
 
     // Admin: edit form
