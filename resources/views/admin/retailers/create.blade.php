@@ -80,11 +80,6 @@
                             <label>Distributor</label>
                             <select name="distributor_id" id="distributor_id" class="form-select" required>
                                 <option value="">Select Distributor</option>
-                                @foreach($distributors as $distributor)
-                                    <option value="{{ $distributor->id }}" {{ old('distributor_id') == $distributor->id ? 'selected' : '' }}>
-                                        {{ $distributor->company_name }}
-                                    </option>
-                                @endforeach
                             </select>
                         </div>
 
@@ -104,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const distributorSelect = document.getElementById('distributor_id');
 
     function fetchAreas(districtId) {
-        areaSelect.innerHTML = '<option value="">Select Area</option>';
+        areaSelect.innerHTML = '<option value="">Select Area</option>'; // Ensure only one default option
 
                     if (districtId) {
                         fetch(`{{ route('retailers.getAreas', ['district' => '__districtId__']) }}`.replace('__districtId__', districtId))
@@ -120,34 +115,43 @@ document.addEventListener('DOMContentLoaded', function () {
                             .catch(error => console.error('Error fetching areas:', error));
                     }    }
 
-    function fetchDistributors(districtId) {
+    function fetchDistributors(districtId, areaId) {
         distributorSelect.innerHTML = '<option value="">Select Distributor</option>';
 
-                    if (districtId) {
-                        fetch(`{{ route('retailers.getDistributors', ['district' => '__districtId__']) }}`.replace('__districtId__', districtId))
-                            .then(response => response.json())
-                            .then(data => {
-                                if (!data.length) {
-                                    const option = document.createElement('option');
-                                    option.textContent = 'No distributors found';
-                                    distributorSelect.appendChild(option);
-                                    return;
-                                }
-                                data.forEach(distributor => {
-                                    const option = document.createElement('option');
-                                    option.value = distributor.id;
-                                    option.textContent = distributor.company_name || `Distributor #${distributor.id}`;
-                                    distributorSelect.appendChild(option);
-                                });
-                            })
-                            .catch(error => console.error('Error fetching distributors:', error));
-                    }    }
+        if (districtId && areaId) {
+            fetch(`{{ route('retailers.getDistributorsByDistrictAndArea', ['district' => '__districtId__', 'area' => '__areaId__']) }}`
+                .replace('__districtId__', districtId)
+                .replace('__areaId__', areaId))
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.length) {
+                        const option = document.createElement('option');
+                        option.textContent = 'No distributors found';
+                        distributorSelect.appendChild(option);
+                        return;
+                    }
+                    data.forEach(distributor => {
+                        const option = document.createElement('option');
+                        option.value = distributor.id;
+                        option.textContent = distributor.company_name || `Distributor #${distributor.id}`;
+                        distributorSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching distributors:', error));
+        }
+    }
 
     districtSelect.addEventListener('change', function () {
         const districtId = this.value;
-        console.log('Selected District ID:', districtId);
         fetchAreas(districtId);
-        fetchDistributors(districtId);
+        // Clear distributors when district changes, as areas will change
+        distributorSelect.innerHTML = '<option value="">Select Distributor</option>';
+    });
+
+    areaSelect.addEventListener('change', function () {
+        const districtId = districtSelect.value;
+        const areaId = this.value;
+        fetchDistributors(districtId, areaId);
     });
 });
 </script>

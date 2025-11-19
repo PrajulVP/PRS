@@ -28,4 +28,14 @@ class FieldStaff extends Model
     {
         return $this->hasMany(DistributorOrder::class);
     }
+
+    public function retailers(): HasMany
+    {
+        return $this->hasMany(Retailer::class);
+    }
+
+    public function salesTargets(): HasMany
+    {
+        return $this->hasMany(SalesTarget::class);
+    }
 }

@@ -14,7 +14,7 @@
                     </div>
                     @endif
 
-                    <form action="{{ route('retailer-orders-management.update', $retailerOrder->id) }}" method="POST">
+                    <form action="{{ route('retailer-orders-management.update', ['retailer_orders_management' => $retailerOrder->id]) }}" method="POST">
                         @csrf
                         @method('PUT')
 

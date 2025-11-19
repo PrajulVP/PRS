@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles; // Added this line
+use App\Models\PermissionCategory;
+use App\Models\Role;
 
 class User extends Authenticatable
 {
@@ -76,11 +78,37 @@ class User extends Authenticatable
     //     return $this->belongsTo(Distributor::class, 'distributor_id');
     // }
 
+<<<<<<< HEAD
     public function hasPermissionTo($permission, $guardName = null): bool
     {
         foreach ($this->roles as $role) {
             if ($role->hasPermissionTo($permission, $guardName)) {
                 return true;
+=======
+    public function hasPermissionToCategory($permissionCategoryShortCode, $action)
+    {
+        $permissionCategory = PermissionCategory::where('short_code', $permissionCategoryShortCode)->first();
+
+        if (!$permissionCategory) {
+            return false;
+        }
+
+        $roles = $this->getRoleNames();
+
+        foreach ($roles as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+
+            if ($role) {
+                $hasPermission = \DB::table('roles_permissions')
+                    ->where('role_id', $role->id)
+                    ->where('permission_category_id', $permissionCategory->id)
+                    ->where('can_' . $action, true)
+                    ->exists();
+
+                if ($hasPermission) {
+                    return true;
+                }
+>>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
             }
         }
 

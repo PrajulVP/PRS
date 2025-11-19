@@ -80,6 +80,72 @@ class RetailerOrderController extends Controller
     public function show(RetailerOrder $retailerOrder)
     {
         $retailerOrder->load('retailer');
+        \Illuminate\Support\Facades\Log::info('RetailerOrderController@show: $retailerOrder object', $retailerOrder->toArray());
         return view('admin.orders.show', compact('retailerOrder'));
+    }
+
+    
+    // Retailer: show create form
+    public function create()
+    {
+        $user = Auth::user();
+        $retailer = $user->retailer;
+
+        if (!$retailer || !$retailer->distributor) {
+            // Handle case where retailer is not found or not assigned to a distributor
+            return redirect()->back()->with('error', 'You are not assigned to a distributor or your retailer profile is incomplete.');
+        }
+
+        $distributorProducts = $retailer->distributor->products; // Get products associated with the retailer's distributor
+
+        return view('admin.orders.create', ['products' => $distributorProducts])->with('orderType', 'retailer');
+    }
+
+    // Retailer: store order
+    public function store(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|integer|min:1',
+            'prescription_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'notes' => 'nullable|string',
+        ]);
+
+        $retailer = Auth::user()->retailer;
+
+        if (!$retailer || !$retailer->distributor) {
+            return back()->withErrors(['retailer' => 'Retailer not assigned to a distributor.'])->withInput();
+        }
+
+        $distributor = $retailer->distributor;
+        $product = $distributor->products()->where('product_id', $request->product_id)->first();
+
+        if (!$product) {
+            return back()->withErrors(['product_id' => 'Product not available from your assigned distributor.'])->withInput();
+        }
+
+        if ($product->pivot->stock < $request->quantity) {
+            return back()->withErrors(['quantity' => 'Ordered quantity exceeds available stock from distributor. Available stock: ' . $product->pivot->stock])->withInput();
+        }
+
+        // Decrement stock from distributor_product pivot table
+        $distributor->products()->updateExistingPivot($product->id, ['stock' => $product->pivot->stock - $request->quantity]);
+
+        $data = $request->all();
+        $data['retailer_id'] = $retailer->id;
+        $data['product_name'] = $product->product_name; // Store product name from selected product
+        $data['unit_price'] = $product->mrp; // Store unit price from selected product
+        $data['total_amount'] = $request->quantity * $product->mrp;
+        $data['placed_at'] = now();
+        $data['status'] = 'pending';
+        $data['distributor_id'] = $retailer->distributor_id; // Add distributor_id from the retailer
+
+        if ($request->hasFile('prescription_photo')) {
+            $data['prescription_photo'] = $request->file('prescription_photo')->store('prescriptions', 'public');
+        }
+
+        RetailerOrder::create($data);
+
+        return redirect()->route('retailer.orders.index')->with('success', 'Medicine requirement sent successfully!');
     }
 }

@@ -21,10 +21,13 @@ class RetailerOrder extends Model
         'status',
         'placed_at',
         'notes',
+        'fieldstaff_id',
+        'delivered_at',
     ];
 
     protected $casts = [
         'placed_at' => 'datetime',
+        'delivered_at' => 'datetime',
     ];
 
     public function retailer(): BelongsTo

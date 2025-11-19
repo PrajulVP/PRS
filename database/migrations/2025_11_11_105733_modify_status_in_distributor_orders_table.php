@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('distributor_orders', function (Blueprint $table) {
+        Schema::table('orders', function (Blueprint $table) {
             $table->enum('status', [
                 'pending',
                 'accepted',
@@ -30,7 +30,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('distributor_orders', function (Blueprint $table) {
+        Schema::table('orders', function (Blueprint $table) {
             $table->enum('status', [
                 'pending',
                 'accepted',

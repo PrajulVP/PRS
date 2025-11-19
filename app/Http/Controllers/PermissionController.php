@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+<<<<<<< HEAD
 use App\Models\Role;
 use App\Models\Permission; // Use our extended Permission model
+=======
+use Spatie\Permission\Models\Role;
+>>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
 use App\Models\PermissionGroup;
 use App\Models\PermissionCategory;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class PermissionController extends Controller
 {
@@ -20,6 +23,7 @@ class PermissionController extends Controller
 
     public function edit(Role $role)
     {
+<<<<<<< HEAD
         // Define the desired order of permission groups and categories
         $groupOrder = [
             'Users',
@@ -45,8 +49,17 @@ class PermissionController extends Controller
         });
 
         $actions = ['view', 'add', 'edit', 'delete']; // Define the actions
+=======
+        $permissionGroups = PermissionGroup::with('permissionCategories')->get();
+        $actions = ['view', 'add', 'edit', 'delete'];
 
-        // Prepare data for the view
+        // Get current permissions for the role from the custom roles_permissions table
+        $currentRolePermissions = DB::table('roles_permissions')
+            ->where('role_id', $role->id)
+            ->get()
+            ->keyBy('permission_category_id');
+>>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
+
         $groupedPermissions = [];
         foreach ($permissionGroups as $group) {
             $groupedPermissions[$group->name] = [
@@ -54,15 +67,17 @@ class PermissionController extends Controller
                 'categories' => []
             ];
             foreach ($group->permissionCategories as $category) {
+                $currentPerms = $currentRolePermissions->get($category->id);
+
                 $groupedPermissions[$group->name]['categories'][$category->name] = [
                     'id' => $category->id,
                     'short_code' => $category->short_code,
-                    'enable_view' => $category->enable_view,
-                    'enable_add' => $category->enable_add,
-                    'enable_edit' => $category->enable_edit,
-                    'enable_delete' => $category->enable_delete,
-                    'permissions' => []
+                    'can_view' => $currentPerms ? (bool) $currentPerms->can_view : false,
+                    'can_add' => $currentPerms ? (bool) $currentPerms->can_add : false,
+                    'can_edit' => $currentPerms ? (bool) $currentPerms->can_edit : false,
+                    'can_delete' => $currentPerms ? (bool) $currentPerms->can_delete : false,
                 ];
+<<<<<<< HEAD
                 foreach ($category->permissions as $permission) {
                     $action = '';
                     if (Str::startsWith($permission->name, 'view ')) {
@@ -87,6 +102,8 @@ class PermissionController extends Controller
                         $groupedPermissions[$group->name]['categories'][$category->name]['permissions'][$action] = $permission;
                     }
                 }
+=======
+>>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
             }
         }
 
@@ -100,6 +117,7 @@ class PermissionController extends Controller
 
     public function update(Request $request, Role $role)
     {
+<<<<<<< HEAD
         $inputPermissions = $request->input('permissions', []);
         \Illuminate\Support\Facades\Log::info('Input Permissions: ' . json_encode($inputPermissions));
         $checkedPermissionIds = array_keys($inputPermissions);
@@ -165,6 +183,38 @@ class PermissionController extends Controller
         } else {
             \Illuminate\Support\Facades\Log::info('No new roles_permissions data to insert.');
         }
+=======
+        $request->validate([
+            'permissions' => 'array',
+        ]);
+
+        // Clear existing permissions for this role in the custom table
+        DB::table('roles_permissions')->where('role_id', $role->id)->delete();
+
+        $permissionCategories = PermissionCategory::all();
+
+        foreach ($permissionCategories as $category) {
+            $categoryId = $category->id;
+            $canView = $request->has("permissions.{$categoryId}.can_view");
+            $canAdd = $request->has("permissions.{$categoryId}.can_add");
+            $canEdit = $request->has("permissions.{$categoryId}.can_edit");
+            $canDelete = $request->has("permissions.{$categoryId}.can_delete");
+
+            // Only insert if at least one permission is granted for the category
+            if ($canView || $canAdd || $canEdit || $canDelete) {
+                DB::table('roles_permissions')->insert([
+                    'role_id' => $role->id,
+                    'permission_category_id' => $categoryId,
+                    'can_view' => $canView,
+                    'can_add' => $canAdd,
+                    'can_edit' => $canEdit,
+                    'can_delete' => $canDelete,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+>>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
 
         return redirect()->route('admin.permissions.edit', $role)->with('success', 'Permissions updated successfully.');
     }

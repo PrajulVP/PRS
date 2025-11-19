@@ -20,7 +20,7 @@ class DistributorBulkOrderController extends Controller
                 // Filter by distributor if authenticated user is a distributor
                 if (Auth::user()->hasRole('distributor')) {
                     $distributor = Auth::user()->distributor;
-                    $query->where('id', $distributor->id);
+                    $query->where('distributor_id', $distributor->id);
                 }
 
                 $totalData = $query->count();
@@ -29,7 +29,7 @@ class DistributorBulkOrderController extends Controller
                 if ($request->has('search') && !empty($request->input('search')['value'])) {
                     $searchValue = $request->input('search')['value'];
                     $query->where(function ($q) use ($searchValue) {
-                        $q->where('orders.id', 'like', "%{$searchValue}%")
+                        $q->where('distributor_orders.id', 'like', "%{$searchValue}%")
                           ->orWhere('product_name', 'like', "%{$searchValue}%")
                           ->orWhere('status', 'like', "%{$searchValue}%")
                           ->orWhereHas('distributor.user', function ($subQuery) use ($searchValue) {
@@ -48,13 +48,13 @@ class DistributorBulkOrderController extends Controller
 
                     switch ($columnName) {
                         case 'id':
-                            $query->orderBy('orders.id', $sortDirection);
+                            $query->orderBy('distributor_orders.id', $sortDirection);
                             break;
                         case 'name':
-                            $query->join('distributors', 'orders.id', '=', 'distributors.id')
+                            $query->join('distributors', 'distributor_orders.distributor_id', '=', 'distributors.id')
                                  ->join('users', 'distributors.user_id', '=', 'users.id')
                                  ->orderBy('users.name', $sortDirection)
-                                 ->select('orders.*');
+                                 ->select('distributor_orders.*');
                             break;
                         case 'product_name':
                             $query->orderBy('product_name', $sortDirection);
@@ -72,11 +72,11 @@ class DistributorBulkOrderController extends Controller
                             $query->orderBy('placed_at', $sortDirection);
                             break;
                         default:
-                            $query->orderBy('orders.id', 'desc');
+                            $query->orderBy('distributor_orders.id', 'desc');
                             break;
                     }
                 } else {
-                    $query->orderBy('orders.id', 'desc'); // Default sort
+                    $query->orderBy('distributor_orders.id', 'desc'); // Default sort
                 }
 
                 // Apply pagination
@@ -85,14 +85,24 @@ class DistributorBulkOrderController extends Controller
                 $orders = $query->offset($start)->limit($length)->get();
 
                 $formattedOrders = $orders->map(function ($order) {
+                    \Illuminate\Support\Facades\Log::info('DistributorBulkOrderController@index: Order ID ' . $order->id . ' - Status: ' . $order->status);
                     return [
                         'id' => $order->id,
                         'name' => $order->distributor->user->name ?? 'N/A',
                         'product_name' => $order->product_name,
+                        'sku' => $order->sku,
                         'quantity' => $order->quantity,
+                        'unit_price' => number_format($order->unit_price, 2),
                         'total_amount' => number_format($order->total_amount, 2),
                         'status' => ucfirst($order->status),
                         'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d H:i:s') : '-',
+                        'notes' => $order->notes,
+                        'prescription_photo' => $order->prescription_photo,
+                        'delivery_notes' => $order->delivery_notes,
+                        'distributor_id' => $order->distributor_id,
+                        'fieldstaff_id' => $order->fieldstaff_id,
+                        'created_at' => $order->created_at ? \Carbon\Carbon::parse($order->created_at)->format('Y-m-d H:i:s') : '-',
+                        'updated_at' => $order->updated_at ? \Carbon\Carbon::parse($order->updated_at)->format('Y-m-d H:i:s') : '-',
                         'actions' => null,
                     ];
                 });
@@ -117,12 +127,29 @@ class DistributorBulkOrderController extends Controller
     // Admin/Distributor: show create form
     public function create()
     {
+<<<<<<< HEAD
         $distributors = [];
         if (!Auth::user()->hasRole('distributor')) {
             $distributors = Distributor::with('user')->get();
         }
+=======
+        $user = Auth::user();
+>>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
         $products = \App\Models\Product::all(); // Fetch all products
-        return view('admin.orders.create', compact('distributors', 'products'))->with('orderType', 'distributor');
+
+        $distributors = collect(); // Initialize as empty collection
+        $authenticatedDistributorId = null;
+
+        if ($user->hasRole('distributor')) {
+            $authenticatedDistributorId = $user->distributor->id ?? null;
+            // If a distributor is creating an order, they are creating it for themselves
+            // No need to select a distributor from a list
+        } else {
+            // If an admin/superadmin is creating, they need to select a distributor
+            $distributors = Distributor::with('user')->get();
+        }
+
+        return view('admin.orders.create', compact('distributors', 'products', 'authenticatedDistributorId'))->with('orderType', 'distributor');
     }
 
     // Admin/Distributor: store bulk order
@@ -148,6 +175,7 @@ class DistributorBulkOrderController extends Controller
             return back()->withErrors(['product_id' => 'Selected product not found.'])->withInput();
         }
 
+<<<<<<< HEAD
         $distributor = Distributor::find($distributorId);
         $orderedUnits = $request->quantity * $product->pack_quantity;
 
@@ -162,12 +190,33 @@ class DistributorBulkOrderController extends Controller
         $data['product_name'] = $product->product_name;
         $data['unit_price'] = $product->mrp;
         $data['total_amount'] = $request->quantity * $product->mrp;
+=======
+        // Check for sufficient stock
+        if ($product->stock < $request->quantity) {
+            return back()->withErrors(['quantity' => 'Insufficient stock for this product. Available: ' . $product->stock])->withInput();
+        }
+
+        // Decrement stock
+        $product->stock -= $request->quantity;
+        $product->save();
+
+        $data = $request->all();
+        $data['product_name'] = $product->product_name; // Store product name from selected product
+        $data['unit_price'] = $product->mrp; // Populate unit price from product's MRP
+        $data['sku'] = $product->product_code; // Populate SKU from product's code
+        $data['total_amount'] = $request->quantity * $product->mrp; // Recalculate total amount
+>>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
         $data['placed_at'] = now();
         $data['status'] = 'pending';
 
+        // If the authenticated user is a distributor, override the distributor_id
+        if (Auth::user()->hasRole('distributor')) {
+            $data['distributor_id'] = Auth::user()->distributor->id;
+        }
+
         DistributorOrder::create($data);
 
-        return redirect()->route('distributor-bulk-orders.index')->with('success', 'Bulk order placed successfully!');
+        return redirect()->route('distributor-bulk-orders.index')->with('success', 'Order placed successfully!');
     }
 
     // Admin/Distributor: show single bulk order
@@ -193,7 +242,7 @@ class DistributorBulkOrderController extends Controller
             'sku' => 'nullable|string|max:100',
             'quantity' => 'required|integer|min:1',
             'unit_price' => 'required|numeric|min:0',
-            'status' => 'required|in:pending,accepted,dispatched,delivered,cancelled',
+            'status' => 'required|in:pending,accepted,delivered,cancelled',
             'notes' => 'nullable|string',
         ]);
 
@@ -210,4 +259,116 @@ class DistributorBulkOrderController extends Controller
         $distributorBulkOrder->delete();
         return redirect()->route('distributor-bulk-orders.index')->with('success','Bulk order deleted.');
     }
-}
+
+    // Admin/Manager: Confirm delivery of a distributor order
+    public function confirmDelivery(DistributorOrder $distributorBulkOrder)
+    {
+        \Illuminate\Support\Facades\Log::info('Confirm Delivery: Order ID ' . $distributorBulkOrder->id . ' - Current Status: ' . $distributorBulkOrder->status);
+
+        // Check if the authenticated user has permission to edit distributor orders
+        if (!Auth::user()->hasPermissionToCategory('distributor_orders', 'edit')) {
+            return response()->json(['error' => 'You do not have permission to confirm delivery of orders.'], 403);
+        }
+
+        // Check if the order is in an 'accepted' state
+        if ($distributorBulkOrder->status !== 'accepted') {
+            \Illuminate\Support\Facades\Log::warning('Confirm Delivery: Order ID ' . $distributorBulkOrder->id . ' - Status is not accepted. Actual: ' . $distributorBulkOrder->status);
+            return response()->json(['error' => 'Only accepted orders can be confirmed as delivered.'], 400);
+        }
+
+        $distributorBulkOrder->status = 'delivered';
+        $distributorBulkOrder->save();
+
+                return response()->json(['success' => 'Order confirmed as delivered!']);
+
+            }
+
+        
+
+            // Manager: Accept a pending distributor order
+
+            public function acceptOrder(DistributorOrder $distributorBulkOrder)
+
+            {
+
+                \Illuminate\Support\Facades\Log::info('Accept Order: Order ID ' . $distributorBulkOrder->id . ' - Current Status: ' . $distributorBulkOrder->status);
+
+        
+
+                // Check if the authenticated user has permission to edit distributor orders
+
+                if (!Auth::user()->hasPermissionToCategory('distributor_orders', 'edit')) {
+
+                    return response()->json(['error' => 'You do not have permission to accept orders.'], 403);
+
+                }
+
+        
+
+                // Check if the order is in a pending state
+
+                if ($distributorBulkOrder->status !== 'pending') {
+
+                    \Illuminate\Support\Facades\Log::warning('Accept Order: Order ID ' . $distributorBulkOrder->id . ' - Status is not pending. Actual: ' . $distributorBulkOrder->status);
+
+                    return response()->json(['error' => 'Only pending orders can be accepted.'], 400);
+
+                }
+
+        
+                $distributorBulkOrder->status = 'accepted';
+                $distributorBulkOrder->save();
+        
+                // Add product to distributor's stock
+                $product = Product::where('product_code', $distributorBulkOrder->sku)->first();
+                $distributor = $distributorBulkOrder->distributor;
+        
+                if ($product && $distributor) {
+                    $pivot = $distributor->products()->where('product_id', $product->id)->first();
+                    if ($pivot) {
+                        // If pivot record exists, increment stock
+                        $newStock = $pivot->pivot->stock + $distributorBulkOrder->quantity;
+                        $distributor->products()->updateExistingPivot($product->id, ['stock' => $newStock]);
+                    } else {
+                        // If no pivot record, create one
+                        $distributor->products()->attach($product->id, ['stock' => $distributorBulkOrder->quantity]);
+                    }
+                }
+
+                return response()->json(['success' => 'Order accepted successfully!']);
+
+            }
+
+    // Distributor: Cancel a pending order
+    public function cancelOrder(DistributorOrder $distributorBulkOrder)
+    {
+        // Ensure the user is a distributor
+        if (!Auth::user()->hasRole('distributor')) {
+            return response()->json(['error' => 'You do not have permission to cancel this order.'], 403);
+        }
+
+        // Ensure the order belongs to this distributor
+        if ($distributorBulkOrder->distributor_id !== Auth::user()->distributor->id) {
+            return response()->json(['error' => 'You can only cancel your own orders.'], 403);
+        }
+
+        // Check if the order is in a 'pending' state
+        if ($distributorBulkOrder->status !== 'pending') {
+            return response()->json(['error' => 'Only pending orders can be cancelled.'], 400);
+        }
+
+        // Restore product stock
+        $product = Product::where('product_code', $distributorBulkOrder->sku)->first();
+        if ($product) {
+            $product->stock += $distributorBulkOrder->quantity;
+            $product->save();
+        }
+
+        $distributorBulkOrder->status = 'cancelled';
+        $distributorBulkOrder->save();
+
+        return response()->json(['success' => 'Order cancelled successfully!']);
+    }
+
+        }
+

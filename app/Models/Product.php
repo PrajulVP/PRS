@@ -33,6 +33,10 @@ class Product extends Model
 
     public function distributors()
     {
+<<<<<<< HEAD
         return $this->belongsToMany(Distributor::class)->withPivot('stock');
+=======
+        return $this->belongsToMany(Distributor::class, 'distributor_product')->withPivot('stock');
+>>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
     }
 }

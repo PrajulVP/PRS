@@ -35,7 +35,11 @@ return new class extends Migration
         });
 
         Schema::create('sessions', function (Blueprint $table) {
+<<<<<<< HEAD
             $table->string('id', 191)->primary(); // VARCHAR(191)
+=======
+            $table->string('id', 120)->primary(); // VARCHAR(120)
+>>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
             $table->foreignId('user_id')->nullable()->index(); // BIGINT UNSIGNED INDEX
             $table->string('ip_address', 45)->nullable(); // VARCHAR(45) NULL (IPv4/IPv6)
             $table->text('user_agent')->nullable(); // TEXT NULL
