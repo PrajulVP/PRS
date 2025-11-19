@@ -24,7 +24,7 @@ class PermissionCategorySeeder extends Seeder
             [
                 'name' => 'Permissions',
                 'short_code' => 'permissions',
-                'perm_group_id' => $userManagementGroup->id,
+                'permission_group_id' => $userManagementGroup->id,
                 'enable_view' => true,
                 'enable_add' => false, // Assuming no direct 'add' for permissions category itself
                 'enable_edit' => true,
@@ -33,7 +33,7 @@ class PermissionCategorySeeder extends Seeder
             [
                 'name' => 'Managers',
                 'short_code' => 'managers',
-                'perm_group_id' => $userManagementGroup->id,
+                'permission_group_id' => $userManagementGroup->id,
                 'enable_view' => true,
                 'enable_add' => true,
                 'enable_edit' => true, // Assuming edit is also needed
@@ -42,7 +42,7 @@ class PermissionCategorySeeder extends Seeder
             [
                 'name' => 'Distributors',
                 'short_code' => 'distributors',
-                'perm_group_id' => $userManagementGroup->id,
+                'permission_group_id' => $userManagementGroup->id,
                 'enable_view' => true,
                 'enable_add' => true,
                 'enable_edit' => true,
@@ -51,7 +51,7 @@ class PermissionCategorySeeder extends Seeder
             [
                 'name' => 'Field Staff',
                 'short_code' => 'field_staff',
-                'perm_group_id' => $userManagementGroup->id,
+                'permission_group_id' => $userManagementGroup->id,
                 'enable_view' => true,
                 'enable_add' => true,
                 'enable_edit' => true,
@@ -60,7 +60,7 @@ class PermissionCategorySeeder extends Seeder
             [
                 'name' => 'Retailers',
                 'short_code' => 'retailers',
-                'perm_group_id' => $userManagementGroup->id,
+                'permission_group_id' => $userManagementGroup->id,
                 'enable_view' => true,
                 'enable_add' => true,
                 'enable_edit' => true,
@@ -71,7 +71,7 @@ class PermissionCategorySeeder extends Seeder
             [
                 'name' => 'Districts',
                 'short_code' => 'districts',
-                'perm_group_id' => $regionsAreaGroup->id,
+                'permission_group_id' => $regionsAreaGroup->id,
                 'enable_view' => true,
                 'enable_add' => true,
                 'enable_edit' => true,
@@ -80,7 +80,7 @@ class PermissionCategorySeeder extends Seeder
             [
                 'name' => 'Areas',
                 'short_code' => 'areas',
-                'perm_group_id' => $regionsAreaGroup->id,
+                'permission_group_id' => $regionsAreaGroup->id,
                 'enable_view' => true,
                 'enable_add' => true,
                 'enable_edit' => true,
@@ -91,7 +91,7 @@ class PermissionCategorySeeder extends Seeder
             [
                 'name' => 'Products',
                 'short_code' => 'products',
-                'perm_group_id' => $productsGroup->id,
+                'permission_group_id' => $productsGroup->id,
                 'enable_view' => true,
                 'enable_add' => true,
                 'enable_edit' => true,
@@ -102,7 +102,7 @@ class PermissionCategorySeeder extends Seeder
             [
                 'name' => 'Retailer Orders',
                 'short_code' => 'retailer_orders',
-                'perm_group_id' => $ordersGroup->id,
+                'permission_group_id' => $ordersGroup->id,
                 'enable_view' => true,
                 'enable_add' => true,
                 'enable_edit' => true,
@@ -111,7 +111,7 @@ class PermissionCategorySeeder extends Seeder
             [
                 'name' => 'Distributor Orders',
                 'short_code' => 'distributor_orders',
-                'perm_group_id' => $ordersGroup->id,
+                'permission_group_id' => $ordersGroup->id,
                 'enable_view' => true,
                 'enable_add' => true,
                 'enable_edit' => true,
