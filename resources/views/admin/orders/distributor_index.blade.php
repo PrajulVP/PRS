@@ -154,31 +154,6 @@
                                 } else {
                                     output = `<span class="badge badge-info">${row.status}</span>`;
                                 }
-                            } else if (status === 'assigned_to_distributor') {
-                                if ({{ Auth::user()->hasPermissionToCategory('distributor_orders', 'edit') ? 'true' : 'false' }}) { // Assuming manager/admin can assign field staff
-                                    var fieldstaffs = {!! json_encode(App\Models\FieldStaff::with('user')->get()->map(function($fieldstaff) {
-                                        return ['id' => $fieldstaff->id, 'name' => $fieldstaff->user->name];
-                                    })) !!};
-                                    var options = '<option value="">-- Select Field Staff --</option>';
-                                    fieldstaffs.forEach(function(fieldstaff) {
-                                        options += `<option value="${fieldstaff.id}">${fieldstaff.name}</option>`;
-                                    });
-
-                                    output = `
-                                        <form class="assign-fieldstaff-form">
-                                            @csrf
-                                            <input type="hidden" name="order_id" value="${row.id}">
-                                            <div class="input-group">
-                                                <select class="form-select" name="fieldstaff_id" required>
-                                                    ${options}
-                                                </select>
-                                                <button type="submit" class="btn btn-primary">Assign</button>
-                                            </div>
-                                        </form>
-                                    `;
-                                } else {
-                                    output = `<span class="badge badge-info">${row.status}</span>`;
-                                }
                             } else {
                                 // Default status display for other states
                                 var badgeClass = 'badge-primary';
@@ -209,41 +184,6 @@
                     { extend: 'pdf', className: 'btn btn-primary btn-sm' },
                     { extend: 'print', className: 'btn btn-primary btn-sm' },
                 ]
-            });
-
-            $('#retailer-orders-table').on('submit', '.assign-fieldstaff-form', function(e) {
-                e.preventDefault();
-
-                var form = $(this);
-                var orderId = form.find('input[name="order_id"]').val();
-                var fieldstaffId = form.find('select[name="fieldstaff_id"]').val();
-                var token = form.find('input[name="_token"]').val();
-
-                if (!fieldstaffId) {
-                    alert('Please select a field staff.');
-                    return;
-                }
-
-                $.ajax({
-                    url: "{{ route('distributor.orders.assignFieldStaff', ['order' => ':orderId']) }}".replace(':orderId', orderId),
-                    method: 'POST',
-                    data: {
-                        _token: token,
-                        fieldstaff_id: fieldstaffId
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            alert(response.success);
-                            table.draw(); // Redraw the table
-                        } else {
-                            alert(response.error || 'Something went wrong.');
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error:', error);
-                        alert('Something went wrong.');
-                    }
-                });
             });
 
             // Handle Accept Order button click

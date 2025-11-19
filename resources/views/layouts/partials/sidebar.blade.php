@@ -31,25 +31,14 @@
             </svg><span>Dashboard</span></a>
         </li>
 
-<<<<<<< HEAD
-        @if(Auth::user()->hasPermissionTo('view permissions') || Auth::user()->hasPermissionTo('view managers') || Auth::user()->hasPermissionTo('view distributors') || Auth::user()->hasPermissionTo('view field_staff') || Auth::user()->hasPermissionTo('view retailers'))
-=======
         @if (Auth::user()->hasPermissionToCategory('permissions', 'view') || Auth::user()->hasPermissionToCategory('managers', 'view') || Auth::user()->hasPermissionToCategory('distributors', 'view') || Auth::user()->hasPermissionToCategory('field_staff', 'view') || Auth::user()->hasPermissionToCategory('retailers', 'view'))
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
         <li class="sidebar-main-title">
           <div>
             <h6 class="lan-10">User Management</h6>
           </div>
-<<<<<<< HEAD
-        </li>
-        @endif
-
-        @if(Auth::user()->hasPermissionTo('view permissions'))
-=======
         @endif
 
         @if (Auth::user()->hasRole('superadmin') || Auth::user()->hasRole('admin'))
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.permissions.index') }}">
             <svg class="stroke-icon">
               <use href="{{ asset('admin/assets/svg/icon-sprite.svg#stroke-home') }}"></use>
@@ -60,11 +49,7 @@
         </li>
         @endif
 
-<<<<<<< HEAD
-        @if(Auth::user()->hasPermissionTo('view managers'))
-=======
         @if (Auth::user()->hasPermissionToCategory('managers', 'view'))
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
             <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
@@ -74,22 +59,14 @@
             </svg><span>Managers</span></a>
           <ul class="sidebar-submenu">
             <li><a href="{{ route('managers.index') }}">Managers List</a></li>
-<<<<<<< HEAD
-            @if(Auth::user()->hasPermissionTo('add managers'))
-=======
             @if (Auth::user()->hasPermissionToCategory('managers', 'add'))
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
             <li><a href="{{ route('managers.create') }}">Create Managers</a></li>
             @endif
           </ul>
         </li>
         @endif
 
-<<<<<<< HEAD
-        @if(Auth::user()->hasPermissionTo('view distributors'))
-=======
         @if (Auth::user()->hasPermissionToCategory('distributors', 'view'))
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
             <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
@@ -99,22 +76,14 @@
             </svg><span>Distributors</span></a>
           <ul class="sidebar-submenu">
             <li><a href="{{ route('distributors.index') }}">Distributors List</a></li>
-<<<<<<< HEAD
-            @if(Auth::user()->hasPermissionTo('create distributors'))
-=======
             @if (Auth::user()->hasPermissionToCategory('distributors', 'add'))
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
             <li><a href="{{ route('distributors.create') }}">Create Distributors</a></li>
             @endif
           </ul>
         </li>
         @endif
 
-<<<<<<< HEAD
-        @if(Auth::user()->hasPermissionTo('view field_staff'))
-=======
         @if (Auth::user()->hasPermissionToCategory('field_staff', 'view'))
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
             <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
@@ -124,22 +93,14 @@
             </svg><span>Field Staff</span></a>
           <ul class="sidebar-submenu">           
             <li><a href="{{ route('fieldstaffs.index') }}">Field Staff List</a></li>
-<<<<<<< HEAD
-            @if(Auth::user()->hasPermissionTo('add field_staff'))
-=======
             @if (Auth::user()->hasPermissionToCategory('field_staff', 'add'))
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
             <li><a href="{{ route('fieldstaffs.create') }}">Create Field Staff</a></li>
             @endif
           </ul>
         </li>
         @endif
 
-<<<<<<< HEAD
-        @if(Auth::user()->hasPermissionTo('view retailers'))
-=======
         @if (Auth::user()->hasPermissionToCategory('retailers', 'view'))
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
             <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
@@ -149,35 +110,19 @@
             </svg><span>Retailer (Chemist)</span></a>
           <ul class="sidebar-submenu">
             <li><a href="{{ route('retailers.index') }}">Retailers List</a></li>
-<<<<<<< HEAD
-            @if(Auth::user()->hasPermissionTo('create retailers'))
-=======
             @if (Auth::user()->hasPermissionToCategory('retailers', 'add'))
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
             <li><a href="{{ route('retailers.create') }}">Create Retailers</a></li>
             @endif
           </ul>
         </li>
         @endif
 
-<<<<<<< HEAD
-        @if(Auth::user()->hasPermissionTo('view districts') || Auth::user()->hasPermissionTo('view areas'))
-        <li class="sidebar-main-title">
-          <div>
-            <h6 class="lan-10">Regions & Area</h6>
-          </div>
-        </li>
-        @endif
-
-        @if(Auth::user()->hasPermissionTo('view districts'))
-=======
         @if (Auth::user()->hasPermissionToCategory('districts', 'view') || Auth::user()->hasPermissionToCategory('areas', 'view'))
         <li class="sidebar-main-title">
           <div>
         @endif
 
         @if (Auth::user()->hasPermissionToCategory('districts', 'view'))
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
             <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
@@ -187,22 +132,14 @@
             </svg><span>Districts</span></a>
           <ul class="sidebar-submenu">
             <li><a href="{{ route('districts.index') }}">District List</a></li>
-<<<<<<< HEAD
-            @if(Auth::user()->hasPermissionTo('add districts'))
-=======
             @if (Auth::user()->hasPermissionToCategory('districts', 'add'))
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
             <li><a href="{{ route('districts.create') }}">Create District</a></li>
             @endif
           </ul>
         </li>
         @endif
 
-<<<<<<< HEAD
-        @if(Auth::user()->hasPermissionTo('view areas'))
-=======
         @if (Auth::user()->hasPermissionToCategory('areas', 'view'))
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
             <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
@@ -212,22 +149,14 @@
             </svg><span>Areas</span></a>
           <ul class="sidebar-submenu">
             <li><a href="{{ route('areas.index') }}">Area List</a></li>
-<<<<<<< HEAD
-            @if(Auth::user()->hasPermissionTo('add areas'))
-=======
             @if (Auth::user()->hasPermissionToCategory('areas', 'add'))
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
             <li><a href="{{ route('areas.create') }}">Create Area</a></li>
             @endif
           </ul>
         </li>
         @endif
 
-<<<<<<< HEAD
-        @if(Auth::user()->hasPermissionTo('view products'))
-=======
         @if (Auth::user()->hasPermissionToCategory('products', 'view'))
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
         <li class="sidebar-main-title">
           <div>
             <h6 class="lan-10">Products</h6>
@@ -235,43 +164,26 @@
         </li>
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
             <svg class="stroke-icon">
-<<<<<<< HEAD
-              <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
-=======
                 <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
             </svg>
             <svg class="fill-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
             </svg><span>Products</span></a>
           <ul class="sidebar-submenu">
             <li><a href="{{ route('products.index') }}">Product List</a></li>
-<<<<<<< HEAD
-            @if(Auth::user()->hasPermissionTo('create products'))
-=======
             @if (Auth::user()->hasPermissionToCategory('products', 'add'))
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
             <li><a href="{{ route('products.create') }}">Create Product</a></li>
             @endif
           </ul>
         </li>
         @endif
 
-<<<<<<< HEAD
-        @if(Auth::user()->hasPermissionTo('view retailer_orders') || Auth::user()->hasPermissionTo('view distributor_orders'))
-=======
         @if (Auth::user()->hasPermissionToCategory('retailer_orders', 'view') || Auth::user()->hasPermissionToCategory('distributor_orders', 'view'))
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
         <li class="sidebar-main-title">
           <div>
             <h6 class="lan-10">Orders</h6>
           </div>
         </li>
-<<<<<<< HEAD
-        @endif
-        
-        @if(Auth::user()->hasPermissionTo('view retailer_orders'))
-=======
 
         @if (Auth::user()->hasRole('retailer'))
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
@@ -301,23 +213,7 @@
             {{-- Field staff typically don't create distributor orders directly, but manage assigned ones --}}
           </ul>
         </li>
-        @elseif (Auth::user()->hasRole('distributor'))
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
-            <svg class="stroke-icon">
-              <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
-            </svg>
-            <svg class="fill-icon">
-              <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
-            </svg><span>Orders</span></a>
-          <ul class="sidebar-submenu">
-            <li><a href="{{ route('distributor-bulk-orders.index') }}">Order List</a></li>
-            @if (Auth::user()->hasPermissionToCategory('distributor_orders', 'add'))
-            <li><a href="{{ route('distributor-bulk-orders.create') }}">Create Order</a></li>
-            @endif
-          </ul>
-        </li>
-        @if (Auth::user()->hasPermissionToCategory('retailer_orders', 'view'))
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
+        @if (!Auth::user()->hasRole('retailer') && Auth::user()->hasPermissionToCategory('retailer_orders', 'view'))
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
             <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
@@ -327,16 +223,6 @@
             </svg><span>Retailer Orders</span></a>
           <ul class="sidebar-submenu">
             <li><a href="{{ route('retailer-orders-management.index') }}">Order List</a></li>
-<<<<<<< HEAD
-            @if(Auth::user()->hasPermissionTo('add retailer_orders'))
-            <li><a href="{{ route('retailer-orders-management.create') }}">Create Order</a></li>
-            @endif
-          </ul>
-        </li>
-        @endif
-
-        @if(Auth::user()->hasPermissionTo('view distributor_orders'))
-=======
 
           </ul>
         </li>
@@ -358,7 +244,6 @@
         @endif
 
         @if (Auth::user()->hasPermissionToCategory('distributor_orders', 'view'))
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
             <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
@@ -368,21 +253,14 @@
             </svg><span>Distributor Orders</span></a>
           <ul class="sidebar-submenu">
             <li><a href="{{ route('distributor-bulk-orders.index') }}">Order List</a></li>
-<<<<<<< HEAD
-            @if(Auth::user()->hasPermissionTo('add distributor_bulk_orders'))
-=======
             @if (Auth::user()->hasPermissionToCategory('distributor_orders', 'add'))
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
             <li><a href="{{ route('distributor-bulk-orders.create') }}">Create Order</a></li>
             @endif
           </ul>
         </li>
         @endif
-<<<<<<< HEAD
-=======
         @endif
         @endif
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
 
       </ul>
       <div class="right-arrow" id="right-arrow"><i data-feather="arrow-right"></i></div>

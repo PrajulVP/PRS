@@ -44,11 +44,6 @@ class Distributor extends Model
         return $this->hasMany(RetailerOrder::class);
     }
 
-<<<<<<< HEAD
-    public function products()
-    {
-        return $this->belongsToMany(Product::class)->withPivot('stock');
-=======
     public function fieldStaffs(): HasMany
     {
         return $this->hasMany(FieldStaff::class, 'assigned_distributor_id');
@@ -57,6 +52,5 @@ class Distributor extends Model
     public function products()
     {
         return $this->belongsToMany(Product::class, 'distributor_product')->withPivot('stock');
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
     }
 }

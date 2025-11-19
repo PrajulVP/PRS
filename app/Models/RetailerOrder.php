@@ -39,4 +39,9 @@ class RetailerOrder extends Model
     {
         return $this->belongsTo(Distributor::class);
     }
+
+    public function fieldStaff(): BelongsTo
+    {
+        return $this->belongsTo(FieldStaff::class);
+    }
 }

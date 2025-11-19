@@ -148,4 +148,24 @@ class RetailerOrderController extends Controller
 
         return redirect()->route('retailer.orders.index')->with('success', 'Medicine requirement sent successfully!');
     }
+
+    public function confirmDelivery(RetailerOrder $retailerOrder)
+    {
+        // Check if the authenticated user is the retailer for this order
+        if ($retailerOrder->retailer_id !== Auth::user()->retailer->id) {
+            return response()->json(['error' => 'Unauthorized action.'], 403);
+        }
+
+        // Check if the order is out for delivery
+        if ($retailerOrder->status !== 'out_for_delivery') {
+            return response()->json(['error' => 'Only orders that are out for delivery can be confirmed.'], 400);
+        }
+
+        $retailerOrder->update([
+            'status' => 'delivered',
+            'delivered_at' => now(),
+        ]);
+
+        return response()->json(['success' => 'Order delivery confirmed successfully!']);
+    }
 }

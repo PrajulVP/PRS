@@ -14,9 +14,20 @@
                     </div>
                     @endif
 
-                    <form action="{{ route('retailer-orders-management.update', ['retailer_orders_management' => $retailerOrder->id]) }}" method="POST">
+                    <form action="{{ route('retailer-orders-management.update', ['retailerOrder' => $retailerOrder->id]) }}" method="POST">
                         @csrf
                         @method('PUT')
+
+                        <div class="mb-3">
+                            <label>Retailer</label>
+                            <select name="retailer_id" class="form-select" required>
+                                @foreach($retailers as $retailer)
+                                <option value="{{ $retailer->id }}" {{ $retailerOrder->retailer_id == $retailer->id ? 'selected' : '' }}>
+                                    {{ $retailer->user->name }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
 
                         <div class="mb-3">
                             <label>Product name</label>
@@ -40,13 +51,16 @@
 
                         <div class="mb-3">
                             <label>Status</label>
-                            <select name="status" class="form-select" required>
+                            <select name="status" class="form-select" required @if(Auth::user()->hasRole('distributor')) disabled @endif>
                                 <option value="pending" {{ $retailerOrder->status=='pending' ? 'selected':'' }}>Pending</option>
                                 <option value="accepted" {{ $retailerOrder->status=='accepted' ? 'selected':'' }}>Accepted</option>
                                 <option value="dispatched" {{ $retailerOrder->status=='dispatched' ? 'selected':'' }}>Dispatched</option>
                                 <option value="delivered" {{ $retailerOrder->status=='delivered' ? 'selected':'' }}>Delivered</option>
                                 <option value="cancelled" {{ $retailerOrder->status=='cancelled' ? 'selected':'' }}>Cancelled</option>
                             </select>
+                            @if(Auth::user()->hasRole('distributor'))
+                            <small class="form-text text-muted">Order status must be managed from the order list page.</small>
+                            @endif
                         </div>
 
                         <div class="mb-3">

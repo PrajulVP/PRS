@@ -11,6 +11,9 @@
         <p><strong>Unit price:</strong> {{ number_format($retailerOrder->unit_price,2) }}</p>
         <p><strong>Total:</strong> {{ number_format($retailerOrder->total_amount,2) }}</p>
         <p><strong>Status:</strong> {{ ucfirst($retailerOrder->status) }}</p>
+        @if($retailerOrder->fieldStaff)
+        <p><strong>Assigned Field Staff:</strong> {{ $retailerOrder->fieldStaff->user->name ?? 'N/A' }}</p>
+        @endif
         <p><strong>Placed at:</strong> {{ $retailerOrder->placed_at ? \Carbon\Carbon::parse($retailerOrder->placed_at)->format('Y-m-d') : '-' }}</p>
         <p><strong>Notes:</strong><br>{{ $retailerOrder->notes }}</p>
     </div>

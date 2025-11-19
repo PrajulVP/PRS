@@ -20,7 +20,7 @@ class RetailerOrderManagementController extends Controller
             try {
                 $totalData = RetailerOrder::count();
 
-                $query = RetailerOrder::with('retailer.user');
+                $query = RetailerOrder::with('retailer.user', 'fieldStaff.user');
 
                 // Apply search filter
                 if ($request->has('search') && !empty($request->input('search')['value'])) {
@@ -47,12 +47,6 @@ class RetailerOrderManagementController extends Controller
                     switch ($columnName) {
                         case 'id':
                             $query->orderBy('retailer_orders.id', $sortDirection);
-                            break;
-                        case 'retailer_name':
-                            $query->join('retailers', 'retailer_orders.retailer_id', '=', 'retailers.id')
-                                 ->join('users', 'retailers.user_id', '=', 'users.id')
-                                 ->orderBy('users.name', $sortDirection)
-                                 ->select('retailer_orders.*'); // Select retailer_orders.* to avoid ambiguity
                             break;
                         case 'product_name':
                             $query->orderBy('product_name', $sortDirection);
@@ -88,13 +82,14 @@ class RetailerOrderManagementController extends Controller
                 $formattedOrders = $orders->map(function ($order) {
                     return [
                         'id' => $order->id,
-                        'retailer_name' => $order->retailer->user->name ?? 'N/A',
+                        'retailer_name' => $order->retailer?->user?->name ?? 'N/A',
                         'product_name' => $order->product_name,
                         'quantity' => $order->quantity,
                         'unit_price' => number_format($order->unit_price, 2),
                         'total_amount' => number_format($order->total_amount, 2),
                         'status' => ucfirst($order->status),
                         'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d H:i:s') : '-',
+                        'fieldstaff_name' => $order->fieldStaff?->user?->name ?? 'Not Assigned',
                         'actions' => null, // Actions column will be rendered by DataTables
                     ];
                 });
@@ -111,44 +106,16 @@ class RetailerOrderManagementController extends Controller
                     'error' => 'An error occurred while processing your request.'
                 ], 500);
             }
-        }
+        } // Closing brace for if ($request->ajax())
 
-        return view('admin.orders.index');
+        $fieldstaffs = FieldStaff::with('user')->get()->map(function($fieldstaff) {
+            return ['id' => $fieldstaff->id, 'name' => $fieldstaff->user->name];
+        });
+
+        return view('admin.orders.index', compact('fieldstaffs'));
     }
 
     // Admin: show create form
-<<<<<<< HEAD
-    public function create()
-    {
-        $products = \App\Models\Product::all(); // Fetch all products
-        $distributors = \App\Models\Distributor::with('user')->get();
-        return view('admin.orders.create', compact('products', 'distributors'))->with('orderType', 'retailer');
-    }
-
-    // Admin: store order
-    public function store(Request $request)
-    {
-        $request->validate([
-            'distributor_id' => 'required|exists:distributors,id',
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
-            'prescription_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'notes' => 'nullable|string',
-        ]);
-
-        $distributor = \App\Models\Distributor::find($request->distributor_id);
-        $product = $distributor->products()->find($request->product_id);
-
-        if (!$product) {
-            return back()->withErrors(['product_id' => 'Selected product not found for this distributor.'])->withInput();
-        }
-
-        $orderedUnits = $request->quantity * $product->pack_quantity;
-        if ($product->pivot->stock < $orderedUnits) {
-            $availablePacks = floor($product->pivot->stock / $product->pack_quantity);
-            return back()->withErrors(['quantity' => 'Ordered quantity exceeds available stock for this distributor. Available packs: ' . $availablePacks])->withInput();
-        }
-=======
     // public function create()
     // {
     //     $user = Auth::user();
@@ -182,33 +149,17 @@ class RetailerOrderManagementController extends Controller
 
     //     $distributor = $retailer->distributor;
     //     $product = $distributor->products()->where('product_id', $request->product_id)->first();
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
 
     //     if (!$product) {
     //         return back()->withErrors(['product_id' => 'Product not available from your assigned distributor.'])->withInput();
     //     }
 
-<<<<<<< HEAD
-        // Decrement product stock for the distributor
-        $distributor->products()->updateExistingPivot($product->id, [
-            'stock' => $product->pivot->stock - $orderedUnits
-        ]);
-
-        $data = $request->all();
-        $data['retailer_id'] = $retailer->id;
-        $data['product_name'] = $product->product_name;
-        $data['unit_price'] = $product->mrp;
-        $data['total_amount'] = $request->quantity * $product->mrp;
-        $data['placed_at'] = now();
-        $data['status'] = 'assigned_to_distributor';
-=======
     //     if ($product->pivot->stock < $request->quantity) {
     //         return back()->withErrors(['quantity' => 'Ordered quantity exceeds available stock from distributor. Available stock: ' . $product->pivot->stock])->withInput();
     //     }
 
     //     // Decrement stock from distributor_product pivot table
     //     $distributor->products()->updateExistingPivot($product->id, ['stock' => $product->pivot->stock - $request->quantity]);
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
 
     //     $data = $request->all();
     //     $data['retailer_id'] = $retailer->id;
@@ -344,7 +295,7 @@ class RetailerOrderManagementController extends Controller
 
             $initialQuery = RetailerOrder::with('retailer.user', 'fieldStaff.user')
                 ->where('distributor_id', $distributor->id)
-                ->whereIn('status', ['assigned_to_distributor', 'assigned_to_fieldstaff', 'out_for_delivery']);
+                ->whereIn('status', ['pending', 'dispatched', 'delivered', 'cancelled']);
 
             $totalData = $initialQuery->count(); // Count before applying search filter
 
@@ -362,8 +313,6 @@ class RetailerOrderManagementController extends Controller
                 });
             }
 
-            $totalFiltered = $query->count(); // Count after applying search filter
-
             // Apply order (sorting)
             if ($request->has('order') && !empty($request->input('order'))) {
                 $columnIndex = $request->input('order')[0]['column'];
@@ -371,18 +320,6 @@ class RetailerOrderManagementController extends Controller
                 $sortDirection = $request->input('order')[0]['dir'];
 
                 switch ($columnName) {
-                    case 'retailer_name':
-                        $query->join('retailers', 'retailer_orders.retailer_id', '=', 'retailers.id')
-                              ->join('users', 'retailers.user_id', '=', 'users.id')
-                              ->orderBy('users.name', $sortDirection)
-                              ->select('retailer_orders.*'); // Select retailer_orders.* to avoid ambiguity
-                        break;
-                    case 'fieldstaff_name':
-                        $query->leftJoin('field_staff', 'retailer_orders.fieldstaff_id', '=', 'field_staff.id')
-                              ->leftJoin('users as fs_users', 'field_staff.user_id', '=', 'fs_users.id')
-                              ->orderBy('fs_users.name', $sortDirection)
-                              ->select('retailer_orders.*'); // Select retailer_orders.* to avoid ambiguity
-                        break;
                     case 'id':
                     case 'product_name':
                     case 'quantity':
@@ -424,35 +361,12 @@ class RetailerOrderManagementController extends Controller
             ]);
         }
 
-        return view('admin.orders.distributor_retailer_orders_index');
-    }
+        $distributor = Auth::guard('web')->user()->load('distributor')->distributor;
+        $fieldstaffs = FieldStaff::where('distributor_id', $distributor->id)->with('user')->get()->map(function($fieldstaff) {
+            return ['id' => $fieldstaff->id, 'name' => $fieldstaff->user->name];
+        });
 
-    // Distributor: assign order to field staff
-    public function assignFieldStaff(Request $request, RetailerOrder $retailerOrder)
-    {
-        $request->validate([
-            'fieldstaff_id' => 'required|exists:fieldstaffs,id',
-        ]);
-
-        // Check if the order is in 'accepted_by_distributor' state
-        if ($retailerOrder->status !== 'accepted_by_distributor') {
-            return response()->json(['error' => 'Only accepted orders can be assigned to field staff.'], 400);
-        }
-
-        $retailerOrder->update([
-            'fieldstaff_id' => $request->fieldstaff_id,
-            'status' => 'assigned_to_fieldstaff',
-        ]);
-
-        if ($request->ajax()) {
-            $fieldstaffName = FieldStaff::find($request->fieldstaff_id)->user->name;
-            return response()->json([
-                'success' => 'Order assigned to field staff successfully!',
-                'fieldstaff_name' => $fieldstaffName,
-            ]);
-        }
-
-        return back()->with('success', 'Order assigned to field staff successfully!');
+        return view('admin.orders.distributor_retailer_orders_index', compact('fieldstaffs'));
     }
 
     // Field Staff: list orders assigned to them
@@ -467,7 +381,7 @@ class RetailerOrderManagementController extends Controller
 
             $query = RetailerOrder::with('retailer.user')
                 ->where('fieldstaff_id', $fieldStaff->id)
-                ->whereIn('status', ['assigned_to_fieldstaff', 'out_for_delivery']);
+                ->whereIn('status', ['accepted', 'dispatched']);
 
             // Apply search filter
             if ($request->has('search') && !empty($request->input('search')['value'])) {
@@ -528,7 +442,7 @@ class RetailerOrderManagementController extends Controller
     public function updateDeliveryStatus(Request $request, RetailerOrder $retailerOrder)
     {
         $request->validate([
-            'status' => 'required|in:out_for_delivery,delivered,cancelled',
+            'status' => 'required|in:dispatched,delivered,cancelled',
             'delivery_notes' => 'nullable|string',
         ]);
 
@@ -544,32 +458,39 @@ class RetailerOrderManagementController extends Controller
     // Admin: show single order
     public function show(RetailerOrder $retailerOrder)
     {
-        $retailerOrder->load('retailer');
+        $retailerOrder->load('retailer', 'fieldStaff.user'); // Load fieldStaff and its user
         return view('admin.orders.show', compact('retailerOrder'));
     }
 
-    // Distributor: Accept a pending retailer order
-    public function acceptRetailerOrder(RetailerOrder $retailerOrder)
+    public function acceptAndAssignFieldStaff(Request $request, RetailerOrder $retailerOrder)
     {
-        // Check if the authenticated user is a distributor
-        if (!Auth::user()->hasRole('distributor')) {
-            return response()->json(['error' => 'You do not have permission to accept retailer orders.'], 403);
+        // Validate permissions
+        if (!Auth::user()->hasRole(['distributor', 'admin', 'superadmin'])) {
+            return response()->json(['error' => 'You do not have permission to accept and assign retailer orders.'], 403);
         }
 
-        // Check if the order belongs to this distributor
-        if ($retailerOrder->distributor_id !== Auth::user()->distributor->id) {
-            return response()->json(['error' => 'You can only accept orders assigned to your distributorship.'], 403);
+        // If the user is a distributor, check if the order belongs to them
+        if (Auth::user()->hasRole('distributor') && $retailerOrder->distributor_id !== Auth::user()->distributor->id) {
+            return response()->json(['error' => 'You can only accept and assign orders assigned to your distributorship.'], 403);
         }
+
+        // Validate request
+        $request->validate([
+            'fieldstaff_id' => 'required|exists:fieldstaffs,id',
+        ]);
 
         // Check if the order is in a pending state
         if ($retailerOrder->status !== 'pending') {
-            return response()->json(['error' => 'Only pending retailer orders can be accepted.'], 400);
+            return response()->json(['error' => 'Only pending retailer orders can be accepted and assigned.'], 400);
         }
 
-        $retailerOrder->status = 'accepted_by_distributor';
-        $retailerOrder->save();
+        // Update order status and assign field staff
+        $retailerOrder->update([
+            'fieldstaff_id' => $request->fieldstaff_id,
+            'status' => 'dispatched', // Directly set to dispatched as per user's request
+        ]);
 
-        return response()->json(['success' => 'Retailer order accepted successfully!']);
+        return response()->json(['success' => 'Retailer order accepted and assigned to field staff successfully!']);
     }
 
     // Admin: edit form
@@ -588,7 +509,7 @@ class RetailerOrderManagementController extends Controller
             'sku' => 'nullable|string|max:100',
             'quantity' => 'required|integer|min:1',
             'unit_price' => 'required|numeric|min:0',
-            'status' => 'required|in:pending,accepted_by_distributor,assigned_to_fieldstaff,out_for_delivery,delivered,cancelled',
+            'status' => 'required|in:pending,accepted,dispatched,delivered,cancelled',
             'notes' => 'nullable|string',
         ]);
 
@@ -602,162 +523,12 @@ class RetailerOrderManagementController extends Controller
     // Admin: delete
     public function destroy(RetailerOrder $retailerOrder)
     {
-<<<<<<< HEAD
-        $order->delete();
-                return redirect()->route('admin.orders.index')->with('success','Order deleted.');
-            }
-        
-            public function getProductsByDistributor(\App\Models\Distributor $distributor)
-            {
-                return response()->json($distributor->products);
-            }
-        }
-=======
         $retailerOrder->delete();
-        return redirect()->route('admin.orders.index')->with('success','Order deleted.');
+        return redirect()->route('retailer-orders-management.index')->with('success','Order deleted.');
     }
 
-
+    public function getProductsByDistributor(\App\Models\Distributor $distributor)
+    {
+        return response()->json($distributor->products);
+    }
 }
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
-
-
-
-// namespace App\Http\Controllers;
-
-// use App\Models\Order;
-// use App\Models\OrderItem;
-// use App\Models\Distributor;
-// use App\Models\FieldStaff;
-// use Illuminate\Http\Request;
-// use Illuminate\Support\Facades\DB;
-// use Illuminate\Support\Facades\Auth;
-
-// class OrderController extends Controller
-// {
-//     // Retailer: show create form
-//     public function create()
-//     {
-//         // If you have a product list you can pass it here.
-//         // $products = Product::all();
-//         return view('admin.retailers.create_order'); // create view for retailer in your views
-//     }
-
-//     // Retailer: store order
-//     public function store(Request $request)
-//     {
-//         // Expected payload:
-//         // items = [{product_name, sku, quantity, unit_price}, ...]
-//         $data = $request->validate([
-//             'items' => 'required|array|min:1',
-//             'items.*.product_name' => 'required|string',
-//             'items.*.quantity' => 'required|integer|min:1',
-//             'items.*.unit_price' => 'required|numeric|min:0',
-//             'notes' => 'nullable|string'
-//         ]);
-
-//         DB::transaction(function() use ($request, $data, &$order) {
-//             // obtain retailer id from auth or request
-//             $retailerId = $request->user()->id ?? $request->input('retailer_id');
-
-//             $order = Order::create([
-//                 'retailer_id' => $retailerId,
-//                 'total_value' => 0,
-//                 'status' => 'pending',
-//                 'placed_at' => now(),
-//                 'notes' => $data['notes'] ?? null,
-//             ]);
-
-//             $total = 0;
-//             foreach ($data['items'] as $it) {
-//                 $totalPrice = $it['quantity'] * $it['unit_price'];
-//                 $order->items()->create([
-//                     'product_name' => $it['product_name'],
-//                     'sku' => $it['sku'] ?? null,
-//                     'quantity' => $it['quantity'],
-//                     'unit_price' => $it['unit_price'],
-//                     'total_price' => $totalPrice
-//                 ]);
-//                 $total += $totalPrice;
-//             }
-
-//             $order->update(['total_value' => $total]);
-//         });
-
-//         return redirect()->route('retailers.orders.index')->with('success', 'Order placed successfully.');
-//     }
-
-//     // Admin/Manager: list all orders
-//     public function index()
-//     {
-//         // admin view: show all orders with relations
-//         $orders = Order::with('retailer','distributor','fieldstaff','items')->latest()->paginate(25);
-//         return view('admin.orders.index', compact('orders'));
-//     }
-
-//     // Admin/Manager: show order details
-//     public function show(Order $order)
-//     {
-//         $order->load('items','retailer','distributor','fieldstaff');
-//         return view('admin.orders.show', compact('order'));
-//     }
-
-//     // Admin/Manager: approve & assign distributor
-//     public function approveAndAssignDistributor(Request $request, Order $order)
-//     {
-//         $data = $request->validate([
-//             'distributor_id' => 'required|exists:distributors,id'
-//         ]);
-//         $order->update([
-//             'distributor_id' => $data['distributor_id'],
-//             'status' => 'approved',
-//             'approved_at' => now(),
-//         ]);
-//         return back()->with('success','Order approved and assigned to distributor.');
-//     }
-
-//     // Distributor: list orders assigned to distributor
-//     public function distributorIndex()
-//     {
-//         $distributorId = Auth::user()->id ?? request()->user()->id;
-//         $orders = Order::with('items','retailer','fieldstaff')
-//             ->where('distributor_id', $distributorId)
-//             ->latest()
-//             ->paginate(25);
-//         return view('admin.distributors.orders.index', compact('orders'));
-//     }
-
-//     // Distributor: assign field staff to order
-//     public function assignFieldStaff(Request $request, Order $order)
-//     {
-//         $data = $request->validate([
-//             'fieldstaff_id' => 'required|exists:fieldstaffs,id'
-//         ]);
-//         $order->update([
-//             'fieldstaff_id' => $data['fieldstaff_id'],
-//             'status' => 'assigned',
-//         ]);
-//         return back()->with('success','Field staff assigned.');
-//     }
-
-//     // Fieldstaff: mark delivered (with optional proof)
-//     public function markDelivered(Request $request, Order $order)
-//     {
-//         $data = $request->validate([
-//             'proof' => 'nullable|file|mimes:jpg,png,pdf|max:5120'
-//         ]);
-
-//         if ($request->hasFile('proof')) {
-//             $path = $request->file('proof')->store('order_proofs','public');
-//             // optionally save the path somewhere (order_proofs table or order->notes)
-//             $order->notes = ($order->notes ? $order->notes . "\n" : '') . "Proof: $path";
-//         }
-
-//         $order->update([
-//             'status' => 'delivered',
-//             'delivered_at' => now(),
-//         ]);
-
-//         return back()->with('success','Order marked as delivered.');
-//     }
-// }

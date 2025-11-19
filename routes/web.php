@@ -72,8 +72,10 @@ Route::middleware(['auth:web'])->group(function () {
     Route::resource('retailers', RetailerController::class);
     Route::resource('districts', DistrictController::class);
     Route::resource('areas', AreaController::class);
-    Route::post('retailer-orders-management/{retailerOrder}/accept-order', [RetailerOrderManagementController::class, 'acceptRetailerOrder'])->name('retailer-orders-management.acceptOrder');
-    Route::resource('retailer-orders-management', RetailerOrderManagementController::class)->except(['create', 'store']);
+    Route::post('retailer-orders-management/{retailerOrder}/accept-and-assign', [RetailerOrderManagementController::class, 'acceptAndAssignFieldStaff'])->name('retailer-orders-management.acceptAndAssignFieldStaff'); // New route
+    Route::resource('retailer-orders-management', RetailerOrderManagementController::class)->except(['create', 'store'])->parameters([
+        'retailer-orders-management' => 'retailerOrder'
+    ]);
     Route::post('distributor-bulk-orders/{distributor_bulk_order}/confirm-delivery', [DistributorBulkOrderController::class, 'confirmDelivery'])->name('distributor-bulk-orders.confirmDelivery');
     Route::post('distributor-bulk-orders/{distributor_bulk_order}/accept-order', [DistributorBulkOrderController::class, 'acceptOrder'])->name('distributor-bulk-orders.acceptOrder');
     Route::post('distributor-bulk-orders/{distributor_bulk_order}/cancel-order', [DistributorBulkOrderController::class, 'cancelOrder'])->name('distributor-bulk-orders.cancelOrder');
@@ -92,7 +94,6 @@ Route::middleware(['auth:web'])->group(function () {
 
     Route::prefix('distributor')->name('distributor.')->middleware('role:distributor')->group(function () {
         Route::get('/orders', [RetailerOrderManagementController::class, 'distributorIndex'])->name('orders.index');
-        Route::post('/orders/{order}/assign-fieldstaff', [RetailerOrderManagementController::class, 'assignFieldStaff'])->name('orders.assignFieldStaff');
     });
 
     Route::prefix('fieldstaff')->name('fieldstaff.')->middleware('role:fieldstaff')->group(function () {
@@ -104,6 +105,7 @@ Route::middleware(['auth:web'])->group(function () {
         Route::get('/orders', [RetailerOrderController::class, 'retailerIndex'])->name('orders.index');
         Route::get('/orders/create', [RetailerOrderController::class, 'create'])->name('orders.create');
         Route::post('/orders', [RetailerOrderController::class, 'store'])->name('orders.store');
+        Route::post('/orders/{retailerOrder}/confirm-delivery', [RetailerOrderController::class, 'confirmDelivery'])->name('orders.confirmDelivery');
         Route::get('/orders/{retailerOrder}', [RetailerOrderController::class, 'show'])->name('orders.show');
     });
 

@@ -78,13 +78,6 @@ class User extends Authenticatable
     //     return $this->belongsTo(Distributor::class, 'distributor_id');
     // }
 
-<<<<<<< HEAD
-    public function hasPermissionTo($permission, $guardName = null): bool
-    {
-        foreach ($this->roles as $role) {
-            if ($role->hasPermissionTo($permission, $guardName)) {
-                return true;
-=======
     public function hasPermissionToCategory($permissionCategoryShortCode, $action)
     {
         $permissionCategory = PermissionCategory::where('short_code', $permissionCategoryShortCode)->first();
@@ -99,16 +92,31 @@ class User extends Authenticatable
             $role = Role::where('name', $roleName)->first();
 
             if ($role) {
-                $hasPermission = \DB::table('roles_permissions')
+                $query = \DB::table('roles_permissions')
                     ->where('role_id', $role->id)
-                    ->where('permission_category_id', $permissionCategory->id)
-                    ->where('can_' . $action, true)
-                    ->exists();
+                    ->where('permission_category_id', $permissionCategory->id);
 
-                if ($hasPermission) {
+                switch ($action) {
+                    case 'view':
+                        $query->where('can_view', true);
+                        break;
+                    case 'add':
+                        $query->where('can_add', true);
+                        break;
+                    case 'edit':
+                        $query->where('can_edit', true);
+                        break;
+                    case 'delete':
+                        $query->where('can_delete', true);
+                        break;
+                    default:
+                        // Or maybe throw an exception for invalid action
+                        return false;
+                }
+
+                if ($query->exists()) {
                     return true;
                 }
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
             }
         }
 

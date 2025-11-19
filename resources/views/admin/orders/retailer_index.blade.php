@@ -108,23 +108,17 @@
                                 case 'pending':
                                     output = `<span class="badge badge-warning">Waiting for confirmation</span>`;
                                     break;
-                                case 'assigned_to_distributor':
-                                    output = `<span class="badge badge-info">${row.status}</span>`;
+                                case 'accepted':
+                                    output = `<span class="badge badge-info">Accepted by Distributor</span>`;
                                     break;
-                                case 'assigned_to_fieldstaff':
-                                    output = `<span class="badge badge-info">${row.status}</span>`;
-                                    break;
-                                case 'out_for_delivery':
-                                    output = `<span class="badge badge-secondary">${row.status}</span>`;
+                                case 'dispatched':
+                                    output = `<button class="btn btn-success btn-sm confirm-delivery-btn" data-id="${row.id}">Confirm Delivery</button>`;
                                     break;
                                 case 'delivered':
                                     output = `<span class="badge badge-success">${row.status}</span>`;
                                     break;
                                 case 'cancelled':
                                     output = `<span class="badge badge-danger">${row.status}</span>`;
-                                    break;
-                                case 'accepted':
-                                    output = `<span class="badge badge-success">${row.status}</span>`;
                                     break;
                                 default:
                                     output = `<span class="badge badge-primary">${row.status}</span>`;
@@ -148,6 +142,32 @@
                 ],
                 drawCallback: function() {
                     feather.replace();
+                }
+            });
+
+            // Handle Confirm Delivery button click
+            $('#retailer-orders-table').on('click', '.confirm-delivery-btn', function() {
+                var orderId = $(this).data('id');
+                if (confirm('Are you sure you want to confirm the delivery of this order?')) {
+                    $.ajax({
+                        url: `/retailer/orders/${orderId}/confirm-delivery`,
+                        method: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                alert(response.success);
+                                $('#retailer-orders-table').DataTable().draw(); // Redraw the table
+                            } else {
+                                alert(response.error || 'Something went wrong.');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error:', error);
+                            alert('An error occurred while confirming the delivery.');
+                        }
+                    });
                 }
             });
         });

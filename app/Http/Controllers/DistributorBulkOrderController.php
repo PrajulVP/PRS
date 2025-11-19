@@ -127,14 +127,7 @@ class DistributorBulkOrderController extends Controller
     // Admin/Distributor: show create form
     public function create()
     {
-<<<<<<< HEAD
-        $distributors = [];
-        if (!Auth::user()->hasRole('distributor')) {
-            $distributors = Distributor::with('user')->get();
-        }
-=======
         $user = Auth::user();
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
         $products = \App\Models\Product::all(); // Fetch all products
 
         $distributors = collect(); // Initialize as empty collection
@@ -175,22 +168,6 @@ class DistributorBulkOrderController extends Controller
             return back()->withErrors(['product_id' => 'Selected product not found.'])->withInput();
         }
 
-<<<<<<< HEAD
-        $distributor = Distributor::find($distributorId);
-        $orderedUnits = $request->quantity * $product->pack_quantity;
-
-        // Add stock to distributor
-        $distributor->products()->syncWithoutDetaching([
-            $product->id => ['stock' => \DB::raw("stock + $orderedUnits")]
-        ]);
-
-
-        $data = $request->all();
-        $data['distributor_id'] = $distributorId;
-        $data['product_name'] = $product->product_name;
-        $data['unit_price'] = $product->mrp;
-        $data['total_amount'] = $request->quantity * $product->mrp;
-=======
         // Check for sufficient stock
         if ($product->stock < $request->quantity) {
             return back()->withErrors(['quantity' => 'Insufficient stock for this product. Available: ' . $product->stock])->withInput();
@@ -205,7 +182,6 @@ class DistributorBulkOrderController extends Controller
         $data['unit_price'] = $product->mrp; // Populate unit price from product's MRP
         $data['sku'] = $product->product_code; // Populate SKU from product's code
         $data['total_amount'] = $request->quantity * $product->mrp; // Recalculate total amount
->>>>>>> 91090156be59a846bc1e79fcc62d6a0abcb78dc0
         $data['placed_at'] = now();
         $data['status'] = 'pending';
 

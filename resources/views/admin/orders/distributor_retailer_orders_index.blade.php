@@ -62,6 +62,7 @@
                             <th>Total Amount</th>
                             <th>Status / Actions</th>
                             <th>Field Staff</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -73,6 +74,35 @@
 </div>
 
 @endsection
+
+<!-- Assign Field Staff Modal -->
+<div class="modal fade" id="assignFieldStaffModal" tabindex="-1" aria-labelledby="assignFieldStaffModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assignFieldStaffModalLabel">Assign Field Staff to Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="modalAssignFieldStaffForm">
+                    @csrf
+                    <input type="hidden" name="order_id" id="modalOrderId">
+                    <div class="mb-3">
+                        <label for="modalFieldStaffSelect" class="form-label">Select Field Staff</label>
+                        <select class="form-select" id="modalFieldStaffSelect" name="fieldstaff_id" required>
+                            <option value="">-- Select Field Staff --</option>
+                            {{-- Options will be populated by JavaScript --}}
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmAssignFieldStaffBtn">Assign</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @push('styles')
     <!-- DataTables with Bootstrap 5 -->
@@ -101,8 +131,10 @@
     <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
 
     <script>
+        var table; // Declare table in a higher scope
+
         $(document).ready(function() {
-            var table = $('#retailer-orders-table').DataTable({
+            table = $('#retailer-orders-table').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {
@@ -121,49 +153,29 @@
                         orderable: false,
                         searchable: false,
                         render: function(data, type, row) {
-                            var status = row.status.toLowerCase().replace(/ /g, '_');
+                            if (!row.status) {
+                                return '';
+                            }
+                            var status = row.status;
                             var output = '';
 
                             // Logic for displaying status or action buttons
-                            if (status === 'pending') {
-                                output = `<button class="btn btn-primary btn-sm accept-retailer-order-btn" data-id="${row.id}">Accept</button>`;
-                            } else if (status === 'accepted_by_distributor') {
-                                var fieldstaffs = {!! json_encode(App\Models\FieldStaff::where('distributor_id', Auth::user()->distributor->id)->with('user')->get()->map(function($fieldstaff) {
-                                    return ['id' => $fieldstaff->id, 'name' => $fieldstaff->user->name];
-                                })) !!};
-                                var options = '<option value="">-- Select Field Staff --</option>';
-                                fieldstaffs.forEach(function(fieldstaff) {
-                                    options += `<option value="${fieldstaff.id}">${fieldstaff.name}</option>`;
-                                });
-
-                                output = `
-                                    <form class="assign-fieldstaff-form">
-                                        @csrf
-                                        <input type="hidden" name="order_id" value="${row.id}">
-                                        <div class="input-group">
-                                            <select class="form-select" name="fieldstaff_id" required>
-                                                ${options}
-                                            </select>
-                                            <button type="submit" class="btn btn-primary btn-sm">Assign</button>
-                                        </div>
-                                    </form>
-                                `;
+                            if (status === 'Pending') {
+                                output = `<button class="btn btn-primary btn-sm open-assign-modal-btn" data-id="${row.id}" data-bs-toggle="modal" data-bs-target="#assignFieldStaffModal">Accept & Assign</button>`;
+                            } else if (status === 'Dispatched' && row.fieldstaff_name !== 'Not Assigned') {
+                                output = `<span class="badge badge-info">Assigned to Field Staff / Dispatched</span>`;
                             } else {
                                 // Default status display for other states
                                 var badgeClass = 'badge-primary';
                                 switch (status) {
-                                    case 'assigned_to_fieldstaff':
-                                        badgeClass = 'badge-info';
-                                        break;
-                                    case 'out_for_delivery':
-                                        badgeClass = 'badge-secondary';
-                                        break;
-                                    case 'delivered':
+                                    case 'Delivered':
                                         badgeClass = 'badge-success';
                                         break;
-                                    case 'cancelled':
+                                    case 'Cancelled':
                                         badgeClass = 'badge-danger';
                                         break;
+                                    default:
+                                        return 'Unknown Status: ' + row.status;
                                 }
                                 output = `<span class="badge ${badgeClass}">${row.status}</span>`;
                             }
@@ -171,6 +183,16 @@
                         }
                     },
                     { data: 'fieldstaff_name', name: 'fieldstaff_name' },
+                    {
+                        data: 'actions',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false,
+                        render: function(data, type, row) {
+                            var viewUrl = "{{ route('retailer-orders-management.show', ':id') }}".replace(':id', row.id);
+                            return `<a href="${viewUrl}" class="btn btn-info btn-sm"><i class="fa fa-eye"></i></a>`;
+                        }
+                    }
                 ],
                 dom:  "<'row mb-3'<'col-sm-12'B>>" + 
                         "<'row mb-3 d-flex align-items-center'<'col-md-6'f><'col-md-6 text-end'l>>" +
@@ -184,67 +206,108 @@
                 ]
             });
 
-            // Handle Accept Retailer Order button click
-            $('#retailer-orders-table').on('click', '.accept-retailer-order-btn', function() {
-                var orderId = $(this).data('id');
-                if (confirm('Are you sure you want to accept this retailer order?')) {
-                    $.ajax({
-                        url: `/retailer-orders-management/${orderId}/accept-order`,
-                        method: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}'
-                        },
-                        success: function(response) {
-                            if (response.success) {
-                                alert(response.success);
-                                table.draw(); // Redraw the table
-                            } else {
-                                alert(response.error || 'Something went wrong.');
+                        // Populate field staff dropdown when modal opens
+
+                        $('#assignFieldStaffModal').on('show.bs.modal', function (event) {
+
+                            var button = $(event.relatedTarget); // Button that triggered the modal
+
+                            var orderId = button.data('id'); // Extract info from data-* attributes
+
+                            var modal = $(this);
+
+                            modal.find('#modalOrderId').val(orderId);
+
+            
+
+                            var fieldstaffs = {!! json_encode($fieldstaffs) !!}; // Get fieldstaffs data
+
+                            var optionsHtml = '<option value="">-- Select Field Staff --</option>';
+
+                            fieldstaffs.forEach(function(fieldstaff) {
+
+                                optionsHtml += `<option value="${fieldstaff.id}">${fieldstaff.name}</option>`;
+
+                            });
+
+                            modal.find('#modalFieldStaffSelect').html(optionsHtml);
+
+                        });
+
+            
+
+                        // Handle Assign button click in the modal
+
+                        $('#confirmAssignFieldStaffBtn').on('click', function() {
+
+                            var orderId = $('#modalOrderId').val();
+
+                            var fieldstaffId = $('#modalFieldStaffSelect').val();
+
+                            var csrfToken = $('#modalAssignFieldStaffForm input[name="_token"]').val();
+
+            
+
+                            if (!fieldstaffId) {
+
+                                alert('Please select a field staff.');
+
+                                return;
+
                             }
-                        },
-                        error: function(xhr, status, error) {
-                            console.error('Error:', error);
-                            alert('An error occurred while accepting the order.');
-                        }
+
+            
+
+                            var url = "{{ route('retailer-orders-management.acceptAndAssignFieldStaff', ['retailerOrder' => ':id']) }}".replace(':id', orderId);
+
+            
+
+                            $.ajax({
+
+                                url: url,
+
+                                method: 'POST',
+
+                                data: {
+
+                                    _token: csrfToken,
+
+                                    fieldstaff_id: fieldstaffId
+
+                                },
+
+                                success: function(response) {
+
+                                    if (response.success) {
+
+                                        alert(response.success);
+
+                                        $('#assignFieldStaffModal').modal('hide'); // Hide the modal
+
+                                        table.draw(); // Redraw the table
+
+                                    } else {
+
+                                        alert(response.error || 'Something went wrong.');
+
+                                    }
+
+                                },
+
+                                error: function(xhr, status, error) {
+
+                                    console.error('Error:', error);
+
+                                    alert('An error occurred while accepting and assigning the order.');
+
+                                    $('#assignFieldStaffModal').modal('hide'); // Hide the modal on error
+
+                                }
+
+                            });
+
+                        });
+
                     });
-                }
-            });
-
-            // Handle Assign Field Staff form submission
-            $('#retailer-orders-table').on('submit', '.assign-fieldstaff-form', function(e) {
-                e.preventDefault();
-
-                var form = $(this);
-                var orderId = form.find('input[name="order_id"]').val();
-                var fieldstaffId = form.find('select[name="fieldstaff_id"]').val();
-                var token = form.find('input[name="_token"]').val();
-
-                if (!fieldstaffId) {
-                    alert('Please select a field staff.');
-                    return;
-                }
-
-                $.ajax({
-                    url: `/retailer-orders-management/${orderId}/assign-fieldstaff`,
-                    method: 'POST',
-                    data: {
-                        _token: token,
-                        fieldstaff_id: fieldstaffId
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            alert(response.success);
-                            table.draw(); // Redraw the table
-                        } else {
-                            alert(response.error || 'Something went wrong.');
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error:', error);
-                        alert('An error occurred while assigning field staff.');
-                    }
-                });
-            });
-        });
     </script>
 @endpush
