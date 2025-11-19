@@ -209,7 +209,7 @@
               <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
             </svg><span>Orders</span></a>
           <ul class="sidebar-submenu">
-            <li><a href="{{ route('distributor-bulk-orders.index') }}">Order List</a></li>
+            <li><a href="{{ route('fieldstaff.orders.index') }}">Order List</a></li>
             {{-- Field staff typically don't create distributor orders directly, but manage assigned ones --}}
           </ul>
         </li>
