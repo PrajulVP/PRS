@@ -27,6 +27,7 @@ class User extends Authenticatable
         'role',
         'regulations',
         'profile_pic',
+        'status',
     ];
 
     public function distributor()

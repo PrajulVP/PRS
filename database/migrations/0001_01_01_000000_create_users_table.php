@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('password', 255); // VARCHAR(255)
             $table->rememberToken(); // VARCHAR(100) NULL (for "remember me" sessions)
             $table->string('role', 20)->default('user');
+            $table->string('status', 20)->default('inactive');
             $table->timestamps(); // created_at, updated_at (TIMESTAMP)
         });
 

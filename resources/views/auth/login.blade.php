@@ -2,6 +2,19 @@
 
 @section('content')
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+@if ($errors->any())
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Login Failed',
+            html: `{!! implode('<br>', $errors->all()) !!}`,
+            confirmButtonColor: '#3085d6'
+        });
+    </script>
+@endi
+
 <div class="login-card">
 
 <form id="login-form" method="POST" action="{{ route('login.post') }}" novalidate>
@@ -57,17 +70,22 @@
 
 </div> <!-- close .login-card -->
 
-<style>
-    .form-control.is-invalid {
-        width: 100% !important; /* Ensure width doesn't change */
-        box-sizing: border-box; /* Include padding and border in the element's total width */
-    }
-    .invalid-feedback.d-block {
-        width: 100%; /* Ensure error message takes full width without pushing */
-        box-sizing: border-box;
-    }
-</style>
-
+    <style>
+        .form-control.is-invalid {
+            width: 100% !important;
+            box-sizing: border-box;
+        }
+        .invalid-feedback.d-block {
+            width: 100%;
+            box-sizing: border-box;
+            height: 1.2em; /* Fixed height to prevent layout shift */
+            margin-top: 0.25rem; /* Standard Bootstrap spacing */
+            margin-bottom: 0;
+            padding: 0;
+            line-height: 1.2; /* Ensure text fits within the height */
+            overflow: hidden; /* Hide overflow if message is too long */
+        }
+    </style>
 <script src="{{ asset('admin/assets/js/jquery.min.js') }}"></script>
 <script src="{{ asset('admin/assets/js/bootstrap/bootstrap.bundle.min.js') }}"></script>
 <script>

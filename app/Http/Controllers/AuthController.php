@@ -33,19 +33,36 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email'    => ['required','email'],
+            'email'    => ['required', 'email'],
             'password' => ['required'],
         ]);
 
-        if (Auth::guard('web')->attempt($credentials, $request->boolean('remember'))) {
-            $request->session()->regenerate();
-            return redirect()->route('dashboard');
+        // Check if user exists
+        $user = \App\Models\User::where('email', $request->email)->first();
+
+        if (!$user) {
+            // Email not found
+            return back()->withErrors(['email' => 'Email does not exist'])->withInput();
         }
 
-        return back()->withErrors([
-            'email' => 'Authentication failed. Please try again.',
-        ]);
+        // Block inactive users BEFORE login, except superadmin/admin
+        if (!in_array($user->role, ['superadmin', 'admin']) && $user->status === 'inactive') {
+            return back()->withErrors(['inactive' => 'Your account is inactive. Please contact admin.'])
+                        ->withInput();
+        }
+
+        // Check password manually
+        if (!\Hash::check($request->password, $user->password)) {
+            return back()->withErrors(['password' => 'Incorrect password'])->withInput();
+        }
+
+        // Attempt login
+        Auth::login($user, $request->boolean('remember'));
+        $request->session()->regenerate();
+
+        return redirect()->route('dashboard');
     }
+
 
     /**
      * Dashboard entrypoint. Use a single blade with role-based conditional UI,

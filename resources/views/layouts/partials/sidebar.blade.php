@@ -229,7 +229,7 @@
         @endif
         @elseif (Auth::user()->hasRole('distributor'))
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
-            <svg class="stroke-icon">
+           <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
             </svg>
             <svg class="fill-icon">
@@ -247,7 +247,7 @@
         @else {{-- Superadmin or Admin --}}
         @if (Auth::user()->hasPermissionToCategory('retailer_orders', 'view'))
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
-            <svg class=".stroke-icon">
+            <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
             </svg>
             <svg class="fill-icon">
