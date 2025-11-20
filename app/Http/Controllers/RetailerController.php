@@ -36,9 +36,14 @@ class RetailerController extends Controller
         $retailer = null;  // Changed variable name
         $districts = District::all();
         $areas = Area::all();
-        $distributors = Distributor::all();
+        $distributors = Distributor::whereHas('user', function ($query) {
+            $query->where('status', 'active');
+        })->get();
+        $managers = \App\Models\Manager::whereHas('user', function ($query) {
+            $query->where('status', 'active');
+        })->get();
 
-        return view('admin.retailers.create', compact('retailer', 'districts', 'areas', 'distributors'));
+        return view('admin.retailers.create', compact('retailer', 'districts', 'areas', 'distributors', 'managers'));
     }
 
 
@@ -60,6 +65,7 @@ class RetailerController extends Controller
         $retailerData = $request->validate([
             'gst' => 'required|unique:retailers',
             'distributor_id' => 'required|exists:distributors,id',
+            'sales_manager_id' => 'required|exists:managers,id',
         ]);
         $retailerData['district_id'] = $userData['district_id']; // Add district_id
         $retailerData['area_id'] = $userData['area_id'];     // Add area_id
@@ -84,6 +90,16 @@ class RetailerController extends Controller
         $retailer->district_id = $userData['district_id']; // ADDED
         $retailer->area_id = $userData['area_id'];     // ADDED
         $retailer->user_id = $user->id;
+        $retailer->status = 'inactive';
+
+        if (Auth::user()->hasRole('fieldstaff')) {
+            $fieldstaff = Auth::user()->fieldstaff;
+            $retailer->field_staff_id = $fieldstaff->id;
+            $retailer->sales_manager_id = $fieldstaff->sales_manager_id;
+        } else {
+            $retailer->sales_manager_id = $request->sales_manager_id;
+        }
+
         $retailer->save();
 
         return redirect()->route('retailers.index')->with('success', 'Retailer added successfully!');
@@ -93,7 +109,9 @@ class RetailerController extends Controller
     public function edit(Retailer $retailer) // Changed type-hint and variable name
     {
         $districts = District::all();
-        $distributors = Distributor::all();
+        $distributors = Distributor::whereHas('user', function ($query) {
+            $query->where('status', 'active');
+        })->get();
         $areas = Area::where('district_id', $retailer->user->district_id)->get(); // Changed
         return view('admin.retailers.edit', compact('retailer','districts','areas','distributors'));
     }
@@ -162,5 +180,16 @@ class RetailerController extends Controller
                                    ->where('area_id', $area->id)
                                    ->get();
         return response()->json($distributors);
-    }   
+    }
+
+    public function activate(Retailer $retailer)
+    {
+        if (!Auth::user()->hasRole('manager')) {
+            return redirect()->back()->with('error', 'You are not authorized to activate a retailer.');
+        }
+
+        $retailer->update(['status' => 'active']);
+
+        return redirect()->back()->with('success', 'Retailer activated successfully!');
+    }
 }

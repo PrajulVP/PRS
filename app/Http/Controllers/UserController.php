@@ -24,7 +24,9 @@ class UserController extends Controller
     public function create()
     {
         $roles = ['superadmin', 'admin', 'manager', 'distributor', 'fieldstaff', 'retailer'];
-        $distributors = Distributor::all(); // Fetch all distributors
+        $distributors = Distributor::whereHas('user', function ($query) {
+            $query->where('status', 'active');
+        })->get(); // Fetch all distributors
         return view('admin.users.create', compact('roles', 'distributors'));
     }
 
@@ -249,22 +251,6 @@ class UserController extends Controller
     }
 
     /**
-     * Display a list of users pending approval (status = 'inactive').
-     * Accessible by Superadmin.
-     */
-    public function pendingApproval()
-    {
-        // Only superadmin can access this
-        if (!Auth::guard('web')->user()->hasRole('superadmin')) {
-            abort(403, 'Unauthorized action.');
-        }
-        $users = User::where('status', 'inactive')
-                     ->whereNotIn('role', ['superadmin', 'admin'])
-                     ->get();
-        return view('admin.users.pending_approval', compact('users'));
-    }
-
-    /**
      * Activate a user (set status to 'active').
      * Accessible by Superadmin.
      */
@@ -272,12 +258,12 @@ class UserController extends Controller
     {
         // Only superadmin can access this
         if (!Auth::guard('web')->user()->hasRole('superadmin')) {
-            return response()->json(['error' => 'Unauthorized action.'], 403);
+            return redirect()->back()->with('error', 'Unauthorized action.');
         }
 
         $user->status = 'active';
         $user->save();
 
-        return response()->json(['success' => 'User activated successfully!']);
+        return redirect()->back()->with('success', 'User activated successfully!');
     }
 }

@@ -38,13 +38,18 @@ class FieldStaffController extends Controller
     public function create()
     {
         $districts = District::all();
-        $distributors = Distributor::all();
+        $distributors = Distributor::whereHas('user', function ($query) {
+            $query->where('status', 'active');
+        })->get();
         return view('admin.fieldstaffs.create', compact('districts', 'distributors'));
     }
 
 
     public function store(Request $request)
     {
+        if (!Auth::user()->hasRole('manager')) {
+            return redirect()->route('fieldstaffs.index')->with('error', 'You are not authorized to create a field staff.');
+        }
         // Separate validation for User and FieldStaff fields
         $userData = $request->validate([
             'name' => 'required|string|max:255',
@@ -58,7 +63,6 @@ class FieldStaffController extends Controller
 
         $fieldstaffData = $request->validate([
             'distributor_id' => 'required|exists:distributors,id',
-            'status' => 'in:active,inactive',
         ]);
 
         // Create User
@@ -77,17 +81,24 @@ class FieldStaffController extends Controller
         // Create FieldStaff profile
         $fieldstaff = new FieldStaff($fieldstaffData);
         $fieldstaff->user_id = $user->id;
+        $fieldstaff->status = 'inactive';
+        // Set the sales_manager_id if the authenticated user is a manager
+        if (Auth::user()->hasRole('manager')) {
+            $fieldstaff->sales_manager_id = Auth::user()->manager->id;
+        }
         $fieldstaff->save();
 
 
-        return redirect()->route('fieldstaffs.index')->with('success', 'Field staff added successfully!');
+        return redirect()->route('fieldstaffs.index')->with('success', 'Field staff added successfully and is pending approval.');
     }
 
 
     public function edit(FieldStaff $fieldstaff) // Changed type-hint
     {
         $districts = District::all();
-        $distributors = Distributor::all();
+        $distributors = Distributor::whereHas('user', function ($query) {
+            $query->where('status', 'active');
+        })->get();
         $areas = Area::where('district_id', $fieldstaff->user->district_id)->get(); // Changed
         return view('admin.fieldstaffs.edit', compact('fieldstaff', 'districts', 'distributors', 'areas'));
     }
@@ -151,5 +162,16 @@ class FieldStaffController extends Controller
                                    ->where('area_id', $area->id)
                                    ->get();
         return response()->json($distributors);
+    }
+
+    public function activate(FieldStaff $fieldstaff)
+    {
+        if (!Auth::user()->hasRole('admin')) {
+            return redirect()->route('fieldstaffs.index')->with('error', 'You are not authorized to activate a field staff.');
+        }
+
+        $fieldstaff->update(['status' => 'active']);
+
+        return redirect()->route('fieldstaffs.index')->with('success', 'Field staff activated successfully!');
     }
 }

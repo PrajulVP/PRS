@@ -49,12 +49,12 @@
         </li>
         @endif
 
-      @if (Auth::user()->hasRole('superadmin'))
+      @if (Auth::user()->hasRole('superadmin') || Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager'))
       <li class="sidebar-list">
 
           <a class="sidebar-link sidebar-title link-nav d-flex justify-content-between align-items-center 
-            {{ request()->routeIs('admin.users.pending_approval') ? 'active' : '' }}"
-            href="{{ route('admin.users.pending_approval') }}"
+            {{ request()->routeIs('pending-approvals') ? 'active' : '' }}"
+            href="{{ route('pending-approvals') }}"
             style="color: #000 !important;">
 
               <div class="d-flex align-items-center">
@@ -68,24 +68,6 @@
 
                   <span class="text-truncate" style="max-width: calc(100% - 40px);">Pending Approval</span>
               </div>
-
-              @if ($pendingUsersCount > 0)
-                  <span style="
-                      display:inline-block;
-                      min-width:20px;
-                      padding:2px 6px;
-                      font-size:12px;
-                      font-weight:600;
-                      line-height:1;
-                      color:#fff;
-                      background-color:#ff3b30;
-                      border-radius:12px;
-                      text-align:center;
-                  ">
-                      {{ $pendingUsersCount }}
-                  </span>
-              @endif
-
           </a>
       </li>
       @endif
