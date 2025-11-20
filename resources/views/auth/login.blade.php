@@ -13,7 +13,7 @@
             confirmButtonColor: '#3085d6'
         });
     </script>
-@endi
+@endif
 
 <div class="login-card">
 
@@ -21,17 +21,12 @@
     @csrf
     @method('POST')
     <div class="mb-3">
-        <label for="email" class="form-label">Email or Username</label>
+        <label for="email" class="form-label">Email</label>
         <input id="email" type="text"
                class="form-control @error('email') is-invalid @enderror"
                name="email"
                value="{{ old('email') }}"
                required>
-        <div class="invalid-feedback d-block" style="color: red; font-weight: bold; min-height: 1.2em;">
-            @error('email')
-                {{ $message }}
-            @enderror
-        </div>
     </div>
 
     <div class="mb-3">
@@ -43,11 +38,6 @@
             <button type="button" class="btn btn-outline-secondary show-pass" tabindex="-1" title="Show/Hide">
                 <i class="fa fa-eye"></i>
             </button>
-            <div class="invalid-feedback d-block">
-                @error('password')
-                    {{ $message }}
-                @enderror
-            </div>
         </div>
     </div>
 
@@ -70,22 +60,6 @@
 
 </div> <!-- close .login-card -->
 
-    <style>
-        .form-control.is-invalid {
-            width: 100% !important;
-            box-sizing: border-box;
-        }
-        .invalid-feedback.d-block {
-            width: 100%;
-            box-sizing: border-box;
-            height: 1.2em; /* Fixed height to prevent layout shift */
-            margin-top: 0.25rem; /* Standard Bootstrap spacing */
-            margin-bottom: 0;
-            padding: 0;
-            line-height: 1.2; /* Ensure text fits within the height */
-            overflow: hidden; /* Hide overflow if message is too long */
-        }
-    </style>
 <script src="{{ asset('admin/assets/js/jquery.min.js') }}"></script>
 <script src="{{ asset('admin/assets/js/bootstrap/bootstrap.bundle.min.js') }}"></script>
 <script>
