@@ -23,24 +23,28 @@
                         @csrf
                         @method('PUT')
 
-                        <div class="mb-3">
-                            <label>Name</label>
-                            <input type="text" name="name" class="form-control" value="{{ old('name', $fieldstaff->user->name) }}" required>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label>Name</label>
+                                <input type="text" name="name" class="form-control" value="{{ old('name', $fieldstaff->user->name) }}" required>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label>Email</label>
+                                <input type="email" name="email" class="form-control" value="{{ old('email', $fieldstaff->user->email) }}" required>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label>Email</label>
-                            <input type="email" name="email" class="form-control" value="{{ old('email', $fieldstaff->user->email) }}" required>
-                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label>Password (Leave blank to keep unchanged)</label>
+                                <input type="password" name="password" class="form-control">
+                            </div>
 
-                        <div class="mb-3">
-                            <label>Password (Leave blank to keep unchanged)</label>
-                            <input type="password" name="password" class="form-control">
-                        </div>
-
-                        <div class="mb-3">
-                            <label>Contact No</label>
-                            <input type="text" name="contact_no" class="form-control" value="{{ old('contact_no', $fieldstaff->user->contact_no) }}">
+                            <div class="col-md-6 mb-3">
+                                <label>Contact No</label>
+                                <input type="text" name="contact_no" class="form-control" value="{{ old('contact_no', $fieldstaff->user->contact_no) }}">
+                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -48,38 +52,47 @@
                             <textarea name="address" class="form-control">{{ old('address', $fieldstaff->user->address) }}</textarea>
                         </div>
 
-                        <div class="mb-3">
-                            <label>District</label>
-                            <select name="district_id" id="district_id" class="form-select" required>
-                                <option value="">Select District</option>
-                                @foreach($districts as $district)
-                                    <option value="{{ $district->id }}" {{ $district->id == $fieldstaff->user->district_id ? 'selected' : '' }}>
-                                        {{ $district->name }}
-                                    </option>
-                                @endforeach
-                            </select>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label>District</label>
+                                <select name="district_id" id="district_id" class="form-select" required>
+                                    <option value="">Select District</option>
+                                    @foreach($districts as $district)
+                                        <option value="{{ $district->id }}" {{ $district->id == old('district_id', $fieldstaff->user->district_id) ? 'selected' : '' }}>
+                                            {{ $district->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label>Area</label>
+                                <select name="area_id" id="area_id" class="form-select" required>
+                                    <option value="">Select Area</option>
+                                </select>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label>Area</label>
-                            <select name="area_id" id="area_id" class="form-select" required>
-                                <option value="">Select Area</option>
-                            </select>
-                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label>Distributor</label>
+                                <select name="distributor_id" id="distributor_id" class="form-select" required>
+                                    <option value="">Select Distributor</option>
+                                    @foreach($distributors as $distributor)
+                                        <option value="{{ $distributor->id }}" {{ $distributor->id == old('distributor_id', $fieldstaff->distributor_id) ? 'selected' : '' }}>
+                                            {{ $distributor->company_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
 
-                        <div class="mb-3">
-                            <label>Distributor</label>
-                            <select name="distributor_id" id="distributor_id" class="form-select" required>
-                                <option value="">Select Distributor</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label>Status</label>
-                            <select name="status" class="form-select">
-                                <option value="active" {{ $fieldstaff->status == 'active' ? 'selected' : '' }}>Active</option>
-                                <option value="inactive" {{ $fieldstaff->status == 'inactive' ? 'selected' : '' }}>Inactive</option>
-                            </select>
+                            <div class="col-md-6 mb-3">
+                                <label>Status</label>
+                                <select name="status" class="form-select">
+                                    <option value="active" {{ $fieldstaff->status == 'active' ? 'selected' : '' }}>Active</option>
+                                    <option value="inactive" {{ $fieldstaff->status == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                </select>
+                            </div>
                         </div>
 
                         <button class="btn btn-success">Update Field Staff</button>

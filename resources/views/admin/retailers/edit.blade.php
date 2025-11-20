@@ -18,63 +18,73 @@
                         @csrf
                         @method('PUT')
 
-                        <div class="mb-3">
-                            <label>Name</label>
-                            <input type="text" name="name" class="form-control" value="{{ old('name', $retailer->user->name) }}" required>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label>Name</label>
+                                <input type="text" name="name" class="form-control" value="{{ old('name', $retailer->user->name) }}" required>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label>Email</label>
+                                <input type="email" name="email" class="form-control" value="{{ old('email', $retailer->user->email) }}" required>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label>Email</label>
-                            <input type="email" name="email" class="form-control" value="{{ old('email', $retailer->user->email) }}" required>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label>Password (Leave blank to keep unchanged)</label>
+                                <input type="password" name="password" class="form-control">
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label>Contact No</label>
+                                <input type="text" name="contact_no" class="form-control" value="{{ old('contact_no', $retailer->user->contact_no) }}" required>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label>Password (Leave blank to keep unchanged)</label>
-                            <input type="password" name="password" class="form-control">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label>Address</label>
+                                <textarea name="address" class="form-control" required>{{ old('address', $retailer->user->address) }}</textarea>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label>Pincode</label>
+                                <input type="text" name="pincode" class="form-control" value="{{ old('pincode', $retailer->user->pincode) }}" required>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label>Contact No</label>
-                            <input type="text" name="contact_no" class="form-control" value="{{ old('contact_no', $retailer->user->contact_no) }}" required>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label>Route</label>
+                                <input type="text" name="route" class="form-control" value="{{ old('route', $retailer->user->route) }}">
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label>GST</label>
+                                <input type="text" name="gst" class="form-control" value="{{ old('gst', $retailer->gst) }}" required>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label>Address</label>
-                            <textarea name="address" class="form-control" required>{{ old('address', $retailer->user->address) }}</textarea>
-                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label>District</label>
+                                <select name="district_id" id="district_id" class="form-select" required>
+                                    <option value="">Select District</option>
+                                    @foreach($districts as $district)
+                                    <option value="{{ $district->id }}" {{ $district->id == old('district_id', $retailer->district_id) ? 'selected' : '' }}>
+                                        {{ $district->name }}
+                                    </option>
+                                    @endforeach
+                                </select>
+                            </div>
 
-                        <div class="mb-3">
-                            <label>Pincode</label>
-                            <input type="text" name="pincode" class="form-control" value="{{ old('pincode', $retailer->user->pincode) }}" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label>Route</label>
-                            <input type="text" name="route" class="form-control" value="{{ old('route', $retailer->user->route) }}">
-                        </div>
-
-                        <div class="mb-3">
-                            <label>GST</label>
-                            <input type="text" name="gst" class="form-control" value="{{ old('gst', $retailer->gst) }}" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label>District</label>
-                            <select name="district_id" id="district_id" class="form-select" required>
-                                <option value="">Select District</option>
-                                @foreach($districts as $district)
-                                <option value="{{ $district->id }}" {{ $district->id == $retailer->user->district_id ? 'selected' : '' }}>
-                                    {{ $district->name }}
-                                </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label>Area</label>
-                            <select name="area_id" id="area_id" class="form-select" required>
-                                <option value="">Select Area</option>
-                            </select>
+                            <div class="col-md-6 mb-3">
+                                <label>Area</label>
+                                <select name="area_id" id="area_id" class="form-select" required>
+                                    <option value="">Select Area</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -99,8 +109,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const distributorSelect = document.getElementById('distributor_id');
 
     // Store initial values for pre-selection
-    const initialDistrictId = "{{ old('district_id', $retailer->user->district_id) }}";
-    const initialAreaId = "{{ old('area_id', $retailer->user->area_id) }}";
+    const initialDistrictId = "{{ old('district_id', $retailer->district_id) }}";
+    const initialAreaId = "{{ old('area_id', $retailer->area_id) }}";
     const initialDistributorId = "{{ old('distributor_id', $retailer->distributor_id) }}";
 
     // Function to fetch and populate areas
