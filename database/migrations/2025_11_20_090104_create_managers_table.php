@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->unique()->constrained('users')->onDelete('cascade');
             $table->foreignId('distributor_id')->nullable()->constrained('distributors')->onDelete('set null'); // Manager can be under a distributor or global
-            $table->string('name');
-            $table->string('email')->unique();
+            $table->string('name')->nullable();
+            $table->string('email')->unique()->nullable();
             $table->string('contact_no')->nullable();
             $table->text('address')->nullable();
             $table->string('status')->default('active');
