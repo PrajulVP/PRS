@@ -49,6 +49,17 @@
         </li>
         @endif
 
+        @if (Auth::user()->hasRole('superadmin'))
+        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.users.pending_approval') }}">
+            <svg class="stroke-icon">
+              <use href="{{ asset('admin/assets/svg/icon-sprite.svg#stroke-user') }}"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{{ asset('admin/assets/svg/icon-sprite.svg#fill-user') }}"></use>
+            </svg><span>Users Pending Approval</span></a>
+        </li>
+        @endif
+
         @if (Auth::user()->hasPermissionToCategory('distributors', 'view'))
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
             <svg class="stroke-icon">

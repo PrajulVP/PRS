@@ -247,4 +247,35 @@ class UserController extends Controller
         $user->delete();
         return redirect()->route('admin.users')->with('success', 'User deleted successfully!');
     }
+
+    /**
+     * Display a list of users pending approval (status = 'inactive').
+     * Accessible by Superadmin.
+     */
+    public function pendingApproval()
+    {
+        // Only superadmin can access this
+        if (!Auth::guard('web')->user()->hasRole('superadmin')) {
+            abort(403, 'Unauthorized action.');
+        }
+        $users = User::where('status', 'inactive')->get();
+        return view('admin.users.pending_approval', compact('users'));
+    }
+
+    /**
+     * Activate a user (set status to 'active').
+     * Accessible by Superadmin.
+     */
+    public function activateUser(User $user)
+    {
+        // Only superadmin can access this
+        if (!Auth::guard('web')->user()->hasRole('superadmin')) {
+            return response()->json(['error' => 'Unauthorized action.'], 403);
+        }
+
+        $user->status = 'active';
+        $user->save();
+
+        return response()->json(['success' => 'User activated successfully!']);
+    }
 }

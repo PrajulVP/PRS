@@ -33,7 +33,14 @@
                                         {{-- Header Section --}}
                                         <div class="d-flex justify-content-between align-items-center mb-3">
                                             <h5 class="fw-bold mb-0">{{ $distributor->company_name }}</h5>
-                                            <span class="badge bg-success">{{ $distributor->district->name ?? 'N/A' }}</span>
+                                            <div>
+                                                <span class="badge bg-success">{{ $distributor->district->name ?? 'N/A' }}</span>
+                                                @if($distributor->user->status == 'active')
+                                                    <span class="badge bg-success">Active</span>
+                                                @else
+                                                    <span class="badge bg-warning">Inactive</span>
+                                                @endif
+                                            </div>
                                         </div>
 
                                         {{-- Info Grid --}}

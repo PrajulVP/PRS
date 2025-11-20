@@ -131,6 +131,10 @@ Route::middleware(['auth:web'])->group(function () {
         Route::get('permissions', [PermissionController::class, 'index'])->name('permissions.index');
         Route::get('permissions/{role}/edit', [PermissionController::class, 'edit'])->name('permissions.edit');
         Route::put('permissions/{role}', [PermissionController::class, 'update'])->name('permissions.update');
+        
+        // User Approval routes for Superadmin
+        Route::get('users/pending-approval', [App\Http\Controllers\UserController::class, 'pendingApproval'])->name('users.pending_approval');
+        Route::post('users/{user}/activate', [App\Http\Controllers\UserController::class, 'activateUser'])->name('users.activate');
     });
 
 });
