@@ -15,7 +15,7 @@
                         @foreach($roles as $role)
                             <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                                 {{ ucfirst($role->name) }}
-                                @if (Auth::user()->hasPermissionToCategory('permissions', 'edit'))
+                                @if (Auth::user()->hasRole('superadmin') || Auth::user()->hasRole('admin'))
                                 <a href="{{ route('admin.permissions.edit', $role) }}" class="btn btn-primary btn-sm">
                                     Manage Permissions
                                 </a>
