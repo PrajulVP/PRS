@@ -13,14 +13,12 @@ return new class extends Migration
     {
         Schema::create('retailer_orders', function (Blueprint $table) {
             $table->id();
-            $table->string('order_code')->unique();
+            $table->string('order_code'); // Not unique anymore
             $table->foreignId('distributor_id')->nullable()->constrained('distributors')->onDelete('set null');
             $table->foreignId('retailer_id')->constrained('retailers')->onDelete('cascade');
-            $table->string('product_name');
-            $table->string('sku')->nullable();
-            $table->integer('quantity');
-            $table->decimal('unit_price', 10, 2);
-            $table->decimal('total_amount', 10, 2);
+            $table->decimal('total_amount', 10, 2)->default(0.00); // Added, with default
+            $table->integer('total_items')->default(0); // Added, with default
+            $table->integer('total_quantity')->default(0); // Added, with default
             $table->string('status', 50)->default('pending');
             $table->timestamp('placed_at')->nullable();
             $table->text('notes')->nullable();

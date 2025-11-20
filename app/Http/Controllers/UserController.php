@@ -258,7 +258,9 @@ class UserController extends Controller
         if (!Auth::guard('web')->user()->hasRole('superadmin')) {
             abort(403, 'Unauthorized action.');
         }
-        $users = User::where('status', 'inactive')->get();
+        $users = User::where('status', 'inactive')
+                     ->whereNotIn('role', ['superadmin', 'admin'])
+                     ->get();
         return view('admin.users.pending_approval', compact('users'));
     }
 

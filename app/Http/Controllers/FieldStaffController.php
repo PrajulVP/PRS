@@ -30,7 +30,7 @@ class FieldStaffController extends Controller
             }
         }
 
-        $fieldstaffs = $query->latest()->get();
+        $fieldstaffs = $query->latest()->paginate(10);
         return view('admin.fieldstaffs.index', compact('fieldstaffs'));
     }
 

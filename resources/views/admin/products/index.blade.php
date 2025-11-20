@@ -19,6 +19,42 @@
         width: 70px !important;
         display: inline-block;
     }
+
+    /* Compact badges */
+    .badge-stock {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        line-height: 1;
+    }
+
+    /* Compact action buttons */
+    .table-actions .btn {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.75rem;
+    }
+
+    /* Prevent buttons from wrapping */
+    .table-actions form {
+        display: inline-block;
+        margin: 0;
+    }
+
+    .stock-pill {
+        display: inline-block;
+        font-size: 0.75rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.25rem;
+        color: #fff;
+        font-weight: 500;
+        text-align: center;
+        min-width: 50px;
+    }
+
+    /* Colors */
+    .stock-in { background-color: #28a745; }  /* green */
+    .stock-low { background-color: #ffc107; } /* yellow */
+    .stock-out { background-color: #dc3545; } /* red */
+
 </style>
 
 @section('page-body')
@@ -97,18 +133,23 @@
         { data: 'product_name', name: 'product_name' },
         { data: 'generic_name', name: 'generic_name' },
         { data: 'pack_quantity', name: 'pack_quantity' }, // New column for pack_quantity
-        { data: 'stock', name: 'stock',
+        { 
+            data: 'stock', 
+            name: 'stock',
             render: function(data, type, row) {
-                var stockValue = parseInt(data); // Total individual units
-                var badgeClass = 'badge-danger';
-                var statusText = 'Out of Stock';
+                var stockValue = parseInt(data);
+                var stockClass = 'stock-out';
+                var statusText = 'Out';
 
-                if (stockValue > 0) { // Check if total individual units are greater than 0
-                    badgeClass = 'badge-success';
-                    statusText = 'In Stock (' + stockValue + ' units)'; // Simplified stock display
+                if (stockValue > 50) {
+                    stockClass = 'stock-in';
+                    statusText = stockValue + ' units';
+                } else if (stockValue > 0) {
+                    stockClass = 'stock-low';
+                    statusText = stockValue + ' units';
                 }
 
-                return `<span class="badge ${badgeClass}">${statusText}</span>`;
+                return `<span class="stock-pill ${stockClass}">${statusText}</span>`;
             }
         },
         { data: 'batch_no', name: 'batch_no' },
@@ -125,14 +166,17 @@
                 var editUrl = "{{ route('products.edit', ':id') }}".replace(':id', row.id);
                 var deleteUrl = "{{ route('products.destroy', ':id') }}".replace(':id', row.id);
                 var csrfToken = "{{ csrf_token() }}";
+
                 return `
-                    <a href="${viewUrl}" class="btn btn-outline-info btn-sm"><i class="fa fa-eye"></i></a>
-                    <a href="${editUrl}" class="btn btn-outline-primary btn-sm"><i class="fa fa-edit"></i></a>
-                    <form action="${deleteUrl}" method="POST" style="display:inline-block;">
-                        <input type="hidden" name="_token" value="${csrfToken}">
-                        <input type="hidden" name="_method" value="DELETE">
-                        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure?')"><i class="fa fa-trash"></i></button>
-                    </form>
+                    <div class="table-actions">
+                        <a href="${viewUrl}" class="btn btn-outline-info btn-sm" title="View"><i class="fa fa-eye"></i></a>
+                        <a href="${editUrl}" class="btn btn-outline-primary btn-sm" title="Edit"><i class="fa fa-edit"></i></a>
+                        <form action="${deleteUrl}" method="POST" onsubmit="return confirm('Are you sure?')">
+                            <input type="hidden" name="_token" value="${csrfToken}">
+                            <input type="hidden" name="_method" value="DELETE">
+                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete"><i class="fa fa-trash"></i></button>
+                        </form>
+                    </div>
                 `;
             }
         }

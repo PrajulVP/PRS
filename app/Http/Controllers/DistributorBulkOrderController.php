@@ -15,7 +15,7 @@ class DistributorBulkOrderController extends Controller
     {
         if ($request->ajax()) {
             try {
-                $query = DistributorOrder::with('distributor.user');
+                $query = DistributorOrder::with(['distributor.user', 'items.product']);
 
                 // Filter by distributor if authenticated user is a distributor
                 if (Auth::user()->hasRole('distributor')) {
@@ -29,12 +29,14 @@ class DistributorBulkOrderController extends Controller
                 if ($request->has('search') && !empty($request->input('search')['value'])) {
                     $searchValue = $request->input('search')['value'];
                     $query->where(function ($q) use ($searchValue) {
-                        $q->where('distributor_orders.id', 'like', "%{$searchValue}%")
-                          ->orWhere('product_name', 'like', "%{$searchValue}%")
-                          ->orWhere('status', 'like', "%{$searchValue}%")
+                        $q->where('distributor_orders.order_code', 'like', "%{$searchValue}%")
+                          ->orWhere('distributor_orders.status', 'like', "%{$searchValue}%")
                           ->orWhereHas('distributor.user', function ($subQuery) use ($searchValue) {
                               $subQuery->where('name', 'like', "%{$searchValue}%");
-                          });
+                          })
+                          ->orWhereHas('items.product', function ($subQuery) use ($searchValue) {
+                            $subQuery->where('product_name', 'like', "%{$searchValue}%");
+                        });
                     });
                 }
 
@@ -50,26 +52,29 @@ class DistributorBulkOrderController extends Controller
                         case 'id':
                             $query->orderBy('distributor_orders.id', $sortDirection);
                             break;
+                        case 'order_code':
+                            $query->orderBy('distributor_orders.order_code', $sortDirection);
+                            break;
                         case 'name':
                             $query->join('distributors', 'distributor_orders.distributor_id', '=', 'distributors.id')
                                  ->join('users', 'distributors.user_id', '=', 'users.id')
                                  ->orderBy('users.name', $sortDirection)
-                                 ->select('distributor_orders.*');
+                                 ->select('distributor_orders.*'); // Select back original columns
                             break;
-                        case 'product_name':
-                            $query->orderBy('product_name', $sortDirection);
+                        case 'total_items':
+                            $query->orderBy('distributor_orders.total_items', $sortDirection);
                             break;
-                        case 'quantity':
-                            $query->orderBy('quantity', $sortDirection);
+                        case 'total_quantity':
+                            $query->orderBy('distributor_orders.total_quantity', $sortDirection);
                             break;
                         case 'total_amount':
-                            $query->orderBy('total_amount', $sortDirection);
+                            $query->orderBy('distributor_orders.total_amount', $sortDirection);
                             break;
                         case 'status':
-                            $query->orderBy('status', $sortDirection);
+                            $query->orderBy('distributor_orders.status', $sortDirection);
                             break;
                         case 'placed_at':
-                            $query->orderBy('placed_at', $sortDirection);
+                            $query->orderBy('distributor_orders.placed_at', $sortDirection);
                             break;
                         default:
                             $query->orderBy('distributor_orders.id', 'desc');
@@ -84,26 +89,22 @@ class DistributorBulkOrderController extends Controller
                 $length = $request->input('length');
                 $orders = $query->offset($start)->limit($length)->get();
 
-                $formattedOrders = $orders->map(function (  $order) {
-                    \Illuminate\Support\Facades\Log::info('DistributorBulkOrderController@index: Order ID ' . $order->id . ' - Status: ' . $order->status);
+                $formattedOrders = $orders->map(function ($order) {
+                    $productSummary = $order->items->map(function ($item) {
+                        return $item->product->product_name . ' (' . $item->quantity . ')';
+                    })->implode(', ');
+                    
                     return [
                         'id' => $order->id,
+                        'order_code' => $order->order_code,
                         'name' => $order->distributor->user->name ?? 'N/A',
-                        'product_name' => $order->product_name,
-                        'sku' => $order->sku,
-                        'quantity' => $order->quantity,
-                        'unit_price' => number_format($order->unit_price, 2),
+                        'total_items' => $order->total_items,
+                        'total_quantity' => $order->total_quantity,
                         'total_amount' => number_format($order->total_amount, 2),
+                        'product_summary' => $productSummary, // New field for summary
                         'status' => ucfirst($order->status),
                         'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d H:i:s') : '-',
-                        'notes' => $order->notes,
-                        'prescription_photo' => $order->prescription_photo,
-                        'delivery_notes' => $order->delivery_notes,
-                        'distributor_id' => $order->distributor_id,
-                        'fieldstaff_id' => $order->fieldstaff_id,
-                        'created_at' => $order->created_at ? \Carbon\Carbon::parse($order->created_at)->format('Y-m-d H:i:s') : '-',
-                        'updated_at' => $order->updated_at ? \Carbon\Carbon::parse($order->updated_at)->format('Y-m-d H:i:s') : '-',
-                        'actions' => null,
+                        'actions' => null, // Placeholder for actions
                     ];
                 });
 
@@ -149,9 +150,10 @@ class DistributorBulkOrderController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
             'notes' => 'nullable|string',
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|integer|min:1',
         ]);
 
         $distributorId = null;
@@ -162,35 +164,65 @@ class DistributorBulkOrderController extends Controller
             $distributorId = $request->distributor_id;
         }
 
-        $product = Product::find($request->product_id);
+        $totalAmount = 0;
+        $totalItems = 0;
+        $totalQuantity = 0;
 
-        if (!$product) {
-            return back()->withErrors(['product_id' => 'Selected product not found.'])->withInput();
+        // Create the Distributor Order header
+        $order = DistributorOrder::create([
+            'distributor_id' => $distributorId,
+            'status' => 'pending',
+            'placed_at' => now(),
+            'notes' => $request->notes,
+            'total_amount' => 0, // Initialize to 0, will be updated
+            'total_items' => 0,  // Initialize to 0, will be updated
+            'total_quantity' => 0, // Initialize to 0, will be updated
+        ]);
+
+        try {
+            foreach ($request->items as $itemData) {
+                $product = Product::find($itemData['product_id']);
+
+                if (!$product) {
+                    throw new \Exception('One or more selected products not found.');
+                }
+
+                if ($product->stock < $itemData['quantity']) {
+                    throw new \Exception('Insufficient stock for ' . $product->product_name . '. Available: ' . $product->stock);
+                }
+
+                // Decrement stock
+                $product->stock -= $itemData['quantity'];
+                $product->save();
+
+                // Create Order Item
+                $unitPrice = $product->mrp;
+                $itemTotalAmount = $itemData['quantity'] * $unitPrice;
+
+                $order->items()->create([
+                    'product_id' => $product->id,
+                    'quantity' => $itemData['quantity'],
+                    'unit_price' => $unitPrice,
+                    'total_amount' => $itemTotalAmount,
+                ]);
+
+                $totalAmount += $itemTotalAmount;
+                $totalItems++;
+                $totalQuantity += $itemData['quantity'];
+            }
+
+            // Update the Distributor Order header with calculated totals
+            $order->total_amount = $totalAmount;
+            $order->total_items = $totalItems;
+            $order->total_quantity = $totalQuantity;
+            $order->save();
+
+        } catch (\Exception $e) {
+            // If any error occurs, delete the order and associated items
+            $order->items()->delete();
+            $order->delete();
+            return back()->withErrors(['items' => $e->getMessage()])->withInput();
         }
-
-        // Check for sufficient stock
-        if ($product->stock < $request->quantity) {
-            return back()->withErrors(['quantity' => 'Insufficient stock for this product. Available: ' . $product->stock])->withInput();
-        }
-
-        // Decrement stock
-        $product->stock -= $request->quantity;
-        $product->save();
-
-        $data = $request->all();
-        $data['product_name'] = $product->product_name; // Store product name from selected product
-        $data['unit_price'] = $product->mrp; // Populate unit price from product's MRP
-        $data['sku'] = $product->product_code; // Populate SKU from product's code
-        $data['total_amount'] = $request->quantity * $product->mrp; // Recalculate total amount
-        $data['placed_at'] = now();
-        $data['status'] = 'pending';
-
-        // If the authenticated user is a distributor, override the distributor_id
-        if (Auth::user()->hasRole('distributor')) {
-            $data['distributor_id'] = Auth::user()->distributor->id;
-        }
-
-        DistributorOrder::create($data);
 
         return redirect()->route('distributor-bulk-orders.index')->with('success', 'Order placed successfully!');
     }
@@ -198,42 +230,149 @@ class DistributorBulkOrderController extends Controller
     // Admin/Distributor: show single bulk order
     public function show(DistributorOrder $distributorBulkOrder)
     {
-        $distributorBulkOrder->load('distributor.user');
+        $distributorBulkOrder->load(['distributor.user', 'items.product']);
         return view('admin.orders.show', compact('distributorBulkOrder'));
     }
 
     // Admin/Distributor: edit form
     public function edit(DistributorOrder $distributorBulkOrder)
     {
+        $distributorBulkOrder->load(['items.product']);
         $distributors = Distributor::with('user')->get();
-        return view('admin.orders.edit', compact('distributorBulkOrder', 'distributors'));
+        $products = Product::all(); // All products for selection
+        return view('admin.orders.edit', compact('distributorBulkOrder', 'distributors', 'products'));
     }
 
     // Admin/Distributor: update
     public function update(Request $request, DistributorOrder $distributorBulkOrder)
     {
-        $data = $request->validate([
-            'id' => 'required|exists:distributors,id',
-            'product_name' => 'required|string|max:255',
-            'sku' => 'nullable|string|max:100',
-            'quantity' => 'required|integer|min:1',
-            'unit_price' => 'required|numeric|min:0',
-            'status' => 'required|in:pending,accepted,delivered,cancelled',
+        $request->validate([
+            'distributor_id' => 'required|exists:distributors,id',
+            'status' => 'required|in:pending,accepted,dispatched,delivered,cancelled',
             'notes' => 'nullable|string',
+            'delivery_notes' => 'nullable|string',
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.order_item_id' => 'nullable|exists:distributor_order_items,id',
         ]);
 
-        $data['total_amount'] = $data['quantity'] * $data['unit_price'];
+        // Update order header
+        $distributorBulkOrder->update([
+            'distributor_id' => $request->distributor_id,
+            'status' => $request->status,
+            'notes' => $request->notes,
+            'delivery_notes' => $request->delivery_notes,
+        ]);
 
-        $distributorBulkOrder->update($data);
+        $totalAmount = 0;
+        $totalItems = 0;
+        $totalQuantity = 0;
+        $requestItemIds = []; // To keep track of items in the current request
 
-        return redirect()->route('distributor-bulk-orders.index')->with('success','Bulk order updated.');
+        try {
+            foreach ($request->items as $itemData) {
+                $product = Product::find($itemData['product_id']);
+                if (!$product) {
+                    throw new \Exception('One or more selected products not found.');
+                }
+
+                $currentOrderItem = null;
+                $oldQuantity = 0;
+
+                if (isset($itemData['order_item_id']) && $itemData['order_item_id']) {
+                    $currentOrderItem = $distributorBulkOrder->items()->find($itemData['order_item_id']);
+                    if ($currentOrderItem) {
+                        $oldQuantity = $currentOrderItem->quantity;
+                    }
+                }
+
+                $newQuantity = $itemData['quantity'];
+                $stockChange = $newQuantity - $oldQuantity;
+
+                // Check for sufficient stock for the *change*
+                // If stockChange is positive (new quantity > old quantity), check if enough stock available
+                // If stockChange is negative (new quantity < old quantity), stock will increase, no check needed
+                if ($stockChange > 0 && $product->stock < $stockChange) {
+                    throw new \Exception('Insufficient stock for ' . $product->product_name . '. Available: ' . $product->stock);
+                }
+
+                // Adjust product stock based on the difference
+                $product->stock -= $stockChange;
+                $product->save();
+
+                $unitPrice = $product->mrp;
+                $itemTotalAmount = $newQuantity * $unitPrice;
+
+                if ($currentOrderItem) {
+                    // Update existing item
+                    $currentOrderItem->update([
+                        'product_id' => $product->id,
+                        'quantity' => $newQuantity,
+                        'unit_price' => $unitPrice,
+                        'total_amount' => $itemTotalAmount,
+                    ]);
+                    $requestItemIds[] = $currentOrderItem->id;
+                } else {
+                    // Create new item
+                    $newItem = $distributorBulkOrder->items()->create([
+                        'product_id' => $product->id,
+                        'quantity' => $newQuantity,
+                        'unit_price' => $unitPrice,
+                        'total_amount' => $itemTotalAmount,
+                    ]);
+                    $requestItemIds[] = $newItem->id;
+                }
+
+                $totalAmount += $itemTotalAmount;
+                $totalItems++;
+                $totalQuantity += $newQuantity;
+            }
+
+            // Delete items not in the current request
+            $distributorBulkOrder->items()->whereNotIn('id', $requestItemIds)->get()->each(function ($item) {
+                $product = $item->product;
+                if ($product) {
+                    $product->stock += $item->quantity; // Restore stock for deleted item
+                    $product->save();
+                }
+                $item->delete();
+            });
+
+            // Update the Distributor Order header with calculated totals
+            $distributorBulkOrder->total_amount = $totalAmount;
+            $distributorBulkOrder->total_items = $totalItems;
+            $distributorBulkOrder->total_quantity = $totalQuantity;
+            $distributorBulkOrder->save();
+
+        } catch (\Exception $e) {
+            // Log the error and rollback any stock changes if needed (complex)
+            // For simplicity, for now, just return with error. A more robust solution might involve DB transactions.
+            \Log::error("Error updating order {$distributorBulkOrder->id}: " . $e->getMessage());
+            return back()->withErrors(['items' => $e->getMessage()])->withInput();
+        }
+
+        return redirect()->route('distributor-bulk-orders.index')->with('success', 'Bulk order updated.');
     }
 
     // Admin/Distributor: delete
     public function destroy(DistributorOrder $distributorBulkOrder)
     {
-        $distributorBulkOrder->delete();
-        return redirect()->route('distributor-bulk-orders.index')->with('success','Bulk order deleted.');
+        try {
+            // Restore stock for each item in the order
+            foreach ($distributorBulkOrder->items as $item) {
+                $product = $item->product;
+                if ($product) {
+                    $product->stock += $item->quantity;
+                    $product->save();
+                }
+            }
+            $distributorBulkOrder->delete();
+            return redirect()->route('distributor-bulk-orders.index')->with('success','Bulk order deleted successfully and stock restored.');
+        } catch (\Exception $e) {
+            \Log::error("Error deleting order {$distributorBulkOrder->id}: " . $e->getMessage());
+            return back()->with('error', 'An error occurred while deleting the order and restoring stock.');
+        }
     }
 
     // Admin/Manager: Confirm delivery of a distributor order
@@ -263,57 +402,83 @@ class DistributorBulkOrderController extends Controller
 
             // Manager: Accept a pending distributor order
 
-            public function acceptOrder(DistributorOrder $distributorBulkOrder)
+                public function acceptOrder(DistributorOrder $distributorBulkOrder)
 
-            {
+                {
 
-                \Illuminate\Support\Facades\Log::info('Accept Order: Order ID ' . $distributorBulkOrder->id . ' - Current Status: ' . $distributorBulkOrder->status);
+                    \Illuminate\Support\Facades\Log::info('Accept Order: Order ID ' . $distributorBulkOrder->id . ' - Current Status: ' . $distributorBulkOrder->status);
 
-        
+            
 
-                // Check if the authenticated user has permission to edit distributor orders
+                    // Check if the authenticated user has permission to edit distributor orders
 
-                if (!Auth::user()->hasPermissionToCategory('distributor_orders', 'edit')) {
+                    if (!Auth::user()->hasPermissionToCategory('distributor_orders', 'edit')) {
 
-                    return response()->json(['error' => 'You do not have permission to accept orders.'], 403);
+                        return response()->json(['error' => 'You do not have permission to accept orders.'], 403);
 
-                }
-
-        
-
-                // Check if the order is in a pending state
-
-                if ($distributorBulkOrder->status !== 'pending') {
-
-                    \Illuminate\Support\Facades\Log::warning('Accept Order: Order ID ' . $distributorBulkOrder->id . ' - Status is not pending. Actual: ' . $distributorBulkOrder->status);
-
-                    return response()->json(['error' => 'Only pending orders can be accepted.'], 400);
-
-                }
-
-        
-                $distributorBulkOrder->status = 'accepted';
-                $distributorBulkOrder->save();
-        
-                // Add product to distributor's stock
-                $product = Product::where('product_code', $distributorBulkOrder->sku)->first();
-                $distributor = $distributorBulkOrder->distributor;
-        
-                if ($product && $distributor) {
-                    $pivot = $distributor->products()->where('product_id', $product->id)->first();
-                    if ($pivot) {
-                        // If pivot record exists, increment stock
-                        $newStock = $pivot->pivot->stock + $distributorBulkOrder->quantity;
-                        $distributor->products()->updateExistingPivot($product->id, ['stock' => $newStock]);
-                    } else {
-                        // If no pivot record, create one
-                        $distributor->products()->attach($product->id, ['stock' => $distributorBulkOrder->quantity]);
                     }
+
+            
+
+                    // Check if the order is in a pending state
+
+                    if ($distributorBulkOrder->status !== 'pending') {
+
+                        \Illuminate\Support\Facades\Log::warning('Accept Order: Order ID ' . $distributorBulkOrder->id . ' - Status is not pending. Actual: ' . $distributorBulkOrder->status);
+
+                        return response()->json(['error' => 'Only pending orders can be accepted.'], 400);
+
+                    }
+
+            
+
+                    $distributorBulkOrder->status = 'accepted';
+
+                    $distributorBulkOrder->save();
+
+            
+
+                    $distributor = $distributorBulkOrder->distributor;
+
+            
+
+                    if ($distributor) {
+
+                        foreach ($distributorBulkOrder->items as $item) {
+
+                            $product = $item->product;
+
+                            if ($product) {
+
+                                $pivot = $distributor->products()->where('product_id', $product->id)->first();
+
+                                if ($pivot) {
+
+                                    // If pivot record exists, increment stock
+
+                                    $newStock = $pivot->pivot->stock + $item->quantity;
+
+                                    $distributor->products()->updateExistingPivot($product->id, ['stock' => $newStock]);
+
+                                } else {
+
+                                    // If no pivot record, create one
+
+                                    $distributor->products()->attach($product->id, ['stock' => $item->quantity]);
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+            
+
+                    return response()->json(['success' => 'Order accepted successfully!']);
+
                 }
-
-                return response()->json(['success' => 'Order accepted successfully!']);
-
-            }
 
     // Distributor: Cancel a pending order
     public function cancelOrder(DistributorOrder $distributorBulkOrder)
@@ -333,11 +498,13 @@ class DistributorBulkOrderController extends Controller
             return response()->json(['error' => 'Only pending orders can be cancelled.'], 400);
         }
 
-        // Restore product stock
-        $product = Product::where('product_code', $distributorBulkOrder->sku)->first();
-        if ($product) {
-            $product->stock += $distributorBulkOrder->quantity;
-            $product->save();
+        // Restore product stock for each item in the order
+        foreach ($distributorBulkOrder->items as $item) {
+            $product = $item->product;
+            if ($product) {
+                $product->stock += $item->quantity;
+                $product->save();
+            }
         }
 
         $distributorBulkOrder->status = 'cancelled';

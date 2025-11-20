@@ -27,7 +27,7 @@ class RetailerController extends Controller
             }
         }
 
-        $retailers = $query->latest()->get();
+        $retailers = $query->latest()->paginate(10);
         return view('admin.retailers.index', compact('retailers'));
     }
 

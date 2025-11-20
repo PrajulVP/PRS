@@ -14,7 +14,7 @@ class ManagerController extends Controller
     public function index()
     {
         // Fetch Manager records with their associated User records
-        $managers = Manager::with('user')->latest()->get();
+        $managers = Manager::with('user')->latest()->paginate(10);
         return view('admin.managers.index', compact('managers'));
     }
 

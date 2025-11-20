@@ -20,18 +20,20 @@ class RetailerOrderManagementController extends Controller
             try {
                 $totalData = RetailerOrder::count();
 
-                $query = RetailerOrder::with('retailer.user', 'fieldStaff.user');
+                $query = RetailerOrder::with(['retailer.user', 'fieldStaff.user', 'items.product']);
 
                 // Apply search filter
                 if ($request->has('search') && !empty($request->input('search')['value'])) {
                     $searchValue = $request->input('search')['value'];
                     $query->where(function ($q) use ($searchValue) {
-                        $q->where('retailer_orders.id', 'like', "%{$searchValue}%")
-                          ->orWhere('product_name', 'like', "%{$searchValue}%")
-                          ->orWhere('status', 'like', "%{$searchValue}%")
+                        $q->where('retailer_orders.order_code', 'like', "%{$searchValue}%")
+                          ->orWhere('retailer_orders.status', 'like', "%{$searchValue}%")
                           ->orWhereHas('retailer.user', function ($subQuery) use ($searchValue) {
                               $subQuery->where('name', 'like', "%{$searchValue}%");
-                          });
+                          })
+                          ->orWhereHas('items.product', function ($subQuery) use ($searchValue) {
+                            $subQuery->where('product_name', 'like', "%{$searchValue}%");
+                        });
                     });
                 }
 
@@ -48,23 +50,35 @@ class RetailerOrderManagementController extends Controller
                         case 'id':
                             $query->orderBy('retailer_orders.id', $sortDirection);
                             break;
-                        case 'product_name':
-                            $query->orderBy('product_name', $sortDirection);
+                        case 'order_code':
+                            $query->orderBy('retailer_orders.order_code', $sortDirection);
                             break;
-                        case 'quantity':
-                            $query->orderBy('quantity', $sortDirection);
+                        case 'retailer_name':
+                            $query->join('retailers', 'retailer_orders.retailer_id', '=', 'retailers.id')
+                                ->join('users', 'retailers.user_id', '=', 'users.id')
+                                ->orderBy('users.name', $sortDirection)
+                                ->select('retailer_orders.*'); // Select back original columns
                             break;
-                        case 'unit_price':
-                            $query->orderBy('unit_price', $sortDirection);
+                        case 'total_items':
+                            $query->orderBy('retailer_orders.total_items', $sortDirection);
+                            break;
+                        case 'total_quantity':
+                            $query->orderBy('retailer_orders.total_quantity', $sortDirection);
                             break;
                         case 'total_amount':
-                            $query->orderBy('total_amount', $sortDirection);
+                            $query->orderBy('retailer_orders.total_amount', $sortDirection);
                             break;
                         case 'status':
-                            $query->orderBy('status', $sortDirection);
+                            $query->orderBy('retailer_orders.status', $sortDirection);
                             break;
                         case 'placed_at':
-                            $query->orderBy('placed_at', $sortDirection);
+                            $query->orderBy('retailer_orders.placed_at', $sortDirection);
+                            break;
+                        case 'fieldstaff_name':
+                            $query->leftJoin('field_staff', 'retailer_orders.fieldstaff_id', '=', 'field_staff.id')
+                                ->leftJoin('users as fs_users', 'field_staff.user_id', '=', 'fs_users.id')
+                                ->orderBy('fs_users.name', $sortDirection)
+                                ->select('retailer_orders.*'); // Select back original columns
                             break;
                         default:
                             $query->orderBy('retailer_orders.id', 'desc');
@@ -80,12 +94,17 @@ class RetailerOrderManagementController extends Controller
                 $orders = $query->offset($start)->limit($length)->get();
 
                 $formattedOrders = $orders->map(function ($order) {
+                    $productSummary = $order->items->map(function ($item) {
+                        return $item->product->product_name . ' (' . $item->quantity . ')';
+                    })->implode(', ');
+                    
                     return [
                         'id' => $order->id,
+                        'order_code' => $order->order_code,
                         'retailer_name' => $order->retailer?->user?->name ?? 'N/A',
-                        'product_name' => $order->product_name,
-                        'quantity' => $order->quantity,
-                        'unit_price' => number_format($order->unit_price, 2),
+                        'product_summary' => $productSummary, // New field for summary
+                        'total_items' => $order->total_items,
+                        'total_quantity' => $order->total_quantity,
                         'total_amount' => number_format($order->total_amount, 2),
                         'status' => ucfirst($order->status),
                         'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d H:i:s') : '-',
@@ -106,8 +125,7 @@ class RetailerOrderManagementController extends Controller
                     'error' => 'An error occurred while processing your request.'
                 ], 500);
             }
-        } // Closing brace for if ($request->ajax())
-
+        }
         $fieldstaffs = FieldStaff::with('user')->get()->map(function($fieldstaff) {
             return ['id' => $fieldstaff->id, 'name' => $fieldstaff->user->name];
         });
@@ -458,7 +476,7 @@ class RetailerOrderManagementController extends Controller
     // Admin: show single order
     public function show(RetailerOrder $retailerOrder)
     {
-        $retailerOrder->load('retailer', 'fieldStaff.user'); // Load fieldStaff and its user
+        $retailerOrder->load(['retailer.user', 'fieldStaff.user', 'items.product']);
         return view('admin.orders.show', compact('retailerOrder'));
     }
 
@@ -520,35 +538,167 @@ class RetailerOrderManagementController extends Controller
     // Admin: edit form
     public function edit(RetailerOrder $retailerOrder)
     {
+        $retailerOrder->load(['items.product']);
         $retailers = Retailer::with('user')->get()->sortBy('user.name');
-        return view('admin.orders.edit', compact('retailerOrder','retailers'));
+        $products = Product::all(); // All products for selection
+        return view('admin.orders.edit', compact('retailerOrder', 'retailers', 'products'));
     }
 
     // Admin: update
     public function update(Request $request, RetailerOrder $retailerOrder)
     {
-        $data = $request->validate([
+        $request->validate([
             'retailer_id' => 'required|exists:retailers,id',
-            'product_name' => 'required|string|max:255',
-            'sku' => 'nullable|string|max:100',
-            'quantity' => 'required|integer|min:1',
-            'unit_price' => 'required|numeric|min:0',
-            'status' => 'required|in:pending,accepted,dispatched,delivered,cancelled',
+            'distributor_id' => 'nullable|exists:distributors,id', // Can be assigned later
+            'status' => 'required|in:pending,accepted_by_distributor,assigned_to_fieldstaff,out_for_delivery,delivered,rejected',
             'notes' => 'nullable|string',
+            'fieldstaff_id' => 'nullable|exists:fieldstaffs,id',
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.order_item_id' => 'nullable|exists:retailer_order_items,id', // For existing items
         ]);
 
-        $data['total_amount'] = $data['quantity'] * $data['unit_price'];
+        // Update order header
+        $retailerOrder->update([
+            'retailer_id' => $request->retailer_id,
+            'distributor_id' => $request->distributor_id,
+            'status' => $request->status,
+            'notes' => $request->notes,
+            'fieldstaff_id' => $request->fieldstaff_id,
+            'delivered_at' => ($request->status === 'delivered') ? now() : null, // Set delivered_at if status is delivered
+        ]);
 
-        $retailerOrder->update($data);
+        $totalAmount = 0;
+        $totalItems = 0;
+        $totalQuantity = 0;
+        $requestItemIds = []; // To keep track of items in the current request
 
-        return redirect()->route('admin.orders.index')->with('success','Order updated.');
+        // Load the distributor for stock management
+        $distributor = $retailerOrder->distributor;
+        if (!$distributor) {
+            // This should not happen if order has a distributor_id, but good to check
+            // For now, if no distributor, we cannot adjust stock.
+            // A more robust solution might require assigning a distributor first or disallowing updates.
+            \Log::warning("Retailer order {$retailerOrder->id} has no distributor assigned during update. Stock not adjusted.");
+            // Decide how to handle this: throw error, skip stock adjustment, etc.
+            // For now, we'll allow it to proceed but stock won't be adjusted.
+        }
+
+        try {
+            foreach ($request->items as $itemData) {
+                // If distributor exists, check and adjust its stock
+                if ($distributor) {
+                    $product = $distributor->products()->where('product_id', $itemData['product_id'])->first();
+
+                    if (!$product) {
+                        throw new \Exception('Product ' . $itemData['product_id'] . ' not available from the assigned distributor.');
+                    }
+
+                    $currentOrderItem = null;
+                    $oldQuantity = 0;
+
+                    if (isset($itemData['order_item_id']) && $itemData['order_item_id']) {
+                        $currentOrderItem = $retailerOrder->items()->find($itemData['order_item_id']);
+                        if ($currentOrderItem) {
+                            $oldQuantity = $currentOrderItem->quantity;
+                        }
+                    }
+
+                    $newQuantity = $itemData['quantity'];
+                    $stockChange = $newQuantity - $oldQuantity; // Positive for increase, negative for decrease
+
+                    // Check for sufficient stock for the *change* from distributor's stock
+                    if ($stockChange > 0 && $product->pivot->stock < $stockChange) {
+                        throw new \Exception('Insufficient stock for ' . $product->product_name . '. Available: ' . $product->pivot->stock);
+                    }
+
+                    // Adjust distributor's product stock in the pivot table
+                    $distributor->products()->updateExistingPivot($product->id, ['stock' => $product->pivot->stock - $stockChange]);
+                    $unitPrice = $product->mrp; // Assuming product MRP as unit price
+                } else {
+                    // If no distributor, we can't get stock or mrp from distributor_product pivot
+                    // Fallback to Product model's MRP, but stock adjustment is skipped
+                    $product = Product::find($itemData['product_id']);
+                    if (!$product) {
+                        throw new \Exception('Product ' . $itemData['product_id'] . ' not found.');
+                    }
+                    $unitPrice = $product->mrp;
+                }
+
+                $itemTotalAmount = $newQuantity * $unitPrice;
+
+                if ($currentOrderItem) {
+                    // Update existing item
+                    $currentOrderItem->update([
+                        'product_id' => $itemData['product_id'], // Use itemData product_id, not $product->id in case distributor was null
+                        'quantity' => $newQuantity,
+                        'unit_price' => $unitPrice,
+                        'total_amount' => $itemTotalAmount,
+                    ]);
+                    $requestItemIds[] = $currentOrderItem->id;
+                } else {
+                    // Create new item
+                    $newItem = $retailerOrder->items()->create([
+                        'product_id' => $itemData['product_id'],
+                        'quantity' => $newQuantity,
+                        'unit_price' => $unitPrice,
+                        'total_amount' => $itemTotalAmount,
+                    ]);
+                    $requestItemIds[] = $newItem->id;
+                }
+
+                $totalAmount += $itemTotalAmount;
+                $totalItems++;
+                $totalQuantity += $newQuantity;
+            }
+
+            // Delete items not in the current request
+            $retailerOrder->items()->whereNotIn('id', $requestItemIds)->get()->each(function ($item) use ($distributor) {
+                if ($distributor) {
+                    $product = $distributor->products()->where('product_id', $item->product_id)->first();
+                    if ($product) {
+                        // Restore stock for deleted item
+                        $distributor->products()->updateExistingPivot($product->id, ['stock' => $product->pivot->stock + $item->quantity]);
+                    }
+                }
+                $item->delete();
+            });
+
+            // Update the Retailer Order header with calculated totals
+            $retailerOrder->total_amount = $totalAmount;
+            $retailerOrder->total_items = $totalItems;
+            $retailerOrder->total_quantity = $totalQuantity;
+            $retailerOrder->save();
+
+        } catch (\Exception $e) {
+            \Log::error("Error updating retailer order {$retailerOrder->id}: " . $e->getMessage());
+            return back()->withErrors(['items' => $e->getMessage()])->withInput();
+        }
+
+        return redirect()->route('retailer-orders-management.index')->with('success', 'Retailer order updated successfully!');
     }
 
     // Admin: delete
     public function destroy(RetailerOrder $retailerOrder)
     {
-        $retailerOrder->delete();
-        return redirect()->route('retailer-orders-management.index')->with('success','Order deleted.');
+        try {
+            $distributor = $retailerOrder->distributor;
+            if ($distributor) {
+                // Restore stock for each item in the order
+                foreach ($retailerOrder->items as $item) {
+                    $product = $distributor->products()->where('product_id', $item->product_id)->first();
+                    if ($product) {
+                        $distributor->products()->updateExistingPivot($product->id, ['stock' => $product->pivot->stock + $item->quantity]);
+                    }
+                }
+            }
+            $retailerOrder->delete();
+            return redirect()->route('retailer-orders-management.index')->with('success','Order deleted successfully and stock restored.');
+        } catch (\Exception $e) {
+            \Log::error("Error deleting retailer order {$retailerOrder->id}: " . $e->getMessage());
+            return back()->with('error', 'An error occurred while deleting the order and restoring stock.');
+        }
     }
 
     public function getProductsByDistributor(\App\Models\Distributor $distributor)

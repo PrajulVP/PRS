@@ -11,16 +11,13 @@ class DistributorOrder extends Model
     protected $table = 'distributor_orders';
 
     protected $fillable = [
-        'order_code', // Added
-        'product_name',
-        'sku',
-        'quantity',
-        'unit_price',
+        'order_code',
         'total_amount',
+        'total_items',
+        'total_quantity',
         'status',
         'placed_at',
         'notes',
-        'prescription_photo',
         'delivery_notes',
         'distributor_id',
         'fieldstaff_id',
@@ -46,7 +43,7 @@ class DistributorOrder extends Model
 
     public function items(): HasMany
     {
-        return $this->hasMany(OrderItem::class);
+        return $this->hasMany(DistributorOrderItem::class);
     }
 
     public function distributor(): BelongsTo

@@ -105,10 +105,11 @@ class RetailerOrderController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
-            'prescription_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'notes' => 'nullable|string',
+            'prescription_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|integer|min:1',
         ]);
 
         $retailer = Auth::user()->retailer;
@@ -118,33 +119,79 @@ class RetailerOrderController extends Controller
         }
 
         $distributor = $retailer->distributor;
-        $product = $distributor->products()->where('product_id', $request->product_id)->first();
 
-        if (!$product) {
-            return back()->withErrors(['product_id' => 'Product not available from your assigned distributor.'])->withInput();
-        }
+        $totalAmount = 0;
+        $totalItems = 0;
+        $totalQuantity = 0;
 
-        if ($product->pivot->stock < $request->quantity) {
-            return back()->withErrors(['quantity' => 'Ordered quantity exceeds available stock from distributor. Available stock: ' . $product->pivot->stock])->withInput();
-        }
-
-        // Decrement stock from distributor_product pivot table
-        $distributor->products()->updateExistingPivot($product->id, ['stock' => $product->pivot->stock - $request->quantity]);
-
-        $data = $request->all();
-        $data['retailer_id'] = $retailer->id;
-        $data['product_name'] = $product->product_name; // Store product name from selected product
-        $data['unit_price'] = $product->mrp; // Store unit price from selected product
-        $data['total_amount'] = $request->quantity * $product->mrp;
-        $data['placed_at'] = now();
-        $data['status'] = 'pending';
-        $data['distributor_id'] = $retailer->distributor_id; // Add distributor_id from the retailer
-
+        $prescriptionPhotoPath = null;
         if ($request->hasFile('prescription_photo')) {
-            $data['prescription_photo'] = $request->file('prescription_photo')->store('prescriptions', 'public');
+            $prescriptionPhotoPath = $request->file('prescription_photo')->store('prescriptions', 'public');
         }
 
-        RetailerOrder::create($data);
+        // Create the Retailer Order header
+        $order = RetailerOrder::create([
+            'retailer_id' => $retailer->id,
+            'distributor_id' => $distributor->id,
+            'status' => 'pending',
+            'placed_at' => now(),
+            'notes' => $request->notes,
+            'prescription_photo' => $prescriptionPhotoPath,
+            'total_amount' => 0, // Initialize to 0, will be updated
+            'total_items' => 0,  // Initialize to 0, will be updated
+            'total_quantity' => 0, // Initialize to 0, will be updated
+        ]);
+
+        try {
+            foreach ($request->items as $itemData) {
+                $product = $distributor->products()->where('product_id', $itemData['product_id'])->first();
+
+                if (!$product) {
+                    throw new \Exception('Product not available from your assigned distributor.');
+                }
+
+                if ($product->pivot->stock < $itemData['quantity']) {
+                    throw new \Exception('Ordered quantity exceeds available stock from distributor for ' . $product->product_name . '. Available stock: ' . $product->pivot->stock);
+                }
+
+                // Decrement stock from distributor_product pivot table
+                $distributor->products()->updateExistingPivot($product->id, ['stock' => $product->pivot->stock - $itemData['quantity']]);
+
+                // Create Order Item
+                $unitPrice = $product->mrp;
+                $itemTotalAmount = $itemData['quantity'] * $unitPrice;
+
+                $order->items()->create([
+                    'product_id' => $product->id,
+                    'quantity' => $itemData['quantity'],
+                    'unit_price' => $unitPrice,
+                    'total_amount' => $itemTotalAmount,
+                ]);
+
+                $totalAmount += $itemTotalAmount;
+                $totalItems++;
+                $totalQuantity += $itemData['quantity'];
+            }
+
+            // Update the Retailer Order header with calculated totals
+            $order->total_amount = $totalAmount;
+            $order->total_items = $totalItems;
+            $order->total_quantity = $totalQuantity;
+            $order->save();
+
+        } catch (\Exception $e) {
+            // If any error occurs, delete the order and associated items
+            // Also restore distributor stock if any was decremented
+            foreach ($order->items as $item) {
+                $product = $distributor->products()->where('product_id', $item->product_id)->first();
+                if ($product) {
+                    $distributor->products()->updateExistingPivot($product->id, ['stock' => $product->pivot->stock + $item->quantity]);
+                }
+            }
+            $order->items()->delete();
+            $order->delete();
+            return back()->withErrors(['items' => $e->getMessage()])->withInput();
+        }
 
         return redirect()->route('retailer.orders.index')->with('success', 'Medicine requirement sent successfully!');
     }

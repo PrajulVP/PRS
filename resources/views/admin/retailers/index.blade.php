@@ -13,31 +13,61 @@
                     <div class="alert alert-success">{{ session('success') }}</div>
                     @endif
 
-                    <div class="row">
-                        @foreach($retailers as $retailer)
-                        <div class="col-md-4 mb-4">
-                            <div class="card p-4">
-                                <h5 class="card-title">{{ $retailer->user->name }}</h5>
-                                <p class="card-text"><strong>GST:</strong> {{ $retailer->gst }}</p>
-                                <p class="card-text"><strong>Distributor:</strong> {{ $retailer->distributor->company_name ?? '-' }}</p>
-                                <p class="card-text"><strong>District:</strong> {{ $retailer->user->district->name ?? '' }}</p>
-                                <p class="card-text"><strong>Area:</strong> {{ $retailer->user->area->name ?? '' }}</p>
-                                <p class="card-text"><strong>Route:</strong> {{ $retailer->route ?? '-' }}</p>
-                                <p class="card-text"><strong>Contact:</strong> {{ $retailer->user->contact_no }}</p>
-                                <p class="card-text"><strong>Email:</strong> {{ $retailer->user->email }}</p>
-                                <p class="card-text"><strong>Address:</strong> {{ $retailer->user->address }}</p>
-                                <p class="card-text"><strong>Pincode:</strong> {{ $retailer->pincode }}</p>
-                                <div class="d-flex justify-content-between">
-                                    <a href="{{ route('retailers.edit', $retailer->id) }}" class="btn btn-primary">Edit</a>
-                                    <form action="{{ route('retailers.destroy', $retailer->id) }}" method="POST" style="display: inline-block;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                        @endforeach
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>GST</th>
+                                    <th>Distributor</th>
+                                    <th>District</th>
+                                    <th>Area</th>
+                                    <th>Contact No</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($retailers as $retailer)
+                                <tr>
+                                    <td>{{ $retailer->user->name }}</td>
+                                    <td>{{ $retailer->gst }}</td>
+                                    <td>{{ $retailer->distributor->company_name ?? '-' }}</td>
+                                    <td>{{ $retailer->user->district->name ?? '' }}</td>
+                                    <td>{{ $retailer->user->area->name ?? '' }}</td>
+                                    <td>{{ $retailer->user->contact_no }}</td>
+                                    <td>
+                                        @if($retailer->user->status == 'active')
+                                            <span class="badge bg-success">Active</span>
+                                        @else
+                                            <span class="badge bg-warning">Inactive</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <a href="{{ route('retailers.edit', $retailer->id) }}" class="btn btn-sm btn-primary">
+                                            <i class="fa fa-edit me-1"></i> Edit
+                                        </a>
+                                        <form action="{{ route('retailers.destroy', $retailer->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="fa fa-trash me-1"></i> Delete
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted py-5">
+                                        <p>No retailers found.</p>
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        {{ $retailers->links() }}
                     </div>
                 </div>
             </div>

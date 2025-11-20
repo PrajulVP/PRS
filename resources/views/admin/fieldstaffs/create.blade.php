@@ -8,7 +8,9 @@
                 <div class="card-header">
                     <h5>Create Field Staff</h5>
                 </div>
+
                 <div class="card-body">
+
                     @if($errors->any())
                         <div class="alert alert-danger">
                             <ul>
@@ -22,6 +24,7 @@
                     <form action="{{ route('fieldstaffs.store') }}" method="POST">
                         @csrf
 
+                        {{-- Row 1 --}}
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label>Name</label>
@@ -34,6 +37,7 @@
                             </div>
                         </div>
 
+                        {{-- Row 2 --}}
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label>Password</label>
@@ -46,12 +50,13 @@
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label>Address</label>
-                            <textarea name="address" class="form-control">{{ old('address') }}</textarea>
-                        </div>
-
+                        {{-- Row 3 --}}
                         <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label>Address</label>
+                                <textarea name="address" class="form-control">{{ old('address') }}</textarea>
+                            </div>
+
                             <div class="col-md-6 mb-3">
                                 <label>District</label>
                                 <select name="district_id" id="district_id" class="form-select" required>
@@ -61,16 +66,17 @@
                                     @endforeach
                                 </select>
                             </div>
+                        </div>
 
+                        {{-- Row 4 --}}
+                        <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label>Area</label>
                                 <select name="area_id" id="area_id" class="form-select" required>
                                     <option value="">Select Area</option>
                                 </select>
                             </div>
-                        </div>
 
-                        <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label>Distributor</label>
                                 <select name="distributor_id" id="distributor_id" class="form-select" required>
@@ -82,93 +88,90 @@
                                     @endforeach
                                 </select>
                             </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label>Status</label>
-                                <select name="status" class="form-select">
-                                    <option value="active" selected>Active</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
-                            </div>
                         </div>
-                        
-                        <button class="btn btn-success">Create Field Staff</button>
+
+                        <div class="mt-3">
+                            <button class="btn btn-success">Create Field Staff</button>
+                        </div>
+
                     </form>
+
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const districtSelect = document.getElementById('district_id');
-    const areaSelect = document.getElementById('area_id');
-    const distributorSelect = document.getElementById('distributor_id');
+    document.addEventListener('DOMContentLoaded', function() {
+        const districtSelect = document.getElementById('district_id');
+        const areaSelect = document.getElementById('area_id');
+        const distributorSelect = document.getElementById('distributor_id');
 
-    function fetchAreas(districtId) {
-        console.log('fetchAreas called for districtId:', districtId);
-        areaSelect.innerHTML = '<option value="">Select Area</option>'; // Ensure only one default option
+        function fetchAreas(districtId) {
+            console.log('fetchAreas called for districtId:', districtId);
+            areaSelect.innerHTML = '<option value="">Select Area</option>'; // Ensure only one default option
 
-        if (districtId) {
-            fetch(`{{ route('fieldstaffs.getAreas', ['district' => '__districtId__']) }}`.replace('__districtId__', districtId))
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Areas data received:', data);
-                    data.forEach(area => {
-                        const option = document.createElement('option');
-                        option.value = area.id;
-                        option.textContent = area.name;
-                        areaSelect.appendChild(option);
-                        console.log('Appended area:', area.name);
-                    });
-                })
-                .catch(error => console.error('Error fetching areas:', error));
+            if (districtId) {
+                fetch(`{{ route('fieldstaffs.getAreas', ['district' => '__districtId__']) }}`.replace('__districtId__', districtId))
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Areas data received:', data);
+                        data.forEach(area => {
+                            const option = document.createElement('option');
+                            option.value = area.id;
+                            option.textContent = area.name;
+                            areaSelect.appendChild(option);
+                            console.log('Appended area:', area.name);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching areas:', error));
+            }
         }
-    }
 
-    function fetchDistributors(districtId, areaId) {
-        distributorSelect.innerHTML = '<option value="">Select Distributor</option>';
+        function fetchDistributors(districtId, areaId) {
+            distributorSelect.innerHTML = '<option value="">Select Distributor</option>';
 
-        if (districtId && areaId) {
-            fetch(`{{ route('fieldstaffs.getDistributorsByDistrictAndArea', ['district' => '__districtId__', 'area' => '__areaId__']) }}`
-                .replace('__districtId__', districtId)
-                .replace('__areaId__', areaId))
-                .then(response => response.json())
-                .then(data => {
-                    if (!data.length) {
-                        const option = document.createElement('option');
-                        option.textContent = 'No distributors found';
-                        distributorSelect.appendChild(option);
-                        return;
-                    }
-                    data.forEach(distributor => {
-                        const option = document.createElement('option');
-                        option.value = distributor.id;
-                        option.textContent = distributor.company_name || `Distributor #${distributor.id}`;
-                        distributorSelect.appendChild(option);
-                    });
-                })
-                .catch(error => console.error('Error fetching distributors:', error));
+            if (districtId && areaId) {
+                fetch(`{{ route('fieldstaffs.getDistributorsByDistrictAndArea', ['district' => '__districtId__', 'area' => '__areaId__']) }}`
+                        .replace('__districtId__', districtId)
+                        .replace('__areaId__', areaId))
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.length) {
+                            const option = document.createElement('option');
+                            option.textContent = 'No distributors found';
+                            distributorSelect.appendChild(option);
+                            return;
+                        }
+                        data.forEach(distributor => {
+                            const option = document.createElement('option');
+                            option.value = distributor.id;
+                            option.textContent = distributor.company_name || `Distributor #${distributor.id}`;
+                            distributorSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching distributors:', error));
+            }
         }
-    }
 
-    districtSelect.addEventListener('change', function () {
-        const districtId = this.value;
-        console.log('Selected District ID:', districtId);
-        fetchAreas(districtId);
-        // Clear distributors when district changes, as areas will change
-        distributorSelect.innerHTML = '<option value="">Select Distributor</option>';
-    });
+        districtSelect.addEventListener('change', function() {
+            const districtId = this.value;
+            console.log('Selected District ID:', districtId);
+            fetchAreas(districtId);
+            // Clear distributors when district changes, as areas will change
+            distributorSelect.innerHTML = '<option value="">Select Distributor</option>';
+        });
 
-    areaSelect.addEventListener('change', function () {
-        const districtId = districtSelect.value;
-        const areaId = this.value;
-        console.log('Selected Area ID:', areaId);
-        fetchDistributors(districtId, areaId);
+        areaSelect.addEventListener('change', function() {
+            const districtId = districtSelect.value;
+            const areaId = this.value;
+            console.log('Selected Area ID:', areaId);
+            fetchDistributors(districtId, areaId);
+        });
     });
-});
 </script>
 @endpush
 

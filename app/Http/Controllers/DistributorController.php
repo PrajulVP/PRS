@@ -13,7 +13,7 @@ class DistributorController extends Controller
 {
     public function index()
     {
-        $distributors = Distributor::with('user', 'district', 'area')->latest()->get(); // Changed
+        $distributors = Distributor::with('user', 'district', 'area')->latest()->paginate(10); // Changed
         return view('admin.distributors.index', compact('distributors'));
     }
 

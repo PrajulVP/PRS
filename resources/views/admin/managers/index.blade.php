@@ -18,62 +18,59 @@
                         <div class="alert alert-success">{{ session('success') }}</div>
                     @endif
 
-                    @if($managers->isEmpty())
-                        <div class="text-center text-muted py-5">
-                            <i class="fa fa-user-tie fa-2x mb-3"></i>
-                            <p>No managers found.</p>
-                        </div>
-                    @else
-                        <div class="row g-4">
-                            @foreach($managers as $manager)
-                            <div class="col-lg-6 col-md-12">
-                                <div class="card border rounded-3 shadow-sm h-100">
-                                    <div class="card-body">
-
-                                        {{-- Header Section --}}
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <h5 class="fw-bold mb-0">{{ $manager->name }}</h5>
-                                            <div>
-                                                @if($manager->user->status == 'active')
-                                                    <span class="badge bg-success">Active</span>
-                                                @else
-                                                    <span class="badge bg-warning">Inactive</span>
-                                                @endif
-                                            </div>
-                                        </div>
-
-                                        {{-- Info Grid --}}
-                                        <div class="row">
-                                            <div class="col-sm-6">
-                                                <p class="mb-1"><strong>Email:</strong> {{ $manager->email }}</p>
-                                                <p class="mb-1"><strong>Contact:</strong> {{ $manager->contact_no ?? '-' }}</p>
-                                            </div>
-                                            <div class="col-sm-6">
-                                                <p class="mb-1"><strong>Distributor:</strong> {{ $manager->distributor->user->name ?? 'N/A' }}</p>
-                                                <p class="mb-1"><strong>Address:</strong> {{ $manager->address ?? '-' }}</p>
-                                            </div>
-                                        </div>
-
-                                    </div>
-
-                                    {{-- Footer Buttons --}}
-                                    <div class="card-footer bg-light border-0 d-flex justify-content-end gap-2">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Contact No</th>
+                                    <th>Distributor</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($managers as $manager)
+                                <tr>
+                                    <td>{{ $manager->name }}</td>
+                                    <td>{{ $manager->email }}</td>
+                                    <td>{{ $manager->contact_no ?? '-' }}</td>
+                                    <td>{{ $manager->distributor->user->name ?? 'N/A' }}</td>
+                                    <td>
+                                        @if($manager->user->status == 'active')
+                                            <span class="badge bg-success">Active</span>
+                                        @else
+                                            <span class="badge bg-warning">Inactive</span>
+                                        @endif
+                                    </td>
+                                    <td>
                                         <a href="{{ route('managers.edit', $manager->id) }}" class="btn btn-sm btn-primary">
                                             <i class="fa fa-edit me-1"></i> Edit
                                         </a>
-                                        <form action="{{ route('managers.destroy', $manager->id) }}" method="POST" onsubmit="return confirm('Are you sure?')">
+                                        <form action="{{ route('managers.destroy', $manager->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure?')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-danger">
                                                 <i class="fa fa-trash me-1"></i> Delete
                                             </button>
                                         </form>
-                                    </div>
-                                </div>
-                            </div>
-                            @endforeach
-                        </div>
-                    @endif
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-5">
+                                        <i class="fa fa-user-tie fa-2x mb-3"></i>
+                                        <p>No managers found.</p>
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                     <div class="mt-3">
+                        {{ $managers->links() }}
+                    </div>
                 </div>
             </div>
 

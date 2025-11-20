@@ -13,17 +13,14 @@ return new class extends Migration
     {
         Schema::create('distributor_orders', function (Blueprint $table) {
             $table->id();
-            $table->string('order_code')->unique();
+            $table->string('order_code'); // Not unique anymore
             $table->foreignId('distributor_id')->constrained('distributors')->onDelete('cascade');
-            $table->string('product_name');
-            $table->string('sku')->nullable();
-            $table->integer('quantity');
-            $table->decimal('unit_price', 10, 2);
-            $table->decimal('total_amount', 10, 2);
+            $table->decimal('total_amount', 10, 2)->default(0.00); // Added, with default
+            $table->integer('total_items')->default(0); // Added, with default
+            $table->integer('total_quantity')->default(0); // Added, with default
             $table->enum('status', ['pending', 'accepted', 'dispatched', 'delivered', 'cancelled'])->default('pending');
             $table->timestamp('placed_at')->nullable();
             $table->text('notes')->nullable();
-            $table->string('prescription_photo')->nullable();
             $table->text('delivery_notes')->nullable();
             $table->foreignId('fieldstaff_id')->nullable()->constrained('fieldstaffs')->onDelete('set null');
             $table->timestamps();

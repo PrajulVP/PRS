@@ -49,16 +49,48 @@
         </li>
         @endif
 
-        @if (Auth::user()->hasRole('superadmin'))
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.users.pending_approval') }}">
-            <svg class="stroke-icon">
-              <use href="{{ asset('admin/assets/svg/icon-sprite.svg#stroke-user') }}"></use>
-            </svg>
-            <svg class="fill-icon">
-              <use href="{{ asset('admin/assets/svg/icon-sprite.svg#fill-user') }}"></use>
-            </svg><span>Users Pending Approval</span></a>
-        </li>
-        @endif
+      @if (Auth::user()->hasRole('superadmin'))
+      <li class="sidebar-list">
+
+          <a class="sidebar-link sidebar-title link-nav d-flex justify-content-between align-items-center 
+            {{ request()->routeIs('admin.users.pending_approval') ? 'active' : '' }}"
+            href="{{ route('admin.users.pending_approval') }}"
+            style="color: #000 !important;">
+
+              <div class="d-flex align-items-center">
+                  <svg class="stroke-icon me-2">
+                      <use href="{{ asset('admin/assets/svg/icon-sprite.svg#stroke-user') }}"></use>
+                  </svg>
+
+                  <svg class="fill-icon me-2">
+                      <use href="{{ asset('admin/assets/svg/icon-sprite.svg#fill-user') }}"></use>
+                  </svg>
+
+                  <span class="text-truncate" style="max-width: calc(100% - 40px);">Pending Approval</span>
+              </div>
+
+              @if ($pendingUsersCount > 0)
+                  <span style="
+                      display:inline-block;
+                      min-width:20px;
+                      padding:2px 6px;
+                      font-size:12px;
+                      font-weight:600;
+                      line-height:1;
+                      color:#fff;
+                      background-color:#ff3b30;
+                      border-radius:12px;
+                      text-align:center;
+                  ">
+                      {{ $pendingUsersCount }}
+                  </span>
+              @endif
+
+          </a>
+      </li>
+      @endif
+
+
 
         @if (Auth::user()->hasPermissionToCategory('distributors', 'view'))
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
@@ -253,6 +285,9 @@
             @if (Auth::user()->hasPermissionToCategory('distributor_orders', 'view'))
             <li><a href="{{ route('distributor-bulk-orders.index') }}">My Orders</a></li>
             @endif
+            @if (Auth::user()->hasPermissionToCategory('distributor_orders', 'add'))
+            <li><a href="{{ route('distributor-bulk-orders.create') }}">Create Order</a></li>
+            @endif
           </ul>
         </li>
         @else {{-- Superadmin or Admin --}}
@@ -281,9 +316,6 @@
             </svg><span>Distributor Orders</span></a>
           <ul class="sidebar-submenu">
             <li><a href="{{ route('distributor-bulk-orders.index') }}">Order List</a></li>
-            @if (Auth::user()->hasPermissionToCategory('distributor_orders', 'add'))
-            <li><a href="{{ route('distributor-bulk-orders.create') }}">Create Order</a></li>
-            @endif
           </ul>
         </li>
         @endif

@@ -13,29 +13,61 @@
                     <div class="alert alert-success">{{ session('success') }}</div>
                     @endif
 
-                    <div class="row">
-                        @foreach($fieldstaffs as $staff)
-                        <div class="col-md-4 mb-4">
-                            <div class="card p-4">
-                                <h5 class="card-title">{{ $staff->user->name }}</h5>
-                                <p class="card-text"><strong>Distributor:</strong> {{ $staff->distributor->company_name ?? '-' }}</p>
-                                <p class="card-text"><strong>District:</strong> {{ $staff->user->district->name ?? '' }}</p>
-                                <p class="card-text"><strong>Area:</strong> {{ $staff->user->area->name ?? '' }}</p>
-                                <p class="card-text"><strong>Contact:</strong> {{ $staff->user->contact_no }}</p>
-                                <p class="card-text"><strong>Email:</strong> {{ $staff->user->email }}</p>
-                                <p class="card-text"><strong>Address:</strong> {{ $staff->user->address }}</p>
-                                <p class="card-text"><strong>Status:</strong> {{ ucfirst($staff->status) }}</p>
-                                <div class="d-flex justify-content-between">
-                                    <a href="{{ route('fieldstaffs.edit', $staff->id) }}" class="btn btn-primary">Edit</a>
-                                    <form action="{{ route('fieldstaffs.destroy', $staff->id) }}" method="POST" style="display: inline-block;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                        @endforeach
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Contact No</th>
+                                    <th>Distributor</th>
+                                    <th>District</th>
+                                    <th>Area</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($fieldstaffs as $staff)
+                                <tr>
+                                    <td>{{ $staff->user->name }}</td>
+                                    <td>{{ $staff->user->email }}</td>
+                                    <td>{{ $staff->user->contact_no }}</td>
+                                    <td>{{ $staff->distributor->company_name ?? '-' }}</td>
+                                    <td>{{ $staff->user->district->name ?? '' }}</td>
+                                    <td>{{ $staff->user->area->name ?? '' }}</td>
+                                    <td>
+                                        @if($staff->status == 'active')
+                                            <span class="badge bg-success">Active</span>
+                                        @else
+                                            <span class="badge bg-warning">Inactive</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <a href="{{ route('fieldstaffs.edit', $staff->id) }}" class="btn btn-sm btn-primary">
+                                            <i class="fa fa-edit me-1"></i> Edit
+                                        </a>
+                                        <form action="{{ route('fieldstaffs.destroy', $staff->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="fa fa-trash me-1"></i> Delete
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted py-5">
+                                        <p>No field staff found.</p>
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        {{ $fieldstaffs->links() }}
                     </div>
                 </div>
             </div>

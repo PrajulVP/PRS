@@ -22,14 +22,12 @@ class RetailerOrder extends Model
     protected $table = 'retailer_orders';
 
     protected $fillable = [
-        'order_code', // Added
+        'order_code',
         'distributor_id',
         'retailer_id',
-        'product_name',
-        'sku',
-        'quantity',
-        'unit_price',
         'total_amount',
+        'total_items',
+        'total_quantity',
         'status',
         'placed_at',
         'notes',
@@ -52,6 +50,11 @@ class RetailerOrder extends Model
             } while (RetailerOrder::where('order_code', $orderCode)->exists());
             $order->order_code = $orderCode;
         });
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(RetailerOrderItem::class);
     }
 
     public function retailer(): BelongsTo
