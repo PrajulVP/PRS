@@ -49,6 +49,7 @@ class DistributorController extends Controller
             'email' => $userData['email'],
             'password' => Hash::make($userData['password']),
             'role' => 'distributor', // Keep for consistency if other parts rely on it
+            'status' => 'inactive', // Set status to inactive by default
         ]);
         $user->assignRole('distributor');
 

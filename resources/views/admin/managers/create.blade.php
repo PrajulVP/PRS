@@ -65,14 +65,6 @@
                                     @endforeach
                                 </select>
                             </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label>Status</label>
-                                <select name="status" class="form-select">
-                                    <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Active</option>
-                                    <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
-                                </select>
-                            </div>
                         </div>
 
                         <button class="btn btn-success">Create Manager</button>

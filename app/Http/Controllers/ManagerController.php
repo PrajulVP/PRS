@@ -33,12 +33,12 @@ class ManagerController extends Controller
             'password' => 'required|string|min:4|confirmed',
         ]);
 
-        // 2. Validate Manager-specific details
+        // 2. Validate Manager-specific details (status is removed from validation as it's set by default)
         $request->validate([
             'distributor_id' => 'nullable|exists:distributors,id',
             'contact_no' => 'nullable|string|max:255',
             'address' => 'nullable|string',
-            'status' => 'required|string|in:active,inactive',
+            // 'status' => 'required|string|in:active,inactive', // Removed from validation
         ]);
 
         // Create User record
@@ -47,7 +47,7 @@ class ManagerController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => 'manager', // Assign default role
-            'status' => 'active', // Default user status
+            'status' => 'inactive', // Set user status to inactive by default
         ]);
 
         // Assign 'manager' role using Spatie
@@ -62,7 +62,7 @@ class ManagerController extends Controller
             'email' => $user->email, // Inherit email from user
             'contact_no' => $request->contact_no,
             'address' => $request->address,
-            'status' => $request->status,
+            'status' => 'inactive', // Set manager's profile status to inactive by default
         ]);
 
         return redirect()->route('managers.index')->with('success', 'Manager added successfully!');
