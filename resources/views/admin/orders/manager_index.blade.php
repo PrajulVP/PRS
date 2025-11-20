@@ -21,24 +21,6 @@
     }
 </style>
 
-@section('page-body')
-<div class="container-fluid">
-    <div class="page-title">
-        <div class="row">
-            <div class="col-6 p-4">
-                <h3>Manager Dashboard - Pending Orders</h3>
-            </div>
-            <div class="col-6">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}"><i class="fa fa-home"></i></a></li>
-                    <li class="breadcrumb-item">Manager</li>
-                    <li class="breadcrumb-item active">Pending Orders</li>
-                </ol>
-            </div>
-        </div>
-    </div>
-</div>
-
 <div class="container-fluid">
     <div class="card">
         <div class="card-body">
