@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('distributor_id')->nullable()->constrained('distributors')->onDelete('set null');
             $table->foreignId('field_staff_id')->nullable()->constrained('fieldstaffs')->onDelete('set null');
+            $table->foreignId('sales_manager_id')->nullable()->constrained('managers')->onDelete('set null'); // New field
             $table->foreignId('district_id')->constrained('districts')->onDelete('cascade');
             $table->foreignId('area_id')->constrained('areas')->onDelete('cascade');
             $table->string('proprietor_name')->nullable();

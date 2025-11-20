@@ -21,15 +21,7 @@ class PermissionCategorySeeder extends Seeder
 
         $categories = [
             // User Management
-            [
-                'name' => 'Permissions',
-                'short_code' => 'permissions',
-                'perm_group_id' => $userManagementGroup->id,
-                'enable_view' => true,
-                'enable_add' => false, // Assuming no direct 'add' for permissions category itself
-                'enable_edit' => true,
-                'enable_delete' => false, // Assuming no direct 'delete' for permissions category itself
-            ],
+            // Permissions category removed as per request
             [
                 'name' => 'Managers',
                 'short_code' => 'managers',

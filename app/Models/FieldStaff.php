@@ -14,6 +14,7 @@ class FieldStaff extends Model
     protected $fillable = [
         'user_id',
         'distributor_id',
+        'sales_manager_id', // New field
         'status',
     ];
 
@@ -25,6 +26,11 @@ class FieldStaff extends Model
     public function distributor()
     {
         return $this->belongsTo(Distributor::class);
+    }
+
+    public function salesManager(): BelongsTo
+    {
+        return $this->belongsTo(Manager::class, 'sales_manager_id');
     }
 
     public function distributorOrders(): HasMany

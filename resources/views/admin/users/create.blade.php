@@ -58,6 +58,23 @@
                                     <div class="text-danger">{{ $message }}</div>
                                 @enderror
                             </div>
+                            
+                            {{-- Conditional Distributor Dropdown --}}
+                            <div class="mb-3" id="distributor-selection" style="display: none;">
+                                <label class="form-label" for="distributor_id">Assign to Distributor</label>
+                                <select class="form-select" id="distributor_id" name="distributor_id">
+                                    <option value="">-- Select Distributor --</option>
+                                    @foreach ($distributors as $distributor)
+                                        <option value="{{ $distributor->id }}" {{ old('distributor_id') == $distributor->id ? 'selected' : '' }}>
+                                            {{ $distributor->user->name ?? $distributor->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('distributor_id')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
+
                             <button class="btn btn-primary" type="submit">Create User</button>
                             <a href="{{ route('admin.users') }}" class="btn btn-secondary">Cancel</a>
                         </form>
@@ -68,3 +85,33 @@
     </div>
     <!-- Container-fluid Ends-->
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const roleSelect = document.getElementById('role');
+        const distributorSelectionDiv = document.getElementById('distributor-selection');
+        const distributorSelect = document.getElementById('distributor_id');
+
+        function toggleDistributorSelection() {
+            const selectedRole = roleSelect.value;
+            if (['manager', 'fieldstaff', 'retailer'].includes(selectedRole)) {
+                distributorSelectionDiv.style.display = 'block';
+                // For manager, distributor_id is nullable. For fieldstaff/retailer, it's required.
+                // We'll handle 'required' status via server-side validation.
+                distributorSelect.setAttribute('required', 'required'); // Make it required in UI for these roles
+            } else {
+                distributorSelectionDiv.style.display = 'none';
+                distributorSelect.removeAttribute('required');
+                distributorSelect.value = ''; // Clear selection when hidden
+            }
+        }
+
+        // Initial call to set visibility based on initial selected role
+        toggleDistributorSelection();
+
+        // Listen for changes on the role select dropdown
+        roleSelect.addEventListener('change', toggleDistributorSelection);
+    });
+</script>
+@endpush

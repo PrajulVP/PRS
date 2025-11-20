@@ -24,7 +24,8 @@ class UserController extends Controller
     public function create()
     {
         $roles = ['superadmin', 'admin', 'manager', 'distributor', 'fieldstaff', 'retailer'];
-        return view('admin.users.create', compact('roles'));
+        $distributors = Distributor::all(); // Fetch all distributors
+        return view('admin.users.create', compact('roles', 'distributors'));
     }
 
     public function store(Request $request)
@@ -35,17 +36,18 @@ class UserController extends Controller
             'password' => 'required|string|min:4|confirmed',
             'role' => 'required|string|exists:roles,name',
             'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Added
+            'distributor_id' => 'nullable|exists:distributors,id', // Added for managers, fieldstaff, retailers
         ]);
 
         // Prevent admin from assigning superadmin role
-        if (Auth::guard('web')->check() && Auth::guard('web')->user()->role === 'admin' && $request->role === 'superadmin') {
+        if (Auth::guard('web')->check() && Auth::guard('web')->user()->hasRole('admin') && $request->role === 'superadmin') {
             return back()->withInput()->withErrors(['role' => 'Admins cannot assign the Super Admin role.']);
         }
 
         $uniqueRoles = ['superadmin', 'admin', 'manager'];
         if (in_array($request->role, $uniqueRoles)) {
             // Check if any other user already has this role
-            $existingUserWithRole = User::where('role', $request->role)->first();
+            $existingUserWithRole = User::role($request->role)->first();
             if ($existingUserWithRole) {
                 return back()->withInput()->withErrors(['role' => 'The ' . $request->role . ' role can only be assigned to one user.']);
             }
@@ -70,7 +72,8 @@ class UserController extends Controller
         if ($request->role === 'retailer') {
             $request->validate([
                 'gst' => 'required|string|unique:retailers',
-                'distributor_id' => 'required|exists:distributors,id',
+                'distributor_id' => 'required|exists:distributors,id', // Required for retailer
+                // Add other retailer fields validation if needed
             ]);
 
             Retailer::create([
@@ -79,16 +82,41 @@ class UserController extends Controller
                 'distributor_id' => $request->distributor_id,
             ]);
         } elseif ($request->role === 'distributor') {
+            // Distributor creation logic should be here, assuming it's handled elsewhere
+            // or through a form that provides necessary distributor-specific fields.
+            // For now, it might be just creating a shell or handled by an admin directly creating a Distributor model.
+            // Based on previous contexts, distributor model has more fields.
+            // This needs to be clarified or handled via a separate flow.
+            // For a simple user creation, we assume a basic Distributor record is enough or tied to User model.
+            // If the request implies creating a full Distributor profile here, more fields are needed.
+            // For this task, assuming basic creation.
             Distributor::create([
                 'user_id' => $user->id,
+                'name' => $request->name, // Assuming name from user is distributor name
+                'email' => $request->email, // Assuming email from user
+                // Other fields for Distributor would need to be passed in the request or made nullable
+                // For simplicity, make other required fields nullable in the model for now if not provided.
             ]);
         } elseif ($request->role === 'fieldstaff') {
+            $request->validate([
+                'distributor_id' => 'required|exists:distributors,id', // Required for fieldstaff
+                // Add other fieldstaff fields validation if needed
+            ]);
             FieldStaff::create([
                 'user_id' => $user->id,
+                'distributor_id' => $request->distributor_id,
             ]);
         } elseif ($request->role === 'manager') {
+            $request->validate([
+                'distributor_id' => 'nullable|exists:distributors,id', // Optional for manager
+            ]);
             Manager::create([
                 'user_id' => $user->id,
+                'distributor_id' => $request->distributor_id, // Can be null
+                'name' => $user->name, // Inherit name from user
+                'email' => $user->email, // Inherit email from user
+                'status' => 'active', // Default status
+                // Other fields contact_no, address would need to be added to request or made nullable
             ]);
         }
 

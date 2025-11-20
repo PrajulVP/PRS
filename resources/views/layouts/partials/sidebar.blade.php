@@ -49,23 +49,6 @@
         </li>
         @endif
 
-        @if (Auth::user()->hasPermissionToCategory('managers', 'view'))
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
-            <svg class="stroke-icon">
-              <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
-            </svg>
-            <svg class="fill-icon">
-              <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
-            </svg><span>Managers</span></a>
-          <ul class="sidebar-submenu">
-            <li><a href="{{ route('managers.index') }}">Managers List</a></li>
-            @if (Auth::user()->hasPermissionToCategory('managers', 'add'))
-            <li><a href="{{ route('managers.create') }}">Create Managers</a></li>
-            @endif
-          </ul>
-        </li>
-        @endif
-
         @if (Auth::user()->hasPermissionToCategory('distributors', 'view'))
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
             <svg class="stroke-icon">
@@ -78,6 +61,23 @@
             <li><a href="{{ route('distributors.index') }}">Distributors List</a></li>
             @if (Auth::user()->hasPermissionToCategory('distributors', 'add'))
             <li><a href="{{ route('distributors.create') }}">Create Distributors</a></li>
+            @endif
+          </ul>
+        </li>
+        @endif
+
+        @if (Auth::user()->hasPermissionToCategory('managers', 'view'))
+        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+            <svg class="stroke-icon">
+              <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
+            </svg><span>Managers</span></a>
+          <ul class="sidebar-submenu">
+            <li><a href="{{ route('managers.index') }}">Managers List</a></li>
+            @if (Auth::user()->hasPermissionToCategory('managers', 'add'))
+            <li><a href="{{ route('managers.create') }}">Create Managers</a></li>
             @endif
           </ul>
         </li>

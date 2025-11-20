@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('distributor_id')->constrained('distributors')->onDelete('cascade');
+            $table->foreignId('sales_manager_id')->nullable()->constrained('managers')->onDelete('set null'); // New field
             $table->string('status')->default('active');
             $table->timestamps();
         });

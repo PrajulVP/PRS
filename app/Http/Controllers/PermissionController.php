@@ -13,6 +13,14 @@ class PermissionController extends Controller
     public function index()
     {
         $roles = Role::all();
+        // Define a custom order for roles
+        $customOrder = ['superadmin', 'admin', 'distributor', 'manager', 'fieldstaff', 'retailer'];
+        
+        $roles = $roles->sortBy(function ($role) use ($customOrder) {
+            $index = array_search($role->name, $customOrder);
+            return $index === false ? count($customOrder) : $index; // Put unknown roles at the end
+        });
+
         return view('admin.permissions.index', compact('roles'));
     }
 

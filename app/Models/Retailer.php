@@ -14,6 +14,7 @@ class Retailer extends Model
         'user_id',
         'distributor_id',
         'field_staff_id',
+        'sales_manager_id', // New field
         'district_id',
         'area_id',
         'proprietor_name',
@@ -47,5 +48,10 @@ class Retailer extends Model
     public function fieldStaff()
     {
         return $this->belongsTo(FieldStaff::class);
+    }
+    
+    public function salesManager(): BelongsTo
+    {
+        return $this->belongsTo(Manager::class, 'sales_manager_id');
     }
 }
