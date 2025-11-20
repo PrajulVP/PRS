@@ -4,14 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Notifications\Notifiable; // Added missing import
 
 class Distributor extends Model
 {
+    use HasFactory, Notifiable; // Combined traits
+
     protected $fillable = [
         'user_id',
         'gst',
         'drug_license_number',
-        'contact_no',
+        'contact_no', // Corrected from phone_number
         'address',
         'pincode',
         'district_id',
@@ -46,7 +50,7 @@ class Distributor extends Model
 
     public function fieldStaffs(): HasMany
     {
-        return $this->hasMany(FieldStaff::class, 'assigned_distributor_id');
+        return $this->hasMany(FieldStaff::class, 'distributor_id');
     }
 
     public function products()

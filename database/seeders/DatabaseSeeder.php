@@ -20,6 +20,11 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             SuperAdminSeeder::class,
             DistrictSeeder::class,
+            AreaSeeder::class,
+            DistributorSeeder::class,
+            RetailerSeeder::class,
+            FieldStaffSeeder::class,
+            ProductSeeder::class,
         ]);
     }
 }

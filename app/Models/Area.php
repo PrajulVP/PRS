@@ -5,9 +5,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 use Illuminate\Database\Eloquent\Model;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
 class Area extends Model
 {
-    protected $fillable = ['district_id','name','pincode'];
+    use HasFactory;
+    protected $fillable = ['district_id','name'];
 
     public function district(): BelongsTo
     {

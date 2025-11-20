@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,6 +10,15 @@ use Illuminate\Support\Str; // Import Str facade
 
 class RetailerOrder extends Model
 {
+    use HasFactory;
+    
+    const STATUS_PENDING = 'pending';
+    const STATUS_ACCEPTED_BY_DISTRIBUTOR = 'accepted_by_distributor';
+    const STATUS_ASSIGNED_TO_FIELDSTAFF = 'assigned_to_fieldstaff';
+    const STATUS_OUT_FOR_DELIVERY = 'out_for_delivery'; // Alias or equivalent to assigned_to_fieldstaff for display
+    const STATUS_DELIVERED = 'delivered';
+    const STATUS_REJECTED = 'rejected';
+
     protected $table = 'retailer_orders';
 
     protected $fillable = [

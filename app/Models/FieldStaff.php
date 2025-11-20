@@ -5,12 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
 class FieldStaff extends Model
 {
+    use HasFactory;
     protected $table = 'fieldstaffs';
     protected $fillable = [
         'user_id',
-        'assigned_distributor_id',
+        'distributor_id',
         'status',
     ];
 

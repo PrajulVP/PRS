@@ -5,12 +5,23 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
 class Retailer extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'user_id',
         'distributor_id',
+        'field_staff_id',
+        'district_id',
+        'area_id',
+        'proprietor_name',
+        'contact_no',
         'gst',
+        'address',
+        'status',
+        'credit_limit',
     ];
 
     public function user()
