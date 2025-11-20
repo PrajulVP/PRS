@@ -39,14 +39,14 @@ class PermissionSeeder extends Seeder
                 'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
             ],
             [
-                'short_code' => 'managers',
-                'name' => 'Managers',
+                'short_code' => 'distributors',
+                'name' => 'Distributors',
                 'perm_group_id' => $userManagementGroup->id,
                 'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
             ],
             [
-                'short_code' => 'distributors',
-                'name' => 'Distributors',
+                'short_code' => 'managers',
+                'name' => 'Managers',
                 'perm_group_id' => $userManagementGroup->id,
                 'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
             ],
@@ -84,14 +84,14 @@ class PermissionSeeder extends Seeder
             ],
             // Orders Group (already defined in $newCategories later, but ensuring consistency)
             [
-                'short_code' => 'retailer_orders',
-                'name' => 'Retailer Orders',
+                'short_code' => 'distributor_bulk_orders',
+                'name' => 'Distributor Bulk Orders',
                 'perm_group_id' => $ordersGroup->id,
                 'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
             ],
             [
-                'short_code' => 'distributor_bulk_orders',
-                'name' => 'Distributor Bulk Orders',
+                'short_code' => 'retailer_orders',
+                'name' => 'Retailer Orders',
                 'perm_group_id' => $ordersGroup->id,
                 'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
             ],
@@ -131,8 +131,8 @@ class PermissionSeeder extends Seeder
         if ($usersCategory) {
             $userPermissions = [
                 'add user',
-                'create managers',
                 'create distributors',
+                'create managers',
                 'create fieldstaff',
                 'create retailers',
             ];
@@ -208,8 +208,8 @@ class PermissionSeeder extends Seeder
                 'assign_fieldstaff retailer_orders',
                 'update_delivery_status retailer_orders',
                 'add user',
-                'create managers',
                 'create distributors',
+                'create managers',
                 'create fieldstaff',
                 'create retailers',
             ];
@@ -268,8 +268,8 @@ class PermissionSeeder extends Seeder
         // Assign existing user-related permissions to the "Users" category
         $userPermissions = [
             'add user',
-            'create managers',
             'create distributors',
+            'create managers',
             'create fieldstaff',
             'create retailers',
         ];
@@ -289,8 +289,8 @@ class PermissionSeeder extends Seeder
         // Add new categories and their permissions
         $newCategories = [
             [
-                'name' => 'Retailer Orders',
-                'short_code' => 'retailer_orders',
+                'name' => 'Distributor Bulk Orders',
+                'short_code' => 'distributor_bulk_orders',
                 'enable_view' => true,
                 'enable_add' => true,
                 'enable_edit' => true,
@@ -298,8 +298,8 @@ class PermissionSeeder extends Seeder
                 'perm_group_id' => $ordersGroup->id, // Assign to Orders group
             ],
             [
-                'name' => 'Distributor Bulk Orders',
-                'short_code' => 'distributor_bulk_orders',
+                'name' => 'Retailer Orders',
+                'short_code' => 'retailer_orders',
                 'enable_view' => true,
                 'enable_add' => true,
                 'enable_edit' => true,
@@ -388,8 +388,8 @@ class PermissionSeeder extends Seeder
                 'assign_fieldstaff retailer_orders',
                 'update_delivery_status retailer_orders',
                 'add user',
-                'create managers',
                 'create distributors',
+                'create managers',
                 'create fieldstaff',
                 'create retailers',
             ];

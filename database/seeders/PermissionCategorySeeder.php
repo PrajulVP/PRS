@@ -23,15 +23,6 @@ class PermissionCategorySeeder extends Seeder
             // User Management
             // Permissions category removed as per request
             [
-                'name' => 'Managers',
-                'short_code' => 'managers',
-                'perm_group_id' => $userManagementGroup->id,
-                'enable_view' => true,
-                'enable_add' => true,
-                'enable_edit' => true, // Assuming edit is also needed
-                'enable_delete' => true, // Assuming delete is also needed
-            ],
-            [
                 'name' => 'Distributors',
                 'short_code' => 'distributors',
                 'perm_group_id' => $userManagementGroup->id,
@@ -39,6 +30,15 @@ class PermissionCategorySeeder extends Seeder
                 'enable_add' => true,
                 'enable_edit' => true,
                 'enable_delete' => true,
+            ],
+            [
+                'name' => 'Managers',
+                'short_code' => 'managers',
+                'perm_group_id' => $userManagementGroup->id,
+                'enable_view' => true,
+                'enable_add' => true,
+                'enable_edit' => true, // Assuming edit is also needed
+                'enable_delete' => true, // Assuming delete is also needed
             ],
             [
                 'name' => 'Field Staff',

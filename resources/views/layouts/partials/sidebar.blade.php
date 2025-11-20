@@ -73,7 +73,7 @@
             </svg>
             <svg class="fill-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
-            </svg><span>Managers</span></a>
+            </svg><span>Sales Managers</span></a>
           <ul class="sidebar-submenu">
             <li><a href="{{ route('managers.index') }}">Managers List</a></li>
             @if (Auth::user()->hasPermissionToCategory('managers', 'add'))
