@@ -3,24 +3,6 @@
 @section('page-body')
 <div class="container-fluid">
 
-    <!-- PAGE TITLE -->
-    <div class="page-title">
-        <div class="row">
-            <div class="col-6">
-                <h4>Superadmin Dashboard</h4>
-            </div>
-            <div class="col-6">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="#">
-                        <i data-feather="home"></i>
-                    </a></li>
-                    <li class="breadcrumb-item">Dashboard</li>
-                    <li class="breadcrumb-item active">Overview</li>
-                </ol>
-            </div>
-        </div>
-    </div>
-
     <!-- TOP STATISTICS -->
     <div class="row">
 

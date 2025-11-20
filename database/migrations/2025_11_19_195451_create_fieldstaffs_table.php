@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('fieldstaffs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('assigned_distributor_id')->constrained('distributors')->onDelete('cascade');
+            $table->foreignId('distributor_id')->constrained('distributors')->onDelete('cascade');
             $table->string('status')->default('active');
             $table->timestamps();
         });

@@ -69,7 +69,7 @@
 
                         <div class="mb-3">
                             <label>Distributor</label>
-                            <select name="assigned_distributor_id" id="assigned_distributor_id" class="form-select" required>
+                            <select name="distributor_id" id="distributor_id" class="form-select" required>
                                 <option value="">Select Distributor</option>
                             </select>
                         </div>
@@ -95,12 +95,12 @@
 document.addEventListener('DOMContentLoaded', function () {
     const districtSelect = document.getElementById('district_id');
     const areaSelect = document.getElementById('area_id');
-    const distributorSelect = document.getElementById('assigned_distributor_id');
+    const distributorSelect = document.getElementById('distributor_id');
 
     // Store initial values for pre-selection
     const initialDistrictId = "{{ old('district_id', $fieldstaff->user->district_id) }}";
     const initialAreaId = "{{ old('area_id', $fieldstaff->user->area_id) }}";
-    const initialDistributorId = "{{ old('assigned_distributor_id', $fieldstaff->assigned_distributor_id) }}";
+    const initialDistributorId = "{{ old('distributor_id', $fieldstaff->distributor_id) }}";
 
     // Function to fetch and populate areas
     function fetchAreas(districtId, selectedAreaId = null) {

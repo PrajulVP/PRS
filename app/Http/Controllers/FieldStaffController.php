@@ -57,7 +57,7 @@ class FieldStaffController extends Controller
         ]);
 
         $fieldstaffData = $request->validate([
-            'assigned_distributor_id' => 'required|exists:distributors,id',
+            'distributor_id' => 'required|exists:distributors,id',
             'status' => 'in:active,inactive',
         ]);
 
@@ -107,7 +107,7 @@ class FieldStaffController extends Controller
         ]);
 
         $fieldstaffData = $request->validate([
-            'assigned_distributor_id' => 'required|exists:distributors,id',
+            'distributor_id' => 'required|exists:distributors,id',
             'status' => 'in:active,inactive',
         ]);
 

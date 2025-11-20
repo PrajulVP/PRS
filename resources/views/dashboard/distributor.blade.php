@@ -2,7 +2,6 @@
 
 @section('page-body')
 <div class="container-fluid">
-
     <!-- PAGE TITLE -->
     <div class="page-title">
         <div class="row">

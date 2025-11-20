@@ -15,14 +15,14 @@
     @if(Auth::guard('web')->check())
     <div class="page-wrapper compact-wrapper" id="pageWrapper">
         @include('layouts.partials.header')
-        <div class="page-body-wrapper">
-            @include('layouts.partials.sidebar')
-            <div class="page-body">
-                @yield('page-body')
-            </div>
-            @include('layouts.partials.footer')
-        </div>
-    </div>
+                    <div class="page-body-wrapper">
+                        @include('layouts.partials.sidebar')
+                        <div class="page-body">
+                            @include('layouts.partials.breadcrumbs')
+                            @yield('page-body')
+                        </div>
+                        @include('layouts.partials.footer')
+                    </div>    </div>
     @include('layouts.partials.scripts')
     @stack('scripts')
     @else

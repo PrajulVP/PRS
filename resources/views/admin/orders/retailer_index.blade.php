@@ -108,11 +108,12 @@
                                 case 'pending':
                                     output = `<span class="badge badge-warning">Waiting for confirmation</span>`;
                                     break;
-                                case 'accepted':
+                                case 'accepted_by_distributor':
                                     output = `<span class="badge badge-info">Accepted by Distributor</span>`;
                                     break;
-                                case 'dispatched':
-                                    output = `<button class="btn btn-success btn-sm confirm-delivery-btn" data-id="${row.id}">Confirm Delivery</button>`;
+                                case 'assigned_to_fieldstaff':
+                                    output = `<span class="badge badge-primary">Out for Delivery</span>`;
+                                    output += ` <button class="btn btn-success btn-sm confirm-delivery-btn" data-id="${row.id}">Confirm Delivery</button>`;
                                     break;
                                 case 'delivered':
                                     output = `<span class="badge badge-success">${row.status}</span>`;

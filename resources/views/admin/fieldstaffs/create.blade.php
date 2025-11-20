@@ -66,10 +66,10 @@
 
                         <div class="mb-3">
                             <label>Distributor</label>
-                            <select name="assigned_distributor_id" id="assigned_distributor_id" class="form-select" required>
+                            <select name="distributor_id" id="distributor_id" class="form-select" required>
                                 <option value="">Select Distributor</option>
                                 @foreach($distributors as $distributor)
-                                    <option value="{{ $distributor->id }}" {{ old('assigned_distributor_id') == $distributor->id ? 'selected' : '' }}>
+                                    <option value="{{ $distributor->id }}" {{ old('distributor_id') == $distributor->id ? 'selected' : '' }}>
                                         {{ $distributor->company_name }}
                                     </option>
                                 @endforeach
@@ -97,7 +97,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     const districtSelect = document.getElementById('district_id');
     const areaSelect = document.getElementById('area_id');
-    const distributorSelect = document.getElementById('assigned_distributor_id');
+    const distributorSelect = document.getElementById('distributor_id');
 
     function fetchAreas(districtId) {
         console.log('fetchAreas called for districtId:', districtId);
