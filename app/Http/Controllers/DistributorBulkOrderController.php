@@ -231,7 +231,7 @@ class DistributorBulkOrderController extends Controller
     public function show(DistributorOrder $distributorBulkOrder)
     {
         $distributorBulkOrder->load(['distributor.user', 'items.product']);
-        return view('admin.orders.show', compact('distributorBulkOrder'));
+        return view('admin.orders.show', ['order' => $distributorBulkOrder]);
     }
 
     // Admin/Distributor: edit form
