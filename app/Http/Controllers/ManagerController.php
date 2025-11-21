@@ -26,7 +26,9 @@ class ManagerController extends Controller
 
     public function create()
     {
-        $distributors = Distributor::all(); // Fetch all distributors for the dropdown
+        $distributors = Distributor::whereHas('user', function ($query) {
+            $query->where('status', 'active');
+        })->get(); // Fetch all distributors for the dropdown
         return view('admin.managers.create', compact('distributors'));
     }
 
@@ -44,7 +46,6 @@ class ManagerController extends Controller
             'distributor_id' => 'nullable|exists:distributors,id',
             'contact_no' => 'nullable|string|max:255',
             'address' => 'nullable|string',
-            // 'status' => 'required|string|in:active,inactive', // Removed from validation
         ]);
 
         // Create User record
@@ -68,7 +69,6 @@ class ManagerController extends Controller
             'email' => $user->email, // Inherit email from user
             'contact_no' => $request->contact_no,
             'address' => $request->address,
-            'status' => 'inactive', // Set manager's profile status to inactive by default
         ]);
 
         return redirect()->route('managers.index')->with('success', 'Manager added successfully!');
@@ -76,7 +76,9 @@ class ManagerController extends Controller
 
     public function edit(Manager $manager)
     {
-        $distributors = Distributor::all(); // Fetch all distributors for the dropdown
+        $distributors = Distributor::whereHas('user', function ($query) {
+            $query->where('status', 'active');
+        })->get(); // Fetch all distributors for the dropdown
         // Eager load the user for the form
         $manager->load('user');
         return view('admin.managers.edit', compact('manager', 'distributors'));
@@ -96,7 +98,6 @@ class ManagerController extends Controller
             'distributor_id' => 'nullable|exists:distributors,id',
             'contact_no' => 'nullable|string|max:255',
             'address' => 'nullable|string',
-            'status' => 'required|string|in:active,inactive',
         ]);
 
         // Update User record
@@ -113,7 +114,6 @@ class ManagerController extends Controller
             'email' => $request->email, // Update manager's own email field
             'contact_no' => $request->contact_no,
             'address' => $request->address,
-            'status' => $request->status,
         ]);
 
         return redirect()->route('managers.index')->with('success', 'Manager updated successfully!');

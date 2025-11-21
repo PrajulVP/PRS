@@ -16,7 +16,8 @@ class SuperAdminSeeder extends Seeder
             [
                 'name' => 'Super Admin',
                 'password' => Hash::make('12345'),
-                'role' => 'superadmin' // Keep this for the 'role' column if still used elsewhere
+                'role' => 'superadmin',
+                'status' => 'active'
             ]
         );
 
@@ -32,7 +33,8 @@ class SuperAdminSeeder extends Seeder
             [
                 'name' => 'Admin',
                 'password' => Hash::make('12345'),
-                'role' => 'admin'
+                'role' => 'admin',
+                'status' => 'active'
             ]
         );
 

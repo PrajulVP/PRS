@@ -78,6 +78,11 @@ Route::middleware(['auth:web'])->group(function () {
         Route::resource('fieldstaffs', FieldStaffController::class);
         Route::resource('retailers', RetailerController::class);
     });
+    Route::resource('distributors', DistributorController::class);
+    Route::resource('fieldstaffs', FieldStaffController::class);
+    Route::patch('fieldstaffs/{fieldstaff}/activate', [FieldStaffController::class, 'activate'])->name('fieldstaffs.activate');
+    Route::resource('retailers', RetailerController::class);
+    Route::patch('retailers/{retailer}/activate', [RetailerController::class, 'activate'])->name('retailers.activate');
     Route::resource('districts', DistrictController::class);
     Route::resource('areas', AreaController::class);
     Route::post('retailer-orders-management/{retailerOrder}/accept', [RetailerOrderManagementController::class, 'acceptOrder'])->name('retailer-orders-management.acceptOrder');
@@ -135,11 +140,23 @@ Route::middleware(['auth:web'])->group(function () {
     // Logout (session)
     Route::post('admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
 
+<<<<<<< HEAD
     // Permissions routes for Superadmin
     Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['role:superadmin']], function () {
         Route::get('permissions', [PermissionController::class, 'index'])->name('permissions.index');
         Route::get('permissions/{role}/edit', [PermissionController::class, 'edit'])->name('permissions.edit');
         Route::put('permissions/{role}', [PermissionController::class, 'update'])->name('permissions.update');
+=======
+    Route::get('pending-approvals', [App\Http\Controllers\PendingApprovalController::class, 'index'])->name('pending-approvals');
+
+    Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['role:superadmin|admin']], function () {
+        Route::get('permissions', [PermissionController::class, 'index'])->name('permissions.index');
+        Route::get('permissions/{role}/edit', [PermissionController::class, 'edit'])->name('permissions.edit');
+        Route::put('permissions/{role}', [PermissionController::class, 'update'])->name('permissions.update');
+        
+        // User Approval routes for Superadmin
+        Route::post('users/{user}/activate', [App\Http\Controllers\UserController::class, 'activateUser'])->name('users.activate');
+>>>>>>> 8656c2476019753737a6da2fe9c5e689d1d6b633
     });
 
 });
