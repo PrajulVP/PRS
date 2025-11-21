@@ -58,6 +58,14 @@ Route::middleware(['auth:web'])->group(function () {
     Route::get('/admin/users', [App\Http\Controllers\UserController::class, 'index'])->name('admin.users')->middleware('role:superadmin|admin');
     Route::get('/admin/users/create', [App\Http\Controllers\UserController::class, 'create'])->name('admin.users.create')->middleware('role:superadmin|admin');
     Route::post('/admin/users', [App\Http\Controllers\UserController::class, 'store'])->name('admin.users.store')->middleware('role:superadmin|admin');
+    
+    // User Approval routes for Superadmin, Admin, and Manager
+    Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['role:superadmin|admin|manager']], function () {
+        Route::get('users/pending-approval', [\App\Http\Controllers\ApprovalController::class, 'index'])->name('users.pending_approval');
+        Route::post('users/{user}/activate', [\App\Http\Controllers\ApprovalController::class, 'approve'])->name('users.activate');
+    });
+
+    Route::get('/admin/users/{user}', [App\Http\Controllers\UserController::class, 'show'])->name('admin.users.show');
     Route::get('/admin/users/{user}/edit', [App\Http\Controllers\UserController::class, 'edit'])->name('admin.users.edit');
     Route::put('/admin/users/{user}', [App\Http\Controllers\UserController::class, 'update'])->name('admin.users.update');
     Route::delete('/admin/users/{user}', [App\Http\Controllers\UserController::class, 'destroy'])->name('admin.users.destroy');
@@ -66,10 +74,10 @@ Route::middleware(['auth:web'])->group(function () {
 
     Route::group(['middleware' => ['role:superadmin|admin']], function () {
         Route::resource('managers', ManagerController::class);
+        Route::resource('distributors', DistributorController::class);
+        Route::resource('fieldstaffs', FieldStaffController::class);
+        Route::resource('retailers', RetailerController::class);
     });
-    Route::resource('distributors', DistributorController::class);
-    Route::resource('fieldstaffs', FieldStaffController::class);
-    Route::resource('retailers', RetailerController::class);
     Route::resource('districts', DistrictController::class);
     Route::resource('areas', AreaController::class);
     Route::post('retailer-orders-management/{retailerOrder}/accept', [RetailerOrderManagementController::class, 'acceptOrder'])->name('retailer-orders-management.acceptOrder');
@@ -78,7 +86,7 @@ Route::middleware(['auth:web'])->group(function () {
         'retailer-orders-management' => 'retailerOrder'
     ]);
     Route::post('distributor-bulk-orders/{distributor_bulk_order}/confirm-delivery', [DistributorBulkOrderController::class, 'confirmDelivery'])->name('distributor-bulk-orders.confirmDelivery');
-    Route::post('distributor-bulk-orders/{distributor_bulk_order}/accept-order', [DistributorBulkOrderController::class, 'acceptOrder'])->name('distributor-bulk-orders.acceptOrder');
+    Route::post('distributor-bulk-orders/{distributor_bulk_order}/accept-order', [DistributorBulkOrderController::class, 'acceptOrder'])->name('distributor-bulk-orders.accept-order');
     Route::post('distributor-bulk-orders/{distributor_bulk_order}/cancel-order', [DistributorBulkOrderController::class, 'cancelOrder'])->name('distributor-bulk-orders.cancelOrder');
 
     Route::resource('distributor-bulk-orders', DistributorBulkOrderController::class);
@@ -105,9 +113,9 @@ Route::middleware(['auth:web'])->group(function () {
     Route::prefix('retailer')->name('retailer.')->middleware('role:retailer')->group(function () {
         Route::get('/orders', [RetailerOrderController::class, 'retailerIndex'])->name('orders.index');
         Route::get('/orders/create', [RetailerOrderController::class, 'create'])->name('orders.create');
-        Route::post('/orders', [RetailerOrderController::class, 'store'])->name('orders.store');
+        Route::post('/orders', [RetailerController::class, 'store'])->name('orders.store');
         Route::post('/orders/{retailerOrder}/confirm-delivery', [RetailerOrderController::class, 'confirmDelivery'])->name('orders.confirmDelivery');
-        Route::get('/orders/{retailerOrder}', [RetailerOrderController::class, 'show'])->name('orders.show');
+        Route::get('/orders/{retailerOrder}', [RetailerController::class, 'show'])->name('orders.show');
     });
 
     // AJAX: Get areas for selected district
@@ -127,14 +135,11 @@ Route::middleware(['auth:web'])->group(function () {
     // Logout (session)
     Route::post('admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
 
+    // Permissions routes for Superadmin
     Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['role:superadmin']], function () {
         Route::get('permissions', [PermissionController::class, 'index'])->name('permissions.index');
         Route::get('permissions/{role}/edit', [PermissionController::class, 'edit'])->name('permissions.edit');
         Route::put('permissions/{role}', [PermissionController::class, 'update'])->name('permissions.update');
-        
-        // User Approval routes for Superadmin
-        Route::get('users/pending-approval', [App\Http\Controllers\UserController::class, 'pendingApproval'])->name('users.pending_approval');
-        Route::post('users/{user}/activate', [App\Http\Controllers\UserController::class, 'activateUser'])->name('users.activate');
     });
 
 });

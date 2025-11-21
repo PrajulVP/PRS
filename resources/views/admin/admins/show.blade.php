@@ -5,7 +5,7 @@
 <div class="container">
     <div class="row">
         <div class="col-md-12">
-            <h1>Admin Details</h1>
+            <h1>Admin: {{ $admin->name }}</h1>
             <table class="table">
                 <tbody>
                     <tr>

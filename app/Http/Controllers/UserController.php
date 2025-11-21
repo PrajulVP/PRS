@@ -15,11 +15,17 @@ use Illuminate\Support\Facades\Storage; // Added
 
 class UserController extends Controller
 {
-        public function index(Request $request)
-        {
-            $users = User::with('roles')->get();
-            return view('admin.users.index', compact('users'));
-        }
+    public function index(Request $request)
+    {
+        $users = User::with('roles')->get();
+        return view('admin.users.index', compact('users'));
+    }
+
+    public function show(User $user)
+    {
+        $user->load('distributor', 'manager', 'fieldStaff', 'retailer');
+        return view('admin.users.show', compact('user'));
+    }
 
     public function create()
     {

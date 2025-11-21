@@ -17,6 +17,12 @@ class DistributorController extends Controller
         return view('admin.distributors.index', compact('distributors'));
     }
 
+    public function show(Distributor $distributor)
+    {
+        $distributor->load('user', 'district', 'area');
+        return view('admin.distributors.show', compact('distributor'));
+    }
+
     public function create()
     {
         $districts = District::all();

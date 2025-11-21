@@ -31,6 +31,12 @@ class RetailerController extends Controller
         return view('admin.retailers.index', compact('retailers'));
     }
 
+    public function show(Retailer $retailer)
+    {
+        $retailer->load('user', 'distributor.user', 'user.district', 'user.area');
+        return view('admin.retailers.show', compact('retailer'));
+    }
+
     public function create()
     {
         $retailer = null;  // Changed variable name

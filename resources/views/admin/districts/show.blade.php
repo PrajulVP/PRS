@@ -2,7 +2,7 @@
 
 @section('page-body')
     <div class="container-fluid">
-        <h1>District Details</h1>
+        <h1>District: {{ $district->name }}</h1>
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Name: {{ $district->name }}</h5

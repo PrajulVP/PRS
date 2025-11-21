@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 
 
 use App\Models\User;
-use App\Models\Area;
+use App\models\Area;
 use App\Models\District;
 use App\Models\Distributor;
 use App\Models\FieldStaff; // Added
@@ -34,6 +34,11 @@ class FieldStaffController extends Controller
         return view('admin.fieldstaffs.index', compact('fieldstaffs'));
     }
 
+    public function show(FieldStaff $fieldstaff)
+    {
+        $fieldstaff->load('user', 'distributor.user', 'user.district', 'user.area');
+        return view('admin.fieldstaffs.show', compact('fieldstaff'));
+    }
 
     public function create()
     {

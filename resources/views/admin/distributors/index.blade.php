@@ -45,6 +45,9 @@
                                         @endif
                                     </td>
                                     <td>
+                                        <a href="{{ route('distributors.show', $distributor->id) }}" class="btn btn-sm btn-secondary me-1">
+                                            <i class="fa fa-eye me-1"></i> View
+                                        </a>
                                         <a href="{{ route('distributors.edit', $distributor->id) }}" class="btn btn-sm btn-primary">
                                             <i class="fa fa-edit me-1"></i> Edit
                                         </a>

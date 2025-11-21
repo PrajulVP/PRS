@@ -32,6 +32,7 @@
                                         @endforeach
                                     </td>
                                     <td>
+                                        <a href="{{ route('admin.users.show', $user->id) }}" class="btn btn-sm btn-secondary">View</a>
                                         <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-sm btn-primary">Edit</a>
                                         <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="d-inline">
                                             @csrf

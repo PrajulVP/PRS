@@ -18,6 +18,12 @@ class ManagerController extends Controller
         return view('admin.managers.index', compact('managers'));
     }
 
+    public function show(Manager $manager)
+    {
+        $manager->load('user', 'distributor');
+        return view('admin.managers.show', compact('manager'));
+    }
+
     public function create()
     {
         $distributors = Distributor::all(); // Fetch all distributors for the dropdown

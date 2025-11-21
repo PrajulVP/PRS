@@ -49,7 +49,7 @@
         </li>
         @endif
 
-      @if (Auth::user()->hasRole('superadmin'))
+      @if (Auth::user()->hasRole('superadmin') || Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager'))
       <li class="sidebar-list">
 
           <a class="sidebar-link sidebar-title link-nav d-flex justify-content-between align-items-center 

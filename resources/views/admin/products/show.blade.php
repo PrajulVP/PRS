@@ -7,7 +7,7 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h5>Product Details</h5>
+                    <h5>Product: {{ $product->product_name }}</h5>
                 </div>
                 <div class="card-body">
                     <table class="table table-bordered">
