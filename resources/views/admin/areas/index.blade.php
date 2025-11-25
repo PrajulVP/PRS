@@ -1,152 +1,198 @@
 @extends('layouts.admin')
 
 @push('styles')
-<!-- DataTables Bootstrap 5 -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
 
 <style>
-    /* Search Bar Left */
-    .dataTables_filter {
-        text-align: left !important;
-    }
-    .dataTables_filter input {
-        width: 230px !important;
-        margin-left: 10px !important;
-    }
+    .dataTables_filter { text-align: left !important; }
+    .dataTables_length { text-align: right !important; }
+    .dataTables_filter input { width: 230px; margin-left: 8px; }
 
-    /* Show Entries Right */
-    .dataTables_length {
-        text-align: right !important;
-    }
-    .dataTables_length select {
-        margin: 0 5px !important;
-        width: 70px !important;
+    .side-form {
+        background: #ffffff;
+        border-left: 3px solid #0d6efd;
+        padding: 20px;
+        border-radius: 6px;
     }
 </style>
 @endpush
 
-
 @section('page-body')
 <div class="container-fluid">
 
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
+    <div class="row">
+        
+        <!-- LEFT SIDE TABLE -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Areas</h5>
+                </div>
 
-            <div class="d-flex align-items-center">
-                <i data-feather="map-pin" class="me-2"></i>
-                <h5 class="mb-0">Areas</h5>
+                <div class="card-body">
+
+                    @if(session('success'))
+                        <div class="alert alert-success">{{ session('success') }}</div>
+                    @endif
+
+                    <table id="areas-table" class="table table-striped table-hover display">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Area Name</th>
+                                <th>District</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+
+                </div>
             </div>
-
-            <a href="{{ route('areas.create') }}" class="btn btn-primary d-flex align-items-center">
-                <i data-feather="plus" class="me-1"></i>
-                <span>Add Area</span>
-            </a>
-
         </div>
 
+        <!-- RIGHT SIDE CREATE FORM -->
+        <div class="col-lg-4">
+            <div class="side-form shadow-sm">
+                <h5>Add New Area</h5>
+                <hr>
 
-        <div class="card-body">
+                <form action="{{ route('areas.store') }}" method="POST">
+                    @csrf
 
-            @if(session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
-            @endif
+                    <div class="mb-3">
+                        <label class="form-label">District</label>
+                        <select name="district_id" class="form-control" required>
+                            <option value="">Select District</option>
+                            @foreach($districts as $d)
+                                <option value="{{ $d->id }}">{{ $d->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
 
-            <div class="table-responsive">
-                <table id="areas-table" class="table table-striped table-hover display">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>District</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                    <div class="mb-3">
+                        <label class="form-label">Area Name</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+
+                    <button class="btn btn-primary w-100">Add Area</button>
+                </form>
+
             </div>
-
         </div>
+
     </div>
 
+</div>
+
+
+<!-- EDIT MODAL -->
+<div class="modal fade" id="editAreaModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="POST" id="editAreaForm">
+        @csrf
+        @method('PUT')
+
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Area</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="mb-3">
+                    <label class="form-label">District</label>
+                    <select name="district_id" id="edit_district_id" class="form-control" required>
+                        <option value="">Select District</option>
+                        @foreach($districts as $d)
+                            <option value="{{ $d->id }}">{{ $d->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Area Name</label>
+                    <input type="text" id="edit_name" name="name" class="form-control" required>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-primary">Update Area</button>
+            </div>
+
+        </div>
+
+    </form>
+  </div>
 </div>
 @endsection
 
 
-
 @push('scripts')
-<!-- DataTables -->
+
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
-<!-- Buttons -->
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
-
 <script>
-$(document).ready(function() {
-    $('#areas-table').DataTable({
-        processing: true,
-        serverSide: true,
-        ajax: {
-            url: "{{ route('areas.index') }}",
-            type: "GET",
-        },
-        columns: [
-            { data: "id", name: "id" },
-            { data: "name", name: "name" },
-            { data: "district_name", name: "district_name" },
-            {
-                data: "actions",
-                name: "actions",
-                orderable: false,
-                searchable: false,
-                render: function(data, type, row) {
-                    let editUrl = "{{ route('areas.edit', ':id') }}".replace(':id', row.id);
-                    let deleteUrl = "{{ route('areas.destroy', ':id') }}".replace(':id', row.id);
-                    let token = "{{ csrf_token() }}";
+$(function () {
 
-                    return `
-                        <a href="${editUrl}" class="btn btn-primary btn-sm">
-                            <i data-feather="edit"></i>
-                        </a>
-
-                        <form action="${deleteUrl}" method="POST" style="display:inline-block;">
-                            <input type="hidden" name="_token" value="${token}">
-                            <input type="hidden" name="_method" value="DELETE">
-
-                            <button type="submit" class="btn btn-danger btn-sm"
-                                onclick="return confirm('Are you sure?')">
-                                <i data-feather="trash-2"></i>
+        let table = $('#areas-table').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: "{{ route('areas.index') }}",
+            dom: 'Bfrtip', // Add this line for buttons
+            buttons: [
+                { extend: 'csv', className: 'btn btn-sm' },
+                { extend: 'excel', className: 'btn btn-sm' },
+                { extend: 'pdf', className: 'btn btn-sm' },
+                { extend: 'print', className: 'btn btn-sm' },
+            ],
+            columns: [
+                { data: 'id' },
+                { data: 'name' },
+                { data: 'district_name' },
+                {
+                    data: null,
+                    className: "text-center",
+                    render: function(row){
+                        return `
+                            <button class="btn btn-sm editAreaBtn"
+                                data-id="${row.id}"
+                                data-name="${row.name}"
+                                data-district="${row.district_id}">
+                                <i data-feather="edit"></i>
                             </button>
-                        </form>
-                    `;
+    
+                            <form method="POST" action="/admin/areas/${row.id}"
+                                  style="display:inline-block;">
+                                  @csrf @method('DELETE')
+                                <button class="btn btn-sm" onclick="return confirm('Delete this area?')">
+                                    <i data-feather="trash-2"></i>
+                                </button>
+                            </form>
+                        `;
+                    }
                 }
-            }
-        ],
-
-        /** Layout: Buttons -> Search Left & Show Entries Right */
-        dom: "<'row mb-3'<'col-sm-12'B>>" +
-             "<'row mb-3 d-flex align-items-center'<'col-md-6'f><'col-md-6 text-end'l>>" +
-             "rtip",
-
-        buttons: [
-            { extend: "copy", className: "btn btn-primary btn-sm" },
-            { extend: "csv", className: "btn btn-primary btn-sm" },
-            { extend: "excel", className: "btn btn-primary btn-sm" },
-            { extend: "pdf", className: "btn btn-primary btn-sm" },
-            { extend: "print", className: "btn btn-primary btn-sm" },
-        ],
-
-        drawCallback: function() {
-            feather.replace();
-        }
-    });
+            ],
+            drawCallback: function(){ feather.replace(); }
+        });
+    
+    
+        /** OPEN EDIT MODAL **/
+        $(document).on("click", ".editAreaBtn", function() {
+            let id = $(this).data("id");
+            let name = $(this).data("name");
+            let district = $(this).data("district");
+    
+            $("#edit_name").val(name);
+            $("#edit_district_id").val(district);
+            $("#editAreaForm").attr("action", "{{ url('admin/areas') }}/" + id);
+    
+            $("#editAreaModal").modal("show");
+        });
 });
 </script>
 @endpush

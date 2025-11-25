@@ -14,7 +14,7 @@
                     </div>
                     @endif
 
-                    <form action="{{ route('retailers.update', $retailer->id) }}" method="POST">
+                    <form action="{{ route('admin.retailers.update', $retailer->id) }}" method="POST">
                         @csrf
                         @method('PUT')
 
@@ -38,60 +38,65 @@
 
                             <div class="col-md-6 mb-3">
                                 <label>Contact No</label>
-                                <input type="text" name="contact_no" class="form-control" value="{{ old('contact_no', $retailer->user->contact_no) }}" required>
+                                <input type="text" name="contact_no" class="form-control" value="{{ old('contact_no', $retailer->contact_no) }}" required>
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label>Address</label>
-                                <textarea name="address" class="form-control" required>{{ old('address', $retailer->user->address) }}</textarea>
+                                <textarea name="address" class="form-control" required>{{ old('address', $retailer->address) }}</textarea>
                             </div>
 
                             <div class="col-md-6 mb-3">
                                 <label>Pincode</label>
-                                <input type="text" name="pincode" class="form-control" value="{{ old('pincode', $retailer->user->pincode) }}" required>
+                                <input type="text" name="pincode" class="form-control" value="{{ old('pincode', $retailer->pincode) }}" required>
                             </div>
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label>Route</label>
-                                <input type="text" name="route" class="form-control" value="{{ old('route', $retailer->user->route) }}">
-                            </div>
-
                             <div class="col-md-6 mb-3">
                                 <label>GST</label>
                                 <input type="text" name="gst" class="form-control" value="{{ old('gst', $retailer->gst) }}" required>
                             </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label>Distributor</label>
+                                <select name="distributor_id" id="distributor_id" class="form-select" required>
+                                    <option value="">Select Distributor</option>
+                                    @foreach($distributors as $distributor)
+                                    <option value="{{ $distributor->id }}" {{ old('distributor_id', $retailer->distributor_id) == $distributor->id ? 'selected' : '' }}>
+                                        {{ $distributor->name }}
+                                    </option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label>District</label>
-                                <select name="district_id" id="district_id" class="form-select" required>
-                                    <option value="">Select District</option>
-                                    @foreach($districts as $district)
-                                    <option value="{{ $district->id }}" {{ $district->id == old('district_id', $retailer->district_id) ? 'selected' : '' }}>
-                                        {{ $district->name }}
+                                <label>Sales Manager</label>
+                                <select name="sales_manager_id" id="sales_manager_id" class="form-select" required>
+                                    <option value="">Select Sales Manager</option>
+                                    @foreach($salesManagers as $salesManager)
+                                    <option value="{{ $salesManager->id }}" {{ old('sales_manager_id', $retailer->sales_manager_id) == $salesManager->id ? 'selected' : '' }}>
+                                        {{ $salesManager->name }}
                                     </option>
                                     @endforeach
                                 </select>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label>Area</label>
-                                <select name="area_id" id="area_id" class="form-select" required>
-                                    <option value="">Select Area</option>
+                                <label>Field Staff</label>
+                                <select name="field_staff_id" id="field_staff_id" class="form-select" required>
+                                    <option value="">Select Field Staff</option>
+                                    @foreach($fieldStaffs as $fieldStaff)
+                                    <option value="{{ $fieldStaff->id }}" {{ old('field_staff_id', $retailer->field_staff_id) == $fieldStaff->id ? 'selected' : '' }}>
+                                        {{ $fieldStaff->user->name }}
+                                    </option>
+                                    @endforeach
                                 </select>
                             </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label>Distributor</label>
-                            <select name="distributor_id" id="distributor_id" class="form-select" required>
-                                <option value="">Select Distributor</option>
-                            </select>
                         </div>
 
                         <button class="btn btn-success">Update Retailer</button>
@@ -101,99 +106,84 @@
         </div>
     </div>
 </div>
+
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const districtSelect = document.getElementById('district_id');
-    const areaSelect = document.getElementById('area_id');
-    const distributorSelect = document.getElementById('distributor_id');
+    document.addEventListener('DOMContentLoaded', function () {
+        const districtSelect = document.getElementById('district_id');
+        const areaSelect = document.getElementById('area_id');
+        const distributorSelect = document.getElementById('distributor_id');
 
-    // Store initial values for pre-selection
-    const initialDistrictId = "{{ old('district_id', $retailer->district_id) }}";
-    const initialAreaId = "{{ old('area_id', $retailer->area_id) }}";
-    const initialDistributorId = "{{ old('distributor_id', $retailer->distributor_id) }}";
+        const initialDistrictId = "{{ old('district_id', $retailer->district->id ?? '') }}";
+        const initialAreaId = "{{ old('area_id', $retailer->area->id ?? '') }}";
+        const initialDistributorId = "{{ old('distributor_id', $retailer->distributor_id) }}";
 
-    // Function to fetch and populate areas
-    function fetchAreas(districtId, selectedAreaId = null) {
-        console.log('fetchAreas called for districtId:', districtId);
-        areaSelect.innerHTML = '<option value="">Select Area</option>'; // Ensure only one default option
+        function fetchAreas(districtId, selectedAreaId = null) {
+            areaSelect.innerHTML = '<option value="">Select Area</option>';
+            if (districtId) {
+                fetch(`{{ route('retailers.getAreas', ['district' => '__districtId__']) }}`.replace('__districtId__', districtId))
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(area => {
+                            const option = document.createElement('option');
+                            option.value = area.id;
+                            option.textContent = area.name;
+                            if (selectedAreaId && area.id == selectedAreaId) {
+                                option.selected = true;
+                            }
+                            areaSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching areas:', error));
+            }
+        }
 
-        if (districtId) {
-            fetch(`{{ route('retailers.getAreas', ['district' => '__districtId__']) }}`.replace('__districtId__', districtId))
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Areas data received:', data);
-                    data.forEach(area => {
-                        const option = document.createElement('option');
-                        option.value = area.id;
-                        option.textContent = area.name;
-                        if (selectedAreaId && area.id == selectedAreaId) {
-                            option.selected = true;
+        function fetchDistributors(districtId, areaId, selectedDistributorId = null) {
+            distributorSelect.innerHTML = '<option value="">Select Distributor</option>';
+            if (districtId && areaId) {
+                fetch(`{{ route('retailers.getDistributorsByDistrictAndArea', ['district' => '__districtId__', 'area' => '__areaId__']) }}`
+                        .replace('__districtId__', districtId)
+                        .replace('__areaId__', areaId))
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.length) {
+                            const option = document.createElement('option');
+                            option.textContent = 'No distributors found';
+                            distributorSelect.appendChild(option);
+                            return;
                         }
-                        areaSelect.appendChild(option);
-                        console.log('Appended area:', area.name);
-                    });
-                })
-                .catch(error => console.error('Error fetching areas:', error));
+                        data.forEach(distributor => {
+                            const option = document.createElement('option');
+                            option.value = distributor.id;
+                            option.textContent = distributor.name || `Distributor #${distributor.id}`;
+                            if (selectedDistributorId && distributor.id == selectedDistributorId) {
+                                option.selected = true;
+                            }
+                            distributorSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching distributors:', error));
+            }
         }
-    }
 
-    // Function to fetch and populate distributors
-    function fetchDistributors(districtId, areaId, selectedDistributorId = null) {
-        distributorSelect.innerHTML = '<option value="">Select Distributor</option>';
+        districtSelect.addEventListener('change', function () {
+            const districtId = this.value;
+            fetchAreas(districtId);
+            distributorSelect.innerHTML = '<option value="">Select Distributor</option>';
+        });
 
-        if (districtId && areaId) {
-            fetch(`{{ route('retailers.getDistributorsByDistrictAndArea', ['district' => '__districtId__', 'area' => '__areaId__']) }}`
-                .replace('__districtId__', districtId)
-                .replace('__areaId__', areaId))
-                .then(response => response.json())
-                .then(data => {
-                    if (!data.length) {
-                        const option = document.createElement('option');
-                        option.textContent = 'No distributors found';
-                        distributorSelect.appendChild(option);
-                        return;
-                    }
-                    data.forEach(distributor => {
-                        const option = document.createElement('option');
-                        option.value = distributor.id;
-                        option.textContent = distributor.company_name || `Distributor #${distributor.id}`;
-                        if (selectedDistributorId && distributor.id == selectedDistributorId) {
-                            option.selected = true;
-                        }
-                        distributorSelect.appendChild(option);
-                    });
-                })
-                .catch(error => console.error('Error fetching distributors:', error));
+        areaSelect.addEventListener('change', function () {
+            const districtId = districtSelect.value;
+            const areaId = this.value;
+            fetchDistributors(districtId, areaId);
+        });
+
+        if (initialDistrictId) {
+            fetchAreas(initialDistrictId, initialAreaId);
+            if (initialAreaId) {
+                fetchDistributors(initialDistrictId, initialAreaId, initialDistributorId);
+            }
         }
-    }
-
-    // Event listener for district change
-    districtSelect.addEventListener('change', function () {
-        const districtId = this.value;
-        console.log('Selected District ID:', districtId);
-        fetchAreas(districtId);
-        // Clear distributors when district changes, as areas will change
-        distributorSelect.innerHTML = '<option value="">Select Distributor</option>';
     });
-
-    // Event listener for area change
-    areaSelect.addEventListener('change', function () {
-        const districtId = districtSelect.value;
-        const areaId = this.value;
-        console.log('Selected Area ID:', areaId);
-        fetchDistributors(districtId, areaId);
-    });
-
-    // Initial population on page load if district and area are already selected
-    if (initialDistrictId) {
-        fetchAreas(initialDistrictId, initialAreaId);
-        if (initialAreaId) {
-            fetchDistributors(initialDistrictId, initialAreaId, initialDistributorId);
-        }
-    }
-});
 </script>
 @endpush
-
-@endsection

@@ -1,108 +1,217 @@
 @extends('layouts.admin')
 
+@push('styles')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+
 <style>
-    /* Align search bar properly */
-    .dataTables_filter {
-        text-align: left !important;
-    }
-    .dataTables_filter input {
-        width: 230px !important;
-        margin-left: 10px !important;
+    /* Smaller table rows */
+    table.table-sm > :not(caption) > * > * {
+        padding: 6px 10px !important;
+        font-size: 13px !important;
     }
 
-    /* Align show entries to the right */
-    .dataTables_length {
-        text-align: right !important;
+    /* Side form UI */
+    .side-form {
+        background: #ffffff;
+        border-left: 3px solid #0d6efd;
+        border-radius: 6px;
+        padding: 15px;
     }
+
+    .dataTables_filter input {
+        width: 180px !important;
+        padding: 3px 6px !important;
+        font-size: 13px !important;
+        border-radius: 4px;
+    }
+    .dataTables_length {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        white-space: nowrap !important;
+    }
+
+    .dataTables_length label {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        white-space: nowrap !important;
+    }
+
+
     .dataTables_length select {
-        margin: 0 5px !important;
-        width: 70px !important;
-        display: inline-block;
+        padding: 3px;
+        font-size: 13px;
+    }
+
+    .dt-button.btn {
+        padding: 3px 8px !important;
+        font-size: 12px !important;
+        border-radius: 4px !important;
     }
 </style>
+@endpush
+
 
 @section('page-body')
-<div class="container-fluid">
+<div class="container-fluid py-3">
+
     <div class="row">
-        <div class="col-sm-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5>Districts</h5>
-                    <a href="{{ route('districts.create') }}" class="btn btn-primary">Add District</a>
+
+        <!-- LEFT: ADD DISTRICT FORM -->
+        <div class="col-lg-4 mb-3">
+            <div class="card shadow-sm">
+
+                <div class="card-header text-white py-4">
+                    <h6 class="mb-0">➕ Add District</h6>
                 </div>
+
                 <div class="card-body">
+
+                    <form action="{{ route('districts.store') }}" method="POST">
+                        @csrf
+
+                        <div class="mb-2">
+                            <label class="fw-bold small">District Name</label>
+                            <input type="text" name="name" class="form-control form-control-sm" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-sm w-100 mt-2">
+                            Add District
+                        </button>
+                    </form>
+
+                </div>
+
+            </div>
+        </div>
+
+
+        <!-- RIGHT: TABLE -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+
+                <div class="card-header">
+                    <h4 class="mb-0">Districts</h4>
+                </div>
+
+                <div class="card-body">
+
                     @if(session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
+                    <div class="alert alert-success alert-dismissible fade show">
+                        {{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
                     @endif
 
-                    <div class="table-responsive">
-                        <table class="display" id="districts-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($districts as $district)
-                                <tr>
-                                    <td>{{ $district->id }}</td>
-                                    <td>{{ $district->name }}</td>
-                                    <td>
-                                        <a href="{{ route('districts.edit', $district->id) }}" class="btn btn-primary btn-sm">Edit</a>
-                                        <form action="{{ route('districts.destroy', $district->id) }}" method="POST" style="display:inline-block;">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+                    <table id="districtTable" class="table table-striped table-hover table-sm display w-100">
+                        <thead>
+                            <tr>
+                                <th width="5%">ID</th>
+                                <th>Name</th>
+                                <th width="25%" class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($districts as $district)
+                            <tr>
+                                <td>{{ $district->id }}</td>
+                                <td>{{ $district->name }}</td>
+                                <td class="text-center">
+
+                                    <!-- Small Edit Button -->
+                                    <button 
+                                        class="btn btn-primary btn-sm px-2 py-1 editBtn"
+                                        data-id="{{ $district->id }}"
+                                        data-name="{{ $district->name }}">
+                                        Edit
+                                    </button>
+
+                                    <!-- Small Red Delete Button -->
+                                    <form action="{{ route('districts.destroy',$district->id) }}" 
+                                        method="POST" class="d-inline">
+                                        @csrf 
+                                        @method('DELETE')
+
+                                        <button class="btn btn-danger btn-sm px-2 py-1"
+                                                onclick="return confirm('Delete this district?')">
+                                            Delete
+                                        </button>
+                                    </form>
+
+                                </td>
+
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+
                 </div>
             </div>
         </div>
+
+    </div>
+</div>
+
+
+<!-- ✏️ EDIT MODAL -->
+<div class="modal fade" id="editDistrictModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <form method="POST" id="editDistrictForm" class="modal-content">
+            @csrf @method('PUT')
+
+            <div class="modal-header bg-primary text-white py-2">
+                <h6 class="modal-title">Edit District</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <label class="fw-bold small">District Name</label>
+                <input type="text" name="name" id="edit_name" class="form-control form-control-sm" required>
+            </div>
+
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-success btn-sm">Update</button>
+            </div>
+        </form>
     </div>
 </div>
 @endsection
 
-@push('styles')
-    <!-- DataTables with Bootstrap 5 -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
-@endpush
 
 @push('scripts')
-    <!-- DataTables Bootstrap 5 -->
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
-    <!-- DataTables Buttons -->
-    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+<script>
+$(function () {
 
-    <script>
-        $(document).ready(function() {
-            $('#districts-table').DataTable({
-                processing: true, // Still show processing indicator
-                dom: "<'row mb-3'<'col-sm-12'B>>" + 
-                        "<'row mb-3 d-flex align-items-center'<'col-md-6'f><'col-md-6 text-end'l>>" +
-                        "rtip",
-                buttons: [
-                    { extend: 'copy', className: 'btn btn-primary btn-sm' },
-                    { extend: 'csv', className: 'btn btn-primary btn-sm' },
-                    { extend: 'excel', className: 'btn btn-primary btn-sm' },
-                    { extend: 'pdf', className: 'btn btn-primary btn-sm' },
-                    { extend: 'print', className: 'btn btn-primary btn-sm' },
-                ]
-            });
-        });
-    </script>
+    $('#districtTable').DataTable({
+        dom: "<'row mb-2 d-flex align-items-center'<'col-md-6 d-flex'l><'col-md-6 d-flex justify-content-end'f>>" +
+            "<'row mb-2'<'col-md-12'B>>" +
+            "rtip",
+
+        buttons: [
+            { extend: 'csv', className: 'btn btn-outline-secondary btn-sm' },
+            { extend: 'excel', className: 'btn btn-outline-success btn-sm' },
+            { extend: 'pdf', className: 'btn btn-outline-danger btn-sm' },
+            { extend: 'print', className: 'btn btn-outline-info btn-sm' },
+        ]
+    });
+
+    // Open edit modal
+    $('.editBtn').click(function() {
+        let id = $(this).data('id');
+        let name = $(this).data('name');
+
+        $('#edit_name').val(name);
+        $('#editDistrictForm').attr('action', `/admin/districts/${id}`);
+
+        new bootstrap.Modal('#editDistrictModal').show();
+    });
+
+});
+</script>
 @endpush

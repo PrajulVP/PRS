@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -14,14 +15,11 @@ class Retailer extends Model
         'user_id',
         'distributor_id',
         'field_staff_id',
-        'sales_manager_id', // New field
-        'district_id',
-        'area_id',
-        'proprietor_name',
+        'sales_manager_id',
         'contact_no',
         'gst',
         'address',
-        'status',
+        'pincode',
         'credit_limit',
     ];
 
@@ -52,6 +50,6 @@ class Retailer extends Model
     
     public function salesManager(): BelongsTo
     {
-        return $this->belongsTo(Manager::class, 'sales_manager_id');
+        return $this->belongsTo(SalesManager::class, 'sales_manager_id');
     }
 }

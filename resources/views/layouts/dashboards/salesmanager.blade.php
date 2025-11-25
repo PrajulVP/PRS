@@ -43,34 +43,12 @@
         </div>
     </div>
 
-    <!-- Layout B: top row: Pie | Bar -->
     <div class="row dashboard-row">
-        <div class="col-xl-4">
+        <div class="col-xxl-12 box-col-12">
             <div class="card">
                 <div class="card-header"><h5>Order Status Distribution</h5></div>
                 <div class="card-body">
                     <canvas id="orderStatusDistributionChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-8">
-            <div class="card">
-                <div class="card-header"><h5>Orders by Field Staff</h5></div>
-                <div class="card-body">
-                    <canvas id="ordersByFieldStaffChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- District chart full width -->
-    <div class="row dashboard-row">
-        <div class="col-xxl-12 box-col-12">
-            <div class="card">
-                <div class="card-header"><h5>Orders by District</h5></div>
-                <div class="card-body">
-                    <canvas id="ordersByDistrictChart"></canvas>
                 </div>
             </div>
         </div>
@@ -83,31 +61,6 @@
                 <div class="card-header"><h5>Total Orders Over Time</h5></div>
                 <div class="card-body">
                     <canvas id="totalOrdersOverTimeChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Retailers / Distributors lists -->
-    <div class="row dashboard-row">
-        <div class="col-xl-6 box-col-6">
-            <div class="card">
-                <div class="card-header"><h5>Top 10 Retailers by Order Value</h5></div>
-                <div class="card-body">
-                    <ul id="topRetailersList" class="list-group">
-                        <li class="list-group-item">Loading...</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-6 box-col-6">
-            <div class="card">
-                <div class="card-header"><h5>Top 10 Distributors by Order Value</h5></div>
-                <div class="card-body">
-                    <ul id="topDistributorsList" class="list-group">
-                        <li class="list-group-item">Loading...</li>
-                    </ul>
                 </div>
             </div>
         </div>
@@ -142,34 +95,6 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (e) { console.error(e); }
     })();
 
-    // BAR: Orders by Field Staff
-    (async function () {
-        try {
-            const data = await fetchJson('{{ route('dashboard.api.ordersByFieldStaff') }}');
-            const labels = Object.keys(data);
-            const values = Object.values(data);
-            new Chart(document.getElementById('ordersByFieldStaffChart'), {
-                type: 'bar',
-                data: { labels, datasets: [{ label: 'Orders', data: values }] },
-                options: { responsive: true, scales: { y: { beginAtZero: true } } }
-            });
-        } catch (e) { console.error(e); }
-    })();
-
-    // BAR: Orders by District (full-width)
-    (async function () {
-        try {
-            const data = await fetchJson('{{ route('dashboard.api.ordersByDistrict') }}');
-            const labels = Object.keys(data);
-            const values = Object.values(data);
-            new Chart(document.getElementById('ordersByDistrictChart'), {
-                type: 'bar',
-                data: { labels, datasets: [{ label: 'Orders', data: values }] },
-                options: { responsive: true, scales: { y: { beginAtZero: true } } }
-            });
-        } catch (e) { console.error(e); }
-    })();
-
     // LINE: Total Orders Over Time
     (async function () {
         try {
@@ -183,34 +108,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         } catch (e) { console.error(e); }
     })();
-
-    // LIST: helper to render lists
-    async function renderList(listId, apiUrl, labelKey = 'name', valueKey = 'value') {
-        try {
-            const data = await fetchJson(apiUrl);
-            const el = document.getElementById(listId);
-            el.innerHTML = '';
-            if (!Array.isArray(data) || data.length === 0) {
-                el.innerHTML = '<li class="list-group-item">No data available.</li>';
-                return;
-            }
-            data.forEach(item => {
-                const li = document.createElement('li');
-                li.className = 'list-group-item';
-                const name = document.createElement('span');
-                name.textContent = item[labelKey] ?? '';
-                const badge = document.createElement('span');
-                badge.className = 'badge bg-primary rounded-pill';
-                badge.textContent = item[valueKey] ?? '';
-                li.appendChild(name);
-                li.appendChild(badge);
-                el.appendChild(li);
-            });
-        } catch (e) { console.error(e); }
-    }
-
-    renderList('topRetailersList', '{{ route('dashboard.api.topRetailers') }}', 'retailer_name', 'total_order_value');
-    renderList('topDistributorsList', '{{ route('dashboard.api.topDistributors') }}', 'distributor_name', 'total_order_value');
 });
 </script>
 @endpush

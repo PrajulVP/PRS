@@ -11,9 +11,9 @@ class RolesAndGuardsSeeder extends Seeder
     {
         // List all guards and their roles
         $guardsWithRoles = [
-            'superadmin' => ['superadmin', 'admin', 'manager', 'distributor', 'fieldstaff', 'retailer'],
-            'admin'      => ['admin', 'manager', 'distributor', 'fieldstaff', 'retailer'],
-            'manager'    => ['manager', 'distributor', 'fieldstaff', 'retailer'],
+            'superadmin' => ['superadmin', 'admin', 'salesmanager', 'distributor', 'fieldstaff', 'retailer'],
+            'admin'      => ['admin', 'salesmanager', 'distributor', 'fieldstaff', 'retailer'],
+            'salesmanager'    => ['salesmanager', 'distributor', 'fieldstaff', 'retailer'],
             'web'        => [], // optional for normal users
         ];
 

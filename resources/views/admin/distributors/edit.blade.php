@@ -14,14 +14,14 @@
                     </div>
                     @endif
 
-                    <form action="{{ route('distributors.update', $distributor->id) }}" method="POST">
+                    <form action="{{ route('admin.distributors.update', $distributor->id) }}" method="POST">
                         @csrf
                         @method('PUT')
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label>Name</label>
-                                <input type="text" name="name" class="form-control" value="{{ old('name', $distributor->user->name) }}" required>
+                                <input type="text" name="name" class="form-control" value="{{ old('name', $distributor->name) }}" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label>GST</label>
@@ -31,25 +31,13 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label>Drug License Number</label>
-                                <input type="text" name="drug_license_number" class="form-control" value="{{ old('drug_license_number', $distributor->drug_license_number) }}">
+                                <label>Drug License No</label>
+                                <input type="text" name="drug_license_no" class="form-control" value="{{ old('drug_license_no', $distributor->drug_license_no) }}">
                             </div>
 
                             <div class="col-md-6 mb-3">
                                 <label>Contact No</label>
                                 <input type="text" name="contact_no" class="form-control" value="{{ old('contact_no', $distributor->contact_no) }}" required>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label>Email</label>
-                                <input type="email" name="email" class="form-control" value="{{ old('email', $distributor->user->email) }}" required>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label>Password (Leave blank to keep unchanged)</label>
-                                <input type="password" name="password" class="form-control">
                             </div>
                         </div>
 
@@ -77,19 +65,14 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label>Route</label>
-                                <input type="text" name="route" class="form-control" value="{{ old('route', $distributor->route) }}">
-                            </div>
-
-                            <div class="col-md-6 mb-3">
                                 <label>Address</label>
                                 <textarea name="address" class="form-control" required>{{ old('address', $distributor->address) }}</textarea>
                             </div>
-                        </div>
 
-                        <div class="mb-3">
-                            <label>Pincode</label>
-                            <input type="text" name="pincode" class="form-control" value="{{ old('pincode', $distributor->pincode) }}" required>
+                            <div class="col-md-6 mb-3">
+                                <label>Pincode</label>
+                                <input type="text" name="pincode" class="form-control" value="{{ old('pincode', $distributor->pincode) }}" required>
+                            </div>
                         </div>
 
                         <button class="btn btn-success">Update Distributor</button>

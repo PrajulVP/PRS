@@ -14,17 +14,16 @@ return new class extends Migration
         Schema::create('retailers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('distributor_id')->nullable()->constrained('distributors')->onDelete('set null');
-            $table->foreignId('field_staff_id')->nullable()->constrained('fieldstaffs')->onDelete('set null');
-            $table->foreignId('sales_manager_id')->nullable()->constrained('managers')->onDelete('set null'); // New field
-            $table->foreignId('district_id')->constrained('districts')->onDelete('cascade');
-            $table->foreignId('area_id')->constrained('areas')->onDelete('cascade');
+            $table->foreignId('field_staff_id')->constrained('fieldstaffs')->onDelete('cascade');
+            $table->foreignId('sales_manager_id')->constrained('sales_managers')->onDelete('cascade');
+            $table->foreignId('distributor_id')->constrained('distributors')->onDelete('cascade');
             $table->string('proprietor_name')->nullable();
-            $table->string('contact_no')->nullable();
             $table->string('gst')->nullable();
+            $table->string('contact_no')->nullable();
             $table->text('address')->nullable();
-            $table->string('status')->default('active');
+            $table->string('pincode');
             $table->decimal('credit_limit', 10, 2)->default(0);
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
         });
     }

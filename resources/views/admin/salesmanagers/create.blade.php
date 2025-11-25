@@ -5,7 +5,7 @@
         <div class="col-md-8 p-4">
             <div class="card">
                 <div class="card-header">
-                    <h5>Create Manager</h5>
+                    <h5>Create Sales Manager</h5>
                 </div>
                 <div class="card-body">
                     @if($errors->any())
@@ -14,7 +14,7 @@
                     </div>
                     @endif
 
-                    <form action="{{ route('managers.store') }}" method="POST">
+                    <form action="{{ route('admin.salesmanagers.store') }}" method="POST">
                         @csrf
 
                         <div class="row">
@@ -53,21 +53,7 @@
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label>Distributor</label>
-                                <select name="distributor_id" id="distributor_id" class="form-select">
-                                    <option value="">-- Select Distributor (Optional) --</option>
-                                    @foreach($distributors as $distributor)
-                                        <option value="{{ $distributor->id }}" {{ old('distributor_id') == $distributor->id ? 'selected' : '' }}>
-                                            {{ $distributor->user->name ?? $distributor->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-
-                        <button class="btn btn-success">Create Manager</button>
+                        <button class="btn btn-success">Create Sales Manager</button>
                     </form>
                 </div>
             </div>

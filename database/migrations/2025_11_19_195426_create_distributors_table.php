@@ -17,17 +17,15 @@ return new class extends Migration
 
             // MUST be unique (matches your SQL: UNIQUE KEY distributors_user_id_unique)
             $table->unsignedBigInteger('user_id')->unique();
-
+            $table->string('name');
             $table->string('gst')->nullable();
-            $table->string('drug_license_number')->nullable();
+            $table->string('drug_license_no')->nullable();
             $table->string('contact_no')->nullable();
             $table->string('address')->nullable();
-            $table->string('pincode')->nullable();
+            $table->string('pincode')->unique()->nullable();
 
             $table->unsignedBigInteger('district_id')->nullable();
             $table->unsignedBigInteger('area_id')->nullable();
-
-            $table->string('route')->nullable();
 
             $table->timestamps();
 

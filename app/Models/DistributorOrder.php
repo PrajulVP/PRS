@@ -20,13 +20,10 @@ class DistributorOrder extends Model
         'notes',
         'delivery_notes',
         'distributor_id',
-        'fieldstaff_id',
     ];
 
     protected $casts = [
         'placed_at' => 'datetime',
-        'approved_at' => 'datetime',
-        'delivered_at' => 'datetime',
     ];
 
     protected static function boot()
@@ -49,10 +46,5 @@ class DistributorOrder extends Model
     public function distributor(): BelongsTo
     {
         return $this->belongsTo(Distributor::class);
-    }
-
-    public function fieldstaff(): BelongsTo
-    {
-        return $this->belongsTo(FieldStaff::class);
     }
 }

@@ -32,8 +32,8 @@ class PermissionCategorySeeder extends Seeder
                 'enable_delete' => true,
             ],
             [
-                'name' => 'Managers',
-                'short_code' => 'managers',
+                'name' => 'Sales Managers',
+                'short_code' => 'sales_managers',
                 'perm_group_id' => $userManagementGroup->id,
                 'enable_view' => true,
                 'enable_add' => true,

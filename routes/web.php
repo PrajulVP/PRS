@@ -5,17 +5,18 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ManagerController;
+use App\Http\Controllers\SalesManagerController;
 use App\Http\Controllers\DistributorController;
 use App\Http\Controllers\FieldStaffController;
 use App\Http\Controllers\RetailerController;
 use App\Http\Controllers\DistrictController;
 use App\Http\Controllers\AreaController;
-use App\Http\Controllers\RetailerOrderManagementController; // New
-use App\Http\Controllers\DistributorBulkOrderController;   // New
+use App\Http\Controllers\RetailerOrderManagementController;
+use App\Http\Controllers\DistributorBulkOrderController;
 use App\Http\Controllers\RetailerOrderController;
 use App\Http\Controllers\PermissionController;
-
+use App\Http\Controllers\PendingApprovalController;
+use App\Http\Controllers\UserController;
 
 
 // Public / guest
@@ -27,62 +28,37 @@ Route::middleware(['web', 'guest'])->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('admin.login.post');
 
-    // If you also want a general user login later:
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login'); // optional
-    Route::post('/login', [AuthController::class, 'login'])->name('login.post'); // optional
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 });
 
 // Protected session routes
 Route::middleware(['auth:web'])->group(function () {
    
-    // Generic dashboard entrypoint — controller will redirect or show based on role
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Dashboard API routes for charts and statistics
     Route::prefix('dashboard-api')->name('dashboard.api.')->group(function () {
         Route::get('order-status-distribution', [DashboardController::class, 'getOrderStatusDistribution'])->name('orderStatusDistribution');
-        Route::get('orders-by-district', [DashboardController::class, 'getOrdersByDistrict'])->name('ordersByDistrict');
         Route::get('total-orders-over-time', [DashboardController::class, 'getTotalOrdersOverTime'])->name('totalOrdersOverTime');
         Route::get('orders-by-distributor', [DashboardController::class, 'getOrdersByDistributor'])->name('ordersByDistributor');
-        Route::get('orders-by-fieldstaff', [DashboardController::class, 'getOrdersByFieldStaff'])->name('ordersByFieldStaff');
-        Route::get('top-retailers', [DashboardController::class, 'getTopRetailers'])->name('topRetailers');
-        Route::get('top-distributors', [DashboardController::class, 'getTopDistributors'])->name('topDistributors');
-        Route::get('users-by-credit', [DashboardController::class, 'getUsersByCredit'])->name('usersByCredit');
-        Route::get('users-by-loyalty-points', [DashboardController::class, 'getUsersByLoyaltyPoints'])->name('usersByLoyaltyPoints');
         Route::get('orders-by-retailer', [DashboardController::class, 'getOrdersByRetailer'])->name('ordersByRetailer');
-        Route::get('sales-target', [DashboardController::class, 'getSalesTarget'])->name('salesTarget');
         Route::get('top-products', [DashboardController::class, 'getTopProducts'])->name('topProducts');
     });
 
-    // User Management
-    Route::get('/admin/users', [App\Http\Controllers\UserController::class, 'index'])->name('admin.users')->middleware('role:superadmin|admin');
-    Route::get('/admin/users/create', [App\Http\Controllers\UserController::class, 'create'])->name('admin.users.create')->middleware('role:superadmin|admin');
-    Route::post('/admin/users', [App\Http\Controllers\UserController::class, 'store'])->name('admin.users.store')->middleware('role:superadmin|admin');
+    Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users')->middleware('role:superadmin|admin');
+    Route::get('/admin/users/create', [UserController::class, 'create'])->name('admin.users.create')->middleware('role:superadmin|admin');
+    Route::post('/admin/users', [UserController::class, 'store'])->name('admin.users.store')->middleware('role:superadmin|admin');
     
-    // User Approval routes for Superadmin, Admin, and Manager
-    Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['role:superadmin|admin|manager']], function () {
-        Route::get('users/pending-approval', [\App\Http\Controllers\ApprovalController::class, 'index'])->name('users.pending_approval');
-        Route::post('users/{user}/activate', [\App\Http\Controllers\ApprovalController::class, 'approve'])->name('users.activate');
-    });
-
-    Route::get('/admin/users/{user}', [App\Http\Controllers\UserController::class, 'show'])->name('admin.users.show');
-    Route::get('/admin/users/{user}/edit', [App\Http\Controllers\UserController::class, 'edit'])->name('admin.users.edit');
-    Route::put('/admin/users/{user}', [App\Http\Controllers\UserController::class, 'update'])->name('admin.users.update');
-    Route::delete('/admin/users/{user}', [App\Http\Controllers\UserController::class, 'destroy'])->name('admin.users.destroy');
-
-    Route::get('/admin/users/get-by-role', [App\Http\Controllers\UserController::class, 'getUsersByRole'])->name('admin.users.getByRole');
-
-    Route::group(['middleware' => ['role:superadmin|admin']], function () {
-        Route::resource('managers', ManagerController::class);
+    Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['role:superadmin|admin|salesmanager|fieldstaff']], function () {
+        Route::get('users/pending-approval', [PendingApprovalController::class, 'index'])->name('users.pending_approval');
+        Route::post('users/{user}/activate', [UserController::class, 'activateUser'])->name('users.activate');
+        Route::resource('salesmanagers', SalesManagerController::class);
         Route::resource('distributors', DistributorController::class);
         Route::resource('fieldstaffs', FieldStaffController::class);
+        Route::patch('fieldstaffs/{fieldstaff}/activate', [FieldStaffController::class, 'activate'])->name('fieldstaffs.activate');
         Route::resource('retailers', RetailerController::class);
+        Route::patch('retailers/{retailer}/activate', [RetailerController::class, 'activate'])->name('retailers.activate');
     });
-    Route::resource('distributors', DistributorController::class);
-    Route::resource('fieldstaffs', FieldStaffController::class);
-    Route::patch('fieldstaffs/{fieldstaff}/activate', [FieldStaffController::class, 'activate'])->name('fieldstaffs.activate');
-    Route::resource('retailers', RetailerController::class);
-    Route::patch('retailers/{retailer}/activate', [RetailerController::class, 'activate'])->name('retailers.activate');
     Route::resource('districts', DistrictController::class);
     Route::resource('areas', AreaController::class);
     Route::post('retailer-orders-management/{retailerOrder}/accept', [RetailerOrderManagementController::class, 'acceptOrder'])->name('retailer-orders-management.acceptOrder');
@@ -98,13 +74,7 @@ Route::middleware(['auth:web'])->group(function () {
     Route::get('admin/retailer-orders/create', [RetailerOrderController::class, 'create'])->name('admin.retailer-orders.create');
     Route::resource('products', ProductController::class);
 
-    Route::post('admin/orders/{order}/assign-distributor', [RetailerOrderManagementController::class, 'assignDistributor'])->name('admin.orders.assign_distributor')->middleware('role:superadmin|admin|manager');
-
-    // Order Workflow Routes
-    Route::prefix('manager')->name('manager.')->middleware('role:manager')->group(function () {
-        Route::get('/orders', [RetailerOrderManagementController::class, 'managerIndex'])->name('orders.index');
-        Route::post('/orders/{order}/assign-distributor', [RetailerOrderManagementController::class, 'assignDistributor'])->name('orders.assignDistributor');
-    });
+    Route::post('admin/orders/{order}/assign-distributor', [RetailerOrderManagementController::class, 'assignDistributor'])->name('admin.orders.assign_distributor')->middleware('role:superadmin|admin|salesmanager');
 
     Route::prefix('distributor')->name('distributor.')->middleware('role:distributor')->group(function () {
         Route::get('/orders', [RetailerOrderManagementController::class, 'distributorIndex'])->name('orders.index');
@@ -123,40 +93,22 @@ Route::middleware(['auth:web'])->group(function () {
         Route::get('/orders/{retailerOrder}', [RetailerController::class, 'show'])->name('orders.show');
     });
 
-    // AJAX: Get areas for selected district
     Route::get('/distributors/get-areas/{district}', [DistributorController::class, 'getAreas'])->name('distributors.getAreas');
-    // AJAX: Get areas for selected district for Field Staff
-    Route::get('/fieldstaffs/get-areas/{district}', [FieldStaffController::class, 'getAreas'])->name('fieldstaffs.getAreas');
-    // AJAX: Get areas for selected district for Retailers
     Route::get('/retailers/get-areas/{district}', [RetailerController::class, 'getAreas'])->name('retailers.getAreas');
-
-    // AJAX: Get distributors for selected district for Retailers
     Route::get('/retailers/get-distributors-by-district-and-area/{district}/{area}', [RetailerController::class, 'getDistributorsByDistrictAndArea'])->name('retailers.getDistributorsByDistrictAndArea');
-    // AJAX: Get distributors for selected district for Field Staff
-    Route::get('/fieldstaffs/get-distributors-by-district-and-area/{district}/{area}', [FieldStaffController::class, 'getDistributorsByDistrictAndArea'])->name('fieldstaffs.getDistributorsByDistrictAndArea');
 
     Route::get('/get-products/{distributor}', [RetailerOrderManagementController::class, 'getProductsByDistributor'])->name('get-products-by-distributor');
 
-    // Logout (session)
     Route::post('admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
 
-<<<<<<< HEAD
-    // Permissions routes for Superadmin
-    Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['role:superadmin']], function () {
-        Route::get('permissions', [PermissionController::class, 'index'])->name('permissions.index');
-        Route::get('permissions/{role}/edit', [PermissionController::class, 'edit'])->name('permissions.edit');
-        Route::put('permissions/{role}', [PermissionController::class, 'update'])->name('permissions.update');
-=======
-    Route::get('pending-approvals', [App\Http\Controllers\PendingApprovalController::class, 'index'])->name('pending-approvals');
+    Route::get('pending-approvals', [PendingApprovalController::class, 'index'])->name('pending-approvals');
 
     Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['role:superadmin|admin']], function () {
         Route::get('permissions', [PermissionController::class, 'index'])->name('permissions.index');
         Route::get('permissions/{role}/edit', [PermissionController::class, 'edit'])->name('permissions.edit');
         Route::put('permissions/{role}', [PermissionController::class, 'update'])->name('permissions.update');
         
-        // User Approval routes for Superadmin
-        Route::post('users/{user}/activate', [App\Http\Controllers\UserController::class, 'activateUser'])->name('users.activate');
->>>>>>> 8656c2476019753737a6da2fe9c5e689d1d6b633
+        Route::post('users/{user}/activate', [UserController::class, 'activateUser'])->name('users.activate');
     });
 
 });

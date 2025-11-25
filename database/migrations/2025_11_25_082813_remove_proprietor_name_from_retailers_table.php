@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('managers', function (Blueprint $table) {
-            $table->dropColumn('status');
+        Schema::table('retailers', function (Blueprint $table) {
+            $table->dropColumn('proprietor_name');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('managers', function (Blueprint $table) {
-            $table->string('status')->default('active');
+        Schema::table('retailers', function (Blueprint $table) {
+            $table->string('proprietor_name')->nullable();
         });
     }
 };

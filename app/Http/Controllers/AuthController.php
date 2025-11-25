@@ -83,8 +83,8 @@ class AuthController extends Controller
                 case 'admin':
                     $dashboardView = 'dashboard.admin';
                     break;
-                case 'manager':
-                    $dashboardView = 'dashboard.manager';
+                case 'salesmanager':
+                    $dashboardView = 'dashboard.salesmanager';
                     break;
                 case 'distributor':
                     $dashboardView = 'dashboard.distributor';

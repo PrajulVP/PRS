@@ -13,14 +13,14 @@ class Distributor extends Model
 
     protected $fillable = [
         'user_id',
+        'name',
         'gst',
-        'drug_license_number',
-        'contact_no', // Corrected from phone_number
+        'drug_license_no',
+        'contact_no',
         'address',
         'pincode',
         'district_id',
         'area_id',
-        'route',
     ];
 
     public function user()
@@ -46,11 +46,6 @@ class Distributor extends Model
     public function retailerOrders(): HasMany
     {
         return $this->hasMany(RetailerOrder::class);
-    }
-
-    public function fieldStaffs(): HasMany
-    {
-        return $this->hasMany(FieldStaff::class, 'distributor_id');
     }
 
     public function products()

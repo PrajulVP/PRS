@@ -19,9 +19,9 @@ class FieldStaffSeeder extends Seeder
         $fieldStaffRole = Role::firstOrCreate(['name' => 'fieldstaff']);
 
         // Create 10 field staff records
-        FieldStaff::factory()->count(10)->create()->each(function ($fieldStaff) use ($fieldStaffRole) {
-            // Assign the fieldstaff role to the associated user
-            $fieldStaff->user->assignRole($fieldStaffRole);
-        });
+        // FieldStaff::factory()->count(10)->create()->each(function ($fieldStaff) use ($fieldStaffRole) {
+        //     // Assign the fieldstaff role to the associated user
+        //     $fieldStaff->user->assignRole($fieldStaffRole);
+        // });
     }
 }

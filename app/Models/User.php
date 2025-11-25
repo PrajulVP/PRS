@@ -45,9 +45,9 @@ class User extends Authenticatable
         return $this->hasOne(Retailer::class);
     }
 
-    public function manager()
+    public function salesManager()
     {
-        return $this->hasOne(Manager::class);
+        return $this->hasOne(SalesManager::class);
     }
 
     /**

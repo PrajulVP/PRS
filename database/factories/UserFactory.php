@@ -21,16 +21,45 @@ class UserFactory extends Factory
      *
      * @return array<string, mixed>
      */
-    // public function definition(): array
-    // {
-    //     return [
-    //         'name' => fake()->name(),
-    //         'email' => fake()->unique()->safeEmail(),
-    //         'email_verified_at' => now(),
-    //         'password' => static::$password ??= Hash::make('password'),
-    //         'remember_token' => Str::random(10),
-    //     ];
-    // }
+    public function definition(): array
+    {
+        return [
+            'name' => fake()->name(),
+            'email' => fake()->unique()->safeEmail(),
+            'email_verified_at' => now(),
+            'password' => static::$password ??= Hash::make('password'),
+            'remember_token' => Str::random(10),
+            // No default role here; roles will be set by state methods or explicitly
+        ];
+    }
+
+    public function distributor(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'distributor',
+        ]);
+    }
+
+    public function fieldstaff(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'fieldstaff',
+        ]);
+    }
+
+    public function retailer(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'retailer',
+        ]);
+    }
+
+    public function salesmanager(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'salesmanager',
+        ]);
+    }
 
     // /**
     //  * Indicate that the model's email address should be unverified.

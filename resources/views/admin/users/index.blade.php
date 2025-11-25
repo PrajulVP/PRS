@@ -18,6 +18,7 @@
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Roles</th>
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -31,6 +32,7 @@
                                             <span class="badge badge-primary">{{ $role->name }}</span>
                                         @endforeach
                                     </td>
+                                    <td>{{ $user->status }}</td>
                                     <td>
                                         <a href="{{ route('admin.users.show', $user->id) }}" class="btn btn-sm btn-secondary">View</a>
                                         <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-sm btn-primary">Edit</a>

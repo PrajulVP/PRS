@@ -124,7 +124,7 @@
 
                 <div class="row">
                     <!-- CHARTS ROW -->
-                    <div class="col-xl-4">
+                    <div class="col-xxl-12 box-col-12">
                         <div class="card">
                             <div class="card-header">
                                 <h5>Order Status Distribution</h5>
@@ -133,17 +133,6 @@
                                 <div style="height: 300px;">
                                     <canvas id="orderStatusDistributionChart"></canvas>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-xl-8">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5>Orders by District</h5>
-                            </div>
-                            <div class="card-body">
-                                <canvas id="ordersByDistrictChart"></canvas>
                             </div>
                         </div>
                     </div>
@@ -159,56 +148,11 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- LISTS -->
-                <div class="col-xl-6 box-col-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5>Top 10 Retailers by Order Value</h5>
-                        </div>
-                        <div class="card-body">
-                            <ul id="topRetailersList" class="list-group"></ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-6 box-col-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5>Top 10 Distributors by Order Value</h5>
-                        </div>
-                        <div class="card-body">
-                            <ul id="topDistributorsList" class="list-group"></ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-6 box-col-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5>Top 10 Users by Credit</h5>
-                        </div>
-                        <div class="card-body">
-                            <ul id="usersByCreditList" class="list-group"></ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-6 box-col-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5>Top 10 Users by Loyalty Points</h5>
-                        </div>
-                        <div class="card-body">
-                            <ul id="usersByLoyaltyPointsList" class="list-group"></ul>
-                        </div>
-                    </div>
-                </div>
-
             </div>
         </div>
     </div>
-</div>
+
+</div> <!-- container-fluid -->
 
 @endsection
 
@@ -241,25 +185,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    // BAR CHART
-    function renderBarChart(chartId, title, apiUrl) {
-        fetch(apiUrl)
-            .then(r => r.json())
-            .then(data => {
-                new Chart(document.getElementById(chartId), {
-                    type: 'bar',
-                    data: {
-                        labels: Object.keys(data),
-                        datasets: [{
-                            label: title,
-                            data: Object.values(data),
-                            backgroundColor: 'rgba(75,192,192,0.7)'
-                        }]
-                    }
-                });
-            });
-    }
-
     // LINE CHART
     function renderLineChart(chartId, title, apiUrl) {
         fetch(apiUrl)
@@ -280,40 +205,9 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    // LISTS
-    function renderList(listId, apiUrl, keyField, valueField) {
-        fetch(apiUrl)
-            .then(r => r.json())
-            .then(items => {
-                const list = document.getElementById(listId);
-                list.innerHTML = '';
-
-                if (!items.length) {
-                    list.innerHTML = '<li class="list-group-item">No data available</li>';
-                    return;
-                }
-
-                items.forEach(item => {
-                    list.innerHTML += `
-                        <li class="list-group-item d-flex justify-content-between">
-                            ${item[keyField]}
-                            <span class="badge bg-primary">${item[valueField]}</span>
-                        </li>
-                    `;
-                });
-            });
-    }
-
     // CHARTS
     renderPieChart('orderStatusDistributionChart', 'Order Status Distribution', '{{ route('dashboard.api.orderStatusDistribution') }}');
-    renderBarChart('ordersByDistrictChart', 'Orders by District', '{{ route('dashboard.api.ordersByDistrict') }}');
     renderLineChart('totalOrdersOverTimeChart', 'Total Orders Over Time', '{{ route('dashboard.api.totalOrdersOverTime') }}');
-
-    // LISTS
-    renderList('topRetailersList', '{{ route('dashboard.api.topRetailers') }}', 'retailer_name', 'total_order_value');
-    renderList('topDistributorsList', '{{ route('dashboard.api.topDistributors') }}', 'distributor_name', 'total_order_value');
-    renderList('usersByCreditList', '{{ route('dashboard.api.usersByCredit') }}', 'name', 'credit');
-    renderList('usersByLoyaltyPointsList', '{{ route('dashboard.api.usersByLoyaltyPoints') }}', 'name', 'loyalty_points');
 
 });
 </script>

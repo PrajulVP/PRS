@@ -21,7 +21,7 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('distributors.store') }}" method="POST">
+                    <form action="{{ route('admin.distributors.store') }}" method="POST">
                         @csrf
 
                         <div class="row g-3">
@@ -38,8 +38,8 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label class="form-label">Drug License Number</label>
-                                    <input type="text" name="drug_license_number" class="form-control" value="{{ old('drug_license_number') }}">
+                                    <label class="form-label">Drug License No</label>
+                                    <input type="text" name="drug_license_no" class="form-control" value="{{ old('drug_license_no') }}">
                                 </div>
 
                                 <div class="mb-3">
@@ -48,13 +48,8 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label class="form-label">Email</label>
-                                    <input type="email" name="email" class="form-control" value="{{ old('email') }}" required>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label">Password</label>
-                                    <input type="password" name="password" class="form-control" required>
+                                    <label class="form-label">Address</label>
+                                    <textarea name="address" class="form-control" rows="3" required>{{ old('address') }}</textarea>
                                 </div>
                             </div>
 
@@ -78,18 +73,18 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label class="form-label">Route</label>
-                                    <input type="text" name="route" class="form-control" value="{{ old('route') }}">
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label">Address</label>
-                                    <textarea name="address" class="form-control" rows="3" required>{{ old('address') }}</textarea>
-                                </div>
-
-                                <div class="mb-3">
                                     <label class="form-label">Pincode</label>
                                     <input type="text" name="pincode" class="form-control" value="{{ old('pincode') }}" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" name="email" class="form-control" value="{{ old('email') }}" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Password</label>
+                                    <input type="password" name="password" class="form-control" required>
                                 </div>
                             </div>
                         </div>

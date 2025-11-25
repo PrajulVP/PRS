@@ -8,22 +8,32 @@ use App\Models\User;
 use App\Models\District;
 use App\Models\Area;
 use App\Models\Distributor;
-use App\Models\Retailer; // Added
+use App\Models\Retailer;
+use App\Models\SalesManager;
+use App\Models\FieldStaff;
 use Illuminate\Support\Facades\Auth;
 
 class RetailerController extends Controller
 {
     public function index()
     {
-        $query = Retailer::with('user', 'distributor.user');
+        $query = Retailer::with('user', 'distributor.user', 'fieldStaff.user', 'salesManager.user');
 
         if (Auth::user()->hasRole('distributor')) {
-            $distributor = Auth::user()->distributor; // Assuming a distributor relationship on User model
+            $distributor = Auth::user()->distributor;
             if ($distributor) {
-                $query->whereHas('user', function ($q) use ($distributor) {
-                    $q->where('district_id', $distributor->district_id)
-                      ->where('area_id', $distributor->area_id);
-                });
+                $query->where('distributor_id', $distributor->id);
+            }
+        } elseif (Auth::user()->hasRole('fieldstaff')) {
+            $fieldstaff = Auth::user()->fieldStaff;
+            if ($fieldstaff) {
+                $query->where('field_staff_id', $fieldstaff->id);
+            }
+        } elseif (Auth::user()->hasRole('salesmanager')) {
+            $salesManager = Auth::user()->salesManager;
+            if ($salesManager) {
+                $fieldStaffIds = $salesManager->fieldStaffs->pluck('id');
+                $query->whereIn('field_staff_id', $fieldStaffIds);
             }
         }
 
@@ -33,174 +43,153 @@ class RetailerController extends Controller
 
     public function show(Retailer $retailer)
     {
-        $retailer->load('user', 'distributor.user', 'user.district', 'user.area');
+        $retailer->load('user', 'distributor.user', 'fieldStaff.user', 'salesManager.user');
         return view('admin.retailers.show', compact('retailer'));
     }
 
     public function create()
     {
-        $retailer = null;  // Changed variable name
         $districts = District::all();
         $areas = Area::all();
         $distributors = Distributor::whereHas('user', function ($query) {
             $query->where('status', 'active');
         })->get();
-        $managers = \App\Models\Manager::whereHas('user', function ($query) {
+        $salesManagers = SalesManager::whereHas('user', function ($query) {
+            $query->where('status', 'active');
+        })->get();
+        $fieldStaffs = FieldStaff::whereHas('user', function ($query) {
             $query->where('status', 'active');
         })->get();
 
-        return view('admin.retailers.create', compact('retailer', 'districts', 'areas', 'distributors', 'managers'));
+        return view('admin.retailers.create', compact('districts', 'areas', 'distributors', 'salesManagers', 'fieldStaffs'));
     }
-
 
     public function store(Request $request)
     {
-        // Separate validation for User and Retailer fields
         $userData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:4',
             'contact_no' => 'required',
-            'district_id' => 'required|exists:districts,id',
-            'area_id' => 'required|exists:areas,id',
-            'route' => 'nullable|string',
             'address' => 'required',
-            'pincode' => 'required',
         ]);
 
         $retailerData = $request->validate([
+            'pincode' => 'required',
             'gst' => 'required|unique:retailers',
             'distributor_id' => 'required|exists:distributors,id',
-            'sales_manager_id' => 'required|exists:managers,id',
+            'field_staff_id' => 'required|exists:fieldstaffs,id',
+            'sales_manager_id' => 'required|exists:sales_managers,id',
+            'credit_limit' => 'nullable|numeric|min:0',
         ]);
-        $retailerData['district_id'] = $userData['district_id']; // Add district_id
-        $retailerData['area_id'] = $userData['area_id'];     // Add area_id
 
-        // Create User
         $user = User::create([
             'name' => $userData['name'],
             'email' => $userData['email'],
             'password' => Hash::make($userData['password']),
-            'role' => 'retailer', // Keep for consistency if other parts rely on it
+            'role' => 'retailer',
+            'status' => 'inactive',
             'contact_no' => $userData['contact_no'],
-            'district_id' => $userData['district_id'],
-            'area_id' => $userData['area_id'],
-            'route' => $userData['route'],
             'address' => $userData['address'],
-            'pincode' => $userData['pincode'],
         ]);
         $user->assignRole('retailer');
 
-        // Create Retailer profile
-        $retailer = new Retailer($retailerData);
-        $retailer->district_id = $userData['district_id']; // ADDED
-        $retailer->area_id = $userData['area_id'];     // ADDED
+        $retailer = new Retailer(array_merge($retailerData, ['pincode' => $request->pincode]));
         $retailer->user_id = $user->id;
-        $retailer->status = 'inactive';
 
-        if (Auth::user()->hasRole('fieldstaff')) {
-            $fieldstaff = Auth::user()->fieldstaff;
-            $retailer->field_staff_id = $fieldstaff->id;
-            $retailer->sales_manager_id = $fieldstaff->sales_manager_id;
-        } else {
-            $retailer->sales_manager_id = $request->sales_manager_id;
+        // Auto-assign sales_manager_id and field_staff_id based on who is creating the retailer
+        if (Auth::user()->hasRole('salesmanager')) {
+            $retailer->sales_manager_id = Auth::user()->salesManager->id;
+        } elseif (Auth::user()->hasRole('fieldstaff')) {
+            $retailer->field_staff_id = Auth::user()->fieldStaff->id;
+            $retailer->sales_manager_id = Auth::user()->fieldStaff->salesManager->id;
         }
-
         $retailer->save();
 
-        return redirect()->route('retailers.index')->with('success', 'Retailer added successfully!');
+        return redirect()->route('admin.retailers.index')->with('success', 'Retailer added successfully!');
     }
 
-
-    public function edit(Retailer $retailer) // Changed type-hint and variable name
+    public function edit(Retailer $retailer)
     {
         $districts = District::all();
+        $areas = Area::all();
         $distributors = Distributor::whereHas('user', function ($query) {
             $query->where('status', 'active');
         })->get();
-        $areas = Area::where('district_id', $retailer->user->district_id)->get(); // Changed
-        return view('admin.retailers.edit', compact('retailer','districts','areas','distributors'));
+        $salesManagers = SalesManager::whereHas('user', function ($query) {
+            $query->where('status', 'active');
+        })->get();
+        $fieldStaffs = FieldStaff::whereHas('user', function ($query) {
+            $query->where('status', 'active');
+        })->get();
+
+        return view('admin.retailers.edit', compact('retailer', 'districts', 'areas', 'distributors', 'salesManagers', 'fieldStaffs'));
     }
 
-    public function update(Request $request, Retailer $retailer) // Changed type-hint and variable name
+    public function update(Request $request, Retailer $retailer)
     {
-        // Separate validation for User and Retailer fields
         $userData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $retailer->user->id,
             'password' => 'nullable|min:4',
             'contact_no' => 'required',
-            'district_id' => 'required|exists:districts,id',
-            'area_id' => 'required|exists:areas,id',
-            'route' => 'nullable|string',
             'address' => 'required',
-            'pincode' => 'required',
         ]);
 
         $retailerData = $request->validate([
+            'pincode' => 'required',
             'gst' => 'required|unique:retailers,gst,' . $retailer->id,
             'distributor_id' => 'required|exists:distributors,id',
+            'field_staff_id' => 'required|exists:fieldstaffs,id',
+            'sales_manager_id' => 'required|exists:sales_managers,id',
+            'credit_limit' => 'nullable|numeric|min:0',
         ]);
 
-        // Update User
         $userUpdateData = [
             'name' => $userData['name'],
             'email' => $userData['email'],
-            'role' => 'retailer', // Keep for consistency
+            'role' => 'retailer',
             'contact_no' => $userData['contact_no'],
-            'district_id' => $userData['district_id'],
-            'area_id' => $userData['area_id'],
-            'route' => $userData['route'],
             'address' => $userData['address'],
-            'pincode' => $userData['pincode'],
         ];
         if (!empty($userData['password'])) {
             $userUpdateData['password'] = Hash::make($userData['password']);
         }
         $retailer->user->update($userUpdateData);
 
-        // Update Retailer profile
-        $retailerData['district_id'] = $userData['district_id']; // ADDED
-        $retailerData['area_id'] = $userData['area_id'];     // ADDED
-        $retailer->update($retailerData);
+        $retailer->update(array_merge($retailerData, ['pincode' => $request->pincode]));
 
-        return redirect()->route('retailers.index')->with('success','Retailer updated successfully!');
+        return redirect()->route('admin.retailers.index')->with('success','Retailer updated successfully!');
     }
 
-    public function destroy(Retailer $retailer) // Changed type-hint and variable name
+    public function destroy(Retailer $retailer)
     {
-        $retailer->delete(); // This will cascade delete the User due to foreign key constraint
+        $retailer->delete();
         return redirect()->route('retailers.index')->with('success','Retailer deleted successfully!');
     }
 
-    // AJAX to get areas for selected district
     public function getAreas(District $district)
     {
         return response()->json($district->areas->unique('name')->values()->all());
     }
 
-    // AJAX: Get distributors for selected district and area
     public function getDistributorsByDistrictAndArea(District $district, Area $area)
     {
         $distributors = Distributor::where('district_id', $district->id)
                                    ->where('area_id', $area->id)
                                    ->get();
         return response()->json($distributors);
-<<<<<<< HEAD
-    }   
-}
-=======
     }
 
     public function activate(Retailer $retailer)
     {
-        if (!Auth::user()->hasRole('manager')) {
+        if (!Auth::user()->hasRole('admin') && !Auth::user()->hasRole('salesmanager')) {
             return redirect()->back()->with('error', 'You are not authorized to activate a retailer.');
         }
 
-        $retailer->update(['status' => 'active']);
+        $retailer->user->status = 'active';
+        $retailer->user->save();
 
         return redirect()->back()->with('success', 'Retailer activated successfully!');
     }
 }
->>>>>>> 8656c2476019753737a6da2fe9c5e689d1d6b633

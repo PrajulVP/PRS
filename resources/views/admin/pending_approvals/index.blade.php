@@ -32,10 +32,10 @@
                                     <tr>
                                         <th>Name</th>
                                         <th>Email</th>
-                                        <th>Distributor</th>
+                                        <th>Sales Manager</th>
                                         <th>Actions</th>
                                     </tr>
-                                @elseif($type == 'manager')
+                                @elseif($type == 'salesmanager')
                                     <tr>
                                         <th>Name</th>
                                         <th>Email</th>
@@ -60,20 +60,20 @@
                                     @elseif($type == 'admin')
                                         <td>{{ $item->user->name }}</td>
                                         <td>{{ $item->user->email }}</td>
-                                        <td>{{ $item->distributor->user->name ?? 'N/A' }}</td>
+                                        <td>{{ $item->salesmanager->user->name ?? 'N/A' }}</td>
                                         <td>
-                                            <form action="{{ route('fieldstaffs.activate', $item->id) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('admin.fieldstaffs.activate', $item->id) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 @method('PATCH')
                                                 <button type="submit" class="btn btn-sm btn-success">Activate</button>
                                             </form>
                                         </td>
-                                    @elseif($type == 'manager')
+                                    @elseif($type == 'salesmanager')
                                         <td>{{ $item->user->name }}</td>
                                         <td>{{ $item->user->email }}</td>
                                         <td>{{ $item->fieldstaff->user->name ?? 'N/A' }}</td>
                                         <td>
-                                            <form action="{{ route('retailers.activate', $item->id) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('admin.retailers.activate', $item->id) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 @method('PATCH')
                                                 <button type="submit" class="btn btn-sm btn-success">Activate</button>

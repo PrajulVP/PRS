@@ -168,15 +168,35 @@
                 var csrfToken = "{{ csrf_token() }}";
 
                 return `
-                    <div class="table-actions">
-                        <a href="${viewUrl}" class="btn btn-outline-info btn-sm" title="View"><i class="fa fa-eye"></i></a>
-                        <a href="${editUrl}" class="btn btn-outline-primary btn-sm" title="Edit"><i class="fa fa-edit"></i></a>
-                        <form action="${deleteUrl}" method="POST" onsubmit="return confirm('Are you sure?')">
+                    <div class="table-actions d-flex gap-1">
+
+                        <a href="${viewUrl}" 
+                        class="btn btn-sm btn-icon btn-outline-info" 
+                        title="View">
+                            <i class="fa fa-eye"></i>
+                        </a>
+
+                        <a href="${editUrl}" 
+                        class="btn btn-sm btn-icon btn-outline-primary" 
+                        title="Edit">
+                            <i class="fa fa-edit"></i>
+                        </a>
+
+                        <form action="${deleteUrl}" method="POST" 
+                            onsubmit="return confirm('Are you sure?')" 
+                            class="d-inline">
                             <input type="hidden" name="_token" value="${csrfToken}">
                             <input type="hidden" name="_method" value="DELETE">
-                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete"><i class="fa fa-trash"></i></button>
+
+                            <button type="submit" 
+                                    class="btn btn-sm btn-icon btn-outline-danger" 
+                                    title="Delete">
+                                <i class="fa fa-trash"></i>
+                            </button>
                         </form>
+
                     </div>
+
                 `;
             }
         }
@@ -186,11 +206,10 @@
                         "rtip",
     buttons: [
         { extend: 'copy', className: 'btn btn-primary btn-sm' },
-        { extend: 'csv', className: 'btn btn-primary btn-sm' },
-        { extend: 'excel', className: 'btn btn-primary btn-sm' },
-        { extend: 'pdf', className: 'btn btn-primary btn-sm' },
-        { extend: 'print', className: 'btn btn-primary btn-sm' },
-    ]
+        { extend: 'csv', className: 'btn btn-sm' },
+        { extend: 'excel', className: 'btn btn-sm' },
+        { extend: 'pdf', className: 'btn btn-sm' },
+        { extend: 'print', className: 'btn btn-sm' },    ]
 });
 
     </script>

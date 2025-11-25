@@ -6,7 +6,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5>Retailers</h5>
-                    <a href="{{ route('retailers.create') }}" class="btn btn-primary">Add Retailer</a>
+                    <a href="{{ route('admin.retailers.create') }}" class="btn btn-primary">Add Retailer</a>
                 </div>
                 <div class="card-body">
                     @if(session('success'))
@@ -44,13 +44,13 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <a href="{{ route('retailers.show', $retailer->id) }}" class="btn btn-sm btn-secondary me-1">
+                                        <a href="{{ route('admin.retailers.show', $retailer->id) }}" class="btn btn-sm btn-secondary me-1">
                                             <i class="fa fa-eye me-1"></i> View
                                         </a>
-                                        <a href="{{ route('retailers.edit', $retailer->id) }}" class="btn btn-sm btn-primary">
+                                        <a href="{{ route('admin.retailers.edit', $retailer->id) }}" class="btn btn-sm btn-primary">
                                             <i class="fa fa-edit me-1"></i> Edit
                                         </a>
-                                        <form action="{{ route('retailers.destroy', $retailer->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure?')">
+                                        <form action="{{ route('admin.retailers.destroy', $retailer->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure?')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-danger">

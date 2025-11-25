@@ -11,11 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('fieldstaffs', function (Blueprint $table) {
+        Schema::create('sales_managers', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('sales_manager_id')->constrained('sales_managers')->onDelete('cascade');
-            $table->string('pincode');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->string('contact_no')->nullable();
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
         });
@@ -26,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('fieldstaffs');
+        Schema::dropIfExists('sales_managers');
     }
 };

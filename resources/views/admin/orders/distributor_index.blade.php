@@ -179,11 +179,10 @@
                       "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
                 buttons: [
                     { extend: 'copyHtml5', className: 'btn btn-primary btn-sm' },
-                    { extend: 'excelHtml5', className: 'btn btn-primary btn-sm' },
-                    { extend: 'csvHtml5', className: 'btn btn-primary btn-sm' },
-                    { extend: 'pdfHtml5', className: 'btn btn-primary btn-sm' },
-                    { extend: 'print', className: 'btn btn-primary btn-sm' },
-                ]
+                    { extend: 'excelHtml5', className: 'btn btn-sm' },
+                    { extend: 'csvHtml5', className: 'btn btn-sm' },
+                    { extend: 'pdfHtml5', className: 'btn btn-sm' },
+                    { extend: 'print', className: 'btn btn-sm' },                ]
             });
 
             // Handle Accept Order button click

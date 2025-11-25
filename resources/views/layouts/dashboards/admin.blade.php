@@ -158,58 +158,6 @@
                     </div>
                 </div>
             </div>
-
-                <div class="col-xl-6 box-col-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5>Top 10 Retailers by Order Value</h5>
-                        </div>
-                        <div class="card-body">
-                            <ul id="topRetailersList" class="list-group">
-                                <!-- Data will be loaded here by JavaScript -->
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-6 box-col-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5>Top 10 Distributors by Order Value</h5>
-                        </div>
-                        <div class="card-body">
-                            <ul id="topDistributorsList" class="list-group">
-                                <!-- Data will be loaded here by JavaScript -->
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-6 box-col-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5>Top 10 Users by Credit</h5>
-                        </div>
-                        <div class="card-body">
-                            <ul id="usersByCreditList" class="list-group">
-                                <!-- Data will be loaded here by JavaScript -->
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-6 box-col-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5>Top 10 Users by Loyalty Points</h5>
-                        </div>
-                        <div class="card-body">
-                            <ul id="usersByLoyaltyPointsList" class="list-group">
-                                <!-- Data will be loaded here by JavaScript -->
-                            </ul>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -311,39 +259,8 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(error => console.error(`Error fetching ${title} data:`, error));
     }
 
-    // Function to fetch data and render a list
-    function renderList(listId, apiUrl, keyField, valueField) {
-        fetch(apiUrl)
-            .then(response => response.json())
-            .then(data => {
-                const listElement = document.getElementById(listId);
-                listElement.innerHTML = ''; // Clear existing items
-                if (data.length === 0) {
-                    listElement.innerHTML = '<li class="list-group-item">No data available.</li>';
-                    return;
-                }
-                data.forEach(item => {
-                    const listItem = document.createElement('li');
-                    listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-                    listItem.textContent = item[keyField];
-                    const badge = document.createElement('span');
-                    badge.className = 'badge bg-primary rounded-pill';
-                    badge.textContent = item[valueField];
-                    listItem.appendChild(badge);
-                    listElement.appendChild(listItem);
-                });
-            })
-            .catch(error => console.error(`Error fetching list data for ${listId}:`, error));
-    }
-
     // Admin Charts
     renderPieChart('orderStatusDistributionChart', 'Order Status Distribution', '{{ route('dashboard.api.orderStatusDistribution') }}');
     renderBarChart('ordersByDistributorChart', 'Orders by Distributor', '{{ route('dashboard.api.ordersByDistributor') }}');
-
-    // Admin Lists
-    renderList('topRetailersList', '{{ route('dashboard.api.topRetailers') }}', 'retailer_name', 'total_order_value');
-    renderList('topDistributorsList', '{{ route('dashboard.api.topDistributors') }}', 'distributor_name', 'total_order_value');
-    renderList('usersByCreditList', '{{ route('dashboard.api.usersByCredit') }}', 'name', 'credit');
-    renderList('usersByLoyaltyPointsList', '{{ route('dashboard.api.usersByLoyaltyPoints') }}', 'name', 'loyalty_points');
 });
 </script>

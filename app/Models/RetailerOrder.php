@@ -12,13 +12,6 @@ class RetailerOrder extends Model
 {
     use HasFactory;
     
-    const STATUS_PENDING = 'pending';
-    const STATUS_ACCEPTED_BY_DISTRIBUTOR = 'accepted_by_distributor';
-    const STATUS_ASSIGNED_TO_FIELDSTAFF = 'assigned_to_fieldstaff';
-    const STATUS_OUT_FOR_DELIVERY = 'out_for_delivery'; // Alias or equivalent to assigned_to_fieldstaff for display
-    const STATUS_DELIVERED = 'delivered';
-    const STATUS_REJECTED = 'rejected';
-
     protected $table = 'retailer_orders';
 
     protected $fillable = [
@@ -31,7 +24,6 @@ class RetailerOrder extends Model
         'status',
         'placed_at',
         'notes',
-        'field_staff_id',
         'delivered_at',
     ];
 
@@ -65,10 +57,5 @@ class RetailerOrder extends Model
     public function distributor(): BelongsTo
     {
         return $this->belongsTo(Distributor::class);
-    }
-
-    public function fieldStaff(): BelongsTo
-    {
-        return $this->belongsTo(FieldStaff::class);
     }
 }

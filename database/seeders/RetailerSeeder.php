@@ -19,9 +19,9 @@ class RetailerSeeder extends Seeder
         $retailerRole = Role::firstOrCreate(['name' => 'retailer']);
 
         // Create 15 retailers
-        Retailer::factory()->count(15)->create()->each(function ($retailer) use ($retailerRole) {
-            // Assign the retailer role to the associated user
-            $retailer->user->assignRole($retailerRole);
-        });
+        // Retailer::factory()->count(15)->create()->each(function ($retailer) use ($retailerRole) {
+        //     // Assign the retailer role to the associated user
+        //     $retailer->user->assignRole($retailerRole);
+        // });
     }
 }

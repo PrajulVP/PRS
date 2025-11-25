@@ -22,14 +22,14 @@ class DatabaseSeeder extends Seeder
             PermissionCategorySeeder::class,
             RolePermissionSeeder::class,
             SuperAdminSeeder::class, // Creates superadmin and admin users
-            ManagerSeeder::class,    // Creates manager user
+            SalesManagerSeeder::class,
 
             DistrictSeeder::class,   // Creates general districts
             AreaSeeder::class,       // Creates general areas
 
-            DistributorUserSeeder::class, // Creates specific distributor user and associated model
-            FieldStaffUserSeeder::class,  // Creates specific fieldstaff user and associated model
-            RetailerUserSeeder::class,    // Creates specific retailer user and associated model
+            DistributorSeeder::class,
+            FieldStaffSeeder::class,
+            RetailerSeeder::class,
             
             ProductSeeder::class,    // Creates general products
             // If there are other factory-based seeders that create many records,

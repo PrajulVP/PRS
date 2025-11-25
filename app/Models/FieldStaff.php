@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -13,8 +14,8 @@ class FieldStaff extends Model
     protected $table = 'fieldstaffs';
     protected $fillable = [
         'user_id',
-        'distributor_id',
-        'sales_manager_id', // New field
+        'sales_manager_id',
+        'pincode',
         'status',
     ];
 
@@ -23,14 +24,9 @@ class FieldStaff extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function distributor()
-    {
-        return $this->belongsTo(Distributor::class);
-    }
-
     public function salesManager(): BelongsTo
     {
-        return $this->belongsTo(Manager::class, 'sales_manager_id');
+        return $this->belongsTo(SalesManager::class, 'sales_manager_id');
     }
 
     public function distributorOrders(): HasMany

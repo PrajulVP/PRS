@@ -15,7 +15,7 @@
                     <div class="row g-4">
 
                         <!-- DETAILS -->
-                        <div class="col-md-8">
+                        <div class="col-md-12">
                             <div class="row g-3">
 
                                 <div class="col-md-6">
@@ -32,7 +32,7 @@
 
                                 <div class="col-md-6">
                                     <p class="text-muted mb-1">Contact No</p>
-                                    <p class="fw-semibold">{{ $retailer->user->contact_no ?? 'N/A' }}</p>
+                                    <p class="fw-semibold">{{ $retailer->contact_no ?? 'N/A' }}</p>
                                     <hr class="my-1">
                                 </div>
 
@@ -42,33 +42,33 @@
                                     <hr class="my-1">
                                 </div>
 
-                                <div class="col-md-12">
+                                <div class="col-md-6">
                                     <p class="text-muted mb-1">Address</p>
-                                    <p class="fw-semibold">{{ $retailer->user->address ?? 'N/A' }}</p>
+                                    <p class="fw-semibold">{{ $retailer->address ?? 'N/A' }}</p>
                                     <hr class="my-1">
                                 </div>
 
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <p class="text-muted mb-1">Pincode</p>
-                                    <p class="fw-semibold">{{ $retailer->user->pincode ?? 'N/A' }}</p>
-                                    <hr class="my-1">
-                                </div>
-
-                                <div class="col-md-4">
-                                    <p class="text-muted mb-1">District</p>
-                                    <p class="fw-semibold">{{ $retailer->user->district->name ?? 'N/A' }}</p>
-                                    <hr class="my-1">
-                                </div>
-
-                                <div class="col-md-4">
-                                    <p class="text-muted mb-1">Area</p>
-                                    <p class="fw-semibold">{{ $retailer->user->area->name ?? 'N/A' }}</p>
+                                    <p class="fw-semibold">{{ $retailer->pincode ?? 'N/A' }}</p>
                                     <hr class="my-1">
                                 </div>
 
                                 <div class="col-md-6">
                                     <p class="text-muted mb-1">Distributor</p>
-                                    <p class="fw-semibold">{{ $retailer->distributor->user->name ?? 'N/A' }}</p>
+                                    <p class="fw-semibold">{{ $retailer->distributor->name ?? 'N/A' }}</p>
+                                    <hr class="my-1">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <p class="text-muted mb-1">Sales Manager</p>
+                                    <p class="fw-semibold">{{ $retailer->salesManager->name ?? 'N/A' }}</p>
+                                    <hr class="my-1">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <p class="text-muted mb-1">Field Staff</p>
+                                    <p class="fw-semibold">{{ $retailer->fieldStaff->user->name ?? 'N/A' }}</p>
                                     <hr class="my-1">
                                 </div>
 
@@ -82,17 +82,6 @@
 
                             </div>
                         </div>
-
-                        <!-- IMAGE -->
-                        <div class="col-md-4 text-center">
-                            @if($retailer->user->profile_pic)
-                                <img src="{{ asset('storage/' . $retailer->user->profile_pic) }}"
-                                     class="img-fluid rounded shadow-sm" style="max-width: 250px;">
-                            @else
-                                <div class="border rounded p-4 text-muted">No Profile Picture</div>
-                            @endif
-                        </div>
-
                     </div>
 
                     <div class="mt-4">

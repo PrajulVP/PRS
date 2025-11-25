@@ -19,9 +19,9 @@ class DistributorSeeder extends Seeder
         $distributorRole = Role::firstOrCreate(['name' => 'distributor']);
 
         // Create 5 distributors
-        Distributor::factory()->count(5)->create()->each(function ($distributor) use ($distributorRole) {
-            // Assign the distributor role to the associated user
-            $distributor->user->assignRole($distributorRole);
-        });
+        // Distributor::factory()->count(5)->create()->each(function ($distributor) use ($distributorRole) {
+        //     // Assign the distributor role to the associated user
+        //     $distributor->user->assignRole($distributorRole);
+        // });
     }
 }

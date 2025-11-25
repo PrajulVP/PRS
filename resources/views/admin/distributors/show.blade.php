@@ -13,15 +13,10 @@
             <div class="row g-4">
 
                 {{-- LEFT SIDE DETAILS --}}
-                <div class="col-md-8">
+                <div class="col-md-12">
                     <div class="row mb-2">
-                        <div class="col-sm-5 fw-bold">Company Name:</div>
-                        <div class="col-sm-7">{{ $distributor->user->name }}</div>
-                    </div>
-
-                    <div class="row mb-2">
-                        <div class="col-sm-5 fw-bold">Email:</div>
-                        <div class="col-sm-7">{{ $distributor->user->email }}</div>
+                        <div class="col-sm-5 fw-bold">Name:</div>
+                        <div class="col-sm-7">{{ $distributor->name }}</div>
                     </div>
 
                     <div class="row mb-2">
@@ -35,8 +30,8 @@
                     </div>
 
                     <div class="row mb-2">
-                        <div class="col-sm-5 fw-bold">Truck License Number:</div>
-                        <div class="col-sm-7">{{ $distributor->truck_license_number ?? 'N/A' }}</div>
+                        <div class="col-sm-5 fw-bold">Drug License No:</div>
+                        <div class="col-sm-7">{{ $distributor->drug_license_no ?? 'N/A' }}</div>
                     </div>
 
                     <div class="row mb-2">
@@ -58,41 +53,12 @@
                         <div class="col-sm-5 fw-bold">Area:</div>
                         <div class="col-sm-7">{{ $distributor->area->name ?? 'N/A' }}</div>
                     </div>
-
-                    <div class="row mb-2">
-                        <div class="col-sm-5 fw-bold">Route:</div>
-                        <div class="col-sm-7">{{ $distributor->route }}</div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-sm-5 fw-bold">Status:</div>
-                        <div class="col-sm-7">
-                            <span class="badge {{ $distributor->user->status === 'active' ? 'bg-success' : 'bg-warning' }}">
-                                {{ ucfirst($distributor->user->status) }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- RIGHT SIDE PROFILE PIC --}}
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body text-center">
-                            @if($distributor->user->profile_pic)
-                                <img src="{{ asset('storage/' . $distributor->user->profile_pic) }}"
-                                     class="img-fluid rounded mb-2"
-                                     style="max-width: 230px;">
-                            @else
-                                <p class="text-muted">No Profile Picture</p>
-                            @endif
-                        </div>
-                    </div>
                 </div>
 
             </div>
 
             <div class="mt-4">
-                <a href="{{ route('distributors.edit', $distributor->id) }}" class="btn btn-primary">Edit</a>
+                <a href="{{ route('admin.distributors.edit', $distributor->id) }}" class="btn btn-primary">Edit</a>
                 <a href="{{ url()->previous() }}" class="btn btn-secondary">Back</a>
             </div>
 

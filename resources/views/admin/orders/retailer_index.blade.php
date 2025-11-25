@@ -136,11 +136,10 @@
                         "rtip",
                 buttons: [
                     { extend: 'copy', className: 'btn btn-primary btn-sm' },
-                    { extend: 'csv', className: 'btn btn-primary btn-sm' },
-                    { extend: 'excel', className: 'btn btn-primary btn-sm' },
-                    { extend: 'pdf', className: 'btn btn-primary btn-sm' },
-                    { extend: 'print', className: 'btn btn-primary btn-sm' },
-                ],
+                    { extend: 'csv', className: 'btn btn-sm' },
+                    { extend: 'excel', className: 'btn btn-sm' },
+                    { extend: 'pdf', className: 'btn btn-sm' },
+                    { extend: 'print', className: 'btn btn-sm' },                ],
                 drawCallback: function() {
                     feather.replace();
                 }

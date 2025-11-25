@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 
 use App\Models\FieldStaff;
 use App\Models\RetailerOrder; // Use the new RetailerOrder model
-use App\Models\Retailer;
+use App\Models\Distributor;
+use App\Models\Retailer; // Added
 use App\Models\Product; // Added
+use App\Models\SalesManager; // Added
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -108,7 +110,6 @@ class RetailerOrderManagementController extends Controller
                         'total_amount' => number_format($order->total_amount, 2),
                         'status' => ucfirst($order->status),
                         'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d H:i:s') : '-',
-                        'fieldstaff_name' => $order->fieldStaff?->user?->name ?? 'Not Assigned',
                         'actions' => null, // Actions column will be rendered by DataTables
                     ];
                 });
@@ -366,7 +367,6 @@ class RetailerOrderManagementController extends Controller
                     'quantity' => $order->quantity,
                     'total_amount' => number_format($order->total_amount, 2),
                     'status' => ucfirst(str_replace('_', ' ', $order->status)),
-                    'fieldstaff_name' => $order->fieldStaff->user->name ?? 'Not Assigned',
                     'actions' => null, // Actions column will be rendered by DataTables
                 ];
             });
@@ -380,11 +380,9 @@ class RetailerOrderManagementController extends Controller
         }
 
         $distributor = Auth::guard('web')->user()->load('distributor')->distributor;
-        $fieldstaffs = FieldStaff::where('distributor_id', $distributor->id)->with('user')->get()->map(function($fieldstaff) {
-            return ['id' => $fieldstaff->id, 'name' => $fieldstaff->user->name];
-        });
+        // Removed $fieldstaffs query as per user's clarification: "no conncetion with distribnutor in fieldfstaffs table"
 
-        return view('admin.orders.distributor_retailer_orders_index', compact('fieldstaffs'));
+        return view('admin.orders.distributor_retailer_orders_index');
     }
 
     // Field Staff: list orders assigned to them
@@ -460,7 +458,7 @@ class RetailerOrderManagementController extends Controller
     public function updateDeliveryStatus(Request $request, RetailerOrder $retailerOrder)
     {
         $request->validate([
-            'status' => 'required|in:assigned_to_fieldstaff,dispatched,delivered,cancelled',
+            'status' => 'required|in:dispatched,delivered,cancelled',
             'delivery_notes' => 'nullable|string',
         ]);
 
@@ -504,37 +502,6 @@ class RetailerOrderManagementController extends Controller
         return response()->json(['success' => 'Retailer order accepted by distributor successfully!']);
     }
 
-    public function assignFieldStaff(Request $request, RetailerOrder $retailerOrder)
-    {
-        // Validate permissions (Distributor, Admin, Superadmin can assign)
-        if (!Auth::user()->hasRole(['distributor', 'admin', 'superadmin'])) {
-            return response()->json(['error' => 'You do not have permission to assign field staff to retailer orders.'], 403);
-        }
-
-        // If the user is a distributor, check if the order belongs to them
-        if (Auth::user()->hasRole('distributor') && $retailerOrder->distributor_id !== Auth::user()->distributor->id) {
-            return response()->json(['error' => 'You can only assign field staff to orders assigned to your distributorship.'], 403);
-        }
-
-        // Validate request
-        $request->validate([
-            'fieldstaff_id' => 'required|exists:fieldstaffs,id',
-        ]);
-
-        // Check if the order is in the accepted_by_distributor state
-        if ($retailerOrder->status !== 'accepted_by_distributor') {
-            return response()->json(['error' => 'Only retailer orders accepted by the distributor can be assigned to field staff.'], 400);
-        }
-
-        // Update order status and assign field staff
-        $retailerOrder->update([
-            'fieldstaff_id' => $request->fieldstaff_id,
-            'status' => 'assigned_to_fieldstaff',
-        ]);
-
-        return response()->json(['success' => 'Retailer order assigned to field staff successfully!']);
-    }
-
     // Admin: edit form
     public function edit(RetailerOrder $retailerOrder)
     {
@@ -552,7 +519,6 @@ class RetailerOrderManagementController extends Controller
             'distributor_id' => 'nullable|exists:distributors,id', // Can be assigned later
             'status' => 'required|in:pending,accepted_by_distributor,assigned_to_fieldstaff,out_for_delivery,delivered,rejected',
             'notes' => 'nullable|string',
-            'fieldstaff_id' => 'nullable|exists:fieldstaffs,id',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
@@ -565,7 +531,6 @@ class RetailerOrderManagementController extends Controller
             'distributor_id' => $request->distributor_id,
             'status' => $request->status,
             'notes' => $request->notes,
-            'fieldstaff_id' => $request->fieldstaff_id,
             'delivered_at' => ($request->status === 'delivered') ? now() : null, // Set delivered_at if status is delivered
         ]);
 

@@ -31,31 +31,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Total Field Staff -->
-                <div class="col-xl-6 col-sm-6">
-                    <div class="card o-hidden small-widget">
-                        <div class="card-body total-Progress border-b-warning border-2">
-                            <span class="f-light f-w-500 f-14">Total Field Staff</span>
-                            <div class="project-details">
-                                <div class="project-counter">
-                                    <h2 class="f-w-600">{{ $totalFieldStaff }}</h2>
-                                </div>
-                                <div class="product-sub bg-warning-light">
-                                    <svg class="invoice-icon">
-                                        <use href="{{ asset('admin/assets/svg/icon-sprite.svg#tick-circle') }}"></use>
-                                    </svg>
-                                </div>
-                            </div>
-                            <ul class="bubbles">
-                                <li class="bubble"></li><li class="bubble"></li><li class="bubble"></li>
-                                <li class="bubble"></li><li class="bubble"></li><li class="bubble"></li>
-                                <li class="bubble"></li><li class="bubble"></li><li class="bubble"></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
             </div>
         </div>
     </div>

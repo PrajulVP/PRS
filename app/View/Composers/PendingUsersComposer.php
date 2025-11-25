@@ -4,7 +4,7 @@ namespace App\View\Composers;
 
 use App\Models\Distributor;
 use App\Models\FieldStaff;
-use App\Models\Manager;
+use App\Models\SalesManager;
 use App\Models\Retailer;
 use Illuminate\View\View;
 use App\Models\User;
@@ -22,15 +22,15 @@ class PendingUsersComposer
                 $distributors_count = Distributor::whereHas('user', function ($query) {
                     $query->where('status', 'inactive');
                 })->count();
-                $managers_count = Manager::whereHas('user', function ($query) {
+                $sales_managers_count = SalesManager::whereHas('user', function ($query) {
                     $query->where('status', 'inactive');
                 })->count();
-                $pendingUsersCount = $distributors_count + $managers_count;
+                $pendingUsersCount = $distributors_count + $sales_managers_count;
             } elseif ($user->hasRole('admin')) {
                 $pendingUsersCount = FieldStaff::whereHas('user', function ($query) {
                     $query->where('status', 'inactive');
                 })->count();
-            } elseif ($user->hasRole('manager')) {
+            } elseif ($user->hasRole('salesmanager')) {
                 $pendingUsersCount = Retailer::whereHas('user', function ($query) {
                     $query->where('status', 'inactive');
                 })->count();

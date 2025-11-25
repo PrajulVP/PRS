@@ -79,31 +79,11 @@
     </div>
 
     <!-- Sales Target vs. Achieved Chart -->
-    <div class="row dashboard-row">
-        <div class="col-xxl-12 box-col-12">
-            <div class="card">
-                <div class="card-header"><h5>Sales Target vs. Achieved</h5></div>
-                <div class="card-body">
-                    <canvas id="salesTargetChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Removed as the API route and controller method are no longer available. -->
 
     <!-- Retailers / Distributors lists -->
     <div class="row dashboard-row">
-        <div class="col-xl-6 box-col-6">
-            <div class="card">
-                <div class="card-header"><h5>Top 10 Retailers by Order Value</h5></div>
-                <div class="card-body">
-                    <ul id="topRetailersList" class="list-group">
-                        <li class="list-group-item">Loading...</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-6 box-col-6">
+        <div class="col-xl-12 box-col-12">
             <div class="card">
                 <div class="card-header"><h5>Top Products Ordered</h5></div>
                 <div class="card-body">
@@ -158,8 +138,6 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (e) { console.error(e); }
     })();
 
-
-
     // LINE: Total Orders Over Time
     (async function () {
         try {
@@ -170,55 +148,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 type: 'line',
                 data: { labels, datasets: [{ label: 'Orders', data: values, fill: false }] },
                 options: { responsive: true, scales: { y: { beginAtZero: true } } }
-            });
-        } catch (e) { console.error(e); }
-    })();
-
-    // BAR: Sales Target vs. Achieved
-    (async function () {
-        try {
-            const data = await fetchJson('{{ route('dashboard.api.salesTarget') }}');
-            const labels = Object.keys(data); // e.g., ['Target', 'Achieved']
-            const target = data.target;
-            const achieved = data.achieved;
-
-            new Chart(document.getElementById('salesTargetChart'), {
-                type: 'bar',
-                data: {
-                    labels: ['Target', 'Achieved'],
-                    datasets: [
-                        {
-                            label: 'Amount',
-                            data: [target, achieved],
-                            backgroundColor: [
-                                'rgba(255, 99, 132, 0.7)', // Target color
-                                'rgba(75, 192, 192, 0.7)'  // Achieved color
-                            ],
-                            borderColor: [
-                                'rgba(255, 99, 132, 1)',
-                                'rgba(75, 192, 192, 1)'
-                            ],
-                            borderWidth: 1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Sales Target vs. Achieved'
-                        },
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
             });
         } catch (e) { console.error(e); }
     })();
@@ -248,7 +177,6 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (e) { console.error(e); }
     }
 
-    renderList('topRetailersList', '{{ route('dashboard.api.topRetailers') }}', 'retailer_name', 'total_order_value');
     renderList('topProductsList', '{{ route('dashboard.api.topProducts') }}', 'product_name', 'total_quantity_ordered');
 });
 </script>
