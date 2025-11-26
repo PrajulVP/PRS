@@ -1,61 +1,5 @@
 @extends('layouts.admin')
 
-<style>
-    /* Align search bar properly */
-    .dataTables_filter {
-        text-align: left !important;
-    }
-    .dataTables_filter input {
-        width: 230px !important;
-        margin-left: 10px !important;
-    }
-
-    /* Align show entries to the right */
-    .dataTables_length {
-        text-align: right !important;
-    }
-    .dataTables_length select {
-        margin: 0 5px !important;
-        width: 70px !important;
-        display: inline-block;
-    }
-
-    /* Compact badges */
-    .badge-stock {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
-        line-height: 1;
-    }
-
-    /* Compact action buttons */
-    .table-actions .btn {
-        padding: 0.25rem 0.4rem;
-        font-size: 0.75rem;
-    }
-
-    /* Prevent buttons from wrapping */
-    .table-actions form {
-        display: inline-block;
-        margin: 0;
-    }
-
-    .stock-pill {
-        display: inline-block;
-        font-size: 0.75rem;
-        padding: 0.2rem 0.5rem;
-        border-radius: 0.25rem;
-        color: #fff;
-        font-weight: 500;
-        text-align: center;
-        min-width: 50px;
-    }
-
-    /* Colors */
-    .stock-in { background-color: #28a745; }  /* green */
-    .stock-low { background-color: #ffc107; } /* yellow */
-    .stock-out { background-color: #dc3545; } /* red */
-
-</style>
 
 @section('page-body')
 <div class="container-fluid">
@@ -202,7 +146,7 @@
         }
     ],
     dom: "<'row mb-3'<'col-sm-12'B>>" + 
-                        "<'row mb-3 d-flex align-items-center'<'col-md-6'f><'col-md-6 text-end'l>>" +
+                        "<'row mb-3 d-flex align-items-center'<'col-md-6 d-flex justify-content-start'f><'col-md-6 d-flex justify-content-end text-end'l>>" +
                         "rtip",
     buttons: [
         { extend: 'copy', className: 'btn btn-primary btn-sm' },

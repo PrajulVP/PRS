@@ -23,7 +23,6 @@
 
     <div class="row">
         
-        <!-- LEFT SIDE TABLE -->
         <div class="col-lg-8">
             <div class="card shadow-sm">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -52,7 +51,6 @@
             </div>
         </div>
 
-        <!-- RIGHT SIDE CREATE FORM -->
         <div class="col-lg-4">
             <div class="side-form shadow-sm">
                 <h5>Add New Area</h5>
@@ -87,7 +85,6 @@
 </div>
 
 
-<!-- EDIT MODAL -->
 <div class="modal fade" id="editAreaModal" tabindex="-1">
   <div class="modal-dialog">
     <form method="POST" id="editAreaForm">
@@ -135,64 +132,83 @@
 
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
 
 <script>
 $(function () {
 
-        let table = $('#areas-table').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: "{{ route('areas.index') }}",
-            dom: 'Bfrtip', // Add this line for buttons
-            buttons: [
-                { extend: 'csv', className: 'btn btn-sm' },
-                { extend: 'excel', className: 'btn btn-sm' },
-                { extend: 'pdf', className: 'btn btn-sm' },
-                { extend: 'print', className: 'btn btn-sm' },
-            ],
-            columns: [
-                { data: 'id' },
-                { data: 'name' },
-                { data: 'district_name' },
-                {
-                    data: null,
-                    className: "text-center",
-                    render: function(row){
-                        return `
-                            <button class="btn btn-sm editAreaBtn"
+    let table = $('#areas-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: "{{ route('areas.index') }}",
+        dom: 'Bfrtip',
+        buttons: [
+            { extend: 'csv', className: 'btn btn-sm btn-outline-secondary' },
+            { extend: 'excel', className: 'btn btn-sm btn-outline-success' },
+            { extend: 'pdf', className: 'btn btn-sm btn-outline-danger' },
+            { extend: 'print', className: 'btn btn-sm btn-outline-info' },
+        ],
+        columns: [
+            { data: 'id' },
+            { data: 'name' },
+            { data: 'district_name' },
+            {
+                data: null,
+                className: "text-center",
+                render: function(row){
+                    return `
+                        <div class="d-flex justify-content-center align-items-center">
+                            {{-- Edit Button --}}
+                            <button class="btn btn-sm btn-success rounded me-1 editAreaBtn"
                                 data-id="${row.id}"
                                 data-name="${row.name}"
-                                data-district="${row.district_id}">
-                                <i data-feather="edit"></i>
+                                data-district="${row.district_id}"
+                                title="Edit Area"
+                                style="width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                <i data-feather="edit" style="width:20px; height:18px;"></i>
                             </button>
-    
+
+                            {{-- Delete Button --}}
                             <form method="POST" action="/admin/areas/${row.id}"
-                                  style="display:inline-block;">
-                                  @csrf @method('DELETE')
-                                <button class="btn btn-sm" onclick="return confirm('Delete this area?')">
-                                    <i data-feather="trash-2"></i>
+                                style="display:inline-block;"
+                                onsubmit="return confirm('Are you sure you want to delete Area: ${row.name}?');">
+                                
+                                @csrf 
+                                @method('DELETE')
+                                
+                                <button type="submit" class="btn btn-sm btn-danger rounded" title="Delete Area"
+                                    style="width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                    <i data-feather="trash-2" style="width:18px; height:18px;"></i>
                                 </button>
                             </form>
-                        `;
-                    }
+                        </div>
+                    `;
                 }
-            ],
-            drawCallback: function(){ feather.replace(); }
-        });
-    
-    
-        /** OPEN EDIT MODAL **/
-        $(document).on("click", ".editAreaBtn", function() {
-            let id = $(this).data("id");
-            let name = $(this).data("name");
-            let district = $(this).data("district");
-    
-            $("#edit_name").val(name);
-            $("#edit_district_id").val(district);
-            $("#editAreaForm").attr("action", "{{ url('admin/areas') }}/" + id);
-    
-            $("#editAreaModal").modal("show");
-        });
+            }
+        ],
+        drawCallback: function(){ feather.replace(); }
+    });
+
+
+    /** OPEN EDIT MODAL **/
+    $(document).on("click", ".editAreaBtn", function() {
+        let id = $(this).data("id");
+        let name = $(this).data("name");
+        let district = $(this).data("district");
+
+        $("#edit_name").val(name);
+        $("#edit_district_id").val(district);
+        $("#editAreaForm").attr("action", "{{ url('admin/areas') }}/" + id);
+
+        $("#editAreaModal").modal("show");
+    });
 });
 </script>
 @endpush
