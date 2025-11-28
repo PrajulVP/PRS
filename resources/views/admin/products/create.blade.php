@@ -103,7 +103,7 @@
                             </div>
                         </div>
 
-                        <div class="text-center mt-4">
+                        <div class="mt-4">
                             <button type="submit" class="btn btn-primary px-4">Create Product</button>
                         </div>
                     </form>

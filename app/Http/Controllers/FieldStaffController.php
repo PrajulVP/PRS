@@ -9,9 +9,19 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
+use DataTables;
+
 class FieldStaffController extends Controller
 {
-    public function index()
+    public function index(Request $request)
+    {
+        if ($request->ajax()) {
+            return $this->getFieldStaffsData();
+        }
+        return view('admin.fieldstaffs.index');
+    }
+
+    private function getFieldStaffsData()
     {
         $query = FieldStaff::with('user', 'salesManager.user');
 
@@ -19,8 +29,31 @@ class FieldStaffController extends Controller
             $query->where('sales_manager_id', Auth::user()->salesManager->id);
         }
 
-        $fieldstaffs = $query->latest()->paginate(10);
-        return view('admin.fieldstaffs.index', compact('fieldstaffs'));
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->addColumn('action', function($row){
+                $editUrl = route('admin.fieldstaffs.edit', $row->id);
+                $showUrl = route('admin.fieldstaffs.show', $row->id);
+                $deleteUrl = route('admin.fieldstaffs.destroy', $row->id);
+                $btn = '<div class="d-flex align-items-center gap-1">';
+                $btn .= '<a href="'.$editUrl.'" class="btn btn-primary btn-sm px-3">
+                            <i class="fa fa-edit"></i>
+                        </a>';
+                $btn .= '<a href="'.$showUrl.'" class="btn btn-info btn-sm px-3">
+                            <i class="fa fa-eye"></i>
+                        </a>';
+                $btn .= '<form action="'.$deleteUrl.'" method="POST" onsubmit="return confirm(\'Are you sure?\')" class="m-0 p-0">
+                            '.csrf_field().method_field('DELETE').'
+                            <button type="submit" class="btn btn-danger btn-sm px-3">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </form>';
+
+                $btn .= '</div>';
+                return $btn;
+            })
+            ->rawColumns(['action'])
+            ->make(true);
     }
 
     public function show(FieldStaff $fieldstaff)

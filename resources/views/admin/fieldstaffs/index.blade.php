@@ -14,61 +14,22 @@
                     @endif
 
                     <div class="table-responsive">
-                        <table class="table table-bordered table-striped">
+                        <table class="table table-bordered table-striped" id="fieldstaffs-table">
                             <thead>
                                 <tr>
+                                    <th>ID</th>
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Contact No</th>
                                     <th>Sales Manager</th>
                                     <th>Pincode</th>
-                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($fieldstaffs as $staff)
-                                <tr>
-                                    <td>{{ $staff->user->name }}</td>
-                                    <td>{{ $staff->user->email }}</td>
-                                    <td>{{ $staff->user->contact_no }}</td>
-                                    <td>{{ $staff->salesmanager->name ?? '-' }}</td>
-                                    <td>{{ $staff->pincode ?? '' }}</td>
-                                    <td>
-                                        @if($staff->status == 'active')
-                                            <span class="badge bg-success">Active</span>
-                                        @else
-                                            <span class="badge bg-warning">Inactive</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <a href="{{ route('admin.fieldstaffs.show', $staff->id) }}" class="btn btn-sm btn-secondary me-1">
-                                            <i class="fa fa-eye me-1"></i> View
-                                        </a>
-                                        <a href="{{ route('admin.fieldstaffs.edit', $staff->id) }}" class="btn btn-sm btn-primary">
-                                            <i class="fa fa-edit me-1"></i> Edit
-                                        </a>
-                                        <form action="{{ route('admin.fieldstaffs.destroy', $staff->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger">
-                                                <i class="fa fa-trash me-1"></i> Delete
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="8" class="text-center text-muted py-5">
-                                        <p>No field staff found.</p>
-                                    </td>
-                                </tr>
-                                @endforelse
+                               
                             </tbody>
                         </table>
-                    </div>
-                    <div class="mt-3">
-                        {{ $fieldstaffs->links() }}
                     </div>
                 </div>
             </div>
@@ -76,3 +37,54 @@
     </div>
 </div>
 @endsection
+
+@push('styles')
+    <!-- DataTables with Bootstrap 5 -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+@endpush
+
+@push('scripts')
+
+<!-- DataTables Bootstrap 5 -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+    <!-- DataTables Buttons -->
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('#fieldstaffs-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: "{{ route('admin.fieldstaffs.index') }}",
+        columns: [
+            { data: 'id', name: 'id' },
+            { data: 'user.name', name: 'user.name' },
+            { data: 'user.email', name: 'user.email' },
+            { data: 'user.contact_no', name: 'user.contact_no' },
+            { data: 'sales_manager.user.name', name: 'salesManager.user.name' },
+            { data: 'pincode', name: 'pincode' },
+            { data: 'action', name: 'action', orderable: false, searchable: false },
+        ],
+        dom: "<'row mb-3'<'col-sm-12'B>>" + 
+                            "<'row mb-3 d-flex align-items-center'<'col-md-6 d-flex justify-content-start'f><'col-md-6 d-flex justify-content-end text-end'l>>" +
+                            "rtip",
+        buttons: [
+            { extend: 'copy', className: 'btn btn-primary btn-sm' },
+            { extend: 'csv', className: 'btn btn-sm' },
+            { extend: 'excel', className: 'btn btn-sm' },
+            { extend: 'pdf', className: 'btn btn-sm' },
+            { extend: 'print', className: 'btn btn-sm' },
+        ]
+    });
+});
+</script>
+@endpush

@@ -10,6 +10,6 @@ class OrderItem extends Model
 
     public function order(): BelongsTo
     {
-        return $this->belongsTo(DistributorOrder::class);
+        return $this->belongsTo(distributorOrder::class);
     }
 }

@@ -56,6 +56,7 @@ class AreaController extends Controller
                     'id' => $area->id,
                     'name' => $area->name,
                     'district_name' => $area->district->name ?? 'N/A',
+                    'district_id' => $area->district_id,
                     'actions' => null, // Actions column will be rendered by DataTables
                 ];
             });
@@ -75,7 +76,7 @@ class AreaController extends Controller
     public function create()
     {
         $districts = District::all();
-        return view('admin.areas.create', compact('districts'));
+        return view('areas.index', compact('districts'));
     }
 
 
@@ -103,13 +104,13 @@ class AreaController extends Controller
     if ($request->wantsJson()) {
         return response()->json(['status'=>true,'message'=>'Area fetched','data'=>$area]);
     }
-    return view('admin.areas.show', compact('area'));
+    return view('areas.index', compact('area'));
     }
 
     public function edit(Area $area)
     {
         $districts = District::all();
-        return view('admin.areas.edit', compact('area', 'districts'));
+        return view('areas.edit', compact('area', 'districts'));
     }
 
 

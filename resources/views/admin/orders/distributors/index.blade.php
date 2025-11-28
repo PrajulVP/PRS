@@ -20,9 +20,37 @@
         display: inline-block;
     }
 
-    #retailer-orders-table tbody td {
+    #distributor-orders-table tbody td {
         font-size: 0.85em; /* Decrease font size to view more records */
     }
+
+    /* Force action column to never wrap */
+    #distributor-orders-table td:last-child {
+        white-space: nowrap !important;
+    }
+
+    /* Flex wrapper for actions */
+    .action-buttons {
+        display: inline-flex !important;
+        align-items: center;
+        gap: 4px;
+        flex-wrap: nowrap;
+    }
+
+    /* Make every child inline-flex (buttons + forms) */
+    .action-buttons > * {
+        display: inline-flex !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Normalize button sizes */
+    .action-buttons .btn {
+        padding: 6px 10px !important;
+        font-size: 0.75rem !important;
+        line-height: 1 !important;
+    }
+
 </style>
 
 
@@ -36,12 +64,13 @@
             @endif
 
             <div class="table-responsive">
-                <table class="display table table-striped table-hover" id="retailer-orders-table">
+                <table class="display table table-striped table-hover" id="distributor-orders-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>No.</th>
                             <th>Order Code</th>
                             <th>Distributor Name</th>
+                            <th>Sales Manager</th>
                             <th>Products</th>
                             <th>Total Items</th>
                             <th>Total Quantity</th>
@@ -89,17 +118,26 @@
 
     <script>
         $(document).ready(function() {
-            var table = $('#retailer-orders-table').DataTable({
+            var table = $('#distributor-orders-table').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: "{{ route('distributor-bulk-orders.index') }}",
+                    url: "{{ route('distributor-orders.index') }}",
                     type: 'GET'
                 },
                 columns: [
-                    { data: 'id', name: 'id' },
+                    { 
+                        data: null,
+                        name: 'no',
+                        orderable: false,
+                        searchable: false,
+                        render: function(data, type, row, meta) {
+                            return meta.row + meta.settings._iDisplayStart + 1; // Serial number
+                        }
+                    },
                     { data: 'order_code', name: 'order_code' },
                     { data: 'name', name: 'distributor.user.name' }, // Distributor Name
+                    { data: 'sales_manager_name', name: 'salesManager.user.name', orderable: true, searchable: false }, // Sales Manager Name
                     { data: 'product_summary', name: 'product_summary', orderable: false, searchable: false },
                     { data: 'total_items', name: 'total_items' },
                     { data: 'total_quantity', name: 'total_quantity' },
@@ -139,39 +177,63 @@
                         render: function(data, type, row) {
                             var status = row.status.toLowerCase().replace(/ /g, '_');
                             var output = '';
-                            var showUrl = "{{ route('distributor-bulk-orders.show', ':id') }}".replace(':id', row.id);
 
-                            output += `<a href="${showUrl}" class="btn btn-sm btn-info me-1"><i class="fa fa-eye"></i></a>`;
+                            var showUrl = "{{ route('distributor-orders.show', ':id') }}".replace(':id', row.id);
 
-                            // Logic for displaying status or action buttons
-                            if (status === 'pending') {
-                                @if (Auth::user()->hasRole('distributor'))
-                                output += `<button class="btn btn-danger btn-sm cancel-order-btn me-1" data-id="${row.id}">Cancel</button>`;
-                                @endif
-                                @if (Auth::user()->hasPermissionToCategory('distributor_orders', 'edit')) // Manager/Admin
-                                output += `<button class="btn btn-primary btn-sm accept-order-btn me-1" data-id="${row.id}">Accept</button>`;
-                                @endif
-                            } else if (status === 'accepted') {
-                                @if (Auth::user()->hasRole('distributor'))
-                                output += `<button class="btn btn-success btn-sm confirm-delivery-btn me-1" data-id="${row.id}">Confirm</button>`;
-                                @endif
-                            }
-                            // Add Edit/Delete for Admin/Superadmin here
+                            output += `<div class="action-buttons">`;
+
+                            // View button
+                            output += `<a href="${showUrl}" class="btn btn-sm btn-info"><i class="fa fa-eye"></i></a>`;
+
+                            // Distributor
+                            @if (Auth::user()->hasRole('distributor'))
+                                if (status === 'pending') {
+                                    output += `<button class="btn btn-danger btn-sm cancel-order-btn" data-id="${row.id}">Cancel</button>`;
+                                }
+                                if (status === 'accepted_by_sales_manager') {
+                                    output += `<button class="btn btn-warning btn-sm request-cancellation-btn" data-id="${row.id}">Cancel</button>`;
+                                }
+                            @endif
+
+                            // Sales Manager
+                            @if (Auth::user()->hasRole('salesmanager'))
+                                if (status === 'pending') {
+                                    output += `<button class="btn btn-primary btn-sm accept-order-btn" data-id="${row.id}" data-action="sales_manager_accept">Accept</button>`;
+                                }
+                                if (status === 'cancellation_requested') {
+                                    output += `<button class="btn btn-success btn-sm approve-cancellation-btn" data-id="${row.id}">Approve</button>`;
+                                }
+                            @endif
+
+                            // Admin
                             @if (Auth::user()->hasRole('superadmin') || Auth::user()->hasRole('admin'))
-                                var editUrl = "{{ route('distributor-bulk-orders.edit', ':id') }}".replace(':id', row.id);
-                                var deleteUrl = "{{ route('distributor-bulk-orders.destroy', ':id') }}".replace(':id', row.id);
+                                
+                                if (status === 'cancellation_requested') {
+                                    output += `<button class="btn btn-success btn-sm approve-cancellation-btn" data-id="${row.id}">Approve</button>`;
+                                }
+
+                                var editUrl = "{{ route('distributor-orders.edit', ':id') }}".replace(':id', row.id);
+                                var deleteUrl = "{{ route('distributor-orders.destroy', ':id') }}".replace(':id', row.id);
                                 var csrfToken = "{{ csrf_token() }}";
 
-                                output += `<a href="${editUrl}" class="btn btn-sm btn-primary me-1"><i class="fa fa-edit"></i></a>`;
-                                output += `<form action="${deleteUrl}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this order?');">
+                                output += `<a href="${editUrl}" class="btn btn-sm btn-primary"><i class="fa fa-edit"></i></a>`;
+
+                                output += `<form action="${deleteUrl}" method="POST" onsubmit="return confirm('Are you sure?');">
                                                 <input type="hidden" name="_token" value="${csrfToken}">
                                                 <input type="hidden" name="_method" value="DELETE">
                                                 <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
-                                            </form>`;
+                                        </form>`;
+
+                                if (status === 'accepted_by_sales_manager') {
+                                    output += `<button class="btn btn-success btn-sm accept-order-btn" data-id="${row.id}" data-action="admin_accept">Accept</button>`;
+                                }
                             @endif
-                            
+
+                            output += `</div>`;
+
                             return output;
                         }
+
                     }
                 ],
                 dom:  "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
@@ -182,15 +244,28 @@
                     { extend: 'excelHtml5', className: 'btn btn-sm' },
                     { extend: 'csvHtml5', className: 'btn btn-sm' },
                     { extend: 'pdfHtml5', className: 'btn btn-sm' },
-                    { extend: 'print', className: 'btn btn-sm' },                ]
+                    { extend: 'print', className: 'btn btn-sm' }              
+                ]
             });
 
             // Handle Accept Order button click
-            $('#retailer-orders-table').on('click', '.accept-order-btn', function() {
+            $('#distributor-orders-table').on('click', '.accept-order-btn', function() {
                 var orderId = $(this).data('id');
+                var actionType = $(this).data('action'); // 'sales_manager_accept' or 'admin_accept'
+                var url = '';
+
+                if (actionType === 'sales_manager_accept') {
+                    url = `/distributor-orders/${orderId}/accept-by-sales-manager`;
+                } else if (actionType === 'admin_accept') {
+                    url = `/distributor-orders/${orderId}/accept-by-admin`;
+                } else {
+                    alert('Invalid accept action.');
+                    return;
+                }
+
                 if (confirm('Are you sure you want to accept this order?')) {
                     $.ajax({
-                        url: `/distributor-bulk-orders/${orderId}/accept-order`,
+                        url: url,
                         method: 'POST',
                         data: {
                             _token: '{{ csrf_token() }}'
@@ -211,12 +286,68 @@
                 }
             });
 
+            // Handle Request Cancellation button click (for Distributor)
+            $('#distributor-orders-table').on('click', '.request-cancellation-btn', function() {
+                var orderId = $(this).data('id');
+                var reason = prompt('Please enter a reason for cancellation:');
+                if (reason) {
+                    $.ajax({
+                        url: `/distributor-orders/${orderId}/request-cancellation`,
+                        method: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            cancellation_reason: reason
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                alert(response.success);
+                                table.draw(); // Redraw the table
+                            } else {
+                                alert(response.error || 'Something went wrong.');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error:', error);
+                            alert('An error occurred while requesting cancellation.');
+                        }
+                    });
+                } else if (reason === '') {
+                    alert('Cancellation reason cannot be empty.');
+                }
+            });
+
+            // Handle Approve Cancellation button click (for Sales Manager/Admin)
+            $('#distributor-orders-table').on('click', '.approve-cancellation-btn', function() {
+                var orderId = $(this).data('id');
+                if (confirm('Are you sure you want to approve this cancellation request and restore stock?')) {
+                    $.ajax({
+                        url: `/distributor-orders/${orderId}/approve-cancellation`,
+                        method: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                alert(response.success);
+                                table.draw(); // Redraw the table
+                            } else {
+                                alert(response.error || 'Something went wrong.');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error:', error);
+                            alert('An error occurred while approving cancellation.');
+                        }
+                    });
+                }
+            });
+
             // Handle Cancel Order button click
-            $('#retailer-orders-table').on('click', '.cancel-order-btn', function() {
+            $('#distributor-orders-table').on('click', '.cancel-order-btn', function() {
                 var orderId = $(this).data('id');
                 if (confirm('Are you sure you want to cancel this order?')) {
                     $.ajax({
-                        url: `/distributor-bulk-orders/${orderId}/cancel-order`,
+                        url: `/distributor-orders/${orderId}/cancel-order`,
                         method: 'POST',
                         data: {
                             _token: '{{ csrf_token() }}'
@@ -232,32 +363,6 @@
                         error: function(xhr, status, error) {
                             console.error('Error:', error);
                             alert('An error occurred while cancelling the order.');
-                        }
-                    });
-                }
-            });
-
-            // Handle Confirm Delivery button click
-            $('#retailer-orders-table').on('click', '.confirm-delivery-btn', function() {
-                var orderId = $(this).data('id');
-                if (confirm('Are you sure you want to confirm this order as delivered?')) {
-                    $.ajax({
-                        url: `/distributor-bulk-orders/${orderId}/confirm-delivery`,
-                        method: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}'
-                        },
-                        success: function(response) {
-                            if (response.success) {
-                                alert(response.success);
-                                table.draw(); // Redraw the table
-                            } else {
-                                alert(response.error || 'Something went wrong.');
-                            }
-                        },
-                        error: function(xhr, status, error) {
-                            console.error('Error:', error);
-                            alert('An error occurred while confirming delivery.');
                         }
                     });
                 }

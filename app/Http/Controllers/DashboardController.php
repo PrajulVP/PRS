@@ -10,7 +10,7 @@ use App\Models\Product;
 use App\Models\PermissionCategory;
 
 use App\Models\RetailerOrder;
-use App\Models\DistributorOrder;
+use App\Models\distributorOrder;
 
 use App\Models\FieldStaff;
 use App\Models\Retailer;
@@ -27,7 +27,7 @@ class DashboardController extends Controller
             $totalRoles = Role::count();
             $totalProducts = Product::count();
             $totalPermissions = PermissionCategory::count();
-            $totalOrders = RetailerOrder::count() + DistributorOrder::count();
+            $totalOrders = RetailerOrder::count() + distributorOrder::count();
 
             $overallTargetAmount = \App\Models\SalesTarget::sum('amount');
             $overallAchievedAmount = RetailerOrder::sum('total_amount');
@@ -38,7 +38,7 @@ class DashboardController extends Controller
         if ($user->hasRole('admin')) {
             $totalUsers = User::count();
             $totalProducts = Product::count();
-            $totalOrders = RetailerOrder::count() + DistributorOrder::count();
+            $totalOrders = RetailerOrder::count() + distributorOrder::count();
 
             $overallTargetAmount = \App\Models\SalesTarget::sum('amount');
             $overallAchievedAmount = RetailerOrder::sum('total_amount');
@@ -87,7 +87,7 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         $retailerOrders = RetailerOrder::query();
-        $distributorOrders = DistributorOrder::query();
+        $distributorOrders = distributorOrder::query();
 
         if ($user->hasRole('salesmanager')) {
             $managerFieldStaffIds = $user->salesManager->fieldStaffs->pluck('id');
@@ -119,7 +119,7 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         $retailerOrders = RetailerOrder::query();
-        $distributorOrders = DistributorOrder::query();
+        $distributorOrders = distributorOrder::query();
 
         if ($user->hasRole('salesmanager')) {
             $managerFieldStaffIds = $user->salesManager->fieldStaffs->pluck('id');
@@ -147,7 +147,7 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         $retailerOrders = RetailerOrder::query();
-        $distributorOrders = DistributorOrder::query();
+        $distributorOrders = distributorOrder::query();
 
         if ($user->hasRole('salesmanager')) {
             $managerFieldStaffIds = $user->salesManager->fieldStaffs->pluck('id');

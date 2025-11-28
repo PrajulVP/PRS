@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class DistributorOrderItem extends Model
+class distributorOrderItem extends Model
 {
     protected $fillable = [
         'distributor_order_id',
@@ -17,7 +17,7 @@ class DistributorOrderItem extends Model
 
     public function distributorOrder(): BelongsTo
     {
-        return $this->belongsTo(DistributorOrder::class);
+        return $this->belongsTo(distributorOrder::class);
     }
 
     public function product(): BelongsTo

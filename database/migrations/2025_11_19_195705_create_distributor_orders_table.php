@@ -20,7 +20,6 @@ return new class extends Migration
             $table->integer('total_quantity')->default(0); // Added, with default
             $table->enum('status', ['pending', 'accepted', 'dispatched', 'delivered'])->default('pending');
             $table->timestamp('placed_at')->nullable();
-            $table->text('notes')->nullable();
             $table->text('delivery_notes')->nullable();
             $table->timestamps();
         });

@@ -38,7 +38,7 @@
                     <table id="areas-table" class="table table-striped table-hover display">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>No.</th>
                                 <th>Area Name</th>
                                 <th>District</th>
                                 <th class="text-center">Actions</th>
@@ -156,36 +156,38 @@ $(function () {
             { extend: 'print', className: 'btn btn-sm btn-outline-info' },
         ],
         columns: [
-            { data: 'id' },
+            { data: 'id',
+              orderable: false,
+              searchable: false,
+              render: function (data, type, row, meta) {
+                    return meta.row + meta.settings._iDisplayStart + 1;
+                }
+            },
             { data: 'name' },
             { data: 'district_name' },
             {
                 data: null,
                 className: "text-center",
-                render: function(row){
+                render: function(row) {
                     return `
                         <div class="d-flex justify-content-center align-items-center">
-                            {{-- Edit Button --}}
-                            <button class="btn btn-sm btn-success rounded me-1 editAreaBtn"
+
+                            <!-- Small Edit Button -->
+                            <button 
+                                class="btn btn-primary btn-sm px-2 py-1 me-1 editAreaBtn"
                                 data-id="${row.id}"
                                 data-name="${row.name}"
-                                data-district="${row.district_id}"
-                                title="Edit Area"
-                                style="width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center;">
-                                <i data-feather="edit" style="width:20px; height:18px;"></i>
+                                data-district="${row.district_id}">
+                                Edit
                             </button>
 
-                            {{-- Delete Button --}}
-                            <form method="POST" action="/admin/areas/${row.id}"
-                                style="display:inline-block;"
-                                onsubmit="return confirm('Are you sure you want to delete Area: ${row.name}?');">
-                                
-                                @csrf 
-                                @method('DELETE')
-                                
-                                <button type="submit" class="btn btn-sm btn-danger rounded" title="Delete Area"
-                                    style="width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center;">
-                                    <i data-feather="trash-2" style="width:18px; height:18px;"></i>
+                            <!-- Small Red Delete Button -->
+                            <form method="POST" action="/areas/${row.id}" class="d-inline deleteAreaForm" data-name="${row.name}">
+                                <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="_method" value="DELETE">
+
+                                <button class="btn btn-danger btn-sm px-2 py-1">
+                                    <i class="fa fa-trash"></i>
                                 </button>
                             </form>
                         </div>
@@ -205,10 +207,35 @@ $(function () {
 
         $("#edit_name").val(name);
         $("#edit_district_id").val(district);
-        $("#editAreaForm").attr("action", "{{ url('admin/areas') }}/" + id);
+        $("#editAreaForm").attr("action", "{{ url('areas') }}/" + id);
 
         $("#editAreaModal").modal("show");
     });
+
+    // SweetAlert Delete Confirmation
+    $(document).on("submit", ".deleteAreaForm", function(e){
+        e.preventDefault();  // Stop default form submission
+
+        let form = this;
+        let areaName = $(this).data("name");
+
+        Swal.fire({
+            title: "Delete Area?",
+            text: "Are you sure you want to delete: " + areaName + "?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#6c757d",
+            confirmButtonText: "Yes, Delete",
+            cancelButtonText: "Cancel"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit(); // Submit the form if confirmed
+            }
+        });
+    });
+
 });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @endpush

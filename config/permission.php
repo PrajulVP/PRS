@@ -68,7 +68,7 @@ return [
          * basic default value but you may easily change it to any table you like.
          */
 
-        'role_has_permissions' => 'spatie_role_has_permissions',
+        'roles_permissions' => 'spatie_roles_permissions',
     ],
 
     'column_names' => [

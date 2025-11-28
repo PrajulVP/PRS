@@ -6,9 +6,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str; // Import Str facade
 
-class DistributorOrder extends Model
+class distributorOrder extends Model
 {
     protected $table = 'distributor_orders';
+
+    const STATUS_PENDING = 'pending';
+    const STATUS_ACCEPTED_BY_SALES_MANAGER = 'accepted_by_sales_manager';
+    const STATUS_DELIVERED = 'delivered'; // Admin accepted
+    const STATUS_CANCELLED = 'cancelled';
+    const STATUS_CANCELLATION_REQUESTED = 'cancellation_requested';
 
     protected $fillable = [
         'order_code',
@@ -20,6 +26,8 @@ class DistributorOrder extends Model
         'notes',
         'delivery_notes',
         'distributor_id',
+        'sales_manager_id', // New field
+        'cancellation_reason', // New field
     ];
 
     protected $casts = [
@@ -33,18 +41,24 @@ class DistributorOrder extends Model
         static::creating(function ($order) {
             do {
                 $orderCode = 'DO-' . Str::upper(Str::random(6)); // Example: DO-A1B2C3
-            } while (DistributorOrder::where('order_code', $orderCode)->exists());
+            } while (distributorOrder::where('order_code', $orderCode)->exists());
             $order->order_code = $orderCode;
+            $order->status = self::STATUS_PENDING; // Ensure default status
         });
     }
 
     public function items(): HasMany
     {
-        return $this->hasMany(DistributorOrderItem::class);
+        return $this->hasMany(distributorOrderItem::class);
     }
 
     public function distributor(): BelongsTo
     {
         return $this->belongsTo(Distributor::class);
+    }
+
+    public function salesManager(): BelongsTo
+    {
+        return $this->belongsTo(SalesManager::class, 'sales_manager_id');
     }
 }

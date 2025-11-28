@@ -73,6 +73,21 @@
                                 </div>
 
                                 <div class="mb-3">
+                                    <label class="form-label">Sales Manager</label>
+                                    <select name="sales_manager_id" id="sales_manager_id" class="form-select" required>
+                                        <option value="">Select Sales Manager</option>
+                                        @foreach($salesManagers as $salesManager)
+                                            <option value="{{ $salesManager->id }}" {{ old('sales_manager_id') == $salesManager->id ? 'selected' : '' }}>
+                                                {{ $salesManager->user->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('sales_manager_id')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="mb-3">
                                     <label class="form-label">Pincode</label>
                                     <input type="text" name="pincode" class="form-control" value="{{ old('pincode') }}" required>
                                 </div>

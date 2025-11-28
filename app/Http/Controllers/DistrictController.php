@@ -9,20 +9,48 @@ use Illuminate\Validation\Rule;
 class DistrictController extends Controller
 {
     // Display list (API or web)
-    public function index(Request $request) {
-        $districts = District::with('areas')->get();
+    public function index(Request $request)
+    {
+        if ($request->ajax()) {
+            $query = District::query();
 
-        if ($request->wantsJson()) {
+            if ($search = $request->input('search.value')) {
+                $query->where('name', 'like', "%{$search}%");
+            }
+
+            $totalData = District::count();
+            $totalFiltered = $query->count();
+
+            if ($order = $request->input('order.0')) {
+                $columnIndex = $order['column'];
+                $dir = $order['dir'];
+                $columns = ['id', 'name']; // map your columns
+                $query->orderBy($columns[$columnIndex], $dir);
+            }
+
+            $start = $request->input('start', 0);
+            $length = $request->input('length', 10);
+            $districts = $query->offset($start)->limit($length)->get();
+
+            $data = $districts->map(function ($d) {
+                return [
+                    'id' => $d->id,
+                    'name' => $d->name,
+                ];
+            });
+
             return response()->json([
-                'status'=>true,
-                'message'=>'District list fetched',
-                'data'=>$districts
+                'draw' => intval($request->input('draw')),
+                'recordsTotal' => $totalData,
+                'recordsFiltered' => $totalFiltered,
+                'data' => $data,
             ]);
         }
 
-        // For web view
-        return view('admin.districts.index', compact('districts'));
+        return view('admin.districts.index');
     }
+
+
 
     public function create()
     {

@@ -19,60 +19,26 @@
                     @endif
 
                     <div class="table-responsive">
-                        <table class="table table-bordered table-striped">
+                        <table class="table table-bordered table-striped" id="distributors-table">
                             <thead>
                                 <tr>
+                                    <th>No.</th>
                                     <th>Name</th>
+                                    <th>Email</th>
                                     <th>GST</th>
                                     <th>Drug License No</th>
                                     <th>Contact No</th>
                                     <th>Address</th>
-                                    <th>Pincode</th>
                                     <th>District</th>
                                     <th>Area</th>
+                                    <th>Pincode</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($distributors as $distributor)
-                                <tr>
-                                    <td>{{ $distributor->name }}</td>
-                                    <td>{{ $distributor->gst }}</td>
-                                    <td>{{ $distributor->drug_license_no }}</td>
-                                    <td>{{ $distributor->contact_no }}</td>
-                                    <td>{{ $distributor->address }}</td>
-                                    <td>{{ $distributor->pincode }}</td>
-                                    <td>{{ $distributor->district->name ?? 'N/A' }}</td>
-                                    <td>{{ $distributor->area->name ?? '-' }}</td>
-                                    <td>
-                                        <a href="{{ route('admin.distributors.show', $distributor->id) }}" class="btn btn-sm btn-secondary me-1">
-                                            <i class="fa fa-eye me-1"></i> View
-                                        </a>
-                                        <a href="{{ route('admin.distributors.edit', $distributor->id) }}" class="btn btn-sm btn-primary">
-                                            <i class="fa fa-edit me-1"></i> Edit
-                                        </a>
-                                        <form action="{{ route('admin.distributors.destroy', $distributor->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger">
-                                                <i class="fa fa-trash me-1"></i> Delete
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="9" class="text-center text-muted py-5">
-                                        <i class="fa fa-box-open fa-2x mb-3"></i>
-                                        <p>No distributors found.</p>
-                                    </td>
-                                </tr>
-                                @endforelse
+                               
                             </tbody>
                         </table>
-                    </div>
-                    <div class="mt-3">
-                        {{ $distributors->links() }}
                     </div>
                 </div>
             </div>
@@ -81,3 +47,66 @@
     </div>
 </div>
 @endsection
+
+@push('styles')
+    <!-- DataTables with Bootstrap 5 -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+@endpush
+
+@push('scripts')
+    <!-- DataTables Bootstrap 5 -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+    <!-- DataTables Buttons -->
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
+    <script>
+        $('#distributors-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "{{ route('admin.distributors.index') }}",
+            type: 'GET'
+        },
+        columns: [
+            { data: null,
+                orderable: false,
+                searchable: false,
+                render: function (data, type, row, meta) {
+                    return meta.row + 1; // Generates serial number based on row index
+                }
+            },
+            { data: 'name', name: 'name' },
+            { data: 'user.email', name: 'user.email' },
+            { data: 'gst', name: 'gst' },
+            { data: 'drug_license_no', name: 'drug_license_no' },
+            { data: 'contact_no', name: 'contact_no' },
+            { data: 'address', name: 'address' },
+            { data: 'district.name', name: 'district.name' },
+            { data: 'area.name', name: 'area.name' },
+            { data: 'pincode', name: 'pincode' },
+            { data: 'action', name: 'action', orderable: false, searchable: false }
+        ],
+        dom: "<'row mb-3'<'col-sm-12'B>>" + 
+                            "<'row mb-3 d-flex align-items-center'<'col-md-6 d-flex justify-content-start'f><'col-md-6 d-flex justify-content-end text-end'l>>" +
+                            "rtip",
+        buttons: [
+            { extend: 'copy', className: 'btn btn-primary btn-sm' },
+            { extend: 'csv', className: 'btn btn-sm' },
+            { extend: 'excel', className: 'btn btn-sm' },
+            { extend: 'pdf', className: 'btn btn-sm' },
+            { extend: 'print', className: 'btn btn-sm' },
+        ]
+    });
+
+    </script>
+
+@endpush

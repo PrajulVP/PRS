@@ -13,9 +13,19 @@ use App\Models\SalesManager;
 use App\Models\FieldStaff;
 use Illuminate\Support\Facades\Auth;
 
+use DataTables;
+
 class RetailerController extends Controller
 {
-    public function index()
+    public function index(Request $request)
+    {
+        if ($request->ajax()) {
+            return $this->getRetailersData();
+        }
+        return view('admin.retailers.index');
+    }
+
+    private function getRetailersData()
     {
         $query = Retailer::with('user', 'distributor.user', 'fieldStaff.user', 'salesManager.user');
 
@@ -37,8 +47,30 @@ class RetailerController extends Controller
             }
         }
 
-        $retailers = $query->latest()->paginate(10);
-        return view('admin.retailers.index', compact('retailers'));
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->addColumn('action', function($row){
+                $editUrl = route('admin.retailers.edit', $row->id);
+                $showUrl = route('admin.retailers.show', $row->id);
+                $deleteUrl = route('admin.retailers.destroy', $row->id);
+                $btn = '<div class="d-flex align-items-center gap-1">';
+                $btn .= '<a href="'.$editUrl.'" class="btn btn-primary btn-sm px-3">
+                            <i class="fa fa-edit"></i>
+                        </a>';
+                $btn .= '<a href="'.$showUrl.'" class="btn btn-info btn-sm px-3">
+                            <i class="fa fa-eye"></i>
+                        </a>';
+                $btn .= '<form action="'.$deleteUrl.'" method="POST" onsubmit="return confirm(\'Are you sure?\')" class="m-0 p-0">
+                            '.csrf_field().method_field('DELETE').'
+                            <button type="submit" class="btn btn-danger btn-sm px-3">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </form>';
+                $btn .= '</div>';
+                return $btn;
+            })
+            ->rawColumns(['action'])
+            ->make(true);
     }
 
     public function show(Retailer $retailer)

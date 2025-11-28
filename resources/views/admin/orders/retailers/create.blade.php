@@ -14,7 +14,7 @@
                     </div>
                     @endif
 
-                    <form action="{{ $orderType == 'retailer' ? route('retailer.orders.store') : route('distributor-bulk-orders.store') }}" method="POST" enctype="multipart/form-data">
+                    <form action="{{ $orderType == 'retailer' ? route('retailer.orders.store') : route('distributor-orders.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
                         @if($orderType == 'distributor')
@@ -93,6 +93,10 @@
                         <div class="mb-3">
                             <label>Notes</label>
                             <textarea name="notes" class="form-control">{{ old('notes') }}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label>Delivery Notes</label>
+                            <textarea name="delivery_notes" class="form-control">{{ old('delivery_notes') }}</textarea>
                         </div>
 
                         <button class="btn btn-success">Create {{ ucfirst($orderType) }} Order</button>

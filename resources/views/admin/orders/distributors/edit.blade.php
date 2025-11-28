@@ -5,7 +5,7 @@
         <div class="col-md-10 p-4">
             <div class="card">
                 <div class="card-header">
-                    <h5>Edit Order #{{ $distributorBulkOrder->order_code }}</h5>
+                    <h5>Edit Order #{{ $distributorOrder->order_code }}</h5>
                 </div>
                 <div class="card-body">
                     @if($errors->any())
@@ -14,7 +14,7 @@
                     </div>
                     @endif
 
-                    <form action="{{ route('distributor-bulk-orders.update', $distributorBulkOrder->id) }}" method="POST">
+                    <form action="{{ route('distributor-orders.update', $distributorOrder->id) }}" method="POST">
                         @csrf
                         @method('PUT')
 
@@ -24,8 +24,8 @@
                             <select class="form-select" id="distributor_select" name="distributor_id" required>
                                 <option value="">Select Distributor</option>
                                 @foreach($distributors as $distributor)
-                                    <option value="{{ $distributor->id }}" {{ (old('distributor_id', $distributorBulkOrder->distributor_id) == $distributor->id) ? 'selected' : '' }}>
-                                        {{ $distributor->user->name }} ({{ $distributor->company_name }})
+                                    <option value="{{ $distributor->id }}" {{ (old('distributor_id', $distributorOrder->distributor_id) == $distributor->id) ? 'selected' : '' }}>
+                                        {{ $distributor->user->name }} {{ $distributor->company_name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -36,20 +36,6 @@
                         @else
                         <input type="hidden" name="distributor_id" value="{{ Auth::user()->distributor->id }}">
                         @endif
-
-                        <div class="mb-3">
-                            <label for="status">Order Status</label>
-                            <select name="status" class="form-select" id="status" required>
-                                @foreach(['pending', 'accepted', 'dispatched', 'delivered', 'cancelled'] as $statusOption)
-                                    <option value="{{ $statusOption }}" {{ (old('status', $distributorBulkOrder->status) == $statusOption) ? 'selected' : '' }}>
-                                        {{ ucfirst($statusOption) }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('status')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
 
                         <div class="mb-3">
                             <label for="product_select">Add Product to Order</label>
@@ -99,13 +85,8 @@
                         </div>
 
                         <div class="mb-3">
-                            <label>Notes</label>
-                            <textarea name="notes" class="form-control">{{ old('notes', $distributorBulkOrder->notes) }}</textarea>
-                        </div>
-
-                        <div class="mb-3">
                             <label>Delivery Notes</label>
-                            <textarea name="delivery_notes" class="form-control">{{ old('delivery_notes', $distributorBulkOrder->delivery_notes) }}</textarea>
+                            <textarea name="delivery_notes" class="form-control">{{ old('delivery_notes', $distributorOrder->delivery_notes) }}</textarea>
                         </div>
 
                         <button class="btn btn-success">Update Order</button>
@@ -124,7 +105,7 @@
         var orderItems = {}; // Stores product_id => {product, quantity, unitPrice, total, order_item_id (if existing)}
 
         // Populate orderItems with existing order items
-        @foreach($distributorBulkOrder->items as $item)
+        @foreach($distributorOrder->items as $item)
             if (products[{{ $item->product_id }}]) {
                 orderItems[{{ $item->product_id }}] = {
                     product: products[{{ $item->product_id }}],

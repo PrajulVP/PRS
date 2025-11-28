@@ -24,7 +24,7 @@
                         @include('layouts.partials.footer')
                     </div>    </div>
     @include('layouts.partials.scripts')
-    <script src="{{ asset('admin/assets/js/datatables-custom-config.js') }}"></script>
+  
     @stack('scripts')
     @else
         {{-- If NOT authenticated as any role → show only login content --}}

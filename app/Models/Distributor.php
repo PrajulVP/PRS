@@ -21,6 +21,7 @@ class Distributor extends Model
         'pincode',
         'district_id',
         'area_id',
+        'sales_manager_id', // New field
     ];
 
     public function user()
@@ -38,9 +39,14 @@ class Distributor extends Model
         return $this->belongsTo(Area::class);
     }
 
+    public function salesManager()
+    {
+        return $this->belongsTo(SalesManager::class);
+    }
+
     public function distributorOrders(): HasMany
     {
-        return $this->hasMany(DistributorOrder::class);
+        return $this->hasMany(distributorOrder::class);
     }
 
     public function retailerOrders(): HasMany

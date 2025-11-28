@@ -108,43 +108,12 @@
                     <table id="districtTable" class="table table-striped table-hover table-sm display w-100">
                         <thead>
                             <tr>
-                                <th width="5%">ID</th>
+                                <th>no.</th>
                                 <th>Name</th>
-                                <th width="25%" class="text-center">Actions</th>
+                                <th class="text-center">Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            @foreach($districts as $district)
-                            <tr>
-                                <td>{{ $district->id }}</td>
-                                <td>{{ $district->name }}</td>
-                                <td class="text-center">
-
-                                    <!-- Small Edit Button -->
-                                    <button 
-                                        class="btn btn-primary btn-sm px-2 py-1 editBtn"
-                                        data-id="{{ $district->id }}"
-                                        data-name="{{ $district->name }}">
-                                        Edit
-                                    </button>
-
-                                    <!-- Small Red Delete Button -->
-                                    <form action="{{ route('districts.destroy',$district->id) }}" 
-                                        method="POST" class="d-inline">
-                                        @csrf 
-                                        @method('DELETE')
-
-                                        <button class="btn btn-danger btn-sm px-2 py-1"
-                                                onclick="return confirm('Delete this district?')">
-                                            Delete
-                                        </button>
-                                    </form>
-
-                                </td>
-
-                            </tr>
-                            @endforeach
-                        </tbody>
+                        <tbody></tbody>
                     </table>
 
                 </div>
@@ -161,8 +130,8 @@
         <form method="POST" id="editDistrictForm" class="modal-content">
             @csrf @method('PUT')
 
-            <div class="modal-header bg-primary text-white py-2">
-                <h6 class="modal-title">Edit District</h6>
+            <div class="modal-header bg-primary py-2">
+                <h6 class="modal-title text-white">Edit District</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
@@ -180,38 +149,87 @@
 </div>
 @endsection
 
-
 @push('scripts')
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-$(function () {
-
-    $('#districtTable').DataTable({
-        dom: "<'row mb-2 d-flex align-items-center'<'col-md-6 d-flex'l><'col-md-6 d-flex justify-content-end'f>>" +
-            "<'row mb-2'<'col-md-12'B>>" +
-            "rtip",
-
+$(document).ready(function() {
+    let table = $('#districtTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: "{{ route('districts.index') }}",
+        columns: [
+            {
+                data: null,
+                orderable: false,
+                searchable: false,
+                render: function(data, type, row, meta) {
+                    // Serial number across pagination
+                    return meta.row + meta.settings._iDisplayStart + 1;
+                }
+            },
+            { data: 'name' },
+            {
+                data: null,
+                orderable: false,
+                searchable: false,
+                className: 'text-center',
+                render: function(row) {
+                    return `
+                        <button class="btn btn-primary btn-sm editBtn px-2 py-1" 
+                                data-id="${row.id}" 
+                                data-name="${row.name}">
+                            Edit
+                        </button>
+                        <form method="POST" action="/districts/${row.id}" class="d-inline deleteDistrictForm">
+                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="_method" value="DELETE">
+                            <button class="btn btn-danger btn-sm px-2 py-1" type="submit"><i class="fa fa-trash"></i></button>
+                        </form>
+                    `;
+                }
+            }
+        ],
+        dom: 'Bfrtip',
         buttons: [
-            { extend: 'csv', className: 'btn btn-outline-secondary btn-sm' },
-            { extend: 'excel', className: 'btn btn-outline-success btn-sm' },
-            { extend: 'pdf', className: 'btn btn-outline-danger btn-sm' },
-            { extend: 'print', className: 'btn btn-outline-info btn-sm' },
+            { extend: 'csv', className: 'btn btn-sm btn-outline-secondary' },
+            { extend: 'excel', className: 'btn btn-sm btn-outline-success' },
+            { extend: 'pdf', className: 'btn btn-sm btn-outline-danger' },
+            { extend: 'print', className: 'btn btn-sm btn-outline-info' },
         ]
     });
 
-    // Open edit modal
-    $('.editBtn').click(function() {
+    // Open edit modal (works on all pages)
+    $(document).on('click', '.editBtn', function() {
         let id = $(this).data('id');
         let name = $(this).data('name');
 
         $('#edit_name').val(name);
-        $('#editDistrictForm').attr('action', `/admin/districts/${id}`);
+        $('#editDistrictForm').attr('action', `/districts/${id}`);
 
         new bootstrap.Modal('#editDistrictModal').show();
-    });
+    }); 
 
+    // Delete confirmation
+    $(document).on('submit', '.deleteDistrictForm', function(e) {
+        e.preventDefault();
+        let form = this;
+        Swal.fire({
+            title: 'Delete District?',
+            text: 'Are you sure you want to delete this district?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) form.submit();
+        });
+    });
 });
 </script>
 @endpush

@@ -7,13 +7,46 @@ use App\Models\SalesManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
+use DataTables;
 
 class SalesManagerController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $salesManagers = SalesManager::with('user')->latest()->paginate(10);
-        return view('admin.salesmanagers.index', compact('salesManagers'));
+        if ($request->ajax()) {
+            return $this->getSalesManagersData();
+        }
+        return view('admin.salesmanagers.index');
+    }
+
+    private function getSalesManagersData()
+    {
+        $data = SalesManager::with('user')->select('sales_managers.*');
+
+        return DataTables::of($data)
+            ->addIndexColumn()
+            ->addColumn('action', function($row){
+                $editUrl = route('admin.salesmanagers.edit', $row->id);
+                $showUrl = route('admin.salesmanagers.show', $row->id);
+                $deleteUrl = route('admin.salesmanagers.destroy', $row->id);
+                $btn = '<div class="d-flex align-items-center gap-1">';
+                $btn .= '<a href="'.$editUrl.'" class="btn btn-primary btn-sm px-3">
+                            <i class="fa fa-edit"></i>
+                        </a>';
+                $btn .= '<a href="'.$showUrl.'" class="btn btn-info btn-sm px-3">
+                            <i class="fa fa-eye"></i>
+                        </a>';
+                $btn .= '<form action="'.$deleteUrl.'" method="POST" onsubmit="return confirm(\'Are you sure?\')" class="m-0 p-0">
+                            '.csrf_field().method_field('DELETE').'
+                            <button type="submit" class="btn btn-danger btn-sm px-3">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </form>';
+                $btn .= '</div>';
+                return $btn;
+            })
+            ->rawColumns(['action'])
+            ->make(true);
     }
 
     public function show(SalesManager $salesManager)

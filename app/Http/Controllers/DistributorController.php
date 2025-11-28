@@ -8,13 +8,48 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\District;
 use App\Models\Distributor; // Added
+use App\Models\SalesManager; // Added
+use Yajra\DataTables\DataTables;
+
 
 class DistributorController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $distributors = Distributor::with('user', 'district', 'area')->latest()->paginate(10); // Changed
-        return view('admin.distributors.index', compact('distributors'));
+        if ($request->ajax()) {
+            return $this->getDistributorsData();
+        }
+        return view('admin.distributors.index');
+    }
+
+    private function getDistributorsData()
+    {
+        $data = Distributor::with('user', 'district', 'area', 'salesManager.user')->select('distributors.*');
+
+        return DataTables::of($data)
+            ->addIndexColumn()
+            ->addColumn('action', function($row){
+                $editUrl = route('admin.distributors.edit', $row->id);
+                $showUrl = route('admin.distributors.show', $row->id);
+                $deleteUrl = route('admin.distributors.destroy', $row->id);
+                $btn = '<div class="d-flex align-items-center gap-1">';
+                $btn .= '<a href="'.$editUrl.'" class="btn btn-primary btn-sm px-3">
+                            <i class="fa fa-edit"></i>
+                        </a>';
+                $btn .= '<a href="'.$showUrl.'" class="btn btn-info btn-sm px-3">
+                            <i class="fa fa-eye"></i>
+                        </a>';
+                $btn .= '<form action="'.$deleteUrl.'" method="POST" onsubmit="return confirm(\'Are you sure?\')" class="m-0 p-0">
+                            '.csrf_field().method_field('DELETE').'
+                            <button type="submit" class="btn btn-danger btn-sm px-3">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </form>';
+                $btn .= '</div>';
+                return $btn;
+            })
+            ->rawColumns(['action'])
+            ->make(true);
     }
 
     public function show(Distributor $distributor)
@@ -26,7 +61,8 @@ class DistributorController extends Controller
     public function create()
     {
         $districts = District::all();
-        return view('admin.distributors.create', compact('districts'));
+        $salesManagers = SalesManager::with('user')->get(); // Fetch sales managers
+        return view('admin.distributors.create', compact('districts', 'salesManagers'));
     }
 
     public function store(Request $request)
@@ -46,6 +82,7 @@ class DistributorController extends Controller
             'pincode' => 'required',
             'district_id' => 'required|exists:districts,id',
             'area_id' => 'required|exists:areas,id',
+            'sales_manager_id' => 'required|exists:sales_managers,id', // New validation
         ]);
 
         $user = User::create([
@@ -59,16 +96,18 @@ class DistributorController extends Controller
 
         $distributor = new Distributor($distributorData);
         $distributor->user_id = $user->id;
+        $distributor->sales_manager_id = $distributorData['sales_manager_id']; // Assign sales manager
         $distributor->save();
 
-        return redirect()->route(route: 'admin.distributors.index')->with('success', 'Distributor added successfully!');
+        return redirect()->route('admin.distributors.index')->with('success', 'Distributor added successfully!');
     }
 
     public function edit(Distributor $distributor)
     {
         $districts = District::all();
         $areas = Area::where('district_id', $distributor->district_id)->get();
-        return view('admin.distributors.edit', compact('distributor','districts','areas'));
+        $salesManagers = SalesManager::with('user')->get(); // Fetch sales managers
+        return view('admin.distributors.edit', compact('distributor','districts','areas', 'salesManagers'));
     }
 
     public function update(Request $request, Distributor $distributor)
@@ -88,6 +127,7 @@ class DistributorController extends Controller
             'pincode' => 'required',
             'district_id' => 'required|exists:districts,id',
             'area_id' => 'required|exists:areas,id',
+            'sales_manager_id' => 'required|exists:sales_managers,id', // New validation
         ]);
 
         $userUpdateData = [
@@ -100,7 +140,7 @@ class DistributorController extends Controller
         }
         $distributor->user->update($userUpdateData);
 
-        $distributor->update($distributorData);
+        $distributor->update(array_merge($distributorData, ['sales_manager_id' => $distributorData['sales_manager_id']])); // Update sales manager
 
         return redirect()->route('admin.distributors.index')->with('success','Distributor updated successfully!');
     }

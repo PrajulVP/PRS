@@ -98,7 +98,7 @@
                             </div>
                         </div>
 
-                        <button class="btn btn-success">Create Retailer</button>
+                        <button class="btn btn-primary">Create Retailer</button>
                     </form>
                 </div>
             </div>

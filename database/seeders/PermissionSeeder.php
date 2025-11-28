@@ -173,7 +173,7 @@ class PermissionSeeder extends Seeder
             }
         }
 
-        // Populate spatie_role_has_permissions table based on custom roles_permissions
+        // Populate spatie_roles_permissions table based on custom roles_permissions
         $roles = \App\Models\Role::all();
         $actions = ['view', 'add', 'edit', 'delete'];
 
@@ -353,7 +353,7 @@ class PermissionSeeder extends Seeder
             }
         }
 
-        // Populate spatie_role_has_permissions table based on custom roles_permissions
+        // Populate spatie_roles_permissions table based on custom roles_permissions
         $roles = \App\Models\Role::all();
         $actions = ['view', 'add', 'edit', 'delete'];
 

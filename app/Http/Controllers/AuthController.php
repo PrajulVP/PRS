@@ -11,6 +11,16 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
+/**
+ * @OA\Info(
+ *      version="1.0.0",
+ *      title="PRS API",
+ *      description="API documentation for the PRS application.",
+ *      @OA\Contact(
+ *          email="support@prs.com"
+ *      )
+ * )
+ */
 class AuthController extends Controller
 {
     /**
@@ -124,8 +134,37 @@ class AuthController extends Controller
     }
 
     /**
-     * API: Login using JWT. Returns token + user.
-     * POST /api/login  { email, password }
+     * @OA\Post(
+     *     path="/api/login",
+     *     summary="Authenticate user and get JWT token",
+     *     tags={"Auth"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email","password"},
+     *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
+     *             @OA\Property(property="password", type="string", format="password", example="password")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful login",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="access_token", type="string"),
+     *             @OA\Property(property="token_type", type="string", example="bearer"),
+     *             @OA\Property(property="expires_in", type="integer", example=3600),
+     *             @OA\Property(property="user", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Invalid credentials"
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     )
+     * )
      */
     public function apiLogin(Request $request)
     {
@@ -159,7 +198,16 @@ class AuthController extends Controller
     }
 
     /**
-     * API: get profile (protected)
+     * @OA\Get(
+     *     path="/api/profile",
+     *     summary="Get authenticated user profile",
+     *     tags={"Auth"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="User profile data"
+     *     )
+     * )
      */
     public function apiProfile(Request $request)
     {
@@ -167,7 +215,16 @@ class AuthController extends Controller
     }
 
     /**
-     * API: logout — invalidate token
+     * @OA\Post(
+     *     path="/api/logout",
+     *     summary="Logout user and invalidate token",
+     *     tags={"Auth"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successfully logged out"
+     *     )
+     * )
      */
     public function apiLogout(Request $request)
     {

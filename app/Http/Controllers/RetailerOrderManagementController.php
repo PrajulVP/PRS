@@ -131,7 +131,7 @@ class RetailerOrderManagementController extends Controller
             return ['id' => $fieldstaff->id, 'name' => $fieldstaff->user->name];
         });
 
-        return view('admin.orders.index', compact('fieldstaffs'));
+        return view('admin.orders.retailers.index', compact('fieldstaffs'));
     }
 
     // Admin: show create form
@@ -147,11 +147,11 @@ class RetailerOrderManagementController extends Controller
 
     //     $distributorProducts = $retailer->distributor->products; // Get products associated with the retailer's distributor
 
-    //     return view('admin.orders.create', ['products' => $distributorProducts])->with('orderType', 'retailer');
+    //     return view('admin.orders.retailers.create', ['products' => $distributorProducts])->with('orderType', 'retailer');
     // }
 
     // Admin: store order
-    // public function store(Request $request) // Changed request type from StoreDistributorOrderRequest to Request
+    // public function store(Request $request) // Changed request type from StoredistributorOrderRequest to Request
     // {
     //     $request->validate([
     //         'product_id' => 'required|exists:products,id',
@@ -280,7 +280,7 @@ class RetailerOrderManagementController extends Controller
             ]);
         }
 
-        return view('admin.orders.manager_index');
+        return view('admin.orders.retailers.manager_index');
     }
 
     // Manager: assign order to distributor
@@ -382,7 +382,7 @@ class RetailerOrderManagementController extends Controller
         $distributor = Auth::guard('web')->user()->load('distributor')->distributor;
         // Removed $fieldstaffs query as per user's clarification: "no conncetion with distribnutor in fieldfstaffs table"
 
-        return view('admin.orders.distributor_retailer_orders_index');
+        return view('admin.orders.retailers.index');
     }
 
     // Field Staff: list orders assigned to them
@@ -451,7 +451,7 @@ class RetailerOrderManagementController extends Controller
             ]);
         }
 
-        return view('admin.orders.fieldstaff_index');
+        return view('admin.orders.retailers.fieldstaff_index');
     }
 
     // Field Staff: update delivery status
@@ -475,7 +475,7 @@ class RetailerOrderManagementController extends Controller
     public function show(RetailerOrder $retailerOrder)
     {
         $retailerOrder->load(['retailer.user', 'fieldStaff.user', 'items.product']);
-        return view('admin.orders.show', compact('retailerOrder'));
+        return view('admin.orders.retailers.show', compact('retailerOrder'));
     }
 
     public function acceptOrder(RetailerOrder $retailerOrder)
@@ -508,7 +508,7 @@ class RetailerOrderManagementController extends Controller
         $retailerOrder->load(['items.product']);
         $retailers = Retailer::with('user')->get()->sortBy('user.name');
         $products = Product::all(); // All products for selection
-        return view('admin.orders.edit', compact('retailerOrder', 'retailers', 'products'));
+        return view('admin.orders.retailers.edit', compact('retailerOrder', 'retailers', 'products'));
     }
 
     // Admin: update
@@ -519,6 +519,7 @@ class RetailerOrderManagementController extends Controller
             'distributor_id' => 'nullable|exists:distributors,id', // Can be assigned later
             'status' => 'required|in:pending,accepted_by_distributor,assigned_to_fieldstaff,out_for_delivery,delivered,rejected',
             'notes' => 'nullable|string',
+            'delivery_notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
@@ -531,6 +532,7 @@ class RetailerOrderManagementController extends Controller
             'distributor_id' => $request->distributor_id,
             'status' => $request->status,
             'notes' => $request->notes,
+            'delivery_notes' => $request->delivery_notes,
             'delivered_at' => ($request->status === 'delivered') ? now() : null, // Set delivered_at if status is delivered
         ]);
 

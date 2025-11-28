@@ -12,7 +12,7 @@ use App\Http\Controllers\RetailerController;
 use App\Http\Controllers\DistrictController;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\RetailerOrderManagementController;
-use App\Http\Controllers\DistributorBulkOrderController;
+use App\Http\Controllers\distributorOrderController;
 use App\Http\Controllers\RetailerOrderController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PendingApprovalController;
@@ -66,11 +66,13 @@ Route::middleware(['auth:web'])->group(function () {
     Route::resource('retailer-orders-management', RetailerOrderManagementController::class)->except(['create', 'store'])->parameters([
         'retailer-orders-management' => 'retailerOrder'
     ]);
-    Route::post('distributor-bulk-orders/{distributor_bulk_order}/confirm-delivery', [DistributorBulkOrderController::class, 'confirmDelivery'])->name('distributor-bulk-orders.confirmDelivery');
-    Route::post('distributor-bulk-orders/{distributor_bulk_order}/accept-order', [DistributorBulkOrderController::class, 'acceptOrder'])->name('distributor-bulk-orders.accept-order');
-    Route::post('distributor-bulk-orders/{distributor_bulk_order}/cancel-order', [DistributorBulkOrderController::class, 'cancelOrder'])->name('distributor-bulk-orders.cancelOrder');
+    Route::post('distributor-orders/{distributor_order}/accept-by-sales-manager', [distributorOrderController::class, 'acceptBySalesManager'])->name('distributor-orders.accept-by-sales-manager')->middleware('role:salesmanager');
+    Route::post('distributor-orders/{distributor_order}/accept-by-admin', [distributorOrderController::class, 'acceptByAdmin'])->name('distributor-orders.accept-by-admin')->middleware('role:admin');
+    Route::post('distributor-orders/{distributor_order}/request-cancellation', [distributorOrderController::class, 'requestCancellation'])->name('distributor-orders.request-cancellation')->middleware('role:distributor');
+    Route::post('distributor-orders/{distributor_order}/approve-cancellation', [distributorOrderController::class, 'approveCancellation'])->name('distributor-orders.approve-cancellation')->middleware('role:salesmanager');
+    Route::post('distributor-orders/{distributor_order}/cancel-order', [distributorOrderController::class, 'cancelOrder'])->name('distributor-orders.cancel-order')->middleware('role:distributor');
 
-    Route::resource('distributor-bulk-orders', DistributorBulkOrderController::class);
+    Route::resource('distributor-orders', distributorOrderController::class);
     Route::get('admin/retailer-orders/create', [RetailerOrderController::class, 'create'])->name('admin.retailer-orders.create');
     Route::resource('products', ProductController::class);
 
@@ -100,6 +102,8 @@ Route::middleware(['auth:web'])->group(function () {
     Route::get('/get-products/{distributor}', [RetailerOrderManagementController::class, 'getProductsByDistributor'])->name('get-products-by-distributor');
 
     Route::post('admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
+
+
 
     Route::get('pending-approvals', [PendingApprovalController::class, 'index'])->name('pending-approvals');
 

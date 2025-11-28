@@ -19,58 +19,21 @@
                     @endif
 
                     <div class="table-responsive">
-                        <table class="table table-bordered table-striped">
+                        <table class="table table-bordered table-striped" id="sales-managers-table">
                             <thead>
                                 <tr>
+                                    <th>No.</th>
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Contact No</th>
-                                    <th>Status</th>
+                                    <th>Address</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($salesManagers as $salesManager)
-                                <tr>
-                                    <td>{{ $salesManager->name }}</td>
-                                    <td>{{ $salesManager->email }}</td>
-                                    <td>{{ $salesManager->contact_no ?? '-' }}</td>
-                                    <td>
-                                        @if($salesManager->user->status == 'active')
-                                            <span class="badge bg-success">Active</span>
-                                        @else
-                                            <span class="badge bg-warning">Inactive</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <a href="{{ route('admin.salesmanagers.show', $salesManager->id) }}" class="btn btn-sm btn-secondary me-1">
-                                            <i class="fa fa-eye me-1"></i> View
-                                        </a>
-                                        <a href="{{ route('admin.salesmanagers.edit', $salesManager->id) }}" class="btn btn-sm btn-primary">
-                                            <i class="fa fa-edit me-1"></i> Edit
-                                        </a>
-                                        <form action="{{ route('admin.salesmanagers.destroy', $salesManager->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger">
-                                                <i class="fa fa-trash me-1"></i> Delete
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted py-5">
-                                        <i class="fa fa-user-tie fa-2x mb-3"></i>
-                                        <p>No sales managers found.</p>
-                                    </td>
-                                </tr>
-                                @endforelse
+                               
                             </tbody>
                         </table>
-                    </div>
-                     <div class="mt-3">
-                        {{ $salesManagers->links() }}
                     </div>
                 </div>
             </div>
@@ -79,3 +42,61 @@
     </div>
 </div>
 @endsection
+
+@push('styles')
+    <!-- DataTables with Bootstrap 5 -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+@endpush
+
+@push('scripts')
+    <!-- DataTables Bootstrap 5 -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+    <!-- DataTables Buttons -->
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
+    <script>
+        $('#sales-managers-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "{{ route('admin.salesmanagers.index') }}",
+            type: 'GET'
+        },
+        columns: [
+            { data: null,
+                orderable: false,
+                searchable: false,
+                render: function (data, type, row, meta) {
+                    return meta.row + 1; // Generates serial number based on row index
+                }
+            },
+            { data: 'name', name: 'name' },
+            { data: 'user.email', name: 'user.email' },
+            { data: 'contact_no', name: 'contact_no' },
+            { data: 'user.address', name: 'user.address' },
+            { data: 'action', name: 'action', orderable: false, searchable: false }
+        ],
+        dom: "<'row mb-3'<'col-sm-12'B>>" + 
+                            "<'row mb-3 d-flex align-items-center'<'col-md-6 d-flex justify-content-start'f><'col-md-6 d-flex justify-content-end text-end'l>>" +
+                            "rtip",
+        buttons: [
+            { extend: 'copy', className: 'btn btn-primary btn-sm' },
+            { extend: 'csv', className: 'btn btn-sm' },
+            { extend: 'excel', className: 'btn btn-sm' },
+            { extend: 'pdf', className: 'btn btn-sm' },
+            { extend: 'print', className: 'btn btn-sm' },
+        ]
+    });
+
+    </script>
+
+@endpush

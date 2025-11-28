@@ -1,5 +1,28 @@
 @extends('layouts.admin')
 
+<style>
+    /* Flex wrapper for actions */
+    .action-buttons {
+        display: inline-flex !important;
+        align-items: center;
+        gap: 4px;
+        flex-wrap: nowrap;
+    }
+
+    /* Make every child inline-flex (buttons + forms) */
+    .action-buttons > * {
+        display: inline-flex !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Normalize button sizes */
+    .action-buttons .btn {
+        padding: 6px 12px !important;
+        font-size: 0.75rem !important;
+        line-height: 1 !important;
+    }
+</style>
 
 @section('page-body')
 <div class="container-fluid">
@@ -12,14 +35,13 @@
                 </div>
                 <div class="card-body">
                     @if(session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
+                        <div class="alert alert-success">{{ session('success') }}</div>
                     @endif
-
                     <div class="table-responsive">
                         <table class="display table table-striped table-hover" id="products-table">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
+                                    <th>No.</th>
                                     <th>Code</th>
                                     <th>Name</th>
                                     <th>Generic Name</th>
@@ -32,8 +54,7 @@
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                            </tbody>
+                            <tbody></tbody>
                         </table>
                     </div>
                 </div>
@@ -44,117 +65,90 @@
 @endsection
 
 @push('styles')
-    <!-- DataTables with Bootstrap 5 -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
 @endpush
 
 @push('scripts')
-    <!-- DataTables Bootstrap 5 -->
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
 
-    <!-- DataTables Buttons -->
-    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
-
-    <script>
-        $('#products-table').DataTable({
-    processing: true,
-    serverSide: true,
-    ajax: {
-        url: "{{ route('products.index') }}",
-        type: 'GET'
-    },
-    columns: [
-        { data: 'id', name: 'id' },
-        { data: 'product_code', name: 'product_code' },
-        { data: 'product_name', name: 'product_name' },
-        { data: 'generic_name', name: 'generic_name' },
-        { data: 'pack_quantity', name: 'pack_quantity' }, // New column for pack_quantity
-        { 
-            data: 'stock', 
-            name: 'stock',
-            render: function(data, type, row) {
-                var stockValue = parseInt(data);
-                var stockClass = 'stock-out';
-                var statusText = 'Out';
-
-                if (stockValue > 50) {
-                    stockClass = 'stock-in';
-                    statusText = stockValue + ' units';
-                } else if (stockValue > 0) {
-                    stockClass = 'stock-low';
-                    statusText = stockValue + ' units';
+<script>
+$(document).ready(function() {
+    $('#products-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: "{{ route('products.index') }}",
+        order: [[1, 'desc']],
+        columns: [
+            { 
+                data: null,
+                orderable: false,
+                searchable: false,
+                render: function(data, type, row, meta) {
+                    return meta.row + meta.settings._iDisplayStart + 1;
                 }
+            },
+            { data: 'product_code', name: 'product_code' },
+            { data: 'product_name', name: 'product_name' },
+            { data: 'generic_name', name: 'generic_name' },
+            { data: 'pack_quantity', name: 'pack_quantity' },
+            { 
+                data: 'stock',
+                name: 'stock',
+                render: function(data) {
+                    if (data > 50) return `<span class="badge bg-success">${data} units</span>`;
+                    if (data > 0) return `<span class="badge bg-warning">${data} units</span>`;
+                    return `<span class="badge bg-danger">Out</span>`;
+                }
+            },
+            { data: 'batch_no', name: 'batch_no' },
+            { data: 'expiry', name: 'expiry' },
+            { data: 'mrp', name: 'mrp' },
+            { data: 'net_amount', name: 'net_amount' },
+            { 
+                data: 'id',
+                orderable: false,
+                searchable: false,
+                render: function(id) {
+                    let viewUrl = "{{ route('products.show', ':id') }}".replace(':id', id);
+                    let editUrl = "{{ route('products.edit', ':id') }}".replace(':id', id);
+                    let deleteUrl = "{{ route('products.destroy', ':id') }}".replace(':id', id);
+                    let csrf = "{{ csrf_token() }}";
 
-                return `<span class="stock-pill ${stockClass}">${statusText}</span>`;
+                    return `
+                        <div class="action-buttons">
+                            <a href="${viewUrl}" class="btn btn-sm btn-primary"><i class="fa fa-eye"></i></a>
+                            <a href="${editUrl}" class="btn btn-sm btn-primary"><i class="fa fa-edit"></i></a>
+                            <form action="${deleteUrl}" method="POST" onsubmit="return confirm('Are you sure?')">
+                                <input type="hidden" name="_token" value="${csrf}">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
+                            </form>
+                        </div>
+                    `;
+                }
             }
-        },
-        { data: 'batch_no', name: 'batch_no' },
-        { data: 'expiry', name: 'expiry' },
-        { data: 'mrp', name: 'mrp' },
-        { data: 'net_amount', name: 'net_amount' },
-        {
-            data: 'actions',
-            name: 'actions',
-            orderable: false,
-            searchable: false,
-            render: function(data, type, row) {
-                var viewUrl = "{{ route('products.show', ':id') }}".replace(':id', row.id);
-                var editUrl = "{{ route('products.edit', ':id') }}".replace(':id', row.id);
-                var deleteUrl = "{{ route('products.destroy', ':id') }}".replace(':id', row.id);
-                var csrfToken = "{{ csrf_token() }}";
-
-                return `
-                    <div class="table-actions d-flex gap-1">
-
-                        <a href="${viewUrl}" 
-                        class="btn btn-sm btn-icon btn-outline-info" 
-                        title="View">
-                            <i class="fa fa-eye"></i>
-                        </a>
-
-                        <a href="${editUrl}" 
-                        class="btn btn-sm btn-icon btn-outline-primary" 
-                        title="Edit">
-                            <i class="fa fa-edit"></i>
-                        </a>
-
-                        <form action="${deleteUrl}" method="POST" 
-                            onsubmit="return confirm('Are you sure?')" 
-                            class="d-inline">
-                            <input type="hidden" name="_token" value="${csrfToken}">
-                            <input type="hidden" name="_method" value="DELETE">
-
-                            <button type="submit" 
-                                    class="btn btn-sm btn-icon btn-outline-danger" 
-                                    title="Delete">
-                                <i class="fa fa-trash"></i>
-                            </button>
-                        </form>
-
-                    </div>
-
-                `;
-            }
-        }
-    ],
-    dom: "<'row mb-3'<'col-sm-12'B>>" + 
-                        "<'row mb-3 d-flex align-items-center'<'col-md-6 d-flex justify-content-start'f><'col-md-6 d-flex justify-content-end text-end'l>>" +
-                        "rtip",
-    buttons: [
-        { extend: 'copy', className: 'btn btn-primary btn-sm' },
-        { extend: 'csv', className: 'btn btn-sm' },
-        { extend: 'excel', className: 'btn btn-sm' },
-        { extend: 'pdf', className: 'btn btn-sm' },
-        { extend: 'print', className: 'btn btn-sm' },    ]
+        ],
+        dom: "<'row mb-3'<'col-sm-12'B>>" +
+             "<'row mb-3 d-flex align-items-center'<'col-md-6'f><'col-md-6'l>>" +
+             "rtip",
+        buttons: [
+            { extend: 'copy', className: 'btn btn-sm btn-primary' },
+            { extend: 'csv', className: 'btn btn-sm btn-secondary' },
+            { extend: 'excel', className: 'btn btn-sm btn-success' },
+            { extend: 'pdf', className: 'btn btn-sm btn-danger' },
+            { extend: 'print', className: 'btn btn-sm btn-info' }
+        ]
+    });
 });
+</script>
 
-    </script>
 @endpush

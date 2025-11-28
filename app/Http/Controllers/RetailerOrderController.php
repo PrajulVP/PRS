@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\RetailerOrder;
 use App\Models\Retailer;
-use App\Http\Requests\StoreDistributorOrderRequest; // Assuming this request is still relevant or will be adapted
+use App\Http\Requests\StoredistributorOrderRequest; // Assuming this request is still relevant or will be adapted
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -74,14 +74,14 @@ class RetailerOrderController extends Controller
             ]);
         }
 
-        return view('admin.orders.retailer_index');
+        return view('admin.orders.retailers.retailer_index');
     }
 
     public function show(RetailerOrder $retailerOrder)
     {
         $retailerOrder->load('retailer');
         \Illuminate\Support\Facades\Log::info('RetailerOrderController@show: $retailerOrder object', $retailerOrder->toArray());
-        return view('admin.orders.show', compact('retailerOrder'));
+        return view('admin.orders.retailers.show', compact('retailerOrder'));
     }
 
     
@@ -98,7 +98,7 @@ class RetailerOrderController extends Controller
 
         $distributorProducts = $retailer->distributor->products; // Get products associated with the retailer's distributor
 
-        return view('admin.orders.create', ['products' => $distributorProducts])->with('orderType', 'retailer');
+        return view('admin.orders.retailers.create', ['products' => $distributorProducts])->with('orderType', 'retailer');
     }
 
     // Retailer: store order
@@ -106,6 +106,7 @@ class RetailerOrderController extends Controller
     {
         $request->validate([
             'notes' => 'nullable|string',
+            'delivery_notes' => 'nullable|string',
             'prescription_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
@@ -136,6 +137,7 @@ class RetailerOrderController extends Controller
             'status' => 'pending',
             'placed_at' => now(),
             'notes' => $request->notes,
+            'delivery_notes' => $request->delivery_notes,
             'prescription_photo' => $prescriptionPhotoPath,
             'total_amount' => 0, // Initialize to 0, will be updated
             'total_items' => 0,  // Initialize to 0, will be updated

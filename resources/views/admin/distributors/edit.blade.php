@@ -65,10 +65,26 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
+                                <label>Sales Manager</label>
+                                <select name="sales_manager_id" id="sales_manager_id" class="form-select" required>
+                                    <option value="">Select Sales Manager</option>
+                                    @foreach($salesManagers as $salesManager)
+                                        <option value="{{ $salesManager->id }}" {{ $salesManager->id == old('sales_manager_id', $distributor->sales_manager_id) ? 'selected' : '' }}>
+                                            {{ $salesManager->user->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('sales_manager_id')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-6 mb-3">
                                 <label>Address</label>
                                 <textarea name="address" class="form-control" required>{{ old('address', $distributor->address) }}</textarea>
                             </div>
+                        </div>
 
+                        <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label>Pincode</label>
                                 <input type="text" name="pincode" class="form-control" value="{{ old('pincode', $distributor->pincode) }}" required>
