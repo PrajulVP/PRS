@@ -63,17 +63,18 @@ class DistrictController extends Controller
     }
 
     // Store district
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         $validated = $request->validate([
-            'name'=>'required|string|unique:districts,name'
+            'name' => 'required|string|unique:districts,name'
         ]);
         $district = District::create($validated);
 
         if ($request->wantsJson()) {
             return response()->json([
-                'status'=>true,
-                'message'=>'District created successfully',
-                'data'=>$district
+                'status' => true,
+                'message' => 'District created successfully',
+                'data' => $district
             ], 201);
         }
 
@@ -82,14 +83,15 @@ class DistrictController extends Controller
     }
 
     // Show single district
-    public function show(Request $request, District $district) {
+    public function show(Request $request, District $district)
+    {
         $district->load('areas');
 
         if ($request->wantsJson()) {
             return response()->json([
-                'status'=>true,
-                'message'=>'District fetched',
-                'data'=>$district
+                'status' => true,
+                'message' => 'District fetched',
+                'data' => $district
             ]);
         }
 
@@ -97,35 +99,37 @@ class DistrictController extends Controller
     }
 
     // Update district
-    public function update(Request $request, District $district) {
+    public function update(Request $request, District $district)
+    {
         $validated = $request->validate([
-            'name'=>['required','string',Rule::unique('districts','name')->ignore($district->id)]
+            'name' => ['required', 'string', Rule::unique('districts', 'name')->ignore($district->id)]
         ]);
         $district->update($validated);
 
         if ($request->wantsJson()) {
             return response()->json([
-                'status'=>true,
-                'message'=>'District updated successfully',
-                'data'=>$district
+                'status' => true,
+                'message' => 'District updated successfully',
+                'data' => $district
             ]);
         }
 
-        return redirect()->route('districts.index')->with('success','District updated successfully');
+        return redirect()->route('districts.index')->with('success', 'District updated successfully');
     }
 
     // Delete district
-    public function destroy(Request $request, District $district) {
+    public function destroy(Request $request, District $district)
+    {
         $district->delete();
 
         if ($request->wantsJson()) {
             return response()->json([
-                'status'=>true,
-                'message'=>'District deleted',
-                'data'=>null
+                'status' => true,
+                'message' => 'District deleted',
+                'data' => null
             ]);
         }
 
-        return redirect()->route('districts.index')->with('success','District deleted successfully');
+        return redirect()->route('districts.index')->with('success', 'District deleted successfully');
     }
 }
