@@ -21,148 +21,60 @@
 
 <div class="container-fluid">
     <div class="user-profile">
-        <div class="row">
+        <div class="row justify-content-center">
             <!-- User Profile Card -->
-            <div class="col-xl-4">
-                <div class="card hovercard text-center">
-                    <div class="cardheader"></div>
+            <div class="col-xl-6 col-lg-8 col-md-10">
+                <div class="card hovercard text-center profile-card">
+                    <div class="cardheader" style="background-image: url('{{ asset('admin/assets/images/other-images/bg-profile.png') }}'); background-size: cover; height: 155px;"></div>
                     <div class="user-image">
                         <div class="avatar">
-                            <img alt="" src="{{ $user->profile_pic ? asset('storage/' . $user->profile_pic) : asset('admin/assets/images/user/7.jpg') }}">
+                            <img alt="" src="{{ $user->profile_pic ? asset('storage/' . $user->profile_pic) : asset('admin/assets/images/user/7.jpg') }}" class="img-fluid rounded-circle shadow-lg border border-3 border-white">
                         </div>
-                        <div class="icon-wrapper"><i class="icofont icofont-pencil-alt-5"></i></div>
                     </div>
-                    <div class="info">
+                    <div class="info mt-3 p-4">
                         <div class="row">
-                            <div class="col-sm-6 col-lg-4 order-sm-1 order-xl-0">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="ttl-info text-start">
-                                            <h6><i class="fa fa-envelope"></i> Email</h6><span>{{ $user->email }}</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="ttl-info text-start">
-                                            <h6><i class="fa fa-calendar"></i> Joined</h6><span>{{ $user->created_at->format('d M Y') }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-sm-12 col-lg-4 order-sm-0 order-xl-1">
-                                <div class="user-designation">
-                                    <div class="title"><a target="_blank" href="">{{ $user->name }}</a></div>
-                                    <div class="desc">{{ $user->getRoleNames()->first() ?? 'User' }}</div>
-                                </div>
-                            </div>
-                            <div class="col-sm-6 col-lg-4 order-sm-2 order-xl-2">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="ttl-info text-start">
-                                            <h6><i class="fa fa-phone"></i> Contact Us</h6><span>{{ $user->phone_number ?? 'N/A' }}</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="ttl-info text-start">
-                                            <h6><i class="fa fa-location-arrow"></i> Location</h6><span>{{ $user->city ?? 'N/A' }}</span>
-                                        </div>
-                                    </div>
+                            <div class="col-12">
+                                <div class="user-designation mb-3">
+                                    <h3 class="fw-bold text-dark">{{ $user->name }}</h3>
+                                    <h5 class="text-primary text-uppercase f-12 fw-bold tracking-wide mt-1">{{ $user->getRoleNames()->first() ?? 'User' }}</h5>
                                 </div>
                             </div>
                         </div>
-                        <hr>
-                        <!-- Social/Follow Section (Optional) -->
+                        <hr class="my-4">
+                        <div class="row g-3">
+                            <div class="col-md-6 text-start">
+                                <p class="mb-1 text-muted small text-uppercase fw-bold">Email Address</p>
+                                <h6 class="text-dark"><i class="fa fa-envelope me-2 text-primary"></i>{{ $user->email }}</h6>
+                            </div>
+                            <div class="col-md-6 text-start">
+                                <p class="mb-1 text-muted small text-uppercase fw-bold">Joined On</p>
+                                <h6 class="text-dark"><i class="fa fa-calendar me-2 text-success"></i>{{ $user->created_at->format('d M Y') }}</h6>
+                            </div>
+                            <div class="col-md-6 text-start mt-4">
+                                <p class="mb-1 text-muted small text-uppercase fw-bold">Contact Number</p>
+                                <h6 class="text-dark"><i class="fa fa-phone me-2 text-info"></i>{{ $user->phone_number ?? 'Not Available' }}</h6>
+                            </div>
+                            <div class="col-md-6 text-start mt-4">
+                                <p class="mb-1 text-muted small text-uppercase fw-bold">Location</p>
+                                <h6 class="text-dark"><i class="fa fa-map-marker me-2 text-danger"></i>{{ $user->city ?? 'Not Available' }}</h6>
+                            </div>
+                            <div class="col-md-12 text-start mt-4">
+                                <p class="mb-1 text-muted small text-uppercase fw-bold">Detailed Address</p>
+                                <h6 class="text-dark mb-0"><i class="fa fa-home me-2 text-warning"></i>{{ $user->address ?? 'Address not updated' }}</h6>
+                            </div>
+                        </div>
+                        <hr class="my-4">
                         <div class="social-media">
-                            <ul class="list-inline">
-                                <li class="list-inline-item"><a href="#"><i class="fa fa-facebook"></i></a></li>
-                                <li class="list-inline-item"><a href="#"><i class="fa fa-google-plus"></i></a></li>
-                                <li class="list-inline-item"><a href="#"><i class="fa fa-twitter"></i></a></li>
-                                <li class="list-inline-item"><a href="#"><i class="fa fa-instagram"></i></a></li>
-                                <li class="list-inline-item"><a href="#"><i class="fa fa-rss"></i></a></li>
+                            <p class="text-muted small mb-2">Connect with me</p>
+                            <ul class="list-inline mb-0">
+                                <li class="list-inline-item"><a href="#" class="btn btn-primary btn-sm rounded-circle p-2 "><i class="fa fa-facebook"></i></a></li>
+                                <li class="list-inline-item"><a href="#" class="btn btn-danger btn-sm rounded-circle p-2"><i class="fa fa-google-plus"></i></a></li>
+                                <li class="list-inline-item"><a href="#" class="btn btn-info btn-sm rounded-circle p-2"><i class="fa fa-twitter"></i></a></li>
+                                <li class="list-inline-item"><a href="#" class="btn btn-warning btn-sm rounded-circle p-2 text-white"><i class="fa fa-instagram"></i></a></li>
                             </ul>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Edit Profile Form -->
-            <div class="col-xl-8">
-                <form class="card" method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data">
-                    @csrf
-                    @method('PUT')
-                    <div class="card-header">
-                        <h4 class="card-title mb-0">Edit Profile</h4>
-                        <div class="card-options"><a class="card-options-collapse" href="#" data-bs-toggle="card-collapse"><i class="fe fe-chevron-up"></i></a><a class="card-options-remove" href="#" data-bs-toggle="card-remove"><i class="fe fe-x"></i></a></div>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-5">
-                                <div class="mb-3">
-                                    <label class="form-label">Company</label>
-                                    <input class="form-control" type="text" placeholder="Company" value="PRS" disabled>
-                                </div>
-                            </div>
-                            <div class="col-sm-6 col-md-3">
-                                <div class="mb-3">
-                                    <label class="form-label">Username</label>
-                                    <input class="form-control" type="text" placeholder="Username" value="{{ $user->name }}" name="name">
-                                </div>
-                            </div>
-                            <div class="col-sm-6 col-md-4">
-                                <div class="mb-3">
-                                    <label class="form-label">Email address</label>
-                                    <input class="form-control" type="email" placeholder="Email" value="{{ $user->email }}" disabled>
-                                </div>
-                            </div>
-                            <div class="col-sm-6 col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">First Name</label>
-                                    <input class="form-control" type="text" placeholder="First Name" value="{{ explode(' ', $user->name)[0] ?? '' }}">
-                                </div>
-                            </div>
-                            <div class="col-sm-6 col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Last Name</label>
-                                    <input class="form-control" type="text" placeholder="Last Name" value="{{ explode(' ', $user->name, 2)[1] ?? '' }}">
-                                </div>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label class="form-label">Address</label>
-                                    <input class="form-control" type="text" placeholder="Home Address" value="{{ $user->address ?? '' }}" name="address">
-                                </div>
-                            </div>
-                            <div class="col-sm-6 col-md-4">
-                                <div class="mb-3">
-                                    <label class="form-label">City</label>
-                                    <input class="form-control" type="text" placeholder="City" value="{{ $user->city ?? '' }}" name="city">
-                                </div>
-                            </div>
-                            <div class="col-sm-6 col-md-3">
-                                <div class="mb-3">
-                                    <label class="form-label">Postal Code</label>
-                                    <input class="form-control" type="number" placeholder="ZIP Code" value="{{ $user->pincode ?? '' }}" name="pincode">
-                                </div>
-                            </div>
-                            <div class="col-md-5">
-                                <div class="mb-3">
-                                    <label class="form-label">Country</label>
-                                    <select class="form-control btn-square">
-                                        <option value="0">India</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label class="form-label">Profile Image</label>
-                                    <input class="form-control" type="file" name="profile_pic">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-footer text-end">
-                        <button class="btn btn-primary" type="submit">Update Profile</button>
-                    </div>
-                </form>
             </div>
         </div>
     </div>

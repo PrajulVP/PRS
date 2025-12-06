@@ -11,17 +11,31 @@
                     <h5>Manage Permissions</h5>
                 </div>
                 <div class="card-body">
-                    <div class="list-group">
-                        @foreach($roles as $role)
-                            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                                {{ ucfirst($role->name) }}
-                                @if (Auth::user()->hasRole('superadmin') || Auth::user()->hasRole('admin'))
-                                <a href="{{ route('admin.permissions.edit', $role) }}" class="btn btn-primary btn-sm">
-                                    Manage Permissions
-                                </a>
-                                @endif
-                            </div>
-                        @endforeach
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col" style="width: 50px;">#</th>
+                                    <th scope="col">Role Name</th>
+                                    <th scope="col" class="text-center" style="width: 200px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($roles as $index => $role)
+                                <tr>
+                                    <td>{{ $index + 1 }}</td>
+                                    <td><span class="badge bg-light text-dark border border-dark border-1 fs-6">{{ ucfirst($role->name) }}</span></td>
+                                    <td class="text-center">
+                                        @if (Auth::user()->hasRole('superadmin') || Auth::user()->hasRole('admin'))
+                                        <a href="{{ route('admin.permissions.edit', $role) }}" class="btn btn-primary btn-sm btn-pill px-4">
+                                            <i class="fa fa-key me-1"></i> Manage Permissions
+                                        </a>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

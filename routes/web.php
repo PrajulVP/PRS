@@ -22,20 +22,7 @@ use App\Http\Controllers\{
     distributorOrderController
 };
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
-*/
 
-// =========================================================================
-// PUBLIC / GUEST ROUTES
-// =========================================================================
 Route::get('/', function () {
     return redirect()->route('login');
 });
@@ -47,10 +34,8 @@ Route::middleware(['web', 'guest'])->group(function () {
     Route::post('/login-alt', [AuthController::class, 'login'])->name('login.post');
 });
 
-// =========================================================================
-// AUTHENTICATED ROUTES
-// =========================================================================
-Route::middleware(['auth:web'])->group(function () {
+
+Route::middleware(['auth'])->group(function () {
 
     // --- Authentication ---
     Route::post('admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
@@ -83,53 +68,39 @@ Route::middleware(['auth:web'])->group(function () {
     Route::get('/get-products/{distributor}', [RetailerOrderManagementController::class, 'getProductsByDistributor'])->name('get-products-by-distributor');
 
 
-    // =====================================================================
-    // ROLE-BASED GROUPS
-    // =====================================================================
-
     // --- SuperAdmin & Admin ---
-    Route::middleware(['role:superadmin|admin'])->group(function () {
-        // User CRUD
-        Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users');
-        Route::get('/admin/users/create', [UserController::class, 'create'])->name('admin.users.create');
-        Route::post('/admin/users', [UserController::class, 'store'])->name('admin.users.store');
-        Route::post('admin/users/{user}/activate', [UserController::class, 'activateUser'])->name('admin.users.activate');
+    // User CRUD
+    Route::get('/users', [UserController::class, 'index'])->name('admin.users');
+    Route::get('/users/create', [UserController::class, 'create'])->name('admin.users.create');
+    Route::post('/users', [UserController::class, 'store'])->name('admin.users.store');
+    Route::post('users/{user}/activate', [UserController::class, 'activateUser'])->name('admin.users.activate');
 
-        // Permissions / Master Settings
-        Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
-            Route::get('permissions', [PermissionController::class, 'index'])->name('permissions.index');
-            Route::get('permissions/{role}/edit', [PermissionController::class, 'edit'])->name('permissions.edit');
-            Route::put('permissions/{role}', [PermissionController::class, 'update'])->name('permissions.update');
-        });
-    });
+    // Permissions / Master Settings
+    Route::get('roles', [PermissionController::class, 'index'])->name('admin.permissions.index');
+    Route::get('roles/{role}/edit', [PermissionController::class, 'edit'])->name('admin.permissions.edit');
+    Route::put('roles/{role}', [PermissionController::class, 'update'])->name('admin.permissions.update');
+    // Permissions / Master Settings
+    Route::get('roles', [PermissionController::class, 'index'])->name('admin.permissions.index');
+    Route::get('roles/{role}/edit', [PermissionController::class, 'edit'])->name('admin.permissions.edit');
+    Route::put('roles/{role}', [PermissionController::class, 'update'])->name('admin.permissions.update');
 
-    // --- Pending Approvals (Shared) ---
-    // Accessible by SuperAdmin, Admin, SalesManager, FieldStaff (based on old group)
-    // Note: The original code had specific middleware on 'admin.users' but pending approval was wider.
-    // Keeping consistent with original logic.
     Route::get('pending-approvals', [PendingApprovalController::class, 'index'])->name('pending-approvals');
 
 
     // --- Management Routes (SuperAdmin, Admin, SalesManager, FieldStaff) ---
-    Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['role:superadmin|admin|salesmanager|fieldstaff']], function () {
-        Route::get('users/pending-approval', [PendingApprovalController::class, 'index'])->name('users.pending_approval');
+    Route::get('users/pending-approval', [PendingApprovalController::class, 'index'])->name('admin.users.pending_approval');
 
-        // Role Management Resources
-        Route::resource('salesmanagers', SalesManagerController::class);
-        Route::resource('distributors', DistributorController::class);
-        Route::resource('fieldstaffs', FieldStaffController::class);
-        Route::patch('fieldstaffs/{fieldstaff}/activate', [FieldStaffController::class, 'activate'])->name('fieldstaffs.activate');
-        Route::resource('retailers', RetailerController::class);
-        Route::patch('retailers/{retailer}/activate', [RetailerController::class, 'activate'])->name('retailers.activate');
+    // Role Management Resources
+    Route::resource('salesmanagers', SalesManagerController::class, ['as' => 'admin']);
+    Route::resource('distributors', DistributorController::class, ['as' => 'admin']);
+    Route::resource('fieldstaffs', FieldStaffController::class, ['as' => 'admin']);
+    Route::patch('fieldstaffs/{fieldstaff}/activate', [FieldStaffController::class, 'activate'])->name('admin.fieldstaffs.activate');
+    Route::resource('retailers', RetailerController::class, ['as' => 'admin']);
+    Route::patch('retailers/{retailer}/activate', [RetailerController::class, 'activate'])->name('admin.retailers.activate');
 
-        // Order Assignment
-        Route::post('orders/{order}/assign-distributor', [RetailerOrderManagementController::class, 'assignDistributor'])->name('orders.assign_distributor');
-    });
+    // Order Assignment
+    Route::post('orders/{order}/assign-distributor', [RetailerOrderManagementController::class, 'assignDistributor'])->name('admin.orders.assign_distributor');
 
-
-    // =====================================================================
-    // ORDER MANAGEMENT
-    // /====================================================================
 
     // --- Retailer Orders (Management Side) ---
     Route::resource('retailer-orders-management', RetailerOrderManagementController::class)
@@ -140,50 +111,39 @@ Route::middleware(['auth:web'])->group(function () {
     Route::post('retailer-orders-management/{retailerOrder}/assign-fieldstaff', [RetailerOrderManagementController::class, 'assignFieldStaff'])->name('retailer-orders-management.assignFieldStaff');
 
     // Admin Creation of Retailer Orders
-    Route::get('admin/retailer-orders/create', [RetailerOrderController::class, 'create'])->name('admin.retailer-orders.create');
+    Route::get('retailer-orders/create', [RetailerOrderController::class, 'create'])->name('admin.retailer-orders.create');
 
     // --- Distributor Orders ---
     Route::resource('distributor-orders', distributorOrderController::class);
 
     // Status Updates / Actions for Distributor Orders
-    Route::post('distributor-orders/{distributor_order}/accept-by-sales-manager', [distributorOrderController::class, 'acceptBySalesManager'])
-        ->name('distributor-orders.accept-by-sales-manager')
-        ->middleware('role:salesmanager');
-
+    // Status Updates / Actions for Distributor Orders
     Route::post('distributor-orders/{distributor_order}/accept-by-admin', [distributorOrderController::class, 'acceptByAdmin'])
-        ->name('distributor-orders.accept-by-admin')
-        ->middleware('role:admin');
+        ->name('distributor-orders.accept-by-admin');
+
+    Route::post('distributor-orders/{distributor_order}/accept-by-sales-manager', [distributorOrderController::class, 'acceptBySalesManager'])
+        ->name('distributor-orders.accept-by-sales-manager');
+    Route::post('distributor-orders/{distributor_order}/approve-cancellation', [distributorOrderController::class, 'approveCancellation'])
+        ->name('distributor-orders.approve-cancellation');
 
     Route::post('distributor-orders/{distributor_order}/request-cancellation', [distributorOrderController::class, 'requestCancellation'])
-        ->name('distributor-orders.request-cancellation')
-        ->middleware('role:distributor');
-
-    Route::post('distributor-orders/{distributor_order}/approve-cancellation', [distributorOrderController::class, 'approveCancellation'])
-        ->name('distributor-orders.approve-cancellation')
-        ->middleware('role:salesmanager');
-
+        ->name('distributor-orders.request-cancellation');
     Route::post('distributor-orders/{distributor_order}/cancel-order', [distributorOrderController::class, 'cancelOrder'])
-        ->name('distributor-orders.cancel-order')
-        ->middleware('role:distributor');
-
-
-    // =====================================================================
-    // ROLE SPECIFIC PORTALS
-    // =====================================================================
+        ->name('distributor-orders.cancel-order');
 
     // --- Distributor Portal ---
-    Route::prefix('distributor')->name('distributor.')->middleware('role:distributor')->group(function () {
+    Route::prefix('distributor')->name('distributor.')->group(function () {
         Route::get('/orders', [RetailerOrderManagementController::class, 'distributorIndex'])->name('orders.index');
     });
 
     // --- Field Staff Portal ---
-    Route::prefix('fieldstaff')->name('fieldstaff.')->middleware('role:fieldstaff')->group(function () {
+    Route::prefix('fieldstaff')->name('fieldstaff.')->group(function () {
         Route::get('/orders', [RetailerOrderManagementController::class, 'fieldStaffIndex'])->name('orders.index');
         Route::post('/orders/{order}/update-delivery-status', [RetailerOrderManagementController::class, 'updateDeliveryStatus'])->name('orders.updateDeliveryStatus');
     });
 
     // --- Retailer Portal ---
-    Route::prefix('retailer')->name('retailer.')->middleware('role:retailer')->group(function () {
+    Route::prefix('retailer')->name('retailer.')->group(function () {
         Route::get('/orders', [RetailerOrderController::class, 'retailerIndex'])->name('orders.index');
         Route::get('/orders/create', [RetailerOrderController::class, 'create'])->name('orders.create');
         Route::post('/orders', [RetailerController::class, 'store'])->name('orders.store');

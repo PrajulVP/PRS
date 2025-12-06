@@ -270,6 +270,11 @@
     $(".lan-7").text(trans[6][tnum]);
     $(".lan-8").text(trans[7][tnum]);
     $(".lan-9").text(trans[8][tnum]);
+    $(".lan-10").text(trans[9][tnum]);
+    $(".lan-11").text(trans[10][tnum]);
+    $(".lan-12").text(trans[11][tnum]);
+    $(".lan-13").text(trans[12][tnum]);
+    $(".lan-14").text(trans[13][tnum]);
   }
 
   var trans = [
@@ -353,6 +358,51 @@
       de: "Klaar om apps te gebruiken",
       cn: "ä»ªè¡¨æ¿",
       ae: "Ø¬Ø§Ù‡Ø² Ù„Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„ØªØ·Ø¨ÙŠÙ‚Ø§Øª",
+    },
+    {
+      en: "Settings",
+      pt: "ConfiguraÃ§Ãµes",
+      es: "Agordoj",
+      fr: "ParamÃ¨tres",
+      de: "De instellingen",
+      cn: "è¨å®š",
+      ae: "Ø§Ù„Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª",
+    },
+    {
+        en: "User Management",
+        pt: "Gerenciamento de Usuários",
+        es: "Gestión de Usuarios",
+        fr: "Gestion des utilisateurs",
+        de: "Benutzerverwaltung",
+        cn: "用户管理",
+        ae: "إدارة المستخدمين",
+    },
+    {
+        en: "Products",
+        pt: "Produtos",
+        es: "Productos",
+        fr: "Produits",
+        de: "Produkte",
+        cn: "用户管理",
+        ae: "إدارة المستخدمين",
+    },
+    {
+        en: "Orders",
+        pt: "Pedidos",
+        es: "Pedidos",
+        fr: "Commandes",
+        de: "Bestellungen",
+        cn: "用户管理",
+        ae: "إدارة المستخدمين",
+    },
+    {
+        en: "Locations",
+        pt: "Locais",
+        es: "Ubicaciones",
+        fr: "Emplacements",
+        de: "Standorte",
+        cn: "用户管理",
+        ae: "إدارة المستخدمين",
     },
   ];
 
