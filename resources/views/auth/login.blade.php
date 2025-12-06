@@ -1,81 +1,108 @@
 @extends('layouts.admin')
 
 @section('content')
+<!-- Background Image Container -->
+<div class="container-fluid p-0" style="background-image: url('{{ asset('admin/assets/images/login/login_bg.jpg') }}'); background-size: cover; background-position: center;">
+    
+    <!-- Light Overlay for White Theme -->
+    <div class="row m-0 bg-white bg-opacity-50 vh-100 justify-content-center align-items-center">
+        
+        <div class="col-12 col-sm-8 col-md-6 col-lg-4 col-xl-3">
+            <!-- White Card -->
+            <div class="card border-0 shadow-lg rounded-4 bg-white">
+                
+                <div class="card-body p-4 p-sm-5">
+                    
+                    <div class="text-center mb-4">
+                        <!-- Use Dark Logo for White Background -->
+                        <img src="{{ asset('admin/assets/images/logo/logo_dark.png') }}" class="img-fluid mb-3" alt="PRS Logo" style="max-height: 60px;">
+                        <h3 class="fw-bold text-dark mb-1">Welcome Back</h3>
+                        <p class="text-muted small">Sign in to continue to PRS</p>
+                    </div>
+
+                    <form id="login-form" method="POST" action="{{ route('login.post') }}" novalidate>
+                        @csrf
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label fw-bold text-muted small">Email Address</label>
+                            <input id="email" type="email"
+                                   class="form-control form-control-lg bg-light border-light-subtle text-dark"
+                                   name="email"
+                                   value="{{ old('email') }}"
+                                   placeholder="name@example.com"
+                                   required autofocus> 
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label fw-bold text-muted small">Password</label>
+                            <div class="input-group">
+                                <input id="password" type="password"
+                                       class="form-control form-control-lg bg-light border-light-subtle text-dark border-end-0"
+                                       name="password" required autocomplete="current-password"
+                                       placeholder="Enter password">
+                                <button type="button" class="btn btn-lg bg-light border-light-subtle border-start-0 text-muted show-pass" tabindex="-1" title="Show/Hide">
+                                    <i class="fa fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
+                                <label class="form-check-label text-muted small" for="remember">
+                                    Remember me
+                                </label>
+                            </div>
+                            <a href="#" class="text-primary text-decoration-none small hover-underline">Forgot Password?</a>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg shadow-sm">LOG IN</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 @if ($errors->any())
     <script>
         Swal.fire({
             icon: 'error',
             title: 'Login Failed',
             html: `{!! implode('<br>', $errors->all()) !!}`,
-            confirmButtonColor: '#3085d6'
+            confirmButtonColor: '#7366ff'
         });
     </script>
 @endif
 
-<div class="login-card">
-
-<form id="login-form" method="POST" action="{{ route('login.post') }}" novalidate>
-    @csrf
-    @method('POST')
-    <div class="mb-3">
-        <label for="email" class="form-label">Email</label>
-        <input id="email" type="text"
-               class="form-control @error('email') is-invalid @enderror"
-               name="email"
-               value="{{ old('email') }}"
-               required>
-    </div>
-
-    <div class="mb-3">
-        <label for="password" class="form-label">Password</label>
-        <div class="input-group">
-            <input id="password" type="password"
-                   class="form-control @error('password') is-invalid @enderror"
-                   name="password" required autocomplete="current-password">
-            <button type="button" class="btn btn-outline-secondary show-pass" tabindex="-1" title="Show/Hide">
-                <i class="fa fa-eye"></i>
-            </button>
-        </div>
-    </div>
-
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox"
-                   name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-        </div>
-        <div>
-            <a href="">Forgot password?</a>
-        </div>
-    </div>
-
-    <div class="d-grid mb-3">
-        <button type="submit" class="btn btn-primary">Login</button>
-    </div>
-</form>
-
-<hr>
-
-</div> <!-- close .login-card -->
-
-<script src="{{ asset('admin/assets/js/jquery.min.js') }}"></script>
-<script src="{{ asset('admin/assets/js/bootstrap/bootstrap.bundle.min.js') }}"></script>
 <script>
-(function(){
-    document.querySelectorAll('.show-pass').forEach(function(btn){
-        btn.addEventListener('click', function(){
-            var input = this.parentElement.querySelector('input');
-            if(input.type === 'password'){
-                input.type = 'text';
-                this.innerHTML = '<i class="fa fa-eye-slash"></i>';
-            } else {
-                input.type = 'password';
-                this.innerHTML = '<i class="fa fa-eye"></i>';
-            }
+    document.addEventListener('DOMContentLoaded', function() {
+        const showPassBtns = document.querySelectorAll('.show-pass');
+        showPassBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const input = this.parentElement.querySelector('input');
+                const icon = this.querySelector('i');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
         });
     });
-})();
 </script>
+
+<style>
+    .hover-underline:hover {
+        text-decoration: underline !important;
+    }
+</style>
+
 @endsection

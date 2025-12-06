@@ -264,3 +264,4 @@ document.addEventListener('DOMContentLoaded', function () {
     renderBarChart('ordersByDistributorChart', 'Orders by Distributor', '{{ route('dashboard.api.ordersByDistributor') }}');
 });
 </script>
+@endpush

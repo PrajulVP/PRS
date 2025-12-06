@@ -302,7 +302,7 @@
           </div>
 
           <ul class="profile-dropdown onhover-show-div">
-            <li><a href="user-profile.html"><i data-feather="user"></i><span>My Profile</span></a></li>
+            <li><a href="{{ route('profile.index') }}"><i data-feather="user"></i><span>My Profile</span></a></li>
             <li> <a href="edit-profile.html"> <i data-feather="settings"></i><span>Settings</span></a></li>
             <li>
               <form id="logout-form" action="{{ route('admin.logout') }}" method="POST" class="d-inline">
