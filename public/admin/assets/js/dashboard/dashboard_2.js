@@ -67,8 +67,11 @@ var options = {
     }
   };
   
-  var statisticschart = new ApexCharts(document.querySelector("#statisticschart"), options);
-  statisticschart.render();
+  var statisticschartElement = document.querySelector("#statisticschart");
+  if (statisticschartElement) {
+    var statisticschart = new ApexCharts(statisticschartElement, options);
+    statisticschart.render();
+  }
 
   function radialCommonOption(data) {
     return {

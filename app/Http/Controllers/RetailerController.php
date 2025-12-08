@@ -5,14 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
-use App\Models\District;
-use App\Models\Area;
 use App\Models\Distributor;
 use App\Models\Retailer;
 use App\Models\SalesManager;
 use App\Models\FieldStaff;
 use Illuminate\Support\Facades\Auth;
-
 use DataTables;
 
 class RetailerController extends Controller
@@ -20,80 +17,44 @@ class RetailerController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            return $this->getRetailersData();
-        }
-        return view('admin.retailers.index');
-    }
+            $query = Retailer::with('user', 'distributor.user', 'fieldStaff.user', 'salesManager.user');
 
-    private function getRetailersData()
-    {
-        $query = Retailer::with('user', 'distributor.user', 'fieldStaff.user', 'salesManager.user');
+            if (Auth::user()->hasRole('distributor')) {
+                $distributor = Auth::user()->distributor;
+                if ($distributor) {
+                    $query->where('distributor_id', $distributor->id);
+                }
+            } elseif (Auth::user()->hasRole('fieldstaff')) {
+                $fieldstaff = Auth::user()->fieldStaff;
+                if ($fieldstaff) {
+                    $query->where('field_staff_id', $fieldstaff->id);
+                }
+            } elseif (Auth::user()->hasRole('salesmanager')) {
+                $salesManager = Auth::user()->salesManager;
+                if ($salesManager) {
+                    $fieldStaffIds = $salesManager->fieldStaffs->pluck('id');
+                    $query->whereIn('field_staff_id', $fieldStaffIds);
+                }
+            }
 
-        if (Auth::user()->hasRole('distributor')) {
-            $distributor = Auth::user()->distributor;
-            if ($distributor) {
-                $query->where('distributor_id', $distributor->id);
-            }
-        } elseif (Auth::user()->hasRole('fieldstaff')) {
-            $fieldstaff = Auth::user()->fieldStaff;
-            if ($fieldstaff) {
-                $query->where('field_staff_id', $fieldstaff->id);
-            }
-        } elseif (Auth::user()->hasRole('salesmanager')) {
-            $salesManager = Auth::user()->salesManager;
-            if ($salesManager) {
-                $fieldStaffIds = $salesManager->fieldStaffs->pluck('id');
-                $query->whereIn('field_staff_id', $fieldStaffIds);
-            }
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->make(true);
         }
 
-        return DataTables::of($query)
-            ->addIndexColumn()
-            ->addColumn('action', function($row){
-                $editUrl = route('admin.retailers.edit', $row->id);
-                $showUrl = route('admin.retailers.show', $row->id);
-                $deleteUrl = route('admin.retailers.destroy', $row->id);
-                $btn = '<div class="d-flex align-items-center gap-1">';
-                $btn .= '<a href="'.$editUrl.'" class="btn btn-primary btn-sm px-3">
-                            <i class="fa fa-edit"></i>
-                        </a>';
-                $btn .= '<a href="'.$showUrl.'" class="btn btn-info btn-sm px-3">
-                            <i class="fa fa-eye"></i>
-                        </a>';
-                $btn .= '<form action="'.$deleteUrl.'" method="POST" onsubmit="return confirm(\'Are you sure?\')" class="m-0 p-0">
-                            '.csrf_field().method_field('DELETE').'
-                            <button type="submit" class="btn btn-danger btn-sm px-3">
-                                <i class="fa fa-trash"></i>
-                            </button>
-                        </form>';
-                $btn .= '</div>';
-                return $btn;
-            })
-            ->rawColumns(['action'])
-            ->make(true);
-    }
-
-    public function show(Retailer $retailer)
-    {
-        $retailer->load('user', 'distributor.user', 'fieldStaff.user', 'salesManager.user');
-        return view('admin.retailers.show', compact('retailer'));
-    }
-
-    public function create()
-    {
-        $districts = District::all();
-        $areas = Area::all();
         $distributors = Distributor::whereHas('user', function ($query) {
             $query->where('status', 'active');
         })->get();
+
         $salesManagers = SalesManager::whereHas('user', function ($query) {
             $query->where('status', 'active');
         })->get();
+
         $fieldStaffs = FieldStaff::whereHas('user', function ($query) {
             $query->where('status', 'active');
         })->get();
 
-        return view('admin.retailers.create', compact('districts', 'areas', 'distributors', 'salesManagers', 'fieldStaffs'));
+        return view('admin.retailers.index', compact('distributors', 'salesManagers', 'fieldStaffs'));
     }
 
     public function store(Request $request)
@@ -129,33 +90,18 @@ class RetailerController extends Controller
         $retailer = new Retailer(array_merge($retailerData, ['pincode' => $request->pincode]));
         $retailer->user_id = $user->id;
 
-        // Auto-assign sales_manager_id and field_staff_id based on who is creating the retailer
+        // Auto-assign logic preserved if applicable, but form sends IDs so we likely use them unless logic overrides?
+        // Original logic:
         if (Auth::user()->hasRole('salesmanager')) {
             $retailer->sales_manager_id = Auth::user()->salesManager->id;
         } elseif (Auth::user()->hasRole('fieldstaff')) {
             $retailer->field_staff_id = Auth::user()->fieldStaff->id;
             $retailer->sales_manager_id = Auth::user()->fieldStaff->salesManager->id;
         }
+
         $retailer->save();
 
         return redirect()->route('admin.retailers.index')->with('success', 'Retailer added successfully!');
-    }
-
-    public function edit(Retailer $retailer)
-    {
-        $districts = District::all();
-        $areas = Area::all();
-        $distributors = Distributor::whereHas('user', function ($query) {
-            $query->where('status', 'active');
-        })->get();
-        $salesManagers = SalesManager::whereHas('user', function ($query) {
-            $query->where('status', 'active');
-        })->get();
-        $fieldStaffs = FieldStaff::whereHas('user', function ($query) {
-            $query->where('status', 'active');
-        })->get();
-
-        return view('admin.retailers.edit', compact('retailer', 'districts', 'areas', 'distributors', 'salesManagers', 'fieldStaffs'));
     }
 
     public function update(Request $request, Retailer $retailer)
@@ -191,26 +137,13 @@ class RetailerController extends Controller
 
         $retailer->update(array_merge($retailerData, ['pincode' => $request->pincode]));
 
-        return redirect()->route('admin.retailers.index')->with('success','Retailer updated successfully!');
+        return redirect()->route('admin.retailers.index')->with('success', 'Retailer updated successfully!');
     }
 
     public function destroy(Retailer $retailer)
     {
         $retailer->delete();
-        return redirect()->route('retailers.index')->with('success','Retailer deleted successfully!');
-    }
-
-    public function getAreas(District $district)
-    {
-        return response()->json($district->areas->unique('name')->values()->all());
-    }
-
-    public function getDistributorsByDistrictAndArea(District $district, Area $area)
-    {
-        $distributors = Distributor::where('district_id', $district->id)
-                                   ->where('area_id', $area->id)
-                                   ->get();
-        return response()->json($distributors);
+        return redirect()->route('admin.retailers.index')->with('success', 'Retailer deleted successfully!');
     }
 
     public function activate(Retailer $retailer)

@@ -64,15 +64,7 @@
                             </div>
                         </div>
                         <hr class="my-4">
-                        <div class="social-media">
-                            <p class="text-muted small mb-2">Connect with me</p>
-                            <ul class="list-inline mb-0">
-                                <li class="list-inline-item"><a href="#" class="btn btn-primary btn-sm rounded-circle p-2 "><i class="fa fa-facebook"></i></a></li>
-                                <li class="list-inline-item"><a href="#" class="btn btn-danger btn-sm rounded-circle p-2"><i class="fa fa-google-plus"></i></a></li>
-                                <li class="list-inline-item"><a href="#" class="btn btn-info btn-sm rounded-circle p-2"><i class="fa fa-twitter"></i></a></li>
-                                <li class="list-inline-item"><a href="#" class="btn btn-warning btn-sm rounded-circle p-2 text-white"><i class="fa fa-instagram"></i></a></li>
-                            </ul>
-                        </div>
+
                     </div>
                 </div>
             </div>

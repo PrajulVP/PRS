@@ -3,218 +3,125 @@
 namespace App\Http\Controllers;
 
 use App\Models\RetailerOrder;
-use App\Models\Retailer;
-use App\Http\Requests\StoredistributorOrderRequest; // Assuming this request is still relevant or will be adapted
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 
 class RetailerOrderController extends Controller
 {
-    // Retailer: list orders
+    // Retailer: list orders (Unified View with Create Modal)
     public function retailerIndex(Request $request)
     {
+        // If AJAX, return DataTable JSON
         if ($request->ajax()) {
             $retailer = Auth::guard('web')->user()->load('retailer')->retailer;
+            if (!$retailer) return response()->json(['error' => 'Unauthorized'], 403);
 
-            if (!$retailer) {
-                return response()->json(['error' => 'Unauthorized action.'], 403);
-            }
+            $query = RetailerOrder::where('retailer_id', $retailer->id)->with('items.product');
 
-            $query = RetailerOrder::where('retailer_id', $retailer->id);
+            $orders = $query->orderBy('id', 'desc')->get();
 
-            // Apply search filter
-            if ($request->has('search') && !empty($request->input('search')['value'])) {
-                $searchValue = $request->input('search')['value'];
-                $query->where(function ($q) use ($searchValue) {
-                    $q->where('id', 'like', "%{$searchValue}%")
-                        ->orWhere('product_name', 'like', "%{$searchValue}%")
-                        ->orWhere('status', 'like', "%{$searchValue}%");
-                });
-            }
-
-            $totalFiltered = $query->count();
-
-            // Apply order (sorting)
-            if ($request->has('order') && !empty($request->input('order'))) {
-                $columnIndex = $request->input('order')[0]['column'];
-                $columnName = $request->input('columns')[$columnIndex]['data'];
-                $sortDirection = $request->input('order')[0]['dir'];
-
-                $query->orderBy($columnName, $sortDirection);
-            } else {
-                $query->orderBy('id', 'desc'); // Default sort
-            }
-
-            $totalData = $query->count();
-
-            // Apply pagination
-            $start = $request->input('start');
-            $length = $request->input('length');
-            $orders = $query->offset($start)->limit($length)->get();
-
-            $formattedOrders = $orders->map(function ($order) {
+            $formatted = $orders->map(function ($order) {
                 return [
                     'id' => $order->id,
-                    'product_name' => $order->product_name,
-                    'quantity' => $order->quantity,
-                    'unit_price' => number_format($order->unit_price, 2),
+                    'order_code' => $order->order_code,
+                    'product_summary' => $order->items->map(fn($i) => $i->product->product_name . ' (' . $i->quantity . ')')->implode(', '),
                     'total_amount' => number_format($order->total_amount, 2),
                     'status' => ucfirst($order->status),
-                    'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d') : '-',
-                    'actions' => null, // Actions column will be rendered by DataTables
+                    'placed_at' => $order->placed_at ? $order->placed_at->format('Y-m-d') : '-',
+                    'items' => $order->items->map(fn($i) => [
+                        'name' => $i->product->product_name,
+                        'qty' => $i->quantity,
+                        'price' => $i->unit_price,
+                        'total' => $i->total_amount
+                    ]),
+                    'notes' => $order->notes,
+                    'delivery_notes' => $order->delivery_notes
                 ];
             });
 
-            return response()->json([
-                'draw' => intval($request->input('draw')),
-                'recordsTotal' => $totalData,
-                'recordsFiltered' => $totalFiltered,
-                'data' => $formattedOrders,
-            ]);
+            return response()->json(['data' => $formatted]);
         }
 
-        return view('admin.orders.retailers.retailer_index');
-    }
-
-    public function show(RetailerOrder $retailerOrder)
-    {
-        $retailerOrder->load('retailer');
-        \Illuminate\Support\Facades\Log::info('RetailerOrderController@show: $retailerOrder object', $retailerOrder->toArray());
-        return view('admin.orders.retailers.show', compact('retailerOrder'));
-    }
-
-    
-    // Retailer: show create form
-    public function create()
-    {
+        // Return the unified view. 
+        // We pass distributorProducts for the Create Modal if the user is a Retailer.
         $user = Auth::user();
         $retailer = $user->retailer;
-
-        if (!$retailer || !$retailer->distributor) {
-            // Handle case where retailer is not found or not assigned to a distributor
-            return redirect()->back()->with('error', 'You are not assigned to a distributor or your retailer profile is incomplete.');
+        $distributorProducts = collect();
+        if ($retailer && $retailer->distributor) {
+            $distributorProducts = $retailer->distributor->products;
         }
 
-        $distributorProducts = $retailer->distributor->products; // Get products associated with the retailer's distributor
+        $retailers = collect(); // For Admin view compatibility (though this method is for retailer role mainly)
+        $fieldstaffs = collect();
+        $distributors = collect();
+        $products = Product::all(); // Fallback
 
-        return view('admin.orders.retailers.create', ['products' => $distributorProducts])->with('orderType', 'retailer');
+        // We use the SAME 'index' view but data will drive what is shown.
+        // Actually, the Admin Index expects $retailers, $fieldstaffs etc. 
+        // We should pass empty collections or just enough to not break the view.
+        // Or we pass a flag 'isRetailer' to view.
+
+        return view('admin.orders.retailers.index', compact('distributorProducts', 'retailers', 'fieldstaffs', 'distributors', 'products'));
     }
 
-    // Retailer: store order
     public function store(Request $request)
     {
         $request->validate([
-            'notes' => 'nullable|string',
-            'delivery_notes' => 'nullable|string',
-            'prescription_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.quantity' => 'required|integer|min:1'
         ]);
 
         $retailer = Auth::user()->retailer;
-
-        if (!$retailer || !$retailer->distributor) {
-            return back()->withErrors(['retailer' => 'Retailer not assigned to a distributor.'])->withInput();
-        }
+        if (!$retailer || !$retailer->distributor) return back()->with('error', 'No distributor assigned');
 
         $distributor = $retailer->distributor;
 
-        $totalAmount = 0;
-        $totalItems = 0;
-        $totalQuantity = 0;
-
-        $prescriptionPhotoPath = null;
-        if ($request->hasFile('prescription_photo')) {
-            $prescriptionPhotoPath = $request->file('prescription_photo')->store('prescriptions', 'public');
-        }
-
-        // Create the Retailer Order header
-        $order = RetailerOrder::create([
-            'retailer_id' => $retailer->id,
-            'distributor_id' => $distributor->id,
-            'status' => 'pending',
-            'placed_at' => now(),
-            'notes' => $request->notes,
-            'delivery_notes' => $request->delivery_notes,
-            'prescription_photo' => $prescriptionPhotoPath,
-            'total_amount' => 0, // Initialize to 0, will be updated
-            'total_items' => 0,  // Initialize to 0, will be updated
-            'total_quantity' => 0, // Initialize to 0, will be updated
-        ]);
-
         try {
-            foreach ($request->items as $itemData) {
-                $product = $distributor->products()->where('product_id', $itemData['product_id'])->first();
+            DB::beginTransaction();
+            $order = RetailerOrder::create([
+                'retailer_id' => $retailer->id,
+                'distributor_id' => $distributor->id,
+                'status' => 'pending',
+                'placed_at' => now(),
+                'notes' => $request->notes,
+                'delivery_notes' => $request->delivery_notes,
+                'total_amount' => 0,
+                'total_items' => 0,
+                'total_quantity' => 0,
+                'order_code' => 'ORD-' . strtoupper(uniqid())
+            ]);
 
-                if (!$product) {
-                    throw new \Exception('Product not available from your assigned distributor.');
+            $totalAmt = 0;
+            $totalQty = 0;
+
+            foreach ($request->items as $item) {
+                $prod = $distributor->products()->where('product_id', $item['product_id'])->first();
+                if (!$prod || $prod->pivot->stock < $item['quantity']) {
+                    throw new \Exception('Insufficient stock for product id ' . $item['product_id']);
                 }
 
-                if ($product->pivot->stock < $itemData['quantity']) {
-                    throw new \Exception('Ordered quantity exceeds available stock from distributor for ' . $product->product_name . '. Available stock: ' . $product->pivot->stock);
-                }
+                // Decrement
+                $distributor->products()->updateExistingPivot($prod->id, ['stock' => $prod->pivot->stock - $item['quantity']]);
 
-                // Decrement stock from distributor_product pivot table
-                $distributor->products()->updateExistingPivot($product->id, ['stock' => $product->pivot->stock - $itemData['quantity']]);
-
-                // Create Order Item
-                $unitPrice = $product->mrp;
-                $itemTotalAmount = $itemData['quantity'] * $unitPrice;
-
+                $sub = $item['quantity'] * $prod->mrp;
                 $order->items()->create([
-                    'product_id' => $product->id,
-                    'quantity' => $itemData['quantity'],
-                    'unit_price' => $unitPrice,
-                    'total_amount' => $itemTotalAmount,
+                    'product_id' => $prod->id,
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $prod->mrp,
+                    'total_amount' => $sub
                 ]);
-
-                $totalAmount += $itemTotalAmount;
-                $totalItems++;
-                $totalQuantity += $itemData['quantity'];
+                $totalAmt += $sub;
+                $totalQty += $item['quantity'];
             }
 
-            // Update the Retailer Order header with calculated totals
-            $order->total_amount = $totalAmount;
-            $order->total_items = $totalItems;
-            $order->total_quantity = $totalQuantity;
-            $order->save();
-
+            $order->update(['total_amount' => $totalAmt, 'total_items' => count($request->items), 'total_quantity' => $totalQty]);
+            DB::commit();
+            return back()->with('success', 'Order placed successfully');
         } catch (\Exception $e) {
-            // If any error occurs, delete the order and associated items
-            // Also restore distributor stock if any was decremented
-            foreach ($order->items as $item) {
-                $product = $distributor->products()->where('product_id', $item->product_id)->first();
-                if ($product) {
-                    $distributor->products()->updateExistingPivot($product->id, ['stock' => $product->pivot->stock + $item->quantity]);
-                }
-            }
-            $order->items()->delete();
-            $order->delete();
-            return back()->withErrors(['items' => $e->getMessage()])->withInput();
+            DB::rollBack();
+            return back()->with('error', $e->getMessage());
         }
-
-        return redirect()->route('retailer.orders.index')->with('success', 'Medicine requirement sent successfully!');
-    }
-
-    public function confirmDelivery(RetailerOrder $retailerOrder)
-    {
-        // Check if the authenticated user is the retailer for this order
-        if ($retailerOrder->retailer_id !== Auth::user()->retailer->id) {
-            return response()->json(['error' => 'Unauthorized action.'], 403);
-        }
-
-        // Check if the order is out for delivery
-        if ($retailerOrder->status !== 'out_for_delivery') {
-            return response()->json(['error' => 'Only orders that are out for delivery can be confirmed.'], 400);
-        }
-
-        $retailerOrder->update([
-            'status' => 'delivered',
-            'delivered_at' => now(),
-        ]);
-
-        return response()->json(['success' => 'Order delivery confirmed successfully!']);
     }
 }

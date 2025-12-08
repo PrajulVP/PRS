@@ -20,9 +20,9 @@ class AreaController extends Controller
                 $searchValue = $request->input('search')['value'];
                 $query->where(function ($q) use ($searchValue) {
                     $q->where('name', 'like', "%{$searchValue}%")
-                      ->orWhereHas('district', function ($subQuery) use ($searchValue) {
-                          $subQuery->where('name', 'like', "%{$searchValue}%");
-                      });
+                        ->orWhereHas('district', function ($subQuery) use ($searchValue) {
+                            $subQuery->where('name', 'like', "%{$searchValue}%");
+                        });
                 });
             }
 
@@ -35,12 +35,14 @@ class AreaController extends Controller
                 $columnName = $request->input('columns')[$columnIndex]['data'];
                 $sortDirection = $request->input('order')[0]['dir'];
 
-                if ($columnName == 'district_name') {
-                    $query->join('districts', 'areas.district_id', '=', 'districts.id')
-                          ->orderBy('districts.name', $sortDirection)
-                          ->select('areas.*');
-                } else {
-                    $query->orderBy($columnName, $sortDirection);
+                if (!empty($columnName)) {
+                    if ($columnName == 'district_name') {
+                        $query->join('districts', 'areas.district_id', '=', 'districts.id')
+                            ->orderBy('districts.name', $sortDirection)
+                            ->select('areas.*');
+                    } else {
+                        $query->orderBy($columnName, $sortDirection);
+                    }
                 }
             } else {
                 $query->orderBy('id', 'desc'); // Default sort
@@ -80,31 +82,33 @@ class AreaController extends Controller
     }
 
 
-    public function store(Request $request){
-    $validated = $request->validate(['district_id'=>'required|exists:districts,id','name'=>'required|string']);
-    $exists = Area::where('district_id',$validated['district_id'])->where('name',$validated['name'])->exists();
-    if($exists) {
-        if ($request->wantsJson()) {
-            return response()->json(['status'=>false,'message'=>'This area already exists for the selected district.','data'=>null],422);
+    public function store(Request $request)
+    {
+        $validated = $request->validate(['district_id' => 'required|exists:districts,id', 'name' => 'required|string']);
+        $exists = Area::where('district_id', $validated['district_id'])->where('name', $validated['name'])->exists();
+        if ($exists) {
+            if ($request->wantsJson()) {
+                return response()->json(['status' => false, 'message' => 'This area already exists for the selected district.', 'data' => null], 422);
+            }
+            return redirect()->back()->withErrors(['name' => 'This area already exists for the selected district.']);
         }
-        return redirect()->back()->withErrors(['name' => 'This area already exists for the selected district.']);
-    }
-    $area = Area::create($validated);
+        $area = Area::create($validated);
 
-    if ($request->wantsJson()) {
-        return response()->json(['status'=>true,'message'=>'Area created successfully','data'=>$area],201);
-    }
-    return redirect()->route('areas.index')->with('success', 'Area created successfully');
+        if ($request->wantsJson()) {
+            return response()->json(['status' => true, 'message' => 'Area created successfully', 'data' => $area], 201);
+        }
+        return redirect()->route('areas.index')->with('success', 'Area created successfully');
     }
 
 
-    public function show(Request $request, Area $area){
-    $area->load('district');
+    public function show(Request $request, Area $area)
+    {
+        $area->load('district');
 
-    if ($request->wantsJson()) {
-        return response()->json(['status'=>true,'message'=>'Area fetched','data'=>$area]);
-    }
-    return view('areas.index', compact('area'));
+        if ($request->wantsJson()) {
+            return response()->json(['status' => true, 'message' => 'Area fetched', 'data' => $area]);
+        }
+        return view('areas.index', compact('area'));
     }
 
     public function edit(Area $area)
@@ -114,50 +118,54 @@ class AreaController extends Controller
     }
 
 
-    public function update(Request $request,Area $area){
-    $validated = $request->validate(['district_id'=>'required|exists:districts,id','name'=>'required|string']);
-    $exists = Area::where('district_id',$validated['district_id'])->where('name',$validated['name'])->where('id','<>',$area->id)->exists();
-    if($exists) {
-        if ($request->wantsJson()) {
-            return response()->json(['status'=>false,'message'=>'This area already exists for the selected district.','data'=>null],422);
+    public function update(Request $request, Area $area)
+    {
+        $validated = $request->validate(['district_id' => 'required|exists:districts,id', 'name' => 'required|string']);
+        $exists = Area::where('district_id', $validated['district_id'])->where('name', $validated['name'])->where('id', '<>', $area->id)->exists();
+        if ($exists) {
+            if ($request->wantsJson()) {
+                return response()->json(['status' => false, 'message' => 'This area already exists for the selected district.', 'data' => null], 422);
+            }
+            return redirect()->back()->withErrors(['name' => 'This area already exists for the selected district.']);
         }
-        return redirect()->back()->withErrors(['name' => 'This area already exists for the selected district.']);
-    }
-    try{ $area->update($validated); } catch(QueryException $e){
-        if ($request->wantsJson()) {
-            return response()->json(['status'=>false,'message'=>'Update failed - duplicate','data'=>null],422);
+        try {
+            $area->update($validated);
+        } catch (QueryException $e) {
+            if ($request->wantsJson()) {
+                return response()->json(['status' => false, 'message' => 'Update failed - duplicate', 'data' => null], 422);
+            }
+            return redirect()->back()->withErrors(['name' => 'Update failed - duplicate']);
         }
-        return redirect()->back()->withErrors(['name' => 'Update failed - duplicate']);
-    }
 
-    if ($request->wantsJson()) {
-        return response()->json(['status'=>true,'message'=>'Area updated successfully','data'=>$area]);
-    }
-    return redirect()->route('areas.index')->with('success','Area updated successfully');
+        if ($request->wantsJson()) {
+            return response()->json(['status' => true, 'message' => 'Area updated successfully', 'data' => $area]);
+        }
+        return redirect()->route('areas.index')->with('success', 'Area updated successfully');
     }
 
 
-    public function destroy(Request $request, Area $area){
-    try {
-        $area->delete();
-    } catch (QueryException $e) {
+    public function destroy(Request $request, Area $area)
+    {
+        try {
+            $area->delete();
+        } catch (QueryException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Area could not be deleted due to related records.',
+                    'data' => null
+                ], 422);
+            }
+            return redirect()->back()->withErrors(['error' => 'Area could not be deleted due to related records.']);
+        }
+
         if ($request->wantsJson()) {
             return response()->json([
-                'status' => false,
-                'message' => 'Area could not be deleted due to related records.',
+                'status' => true,
+                'message' => 'Area deleted',
                 'data' => null
-            ], 422);
+            ]);
         }
-        return redirect()->back()->withErrors(['error' => 'Area could not be deleted due to related records.']);
-    }
-
-    if ($request->wantsJson()) {
-        return response()->json([
-            'status'=>true,
-            'message'=>'Area deleted',
-            'data'=>null
-        ]);
-    }
-    return redirect()->route('areas.index')->with('success','Area deleted successfully');
+        return redirect()->route('areas.index')->with('success', 'Area deleted successfully');
     }
 }

@@ -38,67 +38,52 @@
           </div>
         </li>
 
+        {{-- Retailer Role: My Orders (Link directly) --}}
         @if (Auth::user()->hasRole('retailer'))
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+          <a class="sidebar-link sidebar-title link-nav" href="{{ route('retailer.orders.index') }}">
             <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
             </svg>
             <svg class="fill-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
-            </svg><span>Orders</span></a>
-          <ul class="sidebar-submenu">
-            <li><a href="{{ route('retailer.orders.index') }}">Order List</a></li>
-            @if (Auth::user()->hasPermissionToCategory('retailer_orders', 'add'))
-            <li><a href="{{ route('retailer.orders.create') }}">Create Order</a></li>
-            @endif
-          </ul>
+            </svg><span>Orders</span>
+          </a>
         </li>
 
-        @if (!Auth::user()->hasRole('retailer') && Auth::user()->hasPermissionToCategory('retailer_orders', 'view'))
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
-            <svg class="stroke-icon">
-              <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
-            </svg>
-            <svg class="fill-icon">
-              <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
-            </svg><span>Retailer Orders</span></a>
-          <ul class="sidebar-submenu">
-            <li><a href="{{ route('retailer-orders-management.index') }}">Order List</a></li>
-
-          </ul>
-        </li>
-        @endif
         @elseif (Auth::user()->hasRole('distributor'))
+        {{-- Distributor Role: Received Orders & My Orders --}}
         @if (Auth::user()->hasPermissionToCategory('retailer_orders', 'view'))
-        <li class="sidebar-list">
-          <a class="sidebar-link" href="{{ route('distributor.orders.index') }}">
+        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+          <a class="sidebar-link sidebar-title link-nav" href="{{ route('distributor.orders.index') }}">
             <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
             </svg>
-            <span>Received Orders</span>
+            <svg class="fill-icon">
+              <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
+            </svg><span>Received Orders</span>
           </a>
         </li>
         @endif
 
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+        @if (Auth::user()->hasPermissionToCategory('distributor_orders', 'view'))
+        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+          <a class="sidebar-link sidebar-title link-nav" href="{{ route('distributor-orders.index') }}">
             <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
             </svg>
             <svg class="fill-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
-            </svg><span>My Orders</span></a>
-          <ul class="sidebar-submenu">
-            @if (Auth::user()->hasPermissionToCategory('distributor_orders', 'view'))
-            <li><a href="{{ route('distributor-orders.index') }}">My Orders</a></li>
-            @endif
-            @if (Auth::user()->hasPermissionToCategory('distributor_orders', 'add'))
-            <li><a href="{{ route('distributor-orders.create') }}">Create Order</a></li>
-            @endif
-          </ul>
+            </svg><span>My Orders</span>
+          </a>
         </li>
-        @else {{-- Superadmin or Admin or Sales Manager --}}
+        @endif
+
+        @else
+        {{-- Admin/Manager: Retailer Orders & Distributor Orders --}}
         @if (Auth::user()->hasPermissionToCategory('retailer_orders', 'view'))
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('retailer-orders-management.index') }}">
+        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+          <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.retailer-orders.index') }}">
             <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
             </svg>
@@ -109,7 +94,7 @@
         @endif
 
         @if (Auth::user()->hasPermissionToCategory('distributor_orders', 'view'))
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('distributor-orders.index') }}">
+        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.distributor-orders.index') }}">
             <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
             </svg>
@@ -118,7 +103,6 @@
             </svg><span>Distributor Orders</span></a>
         </li>
         @endif
-
 
         @endif
         @endif
@@ -153,14 +137,10 @@
         @endif
 
 
-        @if (
-        Auth::user()->hasPermissionToCategory('districts', 'view') ||
-        Auth::user()->hasPermissionToCategory('districts', 'add')
-        )
+        @if (Auth::user()->hasPermissionToCategory('districts', 'view') || Auth::user()->hasPermissionToCategory('districts', 'add'))
         <li class="sidebar-list">
           <i class="fa fa-thumb-tack"></i>
-          <a class="sidebar-link sidebar-title link-nav"
-            href="{{ route('districts.index') }}">
+          <a class="sidebar-link sidebar-title link-nav" href="{{ route('districts.index') }}">
             <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
             </svg>
@@ -172,15 +152,10 @@
         </li>
         @endif
 
-
-        @if (
-        Auth::user()->hasPermissionToCategory('areas', 'view') ||
-        Auth::user()->hasPermissionToCategory('areas', 'add')
-        )
+        @if (Auth::user()->hasPermissionToCategory('areas', 'view') || Auth::user()->hasPermissionToCategory('areas', 'add'))
         <li class="sidebar-list">
           <i class="fa fa-thumb-tack"></i>
-          <a class="sidebar-link sidebar-title link-nav"
-            href="{{ route('areas.index') }}">
+          <a class="sidebar-link sidebar-title link-nav" href="{{ route('areas.index') }}">
             <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
             </svg>
@@ -197,100 +172,70 @@
           <div>
             <h6 class="lan-11">User Management</h6>
           </div>
-          @endif
+        </li>
+        @endif
 
-
-
-          @if (Auth::user()->hasRole('superadmin') || Auth::user()->hasRole('admin') || Auth::user()->hasRole('salesmanager'))
+        @if (Auth::user()->hasRole('superadmin') || Auth::user()->hasRole('admin') || Auth::user()->hasRole('salesmanager'))
         <li class="sidebar-list">
-
-          <a class="sidebar-link sidebar-title link-nav d-flex justify-content-between align-items-center 
-                  {{ request()->routeIs('*pending*') ? 'active' : '' }}"
-            href="{{ route('pending-approvals') }}" style="color:#333;">
-
+          <a class="sidebar-link sidebar-title link-nav d-flex justify-content-between align-items-center {{ request()->routeIs('*pending*') ? 'active' : '' }}" href="{{ route('pending-approvals') }}" style="color:#333;">
             <div class="d-flex align-items-center">
               <svg class="stroke-icon me-2">
                 <use href="{{ asset('admin/assets/svg/icon-sprite.svg#stroke-user') }}"></use>
               </svg>
-
               <svg class="fill-icon me-2">
                 <use href="{{ asset('admin/assets/svg/icon-sprite.svg#fill-user') }}"></use>
               </svg>
-
-              <span class="text-truncate" style="max-width: calc(100% - 40px);">
-                Pending Approval
-              </span>
+              <span class="text-truncate" style="max-width: calc(100% - 40px);">Pending Approval</span>
             </div>
           </a>
         </li>
         @endif
 
-
         @if (Auth::user()->hasPermissionToCategory('sales_managers', 'view'))
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+          <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.sales-managers.index') }}">
             <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
             </svg>
             <svg class="fill-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
             </svg><span>Sales Managers</span></a>
-          <ul class="sidebar-submenu">
-            <li><a href="{{ route('admin.salesmanagers.index') }}">Sales Managers List</a></li>
-            @if (Auth::user()->hasPermissionToCategory('sales_managers', 'add'))
-            <li><a href="{{ route('admin.salesmanagers.create') }}">Create Sales Managers</a></li>
-            @endif
-          </ul>
         </li>
         @endif
 
         @if (Auth::user()->hasPermissionToCategory('distributors', 'view'))
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+          <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.distributors.index') }}">
             <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
             </svg>
             <svg class="fill-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
             </svg><span>Distributors</span></a>
-          <ul class="sidebar-submenu">
-            <li><a href="{{ route('admin.distributors.index') }}">Distributors List</a></li>
-            @if (Auth::user()->hasPermissionToCategory('distributors', 'add'))
-            <li><a href="{{ route('admin.distributors.create') }}">Create Distributors</a></li>
-            @endif
-          </ul>
         </li>
         @endif
 
         @if (Auth::user()->hasPermissionToCategory('field_staff', 'view'))
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+          <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.field-staffs.index') }}">
             <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
             </svg>
             <svg class="fill-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
             </svg><span>Field Staff</span></a>
-          <ul class="sidebar-submenu">
-            <li><a href="{{ route('admin.fieldstaffs.index') }}">Field Staff List</a></li>
-            @if (Auth::user()->hasPermissionToCategory('field_staff', 'add'))
-            <li><a href="{{ route('admin.fieldstaffs.create') }}">Create Field Staff</a></li>
-            @endif
-          </ul>
         </li>
         @endif
 
         @if (Auth::user()->hasPermissionToCategory('retailers', 'view'))
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+          <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.retailers.index') }}">
             <svg class="stroke-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
             </svg>
             <svg class="fill-icon">
               <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
-            </svg><span>Retailer (Chemist)</span></a>
-          <ul class="sidebar-submenu">
-            <li><a href="{{ route('admin.retailers.index') }}">Retailers List</a></li>
-            @if (Auth::user()->hasPermissionToCategory('retailers', 'add'))
-            <li><a href="{{ route('admin.retailers.create') }}">Create Retailers</a></li>
-            @endif
-          </ul>
+            </svg><span>Retailers</span></a>
         </li>
         @endif
 

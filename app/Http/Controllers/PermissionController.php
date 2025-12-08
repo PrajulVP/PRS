@@ -7,18 +7,18 @@ use Spatie\Permission\Models\Role;
 use App\Models\PermissionGroup;
 use App\Models\PermissionCategory;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class PermissionController extends Controller
 {
     public function index()
     {
         $roles = Role::all();
-        // Define a custom order for roles
         $customOrder = ['superadmin', 'admin', 'distributor', 'salesmanager', 'fieldstaff', 'retailer'];
-        
+
         $roles = $roles->sortBy(function ($role) use ($customOrder) {
             $index = array_search($role->name, $customOrder);
-            return $index === false ? count($customOrder) : $index; // Put unknown roles at the end
+            return $index === false ? count($customOrder) : $index;
         });
 
         return view('admin.permissions.index', compact('roles'));
@@ -27,75 +27,73 @@ class PermissionController extends Controller
     public function edit(Role $role)
     {
         $permissionGroups = PermissionGroup::with('permissionCategories')->get();
-        $actions = ['view', 'add', 'edit', 'delete'];
+        // $actions = ['view', 'add', 'edit', 'delete'];
 
-        // Get current permissions for the role from the custom roles_permissions table
-        $currentRolePermissions = DB::table('roles_permissions')
+        $currentPermissions = DB::table('roles_permissions')
             ->where('role_id', $role->id)
             ->get()
             ->keyBy('permission_category_id');
 
         $groupedPermissions = [];
         foreach ($permissionGroups as $group) {
-            $groupedPermissions[$group->name] = [
-                'id' => $group->id,
-                'categories' => []
-            ];
+            $cats = [];
             foreach ($group->permissionCategories as $category) {
-                $currentPerms = $currentRolePermissions->get($category->id);
+                $curr = $currentPermissions->get($category->id);
+                // logic for disabled checkboxes (superadmin, admin restrictions)
+                $isDisabled = false;
+                if ($role->name === 'superadmin') $isDisabled = true;
+                if ($role->name === 'admin' && !Auth::user()->hasRole('superadmin')) $isDisabled = true;
+                if ($category->short_code === 'permissions' && !Auth::user()->hasRole('superadmin')) $isDisabled = true;
 
-                $groupedPermissions[$group->name]['categories'][$category->name] = [
+                $cats[$category->name] = [
                     'id' => $category->id,
-                    'short_code' => $category->short_code,
-                    'can_view' => $currentPerms ? (bool) $currentPerms->can_view : false,
-                    'can_add' => $currentPerms ? (bool) $currentPerms->can_add : false,
-                    'can_edit' => $currentPerms ? (bool) $currentPerms->can_edit : false,
-                    'can_delete' => $currentPerms ? (bool) $currentPerms->can_delete : false,
+                    'is_disabled' => $isDisabled,
+                    'can_view' => $curr ? (bool)$curr->can_view : false,
+                    'can_add' => $curr ? (bool)$curr->can_add : false,
+                    'can_edit' => $curr ? (bool)$curr->can_edit : false,
+                    'can_delete' => $curr ? (bool)$curr->can_delete : false,
                 ];
             }
+            $groupedPermissions[$group->name] = ['categories' => $cats];
         }
 
-        $assignedPermissions = DB::table('roles_permissions')
-            ->where('role_id', $role->id)
-            ->get()
-            ->keyBy('permission_category_id');
-
-        return view('admin.permissions.edit_role_permissions', compact('role', 'groupedPermissions', 'actions', 'assignedPermissions'));
+        return view('admin.permissions.edit', compact('role', 'groupedPermissions'));
     }
 
     public function update(Request $request, Role $role)
     {
-        $request->validate([
-            'permissions' => 'array',
-        ]);
+        $request->validate(['permissions' => 'array']);
 
-        // Clear existing permissions for this role in the custom table
-        DB::table('roles_permissions')->where('role_id', $role->id)->delete();
+        try {
+            DB::beginTransaction();
+            DB::table('roles_permissions')->where('role_id', $role->id)->delete();
 
-        $permissionCategories = PermissionCategory::all();
+            $categories = PermissionCategory::all();
+            foreach ($categories as $cat) {
+                $p = $request->input("permissions.{$cat->id}", []);
+                $v = isset($p['can_view']);
+                $a = isset($p['can_add']);
+                $e = isset($p['can_edit']);
+                $d = isset($p['can_delete']);
 
-        foreach ($permissionCategories as $category) {
-            $categoryId = $category->id;
-            $canView = $request->has("permissions.{$categoryId}.can_view");
-            $canAdd = $request->has("permissions.{$categoryId}.can_add");
-            $canEdit = $request->has("permissions.{$categoryId}.can_edit");
-            $canDelete = $request->has("permissions.{$categoryId}.can_delete");
-
-            // Only insert if at least one permission is granted for the category
-            if ($canView || $canAdd || $canEdit || $canDelete) {
-                DB::table('roles_permissions')->insert([
-                    'role_id' => $role->id,
-                    'permission_category_id' => $categoryId,
-                    'can_view' => $canView,
-                    'can_add' => $canAdd,
-                    'can_edit' => $canEdit,
-                    'can_delete' => $canDelete,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+                if ($v || $a || $e || $d) {
+                    DB::table('roles_permissions')->insert([
+                        'role_id' => $role->id,
+                        'permission_category_id' => $cat->id,
+                        'can_view' => $v,
+                        'can_add' => $a,
+                        'can_edit' => $e,
+                        'can_delete' => $d,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                }
             }
+            DB::commit();
+            return redirect()->route('admin.permissions.index')->with('success', 'Permissions updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', $e->getMessage());
         }
-
-        return redirect()->route('admin.permissions.edit', $role)->with('success', 'Permissions updated successfully.');
     }
 }
