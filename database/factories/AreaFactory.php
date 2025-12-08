@@ -24,7 +24,7 @@ class AreaFactory extends Factory
     {
         return [
             'name' => $this->faker->unique()->streetName,
-            'district_id' => District::factory(), // Create a District and use its ID
+            'district_id' => District::inRandomOrder()->first()->id ?? District::factory(), // Use existing District or create one
         ];
     }
 }
