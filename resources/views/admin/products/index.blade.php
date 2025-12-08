@@ -86,57 +86,58 @@
                 @csrf
                 <div class="modal-body">
                     <!-- General Info -->
-                    <h6 class="mb-3 border-bottom pb-2">General Information</h6>
-                    <div class="row g-3 mb-3">
+                    <!-- General Info -->
+                    <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">General Information</h6>
+                    <div class="row g-3 mb-4">
                         <div class="col-md-4">
-                            <label for="create_product_code" class="form-label">Product Code</label>
+                            <label for="create_product_code" class="form-label fw-medium">Product Code</label>
                             <input type="text" name="product_code" id="create_product_code" class="form-control" required>
                         </div>
                         <div class="col-md-4">
-                            <label for="create_product_name" class="form-label">Product Name</label>
+                            <label for="create_product_name" class="form-label fw-medium">Product Name</label>
                             <input type="text" name="product_name" id="create_product_name" class="form-control" required>
                         </div>
                         <div class="col-md-4">
-                            <label for="create_generic_name" class="form-label">Generic Name</label>
+                            <label for="create_generic_name" class="form-label fw-medium">Generic Name</label>
                             <input type="text" name="generic_name" id="create_generic_name" class="form-control">
                         </div>
                     </div>
 
-                    <div class="row g-3">
+                    <div class="row g-4">
                         <!-- Left Column: Stock & Packaging -->
-                        <div class="col-md-6">
-                            <h6 class="mb-3 border-bottom pb-2">Stock & Packaging</h6>
+                        <div class="col-md-6 border-end">
+                            <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Stock & Packaging</h6>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="create_batch_no" class="form-label">Batch No.</label>
+                                    <label for="create_batch_no" class="form-label fw-medium">Batch No.</label>
                                     <input type="text" name="batch_no" id="create_batch_no" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="create_expiry" class="form-label">Expiry Date</label>
+                                    <label for="create_expiry" class="form-label fw-medium">Expiry Date</label>
                                     <input type="date" name="expiry" id="create_expiry" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="create_pack_quantity" class="form-label">Pack Quantity</label>
+                                    <label for="create_pack_quantity" class="form-label fw-medium">Pack Quantity</label>
                                     <input type="number" name="pack_quantity" id="create_pack_quantity" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="create_stock" class="form-label">Stock</label>
+                                    <label for="create_stock" class="form-label fw-medium">Stock</label>
                                     <input type="number" name="stock" id="create_stock" class="form-control" value="0" required>
                                 </div>
                                 <div class="col-md-4">
-                                    <label for="create_strip_size" class="form-label">Strip Size</label>
+                                    <label for="create_strip_size" class="form-label fw-medium">Strip Size</label>
                                     <input type="number" name="strip_size" id="create_strip_size" class="form-control">
                                 </div>
                                 <div class="col-md-4">
-                                    <label for="create_box_size" class="form-label">Box Size</label>
+                                    <label for="create_box_size" class="form-label fw-medium">Box Size</label>
                                     <input type="number" name="box_size" id="create_box_size" class="form-control">
                                 </div>
                                 <div class="col-md-4">
-                                    <label for="create_carton_size" class="form-label">Carton Size</label>
+                                    <label for="create_carton_size" class="form-label fw-medium">Carton Size</label>
                                     <input type="number" name="carton_size" id="create_carton_size" class="form-control">
                                 </div>
                                 <div class="col-md-12">
-                                    <label for="create_hsn_code" class="form-label">HSN Code</label>
+                                    <label for="create_hsn_code" class="form-label fw-medium">HSN Code</label>
                                     <input type="text" name="hsn_code" id="create_hsn_code" class="form-control">
                                 </div>
                             </div>
@@ -144,35 +145,37 @@
 
                         <!-- Right Column: Pricing -->
                         <div class="col-md-6">
-                            <h6 class="mb-3 border-bottom pb-2">Pricing Details</h6>
+                            <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Pricing Details</h6>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="create_mrp" class="form-label">MRP</label>
+                                    <label for="create_mrp" class="form-label fw-medium">MRP</label>
                                     <input type="number" step="0.01" name="mrp" id="create_mrp" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="create_ptr" class="form-label">PTR</label>
+                                    <label for="create_ptr" class="form-label fw-medium">PTR</label>
                                     <input type="number" step="0.01" name="ptr" id="create_ptr" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="create_taxable_value" class="form-label">Taxable Value</label>
+                                    <label for="create_taxable_value" class="form-label fw-medium">Taxable Value</label>
                                     <input type="number" step="0.01" name="taxable_value" id="create_taxable_value" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="create_gst" class="form-label">GST (%)</label>
+                                    <label for="create_gst" class="form-label fw-medium">GST (%)</label>
                                     <input type="number" step="0.01" name="gst" id="create_gst" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="create_offer" class="form-label">Offer</label>
+                                    <label for="create_offer" class="form-label fw-medium">Offer</label>
                                     <input type="number" step="0.01" name="offer" id="create_offer" class="form-control">
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="create_discount" class="form-label">Discount</label>
+                                    <label for="create_discount" class="form-label fw-medium">Discount</label>
                                     <input type="number" step="0.01" name="discount" id="create_discount" class="form-control">
                                 </div>
                                 <div class="col-md-12">
-                                    <label for="create_net_amount" class="form-label fw-bold">Net Amount</label>
-                                    <input type="number" step="0.01" name="net_amount" id="create_net_amount" class="form-control fw-bold" readonly>
+                                    <div class="alert alert-light border text-center mt-3 mb-0">
+                                        <label for="create_net_amount" class="form-label text-muted small text-uppercase fw-bold mb-0">Net Amount</label>
+                                        <input type="number" step="0.01" name="net_amount" id="create_net_amount" class="form-control form-control-lg fw-bold text-primary text-center border-0 bg-transparent" readonly placeholder="0.00">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -200,57 +203,57 @@
                 @method('PUT')
                 <div class="modal-body">
                     <!-- General Info -->
-                    <h6 class="mb-3 border-bottom pb-2">General Information</h6>
-                    <div class="row g-3 mb-3">
+                    <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">General Information</h6>
+                    <div class="row g-3 mb-4">
                         <div class="col-md-4">
-                            <label for="edit_product_code" class="form-label">Product Code</label>
+                            <label for="edit_product_code" class="form-label fw-medium">Product Code</label>
                             <input type="text" name="product_code" id="edit_product_code" class="form-control" required>
                         </div>
                         <div class="col-md-4">
-                            <label for="edit_product_name" class="form-label">Product Name</label>
+                            <label for="edit_product_name" class="form-label fw-medium">Product Name</label>
                             <input type="text" name="product_name" id="edit_product_name" class="form-control" required>
                         </div>
                         <div class="col-md-4">
-                            <label for="edit_generic_name" class="form-label">Generic Name</label>
+                            <label for="edit_generic_name" class="form-label fw-medium">Generic Name</label>
                             <input type="text" name="generic_name" id="edit_generic_name" class="form-control">
                         </div>
                     </div>
 
-                    <div class="row g-3">
+                    <div class="row g-4">
                         <!-- Left Column: Stock & Packaging -->
-                        <div class="col-md-6">
-                            <h6 class="mb-3 border-bottom pb-2">Stock & Packaging</h6>
+                        <div class="col-md-6 border-end">
+                            <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Stock & Packaging</h6>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="edit_batch_no" class="form-label">Batch No.</label>
+                                    <label for="edit_batch_no" class="form-label fw-medium">Batch No.</label>
                                     <input type="text" name="batch_no" id="edit_batch_no" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="edit_expiry" class="form-label">Expiry Date</label>
+                                    <label for="edit_expiry" class="form-label fw-medium">Expiry Date</label>
                                     <input type="date" name="expiry" id="edit_expiry" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="edit_pack_quantity" class="form-label">Pack Quantity</label>
+                                    <label for="edit_pack_quantity" class="form-label fw-medium">Pack Quantity</label>
                                     <input type="number" name="pack_quantity" id="edit_pack_quantity" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="edit_stock" class="form-label">Stock</label>
+                                    <label for="edit_stock" class="form-label fw-medium">Stock</label>
                                     <input type="number" name="stock" id="edit_stock" class="form-control" required>
                                 </div>
                                 <div class="col-md-4">
-                                    <label for="edit_strip_size" class="form-label">Strip Size</label>
+                                    <label for="edit_strip_size" class="form-label fw-medium">Strip Size</label>
                                     <input type="number" name="strip_size" id="edit_strip_size" class="form-control">
                                 </div>
                                 <div class="col-md-4">
-                                    <label for="edit_box_size" class="form-label">Box Size</label>
+                                    <label for="edit_box_size" class="form-label fw-medium">Box Size</label>
                                     <input type="number" name="box_size" id="edit_box_size" class="form-control">
                                 </div>
                                 <div class="col-md-4">
-                                    <label for="edit_carton_size" class="form-label">Carton Size</label>
+                                    <label for="edit_carton_size" class="form-label fw-medium">Carton Size</label>
                                     <input type="number" name="carton_size" id="edit_carton_size" class="form-control">
                                 </div>
                                 <div class="col-md-12">
-                                    <label for="edit_hsn_code" class="form-label">HSN Code</label>
+                                    <label for="edit_hsn_code" class="form-label fw-medium">HSN Code</label>
                                     <input type="text" name="hsn_code" id="edit_hsn_code" class="form-control">
                                 </div>
                             </div>
@@ -258,35 +261,37 @@
 
                         <!-- Right Column: Pricing -->
                         <div class="col-md-6">
-                            <h6 class="mb-3 border-bottom pb-2">Pricing Details</h6>
+                            <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Pricing Details</h6>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="edit_mrp" class="form-label">MRP</label>
+                                    <label for="edit_mrp" class="form-label fw-medium">MRP</label>
                                     <input type="number" step="0.01" name="mrp" id="edit_mrp" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="edit_ptr" class="form-label">PTR</label>
+                                    <label for="edit_ptr" class="form-label fw-medium">PTR</label>
                                     <input type="number" step="0.01" name="ptr" id="edit_ptr" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="edit_taxable_value" class="form-label">Taxable Value</label>
+                                    <label for="edit_taxable_value" class="form-label fw-medium">Taxable Value</label>
                                     <input type="number" step="0.01" name="taxable_value" id="edit_taxable_value" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="edit_gst" class="form-label">GST (%)</label>
+                                    <label for="edit_gst" class="form-label fw-medium">GST (%)</label>
                                     <input type="number" step="0.01" name="gst" id="edit_gst" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="edit_offer" class="form-label">Offer</label>
+                                    <label for="edit_offer" class="form-label fw-medium">Offer</label>
                                     <input type="number" step="0.01" name="offer" id="edit_offer" class="form-control">
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="edit_discount" class="form-label">Discount</label>
+                                    <label for="edit_discount" class="form-label fw-medium">Discount</label>
                                     <input type="number" step="0.01" name="discount" id="edit_discount" class="form-control">
                                 </div>
                                 <div class="col-md-12">
-                                    <label for="edit_net_amount" class="form-label fw-bold">Net Amount</label>
-                                    <input type="number" step="0.01" name="net_amount" id="edit_net_amount" class="form-control fw-bold" readonly>
+                                    <div class="alert alert-light border text-center mt-3 mb-0">
+                                        <label for="edit_net_amount" class="form-label text-muted small text-uppercase fw-bold mb-0">Net Amount</label>
+                                        <input type="number" step="0.01" name="net_amount" id="edit_net_amount" class="form-control form-control-lg fw-bold text-primary text-center border-0 bg-transparent" readonly placeholder="0.00">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -499,76 +504,70 @@
             var product = $(this).data('product');
 
             let html = `
-                <table class="table table-bordered">
-                    <tbody>
-                        <tr>
-                            <th width="30%">Product Name</th>
-                            <td>${product.product_name}</td>
-                        </tr>
-                        <tr>
-                            <th>Product Code</th>
-                            <td>${product.product_code}</td>
-                        </tr>
-                        <tr>
-                            <th>Generic Name</th>
-                            <td>${product.generic_name || '-'}</td>
-                        </tr>
-                        <tr>
-                            <th colspan="2" class="bg-light">Stock & Packaging</th>
-                        </tr>
-                        <tr>
-                            <th>Batch No</th>
-                            <td>${product.batch_no}</td>
-                        </tr>
-                        <tr>
-                            <th>Expiry Date</th>
-                            <td>${product.expiry ? product.expiry.split('T')[0] : '-'}</td>
-                        </tr>
-                        <tr>
-                            <th>Pack Quantity</th>
-                            <td>${product.pack_quantity}</td>
-                        </tr>
-                        <tr>
-                            <th>Stock</th>
-                            <td>${product.stock}</td>
-                        </tr>
-                        <tr>
-                            <th>Sizes (Strip/Box/Carton)</th>
-                            <td>${product.strip_size || '-'} / ${product.box_size || '-'} / ${product.carton_size || '-'}</td>
-                        </tr>
-                        <tr>
-                            <th>HSN Code</th>
-                            <td>${product.hsn_code || '-'}</td>
-                        </tr>
-                        <tr>
-                            <th colspan="2" class="bg-light">Pricing Details</th>
-                        </tr>
-                        <tr>
-                            <th>MRP</th>
-                            <td>${parseFloat(product.mrp).toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <th>PTR</th>
-                            <td>${parseFloat(product.ptr).toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <th>Taxable Value</th>
-                            <td>${parseFloat(product.taxable_value).toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <th>GST</th>
-                            <td>${parseFloat(product.gst).toFixed(2)}%</td>
-                        </tr>
-                        <tr>
-                            <th>Offer / Discount</th>
-                            <td>${parseFloat(product.offer || 0).toFixed(2)} / ${parseFloat(product.discount || 0).toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <th>Net Amount</th>
-                            <td class="fw-bold">${parseFloat(product.net_amount).toFixed(2)}</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="row g-3">
+                    <div class="col-md-12 mb-3">
+                        <div class="p-4 bg-light rounded text-center">
+                            <h3 class="fw-bold text-primary mb-1">${product.product_name}</h3>
+                            <div class="text-secondary">${product.product_code} <span class="mx-2">|</span> ${product.generic_name || 'Generic N/A'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <!-- Left Column: Stock & Packaging -->
+                    <div class="col-md-6 border-end">
+                        <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Stock & Packaging</h6>
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4 text-muted small text-uppercase">Batch No</dt>
+                            <dd class="col-sm-8 fw-medium">${product.batch_no}</dd>
+
+                            <dt class="col-sm-4 text-muted small text-uppercase">Expiry</dt>
+                            <dd class="col-sm-8 fw-medium text-danger">${product.expiry ? product.expiry.split('T')[0] : 'N/A'}</dd>
+
+                            <dt class="col-sm-4 text-muted small text-uppercase">Stock</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge ${product.stock > 0 ? 'bg-success' : 'bg-danger'}">${product.stock}</span>
+                            </dd>
+
+                            <dt class="col-sm-4 text-muted small text-uppercase">Pack Qty</dt>
+                            <dd class="col-sm-8 fw-medium">${product.pack_quantity}</dd>
+
+                            <dt class="col-sm-4 text-muted small text-uppercase">Sizes</dt>
+                            <dd class="col-sm-8 fw-medium">${product.strip_size || '-'} / ${product.box_size || '-'} / ${product.carton_size || '-'}</dd>
+                            
+                            <dt class="col-sm-4 text-muted small text-uppercase">HSN</dt>
+                            <dd class="col-sm-8 fw-medium">${product.hsn_code || '-'}</dd>
+                        </dl>
+                    </div>
+
+                    <!-- Right Column: Pricing -->
+                    <div class="col-md-6">
+                        <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Pricing Details</h6>
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4 text-muted small text-uppercase">MRP</dt>
+                            <dd class="col-sm-8 fw-medium">₹${parseFloat(product.mrp).toFixed(2)}</dd>
+
+                            <dt class="col-sm-4 text-muted small text-uppercase">PTR</dt>
+                            <dd class="col-sm-8 fw-medium">₹${parseFloat(product.ptr).toFixed(2)}</dd>
+
+                            <dt class="col-sm-4 text-muted small text-uppercase">Taxable</dt>
+                            <dd class="col-sm-8 fw-medium">₹${parseFloat(product.taxable_value).toFixed(2)}</dd>
+
+                            <dt class="col-sm-4 text-muted small text-uppercase">GST</dt>
+                            <dd class="col-sm-8 fw-medium">${parseFloat(product.gst).toFixed(2)}%</dd>
+
+                            <dt class="col-sm-4 text-muted small text-uppercase">Offer / Disc</dt>
+                            <dd class="col-sm-8 fw-medium text-success">
+                                ${parseFloat(product.offer || 0).toFixed(2)} / ${parseFloat(product.discount || 0).toFixed(2)}
+                            </dd>
+                        </dl>
+                        
+                        <div class="alert alert-light border text-center mt-3">
+                            <small class="text-muted text-uppercase fw-bold d-block">Net Amount</small>
+                            <span class="h4 fw-bold text-primary">₹${parseFloat(product.net_amount).toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
             `;
             // Note: We need to change the modal body structure slightly in the blade file to accommodate this if it expects a table structure.
             // The current blade has <tbody id="showProductTableBody"> inside a <table>. We should check if we need to replace the table with a div.
