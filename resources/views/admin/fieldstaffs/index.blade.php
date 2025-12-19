@@ -31,8 +31,8 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5><i class="fa fa-users me-2"></i>Field Staff</h5>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createFieldStaffModal">
-                        <i class="fa fa-plus me-1"></i>Add Field Staff
+                    <button type="button" class="-btn -btn-primary button-64" data-bs-toggle="modal" data-bs-target="#createFieldStaffModal">
+                        <span class="text"><i class="fa fa-plus me-1"></i>Add Field Staff</span>
                     </button>
                 </div>
                 <div class="card-body">

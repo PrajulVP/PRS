@@ -69,7 +69,7 @@
     </div>
 </div>
 
-<!-- Create Modal -->
+<!-- Create Sales Manager Modal -->
 <div class="modal fade" id="createSalesManagerModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -119,7 +119,7 @@
         </div>
     </div>
 </div>
-
+<!-- Create Sales Manager Modal -->
 <!-- Edit Modal -->
 <div class="modal fade" id="editSalesManagerModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
