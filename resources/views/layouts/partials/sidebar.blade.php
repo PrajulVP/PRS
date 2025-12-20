@@ -129,7 +129,7 @@
         Auth::user()->hasPermissionToCategory('areas', 'view') ||
         Auth::user()->hasPermissionToCategory('areas', 'add')
         )
-        <li class="sidebar-main-title">
+        <!-- <li class="sidebar-main-title">
           <div>
             <h6 class="lan-14">Locations</h6>
           </div>
@@ -165,7 +165,7 @@
             <span>Areas</span>
           </a>
         </li>
-        @endif
+        @endif -->
 
         @if (Auth::user()->hasPermissionToCategory('permissions', 'view') || Auth::user()->hasPermissionToCategory('sales_managers', 'view') || Auth::user()->hasPermissionToCategory('distributors', 'view') || Auth::user()->hasPermissionToCategory('field_staff', 'view') || Auth::user()->hasPermissionToCategory('retailers', 'view'))
         <li class="sidebar-main-title">
@@ -245,6 +245,45 @@
             <h6 class="lan-10">Settings</h6>
           </div>
         </li>
+        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title -link-nav" href="#">
+            <svg class="stroke-icon">
+              <use href="{{ asset('admin/assets/svg/icon-sprite.svg#stroke-user') }}"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{{ asset('admin/assets/svg/icon-sprite.svg#fill-user') }}"></use>
+            </svg><span>Master Settings</span></a>
+          <ul class="sidebar-submenu">
+            @if (Auth::user()->hasPermissionToCategory('districts', 'view') || Auth::user()->hasPermissionToCategory('districts', 'add'))
+            <li class="sidebar-list">
+              <i class="fa fa-thumb-tack"></i>
+              <a class="sidebar-link sidebar-title link-nav" href="{{ route('districts.index') }}">
+                <svg class="stroke-icon">
+                  <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
+                </svg>
+                <svg class="fill-icon">
+                  <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
+                </svg>
+                <span>Districts</span>
+              </a>
+            </li>
+            @endif
+
+            @if (Auth::user()->hasPermissionToCategory('areas', 'view') || Auth::user()->hasPermissionToCategory('areas', 'add'))
+            <li class="sidebar-list">
+              <i class="fa fa-thumb-tack"></i>
+              <a class="sidebar-link sidebar-title link-nav" href="{{ route('areas.index') }}">
+                <svg class="stroke-icon">
+                  <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
+                </svg>
+                <svg class="fill-icon">
+                  <use href="../../admin/assets/svg/icon-sprite.svg#fill-form"></use>
+                </svg>
+                <span>Areas</span>
+              </a>
+            </li>
+            @endif
+          </ul>
+        </li>
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.permissions.index') }}">
             <svg class="stroke-icon">
               <use href="{{ asset('admin/assets/svg/icon-sprite.svg#stroke-user') }}"></use>
@@ -252,6 +291,7 @@
             <svg class="fill-icon">
               <use href="{{ asset('admin/assets/svg/icon-sprite.svg#fill-user') }}"></use>
             </svg><span>Roles</span></a>
+
         </li>
         @endif
 
