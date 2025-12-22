@@ -74,7 +74,7 @@ class IndianPinCodeSeeder extends Seeder
             $areasData[] = [
                 'district_id' => $districtId,
                 'name' => $areaName, // "Area Name"
-                // 'pincode' => $pincode // if we had a pincode column
+                'pincode' => $pincode,
                 'created_at' => now(),
                 'updated_at' => now(),
             ];

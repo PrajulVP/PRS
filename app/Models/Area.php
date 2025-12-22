@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Area extends Model
 {
     use HasFactory;
-    protected $fillable = ['district_id','name'];
+    protected $fillable = ['district_id','name', 'pincode'];
 
     public function district(): BelongsTo
     {
