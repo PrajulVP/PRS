@@ -33,6 +33,9 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,    // Creates general products
             // If there are other factory-based seeders that create many records,
             // they can be called here (e.g., ProductFactory)
+
+            // Application-wide settings
+            \Database\Seeders\SettingSeeder::class,
         ]);
     }
 }

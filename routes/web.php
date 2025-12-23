@@ -17,8 +17,7 @@ use App\Http\Controllers\{
     FieldStaffController,
     RetailerController,
     RetailerOrderController,
-    RetailerOrderManagementController,
-    distributorOrderController
+    RetailerOrderManagementController,    SettingsController,    distributorOrderController
 };
 
 Route::get('/', function () {
@@ -97,6 +96,10 @@ Route::middleware(['auth'])->group(function () {
             ->name('distributor-orders.request-cancellation');
         Route::post('distributor-orders/{distributor_order}/cancel-order', [distributorOrderController::class, 'cancelOrder'])
             ->name('distributor-orders.cancel-order');
+
+        // Master settings
+        Route::get('settings/general', [SettingsController::class, 'general'])->name('settings.general');
+        Route::post('settings', [SettingsController::class, 'save'])->name('settings.save');
     });
 
     Route::get('/distributors/get-areas/{district}', [DistributorController::class, 'getAreas'])->name('distributors.getAreas');

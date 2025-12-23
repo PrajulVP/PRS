@@ -268,6 +268,20 @@
               </a>
             </li>
             @endif
+
+            {{-- General settings page --}}
+            <li class="sidebar-list">
+              <!-- <i class="fa fa-cog"></i> -->
+              <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.settings.general') }}">
+                <svg class="stroke-icon">
+                  <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
+                </svg>
+                <!-- <svg class="fill-icon">
+                  <use href="../../admin/assets/svg/icon-sprite.svg#fill-settings"></use>
+                </svg> -->
+                <span>General</span>
+              </a>
+            </li>
           </ul>
         </li>
         @if (Auth::user()->hasPermissionToCategory('permissions', 'view'))
