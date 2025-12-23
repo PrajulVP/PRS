@@ -3,16 +3,16 @@
 @section('content')
 <!-- Background Image Container -->
 <div class="container-fluid p-0" style="background-image: url('{{ asset('admin/assets/images/login/login_bg.jpg') }}'); background-size: cover; background-position: center;">
-    
+
     <!-- Light Overlay for White Theme -->
     <div class="row m-0 bg-white bg-opacity-50 vh-100 justify-content-center align-items-center">
-        
+
         <div class="col-12 col-sm-8 col-md-6 col-lg-4 col-xl-3">
             <!-- White Card -->
             <div class="card border-0 shadow-lg rounded-4 bg-white">
-                
+
                 <div class="card-body p-4 p-sm-5">
-                    
+
                     <div class="text-center mb-4">
                         <!-- Use Dark Logo for White Background -->
                         <img src="{{ asset('admin/assets/images/logo/logo_dark.png') }}" class="img-fluid mb-3" alt="PRS Logo" style="max-height: 60px;">
@@ -20,26 +20,26 @@
                         <p class="text-muted small">Sign in to continue to PRS</p>
                     </div>
 
-                    <form id="login-form" method="POST" action="{{ route('login.post') }}" novalidate>
+                    <form id="login-form" method="POST" action="{{ route('login') }}" novalidate>
                         @csrf
-                        
+
                         <div class="mb-3">
                             <label for="email" class="form-label fw-bold text-muted small">Email Address</label>
                             <input id="email" type="email"
-                                   class="form-control form-control-lg bg-light border-light-subtle text-dark"
-                                   name="email"
-                                   value="{{ old('email') }}"
-                                   placeholder="name@example.com"
-                                   required autofocus> 
+                                class="form-control form-control-lg bg-light border-light-subtle text-dark"
+                                name="email"
+                                value="{{ old('email') }}"
+                                placeholder="name@example.com"
+                                required autofocus>
                         </div>
 
                         <div class="mb-3">
                             <label for="password" class="form-label fw-bold text-muted small">Password</label>
                             <div class="input-group">
                                 <input id="password" type="password"
-                                       class="form-control form-control-lg bg-light border-light-subtle text-dark border-end-0"
-                                       name="password" required autocomplete="current-password"
-                                       placeholder="Enter password">
+                                    class="form-control form-control-lg bg-light border-light-subtle text-dark border-end-0"
+                                    name="password" required autocomplete="current-password"
+                                    placeholder="Enter password">
                                 <button type="button" class="btn btn-lg bg-light border-light-subtle border-start-0 text-muted show-pass" tabindex="-1" title="Show/Hide">
                                     <i class="fa fa-eye"></i>
                                 </button>
@@ -68,14 +68,14 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @if ($errors->any())
-    <script>
-        Swal.fire({
-            icon: 'error',
-            title: 'Login Failed',
-            html: `{!! implode('<br>', $errors->all()) !!}`,
-            confirmButtonColor: '#7366ff'
-        });
-    </script>
+<script>
+    Swal.fire({
+        icon: 'error',
+        title: 'Login Failed',
+        html: `{!! implode('<br>', $errors->all()) !!}`,
+        confirmButtonColor: '#7366ff'
+    });
+</script>
 @endif
 
 <script>

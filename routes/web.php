@@ -26,8 +26,8 @@ Route::get('/', function () {
 });
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login'])->name('admin.login.post');
-Route::post('/login-alt', [AuthController::class, 'login'])->name('login.post');
+Route::post('/login', [AuthController::class, 'login']);
+// Route::post('/login-alt', [AuthController::class, 'login'])->name('login.post');
 
 Route::middleware(['auth'])->group(function () {
 
