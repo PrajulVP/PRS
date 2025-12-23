@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles; // Added this line
 use App\Models\PermissionCategory;
 use App\Models\Role;
+use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject
@@ -74,11 +75,20 @@ class User extends Authenticatable implements JWTSubject
         ];
     }
 
-    public function district() { return $this->belongsTo(District::class); }
-    public function area()     { return $this->belongsTo(Area::class); }
+    // public function district() { return $this->belongsTo(District::class); }
+    // public function area()
+    // {
+    //     return $this->belongsTo(Area::class);
+    // }
     // public function chemists() { return $this->hasMany(Retailer::class);}
-    public function orders() { return $this->hasMany(RetailerOrder::class); }
-    public function targets() { return $this->hasMany(SalesTarget::class); }
+    public function orders()
+    {
+        return $this->hasMany(RetailerOrder::class);
+    }
+    public function targets()
+    {
+        return $this->hasMany(SalesTarget::class);
+    }
 
     // public function distributor()
     // {

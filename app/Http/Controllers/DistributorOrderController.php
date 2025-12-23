@@ -33,12 +33,9 @@ class distributorOrderController extends Controller
                     });
                 }
 
-                // Filter for Admin/Superadmin: only show orders after Sales Manager approval
+                // Filter for Admin/Superadmin: Show all orders
                 if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('superadmin')) {
-                    $query->whereIn('status', [
-                        distributorOrder::STATUS_ACCEPTED_BY_SALES_MANAGER,
-                        distributorOrder::STATUS_DELIVERED,
-                    ]);
+                    // No additional filtering needed to show all orders
                 }
 
                 $totalData = $query->count();
@@ -79,14 +76,18 @@ class distributorOrderController extends Controller
                     $query->orderBy('distributor_orders.id', 'desc');
                 }
 
-                $start = $request->input('start');
-                $length = $request->input('length');
-                $orders = $query->offset($start)->limit($length)->get();
+                $start = (int) $request->input('start');
+                $length = (int) $request->input('length');
+
+                if ($length > 0) {
+                    $query->skip($start)->take($length);
+                }
+                $orders = $query->get();
 
                 $formattedOrders = $orders->map(function ($order) {
                     $productSummary = $order->items->map(function ($item) {
-                        return $item->product->product_name . ' (' . $item->quantity . ')';
-                    })->implode(', ');
+                        return $item->product->product_name . ' - ' . $item->quantity;
+                    })->implode('<br>');
 
                     return [
                         'id' => $order->id,
@@ -126,7 +127,7 @@ class distributorOrderController extends Controller
             } catch (\Exception $e) {
                 Log::error('Error in distributorOrderController@index: ' . $e->getMessage());
                 return response()->json([
-                    'error' => 'An error occurred while processing your request.'
+                    'error' => $e->getMessage()
                 ], 500);
             }
         }
@@ -140,8 +141,31 @@ class distributorOrderController extends Controller
         return view('admin.orders.distributors.index', compact('products', 'distributors'));
     }
 
+    // Create Order Page
+    public function create()
+    {
+        $products = Product::select('id', 'product_name', 'mrp')->get();
+        $distributors = collect();
+        if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('superadmin')) {
+            $distributors = Distributor::with('user')->whereHas('user', function ($q) {
+                $q->where('status', 'active');
+            })->get();
+        }
+
+        return view('admin.orders.distributors.create', compact('products', 'distributors'));
+    }
+
+    public function getProductDetails(Product $product)
+    {
+        return response()->json([
+            'product' => $product
+        ]);
+    }
+
     public function store(Request $request)
     {
+        Log::info('Distributor Order Store Request Data:', $request->all());
+
         $request->validate([
             'delivery_notes' => 'nullable|string',
             'items' => 'required|array|min:1',
@@ -152,6 +176,7 @@ class distributorOrderController extends Controller
         $distributorId = null;
         $distributorSalesManagerId = null;
         if (Auth::user()->hasRole('distributor')) {
+
             $distributor = Auth::user()->distributor;
             $distributorId = $distributor->id;
             $distributorSalesManagerId = $distributor->sales_manager_id;
@@ -166,6 +191,8 @@ class distributorOrderController extends Controller
         $totalItems = 0;
         $totalQuantity = 0;
 
+
+
         $order = distributorOrder::create([
             'distributor_id' => $distributorId,
             'sales_manager_id' => $distributorSalesManagerId,
@@ -176,6 +203,7 @@ class distributorOrderController extends Controller
             'total_items' => 0,
             'total_quantity' => 0,
         ]);
+
 
         try {
             foreach ($request->items as $itemData) {
@@ -212,12 +240,13 @@ class distributorOrderController extends Controller
             $order->total_quantity = $totalQuantity;
             $order->save();
         } catch (\Exception $e) {
+            Log::error('Order creation failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             $order->items()->delete();
             $order->delete();
-            return back()->withErrors(['items' => $e->getMessage()])->withInput();
+            return response()->json(['error' => $e->getMessage()], 500);
         }
 
-        return redirect()->route('admin.distributor-orders.index')->with('success', 'Order placed successfully!');
+        return response()->json(['success' => 'Order placed successfully!']);
     }
 
     public function update(Request $request, distributorOrder $distributorOrder)

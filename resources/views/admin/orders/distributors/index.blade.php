@@ -52,9 +52,7 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5>Distributor Orders</h5>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createOrderModal" id="btnOpenCreate">
-                <i class="fa fa-plus me-1"></i>Create Order
-            </button>
+            <a href="{{ route('admin.distributor-orders.create') }}" class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> Create Order</a>
         </div>
         <div class="card-body">
             @if(session('success'))
@@ -73,7 +71,7 @@
                             <th>Distributor</th>
                             <th>Sales Manager</th>
                             <th>Products</th>
-                            <th>Items</th>
+                            {{-- <th>Items</th> --}}
                             <th>Qty</th>
                             <th>Total</th>
                             <th>Status</th>
@@ -304,12 +302,23 @@
                 },
                 {
                     data: 'product_summary',
-                    name: 'items.product.product_name'
-                }, // Searchable
-                {
-                    data: 'total_items',
-                    name: 'total_items'
+                    name: 'items.product.product_name',
+                    render: function(data, type, row) {
+                        if (!data) return '-';
+                        let items = data.split('<br>');
+                        if (items.length > 2) {
+                            let visible = items.slice(0, 2).join('<br>');
+                            return `<div>
+                                        <span class="preview-content">${visible}</span>
+                                        <span class="full-content d-none">${data}</span>
+                                        <br>
+                                        <a href="#" class="small text-primary toggle-more-btn" onclick="event.preventDefault(); let p = $(this).parent(); if(p.find('.full-content').hasClass('d-none')){ p.find('.full-content').removeClass('d-none'); p.find('.preview-content').addClass('d-none'); $(this).text('Show Less'); } else { p.find('.full-content').addClass('d-none'); p.find('.preview-content').removeClass('d-none'); $(this).text('Read More'); }">Read More</a>
+                                    </div>`;
+                        }
+                        return data;
+                    }
                 },
+                // { data: 'total_items', name: 'total_items' }, // Hidden as per request
                 {
                     data: 'total_quantity',
                     name: 'total_quantity'
@@ -320,11 +329,25 @@
                 },
                 {
                     data: 'status',
-                    name: 'status'
+                    name: 'status',
+                    render: function(data, type, row) {
+                        let status = data.toLowerCase();
+                        let badgeClass = 'bg-secondary';
+                        if (status.includes('pending')) badgeClass = 'bg-warning text-dark';
+                        else if (status.includes('accepted')) badgeClass = 'bg-primary';
+                        else if (status.includes('delivered')) badgeClass = 'bg-success';
+                        else if (status.includes('cancelled')) badgeClass = 'bg-danger';
+
+                        return `<span class="badge ${badgeClass}">${data}</span>`;
+                    }
                 },
                 {
                     data: 'placed_at',
-                    name: 'placed_at'
+                    name: 'placed_at',
+                    render: function(data) {
+                        if (!data || data === '-') return '-';
+                        return new Date(data).toLocaleString();
+                    }
                 },
                 {
                     data: 'id',
@@ -392,11 +415,11 @@
             let select = $('#create_product_select option:selected');
             let id = select.val();
             if (!id) {
-                Swal.fire('Warning', 'Select a product', 'warning');
+                showToast('error', 'Select a product');
                 return;
             }
             if (createItems[id]) {
-                Swal.fire('Warning', 'Already added', 'warning');
+                showToast('error', 'Already added');
                 return;
             }
 
@@ -421,21 +444,15 @@
                     if (res.success || res.message) {
                         $('#createOrderModal').modal('hide');
                         table.ajax.reload();
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Created!',
-                            text: res.success || res.message,
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
+                        showToast('success', res.success || res.message);
                     } else {
-                        Swal.fire('Error', res.error, 'error');
+                        showToast('error', res.error);
                     }
                 },
                 error: function(xhr) {
                     let err = 'An error occurred.';
                     if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
-                    Swal.fire('Error', err, 'error');
+                    showToast('error', err);
                 }
             });
         });
@@ -474,7 +491,7 @@
             let val = parseInt($(this).val());
             if (val < 1) val = 1;
             if (val > createItems[id].stock) {
-                Swal.fire('Warning', 'Exceeds stock', 'warning');
+                showToast('error', 'Exceeds stock');
                 val = createItems[id].stock;
             }
             createItems[id].quantity = val;
@@ -524,11 +541,11 @@
             let select = $('#edit_product_select option:selected');
             let id = select.val();
             if (!id) {
-                Swal.fire('Warning', 'Select a product', 'warning');
+                showToast('error', 'Select a product');
                 return;
             }
             if (editItems[id]) {
-                Swal.fire('Warning', 'Already added', 'warning');
+                showToast('error', 'Already added');
                 return;
             }
 
@@ -554,21 +571,15 @@
                     if (res.success || res.message) {
                         $('#editOrderModal').modal('hide');
                         table.ajax.reload();
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Updated!',
-                            text: res.success || res.message,
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
+                        showToast('success', res.success || res.message);
                     } else {
-                        Swal.fire('Error', res.error, 'error');
+                        showToast('error', res.error);
                     }
                 },
                 error: function(xhr) {
                     let err = 'An error occurred.';
                     if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
-                    Swal.fire('Error', err, 'error');
+                    showToast('error', err);
                 }
             });
         });
@@ -661,16 +672,10 @@
                     }, function(res) {
                         if (res.success) {
                             table.ajax.reload();
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Accepted!',
-                                text: res.success,
-                                timer: 1500,
-                                showConfirmButton: false
-                            });
-                        } else Swal.fire('Error', res.error, 'error');
+                            showToast('success', res.success);
+                        } else showToast('error', res.error);
                     }).fail(function() {
-                        Swal.fire('Error', 'Request failed', 'error');
+                        showToast('error', 'Request failed');
                     });
                 }
             });
@@ -691,10 +696,10 @@
                     }, function(res) {
                         if (res.success) {
                             table.ajax.reload();
-                            Swal.fire('Cancelled!', res.success, 'success');
-                        } else Swal.fire('Error', res.error, 'error');
+                            showToast('success', res.success);
+                        } else showToast('error', res.error);
                     }).fail(function() {
-                        Swal.fire('Error', 'Request failed', 'error');
+                        showToast('error', 'Request failed');
                     });
                 }
             });
@@ -721,8 +726,8 @@
                     }, function(res) {
                         if (res.success) {
                             table.ajax.reload();
-                            Swal.fire('Requested!', res.success, 'success');
-                        } else Swal.fire('Error', res.error, 'error');
+                            showToast('success', res.success);
+                        } else showToast('error', res.error);
                     });
                 }
             });
@@ -742,8 +747,8 @@
                     }, function(res) {
                         if (res.success) {
                             table.ajax.reload();
-                            Swal.fire('Approved!', res.success, 'success');
-                        } else Swal.fire('Error', res.error, 'error');
+                            showToast('success', res.success);
+                        } else showToast('error', res.error);
                     });
                 }
             });

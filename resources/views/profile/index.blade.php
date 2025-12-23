@@ -47,6 +47,13 @@
                                     </div>
                                 </div>
                                 <div class="col-md-6">
+                                    <label class="text-muted small text-uppercase fw-bold mb-1">Role</label>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fa fa-id-badge text-warning me-2"></i>
+                                        <span class="fs-6 fw-medium text-dark">{{ ucfirst($user->role) }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
                                     <label class="text-muted small text-uppercase fw-bold mb-1">Member Since</label>
                                     <div class="d-flex align-items-center">
                                         <i class="fa fa-calendar text-info me-2"></i>

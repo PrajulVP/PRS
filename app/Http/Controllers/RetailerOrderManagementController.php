@@ -15,6 +15,111 @@ use Illuminate\Support\Facades\Log;
 
 class RetailerOrderManagementController extends Controller
 {
+    // Create Order Page
+    public function create()
+    {
+        $retailers = Retailer::with('user')->get();
+        // Distributors are now fetched via AJAX per product, or generally available?
+        // Actually, we need distributors list if we were to show them all, but we show per product.
+        // We can just pass active retailers.
+
+        $products = Product::with('distributors.user')->get(); // We can optimize this later if needed, or remove eager load if AJAX is used for everything.
+        // For now, let's keep products list but remove eager loading from index to speed up, 
+        // AND add the AJAX endpoint.
+        // User asked for AJAX to fetch info.
+
+        // Revised: We will keep the products list for the dropdown, but minimal data.
+        $products = Product::select('id', 'product_name', 'mrp')->get();
+
+        return view('admin.orders.retailers.create', compact('retailers', 'products'));
+    }
+
+    public function getProductDetails(Product $product)
+    {
+        $product->load('distributors.user');
+        return response()->json([
+            'product' => $product,
+            'distributors' => $product->distributors
+        ]);
+    }
+
+    // Store (Admin Create)
+    public function store(Request $request)
+    {
+        $request->validate([
+            'retailer_id' => 'required|exists:retailers,id',
+            'status' => 'required',
+            'items' => 'required|array|min:1',
+        ]);
+
+        try {
+            \DB::beginTransaction();
+
+            $retailer = Retailer::findOrFail($request->retailer_id);
+
+            // Group items by distributor
+            $itemsByDistributor = collect($request->items)->groupBy('distributor_id');
+
+            foreach ($itemsByDistributor as $distributorId => $items) {
+                // Ensure distributor exists if ID is present
+                $distributor = $distributorId ? Distributor::find($distributorId) : null;
+
+                // If no distributor selected/found, fallback or skip (based on logic, here we create order even if null if allowed)
+
+                // Create Order
+                $order = RetailerOrder::create([
+                    'retailer_id' => $retailer->id,
+                    'distributor_id' => $distributor ? $distributor->id : null,
+                    'order_code' => 'ORD-' . strtoupper(uniqid()),
+                    'status' => $request->status,
+                    'notes' => $request->notes,
+                    'delivery_notes' => $request->delivery_notes,
+                    'total_amount' => 0,
+                    'total_items' => 0,
+                    'total_quantity' => 0,
+                    'placed_at' => now(),
+                ]);
+
+                $totalAmount = 0;
+                $totalItems = 0;
+                $totalQuantity = 0;
+
+                foreach ($items as $itemData) {
+                    $product = Product::find($itemData['product_id']);
+                    if (!$product) continue;
+
+                    $price = $product->mrp; // Default MRP
+                    $qty = $itemData['quantity'];
+                    $subtotal = $qty * $price;
+
+                    $order->items()->create([
+                        'product_id' => $product->id,
+                        'quantity' => $qty,
+                        'unit_price' => $price,
+                        'total_amount' => $subtotal,
+                    ]);
+
+                    $totalAmount += $subtotal;
+                    $totalItems++;
+                    $totalQuantity += $qty;
+                }
+
+                $order->update([
+                    'total_amount' => $totalAmount,
+                    'total_items' => $totalItems,
+                    'total_quantity' => $totalQuantity
+                ]);
+            }
+
+            \DB::commit();
+
+            return response()->json(['success' => 'Order(s) created successfully!']);
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
     // Admin/Manager: List all orders
     public function index(Request $request)
     {

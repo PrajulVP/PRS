@@ -30,6 +30,7 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5>Retailer Orders</h5>
+            <a href="{{ route('admin.retailer-orders.create') }}" class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> Create Order</a>
         </div>
         <div class="card-body">
             @if(session('success')) <div class="alert alert-success">{{ session('success') }}</div> @endif
@@ -498,6 +499,8 @@
             $('#showOrderItemsBody').html(h);
             $('#showOrderModal').modal('show');
         });
+
+
     });
 </script>
 @endpush
