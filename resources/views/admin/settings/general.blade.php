@@ -3,10 +3,10 @@
 @section('page-body')
 <div class="container-fluid">
     <div class="row">
-        <div class="col-sm-8">
+        <div class="col-sm-10">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5><i class="fa fa-cog me-2"></i>General Settings</h5>
+                    <h5><i class="fa fa-cog me-2"></i>Loyalty Settings</h5>
                 </div>
                 <div class="card-body">
                     <form id="general-settings-form">
