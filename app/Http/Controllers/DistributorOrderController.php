@@ -86,7 +86,7 @@ class distributorOrderController extends Controller
 
                 $formattedOrders = $orders->map(function ($order) {
                     $productSummary = $order->items->map(function ($item) {
-                        return $item->product->product_name . ' - ' . $item->quantity;
+                        return $item->product->product_name . ' - ' . $item->quantity . ' ' . ($item->product->pack ?? '');
                     })->implode('<br>');
 
                     return [
@@ -110,6 +110,7 @@ class distributorOrderController extends Controller
                                 'unit_price' => $item->unit_price,
                                 'total_amount' => $item->total_amount,
                                 'stock_at_time' => $item->product->stock, // Note: This is current stock, not at time of order
+                                'unit' => $item->unit,
                                 'order_item_id' => $item->id
                             ];
                         }),
@@ -226,6 +227,7 @@ class distributorOrderController extends Controller
                 $order->items()->create([
                     'product_id' => $product->id,
                     'quantity' => $itemData['quantity'],
+                    'unit' => $itemData['unit'] ?? 'Box',
                     'unit_price' => $unitPrice,
                     'total_amount' => $itemTotalAmount,
                 ]);
@@ -311,6 +313,7 @@ class distributorOrderController extends Controller
                 if ($currentOrderItem) {
                     $currentOrderItem->update([
                         'quantity' => $newQuantity,
+                        'unit' => $itemData['unit'] ?? 'Box',
                         'unit_price' => $unitPrice,
                         'total_amount' => $itemTotalAmount,
                     ]);
@@ -319,6 +322,7 @@ class distributorOrderController extends Controller
                     $newItem = $distributorOrder->items()->create([
                         'product_id' => $product->id,
                         'quantity' => $newQuantity,
+                        'unit' => $itemData['unit'] ?? 'Box',
                         'unit_price' => $unitPrice,
                         'total_amount' => $itemTotalAmount,
                     ]);
@@ -341,27 +345,10 @@ class distributorOrderController extends Controller
             $distributorOrder->total_quantity = $totalQuantity;
             $distributorOrder->save();
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
 
-        return redirect()->route('admin.distributor-orders.index')->with('success', 'Order updated.');
-    }
-
-    public function destroy(distributorOrder $distributorOrder)
-    {
-        if ($distributorOrder->status !== distributorOrder::STATUS_PENDING) {
-            return back()->with('error', 'Only pending orders can be deleted.');
-        }
-
-        try {
-            foreach ($distributorOrder->items as $item) {
-                $item->product->increment('stock', $item->quantity);
-            }
-            $distributorOrder->delete();
-            return redirect()->route('admin.distributor-orders.index')->with('success', 'Order deleted successfully and stock restored.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'An error occurred.');
-        }
+        return response()->json(['success' => 'Order updated successfully.']);
     }
 
     // ... keep acceptBySalesManager, acceptByAdmin, requestCancellation, approveCancellation, cancelOrder methods as is ...
@@ -435,19 +422,46 @@ class distributorOrderController extends Controller
         return response()->json(['success' => 'Order cancellation approved successfully! Stock restored.']);
     }
 
-    public function cancelOrder(distributorOrder $distributorOrder)
+    public function cancelOrder(Request $request, distributorOrder $distributorOrder)
     {
-        if (!Auth::user()->hasRole('distributor')) return response()->json(['error' => 'No permission'], 403);
-        if ($distributorOrder->distributor_id !== Auth::user()->distributor->id) return response()->json(['error' => 'Not your order'], 403);
+        $request->validate([
+            'cancellation_reason' => 'required|string|min:3',
+        ]);
 
         if ($distributorOrder->status === distributorOrder::STATUS_PENDING) {
             foreach ($distributorOrder->items as $item) {
                 $item->product->increment('stock', $item->quantity);
             }
-            $distributorOrder->delete();
-            return response()->json(['success' => 'Pending order cancelled successfully!']);
+
+            $distributorOrder->update([
+                'status' => distributorOrder::STATUS_CANCELLED,
+                'cancellation_reason' => $request->cancellation_reason
+            ]);
+
+            return response()->json(['success' => 'Order cancelled successfully!']);
         }
 
         return response()->json(['error' => 'Only pending orders can be directly cancelled.'], 400);
+    }
+    public function destroy(distributorOrder $distributorOrder)
+    {
+        if (!Auth::user()->hasAnyRole(['admin', 'superadmin'])) {
+            return response()->json(['error' => 'No permission to delete orders.'], 403);
+        }
+
+        // Restore stock if the order wasn't already cancelled (assuming stock was deducted on creation)
+        if (!in_array($distributorOrder->status, [distributorOrder::STATUS_CANCELLED])) {
+            foreach ($distributorOrder->items as $item) {
+                // Determine logic: 
+                // Creating order REDUCES global product stock? Yes, usually.
+                // So deleting order should RESTORE it.
+                $item->product->increment('stock', $item->quantity);
+            }
+        }
+
+        $distributorOrder->items()->delete(); // Delete items first
+        $distributorOrder->delete();
+
+        return response()->json(['success' => 'Order deleted successfully! Stock restored.']);
     }
 }

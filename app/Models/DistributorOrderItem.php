@@ -11,6 +11,7 @@ class distributorOrderItem extends Model
         'distributor_order_id',
         'product_id',
         'quantity',
+        'unit',
         'unit_price',
         'total_amount',
     ];

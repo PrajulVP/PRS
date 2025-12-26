@@ -21,36 +21,35 @@
             </div>
             <div class="card-body">
                 <div class="row align-items-center">
-                    <div class="col-md-2 text-center">
+                    <div class="col-sm-3 col-12 text-center mb-3 mb-sm-0">
                         <img id="previewImage" src="https://placehold.co/400x300?text=Product+Image" class="img-fluid rounded shadow-sm" style="max-height: 120px; object-fit: contain;">
                     </div>
-                    <div class="col-md-10">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h4 id="previewName" class="fw-bold mb-0">Product Name</h4>
+                    <div class="col-sm-9 col-12">
+                        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start mb-2">
+                            <h4 id="previewName" class="fw-bold mb-1 mb-sm-0">Product Name</h4>
                             <div>
-                                <span class="badge bg-success fs-6 me-2">MRP: ₹<span id="previewMrp">0.00</span></span>
+                                <span class="badge bg-success fs-6">MRP: ₹<span id="previewMrp">0.00</span></span>
                             </div>
                         </div>
                         <p class="text-muted small mb-3" id="previewGeneric">Generic Name</p>
-                        <p class="text-muted small mb-1"><strong>Unit/Pack:</strong> <span id="previewPack">-</span></p>
 
-                        <div class="row g-3">
-                            <div class="col-md-4">
+                        <div class="row g-2">
+                            <div class="col-4">
                                 <div class="p-2 border rounded bg-light text-center">
-                                    <small class="text-muted d-block text-uppercase fw-bold">Pack</small>
-                                    <span id="previewPack" class="fw-bold">-</span>
+                                    <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.7rem;">Pack</small>
+                                    <span id="previewPack" class="fw-bold small">-</span>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-4">
                                 <div class="p-2 border rounded bg-light text-center">
-                                    <small class="text-muted d-block text-uppercase fw-bold">HSN Code</small>
-                                    <span id="previewHsn" class="fw-bold">-</span>
+                                    <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.7rem;">HSN</small>
+                                    <span id="previewHsn" class="fw-bold small">-</span>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-4">
                                 <div class="p-2 border rounded bg-light text-center">
-                                    <small class="text-muted d-block text-uppercase fw-bold">Box Size</small>
-                                    <span id="previewBox" class="fw-bold">-</span>
+                                    <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.7rem;">Box Size</small>
+                                    <span id="previewBox" class="fw-bold small">-</span>
                                 </div>
                             </div>
                         </div>
@@ -78,7 +77,14 @@
 
                     <div class="col-md-3">
                         <label class="form-label fw-bold">Quantity</label>
-                        <input type="number" id="qtyInput" class="form-control" value="1" min="1">
+                        <div class="input-group">
+                            <input type="number" id="qtyInput" class="form-control" value="1" min="1">
+                            <select class="form-select input-group-text" id="unitSelect" style="max-width: 100px;">
+                                <option value="Strips">Strips</option>
+                                <option value="Carton">Carton</option>
+                                <option value="Box">Box</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="col-md-3">
                         <button type="button" class="btn btn-primary w-100 fw-bold py-2" id="btnAddItem">
@@ -242,6 +248,18 @@
                     $('#previewPack').text(details.pack || '-');
                     $('#previewHsn').text(details.hsn_code || '-');
                     $('#previewBox').text(details.box_size || '-');
+
+                    // Auto-select unit if matches, else default
+                    let unit = details.pack || 'Box';
+                    let found = false;
+                    $('#unitSelect option').each(function() {
+                        if ($(this).val().toLowerCase() === unit.toLowerCase()) {
+                            $('#unitSelect').val($(this).val());
+                            found = true;
+                            return false;
+                        }
+                    });
+                    if (!found) $('#unitSelect').val('Box');
                 },
                 error: function() {
                     showToast('error', 'Failed to fetch product details');
@@ -268,6 +286,7 @@
             }
 
             let qty = parseInt($('#qtyInput').val());
+            let unit = $('#unitSelect').val(); // Capture Unit
             if (qty < 1) return showToast('error', 'Invalid quantity');
 
             if (!currentProductDetails) return showToast('error', 'Product details not loaded');
@@ -277,23 +296,23 @@
             if (addedItems[key]) {
                 // Update existing
                 addedItems[key].qty += qty;
+                addedItems[key].unit = unit; // Update unit just in case
                 lastAddedKey = key;
             } else {
                 // Add new
                 addedItems[key] = {
-                    key: key,
-                    prodId: prodId,
-                    prodName: currentProductDetails.product_name,
-                    pack: currentProductDetails.pack || '-',
+                    id: currentProductDetails.id,
+                    name: currentProductDetails.product_name,
                     price: parseFloat(currentProductDetails.mrp),
-                    qty: qty
+                    qty: qty,
+                    unit: unit // Store Unit
                 };
                 lastAddedKey = key;
             }
 
             renderTable();
-            // Reset Input
-            $('#productSelect').val(null).trigger('change');
+            // Reset quantity but keep product selected? Or clear all?
+            // Usually clearing quantity is enough
             $('#qtyInput').val(1);
         });
 
@@ -316,12 +335,18 @@
                     <tr class="${rowClass}">
                         <td class="ps-4 text-muted">${index++}</td>
                         <td>
-                            <div class="fw-bold">${item.prodName}</div>
-                            <div class="small text-muted">Unit: ${item.pack}</div>
-                            <input type="hidden" name="items[${key}][product_id]" value="${item.prodId}">
+                            <div class="fw-bold">${item.name}</div>
+                            <input type="hidden" name="items[${key}][product_id]" value="${item.id}">
                         </td>
                         <td>
-                            <input type="number" class="form-control form-control-sm qty-change" data-key="${key}" value="${item.qty}" name="items[${key}][quantity]" style="width: 80px;">
+                            <div class="input-group input-group-sm" style="width: 150px;">
+                                <input type="number" class="form-control qty-change" data-key="${key}" value="${item.qty}" name="items[${key}][quantity]" min="1">
+                                <select class="form-select unit-change" data-key="${key}" name="items[${key}][unit]" style="max-width: 80px;">
+                                    <option value="Strips" ${item.unit === 'Strips' ? 'selected' : ''}>Strips</option>
+                                    <option value="Carton" ${item.unit === 'Carton' ? 'selected' : ''}>Carton</option>
+                                    <option value="Box" ${item.unit === 'Box' ? 'selected' : ''}>Box</option>
+                                </select>
+                            </div>
                         </td>
                         <td>₹${item.price.toFixed(2)}</td>
                         <td>₹${lineTotal.toFixed(2)}</td>
@@ -335,7 +360,7 @@
             lastAddedKey = null;
 
             if (!hasItems) {
-                tbody.append('<tr id="emptyRow"><td colspan="6" class="text-center text-muted">No items added yet</td></tr>');
+                tbody.append('<tr id="emptyRow"><td colspan="6" class="text-center py-5 text-muted"><i class="fa fa-shopping-basket fa-3x mb-3 text-light"></i><br>Your order list is empty. Start by adding products above.</td></tr>');
                 $('#btnSubmitOrder').prop('disabled', true);
             } else {
                 $('#btnSubmitOrder').prop('disabled', false);
@@ -351,6 +376,14 @@
             let val = parseInt($(this).val());
             if (val < 1) val = 1;
             addedItems[key].qty = val;
+            renderTable();
+        });
+
+        // Unit Change in List
+        $(document).on('change', '.unit-change', function() {
+            let key = $(this).data('key');
+            let val = $(this).val();
+            addedItems[key].unit = val;
             renderTable();
         });
 

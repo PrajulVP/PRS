@@ -68,11 +68,13 @@
                         <tr>
                             <th>No.</th>
                             <th>Order Code</th>
+                            @if(!Auth::user()->hasRole('distributor'))
                             <th>Distributor</th>
+                            @endif
                             <th>Sales Manager</th>
                             <th>Products</th>
                             {{-- <th>Items</th> --}}
-                            <th>Qty</th>
+                            {{-- <th>Qty</th> --}}
                             <th>Total</th>
                             <th>Status</th>
                             <th>Placed At</th>
@@ -167,11 +169,12 @@
 </div>
 
 {{-- Edit Modal --}}
+{{-- Edit Modal --}}
 <div class="modal fade" id="editOrderModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Edit Order <span id="edit_order_code"></span></h5>
+                <h5 class="modal-title">Edit Order <span id="edit_order_code" class="fw-bold"></span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="editOrderForm" method="POST">
@@ -182,57 +185,57 @@
                     <input type="hidden" name="status" id="edit_status">
                     <input type="hidden" name="distributor_id" id="edit_distributor_id_hidden">
 
-                    <div class="mb-3">
-                        <label class="form-label">Distributor: <strong id="edit_distributor_name"></strong></label>
+                    <div class="mb-4">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Distributor</label>
+                        <h5 class="mb-0 text-dark" id="edit_distributor_name"></h5>
                     </div>
 
-                    {{-- Product Selection --}}
-                    <div class="mb-3 p-3 bg-light rounded">
+                    <div class="mb-4">
                         <label class="form-label fw-bold">Add Products</label>
                         <div class="input-group">
-                            <select id="edit_product_select" class="form-control">
-                                <option value="">Select a product</option>
+                            <select id="edit_product_select" class="form-control select2-modal">
+                                <option value="">Select a product to add...</option>
                                 @foreach($products as $product)
                                 <option value="{{ $product->id }}" data-price="{{ $product->mrp }}" data-stock="{{ $product->stock }}">
-                                    {{ $product->product_name }} - Stock: {{ $product->stock }}
+                                    {{ $product->product_name }} (Stock: {{ $product->stock }}) - ₹{{ $product->mrp }}
                                 </option>
                                 @endforeach
                             </select>
-                            <button type="button" class="btn btn-primary" id="btn_add_product_edit">Add</button>
+                            <button type="button" class="btn btn-primary" id="btn_add_product_edit">
+                                <i class="fa fa-plus"></i> Add
+                            </button>
                         </div>
                     </div>
 
-                    {{-- Items Table --}}
-                    <div class="table-responsive mb-3">
-                        <table class="table table-bordered text-center" id="edit_items_table">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Quantity</th>
-                                    <th>Price</th>
-                                    <th>Total</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                            <tfoot>
-                                <tr>
-                                    <th colspan="3" class="text-end">Grand Total:</th>
-                                    <th id="edit_grand_total">0.00</th>
-                                    <th></th>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Delivery Notes</label>
-                        <textarea name="delivery_notes" id="edit_delivery_notes" class="form-control" rows="2"></textarea>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Order Items</label>
+                        <div class="table-responsive border rounded">
+                            <table class="table table-hover align-middle mb-0" id="edit_items_table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3">Product</th>
+                                        <th class="text-center" width="120">Unit</th>
+                                        <th class="text-center" width="100">Qty</th>
+                                        <th class="text-end" width="120">Price</th>
+                                        <th class="text-end" width="120">Total</th>
+                                        <th class="text-center" width="60"></th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td colspan="4" class="text-end fw-bold">Grand Total:</td>
+                                        <td class="text-end fw-bold"><i class="fa fa-rupee"></i> <span id="edit_grand_total">0.00</span></td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Update Order</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
                 </div>
             </form>
         </div>
@@ -248,24 +251,76 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <table class="table table-bordered">
-                    <tbody id="showOrderBody"></tbody>
-                </table>
-                <h6 class="mt-3">Items</h6>
-                <table class="table table-sm table-striped">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Qty</th>
-                            <th>Price</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody id="showOrderItemsBody"></tbody>
-                </table>
+                <div class="mb-4" id="showOrderInfo">
+                    <!-- Content via JS -->
+                </div>
+
+                <h6 class="fw-bold mb-3">Ordered Items</h6>
+                <div class="table-responsive border rounded">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">Product</th>
+                                <th class="text-center">Qty</th>
+                                <th class="text-end">Price</th>
+                                <th class="text-end pe-3">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="showOrderItemsBody"></tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="3" class="text-end fw-bold">Total Amount:</td>
+                                <td class="text-end fw-bold pe-3"><i class="fa fa-rupee"></i> <span id="showOrderTotal">0.00</span></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{{-- Delete Confirmation Modal --}}
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Are you sure you want to delete this order? This process cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete Order</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Cancel Confirmation Modal --}}
+<div class="modal fade" id="cancelConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Cancellation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Are you sure you want to cancel this order? This action cannot be undone.</p>
+                <div class="mb-3">
+                    <label class="form-label required">Cancellation Reason</label>
+                    <textarea id="cancel_reason_input" class="form-control" rows="3" placeholder="Please provide a reason for cancellation..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Keep It</button>
+                <button type="button" class="btn btn-warning" id="confirmCancelBtn">Yes, Cancel Order</button>
             </div>
         </div>
     </div>
@@ -292,11 +347,11 @@
                     data: 'order_code',
                     name: 'order_code'
                 },
-                {
+                @if(!Auth::user()->hasRole('distributor')) {
                     data: 'name',
                     name: 'distributor.user.name'
                 }, // Distributor Name
-                {
+                @endif {
                     data: 'sales_manager_name',
                     name: 'salesManager.user.name'
                 },
@@ -319,13 +374,16 @@
                     }
                 },
                 // { data: 'total_items', name: 'total_items' }, // Hidden as per request
-                {
-                    data: 'total_quantity',
-                    name: 'total_quantity'
-                },
+                // {
+                //     data: 'total_quantity',
+                //     name: 'total_quantity'
+                // },
                 {
                     data: 'total_amount',
-                    name: 'total_amount'
+                    name: 'total_amount',
+                    render: function(data, type, row) {
+                        return `<span class="fw-bold text-success"><i class="fa fa-rupee"></i> ${data}</span>`;
+                    }
                 },
                 {
                     data: 'status',
@@ -363,8 +421,12 @@
                         btns += `<button class="btn btn-primary btn-sm edit-btn" data-row='${JSON.stringify(row).replace(/'/g, "&apos;")}'><i class="fa fa-edit"></i></button>`;
 
                         if (row.status.toLowerCase().includes('pending')) {
-                            btns += `<button class="btn btn-danger btn-sm cancel-order-btn" data-id="${row.id}"><i class="fa fa-times"></i></button>`;
+                            btns += `<button class="btn btn-warning btn-sm cancel-order-btn" title="Cancel Order" data-id="${row.id}"><i class="fa fa-times"></i></button>`;
                         }
+
+                        // Delete button for Admin/Superadmin (or check permissions)
+                        // Assuming permission check context is available or just show it for now
+                        btns += `<button class="btn btn-danger btn-sm delete-order-btn" title="Delete Order" data-id="${row.id}"><i class="fa fa-trash"></i></button>`;
 
                         btns += `</div>`;
                         return btns;
@@ -382,26 +444,78 @@
                 },
                 buttons: [{
                         extend: 'copy',
-                        className: 'btn btn-primary btn-sm'
+                        className: 'btn btn-secondary btn-sm',
+                        text: '<i class="fa fa-copy"></i> Copy'
                     },
                     {
                         extend: 'csv',
-                        className: 'btn btn-sm btn-secondary'
+                        className: 'btn btn-info btn-sm text-white',
+                        text: '<i class="fa fa-file-csv"></i> CSV'
                     },
                     {
                         extend: 'excel',
-                        className: 'btn btn-sm'
+                        className: 'btn btn-success btn-sm',
+                        text: '<i class="fa fa-file-excel"></i> Excel'
                     },
                     {
                         extend: 'pdf',
-                        className: 'btn btn-sm'
+                        className: 'btn btn-danger btn-sm',
+                        text: '<i class="fa fa-file-pdf"></i> PDF'
                     },
                     {
                         extend: 'print',
-                        className: 'btn btn-sm'
+                        className: 'btn btn-dark btn-sm',
+                        text: '<i class="fa fa-print"></i> Print'
                     }
                 ]
             }
+        });
+
+        // --- Create Modal Logic ---
+        $('#btnOpenCreate').click(function() {
+            createItems = {};
+            renderCreateItems();
+            $('#createOrderForm')[0].reset();
+        });
+
+        // ... (existing code) ...
+
+        // --- Actions ---
+
+        // ... (existing actions) ...
+
+        // Delete Order Logic
+        let deleteOrderId = null;
+        $(document).on('click', '.delete-order-btn', function() {
+            deleteOrderId = $(this).data('id');
+            $('#deleteConfirmModal').modal('show');
+        });
+
+        $('#confirmDeleteBtn').click(function() {
+            if (!deleteOrderId) return;
+
+            $.ajax({
+                url: `/distributor-orders/${deleteOrderId}`, // Assuming resource route uses destroy
+                type: 'DELETE',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(res) {
+                    $('#deleteConfirmModal').modal('hide');
+                    if (res.success) {
+                        table.ajax.reload();
+                        showToast('success', res.success || 'Order deleted successfully');
+                    } else {
+                        showToast('error', res.error || 'Failed to delete order');
+                    }
+                },
+                error: function(xhr) {
+                    $('#deleteConfirmModal').modal('hide');
+                    let err = 'An error occurred.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
+                    showToast('error', err);
+                }
+            });
         });
 
         // --- Create Modal Logic ---
@@ -517,7 +631,7 @@
             else if (st.includes('cancelled')) st = 'cancelled';
             $('#edit_status').val(st);
 
-            $('#edit_delivery_notes').val(row.delivery_notes);
+            // Removed delivery notes population
 
             editItems = {};
             row.items.forEach(function(item) {
@@ -527,6 +641,7 @@
                     price: parseFloat(item.unit_price),
                     stock: 9999,
                     quantity: item.quantity,
+                    unit: item.unit || 'Box',
                     orderItemId: item.order_item_id
                 };
             });
@@ -538,24 +653,28 @@
         });
 
         $('#btn_add_product_edit').click(function() {
-            let select = $('#edit_product_select option:selected');
-            let id = select.val();
+            let selectEl = $('#edit_product_select');
+            let id = selectEl.val(); // Get value directly from select
+            let selectedOption = selectEl.find('option:selected'); // Get selected option
+
             if (!id) {
                 showToast('error', 'Select a product');
                 return;
             }
             if (editItems[id]) {
-                showToast('error', 'Already added');
+                editItems[id].quantity += 1;
+                renderEditItems();
                 return;
             }
 
             editItems[id] = {
                 id: id,
-                name: select.text(),
-                price: parseFloat(select.data('price')),
-                stock: 9999,
+                name: selectedOption.text(),
+                price: parseFloat(selectedOption.data('price')) || 0,
+                stock: parseInt(selectedOption.data('stock')) || 0,
                 quantity: 1,
-                orderItemId: null // New item
+                unit: 'Box',
+                orderItemId: null
             };
             renderEditItems();
         });
@@ -589,25 +708,42 @@
             tbody.empty();
             let total = 0;
             if (Object.keys(editItems).length === 0) {
-                tbody.html('<tr><td colspan="5">No Items</td></tr>');
+                tbody.html('<tr><td colspan="5" class="text-center text-muted">No Items Added</td></tr>');
             } else {
-                $.each(editItems, function(id, item) {
-                    let sub = item.quantity * item.price;
+                $.each(editItems, function(key, item) {
+                    let price = parseFloat(item.price) || 0;
+                    let qty = parseInt(item.quantity) || 1;
+                    let sub = qty * price;
                     total += sub;
+
+                    // Ensure ID is passed as string to avoid type confusion
+                    let rowId = item.id;
+                    let unit = item.unit || 'Box';
+                    let options = '';
+                    ['Box', 'Carton', 'Strips'].forEach(function(u) {
+                        options += `<option value="${u}" ${unit === u ? 'selected' : ''}>${u}</option>`;
+                    });
+
                     tbody.append(`
                     <tr>
                         <td>${item.name}
-                            <input type="hidden" name="items[${id}][product_id]" value="${id}">
-                            ${item.orderItemId ? `<input type="hidden" name="items[${id}][order_item_id]" value="${item.orderItemId}">` : ''}
+                            <input type="hidden" name="items[${rowId}][product_id]" value="${rowId}">
+                            ${item.orderItemId ? `<input type="hidden" name="items[${rowId}][order_item_id]" value="${item.orderItemId}">` : ''}
+                        </td>
+                        <td>
+                            <select class="form-select form-select-sm unit-select-edit" data-id="${rowId}" style="width: 90px; margin: 0 auto;">
+                                ${options}
+                            </select>
+                            <input type="hidden" name="items[${rowId}][unit]" value="${unit}">
                         </td>
                         <td>
                             <input type="number" class="form-control form-control-sm qty-input-edit" 
-                            data-id="${id}" value="${item.quantity}" min="1" style="width:80px">
-                            <input type="hidden" name="items[${id}][quantity]" value="${item.quantity}">
+                            data-id="${rowId}" value="${qty}" min="1" style="width:80px; margin: 0 auto;">
+                            <input type="hidden" name="items[${rowId}][quantity]" value="${qty}">
                         </td>
-                        <td>${item.price}</td>
-                        <td>${sub.toFixed(2)}</td>
-                        <td><button type="button" class="btn btn-danger btn-sm remove-edit" data-id="${id}">X</button></td>
+                        <td class="text-end">${price.toFixed(2)}</td>
+                        <td class="text-end">${sub.toFixed(2)}</td>
+                        <td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm remove-edit" data-id="${rowId}"><i class="fa fa-times"></i></button></td>
                     </tr>
                 `);
                 });
@@ -615,17 +751,32 @@
             $('#edit_grand_total').text(total.toFixed(2));
         }
 
+        $(document).on('change', '.unit-select-edit', function() {
+            let id = $(this).data('id');
+            let val = $(this).val();
+            if (editItems[id]) {
+                editItems[id].unit = val;
+                // Update hidden input directly to avoid full table re-render
+                $(`input[name="items[${id}][unit]"]`).val(val);
+            }
+        });
+
         $(document).on('change', '.qty-input-edit', function() {
             let id = $(this).data('id');
             let val = parseInt($(this).val());
             if (val < 1) val = 1;
-            editItems[id].quantity = val;
-            renderEditItems();
+            if (editItems[id]) {
+                editItems[id].quantity = val;
+                renderEditItems();
+            }
         });
 
         $(document).on('click', '.remove-edit', function() {
-            delete editItems[$(this).data('id')];
-            renderEditItems();
+            let id = $(this).data('id');
+            if (editItems[id]) {
+                delete editItems[id];
+                renderEditItems();
+            }
         });
 
         // --- Show Modal ---
@@ -637,7 +788,6 @@
             <tr><th>Sales Manager</th><td>${row.sales_manager_name}</td></tr>
             <tr><th>Status</th><td>${row.status}</td></tr>
             <tr><th>Placed At</th><td>${row.placed_at}</td></tr>
-            <tr><th>Delivery Notes</th><td>${row.delivery_notes || '-'}</td></tr>
          `;
             $('#showOrderBody').html(html);
 
@@ -681,27 +831,37 @@
             });
         });
 
+        // Cancel Order Logic (Pending Orders)
+        let cancelOrderId = null;
         $(document).on('click', '.cancel-order-btn', function() {
-            let id = $(this).data('id');
-            Swal.fire({
-                title: 'Cancel this pending order?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, Cancel',
-                confirmButtonColor: '#d33'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.post(`/distributor-orders/${id}/cancel-order`, {
-                        _token: '{{ csrf_token() }}'
-                    }, function(res) {
-                        if (res.success) {
-                            table.ajax.reload();
-                            showToast('success', res.success);
-                        } else showToast('error', res.error);
-                    }).fail(function() {
-                        showToast('error', 'Request failed');
-                    });
-                }
+            cancelOrderId = $(this).data('id');
+            $('#cancel_reason_input').val(''); // Reset input
+            $('#cancelConfirmModal').modal('show');
+        });
+
+        $('#confirmCancelBtn').click(function() {
+            if (!cancelOrderId) return;
+
+            let reason = $('#cancel_reason_input').val().trim();
+            if (!reason) {
+                showToast('error', 'Please provide a cancellation reason.');
+                return;
+            }
+
+            $.post(`/distributor-orders/${cancelOrderId}/cancel-order`, {
+                _token: '{{ csrf_token() }}',
+                cancellation_reason: reason
+            }, function(res) {
+                $('#cancelConfirmModal').modal('hide');
+                if (res.success) {
+                    table.ajax.reload();
+                    showToast('success', res.success);
+                } else showToast('error', res.error);
+            }).fail(function(xhr) {
+                $('#cancelConfirmModal').modal('hide');
+                let err = 'Request failed';
+                if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
+                showToast('error', err);
             });
         });
 
