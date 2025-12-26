@@ -82,6 +82,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('orders/{order}/assign-distributor', [RetailerOrderManagementController::class, 'assignDistributor'])->name('orders.assign_distributor');
         Route::get('retailer-orders/product/{product}', [RetailerOrderManagementController::class, 'getProductDetails'])->name('retailer-orders.product-details');
 
+        // Cancellation / Approval endpoints (parity with distributor orders)
+        Route::post('retailer-orders/{retailerOrder}/request-cancellation', [RetailerOrderManagementController::class, 'requestCancellation'])->name('retailer-orders.request-cancellation');
+        Route::post('retailer-orders/{retailerOrder}/approve-cancellation', [RetailerOrderManagementController::class, 'approveCancellation'])->name('retailer-orders.approve-cancellation');
+        Route::post('retailer-orders/{retailerOrder}/cancel-order', [RetailerOrderManagementController::class, 'cancelOrder'])->name('retailer-orders.cancel-order');
+
 
         Route::resource('distributor-orders', distributorOrderController::class);
         Route::get('distributor-orders/product/{product}', [distributorOrderController::class, 'getProductDetails'])->name('distributor-orders.product-details');
