@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -28,6 +29,8 @@ class distributorOrder extends Model
         'distributor_id',
         'sales_manager_id', // New field
         'cancellation_reason', // New field
+        'payment_status', // New field
+        'invoice_path',
     ];
 
     protected $casts = [

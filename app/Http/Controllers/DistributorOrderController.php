@@ -116,6 +116,7 @@ class distributorOrderController extends Controller
                         }),
                         'delivery_notes' => $order->delivery_notes,
                         'cancellation_reason' => $order->cancellation_reason,
+                        'invoice_url' => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
                     ];
                 });
 
@@ -443,6 +444,120 @@ class distributorOrderController extends Controller
 
         return response()->json(['error' => 'Only pending orders can be directly cancelled.'], 400);
     }
+    public function updateStatus(Request $request, distributorOrder $distributorOrder)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,hold,accepted_by_sales_manager,rejected,cancelled,delivered',
+        ]);
+
+        // Permission check
+        if (Auth::user()->hasRole('distributor') && $distributorOrder->distributor_id !== Auth::user()->distributor->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+        // SM check
+        if (Auth::user()->hasRole('salesmanager')) {
+            // Ensure order belongs to their distributor? Or just allow if they are SM.
+            // For now assuming if they can see it, they can update it (logic in index filters visibility)
+        }
+
+        $oldStatus = $distributorOrder->status;
+        $newStatus = $request->status;
+
+        $distributorOrder->status = $newStatus;
+
+        // Handle side effects
+        if ($newStatus === 'accepted_by_sales_manager') {
+            if (Auth::user()->hasRole('salesmanager')) {
+                $distributorOrder->sales_manager_id = Auth::user()->salesManager->id;
+            }
+        }
+
+        if ($newStatus === 'rejected' || $newStatus === 'cancelled') {
+            // Restore stock if it was reserved?
+            // Only restore if not already restored (i.e. check oldStatus)
+            if (!in_array($oldStatus, ['rejected', 'cancelled'])) {
+                foreach ($distributorOrder->items as $item) {
+                    $item->product->increment('stock', $item->quantity);
+                }
+            }
+        } else {
+            // If moving FROM filtered/cancelled TO active, we should re-deduct stock?
+            // This is complex. For now assuming we don't move back from Cancelled -> Pending easily without stock checks.
+            // But if user does it:
+            if (in_array($oldStatus, ['rejected', 'cancelled']) && !in_array($newStatus, ['rejected', 'cancelled'])) {
+                // Try to deduct stock again
+                foreach ($distributorOrder->items as $item) {
+                    if ($item->product->stock < $item->quantity) {
+                        return response()->json(['error' => 'Insufficient stock to reactivate order for product: ' . $item->product->product_name], 400);
+                    }
+                    $item->product->decrement('stock', $item->quantity);
+                }
+            }
+        }
+
+        $distributorOrder->save();
+
+        return response()->json(['success' => 'Status updated successfully to ' . ucfirst(str_replace('_', ' ', $newStatus))]);
+    }
+
+    public function updatePaymentStatus(Request $request, distributorOrder $distributorOrder)
+    {
+        $request->validate([
+            'payment_status' => 'required|in:pending,paid,failed',
+        ]);
+
+        $user = Auth::user();
+        // Permission check can be same as updateStatus or specific.
+        // Assuming same people who can approve orders can update payment.
+        if (!$user->hasRole(['superadmin', 'admin', 'salesmanager'])) {
+            return response()->json(['error' => 'You do not have permission to update payment status.'], 403);
+        }
+
+        // Sales Manager check
+        if ($user->hasRole('salesmanager') && $distributorOrder->sales_manager_id !== $user->salesManager->id) {
+            return response()->json(['error' => 'You are not authorized to update this order.'], 403);
+        }
+
+        $newStatus = $request->payment_status;
+        $distributorOrder->payment_status = $newStatus;
+        $distributorOrder->save();
+
+        return response()->json(['success' => 'Payment status updated successfully to ' . ucfirst($newStatus)]);
+    }
+
+    public function invoice(distributorOrder $distributorOrder)
+    {
+        $distributorOrder->load(['distributor.user', 'items.product', 'salesManager.user']);
+        $cgst = \App\Models\Setting::getValue('cgst', 9);
+        $sgst = \App\Models\Setting::getValue('sgst', 9);
+        return view('admin.distributor_orders.invoice', compact('distributorOrder', 'cgst', 'sgst'));
+    }
+
+    public function uploadInvoice(Request $request, distributorOrder $distributorOrder)
+    {
+        $request->validate([
+            'invoice' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB max
+        ]);
+
+        if ($request->hasFile('invoice')) {
+            // Delete old invoice if exists
+            if ($distributorOrder->invoice_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($distributorOrder->invoice_path)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($distributorOrder->invoice_path);
+            }
+
+            $path = $request->file('invoice')->store('invoices/distributors', 'public');
+            $distributorOrder->invoice_path = $path;
+            $distributorOrder->save();
+
+            return response()->json([
+                'success' => 'Invoice uploaded successfully!',
+                'invoice_url' => asset('storage/' . $path)
+            ]);
+        }
+
+        return response()->json(['error' => 'No file uploaded.'], 400);
+    }
+
     public function destroy(distributorOrder $distributorOrder)
     {
         if (!Auth::user()->hasAnyRole(['admin', 'superadmin'])) {

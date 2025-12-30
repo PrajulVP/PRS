@@ -94,9 +94,8 @@
         @endif
 
         @if ($hasApprovalRoles)
-        <li class="sidebar-list">
-          <i class="fa fa-thumb-tack"></i>
-          <a class="sidebar-link sidebar-title link-nav" href="{{ route('pending-approvals') }}">
+        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+          <a class="sidebar-link sidebar-title" href="#">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-user"></use>
             </svg>
@@ -104,6 +103,10 @@
               <use href="{{ $iconSprite }}#fill-user"></use>
             </svg><span>Approvals</span>
           </a>
+          <ul class="sidebar-submenu">
+            <li><a href="{{ route('pending-approvals.retailer') }}">Retailers</a></li>
+            <li><a href="{{ route('pending-approvals.distributor') }}">Distributors</a></li>
+          </ul>
         </li>
         @endif
 
@@ -269,6 +272,17 @@
             </li>
             @endif
 
+
+            <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.permissions.index') }}">
+                <svg class="stroke-icon">
+                  <use href="{{ $iconSprite }}#stroke-user"></use>
+                </svg>
+                <svg class="fill-icon">
+                  <use href="{{ $iconSprite }}#fill-user"></use>
+                </svg><span>Roles</span></a>
+            </li>
+
+
             {{-- General settings page --}}
             <li class="sidebar-list">
               <!-- <i class="fa fa-cog"></i> -->
@@ -284,16 +298,7 @@
             </li>
           </ul>
         </li>
-        @if (Auth::user()->hasPermissionToCategory('permissions', 'view'))
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.permissions.index') }}">
-            <svg class="stroke-icon">
-              <use href="{{ $iconSprite }}#stroke-user"></use>
-            </svg>
-            <svg class="fill-icon">
-              <use href="{{ $iconSprite }}#fill-user"></use>
-            </svg><span>Roles</span></a>
-        </li>
-        @endif
+
         @endif
 
       </ul>

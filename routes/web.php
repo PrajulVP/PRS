@@ -17,7 +17,9 @@ use App\Http\Controllers\{
     FieldStaffController,
     RetailerController,
     RetailerOrderController,
-    RetailerOrderManagementController,    SettingsController,    distributorOrderController
+    RetailerOrderManagementController,
+    SettingsController,
+    distributorOrderController
 };
 
 Route::get('/', function () {
@@ -59,7 +61,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('roles/{role}/permissions', [PermissionController::class, 'edit'])->name('admin.permissions.edit');
     Route::put('roles/{role}/permissions', [PermissionController::class, 'update'])->name('admin.permissions.update');
 
-    Route::get('pending-approvals', [PendingApprovalController::class, 'index'])->name('pending-approvals');
+    // Route::get('pending-approvals', [PendingApprovalController::class, 'index'])->name('pending-approvals'); // Deprecated generic route
+    Route::get('pending-approvals/retailers', [PendingApprovalController::class, 'index'])->defaults('type', 'retailer')->name('pending-approvals.retailer');
+    Route::get('approvals/distributors', [PendingApprovalController::class, 'index'])->defaults('type', 'distributor')->name('pending-approvals.distributor');
     Route::get('users/pending-approval', [PendingApprovalController::class, 'index'])->name('admin.users.pending_approval');
 
     Route::name('admin.')->group(function () {
@@ -96,6 +100,14 @@ Route::middleware(['auth'])->group(function () {
             ->name('distributor-orders.request-cancellation');
         Route::post('distributor-orders/{distributor_order}/cancel-order', [distributorOrderController::class, 'cancelOrder'])
             ->name('distributor-orders.cancel-order');
+        Route::post('distributor-orders/{distributor_order}/update-status', [distributorOrderController::class, 'updateStatus'])
+            ->name('distributor-orders.update-status');
+        Route::post('distributor-orders/{distributor_order}/update-payment-status', [distributorOrderController::class, 'updatePaymentStatus'])
+            ->name('distributor-orders.update-payment-status');
+        Route::get('distributor-orders/{distributor_order}/invoice', [distributorOrderController::class, 'invoice'])
+            ->name('distributor-orders.invoice');
+        Route::post('distributor-orders/{distributor_order}/upload-invoice', [distributorOrderController::class, 'uploadInvoice'])
+            ->name('distributor-orders.upload-invoice');
 
         // Master settings
         Route::get('settings/general', [SettingsController::class, 'general'])->name('settings.general');
