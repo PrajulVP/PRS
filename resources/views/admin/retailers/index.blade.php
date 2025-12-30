@@ -349,11 +349,11 @@
                     },
                     {
                         extend: 'excel',
-                        className: 'btn btn-sm'
+                        className: 'btn btn-sm btn-success'
                     },
                     {
                         extend: 'pdf',
-                        className: 'btn btn-sm'
+                        className: 'btn btn-sm btn-danger'
                     },
                     {
                         extend: 'print',

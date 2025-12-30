@@ -1,7 +1,6 @@
 @extends('layouts.admin')
-
 @section('page-body')
-<div class="container-fluid">
+<!-- <div class="container-fluid">
     <div class="page-title">
         <div class="row">
             <div class="col-6">
@@ -16,7 +15,7 @@
             </div>
         </div>
     </div>
-</div>
+</div> -->
 
 <div class="container-fluid">
     <form id="createOrderForm" method="POST" action="{{ route('admin.retailer-orders.store') }}">
@@ -94,7 +93,14 @@
                     </div>
                     <div class="col-md-2">
                         <label class="form-label fw-bold">Quantity</label>
-                        <input type="number" id="qtyInput" class="form-control" value="1" min="1">
+                        <div class="input-group">
+                            <input type="number" id="qtyInput" class="form-control" value="1" min="1">
+                            <select class="form-select input-group-text" id="unitSelect" style="max-width: 100px;">
+                                <option value="Strips">Strips</option>
+                                <option value="Carton">Carton</option>
+                                <option value="Box">Box</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="col-md-2">
                         <button type="button" class="btn btn-primary w-100 fw-bold py-2" id="btnAddItem">
@@ -262,6 +268,18 @@
                     $('#previewHsn').text(details.hsn_code || '-');
                     $('#previewBox').text(details.box_size || '-');
 
+                    // Auto-select unit if matches, else default
+                    let unit = details.pack || 'Box';
+                    let found = false;
+                    $('#unitSelect option').each(function() {
+                        if ($(this).val().toLowerCase() === unit.toLowerCase()) {
+                            $('#unitSelect').val($(this).val());
+                            found = true;
+                            return false;
+                        }
+                    });
+                    if (!found) $('#unitSelect').val('Box');
+
                     // Distributors
                     let distSelect = $('#distributorSelect');
                     distSelect.empty();
@@ -309,6 +327,7 @@
             if (!distId) return showToast('error', 'No distributor selected');
 
             let qty = parseInt($('#qtyInput').val());
+            let unit = $('#unitSelect').val(); // Capture Unit
             if (qty < 1) return showToast('error', 'Invalid quantity');
 
             if (!currentProductDetails) return showToast('error', 'Product details not loaded');
@@ -320,6 +339,7 @@
             if (addedItems[key]) {
                 // Update existing
                 addedItems[key].qty += qty;
+                addedItems[key].unit = unit; // Update unit
                 lastAddedKey = key; // Mark for highlight
             } else {
                 // Add new
@@ -331,7 +351,8 @@
                     distId: distId,
                     distName: distName,
                     price: parseFloat(currentProductDetails.mrp),
-                    qty: qty
+                    qty: qty,
+                    unit: unit // Store Unit
                 };
                 lastAddedKey = key; // Mark for highlight
             }
@@ -368,7 +389,14 @@
                         </td>
                         <td>${item.distName}</td>
                         <td>
-                            <input type="number" class="form-control form-control-sm qty-change" data-key="${key}" value="${item.qty}" name="items[${key}][quantity]" style="width: 80px;">
+                            <div class="input-group input-group-sm" style="width: 150px;">
+                                <input type="number" class="form-control qty-change" data-key="${key}" value="${item.qty}" name="items[${key}][quantity]" min="1">
+                                <select class="form-select unit-change" data-key="${key}" name="items[${key}][unit]" style="max-width: 80px;">
+                                    <option value="Strips" ${item.unit === 'Strips' ? 'selected' : ''}>Strips</option>
+                                    <option value="Carton" ${item.unit === 'Carton' ? 'selected' : ''}>Carton</option>
+                                    <option value="Box" ${item.unit === 'Box' ? 'selected' : ''}>Box</option>
+                                </select>
+                            </div>
                         </td>
                         <td>₹${item.price.toFixed(2)}</td>
                         <td>₹${lineTotal.toFixed(2)}</td>
@@ -398,6 +426,14 @@
             let val = parseInt($(this).val());
             if (val < 1) val = 1;
             addedItems[key].qty = val;
+            renderTable();
+        });
+
+        // Unit Change in List
+        $(document).on('change', '.unit-change', function() {
+            let key = $(this).data('key');
+            let val = $(this).val();
+            addedItems[key].unit = val;
             renderTable();
         });
 

@@ -17,12 +17,22 @@
     .action-buttons {
         display: inline-flex !important;
         gap: 4px;
+        align-items: center;
     }
 
     .action-buttons .btn {
         padding: 4px 8px !important;
         font-size: 0.75rem !important;
     }
+
+    /* Modal sizing and table compacting */
+    .modal-xl { max-width: 1140px; }
+    #orders-table td:last-child { white-space: nowrap !important; }
+
+    /* Preview / full content helper */
+    .preview-content { display: inline-block; }
+    .full-content { display: block; }
+    .full-content.d-none { display: none; }
 </style>
 
 @section('page-body')
@@ -43,6 +53,7 @@
                             <th>ID</th>
                             <th>Order Code</th>
                             <th>Retailer</th>
+                            <th>Distributor</th>
                             <th>Summary</th>
                             <th>Total</th>
                             <th>Status</th>
@@ -56,6 +67,7 @@
         </div>
     </div>
 </div>
+
 
 {{-- Admin Edit Modal --}}
 <div class="modal fade" id="editOrderModal" tabindex="-1" aria-hidden="true">
@@ -106,12 +118,21 @@
                             <thead>
                                 <tr>
                                     <th>Product</th>
+                                    <th>Unit</th>
                                     <th>Qty</th>
+                                    <th>Price</th>
                                     <th>Total</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="4" class="text-end fw-bold">Grand Total:</td>
+                                    <td id="edit_grand_total">0.00</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
 
@@ -170,8 +191,54 @@
                 </table>
                 <h6 class="mt-2">Items</h6>
                 <table class="table table-sm">
+                    <thead><tr><th>Product</th><th>Qty</th><th>Total</th></tr></thead>
                     <tbody id="showOrderItemsBody"></tbody>
+                    <tfoot>
+                        <tr><td colspan="2" class="text-end"><strong>Total Amount:</strong></td><td id="showOrderTotal">0.00</td></tr>
+                    </tfoot>
                 </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Delete Confirmation Modal --}}
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Are you sure you want to delete this order? This process cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete Order</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Cancel Confirmation Modal --}}
+<div class="modal fade" id="cancelConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Cancellation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Are you sure you want to cancel this order? This action cannot be undone.</p>
+                <div class="mb-3">
+                    <label class="form-label required">Cancellation Reason</label>
+                    <textarea id="cancel_reason_input" class="form-control" rows="3" placeholder="Please provide a reason for cancellation..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Keep It</button>
+                <button type="button" class="btn btn-warning" id="confirmCancelBtn">Yes, Cancel Order</button>
             </div>
         </div>
     </div>
@@ -182,7 +249,7 @@
 @push('scripts')
 <script>
     $(document).ready(function() {
-        var editItems = {};
+        var editItems = {};        
 
         var ajaxUrl = "{{ route('admin.retailer-orders.index') }}";
 
@@ -239,19 +306,50 @@
                     name: 'retailer_name'
                 },
                 {
-                    data: 'product_summary',
-                    name: 'product_summary',
-                    orderable: false
+                    data: 'distributor_name',
+                    name: 'distributor_name',
+                    render: function(data, type, row) {
+                        return data ? data : '-';
+                    }
                 },
                 {
+                    data: 'product_summary',
+                    name: 'product_summary',
+                    orderable: false,
+                    render: function(data, type, row) {
+                        if (!data) return '-';
+                        let items = data.split('<br>');
+                        if (items.length > 2) {
+                            let visible = items.slice(0, 2).join('<br>');
+                            return `<div>
+                                        <span class="preview-content">${visible}</span>
+                                        <span class="full-content d-none">${data}</span>
+                                        <br>
+                                        <a href="#" class="small text-primary toggle-more-btn" onclick="event.preventDefault(); let p = $(this).parent(); if(p.find('.full-content').hasClass('d-none')){ p.find('.full-content').removeClass('d-none'); p.find('.preview-content').addClass('d-none'); $(this).text('Show Less'); } else { p.find('.full-content').addClass('d-none'); p.find('.preview-content').removeClass('d-none'); $(this).text('Read More'); }">Read More</a>
+                                    </div>`;
+                        }
+                        return data;
+                    }
+                }, 
+                {
                     data: 'total_amount',
-                    name: 'total_amount'
+                    name: 'total_amount',
+                    render: function(data) {
+                        return `<span class="fw-bold text-success"><i class="fa fa-rupee"></i> ${data}</span>`;
+                    }
                 },
                 {
                     data: 'status',
                     name: 'status',
-                    render: function(d) {
-                        return `<span class="badge bg-secondary">${d}</span>`;
+                    render: function(data, type, row) {
+                        let status = (data || '').toLowerCase();
+                        let badgeClass = 'bg-secondary';
+                        if (status.includes('pending')) badgeClass = 'bg-warning text-dark';
+                        else if (status.includes('accepted')) badgeClass = 'bg-primary';
+                        else if (status.includes('delivered')) badgeClass = 'bg-success';
+                        else if (status.includes('cancelled') || status.includes('rejected')) badgeClass = 'bg-danger';
+
+                        return `<span class="badge ${badgeClass}">${data}</span>`;
                     }
                 },
                 {
@@ -262,25 +360,37 @@
                     data: null,
                     orderable: false,
                     render: function(d, t, row) {
-                        let rowJson = JSON.stringify(row).replace(/"/g, '&quot;');
-                        let btns = `<div class="action-buttons d-flex align-items-center gap-1">
-                    <button class="btn btn-info btn-sm view-btn" title="View Details" data-row="${rowJson}"><i class="fa fa-eye"></i></button>`;
+                        let btns = `<div class="action-buttons">`;
+                        btns += `<button class="btn btn-info btn-sm view-btn" data-row='${JSON.stringify(row).replace(/'/g, "&apos;")}'><i class="fa fa-eye"></i></button>`;
+                        btns += `<button class="btn btn-primary btn-sm edit-btn" data-row='${JSON.stringify(row).replace(/'/g, "&apos;")}'><i class="fa fa-edit"></i></button>`;
 
-                        btns += `<button class="btn btn-primary btn-sm edit-btn" title="Edit Order" data-row="${rowJson}"><i class="fa fa-edit"></i></button>`;
+                        let st = (row.status||'').toLowerCase();
 
-                        btns += `<form action="/retailer-orders/${row.id}" method="POST" onsubmit="return confirm('Delete?')" style="display:contents;">
-                        @csrf @method('DELETE')
-                        <button class="btn btn-danger btn-sm" title="Delete Order"><i class="fa fa-trash"></i></button></form>`;
-
-                        let st = row.status.toLowerCase();
-                        if (st.includes('accepted_by_distributor')) {
-                            btns += `<button class="btn btn-warning btn-sm assign-fs-btn" title="Assign Field Staff" data-id="${row.id}"><i class="fa fa-user-plus"></i></button>`;
+                        if (st.includes('pending')) {
+                            btns += `<button class="btn btn-warning btn-sm cancel-order-btn" title="Cancel Order" data-id="${row.id}"><i class="fa fa-times"></i></button>`;
+                            btns += `<button class="btn btn-success btn-sm accept-btn" data-id="${row.id}" title="Accept Order"><i class="fa fa-check"></i></button>`;
                         }
-                        return btns + `</div>`;
+
+                        if (st.includes('accepted_by_distributor')) {
+                            btns += `<button class="btn btn-secondary btn-sm request-cancel-btn" data-id="${row.id}" title="Request Cancellation"><i class="fa fa-question"></i></button>`;
+                            btns += `<button class="btn btn-primary btn-sm assign-fs-btn" data-id="${row.id}" title="Assign Field Staff"><i class="fa fa-user"></i></button>`;
+                        }
+
+                        if (st.includes('cancellation requested') || st.includes('cancellation_requested')) {
+                            btns += `<button class="btn btn-success btn-sm approve-cancel-btn" data-id="${row.id}" title="Approve Cancellation"><i class="fa fa-check-circle"></i></button>`;
+                        }
+
+                        // Delete (permission enforced server-side)
+                        btns += `<button class="btn btn-danger btn-sm delete-order-btn" data-id="${row.id}" title="Delete"><i class="fa fa-trash"></i></button>`;
+
+                        btns += `</div>`;
+                        return btns;
                     }
                 }
             ]
         });
+
+
 
         // --- Admin Edit Logic ---
         $(document).on('click', '.edit-btn', function() {
@@ -325,22 +435,55 @@
         function renderEditItems() {
             let tbody = $('#edit_items_table tbody');
             tbody.empty();
-            $.each(editItems, function(id, item) {
-                tbody.append(`<tr>
-                <td>${item.name}<input type="hidden" name="items[${id}][product_id]" value="${id}">
-                   ${item.order_item_id ? `<input type="hidden" name="items[${id}][order_item_id]" value="${item.order_item_id}">` : ''}
-                </td>
-                <td><input type="number" class="form-control form-control-sm edit-qty" data-id="${id}" value="${item.qty}" name="items[${id}][quantity]"></td>
-                <td>${(item.qty*item.price).toFixed(2)}</td>
-                <td><button type="button" class="btn btn-danger btn-sm remove-edit" data-id="${id}">X</button></td>
-            </tr>`);
-            });
+            let total = 0;
+            if (Object.keys(editItems).length === 0) {
+                tbody.html('<tr><td colspan="6" class="text-center text-muted">No Items Added</td></tr>');
+            } else {
+                $.each(editItems, function(id, item) {
+                    let price = parseFloat(item.price) || 0;
+                    let qty = parseInt(item.qty) || 1;
+                    let sub = price * qty;
+                    total += sub;
+                    let unit = item.unit || 'Box';
+                    let options = '';
+                    ['Box', 'Carton', 'Strips'].forEach(function(u) { options += `<option value="${u}" ${unit === u ? 'selected' : ''}>${u}</option>`; });
+
+                    tbody.append(`
+                    <tr>
+                        <td>${item.name}
+                            <input type="hidden" name="items[${id}][product_id]" value="${id}">
+                            ${item.order_item_id ? `<input type="hidden" name="items[${id}][order_item_id]" value="${item.order_item_id}">` : ''}
+                        </td>
+                        <td>
+                            <select class="form-select form-select-sm unit-select-edit" data-id="${id}" name="items[${id}][unit]" style="width:90px; margin: 0 auto;">
+                                ${options}
+                            </select>
+                        </td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm edit-qty" data-id="${id}" value="${qty}" name="items[${id}][quantity]" min="1" style="width:80px; margin: 0 auto;">
+                        </td>
+                        <td class="text-end">${price.toFixed(2)}<input type="hidden" name="items[${id}][unit_price]" value="${price}"></td>
+                        <td class="text-end">${sub.toFixed(2)}</td>
+                        <td class="text-center"><button type="button" class="btn btn-danger btn-sm remove-edit" data-id="${id}">X</button></td>
+                    </tr>
+                    `);
+                });
+            }
+            $('#edit_grand_total').text(total.toFixed(2));
         }
 
         $(document).on('change', '.edit-qty', function() {
             let id = $(this).data('id');
             editItems[id].qty = parseInt($(this).val());
             renderEditItems();
+        });
+
+        $(document).on('change', '.unit-select-edit', function() {
+            let id = $(this).data('id');
+            let val = $(this).val();
+            if (editItems[id]) {
+                editItems[id].unit = val;
+            }
         });
         $(document).on('click', '.remove-edit', function() {
             delete editItems[$(this).data('id')];
@@ -390,42 +533,134 @@
             });
         });
 
-        // --- Delete Logic (Form interception) ---
-        $(document).on('submit', 'form', function(e) {
-            // Intercept delete forms
-            if ($(this).find('input[name="_method"][value="DELETE"]').length > 0) {
-                e.preventDefault();
-                let form = $(this);
-                Swal.fire({
-                    title: 'Are you sure?',
-                    text: "You won't be able to revert this!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Yes, delete it!'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: form.attr('action'),
-                            type: 'POST',
-                            data: form.serialize(),
-                            success: function(response) {
-                                table.ajax.reload();
-                                Swal.fire('Deleted!', 'Record has been deleted.', 'success');
-                            },
-                            error: function(xhr) {
-                                Swal.fire('Error!', 'Could not delete record.', 'error');
-                            }
-                        });
+        // --- Delete & Cancel Logic (modals) ---
+        let deleteOrderId = null;
+        $(document).on('click', '.delete-order-btn', function() {
+            deleteOrderId = $(this).data('id');
+            $('#deleteConfirmModal').modal('show');
+        });
+
+        $('#confirmDeleteBtn').click(function() {
+            if (!deleteOrderId) return;
+            $.ajax({
+                url: `/retailer-orders/${deleteOrderId}`,
+                type: 'DELETE',
+                data: { _token: '{{ csrf_token() }}' },
+                success: function(res) {
+                    $('#deleteConfirmModal').modal('hide');
+                    if (res.success) {
+                        table.ajax.reload();
+                        showToast('success', res.success || 'Order deleted');
+                    } else {
+                        showToast('error', res.error || 'Failed to delete order');
                     }
-                });
-            }
+                },
+                error: function(xhr) {
+                    $('#deleteConfirmModal').modal('hide');
+                    let err = 'An error occurred.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
+                    showToast('error', err);
+                }
+            });
+        });
+
+        // Cancel Order (Admin direct cancel of pending)
+        let cancelOrderId = null;
+        $(document).on('click', '.cancel-order-btn', function() {
+            cancelOrderId = $(this).data('id');
+            $('#cancel_reason_input').val('');
+            $('#cancelConfirmModal').modal('show');
+        });
+
+        $('#confirmCancelBtn').click(function() {
+            if (!cancelOrderId) return;
+            let reason = $('#cancel_reason_input').val().trim();
+            if (!reason) return Swal.fire('Error', 'Please provide a cancellation reason', 'error');
+
+            $.post(`/retailer-orders/${cancelOrderId}/cancel-order`, { _token: '{{ csrf_token() }}', cancellation_reason: reason }, function(res) {
+                $('#cancelConfirmModal').modal('hide');
+                if (res.success) {
+                    table.ajax.reload();
+                    showToast('success', res.success || 'Order cancelled');
+                } else {
+                    showToast('error', res.error || 'Failed to cancel order');
+                }
+            }).fail(function(xhr) {
+                $('#cancelConfirmModal').modal('hide');
+                let err = 'Request failed';
+                if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
+                showToast('error', err);
+            });
+        });
+
+        // Request cancellation (Distributor requests)
+        $(document).on('click', '.request-cancel-btn', function() {
+            let id = $(this).data('id');
+            Swal.fire({
+                title: 'Request Cancellation',
+                input: 'text',
+                inputLabel: 'Reason',
+                inputPlaceholder: 'Enter cancellation reason',
+                showCancelButton: true,
+                inputValidator: (value) => { if (!value) return 'You need to write something!'; }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post(`/retailer-orders/${id}/request-cancellation`, { _token: '{{ csrf_token() }}', cancellation_reason: result.value }, function(res) {
+                        if (res.success) {
+                            table.ajax.reload();
+                            showToast('success', res.success || 'Cancellation requested');
+                        } else showToast('error', res.error || 'Failed to request cancellation');
+                    }).fail(function() { showToast('error', 'Request failed'); });
+                }
+            });
+        });
+
+        // Approve cancellation (Sales Manager)
+        $(document).on('click', '.approve-cancel-btn', function() {
+            let id = $(this).data('id');
+            Swal.fire({
+                title: 'Approve cancellation and restore stock?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Approve'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post(`/retailer-orders/${id}/approve-cancellation`, { _token: '{{ csrf_token() }}' }, function(res) {
+                        if (res.success) {
+                            table.ajax.reload();
+                            showToast('success', res.success || 'Cancellation approved');
+                        } else showToast('error', res.error || 'Failed to approve cancellation');
+                    }).fail(function() { showToast('error', 'Request failed'); });
+                }
+            });
         });
 
 
         // --- Accept & Assign Logic ---
-        // Removed accept-btn logic as requested
+        $(document).on('click', '.accept-btn', function() {
+            let id = $(this).data('id');
+            Swal.fire({
+                title: 'Accept this order?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Accept'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post(`/retailer-orders/${id}/accept`, {
+                        _token: '{{ csrf_token() }}'
+                    }, function(res) {
+                        if (res.success) {
+                            table.ajax.reload();
+                            showToast('success', res.success || 'Order accepted successfully.');
+                        } else {
+                            showToast('error', res.error || 'Error accepting order');
+                        }
+                    }).fail(function() {
+                        showToast('error', 'Request failed.');
+                    });
+                }
+            });
+        });
 
         $(document).on('click', '.assign-fs-btn', function() {
             $('#modalOrderId').val($(this).data('id'));
@@ -447,18 +682,12 @@
                 if (res.success) {
                     $('#assignFieldStaffModal').modal('hide');
                     table.ajax.reload();
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Assigned!',
-                        text: 'Field Staff assigned successfully.',
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
+                    showToast('success', 'Field Staff assigned successfully');
                 } else {
-                    Swal.fire('Error', res.error, 'error');
+                    showToast('error', res.error || 'Failed to assign field staff');
                 }
             }).fail(function() {
-                Swal.fire('Error', 'Request failed.', 'error');
+                showToast('error', 'Request failed.');
             });
         });
 
@@ -467,12 +696,23 @@
             let row = $(this).data('row');
             $('#showOrderBody').html(`
             <tr><th>Order Code</th><td>${row.order_code}</td></tr>
+            <tr><th>Retailer</th><td>${row.retailer_name||'-'}</td></tr>
+            <tr><th>Distributor</th><td>${row.distributor_name || row.distributor || '-'}</td></tr>
             <tr><th>Status</th><td>${row.status}</td></tr>
             <tr><th>Notes</th><td>${row.notes||'-'}</td></tr>
+            <tr><th>Placed At</th><td>${row.placed_at||'-'}</td></tr>
          `);
             let h = '';
-            row.items.forEach(i => h += `<tr><td>${i.product_name||i.name}</td><td>${i.quantity||i.qty}</td><td>${i.total_amount||i.total}</td></tr>`);
+            let total = 0;
+            (row.items||[]).forEach(function(i){
+                let name = i.product_name || i.name || '-';
+                let qty = i.quantity || i.qty || 0;
+                let totalAmt = parseFloat(i.total_amount || i.total || (i.unit_price ? (i.unit_price * qty) : 0));
+                total += totalAmt;
+                h += `<tr><td>${name}</td><td>${qty}</td><td class="text-end"><i class="fa fa-rupee"></i> ${totalAmt.toFixed(2)}</td></tr>`;
+            });
             $('#showOrderItemsBody').html(h);
+            $('#showOrderTotal').text(total.toFixed(2));
             $('#showOrderModal').modal('show');
         });
 

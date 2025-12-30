@@ -26,8 +26,10 @@ class RetailerOrder extends Model
         'notes',
         'delivery_notes',
         'delivered_at',
+        'cancellation_reason',
         'payment_status',
         'invoice_path',
+        'cancellation_reason',
     ];
 
     protected $casts = [

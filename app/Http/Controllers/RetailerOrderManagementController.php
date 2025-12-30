@@ -184,6 +184,12 @@ class RetailerOrderManagementController extends Controller
                             ->orderBy('users.name', $orderDir)
                             ->select('retailer_orders.*');
                         break;
+                    case 'distributor_name':
+                        $query->leftJoin('distributors', 'retailer_orders.distributor_id', '=', 'distributors.id')
+                            ->leftJoin('users as dist_users', 'distributors.user_id', '=', 'dist_users.id')
+                            ->orderBy('dist_users.name', $orderDir)
+                            ->select('retailer_orders.*');
+                        break;
                     case 'total_amount':
                         $query->orderBy('retailer_orders.total_amount', $orderDir);
                         break;
@@ -403,9 +409,75 @@ class RetailerOrderManagementController extends Controller
         return redirect()->route('admin.retailer-orders.index')->with('success', 'Order updated.');
     }
 
-    public function destroy(RetailerOrder $retailerOrder)
+    public function requestCancellation(Request $request, RetailerOrder $retailerOrder)
     {
-        // Restore stock...
+        $request->validate(['cancellation_reason' => 'required|string|min:3']);
+
+        // Only a distributor owning the order can request cancellation
+        if (!Auth::user()->hasRole('distributor')) return response()->json(['error' => 'No permission'], 403);
+        if ($retailerOrder->distributor_id !== Auth::user()->distributor->id) return response()->json(['error' => 'Not your order'], 403);
+        if ($retailerOrder->status !== 'accepted_by_distributor') return response()->json(['error' => 'Invalid status'], 400);
+
+        $retailerOrder->status = 'cancellation_requested';
+        $retailerOrder->cancellation_reason = $request->cancellation_reason;
+        $retailerOrder->save();
+
+        return response()->json(['success' => 'Cancellation request submitted successfully!']);
+    }
+
+    public function approveCancellation(RetailerOrder $retailerOrder)
+    {
+        if (!Auth::user()->hasRole('salesmanager')) return response()->json(['error' => 'No permission'], 403);
+        if ($retailerOrder->status !== 'cancellation_requested') return response()->json(['error' => 'Invalid status'], 400);
+
+        $retailerOrder->status = 'cancelled';
+        $retailerOrder->save();
+
+        // Restore stock to distributor products
+        $distributor = $retailerOrder->distributor;
+        if ($distributor) {
+            foreach ($retailerOrder->items as $item) {
+                $pivot = $distributor->products()->where('product_id', $item->product_id)->first();
+                if ($pivot) {
+                    $distributor->products()->updateExistingPivot($item->product_id, ['stock' => $pivot->pivot->stock + $item->quantity]);
+                } else {
+                    $distributor->products()->attach($item->product_id, ['stock' => $item->quantity]);
+                }
+            }
+        }
+
+        return response()->json(['success' => 'Order cancellation approved successfully! Stock restored.']);
+    }
+
+    public function cancelOrder(Request $request, RetailerOrder $retailerOrder)
+    {
+        $request->validate(['cancellation_reason' => 'required|string|min:3']);
+
+        if ($retailerOrder->status === 'pending') {
+            // Restore stock if needed
+            $distributor = $retailerOrder->distributor;
+            if ($distributor) {
+                foreach ($retailerOrder->items as $item) {
+                    $pivot = $distributor->products()->where('product_id', $item->product_id)->first();
+                    if ($pivot) {
+                        $distributor->products()->updateExistingPivot($item->product_id, ['stock' => $pivot->pivot->stock + $item->quantity]);
+                    }
+                }
+            }
+
+            $retailerOrder->update([
+                'status' => 'cancelled',
+                'cancellation_reason' => $request->cancellation_reason
+            ]);
+
+            return response()->json(['success' => 'Order cancelled successfully!']);
+        }
+
+        return response()->json(['error' => 'Only pending orders can be directly cancelled.'], 400);
+    }
+
+    public function destroy(Request $request, RetailerOrder $retailerOrder)
+    {
         try {
             $distributor = $retailerOrder->distributor;
             if ($distributor) {
@@ -416,9 +488,16 @@ class RetailerOrderManagementController extends Controller
                     }
                 }
             }
+            $retailerOrder->items()->delete();
             $retailerOrder->delete();
+
+            if ($request->ajax()) {
+                return response()->json(['success' => 'Order deleted successfully!']);
+            }
+
             return redirect()->route('admin.retailer-orders.index')->with('success', 'Order deleted.');
         } catch (\Exception $e) {
+            if ($request->ajax()) return response()->json(['error' => $e->getMessage()], 500);
             return back()->with('error', $e->getMessage());
         }
     }
