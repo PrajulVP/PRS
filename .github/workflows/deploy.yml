@@ -128,11 +128,12 @@ jobs:
       - name: 🚀 FTP Deploy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
-          server: https://logiprompt.com/atomed/
+          server: logiprompt.com
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftp
           local-dir: ./
-          server-dir: /
+          server-dir: /atomed/
           exclude: |
             vendor/**
             .env
