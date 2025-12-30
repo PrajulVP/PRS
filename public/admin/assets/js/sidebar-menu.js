@@ -1,4 +1,4 @@
-(function ($) {
+(function ($) { 
   $(".toggle-nav").click(function () {
     $("#sidebar-links .nav-menu").css("left", "0px");
   });

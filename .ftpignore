@@ -16,7 +16,7 @@ vendor
 /tests
 
 # Public
-/public
-public
+# /public
+# public
 
 storage
