@@ -9,8 +9,7 @@ use App\Http\Controllers\{
     PendingApprovalController,
     ProfileController,
     PermissionController,
-    ProductController,
-    DistrictController,
+    ProductController,    InventoryController,    DistrictController,
     AreaController,
     SalesManagerController,
     DistributorController,
@@ -48,6 +47,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('districts', DistrictController::class);
     Route::resource('areas', AreaController::class);
     Route::resource('products', ProductController::class);
+    Route::resource('inventories', InventoryController::class);
 
     Route::get('/users', [UserController::class, 'index'])->name('admin.users');
     Route::post('/users', [UserController::class, 'store'])->name('admin.users.store');

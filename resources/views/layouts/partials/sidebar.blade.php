@@ -121,6 +121,14 @@
               <use href="{{ $iconSprite }}#fill-form"></use>
             </svg><span>Products</span></a>
         </li>
+        <li class="sidebar-list"><a class="sidebar-link sidebar-title link-nav" href="{{ route('inventories.index') }}">
+            <svg class="stroke-icon">
+              <use href="{{ $iconSprite }}#stroke-form"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{{ $iconSprite }}#fill-form"></use>
+            </svg><span>Inventory</span></a>
+        </li>
         @endif
 
         @if (

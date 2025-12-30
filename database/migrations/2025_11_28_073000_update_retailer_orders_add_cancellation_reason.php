@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::table('retailer_orders', function (Blueprint $table) {
             if (!Schema::hasColumn('retailer_orders', 'cancellation_reason')) {
-                $table->text('cancellation_reason')->nullable()->after('delivery_notes');
+                // 'delivery_notes' does not exist on retailer_orders; use 'notes' instead which is present
+                $table->text('cancellation_reason')->nullable()->after('notes');
             }
         });
     }
