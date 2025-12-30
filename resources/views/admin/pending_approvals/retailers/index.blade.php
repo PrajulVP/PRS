@@ -98,7 +98,6 @@
 {{-- Hidden file input for invoice --}}
 <input type="file" id="invoice_upload_input" class="d-none" accept=".pdf,.jpg,.jpeg,.png">
 
-@endsection
 
 {{-- Remove Invoice Confirmation Modal --}}
 <div class="modal fade" id="removeInvoiceConfirmModal" tabindex="-1" aria-hidden="true">
@@ -118,6 +117,10 @@
         </div>
     </div>
 </div>
+
+@endsection
+
+
 
 @push('styles')
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
