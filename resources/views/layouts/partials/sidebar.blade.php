@@ -9,7 +9,7 @@
     <div class="left-arrow" id="left-arrow"><i data-feather="arrow-left"></i></div>
     <div id="sidebar-menu">
       <ul class="sidebar-links" id="simple-bar">
-        <li class="back-btn"><a href="index.html"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/atom-logo.webp') }}" alt=""></a>
+        <li class="back-btn"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/atom-logo.webp') }}" alt=""></a>
           <div class="mobile-back text-end"> <span>Back </span><i class="fa fa-angle-right ps-2" aria-hidden="true"></i></div>
         </li>
         <li class="pin-title sidebar-main-title">
@@ -315,3 +315,22 @@
   </nav>
 </div>
 <!-- Page Sidebar Ends-->
+
+@push('scripts')
+<script>
+  $(document).ready(function() {
+    // Explicitly handle mobile back button to ensure sidebar closes
+    $(document).on('click', '.mobile-back', function(e) {
+      e.preventDefault();
+      e.stopPropagation(); // Prevent bubbling to parent li.back-btn
+
+      // Force close sidebar (add close_icon class handles hiding)
+      $(".page-header").addClass("close_icon");
+      $(".sidebar-wrapper").addClass("close_icon");
+
+      // Trigger overlay update to remove backdrop
+      $(window).trigger("overlay");
+    });
+  });
+</script>
+@endpush

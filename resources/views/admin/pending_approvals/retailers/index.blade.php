@@ -25,23 +25,25 @@
                 </div>
             </div>
 
-            <table class="table table-striped table-hover" id="retailer-approval-table">
-                <thead>
-                    <tr>
-                        <th>Sl No</th>
-                        <th>Order Code</th>
-                        <th>Retailer</th>
-                        <th>Summary</th>
-                        <th>Total</th>
-                        <th>Placed At</th>
-                        <th>Status</th>
-                        <th>Payment Status</th>
-                        <th>Invoice</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover" id="retailer-approval-table">
+                    <thead>
+                        <tr>
+                            <th>Sl No</th>
+                            <th>Order Code</th>
+                            <th>Retailer</th>
+                            <th>Summary</th>
+                            <th>Total</th>
+                            <th>Placed At</th>
+                            <th>Status</th>
+                            <th>Payment Status</th>
+                            <th>Invoice</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
