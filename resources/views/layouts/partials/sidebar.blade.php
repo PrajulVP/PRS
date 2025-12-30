@@ -1,6 +1,6 @@
 <!-- Page Sidebar Start-->
 <div class="sidebar-wrapper bg-gradient-pb-2" data-layout="stroke-svg">
-  <div class="logo-wrapper"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/favicon.ico') }}" width="120" alt=""></a>
+  <div class="logo-wrapper"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/favicon.ico') }}" width="40" alt=""></a>
     <div class="back-btn"><i class="fa fa-angle-left"> </i></div>
     <div class="toggle-sidebar"><i class="status_toggle middle sidebar-toggle" data-feather="grid"> </i></div>
   </div>
