@@ -3,6 +3,12 @@
 /vendor
 vendor
 
+/.agent
+.agent
+
+/.gemini
+.gemini
+
 # Git
 .git
 
