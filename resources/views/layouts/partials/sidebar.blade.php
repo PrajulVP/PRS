@@ -57,7 +57,7 @@
 
         @if ($hasOrderPerms)
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
-          <a class="sidebar-link sidebar-title" href="#">
+          <a class="sidebar-link sidebar-title" id="orders" href="#orders">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-form"></use>
             </svg>
@@ -95,7 +95,7 @@
 
         @if ($hasApprovalRoles)
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
-          <a class="sidebar-link sidebar-title" href="#">
+          <a class="sidebar-link sidebar-title" id="approvals" href="#approvals">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-user"></use>
             </svg>
@@ -104,8 +104,8 @@
             </svg><span>Approvals</span>
           </a>
           <ul class="sidebar-submenu">
-            <li><a href="{{ route('pending-approvals.retailer') }}">Retailers</a></li>
-            <li><a href="{{ route('pending-approvals.distributor') }}">Distributors</a></li>
+            <li><a href="{{ route('approvals.retailer') }}">Retailers</a></li>
+            <li><a href="{{ route('approvals.distributor') }}">Distributors</a></li>
           </ul>
         </li>
         @endif

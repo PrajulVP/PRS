@@ -579,4 +579,16 @@ class DistributorOrderController extends Controller
 
         return response()->json(['success' => 'Order deleted successfully! Stock restored.']);
     }
+    public function removeInvoice(Request $request, DistributorOrder $distributorOrder)
+    {
+        if ($distributorOrder->invoice_path) {
+            if (\Illuminate\Support\Facades\Storage::disk('public')->exists($distributorOrder->invoice_path)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($distributorOrder->invoice_path);
+            }
+            $distributorOrder->invoice_path = null;
+            $distributorOrder->save();
+            return response()->json(['success' => 'Invoice removed successfully']);
+        }
+        return response()->json(['error' => 'No invoice to remove'], 400);
+    }
 }

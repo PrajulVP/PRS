@@ -22,7 +22,8 @@ class RetailerOrderSeeder extends Seeder
         foreach ($retailers as $retailer) {
             // Create 3-5 orders for each retailer
             for ($i = 0; $i < rand(3, 5); $i++) {
-                $status = fake()->randomElement(['pending', 'accepted_by_sales_manager', 'delivered', 'rejected']);
+                // Statuses must match migration enum: ['pending', 'accepted', 'packed', 'shipped', 'delivered', 'cancelled']
+                $status = fake()->randomElement(['pending', 'accepted', 'shipped', 'delivered', 'cancelled']);
 
                 $order = \App\Models\RetailerOrder::create([
                     'distributor_id' => $retailer->distributor_id ?? \App\Models\Distributor::factory(),

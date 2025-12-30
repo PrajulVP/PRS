@@ -187,7 +187,9 @@
         var ajaxUrl = "{{ route('admin.retailer-orders.index') }}";
 
         var table = $('#orders-table').DataTable({
-            dom: 'Bfrtip',
+            dom: "<'row mb-3'<'col-sm-12'B>>" +
+                "<'row mb-3 d-flex align-items-center'<'col-md-6'f><'col-md-6'l>>" +
+                "rtip",
             buttons: {
                 dom: {
                     button: {
@@ -196,23 +198,28 @@
                 },
                 buttons: [{
                         extend: 'copy',
-                        className: 'btn btn-primary btn-sm'
+                        className: 'btn btn-secondary btn-sm',
+                        text: '<i class="fa fa-copy"></i> Copy'
                     },
                     {
                         extend: 'csv',
-                        className: 'btn btn-sm btn-secondary'
+                        className: 'btn btn-info btn-sm text-white',
+                        text: '<i class="fa fa-file-csv"></i> CSV'
                     },
                     {
                         extend: 'excel',
-                        className: 'btn btn-sm'
+                        className: 'btn btn-success btn-sm',
+                        text: '<i class="fa fa-file-excel"></i> Excel'
                     },
                     {
                         extend: 'pdf',
-                        className: 'btn btn-sm'
+                        className: 'btn btn-danger btn-sm',
+                        text: '<i class="fa fa-file-pdf"></i> PDF'
                     },
                     {
                         extend: 'print',
-                        className: 'btn btn-sm'
+                        className: 'btn btn-dark btn-sm',
+                        text: '<i class="fa fa-print"></i> Print'
                     }
                 ]
             },
@@ -256,20 +263,21 @@
                     orderable: false,
                     render: function(d, t, row) {
                         let rowJson = JSON.stringify(row).replace(/"/g, '&quot;');
-                        let btns = `<div class="action-buttons">
-                    <button class="btn btn-info btn-sm view-btn" data-row="${rowJson}"><i class="fa fa-eye"></i></button>`;
+                        let btns = `<div class="action-buttons d-flex align-items-center gap-1">
+                    <button class="btn btn-info btn-sm view-btn" title="View Details" data-row="${rowJson}"><i class="fa fa-eye"></i></button>`;
 
-                        btns += `<button class="btn btn-primary btn-sm edit-btn" data-row="${rowJson}"><i class="fa fa-edit"></i></button>`;
-                        btns += `<form action="/retailer-orders/${row.id}" method="POST" onsubmit="return confirm('Delete?')" style="display:inline;">
+                        btns += `<button class="btn btn-primary btn-sm edit-btn" title="Edit Order" data-row="${rowJson}"><i class="fa fa-edit"></i></button>`;
+
+                        btns += `<form action="/retailer-orders/${row.id}" method="POST" onsubmit="return confirm('Delete?')" style="display:contents;">
                         @csrf @method('DELETE')
-                        <button class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></button></form>`;
+                        <button class="btn btn-danger btn-sm" title="Delete Order"><i class="fa fa-trash"></i></button></form>`;
 
                         let st = row.status.toLowerCase();
                         if (st.includes('pending')) {
-                            btns += `<button class="btn btn-success btn-sm accept-btn" data-id="${row.id}">Accept</button>`;
+                            btns += `<button class="btn btn-success btn-sm accept-btn" title="Accept Order" data-id="${row.id}"><i class="fa fa-check"></i></button>`;
                         }
                         if (st.includes('accepted_by_distributor')) {
-                            btns += `<button class="btn btn-primary btn-sm assign-fs-btn" data-id="${row.id}">Assign FS</button>`;
+                            btns += `<button class="btn btn-warning btn-sm assign-fs-btn" title="Assign Field Staff" data-id="${row.id}"><i class="fa fa-user-plus"></i></button>`;
                         }
                         return btns + `</div>`;
                     }

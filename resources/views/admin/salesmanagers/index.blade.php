@@ -240,8 +240,8 @@
                     name: 'contact_no'
                 },
                 {
-                    data: 'user.address',
-                    name: 'user.address'
+                    data: 'address',
+                    name: 'address'
                 },
                 {
                     data: 'id',

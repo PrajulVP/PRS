@@ -348,7 +348,7 @@
                     data: 'order_code',
                     name: 'order_code'
                 },
-                @if(!Auth::user() - > hasRole('distributor')) {
+                @if(!Auth::user()->hasRole('distributor')) {
                     data: 'name',
                     name: 'distributor.user.name'
                 }, // Distributor Name

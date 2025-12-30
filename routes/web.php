@@ -62,8 +62,8 @@ Route::middleware(['auth'])->group(function () {
     Route::put('roles/{role}/permissions', [PermissionController::class, 'update'])->name('admin.permissions.update');
 
     // Route::get('pending-approvals', [PendingApprovalController::class, 'index'])->name('pending-approvals'); // Deprecated generic route
-    Route::get('pending-approvals/retailers', [PendingApprovalController::class, 'index'])->defaults('type', 'retailer')->name('pending-approvals.retailer');
-    Route::get('approvals/distributors', [PendingApprovalController::class, 'index'])->defaults('type', 'distributor')->name('pending-approvals.distributor');
+    Route::get('approvals/retailers', [PendingApprovalController::class, 'index'])->defaults('type', 'retailer')->name('approvals.retailer');
+    Route::get('approvals/distributors', [PendingApprovalController::class, 'index'])->defaults('type', 'distributor')->name('approvals.distributor');
     Route::get('users/pending-approval', [PendingApprovalController::class, 'index'])->name('admin.users.pending_approval');
 
     Route::name('admin.')->group(function () {
@@ -85,6 +85,12 @@ Route::middleware(['auth'])->group(function () {
         Route::post('retailer-orders/{retailerOrder}/assign-fieldstaff', [RetailerOrderManagementController::class, 'assignFieldStaff'])->name('retailer-orders.assignFieldStaff');
         Route::post('orders/{order}/assign-distributor', [RetailerOrderManagementController::class, 'assignDistributor'])->name('orders.assign_distributor');
         Route::get('retailer-orders/product/{product}', [RetailerOrderManagementController::class, 'getProductDetails'])->name('retailer-orders.product-details');
+
+        Route::post('retailer-orders/{retailerOrder}/update-status', [RetailerOrderManagementController::class, 'updateStatus'])->name('retailer-orders.update-status');
+        Route::post('retailer-orders/{retailerOrder}/update-payment-status', [RetailerOrderManagementController::class, 'updatePaymentStatus'])->name('retailer-orders.update-payment-status');
+        Route::get('retailer-orders/{retailerOrder}/invoice', [RetailerOrderManagementController::class, 'invoice'])->name('retailer-orders.invoice');
+        Route::post('retailer-orders/{retailerOrder}/upload-invoice', [RetailerOrderManagementController::class, 'uploadInvoice'])->name('retailer-orders.upload-invoice');
+        Route::post('retailer-orders/{retailerOrder}/remove-invoice', [RetailerOrderManagementController::class, 'removeInvoice'])->name('retailer-orders.remove-invoice');
 
 
         Route::resource('distributor-orders', DistributorOrderController::class);
@@ -108,6 +114,8 @@ Route::middleware(['auth'])->group(function () {
             ->name('distributor-orders.invoice');
         Route::post('distributor-orders/{distributor_order}/upload-invoice', [DistributorOrderController::class, 'uploadInvoice'])
             ->name('distributor-orders.upload-invoice');
+        Route::post('distributor-orders/{distributor_order}/remove-invoice', [DistributorOrderController::class, 'removeInvoice'])
+            ->name('distributor-orders.remove-invoice');
 
         // Master settings
         Route::get('settings/general', [SettingsController::class, 'general'])->name('settings.general');

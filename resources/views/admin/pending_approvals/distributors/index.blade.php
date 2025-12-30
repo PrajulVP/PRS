@@ -95,6 +95,25 @@
 
     {{-- Hidden file input for invoice --}}
     <input type="file" id="invoice_upload_input" class="d-none" accept=".pdf,.jpg,.jpeg,.png">
+
+    {{-- Remove Invoice Confirmation Modal --}}
+    <div class="modal fade" id="removeInvoiceConfirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Invoice Removal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">Are you sure you want to remove this invoice? This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmRemoveInvoiceBtn">Remove</button>
+                </div>
+            </div>
+        </div>
+    </div>
     @endsection
 
     @push('styles')
@@ -154,7 +173,9 @@
         $(document).ready(function() {
             var table = $('#distributor-approval-table').DataTable({
                 // ... (DataTable config remains same, skipping lines for brevity if not editing)
-                dom: 'Bfrtip',
+                dom: "<'row mb-3'<'col-sm-12'B>>" +
+                    "<'row mb-3 d-flex align-items-center'<'col-md-6'f><'col-md-6'l>>" +
+                    "rtip",
                 buttons: {
                     dom: {
                         button: {
@@ -163,23 +184,28 @@
                     },
                     buttons: [{
                             extend: 'copy',
-                            className: 'btn btn-primary btn-sm'
+                            className: 'btn btn-secondary btn-sm',
+                            text: '<i class="fa fa-copy"></i> Copy'
                         },
                         {
                             extend: 'csv',
-                            className: 'btn btn-secondary btn-sm'
+                            className: 'btn btn-info btn-sm text-white',
+                            text: '<i class="fa fa-file-csv"></i> CSV'
                         },
                         {
                             extend: 'excel',
-                            className: 'btn btn-success btn-sm'
+                            className: 'btn btn-success btn-sm',
+                            text: '<i class="fa fa-file-excel"></i> Excel'
                         },
                         {
                             extend: 'pdf',
-                            className: 'btn btn-danger btn-sm'
+                            className: 'btn btn-danger btn-sm',
+                            text: '<i class="fa fa-file-pdf"></i> PDF'
                         },
                         {
                             extend: 'print',
-                            className: 'btn btn-info btn-sm'
+                            className: 'btn btn-dark btn-sm',
+                            text: '<i class="fa fa-print"></i> Print'
                         }
                     ]
                 },
@@ -292,6 +318,9 @@
                                     </a>
                                     <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}" title="Re-upload Invoice">
                                         <i class="fa fa-refresh"></i>
+                                    </button>
+                                    <button class="btn btn-xs btn-danger remove-invoice-btn" data-id="${row.id}" title="Remove Invoice">
+                                        <i class="fa fa-trash"></i>
                                     </button>
                                 </div>
                             `;
@@ -429,6 +458,41 @@
                     }
                 });
                 $(this).val('');
+            });
+
+            // Remove Invoice Logic
+            let removeInvoiceId = null;
+            $(document).on('click', '.remove-invoice-btn', function() {
+                removeInvoiceId = $(this).data('id');
+                $('#removeInvoiceConfirmModal').modal('show');
+            });
+
+            $('#confirmRemoveInvoiceBtn').click(function() {
+                if (!removeInvoiceId) return;
+
+                let $btn = $(`.remove-invoice-btn[data-id="${removeInvoiceId}"]`);
+                let oldHtml = $btn.html();
+                // $btn.html('<i class="fa fa-spinner fa-spin"></i>').prop('disabled', true); // Optional: add spinner to button behind modal or to modal button
+                let $modalBtn = $(this);
+                let oldModalBtnHtml = $modalBtn.html();
+                $modalBtn.html('<i class="fa fa-spinner fa-spin"></i>').prop('disabled', true);
+
+                $.post(`/distributor-orders/${removeInvoiceId}/remove-invoice`, {
+                    _token: '{{ csrf_token() }}'
+                }, function(res) {
+                    $('#removeInvoiceConfirmModal').modal('hide');
+                    if (res.success) {
+                        showToast('success', res.success);
+                        table.ajax.reload(null, false);
+                    } else {
+                        showToast('error', res.error || 'Failed to remove invoice');
+                    }
+                }).fail(function(xhr) {
+                    $('#removeInvoiceConfirmModal').modal('hide');
+                    showToast('error', 'Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Request failed'));
+                }).always(function() {
+                    $modalBtn.html(oldModalBtnHtml).prop('disabled', false);
+                });
             });
 
             // View Modal Logic
