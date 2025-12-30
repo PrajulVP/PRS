@@ -46,7 +46,7 @@ class Distributor extends Model
 
     public function distributorOrders(): HasMany
     {
-        return $this->hasMany(distributorOrder::class);
+        return $this->hasMany(DistributorOrder::class);
     }
 
     public function retailerOrders(): HasMany

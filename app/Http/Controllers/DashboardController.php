@@ -10,7 +10,7 @@ use App\Models\Product;
 use App\Models\PermissionCategory;
 
 use App\Models\RetailerOrder;
-use App\Models\distributorOrder;
+use App\Models\DistributorOrder;
 
 use App\Models\FieldStaff;
 use App\Models\Retailer;

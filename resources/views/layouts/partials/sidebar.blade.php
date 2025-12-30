@@ -1,15 +1,15 @@
 <!-- Page Sidebar Start-->
 <div class="sidebar-wrapper bg-gradient-pb-2" data-layout="stroke-svg">
-  <div class="logo-wrapper"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/logo.png') }}" alt=""></a>
+  <div class="logo-wrapper"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/atom-logo.webp') }}" alt=""></a>
     <div class="back-btn"><i class="fa fa-angle-left"> </i></div>
     <div class="toggle-sidebar"><i class="status_toggle middle sidebar-toggle" data-feather="grid"> </i></div>
   </div>
-  <div class="logo-icon-wrapper"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/logo-icon.png') }}" alt=""></a></div>
+  <div class="logo-icon-wrapper"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/atom-logo.webp') }}" alt=""></a></div>
   <nav class="sidebar-main">
     <div class="left-arrow" id="left-arrow"><i data-feather="arrow-left"></i></div>
     <div id="sidebar-menu">
       <ul class="sidebar-links" id="simple-bar">
-        <li class="back-btn"><a href="index.html"><img class="img-fluid" src="../../admin/assets/images/logo/logo-icon.png" alt=""></a>
+        <li class="back-btn"><a href="index.html"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/atom-logo.webp') }}" alt=""></a>
           <div class="mobile-back text-end"> <span>Back </span><i class="fa fa-angle-right ps-2" aria-hidden="true"></i></div>
         </li>
         <li class="pin-title sidebar-main-title">
@@ -57,7 +57,7 @@
 
         @if ($hasOrderPerms)
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
-          <a class="sidebar-link sidebar-title" href="#">
+          <a class="sidebar-link sidebar-title" id="orders" href="#orders">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-form"></use>
             </svg>
@@ -94,9 +94,8 @@
         @endif
 
         @if ($hasApprovalRoles)
-        <li class="sidebar-list">
-          <i class="fa fa-thumb-tack"></i>
-          <a class="sidebar-link sidebar-title link-nav" href="{{ route('pending-approvals') }}">
+        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+          <a class="sidebar-link sidebar-title" id="approvals" href="#approvals">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-user"></use>
             </svg>
@@ -104,6 +103,10 @@
               <use href="{{ $iconSprite }}#fill-user"></use>
             </svg><span>Approvals</span>
           </a>
+          <ul class="sidebar-submenu">
+            <li><a href="{{ route('approvals.retailer') }}">Retailers</a></li>
+            <li><a href="{{ route('approvals.distributor') }}">Distributors</a></li>
+          </ul>
         </li>
         @endif
 
@@ -277,6 +280,17 @@
             </li>
             @endif
 
+
+            <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.permissions.index') }}">
+                <svg class="stroke-icon">
+                  <use href="{{ $iconSprite }}#stroke-user"></use>
+                </svg>
+                <svg class="fill-icon">
+                  <use href="{{ $iconSprite }}#fill-user"></use>
+                </svg><span>Roles</span></a>
+            </li>
+
+
             {{-- General settings page --}}
             <li class="sidebar-list">
               <!-- <i class="fa fa-cog"></i> -->
@@ -292,16 +306,7 @@
             </li>
           </ul>
         </li>
-        @if (Auth::user()->hasPermissionToCategory('permissions', 'view'))
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.permissions.index') }}">
-            <svg class="stroke-icon">
-              <use href="{{ $iconSprite }}#stroke-user"></use>
-            </svg>
-            <svg class="fill-icon">
-              <use href="{{ $iconSprite }}#fill-user"></use>
-            </svg><span>Roles</span></a>
-        </li>
-        @endif
+
         @endif
 
       </ul>

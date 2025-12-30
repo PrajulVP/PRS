@@ -20,7 +20,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class, // Call RoleSeeder first
             PermissionCategorySeeder::class,
-            RolePermissionSeeder::class,
+            RolePermissionSeeder::class, // Syncs roles_permissions table
+            PermissionSeeder::class,     // Creates actual Spatie Permissions and Groups
+
             SuperAdminSeeder::class, // Creates superadmin and admin users
             SalesManagerSeeder::class,
 
@@ -29,10 +31,10 @@ class DatabaseSeeder extends Seeder
             DistributorSeeder::class,
             FieldStaffSeeder::class,
             RetailerSeeder::class,
+            CreateRetailerEntriesSeeder::class, // Ensure all retailer users have entries
 
             ProductSeeder::class,    // Creates general products
-            // If there are other factory-based seeders that create many records,
-            // they can be called here (e.g., ProductFactory)
+            RetailerOrderSeeder::class, // Creates dummy retailer orders
 
             // Application-wide settings
             \Database\Seeders\SettingSeeder::class,

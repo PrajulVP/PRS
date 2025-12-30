@@ -1,0 +1,22 @@
+# Dependencies
+/node_modules
+/vendor
+vendor
+
+/.agent
+.agent
+
+/.gemini
+.gemini
+
+# Git
+.git
+
+# Testing
+/tests
+
+# Public
+/public
+public
+
+storage

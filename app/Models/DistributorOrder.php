@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -6,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str; // Import Str facade
 
-class distributorOrder extends Model
+class DistributorOrder extends Model
 {
     protected $table = 'distributor_orders';
 
@@ -28,6 +29,8 @@ class distributorOrder extends Model
         'distributor_id',
         'sales_manager_id', // New field
         'cancellation_reason', // New field
+        'payment_status', // New field
+        'invoice_path',
     ];
 
     protected $casts = [
@@ -41,7 +44,7 @@ class distributorOrder extends Model
         static::creating(function ($order) {
             do {
                 $orderCode = 'DO-' . Str::upper(Str::random(6)); // Example: DO-A1B2C3
-            } while (distributorOrder::where('order_code', $orderCode)->exists());
+            } while (DistributorOrder::where('order_code', $orderCode)->exists());
             $order->order_code = $orderCode;
             $order->status = self::STATUS_PENDING; // Ensure default status
         });
@@ -49,7 +52,7 @@ class distributorOrder extends Model
 
     public function items(): HasMany
     {
-        return $this->hasMany(distributorOrderItem::class);
+        return $this->hasMany(DistributorOrderItem::class);
     }
 
     public function distributor(): BelongsTo

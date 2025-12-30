@@ -78,6 +78,7 @@
                             <th>Total</th>
                             <th>Status</th>
                             <th>Placed At</th>
+                            <th>Invoice</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -373,11 +374,6 @@
                         return data;
                     }
                 },
-                // { data: 'total_items', name: 'total_items' }, // Hidden as per request
-                // {
-                //     data: 'total_quantity',
-                //     name: 'total_quantity'
-                // },
                 {
                     data: 'total_amount',
                     name: 'total_amount',
@@ -400,11 +396,17 @@
                     }
                 },
                 {
-                    data: 'placed_at',
-                    name: 'placed_at',
+                    data: 'invoice_url',
+                    name: 'invoice_url',
+                    orderable: false,
+                    searchable: false,
                     render: function(data) {
-                        if (!data || data === '-') return '-';
-                        return new Date(data).toLocaleString();
+                        if (data) {
+                            let ext = data.split('.').pop().toLowerCase();
+                            let icon = ext === 'pdf' ? 'fa-file-pdf-o' : 'fa-file-image-o';
+                            return `<a href="${data}" target="_blank" class="btn btn-xs btn-success"><i class="fa ${icon}"></i> View</a>`;
+                        }
+                        return '<span class="text-muted small">No Invoice</span>';
                     }
                 },
                 {
@@ -414,18 +416,11 @@
                     render: function(data, type, row) {
                         let btns = `<div class="action-buttons">`;
                         btns += `<button class="btn btn-info btn-sm view-btn" data-row='${JSON.stringify(row).replace(/'/g, "&apos;")}'><i class="fa fa-eye"></i></button>`;
-
-                        // Edit/Actions based on status/role - Simplified for now or check roles in JS
-                        // For simplicity, showing Edit for everyone (Controller handles permission) or check JS variables if passed.
-                        // Assuming basic edit button for now.
                         btns += `<button class="btn btn-primary btn-sm edit-btn" data-row='${JSON.stringify(row).replace(/'/g, "&apos;")}'><i class="fa fa-edit"></i></button>`;
 
                         if (row.status.toLowerCase().includes('pending')) {
                             btns += `<button class="btn btn-warning btn-sm cancel-order-btn" title="Cancel Order" data-id="${row.id}"><i class="fa fa-times"></i></button>`;
                         }
-
-                        // Delete button for Admin/Superadmin (or check permissions)
-                        // Assuming permission check context is available or just show it for now
                         btns += `<button class="btn btn-danger btn-sm delete-order-btn" title="Delete Order" data-id="${row.id}"><i class="fa fa-trash"></i></button>`;
 
                         btns += `</div>`;

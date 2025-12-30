@@ -17,6 +17,30 @@ class SalesManagerSeeder extends Seeder
     {
         $role = Role::firstOrCreate(['name' => 'salesmanager', 'guard_name' => 'web']);
 
-        // Removed default sales manager user creation
+        // Create a default Sales Manager User
+        $user = User::firstOrCreate(
+            ['email' => 'salesmanager@example.com'],
+            [
+                'name' => 'Default Sales Manager',
+                'password' => Hash::make('password'),
+                'role' => 'salesmanager',
+                'status' => 'active',
+            ]
+        );
+
+        if (!$user->hasRole('salesmanager')) {
+            $user->assignRole($role);
+        }
+
+        // Create the Sales Manager profile
+        SalesManager::firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'name' => $user->name,
+                'email' => $user->email,
+                'contact_no' => '9876543210',
+                'address' => '123 Sales St, Business City',
+            ]
+        );
     }
 }

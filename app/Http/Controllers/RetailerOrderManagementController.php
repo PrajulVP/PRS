@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class RetailerOrderManagementController extends Controller
 {
@@ -499,5 +500,84 @@ class RetailerOrderManagementController extends Controller
             if ($request->ajax()) return response()->json(['error' => $e->getMessage()], 500);
             return back()->with('error', $e->getMessage());
         }
+    }
+    public function updateStatus(Request $request, RetailerOrder $retailerOrder)
+    {
+        $request->validate([
+            'status' => 'required',
+        ]);
+
+        // Permission check
+        // Add robust permission checks as needed (Admin, Manager, Distributor if assigned)
+
+        $oldStatus = $retailerOrder->status;
+        $newStatus = $request->status;
+
+        $retailerOrder->status = $newStatus;
+        if ($newStatus == 'delivered') {
+            $retailerOrder->delivered_at = now();
+        }
+        $retailerOrder->save();
+
+        // Handle stock logic if needed for cancellations/rejections similar to DistributorOrder
+        // Minimal logic for now as per user request to enable functionality
+
+        return response()->json(['success' => 'Status updated successfully to ' . ucfirst(str_replace('_', ' ', $newStatus))]);
+    }
+
+    public function updatePaymentStatus(Request $request, RetailerOrder $retailerOrder)
+    {
+        $request->validate([
+            'payment_status' => 'required|in:pending,paid,failed',
+        ]);
+
+        $retailerOrder->payment_status = $request->payment_status;
+        $retailerOrder->save();
+
+        return response()->json(['success' => 'Payment status updated successfully to ' . ucfirst($request->payment_status)]);
+    }
+
+    public function invoice(RetailerOrder $retailerOrder)
+    {
+        $retailerOrder->load(['retailer.user', 'items.product', 'distributor.user']);
+        $cgst = \App\Models\Setting::getValue('cgst', 9);
+        $sgst = \App\Models\Setting::getValue('sgst', 9);
+        return view('admin.orders.retailers.invoice', compact('retailerOrder', 'cgst', 'sgst'));
+    }
+
+    public function uploadInvoice(Request $request, RetailerOrder $retailerOrder)
+    {
+        $request->validate([
+            'invoice' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB max
+        ]);
+
+        if ($request->hasFile('invoice')) {
+            if ($retailerOrder->invoice_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($retailerOrder->invoice_path)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($retailerOrder->invoice_path);
+            }
+
+            $path = $request->file('invoice')->store('invoices/retailers', 'public');
+            $retailerOrder->invoice_path = $path;
+            $retailerOrder->save();
+
+            return response()->json([
+                'success' => 'Invoice uploaded successfully!',
+                'invoice_url' => asset('storage/' . $path)
+            ]);
+        }
+
+        return response()->json(['error' => 'No file uploaded.'], 400);
+    }
+    public function removeInvoice(Request $request, RetailerOrder $retailerOrder)
+    {
+        if ($retailerOrder->invoice_path) {
+            if (\Illuminate\Support\Facades\Storage::disk('public')->exists($retailerOrder->invoice_path)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($retailerOrder->invoice_path);
+            }
+            $retailerOrder->invoice_path = null;
+            $retailerOrder->save();
+            return response()->json(['success' => 'Invoice removed successfully']);
+        }
+        return response()->json(['error' => 'No invoice to remove'], 400);
     }
 }

@@ -257,6 +257,9 @@
             dom: "<'row mb-3'<'col-sm-12'B>>" +
                 "<'row mb-3 d-flex align-items-center'<'col-md-6'f><'col-md-6'l>>" +
                 "rtip",
+            dom: "<'row mb-3'<'col-sm-12'B>>" +
+                "<'row mb-3 d-flex align-items-center'<'col-md-6'f><'col-md-6'l>>" +
+                "rtip",
             buttons: {
                 dom: {
                     button: {
@@ -267,9 +270,13 @@
                         extend: 'copy',
                         className: 'btn btn-secondary btn-sm',
                         text: '<i class="fa fa-copy"></i> Copy'
+                        className: 'btn btn-secondary btn-sm',
+                        text: '<i class="fa fa-copy"></i> Copy'
                     },
                     {
                         extend: 'csv',
+                        className: 'btn btn-info btn-sm text-white',
+                        text: '<i class="fa fa-file-csv"></i> CSV'
                         className: 'btn btn-info btn-sm text-white',
                         text: '<i class="fa fa-file-csv"></i> CSV'
                     },
@@ -277,14 +284,20 @@
                         extend: 'excel',
                         className: 'btn btn-success btn-sm',
                         text: '<i class="fa fa-file-excel"></i> Excel'
+                        className: 'btn btn-success btn-sm',
+                        text: '<i class="fa fa-file-excel"></i> Excel'
                     },
                     {
                         extend: 'pdf',
                         className: 'btn btn-danger btn-sm',
                         text: '<i class="fa fa-file-pdf"></i> PDF'
+                        className: 'btn btn-danger btn-sm',
+                        text: '<i class="fa fa-file-pdf"></i> PDF'
                     },
                     {
                         extend: 'print',
+                        className: 'btn btn-dark btn-sm',
+                        text: '<i class="fa fa-print"></i> Print'
                         className: 'btn btn-dark btn-sm',
                         text: '<i class="fa fa-print"></i> Print'
                     }

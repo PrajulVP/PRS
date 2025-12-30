@@ -11,7 +11,7 @@ use Illuminate\Support\Str; // Import Str facade
 class RetailerOrder extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'retailer_orders';
 
     protected $fillable = [
@@ -27,6 +27,8 @@ class RetailerOrder extends Model
         'delivery_notes',
         'delivered_at',
         'cancellation_reason',
+        'payment_status',
+        'invoice_path',
     ];
 
     protected $casts = [
@@ -59,5 +61,10 @@ class RetailerOrder extends Model
     public function distributor(): BelongsTo
     {
         return $this->belongsTo(Distributor::class);
+    }
+
+    public function fieldStaff(): BelongsTo
+    {
+        return $this->belongsTo(FieldStaff::class, 'fieldstaff_id'); // Assuming foreign key is fieldstaff_id based on migration context
     }
 }
