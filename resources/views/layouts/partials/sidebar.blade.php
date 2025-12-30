@@ -4,12 +4,12 @@
     <div class="back-btn"><i class="fa fa-angle-left"> </i></div>
     <div class="toggle-sidebar"><i class="status_toggle middle sidebar-toggle" data-feather="grid"> </i></div>
   </div>
-  <div class="logo-icon-wrapper"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/atom-logo.webp') }}" alt=""></a></div>
+  <div class="logo-icon-wrapper"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/favicon.ico') }}" alt=""></a></div>
   <nav class="sidebar-main">
     <div class="left-arrow" id="left-arrow"><i data-feather="arrow-left"></i></div>
     <div id="sidebar-menu">
       <ul class="sidebar-links" id="simple-bar">
-        <li class="back-btn"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/atom-logo.webp') }}" alt=""></a>
+        <li class="back-btn"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/favicon.ico') }}" alt=""></a>
           <div class="mobile-back text-end"> <span>Back </span><i class="fa fa-angle-right ps-2" aria-hidden="true"></i></div>
         </li>
         <li class="pin-title sidebar-main-title">
