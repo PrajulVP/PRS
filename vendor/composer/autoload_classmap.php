@@ -50,7 +50,7 @@ return array(
     'App\\Models\\SalesTarget' => $baseDir . '/app/Models/SalesTarget.php',
     'App\\Models\\Setting' => $baseDir . '/app/Models/Setting.php',
     'App\\Models\\User' => $baseDir . '/app/Models/User.php',
-    'App\\Models\\reward' => $baseDir . '/app/Models/reward.php',
+    'App\\Models\\Reward' => $baseDir . '/app/Models/Reward.php',
     'App\\Providers\\AppServiceProvider' => $baseDir . '/app/Providers/AppServiceProvider.php',
     'App\\Providers\\AuthServiceProvider' => $baseDir . '/app/Providers/AuthServiceProvider.php',
     'App\\View\\Components\\StatusBadge' => $baseDir . '/app/View/Components/StatusBadge.php',
