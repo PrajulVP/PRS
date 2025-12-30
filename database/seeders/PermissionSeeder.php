@@ -20,13 +20,22 @@ class PermissionSeeder extends Seeder
         $ordersGroup = PermissionGroup::firstOrCreate(['name' => 'Orders']);
 
         // Find or create the "User Management" permission group
-        $userManagementGroup = PermissionGroup::firstOrCreate(['name' => 'User Management', 'short_code' => 'user_management', 'is_active' => true, 'system' => true]);
+        $userManagementGroup = PermissionGroup::firstOrCreate(
+            ['name' => 'User Management'],
+            ['short_code' => 'user_management', 'is_active' => true, 'system' => true]
+        );
 
         // Find or create the "Regions & Areas" permission group
-        $regionsAreasGroup = PermissionGroup::firstOrCreate(['name' => 'Regions & Areas', 'short_code' => 'regions_areas', 'is_active' => true, 'system' => true]);
+        $regionsAreasGroup = PermissionGroup::firstOrCreate(
+            ['name' => 'Regions & Areas'],
+            ['short_code' => 'regions_areas', 'is_active' => true, 'system' => true]
+        );
 
         // Find or create the "Products" permission group
-        $productsGroup = PermissionGroup::firstOrCreate(['name' => 'Products', 'short_code' => 'products', 'is_active' => true, 'system' => true]);
+        $productsGroup = PermissionGroup::firstOrCreate(
+            ['name' => 'Products'],
+            ['short_code' => 'products', 'is_active' => true, 'system' => true]
+        );
 
 
         // Explicitly create all Permission Categories
@@ -36,64 +45,94 @@ class PermissionSeeder extends Seeder
                 'short_code' => 'users',
                 'name' => 'Users',
                 'perm_group_id' => $userManagementGroup->id,
-                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
+                'enable_view' => true,
+                'enable_add' => true,
+                'enable_edit' => true,
+                'enable_delete' => true,
             ],
             [
                 'short_code' => 'distributors',
                 'name' => 'Distributors',
                 'perm_group_id' => $userManagementGroup->id,
-                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
+                'enable_view' => true,
+                'enable_add' => true,
+                'enable_edit' => true,
+                'enable_delete' => true,
             ],
             [
                 'short_code' => 'managers',
                 'name' => 'Managers',
                 'perm_group_id' => $userManagementGroup->id,
-                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
+                'enable_view' => true,
+                'enable_add' => true,
+                'enable_edit' => true,
+                'enable_delete' => true,
             ],
             [
                 'short_code' => 'field_staff',
                 'name' => 'Field Staff',
                 'perm_group_id' => $userManagementGroup->id,
-                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
+                'enable_view' => true,
+                'enable_add' => true,
+                'enable_edit' => true,
+                'enable_delete' => true,
             ],
             [
                 'short_code' => 'retailers',
                 'name' => 'Retailers',
                 'perm_group_id' => $userManagementGroup->id,
-                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
+                'enable_view' => true,
+                'enable_add' => true,
+                'enable_edit' => true,
+                'enable_delete' => true,
             ],
             // Regions & Areas Group
             [
                 'short_code' => 'districts',
                 'name' => 'Districts',
                 'perm_group_id' => $regionsAreasGroup->id,
-                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
+                'enable_view' => true,
+                'enable_add' => true,
+                'enable_edit' => true,
+                'enable_delete' => true,
             ],
             [
                 'short_code' => 'areas',
                 'name' => 'Areas',
                 'perm_group_id' => $regionsAreasGroup->id,
-                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
+                'enable_view' => true,
+                'enable_add' => true,
+                'enable_edit' => true,
+                'enable_delete' => true,
             ],
             // Products Group
             [
                 'short_code' => 'products',
                 'name' => 'Products',
                 'perm_group_id' => $productsGroup->id,
-                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
+                'enable_view' => true,
+                'enable_add' => true,
+                'enable_edit' => true,
+                'enable_delete' => true,
             ],
             // Orders Group (already defined in $newCategories later, but ensuring consistency)
             [
                 'short_code' => 'distributor_bulk_orders',
                 'name' => 'Distributor Bulk Orders',
                 'perm_group_id' => $ordersGroup->id,
-                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
+                'enable_view' => true,
+                'enable_add' => true,
+                'enable_edit' => true,
+                'enable_delete' => true,
             ],
             [
                 'short_code' => 'retailer_orders',
                 'name' => 'Retailer Orders',
                 'perm_group_id' => $ordersGroup->id,
-                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
+                'enable_view' => true,
+                'enable_add' => true,
+                'enable_edit' => true,
+                'enable_delete' => true,
             ],
         ];
 
