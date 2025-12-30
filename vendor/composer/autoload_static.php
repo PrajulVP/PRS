@@ -694,7 +694,7 @@ class ComposerStaticInitc0e9be922acfb590c2646907a5a33347
         'App\\Models\\SalesTarget' => __DIR__ . '/../..' . '/app/Models/SalesTarget.php',
         'App\\Models\\Setting' => __DIR__ . '/../..' . '/app/Models/Setting.php',
         'App\\Models\\User' => __DIR__ . '/../..' . '/app/Models/User.php',
-        'App\\Models\\reward' => __DIR__ . '/../..' . '/app/Models/reward.php',
+        'App\\Models\\Reward' => __DIR__ . '/../..' . '/app/Models/Reward.php',
         'App\\Providers\\AppServiceProvider' => __DIR__ . '/../..' . '/app/Providers/AppServiceProvider.php',
         'App\\Providers\\AuthServiceProvider' => __DIR__ . '/../..' . '/app/Providers/AuthServiceProvider.php',
         'App\\View\\Components\\StatusBadge' => __DIR__ . '/../..' . '/app/View/Components/StatusBadge.php',

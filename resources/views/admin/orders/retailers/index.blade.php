@@ -273,9 +273,6 @@
                         <button class="btn btn-danger btn-sm" title="Delete Order"><i class="fa fa-trash"></i></button></form>`;
 
                         let st = row.status.toLowerCase();
-                        if (st.includes('pending')) {
-                            btns += `<button class="btn btn-success btn-sm accept-btn" title="Accept Order" data-id="${row.id}"><i class="fa fa-check"></i></button>`;
-                        }
                         if (st.includes('accepted_by_distributor')) {
                             btns += `<button class="btn btn-warning btn-sm assign-fs-btn" title="Assign Field Staff" data-id="${row.id}"><i class="fa fa-user-plus"></i></button>`;
                         }
@@ -428,36 +425,7 @@
 
 
         // --- Accept & Assign Logic ---
-        $(document).on('click', '.accept-btn', function() {
-            let id = $(this).data('id');
-            Swal.fire({
-                title: 'Accept this order?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, Accept'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.post(`/retailer-orders/${id}/accept`, {
-                        _token: '{{ csrf_token() }}'
-                    }, function(res) {
-                        if (res.success) {
-                            table.ajax.reload();
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Accepted!',
-                                text: 'Order accepted successfully.',
-                                timer: 1500,
-                                showConfirmButton: false
-                            });
-                        } else {
-                            Swal.fire('Error', res.error, 'error');
-                        }
-                    }).fail(function() {
-                        Swal.fire('Error', 'Request failed.', 'error');
-                    });
-                }
-            });
-        });
+        // Removed accept-btn logic as requested
 
         $(document).on('click', '.assign-fs-btn', function() {
             $('#modalOrderId').val($(this).data('id'));
