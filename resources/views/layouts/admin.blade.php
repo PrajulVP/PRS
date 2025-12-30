@@ -11,7 +11,7 @@
 
     <!-- Loader -->
     <div id="global-loader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #ffffff; z-index: 99999; display: flex; justify-content: center; align-items: center; transition: opacity 0.5s ease-out;">
-        <img src="{{ asset('admin/assets/images/logo/favicon.ico') }}" alt="Loading..." style="width: 150px; height: auto; animation: pulse 1.5s infinite ease-in-out;">
+        <img src="{{ asset('admin/assets/images/logo/favicon.ico') }}" width="60" alt="Loading..." style="width: 60px; height: auto; animation: pulse 1.5s infinite ease-in-out;">
     </div>
 
     <style>
