@@ -15,7 +15,7 @@
 
                     <div class="text-center mb-4">
                         <!-- Use Dark Logo for White Background -->
-                        <img src="{{ asset('admin/assets/images/logo/logo_dark.png') }}" class="img-fluid mb-3" alt="PRS Logo" style="max-height: 60px;">
+                        <img src="{{ asset('admin/assets/images/logo/atom-logo.webp') }}" class="img-fluid mb-3" alt="PRS Logo" style="max-height: 60px;">
                         <h3 class="fw-bold text-dark mb-1">Welcome Back</h3>
                         <p class="text-muted small">Sign in to continue to PRS</p>
                     </div>
