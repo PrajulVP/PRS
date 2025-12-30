@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 
-class StoredistributorOrderRequest extends FormRequest
+class StoreDistributorOrderRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
