@@ -4,8 +4,8 @@
 <meta name="description" content="Riho admin is super flexible, powerful, clean &amp; modern responsive bootstrap 5 admin template with unlimited possibilities.">
 <meta name="keywords" content="admin template, Riho admin template, dashboard template, flat admin template, responsive admin template, web app">
 <meta name="author" content="pixelstrap">
-<link rel="icon" href="{{ asset('admin/assets/images/logo/atom-logo.webp') }}" type="image/x-icon">
-<link rel="shortcut icon" href="{{ asset('admin/assets/images/logo/atom-logo.webp') }}" type="image/x-icon">
+<link rel="icon" href="{{ asset('admin/assets/images/logo/favicon.ico') }}" type="image/x-icon">
+<link rel="shortcut icon" href="{{ asset('admin/assets/images/logo/favicon.ico') }}" type="image/x-icon">
 <title>P R S</title>
 <!-- Google font-->
 <link rel="preconnect" href="https://fonts.googleapis.com">
