@@ -133,7 +133,7 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftp
           local-dir: ./
-          server-dir: /atomed/
+          server-dir: /
           exclude: |
             vendor/**
             .env
