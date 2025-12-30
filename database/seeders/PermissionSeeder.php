@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission; // Use Spatie Permission model
 use App\Models\PermissionCategory;
 use App\Models\PermissionGroup; // Import PermissionGroup model
