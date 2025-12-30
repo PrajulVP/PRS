@@ -45,7 +45,7 @@ jobs:
           echo "APP_ENV=production" >> .env
           echo "APP_KEY=" >> .env
           echo "APP_DEBUG=false" >> .env
-          echo "APP_URL=https://logiprompt.com/atomed" >> .env
+          echo "APP_URL=https://logiprompt.com/atomed/" >> .env
           echo "LOG_CHANNEL=stack" >> .env
           echo "DB_CONNECTION=mysql" >> .env
           echo "DB_HOST=127.0.0.1" >> .env
@@ -128,7 +128,7 @@ jobs:
       - name: 🚀 FTP Deploy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
-          server: https://logiprompt.com/atomed
+          server: https://logiprompt.com/atomed/
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./
