@@ -21,7 +21,7 @@
                             <div class="media static-top-widget">
                                 <div class="align-self-center text-center"><i data-feather="users"></i></div>
                                 <div class="media-body"><span class="m-0">Distributors</span>
-                                    <h4 class="mb-0 counter">{{ $counts['distributors'] }}</h4><i class="icon-bg" data-feather="users"></i>
+                                    <h4 class="mb-0 counter text-white">{{ $counts['distributors'] }}</h4>
                                 </div>
                             </div>
                         </div>
@@ -33,7 +33,7 @@
                             <div class="media static-top-widget">
                                 <div class="align-self-center text-center"><i data-feather="shopping-bag"></i></div>
                                 <div class="media-body"><span class="m-0">Retailers</span>
-                                    <h4 class="mb-0 counter">{{ $counts['retailers'] }}</h4><i class="icon-bg" data-feather="shopping-bag"></i>
+                                    <h4 class="mb-0 counter text-white">{{ $counts['retailers'] }}</h4>
                                 </div>
                             </div>
                         </div>
@@ -45,19 +45,19 @@
                             <div class="media static-top-widget">
                                 <div class="align-self-center text-center"><i data-feather="box"></i></div>
                                 <div class="media-body"><span class="m-0">Products</span>
-                                    <h4 class="mb-0 counter">{{ $counts['products'] }}</h4><i class="icon-bg" data-feather="box"></i>
+                                    <h4 class="mb-0 counter text-white">{{ $counts['products'] }}</h4>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-sm-6 col-xl-3 col-lg-6">
-                    <div class="card o-hidden border-0 bg-primary">
+                    <div class="card o-hidden border-0 bg-secondary">
                         <div class="bg-primary b-r-4 card-body">
                             <div class="media static-top-widget">
                                 <div class="align-self-center text-center"><i data-feather="file-text"></i></div>
                                 <div class="media-body"><span class="m-0">Total Orders</span>
-                                    <h4 class="mb-0 counter">{{ $retailerOrderStats['total'] }}</h4><i class="icon-bg" data-feather="file-text"></i>
+                                    <h4 class="mb-0 counter text-white">{{ $retailerOrderStats['total'] }}</h4>
                                 </div>
                             </div>
                         </div>
@@ -141,9 +141,7 @@
                     var monthlyOptions = {
                         series: [{
                             name: "Orders",
-                            data: {
-                                !!json_encode($chartData['counts']) !!
-                            }
+                            data: @json($chartData['counts'])
                         }],
                         chart: {
                             height: 350,
@@ -159,9 +157,7 @@
                             curve: 'smooth'
                         },
                         xaxis: {
-                            categories: {
-                                !!json_encode($chartData['months']) !!
-                            },
+                            categories: @json($chartData['months'])
                         },
                         colors: ['#7366ff'], // Admin theme primary color
                         fill: {
@@ -180,33 +176,18 @@
 
                     // Order Status Donut Chart
                     var statusOptions = {
-                        series: [{
-                                {
-                                    $retailerOrderStats['pending']
-                                }
-                            },
-                            {
-                                {
-                                    $retailerOrderStats['approved']
-                                }
-                            },
-                            {
-                                {
-                                    $retailerOrderStats['delivered']
-                                }
-                            },
-                            {
-                                {
-                                    $retailerOrderStats['cancelled']
-                                }
-                            }
+                        series: [
+                                {{ $retailerOrderStats['pending'] }},
+                                {{ $retailerOrderStats['approved'] }},
+                                {{ $retailerOrderStats['delivered'] }},
+                                {{ $retailerOrderStats['cancelled'] }}
                         ],
                         labels: ['Pending', 'Approved', 'Delivered', 'Cancelled'],
                         chart: {
                             type: 'donut',
                             height: 350
                         },
-                        colors: ['#ff9f40', '#7366ff', '#51bb25', '#f73164'], // Orange, Purple, Green, Red
+                        colors: ['#ff9f40', '#7366ff', '#51bb25', '#f73164'],
                         responsive: [{
                             breakpoint: 480,
                             options: {
@@ -220,11 +201,14 @@
                         }]
                     };
 
+
                     var statusChart = new ApexCharts(document.querySelector("#orderStatusChart"), statusOptions);
                     statusChart.render();
                 });
             </script>
             @endpush
+
+            @endif
 
         </div>
     </div>

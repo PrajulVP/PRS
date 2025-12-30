@@ -135,14 +135,6 @@
 
 @push('scripts')
 <script>
-    function showToast(type, message) {
-        if (typeof window.showToast === 'function') {
-            window.showToast(type, message);
-        } else {
-            alert(message);
-        }
-    }
-
     $(document).ready(function() {
         var table = $('#retailer-approval-table').DataTable({
             dom: "<'row mb-3'<'col-sm-12'B>>" +
