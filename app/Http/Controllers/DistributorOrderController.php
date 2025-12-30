@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\distributorOrder;
+use App\Models\DistributorOrder;
 use App\Models\Distributor;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -16,7 +16,7 @@ class DistributorOrderController extends Controller
     {
         if ($request->ajax()) {
             try {
-                $query = distributorOrder::with(['distributor.user', 'items.product', 'salesManager.user']);
+                $query = DistributorOrder::with(['distributor.user', 'items.product', 'salesManager.user']);
 
                 // Filter by distributor if authenticated user is a distributor
                 if (Auth::user()->hasRole('distributor')) {
@@ -28,8 +28,8 @@ class DistributorOrderController extends Controller
                     $salesManager = Auth::user()->salesManager;
                     $query->where(function ($q) use ($salesManager) {
                         $q->where('sales_manager_id', $salesManager->id)
-                            ->orWhere('status', distributorOrder::STATUS_PENDING)
-                            ->orWhere('status', distributorOrder::STATUS_CANCELLATION_REQUESTED);
+                            ->orWhere('status', DistributorOrder::STATUS_PENDING)
+                            ->orWhere('status', DistributorOrder::STATUS_CANCELLATION_REQUESTED);
                     });
                 }
 
@@ -195,10 +195,10 @@ class DistributorOrderController extends Controller
 
 
 
-        $order = distributorOrder::create([
+        $order = DistributorOrder::create([
             'distributor_id' => $distributorId,
             'sales_manager_id' => $distributorSalesManagerId,
-            'status' => distributorOrder::STATUS_PENDING,
+            'status' => DistributorOrder::STATUS_PENDING,
             'placed_at' => now(),
             'delivery_notes' => $request->delivery_notes,
             'total_amount' => 0,
@@ -358,9 +358,9 @@ class DistributorOrderController extends Controller
     public function acceptBySalesManager(distributorOrder $distributorOrder)
     {
         if (!Auth::user()->hasRole('salesmanager')) return response()->json(['error' => 'No permission'], 403);
-        if ($distributorOrder->status !== distributorOrder::STATUS_PENDING) return response()->json(['error' => 'Not pending'], 400);
+        if ($distributorOrder->status !== DistributorOrder::STATUS_PENDING) return response()->json(['error' => 'Not pending'], 400);
 
-        $distributorOrder->status = distributorOrder::STATUS_ACCEPTED_BY_SALES_MANAGER;
+        $distributorOrder->status = DistributorOrder::STATUS_ACCEPTED_BY_SALES_MANAGER;
         $distributorOrder->sales_manager_id = Auth::user()->salesManager->id;
         $distributorOrder->save();
 
@@ -370,9 +370,9 @@ class DistributorOrderController extends Controller
     public function acceptByAdmin(distributorOrder $distributorOrder)
     {
         if (!Auth::user()->hasRole('admin')) return response()->json(['error' => 'No permission'], 403);
-        if ($distributorOrder->status !== distributorOrder::STATUS_ACCEPTED_BY_SALES_MANAGER) return response()->json(['error' => 'Invalid status'], 400);
+        if ($distributorOrder->status !== DistributorOrder::STATUS_ACCEPTED_BY_SALES_MANAGER) return response()->json(['error' => 'Invalid status'], 400);
 
-        $distributorOrder->status = distributorOrder::STATUS_DELIVERED;
+        $distributorOrder->status = DistributorOrder::STATUS_DELIVERED;
         $distributorOrder->save();
 
         $distributor = $distributorOrder->distributor;
@@ -399,9 +399,9 @@ class DistributorOrderController extends Controller
         $request->validate(['cancellation_reason' => 'required|string|min:5']);
         if (!Auth::user()->hasRole('distributor')) return response()->json(['error' => 'No permission'], 403);
         if ($distributorOrder->distributor_id !== Auth::user()->distributor->id) return response()->json(['error' => 'Not your order'], 403);
-        if ($distributorOrder->status !== distributorOrder::STATUS_ACCEPTED_BY_SALES_MANAGER) return response()->json(['error' => 'Invalid status'], 400);
+        if ($distributorOrder->status !== DistributorOrder::STATUS_ACCEPTED_BY_SALES_MANAGER) return response()->json(['error' => 'Invalid status'], 400);
 
-        $distributorOrder->status = distributorOrder::STATUS_CANCELLATION_REQUESTED;
+        $distributorOrder->status = DistributorOrder::STATUS_CANCELLATION_REQUESTED;
         $distributorOrder->cancellation_reason = $request->cancellation_reason;
         $distributorOrder->save();
 
@@ -411,9 +411,9 @@ class DistributorOrderController extends Controller
     public function approveCancellation(distributorOrder $distributorOrder)
     {
         if (!Auth::user()->hasRole('salesmanager')) return response()->json(['error' => 'No permission'], 403);
-        if ($distributorOrder->status !== distributorOrder::STATUS_CANCELLATION_REQUESTED) return response()->json(['error' => 'Invalid status'], 400);
+        if ($distributorOrder->status !== DistributorOrder::STATUS_CANCELLATION_REQUESTED) return response()->json(['error' => 'Invalid status'], 400);
 
-        $distributorOrder->status = distributorOrder::STATUS_CANCELLED;
+        $distributorOrder->status = DistributorOrder::STATUS_CANCELLED;
         $distributorOrder->save();
 
         foreach ($distributorOrder->items as $item) {
@@ -429,13 +429,13 @@ class DistributorOrderController extends Controller
             'cancellation_reason' => 'required|string|min:3',
         ]);
 
-        if ($distributorOrder->status === distributorOrder::STATUS_PENDING) {
+        if ($distributorOrder->status === DistributorOrder::STATUS_PENDING) {
             foreach ($distributorOrder->items as $item) {
                 $item->product->increment('stock', $item->quantity);
             }
 
             $distributorOrder->update([
-                'status' => distributorOrder::STATUS_CANCELLED,
+                'status' => DistributorOrder::STATUS_CANCELLED,
                 'cancellation_reason' => $request->cancellation_reason
             ]);
 
@@ -565,7 +565,7 @@ class DistributorOrderController extends Controller
         }
 
         // Restore stock if the order wasn't already cancelled (assuming stock was deducted on creation)
-        if (!in_array($distributorOrder->status, [distributorOrder::STATUS_CANCELLED])) {
+        if (!in_array($distributorOrder->status, [DistributorOrder::STATUS_CANCELLED])) {
             foreach ($distributorOrder->items as $item) {
                 // Determine logic: 
                 // Creating order REDUCES global product stock? Yes, usually.

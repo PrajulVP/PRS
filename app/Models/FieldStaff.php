@@ -31,7 +31,7 @@ class FieldStaff extends Model
 
     public function distributorOrders(): HasMany
     {
-        return $this->hasMany(distributorOrder::class);
+        return $this->hasMany(DistributorOrder::class);
     }
 
     public function retailers(): HasMany

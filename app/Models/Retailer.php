@@ -35,7 +35,7 @@ class Retailer extends Model
 
     public function distributorOrders(): HasMany
     {
-        return $this->hasMany(distributorOrder::class);
+        return $this->hasMany(DistributorOrder::class);
     }
 
     public function retailerOrders(): HasMany
@@ -47,7 +47,7 @@ class Retailer extends Model
     {
         return $this->belongsTo(FieldStaff::class);
     }
-    
+
     public function salesManager(): BelongsTo
     {
         return $this->belongsTo(SalesManager::class, 'sales_manager_id');
