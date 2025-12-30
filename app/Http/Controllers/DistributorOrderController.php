@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
-class distributorOrderController extends Controller
+class DistributorOrderController extends Controller
 {
     // Admin/Distributor: list all orders
     public function index(Request $request)

@@ -19,7 +19,7 @@ use App\Http\Controllers\{
     RetailerOrderController,
     RetailerOrderManagementController,
     SettingsController,
-    distributorOrderController
+    DistributorOrderController
 };
 
 Route::get('/', function () {
@@ -87,26 +87,26 @@ Route::middleware(['auth'])->group(function () {
         Route::get('retailer-orders/product/{product}', [RetailerOrderManagementController::class, 'getProductDetails'])->name('retailer-orders.product-details');
 
 
-        Route::resource('distributor-orders', distributorOrderController::class);
-        Route::get('distributor-orders/product/{product}', [distributorOrderController::class, 'getProductDetails'])->name('distributor-orders.product-details');
+        Route::resource('distributor-orders', DistributorOrderController::class);
+        Route::get('distributor-orders/product/{product}', [DistributorOrderController::class, 'getProductDetails'])->name('distributor-orders.product-details');
 
-        Route::post('distributor-orders/{distributor_order}/accept-by-admin', [distributorOrderController::class, 'acceptByAdmin'])
+        Route::post('distributor-orders/{distributor_order}/accept-by-admin', [DistributorOrderController::class, 'acceptByAdmin'])
             ->name('distributor-orders.accept-by-admin');
-        Route::post('distributor-orders/{distributor_order}/accept-by-sales-manager', [distributorOrderController::class, 'acceptBySalesManager'])
+        Route::post('distributor-orders/{distributor_order}/accept-by-sales-manager', [DistributorOrderController::class, 'acceptBySalesManager'])
             ->name('distributor-orders.accept-by-sales-manager');
-        Route::post('distributor-orders/{distributor_order}/approve-cancellation', [distributorOrderController::class, 'approveCancellation'])
+        Route::post('distributor-orders/{distributor_order}/approve-cancellation', [DistributorOrderController::class, 'approveCancellation'])
             ->name('distributor-orders.approve-cancellation');
-        Route::post('distributor-orders/{distributor_order}/request-cancellation', [distributorOrderController::class, 'requestCancellation'])
+        Route::post('distributor-orders/{distributor_order}/request-cancellation', [DistributorOrderController::class, 'requestCancellation'])
             ->name('distributor-orders.request-cancellation');
-        Route::post('distributor-orders/{distributor_order}/cancel-order', [distributorOrderController::class, 'cancelOrder'])
+        Route::post('distributor-orders/{distributor_order}/cancel-order', [DistributorOrderController::class, 'cancelOrder'])
             ->name('distributor-orders.cancel-order');
-        Route::post('distributor-orders/{distributor_order}/update-status', [distributorOrderController::class, 'updateStatus'])
+        Route::post('distributor-orders/{distributor_order}/update-status', [DistributorOrderController::class, 'updateStatus'])
             ->name('distributor-orders.update-status');
-        Route::post('distributor-orders/{distributor_order}/update-payment-status', [distributorOrderController::class, 'updatePaymentStatus'])
+        Route::post('distributor-orders/{distributor_order}/update-payment-status', [DistributorOrderController::class, 'updatePaymentStatus'])
             ->name('distributor-orders.update-payment-status');
-        Route::get('distributor-orders/{distributor_order}/invoice', [distributorOrderController::class, 'invoice'])
+        Route::get('distributor-orders/{distributor_order}/invoice', [DistributorOrderController::class, 'invoice'])
             ->name('distributor-orders.invoice');
-        Route::post('distributor-orders/{distributor_order}/upload-invoice', [distributorOrderController::class, 'uploadInvoice'])
+        Route::post('distributor-orders/{distributor_order}/upload-invoice', [DistributorOrderController::class, 'uploadInvoice'])
             ->name('distributor-orders.upload-invoice');
 
         // Master settings
