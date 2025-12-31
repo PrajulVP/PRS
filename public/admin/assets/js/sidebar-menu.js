@@ -3,7 +3,7 @@
     $("#sidebar-links .nav-menu").css("left", "0px");
   });
   $(".mobile-back").click(function () {
-    $("#sidebar-links .nav-menu").css("left", "-410px");
+    $("#sidebar-links .nav-menu").css("left", "-500px");
   });
   $(".page-wrapper").attr(
     "class",

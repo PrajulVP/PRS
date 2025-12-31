@@ -1,15 +1,15 @@
 <!-- Page Sidebar Start-->
 <div class="sidebar-wrapper bg-gradient-pb-2" data-layout="stroke-svg">
-  <div class="logo-wrapper"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/favicon.ico') }}" width="40" alt=""></a>
+  <div class="logo-wrapper"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/atom-logo-main.png') }}" width="100" alt=""></a>
     <div class="back-btn"><i class="fa fa-angle-left"> </i></div>
     <div class="toggle-sidebar"><i class="status_toggle middle sidebar-toggle" data-feather="grid"> </i></div>
   </div>
-  <div class="logo-icon-wrapper"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/favicon.ico') }}" alt=""></a></div>
+  <div class="logo-icon-wrapper"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/atom-logo-main.png') }}" width="100" alt=""></a></div>
   <nav class="sidebar-main">
     <div class="left-arrow" id="left-arrow"><i data-feather="arrow-left"></i></div>
     <div id="sidebar-menu">
       <ul class="sidebar-links" id="simple-bar">
-        <li class="back-btn"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/favicon.ico') }}" alt=""></a>
+        <li class="back-btn"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/atom-logo-main.png') }}" width="100" alt=""></a>
           <div class="mobile-back text-end"> <span>Back </span><i class="fa fa-angle-right ps-2" aria-hidden="true"></i></div>
         </li>
         <li class="pin-title sidebar-main-title">
@@ -124,7 +124,7 @@
               <use href="{{ $iconSprite }}#fill-form"></use>
             </svg><span>Products</span></a>
         </li>
-        <li class="sidebar-list"><a class=" d-none sidebar-link sidebar-title link-nav" href="">
+        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('inventories.index') }}">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-form"></use>
             </svg>
@@ -315,6 +315,19 @@
   </nav>
 </div>
 <!-- Page Sidebar Ends-->
+
+@push('styles')
+<style>
+  @media (max-width: 991.98px) {
+    .sidebar-wrapper .logo-wrapper img {
+      max-width: 100px !important;
+      /* Constrain width on mobile */
+      width: auto !important;
+      height: auto;
+    }
+  }
+</style>
+@endpush
 
 @push('scripts')
 <script>

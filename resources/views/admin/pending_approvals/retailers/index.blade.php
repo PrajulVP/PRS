@@ -303,7 +303,8 @@
                         let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
                         let btns = `<div class="action-buttons d-flex gap-1">`;
                         btns += `<button class="btn btn-info btn-sm view-details-btn" data-row="${rowData}" title="View Details"><i class="fa fa-eye"></i></button>`;
-                        btns += `<a href="/retailer-orders/${row.id}/invoice" target="_blank" class="btn btn-dark btn-sm" title="Print Invoice"><i class="fa fa-print"></i></a>`;
+                        let invoiceUrl = "{{ route('admin.retailer-orders.invoice', ':id') }}".replace(':id', row.id);
+                        btns += `<a href="${invoiceUrl}" target="_blank" class="btn btn-dark btn-sm" title="Print Invoice"><i class="fa fa-print"></i></a>`;
                         btns += `</div>`;
                         return btns;
                     }
@@ -329,7 +330,8 @@
 
             $select.prop('disabled', true);
 
-            $.post(`/retailer-orders/${id}/update-status`, {
+            let url = "{{ route('admin.retailer-orders.update-status', ':id') }}".replace(':id', id);
+            $.post(url, {
                 _token: '{{ csrf_token() }}',
                 status: newStatus
             }, function(res) {
@@ -365,7 +367,8 @@
 
             $select.prop('disabled', true);
 
-            $.post(`/retailer-orders/${id}/update-payment-status`, {
+            let url = "{{ route('admin.retailer-orders.update-payment-status', ':id') }}".replace(':id', id);
+            $.post(url, {
                 _token: '{{ csrf_token() }}',
                 payment_status: newStatus
             }, function(res) {
@@ -410,7 +413,7 @@
             $btn.html('<i class="fa fa-spinner fa-spin"></i>').prop('disabled', true);
 
             $.ajax({
-                url: `/retailer-orders/${currentOrderIdForInvoice}/upload-invoice`,
+                url: "{{ route('admin.retailer-orders.upload-invoice', ':id') }}".replace(':id', currentOrderIdForInvoice),
                 type: 'POST',
                 data: formData,
                 processData: false,
@@ -441,7 +444,8 @@
             let oldModalBtnHtml = $modalBtn.html();
             $modalBtn.html('<i class="fa fa-spinner fa-spin"></i>').prop('disabled', true);
 
-            $.post(`/retailer-orders/${removeInvoiceId}/remove-invoice`, {
+            let url = "{{ route('admin.retailer-orders.remove-invoice', ':id') }}".replace(':id', removeInvoiceId);
+            $.post(url, {
                 _token: '{{ csrf_token() }}'
             }, function(res) {
                 $('#removeInvoiceConfirmModal').modal('hide');
