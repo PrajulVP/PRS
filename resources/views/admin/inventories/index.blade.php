@@ -217,20 +217,19 @@
 <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="fa fa-exclamation-triangle me-2"></i> Confirm Removal</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header bg-light">
+                <h5 class="modal-title">Confirm Removal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <p class="fs-6">Are you sure you want to remove this item from your inventory?</p>
-                <div class="alert alert-info d-flex align-items-center" role="alert">
-                    <i class="fa fa-info-circle me-2"></i>
-                    <div>The <strong>Product Definition</strong> will NOT be deleted from the system.</div>
+                <p class="mb-3">Are you sure you want to remove this item from your inventory?</p>
+                <div class="text-muted small">
+                    <i class="fa fa-info-circle me-1"></i> The product definition will <strong>NOT</strong> be deleted.
                 </div>
             </div>
             <div class="modal-footer bg-light">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Remove Item</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn"><i class="fa fa-trash me-1"></i> Remove Item</button>
             </div>
         </div>
     </div>

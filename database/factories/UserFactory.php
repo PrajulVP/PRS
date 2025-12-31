@@ -29,34 +29,35 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'contact_no' => fake()->phoneNumber(),
             // No default role here; roles will be set by state methods or explicitly
         ];
     }
 
     public function distributor(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'role' => 'distributor',
         ]);
     }
 
     public function fieldstaff(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'role' => 'fieldstaff',
         ]);
     }
 
     public function retailer(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'role' => 'retailer',
         ]);
     }
 
     public function salesmanager(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'role' => 'salesmanager',
         ]);
     }

@@ -305,7 +305,8 @@
                 },
                 {
                     data: 'user.contact_no',
-                    name: 'user.contact_no'
+                    name: 'user.contact_no',
+                    defaultContent: 'N/A'
                 },
                 {
                     data: 'id',
