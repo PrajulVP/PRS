@@ -57,7 +57,9 @@ class InventoryController extends Controller
         // Treat DataTables requests as AJAX or when 'draw' param is present
         if ($request->ajax() || $request->has('draw') || $request->expectsJson()) {
             try {
-                $query = Inventory::with(['product', 'distributor.user']);
+                $query = Inventory::with(['product', 'distributor.user'])
+                    ->selectRaw('MAX(id) as id, product_id, distributor_id, SUM(stock) as stock, MAX(distributor_product_code) as distributor_product_code, MAX(product_name) as product_name')
+                    ->groupBy('product_id', 'distributor_id');
 
                 if (Auth::user()->hasRole('distributor')) {
                     $distributor = Auth::user()->distributor;
@@ -76,22 +78,39 @@ class InventoryController extends Controller
                     });
                 }
 
-                $totalData = Auth::user()->hasRole('distributor') ? Inventory::where('distributor_id', Auth::user()->distributor->id)->count() : Inventory::count();
-                $totalFiltered = $query->count();
+                // Correct totals for grouped data
+                $totalDataQuery = Inventory::query();
+                if (Auth::user()->hasRole('distributor')) {
+                    $totalDataQuery->where('distributor_id', Auth::user()->distributor->id);
+                }
+                $totalData = $totalDataQuery->select('product_id', 'distributor_id')->groupBy('product_id', 'distributor_id')->get()->count();
+
+                $totalFiltered = (clone $query)->get()->count();
 
                 // ordering
                 if ($request->has('order') && !empty($request->input('order'))) {
                     $columnIndex = $request->input('order')[0]['column'];
                     $columnName = $request->input('columns')[$columnIndex]['data'];
                     $sortDirection = $request->input('order')[0]['dir'];
-                    $query->orderBy($columnName, $sortDirection);
+                    // Use a raw order if it's the stock column to ensure SUM(stock) is ordered correctly
+                    if ($columnName === 'stock') {
+                        $query->orderByRaw("SUM(stock) $sortDirection");
+                    } else {
+                        $query->orderBy($columnName, $sortDirection);
+                    }
                 } else {
                     $query->orderBy('id', 'desc');
                 }
 
                 $start = intval($request->input('start', 0));
                 $length = intval($request->input('length', 10));
-                $items = $query->offset($start)->limit($length)->get();
+
+                // If length is -1, fetch all
+                if ($length == -1) {
+                    $items = $query->get();
+                } else {
+                    $items = $query->offset($start)->limit($length)->get();
+                }
 
                 $formatted = $items->map(function ($i) {
                     return [
@@ -165,31 +184,47 @@ class InventoryController extends Controller
             $distributorId = $request->distributor_id;
         }
 
-        $inventory = Inventory::create([
-            'distributor_product_code' => $product->product_code, // Use actual product code
-            'product_id' => $product->id,
-            'product_name' => $product->product_name,
-            'distributor_id' => $distributorId,
-            'stock' => $request->stock,
-        ]);
+        $inventory = Inventory::where('product_id', $product->id)
+            ->where('distributor_id', $distributorId)
+            ->first();
+
+        if ($inventory) {
+            $previousStock = $inventory->stock;
+            $inventory->stock += $request->stock;
+            $inventory->save();
+
+            $changeType = 'restock';
+            $remarks = 'Restocked via inventory form';
+        } else {
+            $previousStock = 0;
+            $inventory = Inventory::create([
+                'distributor_product_code' => $product->product_code,
+                'product_id' => $product->id,
+                'product_name' => $product->product_name,
+                'distributor_id' => $distributorId,
+                'stock' => $request->stock,
+            ]);
+            $changeType = 'initial_stock';
+            $remarks = 'Initial stock on creation';
+        }
 
         if ($request->stock > 0) {
             StockHistory::create([
                 'inventory_id' => $inventory->id,
                 'user_id' => Auth::id(),
-                'previous_stock' => 0,
-                'new_stock' => $request->stock,
+                'previous_stock' => $previousStock,
+                'new_stock' => $inventory->stock,
                 'quantity_change' => $request->stock,
-                'change_type' => 'initial_stock',
-                'remarks' => 'Initial stock on creation'
+                'change_type' => $changeType,
+                'remarks' => $remarks
             ]);
         }
 
         if ($request->ajax()) {
-            return response()->json(['success' => 'Inventory item created successfully.']);
+            return response()->json(['success' => 'Inventory updated successfully.']);
         }
 
-        return redirect()->route('inventories.index')->with('success', 'Inventory item created successfully.');
+        return redirect()->route('inventories.index')->with('success', 'Inventory updated successfully.');
     }
 
     public function show(Inventory $inventory)

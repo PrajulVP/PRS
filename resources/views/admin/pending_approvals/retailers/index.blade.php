@@ -119,6 +119,29 @@
         </div>
     </div>
 </div>
+{{-- Status Change Confirmation Modal --}}
+<div class="modal fade" id="statusChangeConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Status Change</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <i class="fa fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                <p class="mb-0">Are you sure you want to change the status of this order?</p>
+                <div class="mt-3 p-2 bg-light rounded d-flex justify-content-between">
+                    <span class="text-muted small">New Status:</span>
+                    <strong id="new-status-label" class="text-primary">-</strong>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmStatusChangeBtn">Confirm Change</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @endsection
 
@@ -317,17 +340,42 @@
         });
 
         // Status Update Logic
+        let statusChangeData = null;
         $(document).on('change', '.status-select', function(e) {
             let $select = $(this);
             let id = $select.data('id');
             let newStatus = $select.val();
             let originalStatus = $select.data('original');
+            let statusText = $select.find('option:selected').text();
 
-            if (!confirm('Are you sure you want to change the status?')) {
-                $select.val(originalStatus);
-                return;
-            }
+            // Store info for confirmation
+            statusChangeData = {
+                id: id,
+                newStatus: newStatus,
+                originalStatus: originalStatus,
+                $select: $select
+            };
 
+            $('#new-status-label').text(statusText);
+            $('#statusChangeConfirmModal').modal('show');
+
+            // Revert temporarily until confirmed
+            $select.val(originalStatus);
+        });
+
+        $('#confirmStatusChangeBtn').click(function() {
+            if (!statusChangeData) return;
+
+            let {
+                id,
+                newStatus,
+                originalStatus,
+                $select
+            } = statusChangeData;
+            let $modalBtn = $(this);
+            let oldBtnHtml = $modalBtn.html();
+
+            $modalBtn.html('<i class="fa fa-spinner fa-spin"></i>').prop('disabled', true);
             $select.prop('disabled', true);
 
             let url = "{{ route('admin.retailer-orders.update-status', ':id') }}".replace(':id', id);
@@ -335,7 +383,9 @@
                 _token: '{{ csrf_token() }}',
                 status: newStatus
             }, function(res) {
+                $('#statusChangeConfirmModal').modal('hide');
                 if (res.success) {
+                    $select.val(newStatus);
                     $select.removeClass('bg-warning bg-secondary bg-success bg-danger bg-info text-dark text-white');
                     let newClass = 'bg-secondary text-white';
                     if (newStatus.includes('pending')) newClass = 'bg-warning text-dark';
@@ -351,10 +401,13 @@
                     $select.val(originalStatus);
                 }
             }).fail(function(xhr) {
+                $('#statusChangeConfirmModal').modal('hide');
                 showToast('error', 'Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Request failed'));
                 $select.val(originalStatus);
             }).always(function() {
+                $modalBtn.html(oldBtnHtml).prop('disabled', false);
                 $select.prop('disabled', false);
+                statusChangeData = null;
             });
         });
 

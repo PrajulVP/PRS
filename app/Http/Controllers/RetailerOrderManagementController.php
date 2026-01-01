@@ -46,7 +46,9 @@ class RetailerOrderManagementController extends Controller
         // Get current stock levels for this product (all distributors who HAVE this product in inventory)
         $stockMap = DB::table('inventories')
             ->where('product_id', $product->id)
-            ->pluck('stock', 'distributor_id');
+            ->selectRaw('distributor_id, SUM(stock) as total_stock')
+            ->groupBy('distributor_id')
+            ->pluck('total_stock', 'distributor_id');
 
         $distributors = $allDistributors->filter(function ($distributor) use ($stockMap) {
             return $stockMap->has($distributor->id);
