@@ -21,7 +21,7 @@ class AuthController extends Controller
         // Check if the user is authenticated under the default web guard
         if (Auth::guard('web')->check()) {
             return redirect()->route('dashboard'); // Redirect to the dashboard
-        }
+        } 
 
         return view('auth.login'); // Show login form if not authenticated
     }
