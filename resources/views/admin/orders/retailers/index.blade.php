@@ -26,13 +26,26 @@
     }
 
     /* Modal sizing and table compacting */
-    .modal-xl { max-width: 1140px; }
-    #orders-table td:last-child { white-space: nowrap !important; }
+    .modal-xl {
+        max-width: 1140px;
+    }
+
+    #orders-table td:last-child {
+        white-space: nowrap !important;
+    }
 
     /* Preview / full content helper */
-    .preview-content { display: inline-block; }
-    .full-content { display: block; }
-    .full-content.d-none { display: none; }
+    .preview-content {
+        display: inline-block;
+    }
+
+    .full-content {
+        display: block;
+    }
+
+    .full-content.d-none {
+        display: none;
+    }
 </style>
 
 @section('page-body')
@@ -191,10 +204,19 @@
                 </table>
                 <h6 class="mt-2">Items</h6>
                 <table class="table table-sm">
-                    <thead><tr><th>Product</th><th>Qty</th><th>Total</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Qty</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
                     <tbody id="showOrderItemsBody"></tbody>
                     <tfoot>
-                        <tr><td colspan="2" class="text-end"><strong>Total Amount:</strong></td><td id="showOrderTotal">0.00</td></tr>
+                        <tr>
+                            <td colspan="2" class="text-end"><strong>Total Amount:</strong></td>
+                            <td id="showOrderTotal">0.00</td>
+                        </tr>
                     </tfoot>
                 </table>
             </div>
@@ -249,7 +271,7 @@
 @push('scripts')
 <script>
     $(document).ready(function() {
-        var editItems = {};        
+        var editItems = {};
 
         var ajaxUrl = "{{ route('admin.retailer-orders.index') }}";
 
@@ -294,8 +316,13 @@
             serverSide: true,
             ajax: ajaxUrl,
             columns: [{
-                    data: 'id',
-                    name: 'id'
+                    data: null,
+                    name: 'sl_no',
+                    orderable: false,
+                    searchable: false,
+                    render: function(data, type, row, meta) {
+                        return meta.row + meta.settings._iDisplayStart + 1;
+                    }
                 },
                 {
                     data: 'order_code',
@@ -330,7 +357,7 @@
                         }
                         return data;
                     }
-                }, 
+                },
                 {
                     data: 'total_amount',
                     name: 'total_amount',
@@ -364,7 +391,7 @@
                         btns += `<button class="btn btn-info btn-sm view-btn" data-row='${JSON.stringify(row).replace(/'/g, "&apos;")}'><i class="fa fa-eye"></i></button>`;
                         btns += `<button class="btn btn-primary btn-sm edit-btn" data-row='${JSON.stringify(row).replace(/'/g, "&apos;")}'><i class="fa fa-edit"></i></button>`;
 
-                        let st = (row.status||'').toLowerCase();
+                        let st = (row.status || '').toLowerCase();
 
                         if (st.includes('pending')) {
                             btns += `<button class="btn btn-warning btn-sm cancel-order-btn" title="Cancel Order" data-id="${row.id}"><i class="fa fa-times"></i></button>`;
@@ -446,7 +473,9 @@
                     total += sub;
                     let unit = item.unit || 'Box';
                     let options = '';
-                    ['Box', 'Carton', 'Strips'].forEach(function(u) { options += `<option value="${u}" ${unit === u ? 'selected' : ''}>${u}</option>`; });
+                    ['Box', 'Carton', 'Strips'].forEach(function(u) {
+                        options += `<option value="${u}" ${unit === u ? 'selected' : ''}>${u}</option>`;
+                    });
 
                     tbody.append(`
                     <tr>
@@ -545,7 +574,9 @@
             $.ajax({
                 url: `/retailer-orders/${deleteOrderId}`,
                 type: 'DELETE',
-                data: { _token: '{{ csrf_token() }}' },
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
                 success: function(res) {
                     $('#deleteConfirmModal').modal('hide');
                     if (res.success) {
@@ -577,7 +608,10 @@
             let reason = $('#cancel_reason_input').val().trim();
             if (!reason) return Swal.fire('Error', 'Please provide a cancellation reason', 'error');
 
-            $.post(`/retailer-orders/${cancelOrderId}/cancel-order`, { _token: '{{ csrf_token() }}', cancellation_reason: reason }, function(res) {
+            $.post(`/retailer-orders/${cancelOrderId}/cancel-order`, {
+                _token: '{{ csrf_token() }}',
+                cancellation_reason: reason
+            }, function(res) {
                 $('#cancelConfirmModal').modal('hide');
                 if (res.success) {
                     table.ajax.reload();
@@ -602,15 +636,22 @@
                 inputLabel: 'Reason',
                 inputPlaceholder: 'Enter cancellation reason',
                 showCancelButton: true,
-                inputValidator: (value) => { if (!value) return 'You need to write something!'; }
+                inputValidator: (value) => {
+                    if (!value) return 'You need to write something!';
+                }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    $.post(`/retailer-orders/${id}/request-cancellation`, { _token: '{{ csrf_token() }}', cancellation_reason: result.value }, function(res) {
+                    $.post(`/retailer-orders/${id}/request-cancellation`, {
+                        _token: '{{ csrf_token() }}',
+                        cancellation_reason: result.value
+                    }, function(res) {
                         if (res.success) {
                             table.ajax.reload();
                             showToast('success', res.success || 'Cancellation requested');
                         } else showToast('error', res.error || 'Failed to request cancellation');
-                    }).fail(function() { showToast('error', 'Request failed'); });
+                    }).fail(function() {
+                        showToast('error', 'Request failed');
+                    });
                 }
             });
         });
@@ -625,12 +666,16 @@
                 confirmButtonText: 'Yes, Approve'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    $.post(`/retailer-orders/${id}/approve-cancellation`, { _token: '{{ csrf_token() }}' }, function(res) {
+                    $.post(`/retailer-orders/${id}/approve-cancellation`, {
+                        _token: '{{ csrf_token() }}'
+                    }, function(res) {
                         if (res.success) {
                             table.ajax.reload();
                             showToast('success', res.success || 'Cancellation approved');
                         } else showToast('error', res.error || 'Failed to approve cancellation');
-                    }).fail(function() { showToast('error', 'Request failed'); });
+                    }).fail(function() {
+                        showToast('error', 'Request failed');
+                    });
                 }
             });
         });
@@ -704,7 +749,7 @@
          `);
             let h = '';
             let total = 0;
-            (row.items||[]).forEach(function(i){
+            (row.items || []).forEach(function(i) {
                 let name = i.product_name || i.name || '-';
                 let qty = i.quantity || i.qty || 0;
                 let totalAmt = parseFloat(i.total_amount || i.total || (i.unit_price ? (i.unit_price * qty) : 0));

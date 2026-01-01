@@ -62,18 +62,20 @@ class RetailerController extends Controller
         $userData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:4',
-            'contact_no' => 'required',
-            'address' => 'required',
+            'password' => 'required|min:4|confirmed',
         ]);
 
         $retailerData = $request->validate([
             'pincode' => 'required',
             'gst' => 'required|unique:retailers',
-            'distributor_id' => 'required|exists:distributors,id',
-            'field_staff_id' => 'required|exists:fieldstaffs,id',
-            'sales_manager_id' => 'required|exists:sales_managers,id',
+            'distributor_id' => 'nullable|exists:distributors,id',
+            'field_staff_id' => 'nullable|exists:fieldstaffs,id',
+            'sales_manager_id' => 'nullable|exists:sales_managers,id',
             'credit_limit' => 'nullable|numeric|min:0',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'contact_no' => 'required',
+            'address' => 'required',
         ]);
 
         $user = User::create([
@@ -82,8 +84,6 @@ class RetailerController extends Controller
             'password' => Hash::make($userData['password']),
             'role' => 'retailer',
             'status' => 'inactive',
-            'contact_no' => $userData['contact_no'],
-            'address' => $userData['address'],
         ]);
         $user->assignRole('retailer');
 
@@ -101,6 +101,13 @@ class RetailerController extends Controller
 
         $retailer->save();
 
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Retailer added successfully!'
+            ]);
+        }
+
         return redirect()->route('admin.retailers.index')->with('success', 'Retailer added successfully!');
     }
 
@@ -109,26 +116,26 @@ class RetailerController extends Controller
         $userData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $retailer->user->id,
-            'password' => 'nullable|min:4',
-            'contact_no' => 'required',
-            'address' => 'required',
+            'password' => 'nullable|min:4|confirmed',
         ]);
 
         $retailerData = $request->validate([
             'pincode' => 'required',
             'gst' => 'required|unique:retailers,gst,' . $retailer->id,
-            'distributor_id' => 'required|exists:distributors,id',
-            'field_staff_id' => 'required|exists:fieldstaffs,id',
-            'sales_manager_id' => 'required|exists:sales_managers,id',
+            'distributor_id' => 'nullable|exists:distributors,id',
+            'field_staff_id' => 'nullable|exists:fieldstaffs,id',
+            'sales_manager_id' => 'nullable|exists:sales_managers,id',
             'credit_limit' => 'nullable|numeric|min:0',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'contact_no' => 'required',
+            'address' => 'required',
         ]);
 
         $userUpdateData = [
             'name' => $userData['name'],
             'email' => $userData['email'],
             'role' => 'retailer',
-            'contact_no' => $userData['contact_no'],
-            'address' => $userData['address'],
         ];
         if (!empty($userData['password'])) {
             $userUpdateData['password'] = Hash::make($userData['password']);

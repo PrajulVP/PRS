@@ -29,7 +29,6 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
-            'contact_no' => fake()->phoneNumber(),
             // No default role here; roles will be set by state methods or explicitly
         ];
     }

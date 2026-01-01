@@ -16,6 +16,10 @@ class FieldStaff extends Model
         'user_id',
         'sales_manager_id',
         'pincode',
+        'latitude',
+        'longitude',
+        'contact_no',
+        'address',
         'status',
     ];
 

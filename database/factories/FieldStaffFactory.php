@@ -27,6 +27,10 @@ class FieldStaffFactory extends Factory
             'user_id' => User::factory()->fieldstaff(),
             'sales_manager_id' => SalesManager::factory(),
             'pincode' => $this->faker->postcode,
+            'contact_no' => $this->faker->phoneNumber,
+            'address' => $this->faker->address,
+            'latitude' => $this->faker->latitude(8.4, 37.6),
+            'longitude' => $this->faker->longitude(68.7, 97.2),
         ];
     }
 }

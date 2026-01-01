@@ -87,14 +87,16 @@ class FieldStaffController extends Controller
         $userData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:4',
-            'contact_no' => 'nullable|string',
-            'address' => 'nullable|string',
+            'password' => 'required|min:4|confirmed',
         ]);
 
         $fieldstaffData = $request->validate([
             'pincode' => 'required|string',
-            'sales_manager_id' => 'required|exists:sales_managers,id',
+            'sales_manager_id' => 'nullable|exists:sales_managers,id',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'contact_no' => 'required|string',
+            'address' => 'nullable|string',
         ]);
 
         $user = User::create([
@@ -103,8 +105,6 @@ class FieldStaffController extends Controller
             'password' => Hash::make($userData['password']),
             'role' => 'fieldstaff',
             'status' => 'inactive',
-            'contact_no' => $userData['contact_no'],
-            'address' => $userData['address'],
         ]);
         $user->assignRole('fieldstaff');
 
@@ -119,6 +119,13 @@ class FieldStaffController extends Controller
         }
         $fieldstaff->save();
 
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Field staff added successfully and is pending approval.'
+            ]);
+        }
+
         return redirect()->route('admin.field-staffs.index')->with('success', 'Field staff added successfully and is pending approval.');
     }
 
@@ -127,22 +134,22 @@ class FieldStaffController extends Controller
         $userData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $fieldstaff->user->id,
-            'password' => 'nullable|min:4',
-            'contact_no' => 'nullable|string',
-            'address' => 'nullable|string',
+            'password' => 'nullable|min:4|confirmed',
         ]);
 
         $fieldstaffData = $request->validate([
             'pincode' => 'required|string',
-            'sales_manager_id' => 'required|exists:sales_managers,id',
+            'sales_manager_id' => 'nullable|exists:sales_managers,id',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'contact_no' => 'required|string',
+            'address' => 'nullable|string',
         ]);
 
         $userUpdateData = [
             'name' => $userData['name'],
             'email' => $userData['email'],
             'role' => 'fieldstaff',
-            'contact_no' => $userData['contact_no'],
-            'address' => $userData['address'],
         ];
         if (!empty($userData['password'])) {
             $userUpdateData['password'] = Hash::make($userData['password']);

@@ -23,9 +23,9 @@ class ProductController extends Controller
                 $searchValue = $request->input('search')['value'];
                 $query->where(function ($q) use ($searchValue) {
                     $q->where('product_code', 'like', "%{$searchValue}%")
-                      ->orWhere('product_name', 'like', "%{$searchValue}%")
-                      ->orWhere('generic_name', 'like', "%{$searchValue}%")
-                      ->orWhere('batch_no', 'like', "%{$searchValue}%");
+                        ->orWhere('product_name', 'like', "%{$searchValue}%")
+                        ->orWhere('generic_name', 'like', "%{$searchValue}%")
+                        ->orWhere('batch_no', 'like', "%{$searchValue}%");
                 });
             }
 
@@ -53,12 +53,16 @@ class ProductController extends Controller
                     'product_code' => $product->product_code,
                     'product_name' => $product->product_name,
                     'generic_name' => $product->generic_name,
-                    'pack_quantity' => $product->pack_quantity,
+                    'box_size' => $product->box_size,
+                    'carton_size' => $product->carton_size,
+                    'hsn_code' => $product->hsn_code,
                     'batch_no' => $product->batch_no,
-                    'expiry' => \Carbon\Carbon::parse($product->expiry)->format('Y-m-d'),
-                    'mrp' => number_format($product->mrp, 2),
-                    'net_amount' => number_format($product->net_amount, 2),
-                    'stock' => $product->stock, // Added stock
+                    'mrp' => number_format((float)$product->mrp, 2),
+                    'net_amount' => number_format((float)$product->net_amount, 2),
+                    'taxable_value' => $product->taxable_value,
+                    'gst' => $product->gst,
+                    'offer' => $product->offer,
+                    'discount' => $product->discount,
                     'actions' => null, // Actions column will be rendered by DataTables
                 ];
             });
@@ -91,10 +95,6 @@ class ProductController extends Controller
             'product_code' => 'required|string|unique:products|max:255',
             'product_name' => 'required|string|max:255',
             'generic_name' => 'nullable|string|max:255',
-            'pack_quantity' => 'required|integer|min:1',
-            'stock' => 'required|integer|min:0', // Added stock validation
-            'expiry' => 'required|date',
-            'strip_size' => 'nullable|integer|min:0',
             'box_size' => 'nullable|integer|min:0',
             'carton_size' => 'nullable|integer|min:0',
             'hsn_code' => 'nullable|string|max:255',
@@ -138,10 +138,6 @@ class ProductController extends Controller
             'product_code' => 'required|string|max:255|unique:products,product_code,' . $product->id,
             'product_name' => 'required|string|max:255',
             'generic_name' => 'nullable|string|max:255',
-            'pack_quantity' => 'required|integer|min:1',
-            'stock' => 'required|integer|min:0', // Added stock validation
-            'expiry' => 'required|date',
-            'strip_size' => 'nullable|integer|min:0',
             'box_size' => 'nullable|integer|min:0',
             'carton_size' => 'nullable|integer|min:0',
             'hsn_code' => 'nullable|string|max:255',

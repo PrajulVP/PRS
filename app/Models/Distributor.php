@@ -22,6 +22,8 @@ class Distributor extends Model
         'district_id',
         'area_id',
         'sales_manager_id', // New field
+        'latitude',
+        'longitude',
     ];
 
     public function user()
@@ -56,6 +58,6 @@ class Distributor extends Model
 
     public function products()
     {
-        return $this->belongsToMany(Product::class, 'distributor_product')->withPivot('stock');
+        return $this->belongsToMany(Product::class, 'inventories', 'distributor_id', 'product_id')->withPivot('stock');
     }
 }

@@ -56,10 +56,7 @@
                                     <th>Code</th>
                                     <th>Name</th>
                                     <th>Generic Name</th>
-                                    <th>Pack Quantity</th>
-                                    <th>Stock</th>
                                     <th>Batch No</th>
-                                    <th>Expiry</th>
                                     <th>MRP</th>
                                     <th>Net Amount</th>
                                     <th>Actions</th>
@@ -86,7 +83,6 @@
                 @csrf
                 <div class="modal-body">
                     <!-- General Info -->
-                    <!-- General Info -->
                     <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">General Information</h6>
                     <div class="row g-3 mb-4">
                         <div class="col-md-4">
@@ -108,33 +104,17 @@
                         <div class="col-md-6 border-end">
                             <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Stock & Packaging</h6>
                             <div class="row g-3">
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <label for="create_batch_no" class="form-label fw-medium">Batch No.</label>
                                     <input type="text" name="batch_no" id="create_batch_no" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="create_expiry" class="form-label fw-medium">Expiry Date</label>
-                                    <input type="date" name="expiry" id="create_expiry" class="form-control" required>
+                                    <label for="create_box_size" class="form-label fw-medium">Strip / Box</label>
+                                    <input type="number" name="box_size" id="create_box_size" class="form-control" placeholder="Strips per box">
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="create_pack_quantity" class="form-label fw-medium">Pack Quantity</label>
-                                    <input type="number" name="pack_quantity" id="create_pack_quantity" class="form-control" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="create_stock" class="form-label fw-medium">Stock</label>
-                                    <input type="number" name="stock" id="create_stock" class="form-control" value="0" required>
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="create_strip_size" class="form-label fw-medium">Strip Size</label>
-                                    <input type="number" name="strip_size" id="create_strip_size" class="form-control">
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="create_box_size" class="form-label fw-medium">Box Size</label>
-                                    <input type="number" name="box_size" id="create_box_size" class="form-control">
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="create_carton_size" class="form-label fw-medium">Carton Size</label>
-                                    <input type="number" name="carton_size" id="create_carton_size" class="form-control">
+                                    <label for="create_carton_size" class="form-label fw-medium">Box / Carton</label>
+                                    <input type="number" name="carton_size" id="create_carton_size" class="form-control" placeholder="Boxes per carton">
                                 </div>
                                 <div class="col-md-12">
                                     <label for="create_hsn_code" class="form-label fw-medium">HSN Code</label>
@@ -224,33 +204,17 @@
                         <div class="col-md-6 border-end">
                             <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Stock & Packaging</h6>
                             <div class="row g-3">
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <label for="edit_batch_no" class="form-label fw-medium">Batch No.</label>
                                     <input type="text" name="batch_no" id="edit_batch_no" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="edit_expiry" class="form-label fw-medium">Expiry Date</label>
-                                    <input type="date" name="expiry" id="edit_expiry" class="form-control" required>
+                                    <label for="edit_box_size" class="form-label fw-medium">Strip / Box</label>
+                                    <input type="number" name="box_size" id="edit_box_size" class="form-control" placeholder="Strips per box">
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="edit_pack_quantity" class="form-label fw-medium">Pack Quantity</label>
-                                    <input type="number" name="pack_quantity" id="edit_pack_quantity" class="form-control" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="edit_stock" class="form-label fw-medium">Stock</label>
-                                    <input type="number" name="stock" id="edit_stock" class="form-control" required>
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="edit_strip_size" class="form-label fw-medium">Strip Size</label>
-                                    <input type="number" name="strip_size" id="edit_strip_size" class="form-control">
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="edit_box_size" class="form-label fw-medium">Box Size</label>
-                                    <input type="number" name="box_size" id="edit_box_size" class="form-control">
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="edit_carton_size" class="form-label fw-medium">Carton Size</label>
-                                    <input type="number" name="carton_size" id="edit_carton_size" class="form-control">
+                                    <label for="edit_carton_size" class="form-label fw-medium">Box / Carton</label>
+                                    <input type="number" name="carton_size" id="edit_carton_size" class="form-control" placeholder="Boxes per carton">
                                 </div>
                                 <div class="col-md-12">
                                     <label for="edit_hsn_code" class="form-label fw-medium">HSN Code</label>
@@ -372,25 +336,8 @@
                     name: 'generic_name'
                 },
                 {
-                    data: 'pack_quantity',
-                    name: 'pack_quantity'
-                },
-                {
-                    data: 'stock',
-                    name: 'stock',
-                    render: function(data) {
-                        if (data > 50) return `<span class="badge bg-success">${data} units</span>`;
-                        if (data > 0) return `<span class="badge bg-warning">${data} units</span>`;
-                        return `<span class="badge bg-danger">Out</span>`;
-                    }
-                },
-                {
                     data: 'batch_no',
                     name: 'batch_no'
-                },
-                {
-                    data: 'expiry',
-                    name: 'expiry'
                 },
                 {
                     data: 'mrp',
@@ -471,14 +418,7 @@
             $('#edit_product_code').val(product.product_code);
             $('#edit_product_name').val(product.product_name);
             $('#edit_generic_name').val(product.generic_name);
-            $('#edit_pack_quantity').val(product.pack_quantity);
-            $('#edit_stock').val(product.stock);
-            // Expiry might need formatting depending on how it comes from DB (DateTime string likely)
-            // Assuming YYYY-MM-DD HH:MM:SS, just separate date
-            if (product.expiry) {
-                $('#edit_expiry').val(product.expiry.split('T')[0].split(' ')[0]);
-            }
-            $('#edit_strip_size').val(product.strip_size);
+
             $('#edit_box_size').val(product.box_size);
             $('#edit_carton_size').val(product.carton_size);
             $('#edit_hsn_code').val(product.hsn_code);
@@ -521,19 +461,15 @@
                             <dt class="col-sm-4 text-muted small text-uppercase">Batch No</dt>
                             <dd class="col-sm-8 fw-medium">${product.batch_no}</dd>
 
-                            <dt class="col-sm-4 text-muted small text-uppercase">Expiry</dt>
-                            <dd class="col-sm-8 fw-medium text-danger">${product.expiry ? product.expiry.split('T')[0] : 'N/A'}</dd>
 
-                            <dt class="col-sm-4 text-muted small text-uppercase">Stock</dt>
-                            <dd class="col-sm-8">
-                                <span class="badge ${product.stock > 0 ? 'bg-success' : 'bg-danger'}">${product.stock}</span>
-                            </dd>
 
-                            <dt class="col-sm-4 text-muted small text-uppercase">Pack Qty</dt>
-                            <dd class="col-sm-8 fw-medium">${product.pack_quantity}</dd>
 
-                            <dt class="col-sm-4 text-muted small text-uppercase">Sizes</dt>
-                            <dd class="col-sm-8 fw-medium">${product.strip_size || '-'} / ${product.box_size || '-'} / ${product.carton_size || '-'}</dd>
+
+                            <dt class="col-sm-4 text-muted small text-uppercase">Strip / Box</dt>
+                            <dd class="col-sm-8 fw-medium">${product.box_size || '-'}</dd>
+
+                            <dt class="col-sm-4 text-muted small text-uppercase">Box / Carton</dt>
+                            <dd class="col-sm-8 fw-medium">${product.carton_size || '-'}</dd>
                             
                             <dt class="col-sm-4 text-muted small text-uppercase">HSN</dt>
                             <dd class="col-sm-8 fw-medium">${product.hsn_code || '-'}</dd>

@@ -21,7 +21,26 @@
     <form id="createOrderForm" method="POST" action="{{ route('admin.retailer-orders.store') }}">
         @csrf
         @if(Auth::user()->retailer)
-        <input type="hidden" name="retailer_id" value="{{ Auth::user()->retailer->id }}">
+        <input type="hidden" name="retailer_id" id="retailer_id" value="{{ Auth::user()->retailer->id }}">
+        @else
+        {{-- For Admin/Manager: Select Retailer --}}
+        <div class="card mb-4 shadow-sm border-0">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h5 class="card-title mb-0"><i class="fa fa-user me-2"></i>Select Retailer</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <select name="retailer_id" id="retailer_id" class="form-select select2" required>
+                            <option value="">Search for a retailer...</option>
+                            @foreach($retailers as $r)
+                            <option value="{{ $r->id }}">{{ $r->user->name }} - {{ $r->user->contact_no }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
         @endif
         <input type="hidden" name="status" value="pending">
 
@@ -87,7 +106,7 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label fw-bold">Select Distributor</label>
-                        <select id="distributorSelect" class="form-select">
+                        <select id="distributorSelect" class="form-select select2">
                             <option value="">Waiting for Product...</option>
                         </select>
                     </div>
@@ -223,11 +242,45 @@
 
 <script>
     $(document).ready(function() {
-        // Init Select2
-        $('.select2').select2({
+        // Init Select2 for products
+        $('#productSelect').select2({
             placeholder: "Search for a product...",
             allowClear: true
         });
+
+        // Init Select2 for distributors
+        $('#distributorSelect').select2({
+            placeholder: "Select a distributor...",
+            templateResult: formatDistributor,
+            templateSelection: formatDistributor,
+            escapeMarkup: function(m) {
+                return m;
+            }
+        });
+
+        function formatDistributor(opt) {
+            if (!opt.id) return opt.text;
+
+            let el = $(opt.element);
+            let stock = el.data('stock-raw');
+            let distance = el.data('distance');
+
+            if (stock !== undefined) {
+                let stockBadgeClass = stock > 0 ? 'bg-success' : 'bg-danger';
+                let distBadge = (distance && distance !== 'null') ? `<span class="badge bg-light text-dark border me-1"><i class="fa fa-map-marker-alt text-primary me-1"></i>${distance} km</span>` : '';
+
+                return $(`
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>${opt.text}</span>
+                        <div class="d-flex align-items-center">
+                            ${distBadge}
+                            <span class="badge ${stockBadgeClass} rounded-pill" style="min-width: 30px;">${stock}</span>
+                        </div>
+                    </div>
+                `);
+            }
+            return opt.text;
+        }
 
         var addedItems = {};
         var currentProductDetails = null;
@@ -253,9 +306,19 @@
             $('#previewBox').text('...');
 
             // AJAX Fetch
+            let retailerId = $('#retailer_id').val();
+            if (!retailerId) {
+                showToast('error', 'Please select a retailer first');
+                $('#productSelect').val(null).trigger('change');
+                return;
+            }
+
             $.ajax({
                 url: "{{ route('admin.retailer-orders.product-details', ':id') }}".replace(':id', prodId),
                 type: 'GET',
+                data: {
+                    retailer_id: retailerId
+                },
                 success: function(res) {
                     let details = res.product;
                     let distributors = res.distributors;
@@ -284,16 +347,16 @@
                     let distSelect = $('#distributorSelect');
                     distSelect.empty();
                     if (distributors && distributors.length > 0) {
-                        distributors.forEach((d, index) => {
+                        distributors.forEach((d) => {
                             let name = d.user ? d.user.name : 'Distributor ' + d.id;
-                            // Select Random? Or first? User said random default which can be edited.
-                            distSelect.append(`<option value="${d.id}">${name}</option>`);
+                            let distance = d.distance ? parseFloat(d.distance).toFixed(2) : null;
+                            let stock = d.pivot ? d.pivot.stock : 0;
+                            distSelect.append(`<option value="${d.id}" data-stock-raw="${stock}" data-distance="${distance}">${name}</option>`);
                         });
-                        // Select random
+                        // Select first (closest)
                         let opts = distSelect.find('option');
                         if (opts.length > 0) {
-                            let rand = Math.floor(Math.random() * opts.length);
-                            opts.eq(rand).prop('selected', true);
+                            opts.eq(0).prop('selected', true);
                         }
                     } else {
                         distSelect.append('<option value="">No Distributor Available</option>');

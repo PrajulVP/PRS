@@ -15,7 +15,7 @@
                     "Auth"
                 ],
                 "summary": "Authenticate user and get JWT token",
-                "operationId": "42162ecc918d412e9f60eb52e05d8da9",
+                "operationId": "1257f11ade1e6ee3a26cfe338badfb8e",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -84,7 +84,7 @@
                     "Auth"
                 ],
                 "summary": "Get authenticated user profile",
-                "operationId": "f400706954c26a393af6370559c8403e",
+                "operationId": "1344face78c680406f11ca800b271f47",
                 "responses": {
                     "200": {
                         "description": "User profile data"
@@ -103,7 +103,7 @@
                     "Auth"
                 ],
                 "summary": "Logout user and invalidate token",
-                "operationId": "50e8e8549c4aabf0e4a5b2e51f29104d",
+                "operationId": "d0090497298d35d96a9fcde3666ff010",
                 "responses": {
                     "200": {
                         "description": "Successfully logged out"
@@ -117,12 +117,6 @@
             }
         }
     },
-    "tags": [
-        {
-            "name": "Auth",
-            "description": "Auth"
-        }
-    ],
     "components": {
         "securitySchemes": {
             "bearerAuth": {
@@ -132,6 +126,12 @@
             }
         }
     },
+    "tags": [
+        {
+            "name": "Auth",
+            "description": "Auth"
+        }
+    ],
     "security": [
         {
             "bearerAuth": []

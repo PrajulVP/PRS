@@ -21,6 +21,8 @@ class Retailer extends Model
         'address',
         'pincode',
         'credit_limit',
+        'latitude',
+        'longitude',
     ];
 
     public function user()

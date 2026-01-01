@@ -78,7 +78,7 @@
                 <h5 class="modal-title">Create Field Staff</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('admin.field-staffs.store') }}" method="POST">
+            <form id="createFieldStaffForm" action="{{ route('admin.field-staffs.store') }}" method="POST">
                 @csrf
                 <div class="modal-body">
                     <div class="row">
@@ -94,17 +94,17 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Password</label>
-                            <input type="password" name="password" class="form-control" required>
+                            <input type="password" name="password" id="create_password" class="form-control" required>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Contact No</label>
-                            <input type="text" name="contact_no" class="form-control">
+                            <label class="form-label">Confirm Password</label>
+                            <input type="password" name="password_confirmation" id="create_password_confirmation" class="form-control" required>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Address</label>
-                            <textarea name="address" class="form-control"></textarea>
+                            <label class="form-label">Contact No</label>
+                            <input type="text" name="contact_no" class="form-control" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Pincode</label>
@@ -112,15 +112,25 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Sales Manager</label>
-                            <select name="sales_manager_id" class="form-select" required>
-                                <option value="">Select Sales Manager</option>
-                                @foreach($salesManagers as $salesManager)
-                                <option value="{{ $salesManager->id }}">{{ $salesManager->name }}</option>
-                                @endforeach
-                            </select>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Address</label>
+                            <textarea name="address" class="form-control"></textarea>
                         </div>
+                    </div>
+                    <!-- Map Section -->
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Location</label>
+                            <div class="input-group">
+                                <input id="create_pac-input" class="form-control" type="text" placeholder="Search for a location">
+                                <button type="button" class="btn btn-info" onclick="getGeoLocation('create_lat', 'create_long', 'create')"><i class="fa fa-map-marker"></i> Get Current Location</button>
+                            </div>
+                            <div id="create_map" style="height: 300px; width: 100%; margin-top: 10px; border-radius: 8px;"></div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="latitude" id="create_lat">
+                    <input type="hidden" name="longitude" id="create_long">
+                    <div class="row">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -157,17 +167,17 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Password (Leave blank to keep unchanged)</label>
-                            <input type="password" name="password" class="form-control">
+                            <input type="password" name="password" id="edit_password" class="form-control">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Contact No</label>
-                            <input type="text" name="contact_no" id="edit_contact_no" class="form-control">
+                            <label class="form-label">Confirm Password</label>
+                            <input type="password" name="password_confirmation" id="edit_password_confirmation" class="form-control">
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Address</label>
-                            <textarea name="address" id="edit_address" class="form-control"></textarea>
+                            <label class="form-label">Contact No</label>
+                            <input type="text" name="contact_no" id="edit_contact_no" class="form-control">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Pincode</label>
@@ -175,15 +185,25 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Sales Manager</label>
-                            <select name="sales_manager_id" id="edit_sales_manager_id" class="form-select" required>
-                                <option value="">Select Sales Manager</option>
-                                @foreach($salesManagers as $salesManager)
-                                <option value="{{ $salesManager->id }}">{{ $salesManager->name }}</option>
-                                @endforeach
-                            </select>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Address</label>
+                            <textarea name="address" id="edit_address" class="form-control"></textarea>
                         </div>
+                    </div>
+                    <!-- Map Section -->
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Location</label>
+                            <div class="input-group">
+                                <input id="edit_pac-input" class="form-control" type="text" placeholder="Search for a location">
+                                <button type="button" class="btn btn-info" onclick="getGeoLocation('edit_latitude', 'edit_longitude', 'edit')"><i class="fa fa-map-marker"></i> Get Current Location</button>
+                            </div>
+                            <div id="edit_map" style="height: 300px; width: 100%; margin-top: 10px; border-radius: 8px;"></div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="latitude" id="edit_latitude">
+                    <input type="hidden" name="longitude" id="edit_longitude">
+                    <div class="row">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -204,10 +224,12 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <table class="table table-bordered">
-                    <tbody id="showFieldStaffBody">
-                    </tbody>
-                </table>
+                <div class="row g-3" id="showFieldStaffDetails">
+                    <!-- Dynamic Details -->
+                </div>
+                <hr class="my-4">
+                <h6 class="mb-3"><i class="fa fa-map-marker-alt me-2"></i>Location on Map</h6>
+                <div id="show_map" style="height: 350px; width: 100%; border-radius: 12px; border: 1px solid #eee;"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -221,6 +243,11 @@
 @push('styles')
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+<style>
+    .pac-container {
+        z-index: 10000 !important;
+    }
+</style>
 @endpush
 
 @push('scripts')
@@ -236,6 +263,142 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+    // Global Map Variables
+    let createMap, editMap, showMap;
+    let createMarker, editMarker, showMarker;
+
+    function initMap() {
+        const defaultLoc = {
+            lat: 20.5937,
+            lng: 78.9629
+        }; // India Center
+
+        // Create Map
+        createMap = new google.maps.Map(document.getElementById("create_map"), {
+            zoom: 5,
+            center: defaultLoc,
+            mapId: "DEMO_MAP_ID",
+        });
+        createMarker = new google.maps.marker.AdvancedMarkerElement({
+            position: defaultLoc,
+            map: createMap,
+            gmpDraggable: true,
+        });
+        createMarker.addListener("dragend", () => {
+            const pos = createMarker.position;
+            let lat = (typeof pos.lat === 'function') ? pos.lat() : pos.lat;
+            let lng = (typeof pos.lng === 'function') ? pos.lng() : pos.lng;
+            document.getElementById("create_lat").value = lat;
+            document.getElementById("create_long").value = lng;
+        });
+        createMap.addListener("click", (e) => {
+            createMarker.position = e.latLng;
+            document.getElementById("create_lat").value = e.latLng.lat();
+            document.getElementById("create_long").value = e.latLng.lng();
+        });
+
+        // Create Autocomplete
+        const createInput = document.getElementById("create_pac-input");
+        const createAutocomplete = new google.maps.places.Autocomplete(createInput);
+        createAutocomplete.bindTo("bounds", createMap);
+        createAutocomplete.addListener("place_changed", () => {
+            const place = createAutocomplete.getPlace();
+            if (!place.geometry || !place.geometry.location) return;
+            if (place.geometry.viewport) createMap.fitBounds(place.geometry.viewport);
+            else {
+                createMap.setCenter(place.geometry.location);
+                createMap.setZoom(17);
+            }
+            createMarker.position = place.geometry.location;
+            document.getElementById("create_lat").value = place.geometry.location.lat();
+            document.getElementById("create_long").value = place.geometry.location.lng();
+        });
+
+        // Edit Map
+        editMap = new google.maps.Map(document.getElementById("edit_map"), {
+            zoom: 5,
+            center: defaultLoc,
+            mapId: "DEMO_MAP_ID",
+        });
+        editMarker = new google.maps.marker.AdvancedMarkerElement({
+            position: defaultLoc,
+            map: editMap,
+            gmpDraggable: true,
+        });
+        editMarker.addListener("dragend", (event) => {
+            const pos = editMarker.position;
+            let lat = (typeof pos.lat === 'function') ? pos.lat() : pos.lat;
+            let lng = (typeof pos.lng === 'function') ? pos.lng() : pos.lng;
+            document.getElementById("edit_latitude").value = lat;
+            document.getElementById("edit_longitude").value = lng;
+        });
+        editMap.addListener("click", (e) => {
+            editMarker.position = e.latLng;
+            document.getElementById("edit_latitude").value = e.latLng.lat();
+            document.getElementById("edit_longitude").value = e.latLng.lng();
+        });
+
+        // Edit Autocomplete
+        const editInput = document.getElementById("edit_pac-input");
+        const editAutocomplete = new google.maps.places.Autocomplete(editInput);
+        editAutocomplete.bindTo("bounds", editMap);
+        editAutocomplete.addListener("place_changed", () => {
+            const place = editAutocomplete.getPlace();
+            if (!place.geometry || !place.geometry.location) return;
+            if (place.geometry.viewport) editMap.fitBounds(place.geometry.viewport);
+            else {
+                editMap.setCenter(place.geometry.location);
+                editMap.setZoom(17);
+            }
+            editMarker.position = place.geometry.location;
+            document.getElementById("edit_latitude").value = place.geometry.location.lat();
+            document.getElementById("edit_longitude").value = place.geometry.location.lng();
+        });
+
+        // Show Map
+        showMap = new google.maps.Map(document.getElementById("show_map"), {
+            zoom: 5,
+            center: defaultLoc,
+            mapId: "DEMO_MAP_ID",
+        });
+        showMarker = new google.maps.marker.AdvancedMarkerElement({
+            position: defaultLoc,
+            map: showMap,
+        });
+    }
+
+    // Expose initMap
+    window.initMap = initMap;
+
+    function getGeoLocation(latId, longId, mapType) {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                let lat = position.coords.latitude;
+                let lng = position.coords.longitude;
+                document.getElementById(latId).value = lat;
+                document.getElementById(longId).value = lng;
+                let pos = {
+                    lat: lat,
+                    lng: lng
+                };
+
+                if (mapType === 'create' && createMap) {
+                    createMarker.position = pos;
+                    createMap.setCenter(pos);
+                    createMap.setZoom(15);
+                } else if (mapType === 'edit' && editMap) {
+                    editMarker.position = pos;
+                    editMap.setCenter(pos);
+                    editMap.setZoom(15);
+                }
+            }, function(error) {
+                alert("Error getting location: " + error.message);
+            });
+        } else {
+            alert("Geolocation is not supported.");
+        }
+    }
+
     $(document).ready(function() {
         var table = $('#fieldstaffs-table').DataTable({
             processing: true,
@@ -260,7 +423,8 @@
                 },
                 {
                     data: 'sales_manager.user.name',
-                    name: 'salesManager.user.name'
+                    name: 'salesManager.user.name',
+                    defaultContent: 'N/A'
                 },
                 {
                     data: 'pincode',
@@ -331,7 +495,8 @@
             $('#edit_contact_no').val(data.user.contact_no);
             $('#edit_address').val(data.user.address);
             $('#edit_pincode').val(data.pincode);
-            $('#edit_sales_manager_id').val(data.sales_manager_id);
+            $('#edit_latitude').val(data.latitude);
+            $('#edit_longitude').val(data.longitude);
 
             var url = "{{ route('admin.field-staffs.update', ':id') }}".replace(':id', data.id);
             $('#editFieldStaffForm').attr('action', url);
@@ -343,16 +508,16 @@
         $('#fieldstaffs-table').on('click', '.view-btn', function() {
             var data = $(this).data('row');
             let smName = data.sales_manager && data.sales_manager.user ? data.sales_manager.user.name : 'N/A';
-
             let html = `
-                <tr><th>Name</th><td>${data.user.name}</td></tr>
-                <tr><th>Email</th><td>${data.user.email}</td></tr>
-                <tr><th>Contact No</th><td>${data.user.contact_no || 'N/A'}</td></tr>
-                <tr><th>Address</th><td>${data.user.address || 'N/A'}</td></tr>
-                <tr><th>Pincode</th><td>${data.pincode}</td></tr>
-                <tr><th>Sales Manager</th><td>${smName}</td></tr>
+                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Name</label><p class="fw-bold mb-0">${data.user.name}</p></div>
+                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Email</label><p class="mb-0">${data.user.email}</p></div>
+                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Contact</label><p class="mb-0">${data.user.contact_no || 'N/A'}</p></div>
+                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Sales Manager</label><p class="mb-0">${smName}</p></div>
+                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Pincode</label><p class="mb-0">${data.pincode}</p></div>
+                <div class="col-12"><label class="fw-bold text-muted small text-uppercase">Address</label><p class="mb-0">${data.user.address || 'N/A'}</p></div>
             `;
-            $('#showFieldStaffBody').html(html);
+            $('#showFieldStaffDetails').html(html);
+            $('#showFieldStaffModal').data('lat', data.latitude).data('lng', data.longitude);
             $('#showFieldStaffModal').modal('show');
         });
 
@@ -371,6 +536,115 @@
                 if (result.isConfirmed) form.off('submit').submit();
             });
         });
+
+        // Handle Create Field Staff AJAX Submission
+        $('#createFieldStaffForm').on('submit', function(e) {
+            e.preventDefault();
+
+            // JS Password Validation
+            let password = $('#create_password').val();
+            let confirmPassword = $('#create_password_confirmation').val();
+
+            if (password !== confirmPassword) {
+                showToast('danger', 'Passwords do not match!');
+                return false;
+            }
+
+            let formData = new FormData(this);
+            let submitBtn = $(this).find('button[type="submit"]');
+            submitBtn.prop('disabled', true).text('Creating...');
+
+            $.ajax({
+                url: $(this).attr('action'),
+                type: "POST",
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    $('#createFieldStaffModal').modal('hide');
+                    $('#createFieldStaffForm')[0].reset();
+                    $('#fieldstaffs-table').DataTable().ajax.reload();
+                    submitBtn.prop('disabled', false).text('Create');
+                    showToast('success', response.message);
+                },
+                error: function(xhr) {
+                    submitBtn.prop('disabled', false).text('Create');
+                    let errors = xhr.responseJSON.errors;
+                    let errorMessage = '';
+                    if (errors) {
+                        $.each(errors, function(key, value) {
+                            errorMessage += value[0] + '\n';
+                        });
+                    } else {
+                        errorMessage = 'An error occurred. Please try again.';
+                    }
+                    showToast('danger', errorMessage);
+                }
+            });
+        });
+
+        // Handle Edit Field Staff Validation
+        $('#editFieldStaffForm').on('submit', function(e) {
+            let password = $('#edit_password').val();
+            let confirmPassword = $('#edit_password_confirmation').val();
+
+            if (password && password !== confirmPassword) {
+                e.preventDefault();
+                showToast('danger', 'Passwords do not match!');
+                return false;
+            }
+        });
+
+        // Modal Show Events for Map Resize
+        $('#createFieldStaffModal').on('shown.bs.modal', function() {
+            if (createMap) {
+                google.maps.event.trigger(createMap, 'resize');
+                createMap.setCenter(createMarker.position);
+            }
+        });
+        $('#editFieldStaffModal').on('shown.bs.modal', function() {
+            if (editMap) {
+                google.maps.event.trigger(editMap, 'resize');
+                let lat = parseFloat($('#edit_latitude').val());
+                let lng = parseFloat($('#edit_longitude').val());
+                if (lat && lng) {
+                    let pos = {
+                        lat: lat,
+                        lng: lng
+                    };
+                    editMarker.position = pos;
+                    editMap.setCenter(pos);
+                    editMap.setZoom(15);
+                } else {
+                    editMap.setCenter(editMarker.position);
+                }
+            }
+        });
+        $('#showFieldStaffModal').on('shown.bs.modal', function() {
+            if (showMap) {
+                google.maps.event.trigger(showMap, 'resize');
+                let lat = parseFloat($(this).data('lat'));
+                let lng = parseFloat($(this).data('lng'));
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    let pos = {
+                        lat: lat,
+                        lng: lng
+                    };
+                    showMarker.position = pos;
+                    showMap.setCenter(pos);
+                    showMap.setZoom(15);
+                } else {
+                    const defaultLoc = {
+                        lat: 20.5937,
+                        lng: 78.9629
+                    };
+                    showMap.setCenter(defaultLoc);
+                    showMap.setZoom(5);
+                    showMarker.position = defaultLoc;
+                }
+            }
+        });
     });
 </script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&libraries=places,marker&v=weekly&loading=async&callback=initMap" async defer></script>
 @endpush

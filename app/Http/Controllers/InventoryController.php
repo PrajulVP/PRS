@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Models\StockHistory;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Distributor;
 
 class InventoryController extends Controller
 {
@@ -56,7 +57,16 @@ class InventoryController extends Controller
         // Treat DataTables requests as AJAX or when 'draw' param is present
         if ($request->ajax() || $request->has('draw') || $request->expectsJson()) {
             try {
-                $query = Inventory::with('product');
+                $query = Inventory::with(['product', 'distributor.user']);
+
+                if (Auth::user()->hasRole('distributor')) {
+                    $distributor = Auth::user()->distributor;
+                    if ($distributor) {
+                        $query->where('distributor_id', $distributor->id);
+                    } else {
+                        return response()->json(['draw' => intval($request->input('draw')), 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => []]);
+                    }
+                }
 
                 if ($request->has('search') && !empty($request->input('search')['value'])) {
                     $searchValue = $request->input('search')['value'];
@@ -66,7 +76,7 @@ class InventoryController extends Controller
                     });
                 }
 
-                $totalData = Inventory::count(); // total before filtering
+                $totalData = Auth::user()->hasRole('distributor') ? Inventory::where('distributor_id', Auth::user()->distributor->id)->count() : Inventory::count();
                 $totalFiltered = $query->count();
 
                 // ordering
@@ -88,6 +98,7 @@ class InventoryController extends Controller
                         'id' => $i->id,
                         'distributor_product_code' => $i->distributor_product_code,
                         'product_name' => $i->product_name,
+                        'distributor_name' => $i->distributor?->user?->name ?? 'N/A',
                         'stock' => (int) $i->stock,
                         'image' => $i->product && $i->product->image ? asset('storage/' . $i->product->image) : asset('admin/assets/images/dashboard/product-1.png'), // Placeholder
                         'product_details' => $i->product ? [
@@ -98,6 +109,7 @@ class InventoryController extends Controller
                             'gst' => $i->product->gst,
                             'hsn_code' => $i->product->hsn_code,
                             'box_size' => $i->product->box_size,
+                            'carton_size' => $i->product->carton_size,
                             'description' => $i->product->description // Assuming description exists or null
                         ] : null
                     ];
@@ -110,15 +122,19 @@ class InventoryController extends Controller
                     'data' => $formatted,
                 ]);
             } catch (\Exception $e) {
-                \Log::error('Inventory index error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+                Log::error('Inventory index error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
                 return response()->json(['error' => 'Server error while fetching inventories.'], 500);
             }
         }
 
         // Non-AJAX view: pass products to populate the create form
-        $products = Product::select('id', 'product_name', 'product_code')->orderBy('product_name')->get();
+        $products = Product::select('id', 'product_name', 'product_code', 'box_size', 'carton_size')->orderBy('product_name')->get();
+        $distributors = [];
+        if (Auth::user()->hasRole(['admin', 'superadmin', 'manager'])) {
+            $distributors = Distributor::with('user')->get();
+        }
 
-        return view('admin.inventories.index', compact('products'));
+        return view('admin.inventories.index', compact('products', 'distributors'));
     }
 
     public function create()
@@ -141,11 +157,19 @@ class InventoryController extends Controller
         // This likely means we should auto-fill it with product_code or remove it if not needed.
         // Let's use product_code for now to satisfy unique constraint if that's the intention.
 
+        $distributorId = null;
+        if (Auth::user()->hasRole('distributor')) {
+            $distributorId = Auth::user()->distributor->id;
+        } else {
+            $request->validate(['distributor_id' => 'required|exists:distributors,id']);
+            $distributorId = $request->distributor_id;
+        }
+
         $inventory = Inventory::create([
             'distributor_product_code' => $product->product_code, // Use actual product code
             'product_id' => $product->id,
             'product_name' => $product->product_name,
-            'distributor_id' => $request->distributor_id,
+            'distributor_id' => $distributorId,
             'stock' => $request->stock,
         ]);
 
@@ -159,6 +183,10 @@ class InventoryController extends Controller
                 'change_type' => 'initial_stock',
                 'remarks' => 'Initial stock on creation'
             ]);
+        }
+
+        if ($request->ajax()) {
+            return response()->json(['success' => 'Inventory item created successfully.']);
         }
 
         return redirect()->route('inventories.index')->with('success', 'Inventory item created successfully.');
@@ -198,12 +226,21 @@ class InventoryController extends Controller
             ]);
         }
 
+        if ($request->ajax()) {
+            return response()->json(['success' => 'Inventory updated successfully.']);
+        }
+
         return redirect()->route('inventories.index')->with('success', 'Inventory updated successfully.');
     }
 
-    public function destroy(Inventory $inventory)
+    public function destroy(Request $request, Inventory $inventory)
     {
         $inventory->delete();
+
+        if ($request->ajax()) {
+            return response()->json(['success' => 'Inventory deleted successfully.']);
+        }
+
         return redirect()->route('inventories.index')->with('success', 'Inventory deleted successfully.');
     }
 }

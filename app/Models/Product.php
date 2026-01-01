@@ -13,10 +13,7 @@ class Product extends Model
         'product_code',
         'product_name',
         'generic_name',
-        'pack',           
-        'quantity',      
-        'expiry',
-        'strip_size',
+        'pack',
         'box_size',
         'carton_size',
         'hsn_code',
@@ -28,11 +25,9 @@ class Product extends Model
         'offer',
         'discount',
         'net_amount',
-        'stock',         
     ];
 
     protected $casts = [
-        'expiry' => 'date',
         'mrp' => 'decimal:2',
         'ptr' => 'decimal:2',
         'taxable_value' => 'decimal:2',
@@ -42,10 +37,10 @@ class Product extends Model
         'net_amount' => 'decimal:2',
     ];
 
-    // Relation with distributors
+    // Relation with distributors via inventories
     public function distributors()
     {
-        return $this->belongsToMany(Distributor::class, 'distributor_product')
+        return $this->belongsToMany(Distributor::class, 'inventories', 'product_id', 'distributor_id')
             ->withPivot('stock')
             ->withTimestamps();
     }

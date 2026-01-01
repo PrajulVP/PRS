@@ -36,6 +36,8 @@ class RetailerFactory extends Factory
             'address' => $this->faker->address,
             'pincode' => $this->faker->postcode,
             'credit_limit' => $this->faker->randomFloat(2, 0, 100000),
+            'latitude' => $this->faker->latitude(8, 37),
+            'longitude' => $this->faker->longitude(68, 97),
         ];
     }
 }

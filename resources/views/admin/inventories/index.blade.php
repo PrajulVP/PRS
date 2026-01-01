@@ -74,7 +74,11 @@
 
                                     <th>Product Code</th>
                                     <th>Product Name</th>
-                                    <th>Stock</th>
+                                    @if(Auth::user()->hasRole(['admin', 'superadmin', 'manager']))
+                                    <th>Distributor</th>
+                                    @endif
+                                    <th>Stock (Total)</th>
+                                    <th>Breakdown</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -95,7 +99,7 @@
                 <h5 class="modal-title" id="createInventoryModalLabel">Add Product</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('inventories.store') }}" method="POST">
+            <form id="createInventoryForm">
                 @csrf
                 <div class="modal-body">
 
@@ -105,30 +109,103 @@
                         <select name="product_id" id="create_product_id" class="form-select" required>
                             <option value="">-- Select product --</option>
                             @foreach($products as $p)
-                            <option value="{{ $p->id }}" data-code="{{ $p->product_code }}">{{ $p->product_name }} ({{ $p->product_code }})</option>
+                            <option value="{{ $p->id }}"
+                                data-code="{{ $p->product_code }}"
+                                data-box-size="{{ $p->box_size ?? 0 }}"
+                                data-carton-size="{{ $p->carton_size ?? 0 }}">
+                                {{ $p->product_name }} ({{ $p->product_code }})
+                            </option>
                             @endforeach
                         </select>
                     </div>
+
+                    @if(Auth::user()->hasRole(['admin', 'superadmin', 'manager']))
+                    <div class="mb-3">
+                        <label for="create_distributor_id" class="form-label">Distributor</label>
+                        <select name="distributor_id" id="create_distributor_id" class="form-select" required>
+                            <option value="">-- Select Distributor --</option>
+                            @foreach($distributors as $d)
+                            <option value="{{ $d->id }}">{{ $d->user->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @endif
                     <script>
                         document.addEventListener('DOMContentLoaded', function() {
                             var select = document.getElementById('create_product_id');
                             var code = document.getElementById('create_distributor_product_code');
+                            var packInfo = document.getElementById('create_pack_info');
+
+                            var calcCtn = document.getElementById('create_calc_ctn');
+                            var calcQty = document.getElementById('create_input_qty');
+                            var calcUnit = document.getElementById('create_input_unit');
+                            var totalInput = document.getElementById('create_stock');
+
+                            function calculateCreateTotal() {
+                                var opt = select.options[select.selectedIndex];
+                                if (!opt || opt.value === "") return;
+
+                                var boxSize = parseInt(opt.getAttribute('data-box-size')) || 0;
+                                var cartonSize = parseInt(opt.getAttribute('data-carton-size')) || 0;
+
+                                var qty = parseInt(calcQty.value) || 0;
+                                var unit = calcUnit.value;
+
+                                var total = 0;
+                                if (unit === 'strip') {
+                                    total = qty;
+                                } else if (unit === 'box') {
+                                    total = qty * boxSize;
+                                } else if (unit === 'carton') {
+                                    total = qty * boxSize * (cartonSize || 1);
+                                }
+
+                                totalInput.value = total;
+                            }
+
                             if (select) {
                                 select.addEventListener('change', function() {
                                     var selected = select.options[select.selectedIndex];
-                                    var prodCode = selected ? selected.getAttribute('data-code') : '';
-                                    // Only set distributor code if it's empty
-                                    if (code && (!code.value || code.value.trim() === '')) {
-                                        code.value = prodCode || '';
+                                    if (selected && selected.value !== "") {
+                                        var prodCode = selected.getAttribute('data-code');
+                                        var bSize = selected.getAttribute('data-box-size');
+                                        var cSize = selected.getAttribute('data-carton-size');
+
+                                        if (code && (!code.value || code.value.trim() === '')) {
+                                            code.value = prodCode || '';
+                                        }
+
+                                        packInfo.innerHTML = `Packaging: <b>${bSize} Str/Box</b> | <b>${cSize} Box/Ctn</b>`;
+                                        calculateCreateTotal();
+                                    } else {
+                                        packInfo.innerText = "Select a product to see packaging rules";
                                     }
                                 });
                             }
+
+                            $('#create_input_qty, #create_input_unit').on('input change', calculateCreateTotal);
                         });
                     </script>
 
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold">Quantity</label>
+                            <input type="number" id="create_input_qty" class="form-control" placeholder="0" min="0">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Unit</label>
+                            <select id="create_input_unit" class="form-select">
+                                <option value="strip">Strips</option>
+                                <option value="box">Boxes</option>
+                                <option value="carton">Cartons</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="mb-3">
-                        <label for="create_stock" class="form-label">Stock</label>
-                        <input type="number" name="stock" id="create_stock" class="form-control" value="0" required>
+                        <label for="create_stock" class="form-label fw-bold text-muted small">Converted Total (Strips)</label>
+                        <input type="number" name="stock" id="create_stock" class="form-control bg-light" value="0" readonly required>
+                        <div id="create_pack_info" class="form-text small text-info opacity-75">Select a product to see packaging rules</div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -163,7 +240,20 @@
                     </div>
 
                     <input type="hidden" name="product_id" id="edit_product_id">
+
+                    @if(Auth::user()->hasRole(['admin', 'superadmin', 'manager']))
+                    <div class="mb-3">
+                        <label for="edit_distributor_id" class="form-label">Distributor</label>
+                        <select name="distributor_id" id="edit_distributor_id" class="form-select" required>
+                            <option value="">-- Select Distributor --</option>
+                            @foreach($distributors as $d)
+                            <option value="{{ $d->id }}">{{ $d->user->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @else
                     <input type="hidden" name="distributor_id" id="edit_distributor_id">
+                    @endif
 
                     <div class="mb-3">
                         <label class="form-label">Stock</label>
@@ -196,12 +286,25 @@
                     <div class="text-center mb-3">
                         <h6 class="text-muted" id="stock_adj_product_name"></h6>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Enter Quantity to <span id="op_text">Update</span></label>
-                        <div class="input-group input-group-lg">
-                            <span class="input-group-text bg-white" id="op_icon"><i class="fa fa-hashtag"></i></span>
-                            <input type="number" name="quantity" id="stock_adj_quantity" class="form-control" placeholder="0" min="1" required>
+                    <div class="row g-2 mb-4">
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold text-muted small uppercase">Quantity to <span id="op_text_label">Update</span></label>
+                            <input type="number" id="adj_input_qty" class="form-control form-control-lg text-center fw-bold" placeholder="0" min="1">
                         </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold text-muted small uppercase">Unit</label>
+                            <select id="adj_input_unit" class="form-select form-select-lg">
+                                <option value="strip">Strips</option>
+                                <option value="box">Boxes</option>
+                                <option value="carton">Cartons</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="bg-light p-3 rounded text-center">
+                        <label class="form-label fw-bold text-muted small mb-1">EFFECTIVE STRIPS <span id="op_text_caps">UPDATED</span></label>
+                        <input type="number" name="quantity" id="stock_adj_quantity" class="form-control form-control-lg text-center bg-transparent border-0 fw-bold fs-3" value="0" readonly required>
+                        <div id="adj_pack_info" class="text-info small opacity-75 mt-1"></div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
@@ -313,11 +416,53 @@
                         `;
                     }
                 },
-                {
+                @if(Auth::user()->hasRole(['admin', 'superadmin', 'manager'])) {
+                    data: 'distributor_name',
+                    name: 'distributor_name'
+                },
+                @endif {
                     data: 'stock',
                     name: 'stock',
-                    render: function(data) {
-                        return `<span class="badge ${data>0? 'bg-success' : 'bg-danger'}">${data}</span>`
+                    render: function(data, type, row) {
+                        return `<span class="badge ${data > 0 ? 'bg-success' : 'bg-danger'}">${data}</span>`;
+                    }
+                },
+                {
+                    data: 'stock',
+                    name: 'breakdown',
+                    orderable: false,
+                    searchable: false,
+                    render: function(data, type, row) {
+                        if (!row.product_details) return '-';
+
+                        let boxSize = parseInt(row.product_details.box_size) || 0;
+                        let cartonSize = parseInt(row.product_details.carton_size) || 0;
+
+                        if (boxSize <= 0) return '-';
+
+                        let stripsPerCarton = boxSize * (cartonSize || 1);
+
+                        let cartons = 0;
+                        let remaining = data;
+
+                        if (cartonSize > 0) {
+                            cartons = Math.floor(data / stripsPerCarton);
+                            remaining = data % stripsPerCarton;
+                        }
+
+                        let boxes = Math.floor(remaining / boxSize);
+                        let strips = remaining % boxSize;
+
+                        let html = '';
+                        if (cartonSize > 0 && cartons > 0) html += `<span class="badge bg-primary me-1">${cartons} Ctn</span>`;
+                        if (boxes > 0) html += `<span class="badge bg-info text-dark me-1">${boxes} Box</span>`;
+                        if (strips > 0 || (cartons === 0 && boxes === 0)) html += `<span class="badge bg-secondary me-1">${strips} Str</span>`;
+
+                        html += `<div class="mt-1 small text-muted" style="font-size: 0.7rem;">
+                                    (${boxSize} Str/Box | ${cartonSize || 0} Box/Ctn)
+                                 </div>`;
+
+                        return html || '0';
                     }
                 },
                 {
@@ -331,8 +476,9 @@
 
                         return `
                 <div class="action-buttons">
-                    <button type="button" class="btn btn-sm btn-success stock-btn" data-id="${id}" data-op="add" data-name="${row.product_name}" title="Add Stock"><i class="fa fa-plus"></i></button>
-                    <button type="button" class="btn btn-sm btn-warning stock-btn" data-id="${id}" data-op="subtract" data-name="${row.product_name}" title="Reduce Stock"><i class="fa fa-minus"></i></button>
+                    <button type="button" class="btn btn-sm btn-info edit-btn" data-inventory='${rowData}' title="Edit Inventory"><i class="fa fa-edit"></i></button>
+                    <button type="button" class="btn btn-sm btn-success stock-btn" data-id="${id}" data-op="add" data-name="${row.product_name}" data-box-size="${row.product_details?.box_size || 0}" data-carton-size="${row.product_details?.carton_size || 0}" title="Add Stock"><i class="fa fa-plus"></i></button>
+                    <button type="button" class="btn btn-sm btn-warning stock-btn" data-id="${id}" data-op="subtract" data-name="${row.product_name}" data-box-size="${row.product_details?.box_size || 0}" data-carton-size="${row.product_details?.carton_size || 0}" title="Reduce Stock"><i class="fa fa-minus"></i></button>
 
                     <form id="delete-form-${id}" action="${deleteUrl}" method="POST" style="display:inline;">
                         <input type="hidden" name="_token" value="${csrf}">
@@ -352,6 +498,7 @@
 
             $('#edit_product_name').val(data.product_name);
             $('#edit_stock').val(data.stock);
+            $('#edit_distributor_id').val(data.distributor_id);
             // Hide dist code field if it's auto-managed or read-only in edit too
             // But let's keep it in edit form if admin needs to fix it.
             $('#edit_distributor_product_code').val(data.distributor_product_code);
@@ -363,33 +510,65 @@
         });
 
         // Stock Adjustment Handler
+        let currentBoxSize = 0;
+        let currentCartonSize = 0;
+
+        function calculateAdjTotal() {
+            let qty = parseInt($('#adj_input_qty').val()) || 0;
+            let unit = $('#adj_input_unit').val();
+
+            let total = 0;
+            if (unit === 'strip') {
+                total = qty;
+            } else if (unit === 'box') {
+                total = qty * currentBoxSize;
+            } else if (unit === 'carton') {
+                total = qty * currentBoxSize * (currentCartonSize || 1);
+            }
+            $('#stock_adj_quantity').val(total);
+        }
+
         $('#inventories-table').on('click', '.stock-btn', function() {
             let id = $(this).data('id');
             let op = $(this).data('op'); // 'add' or 'subtract'
             let name = $(this).data('name');
+            currentBoxSize = parseInt($(this).data('box-size')) || 0;
+            currentCartonSize = parseInt($(this).data('carton-size')) || 0;
+
             $('#stock_adj_id').val(id);
             $('#stock_adj_op').val(op);
             $('#stock_adj_product_name').text(name);
+            $('#adj_pack_info').html(`Packaging Pattern: <b>${currentBoxSize}</b> Strips/Box, <b>${currentCartonSize}</b> Boxes/Carton`);
+
+            // Reset calc fields
+            $('#adj_input_qty').val('');
+            $('#adj_input_unit').val('strip');
+            $('#stock_adj_quantity').val(0);
 
             let title, btnClass, btnText;
             if (op === 'add') {
                 title = 'Add Stock';
                 btnText = 'Add Stock';
                 btnClass = 'btn-success';
-                $('#op_text').text('Add').addClass('text-success').removeClass('text-danger');
+                $('#op_text').text('Addition').addClass('text-success').removeClass('text-danger');
+                $('#op_text_label').text('Addition');
+                $('#op_text_caps').text('ADDED').addClass('text-success').removeClass('text-danger');
             } else {
                 title = 'Reduce Stock';
                 btnText = 'Reduce Stock';
                 btnClass = 'btn-warning';
-                $('#op_text').text('Reduce').addClass('text-danger').removeClass('text-success');
+                $('#op_text').text('Reduction').addClass('text-danger').removeClass('text-success');
+                $('#op_text_label').text('Reduction');
+                $('#op_text_caps').text('REDUCED').addClass('text-danger').removeClass('text-success');
             }
 
             $('#stockAdjustmentModalLabel span').text(title);
             $('#btn_save_stock').text(btnText).removeClass('btn-success btn-warning').addClass(btnClass);
-            $('#stock_adj_quantity').val('');
 
             $('#stockAdjustmentModal').modal('show');
         });
+
+        $('#adj_input_qty, #adj_input_unit').on('input change', calculateAdjTotal);
 
         // Delete Confirmation Handler
         let deleteFormId = null;
@@ -401,8 +580,49 @@
 
         $('#confirmDeleteBtn').click(function() {
             if (deleteFormId) {
-                $(deleteFormId).submit();
+                let form = $(deleteFormId);
+                let url = form.attr('action');
+                let formData = form.serialize();
+
+                $.post(url, formData, function(res) {
+                    $('#deleteConfirmModal').modal('hide');
+                    if (typeof showToast === 'function') showToast('success', res.success);
+                    table.ajax.reload(null, false);
+                }).fail(function(xhr) {
+                    if (typeof showToast === 'function') showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Error deleting item');
+                });
             }
+        });
+
+        // Add handler for Create form
+        $('#createInventoryForm').submit(function(e) {
+            e.preventDefault();
+            let url = "{{ route('inventories.store') }}";
+            let formData = $(this).serialize();
+
+            $.post(url, formData, function(res) {
+                $('#createInventoryModal').modal('hide');
+                $('#createInventoryForm')[0].reset();
+                if (typeof showToast === 'function') showToast('success', res.success);
+                table.ajax.reload(null, false);
+            }).fail(function(xhr) {
+                if (typeof showToast === 'function') showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Error creating item');
+            });
+        });
+
+        // Add handler for Edit form
+        $('#editInventoryForm').submit(function(e) {
+            e.preventDefault();
+            let url = $(this).attr('action');
+            let formData = $(this).serialize();
+
+            $.post(url, formData, function(res) {
+                $('#editInventoryModal').modal('hide');
+                if (typeof showToast === 'function') showToast('success', res.success);
+                table.ajax.reload(null, false);
+            }).fail(function(xhr) {
+                if (typeof showToast === 'function') showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Error updating item');
+            });
         });
 
         // Product Details Modal Handler
@@ -421,6 +641,8 @@
                 if (details.mrp) html += `<li class="list-group-item d-flex justify-content-between"><span>MRP</span> <strong>${details.mrp}</strong></li>`;
                 if (details.ptr) html += `<li class="list-group-item d-flex justify-content-between"><span>PTR</span> <strong>${details.ptr}</strong></li>`;
                 if (details.hsn_code) html += `<li class="list-group-item d-flex justify-content-between"><span>HSN</span> <strong>${details.hsn_code}</strong></li>`;
+                if (details.box_size) html += `<li class="list-group-item d-flex justify-content-between"><span>Strip / Box</span> <strong>${details.box_size}</strong></li>`;
+                if (details.carton_size) html += `<li class="list-group-item d-flex justify-content-between"><span>Box / Carton</span> <strong>${details.carton_size}</strong></li>`;
             } else {
                 html = '<li class="list-group-item text-center text-muted">No additional details available</li>';
             }

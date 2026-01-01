@@ -35,13 +35,69 @@ class RetailerOrderManagementController extends Controller
         return view('admin.orders.retailers.create', compact('retailers', 'products'));
     }
 
-    public function getProductDetails(Product $product)
+    public function getProductDetails(Request $request, Product $product)
     {
-        $product->load('distributors.user');
+        $retailerId = $request->get('retailer_id');
+        $retailer = Retailer::find($retailerId);
+
+        // Fetch ALL distributors to ensure we show them even if stock is 0 or no record exists
+        $allDistributors = Distributor::with('user')->get();
+
+        // Get current stock levels for this product (all distributors who HAVE this product in inventory)
+        $stockMap = DB::table('inventories')
+            ->where('product_id', $product->id)
+            ->pluck('stock', 'distributor_id');
+
+        $distributors = $allDistributors->filter(function ($distributor) use ($stockMap) {
+            return $stockMap->has($distributor->id);
+        })->map(function ($distributor) use ($retailer, $stockMap) {
+            // Attach a pseudo-pivot for compatibility with existing JS
+            $distributor->pivot = (object)[
+                'stock' => $stockMap[$distributor->id]
+            ];
+
+            if ($retailer && $retailer->latitude && $retailer->longitude && $distributor->latitude && $distributor->longitude) {
+                $distributor->distance = $this->calculateDistance(
+                    (float)$retailer->latitude,
+                    (float)$retailer->longitude,
+                    (float)$distributor->latitude,
+                    (float)$distributor->longitude
+                );
+            } else {
+                $distributor->distance = null; // or large number for sorting
+            }
+            return $distributor;
+        });
+
+        $distributors = $distributors->sort(function ($a, $b) {
+            // Primarily by distance
+            $distA = $a->distance ?? 999999;
+            $distB = $b->distance ?? 999999;
+            if ($distA != $distB) {
+                return $distA <=> $distB;
+            }
+            // Secondarily by stock (descending)
+            $stockA = $a->pivot->stock ?? 0;
+            $stockB = $b->pivot->stock ?? 0;
+            return $stockB <=> $stockA;
+        })->values();
+
         return response()->json([
             'product' => $product,
-            'distributors' => $product->distributors
+            'distributors' => $distributors
         ]);
+    }
+
+    private function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371; // km
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($dLon / 2) * sin($dLon / 2);
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        return $earthRadius * $c;
     }
 
     // Store (Admin Create)
@@ -127,7 +183,7 @@ class RetailerOrderManagementController extends Controller
         if ($request->ajax()) {
             try {
                 // Determine query based on role
-                $query = RetailerOrder::with(['retailer.user', 'fieldStaff.user', 'items.product', 'distributor.user']);
+                $query = RetailerOrder::with(['retailer.user', 'fieldStaff.user', 'items.product', 'distributor.user'])->orderBy('retailer_orders.id', 'desc');
 
                 if (Auth::user()->hasRole('distributor')) {
                     $distributor = Auth::user()->distributor;
@@ -210,7 +266,8 @@ class RetailerOrderManagementController extends Controller
 
                 $formattedOrders = $orders->map(function ($order) {
                     $productSummary = $order->items->map(function ($item) {
-                        return $item->product->product_name . ' (' . $item->quantity . ')';
+                        $pName = $item->product ? $item->product->product_name : 'Unknown Product';
+                        return $pName . ' (' . $item->quantity . ')';
                     })->implode(', ');
 
                     return [
@@ -224,7 +281,7 @@ class RetailerOrderManagementController extends Controller
                         'items' => $order->items->map(function ($item) {
                             return [
                                 'product_id' => $item->product_id,
-                                'product_name' => $item->product->product_name,
+                                'product_name' => $item->product ? $item->product->product_name : 'Unknown Product',
                                 'quantity' => $item->quantity,
                                 'unit_price' => $item->unit_price,
                                 'total_amount' => $item->total_amount,

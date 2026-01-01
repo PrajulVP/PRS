@@ -32,6 +32,8 @@ class DistributorFactory extends Factory
             'pincode' => $this->faker->postcode,
             'district_id' => null, // Will be set in the test or by another factory
             'area_id' => null,     // Will be set in the test or by another factory
+            'latitude' => $this->faker->latitude(8, 37),
+            'longitude' => $this->faker->longitude(68, 97),
         ];
     }
 }
