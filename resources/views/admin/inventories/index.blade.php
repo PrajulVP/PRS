@@ -170,7 +170,7 @@ $(document).ready(function() {
                 <div class="action-buttons">
                     <button type="button" class="btn btn-sm btn-primary view-btn" data-inventory='${rowData}'><i class="fa fa-eye"></i></button>
                     <button type="button" class="btn btn-sm btn-primary edit-btn" data-inventory='${rowData}'><i class="fa fa-edit"></i></button>
-                    <form action="${deleteUrl}" method="POST" onsubmit="return confirm('Are you sure?')">
+                    <form action="${deleteUrl}" method="POST" onsubmit="return confirm('Are you sure?')" class="mb-0">
                         <input type="hidden" name="_token" value="${csrf}">
                         <input type="hidden" name="_method" value="DELETE">
                         <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>

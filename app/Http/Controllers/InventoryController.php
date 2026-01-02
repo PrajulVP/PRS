@@ -84,7 +84,7 @@ class InventoryController extends Controller
             'stock' => 'required|integer|min:0',
         ]);
 
-        $product = Product::find($request->product_id);
+         $product = Product::find($request->product_id);
 
         Inventory::create([
             'distributor_product_code' => $request->distributor_product_code,

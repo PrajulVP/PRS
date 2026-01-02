@@ -326,7 +326,7 @@
                             `;
                             }
                             return `
-                            <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}">
+                            <button class="btn btn-xs btn-warning upload-invoice-btn d-flex align-items-center gap-1 -text-dark fw-bold" data-id="${row.id}">
                                 <i class="fa fa-upload"></i> Upload
                             </button>
                         `;
@@ -338,9 +338,9 @@
                         searchable: false,
                         render: function(data, type, row) {
                             let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
-                            return `<div class="action-buttons">
+                            return `<div class="action-buttons d-flex gap-1">
                                         <button class="btn btn-info btn-sm view-details-btn" data-row="${rowData}" title="View Details"><i class="fa fa-eye"></i></button>
-                                        <a href="/distributor-orders/${row.id}/invoice" target="_blank" class="btn btn-dark btn-sm" title="Print Invoice"><i class="fa fa-print"></i></a>
+                                        <a href="/distributor-orders/${row.id}/invoice" target="_blank" class="btn btn-dark btn-sm pt-2 pb-2 pe-4 ps-4" title="Print Invoice"><i class="fa fa-print"></i></a>
                                      </div>`;
                         }
                     }
