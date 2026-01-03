@@ -249,7 +249,8 @@
 .btn-warning-gradien {
   background-image: linear-gradient(to right, #ffbc43 0%, #f09b00 51%, #ffbc43 100%);
   border: none;
-  color: #fff;
+  color: #08047e;
+  /* color: #fff; */
   background-size: auto 200%;
   transition: all 0.3s ease;
 }

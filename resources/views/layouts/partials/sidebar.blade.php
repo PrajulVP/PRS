@@ -59,10 +59,10 @@
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
           <a class="sidebar-link sidebar-title" id="orders" href="#orders">
             <svg class="stroke-icon">
-              <use href="{{ $iconSprite }}#stroke-form"></use>
+              <use href="{{ $iconSprite }}#stroke-others"></use>
             </svg>
             <svg class="fill-icon">
-              <use href="{{ $iconSprite }}#fill-form"></use>
+              <use href="{{ $iconSprite }}#fill-others"></use>
             </svg><span>Orders</span>
           </a>
           <ul class="sidebar-submenu">
@@ -118,18 +118,18 @@
         </li>
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('products.index') }}">
             <svg class="stroke-icon">
-              <use href="{{ $iconSprite }}#stroke-form"></use>
+              <use href="{{ $iconSprite }}#stroke-charts"></use>
             </svg>
             <svg class="fill-icon">
-              <use href="{{ $iconSprite }}#fill-form"></use>
+              <use href="{{ $iconSprite }}#fill-charts"></use>
             </svg><span>Products</span></a>
         </li>
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('inventories.index') }}">
             <svg class="stroke-icon">
-              <use href="{{ $iconSprite }}#stroke-form"></use>
+              <use href="{{ $iconSprite }}#stroke-charts"></use>
             </svg>
             <svg class="fill-icon">
-              <use href="{{ $iconSprite }}#fill-form"></use>
+              <use href="{{ $iconSprite }}#fill-charts"></use>
             </svg><span>Inventory</span></a>
         </li>
         @endif
@@ -192,10 +192,10 @@
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
           <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.sales-managers.index') }}">
             <svg class="stroke-icon">
-              <use href="{{ $iconSprite }}#stroke-form"></use>
+              <use href="{{ $iconSprite }}#stroke-user"></use>
             </svg>
             <svg class="fill-icon">
-              <use href="{{ $iconSprite }}#fill-form"></use>
+              <use href="{{ $iconSprite }}#fill-user"></use>
             </svg><span>Sales Managers</span></a>
         </li>
         @endif
@@ -204,10 +204,10 @@
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
           <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.distributors.index') }}">
             <svg class="stroke-icon">
-              <use href="{{ $iconSprite }}#stroke-form"></use>
+              <use href="{{ $iconSprite }}#stroke-user"></use>
             </svg>
             <svg class="fill-icon">
-              <use href="{{ $iconSprite }}#fill-form"></use>
+              <use href="{{ $iconSprite }}#fill-user"></use>
             </svg><span>Distributors</span></a>
         </li>
         @endif
@@ -216,10 +216,10 @@
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
           <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.field-staffs.index') }}">
             <svg class="stroke-icon">
-              <use href="{{ $iconSprite }}#stroke-form"></use>
+              <use href="{{ $iconSprite }}#stroke-user"></use>
             </svg>
             <svg class="fill-icon">
-              <use href="{{ $iconSprite }}#fill-form"></use>
+              <use href="{{ $iconSprite }}#fill-user"></use>
             </svg><span>Field Staff</span></a>
         </li>
         @endif
@@ -228,10 +228,10 @@
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
           <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.retailers.index') }}">
             <svg class="stroke-icon">
-              <use href="{{ $iconSprite }}#stroke-form"></use>
+              <use href="{{ $iconSprite }}#stroke-user"></use>
             </svg>
             <svg class="fill-icon">
-              <use href="{{ $iconSprite }}#fill-form"></use>
+              <use href="{{ $iconSprite }}#fill-user"></use>
             </svg><span>Retailers</span></a>
         </li>
         @endif
@@ -244,10 +244,10 @@
         </li>
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title -link-nav" href="#">
             <svg class="stroke-icon">
-              <use href="{{ $iconSprite }}#stroke-user"></use>
+              <use href="{{ $iconSprite }}#stroke-job-search"></use>
             </svg>
             <svg class="fill-icon">
-              <use href="{{ $iconSprite }}#fill-user"></use>
+              <use href="{{ $iconSprite }}#fill-job-search"></use>
             </svg><span>Master Settings</span></a>
           <ul class="sidebar-submenu">
             @if (Auth::user()->hasPermissionToCategory('districts', 'view') || Auth::user()->hasPermissionToCategory('districts', 'add'))
@@ -255,10 +255,10 @@
               <i class="fa fa-thumb-tack"></i>
               <a class="sidebar-link sidebar-title link-nav" href="{{ route('districts.index') }}">
                 <svg class="stroke-icon">
-                  <use href="{{ $iconSprite }}#stroke-form"></use>
+                  <use href="{{ $iconSprite }}#stroke-maps"></use>
                 </svg>
                 <svg class="fill-icon">
-                  <use href="{{ $iconSprite }}#fill-form"></use>
+                  <use href="{{ $iconSprite }}#fill-maps"></use>
                 </svg>
                 <span>Districts</span>
               </a>
@@ -270,10 +270,10 @@
               <i class="fa fa-thumb-tack"></i>
               <a class="sidebar-link sidebar-title link-nav" href="{{ route('areas.index') }}">
                 <svg class="stroke-icon">
-                  <use href="{{ $iconSprite }}#stroke-form"></use>
+                  <use href="{{ $iconSprite }}#stroke-maps"></use>
                 </svg>
                 <svg class="fill-icon">
-                  <use href="{{ $iconSprite }}#fill-form"></use>
+                  <use href="{{ $iconSprite }}#fill-maps"></use>
                 </svg>
                 <span>Areas</span>
               </a>
@@ -296,11 +296,11 @@
               <!-- <i class="fa fa-cog"></i> -->
               <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.settings.general') }}">
                 <svg class="stroke-icon">
-                  <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
+                  <use href="{{ $iconSprite }}#stroke-learning"></use>
                 </svg>
-                <!-- <svg class="fill-icon">
-                  <use href="../../admin/assets/svg/icon-sprite.svg#fill-settings"></use>
-                </svg> -->
+                <svg class="fill-icon">
+                  <use href="{{ $iconSprite }}#fill-learning"></use>
+                </svg>
                 <span>General</span>
               </a>
             </li>

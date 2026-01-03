@@ -273,7 +273,7 @@
                             else if (statusRaw.includes('rejected') || statusRaw.includes('cancelled')) bgClass = 'bg-danger text-white';
 
                             return `
-                        <select class="form-select form-select-sm status-select ${bgClass}" data-id="${row.id}" data-original="${statusRaw}" style="width: 130px; font-weight: 500; border: 1px solid rgba(0,0,0,0.1);">
+                        <select class="form-select form-select-sm status-select ${bgClass} pt-1 pb-1 pe-4 ps-4" data-id="${row.id}" data-original="${statusRaw}" style="width: 130px; font-weight: 600; border: 1px solid rgba(0,0,0,0.1);">
                             <option value="pending" ${statusRaw.includes('pending') ? 'selected' : ''} class="bg-white text-dark">Pending</option>
                             <option value="hold" ${statusRaw.includes('hold') ? 'selected' : ''} class="bg-white text-dark">Hold</option>
                             <option value="accepted_by_sales_manager" ${statusRaw.includes('accepted') ? 'selected' : ''} class="bg-white text-dark">Approved</option>
@@ -294,7 +294,7 @@
                             else if (payStatus === 'failed') bgClass = 'bg-danger text-white';
 
                             return `
-                        <select class="form-select form-select-sm payment-status-select ${bgClass}" data-id="${row.id}" data-original="${payStatus}" style="width: 120px; font-weight: 500; border: 1px solid rgba(0,0,0,0.1);">
+                        <select class="form-select form-select-sm payment-status-select ${bgClass} pt-1 pb-1 pe-4 ps-4" data-id="${row.id}" data-original="${payStatus}" style="width: 120px; font-weight: 600; border: 1px solid rgba(0,0,0,0.1);">
                             <option value="pending" ${payStatus === 'pending' ? 'selected' : ''} class="bg-white text-dark">Pending</option>
                             <option value="paid" ${payStatus === 'paid' ? 'selected' : ''} class="bg-white text-dark">Paid</option>
                             <option value="failed" ${payStatus === 'failed' ? 'selected' : ''} class="bg-white text-dark">Failed</option>
@@ -326,7 +326,7 @@
                             `;
                             }
                             return `
-                            <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}">
+                            <button class="btn btn-xs btn-danger-gradien upload-invoice-btn" data-id="${row.id}">
                                 <i class="fa fa-upload"></i> Upload
                             </button>
                         `;
@@ -340,8 +340,8 @@
                             let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
                             let invoiceUrl = "{{ route('admin.distributor-orders.invoice', ':id') }}".replace(':id', row.id);
                             return `<div class="action-buttons">
-                                        <button class="btn btn-info btn-sm view-details-btn" data-row="${rowData}" title="View Details"><i class="fa fa-eye"></i></button>
-                                        <a href="${invoiceUrl}" target="_blank" class="btn btn-dark btn-sm" title="Print Invoice"><i class="fa fa-print"></i></a>
+                                        <button class="btn btn-success btn-sm view-details-btn" data-row="${rowData}" title="View Details"><i class="fa fa-eye"></i></button>
+                                        <a href="${invoiceUrl}" target="_blank" class="btn btn-info btn-sm" title="Print Invoice"><i class="fa fa-print"></i></a>
                                      </div>`;
                         }
                     }

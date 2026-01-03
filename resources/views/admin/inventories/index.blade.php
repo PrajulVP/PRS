@@ -58,8 +58,8 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5><i class="fa fa-boxes me-2"></i>Inventory</h5>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createInventoryModal">
-                        <i class="fa fa-plus me-1"></i>Add Product
+                    <button type="button" class="-btn -btn-primary button-64" data-bs-toggle="modal" data-bs-target="#createInventoryModal">
+                        <span class="text fw-bold"><i class="fa fa-plus me-1"></i>Add Product</span>
                     </button>
                 </div>
                 <div class="card-body">

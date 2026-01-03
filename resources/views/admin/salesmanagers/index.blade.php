@@ -31,8 +31,8 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5><i class="fa fa-users me-2"></i>Sales Managers</h5>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createSalesManagerModal">
-                        <i class="fa fa-plus me-1"></i>Add Sales Manager
+                    <button type="button" class="-btn -btn-primary button-64" data-bs-toggle="modal" data-bs-target="#createSalesManagerModal">
+                        <span class="text fw-bold"><i class="fa fa-plus me-1"></i>Add Sales Manager</span>
                     </button>
                 </div>
                 <div class="card-body">
