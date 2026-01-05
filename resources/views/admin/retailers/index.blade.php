@@ -453,16 +453,16 @@
                         let csrf = "{{ csrf_token() }}";
                         let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
                         return `
-<div class="action-buttons">
-    <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>
-    <button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>
-    <form action="${deleteUrl}" method="POST" class="delete-form" onsubmit="return false;">
-        <input type="hidden" name="_token" value="${csrf}">
-        <input type="hidden" name="_method" value="DELETE">
-        <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
-    </form>
-</div>
-`;
+                    <div class="action-buttons">
+                        <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>
+                        <button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>
+                        <form action="${deleteUrl}" method="POST" class="delete-form" onsubmit="return false;">
+                            <input type="hidden" name="_token" value="${csrf}">
+                            <input type="hidden" name="_method" value="DELETE">
+                            <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
+                        </form>
+                    </div>
+                    `;
                     }
                 }
             ],

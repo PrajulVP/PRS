@@ -375,9 +375,7 @@
                     }
                 }
             ],
-            dom: "<'row mb-3'<'col-sm-12'B>>" +
-                "<'row mb-3 d-flex align-items-center'<'col-md-6'f><'col-md-6'l>>" +
-                "rtip",
+            dom: "<'row mb-3'<'col-sm-12'B>>" + "<'row mb-3 d-flex align-items-center'<'col-md-6'f><'col-md-6'l>>" + "rtip",
             buttons: {
                 dom: {
                     button: {
@@ -755,4 +753,3 @@
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&libraries=places,marker&v=weekly&loading=async&callback=initMap" async defer></script>
 @endpush
-```
