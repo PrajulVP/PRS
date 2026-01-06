@@ -34,6 +34,7 @@ return new class extends Migration
             // Pricing
             $table->decimal('mrp', 10, 2)->nullable();
             $table->decimal('ptr', 10, 2)->nullable();
+            $table->decimal('pts', 10, 2)->nullable();
             $table->decimal('taxable_value', 10, 2)->nullable();
             $table->decimal('gst', 5, 2)->nullable();
             $table->decimal('offer', 10, 2)->nullable();
