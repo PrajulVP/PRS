@@ -56,9 +56,9 @@
                                     <th>Code</th>
                                     <th>Name</th>
                                     <th>Generic Name</th>
-                                    <th>Batch No</th>
+                                    <!-- <th>Batch No</th> -->
                                     <th>MRP</th>
-                                    <th>Net Amount</th>
+                                    <!-- <th>Net Amount</th> -->
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -104,9 +104,13 @@
                         <div class="col-md-6 border-end">
                             <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Stock & Packaging</h6>
                             <div class="row g-3">
-                                <div class="col-md-12">
+                                <!-- <div class="col-md-12">
                                     <label for="create_batch_no" class="form-label fw-medium">Batch No.</label>
                                     <input type="text" name="batch_no" id="create_batch_no" class="form-control" required>
+                                </div> -->
+                                <div class="col-md-6">
+                                    <label for="create_strip_size" class="form-label fw-medium">Tablet / Strip</label>
+                                    <input type="text" name="strip_size" id="create_strip_size" class="form-control" placeholder="Tablets per strips">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="create_box_size" class="form-label fw-medium">Strip / Box</label>
@@ -116,7 +120,7 @@
                                     <label for="create_carton_size" class="form-label fw-medium">Box / Carton</label>
                                     <input type="number" name="carton_size" id="create_carton_size" class="form-control" placeholder="Boxes per carton">
                                 </div>
-                                <div class="col-md-12">
+                                <div class="col-md-6">
                                     <label for="create_hsn_code" class="form-label fw-medium">HSN Code</label>
                                     <input type="text" name="hsn_code" id="create_hsn_code" class="form-control">
                                 </div>
@@ -136,6 +140,10 @@
                                     <input type="number" step="0.01" name="ptr" id="create_ptr" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
+                                    <label for="create_pts" class="form-label fw-medium">PTS</label>
+                                    <input type="number" step="0.01" name="pts" id="create_pts" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
                                     <label for="create_taxable_value" class="form-label fw-medium">Taxable Value</label>
                                     <input type="number" step="0.01" name="taxable_value" id="create_taxable_value" class="form-control" required>
                                 </div>
@@ -151,12 +159,12 @@
                                     <label for="create_discount" class="form-label fw-medium">Discount</label>
                                     <input type="number" step="0.01" name="discount" id="create_discount" class="form-control">
                                 </div>
-                                <div class="col-md-12">
+                                <!-- <div class="col-md-12">
                                     <div class="alert alert-light border text-center mt-3 mb-0">
                                         <label for="create_net_amount" class="form-label text-muted small text-uppercase fw-bold mb-0">Net Amount</label>
                                         <input type="number" step="0.01" name="net_amount" id="create_net_amount" class="form-control form-control-lg fw-bold text-primary text-center border-0 bg-transparent" readonly placeholder="0.00">
                                     </div>
-                                </div>
+                                </div> -->
                             </div>
                         </div>
                     </div>
@@ -204,9 +212,13 @@
                         <div class="col-md-6 border-end">
                             <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Stock & Packaging</h6>
                             <div class="row g-3">
-                                <div class="col-md-12">
+                                <!-- <div class="col-md-12">
                                     <label for="edit_batch_no" class="form-label fw-medium">Batch No.</label>
                                     <input type="text" name="batch_no" id="edit_batch_no" class="form-control" required>
+                                </div> -->
+                                <div class="col-md-6">
+                                    <label for="edit_strip_size" class="form-label fw-medium">Tablet / Strip</label>
+                                    <input type="text" name="strip_size" id="edit_strp_size" class="form-control" placeholder="Tablets per strips">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="edit_box_size" class="form-label fw-medium">Strip / Box</label>
@@ -216,7 +228,7 @@
                                     <label for="edit_carton_size" class="form-label fw-medium">Box / Carton</label>
                                     <input type="number" name="carton_size" id="edit_carton_size" class="form-control" placeholder="Boxes per carton">
                                 </div>
-                                <div class="col-md-12">
+                                <div class="col-md-6">
                                     <label for="edit_hsn_code" class="form-label fw-medium">HSN Code</label>
                                     <input type="text" name="hsn_code" id="edit_hsn_code" class="form-control">
                                 </div>
@@ -236,6 +248,10 @@
                                     <input type="number" step="0.01" name="ptr" id="edit_ptr" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
+                                    <label for="edit_pts" class="form-label fw-medium">PTS</label>
+                                    <input type="number" step="0.01" name="pts" id="edit_pts" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
                                     <label for="edit_taxable_value" class="form-label fw-medium">Taxable Value</label>
                                     <input type="number" step="0.01" name="taxable_value" id="edit_taxable_value" class="form-control" required>
                                 </div>
@@ -251,12 +267,12 @@
                                     <label for="edit_discount" class="form-label fw-medium">Discount</label>
                                     <input type="number" step="0.01" name="discount" id="edit_discount" class="form-control">
                                 </div>
-                                <div class="col-md-12">
+                                <!-- <div class="col-md-12">
                                     <div class="alert alert-light border text-center mt-3 mb-0">
                                         <label for="edit_net_amount" class="form-label text-muted small text-uppercase fw-bold mb-0">Net Amount</label>
                                         <input type="number" step="0.01" name="net_amount" id="edit_net_amount" class="form-control form-control-lg fw-bold text-primary text-center border-0 bg-transparent" readonly placeholder="0.00">
                                     </div>
-                                </div>
+                                </div> -->
                             </div>
                         </div>
                     </div>
@@ -335,18 +351,15 @@
                     data: 'generic_name',
                     name: 'generic_name'
                 },
-                {
-                    data: 'batch_no',
-                    name: 'batch_no'
-                },
+                // {
+                //     data: 'batch_no',
+                //     name: 'batch_no'
+                // },
                 {
                     data: 'mrp',
                     name: 'mrp'
                 },
-                {
-                    data: 'net_amount',
-                    name: 'net_amount'
-                },
+                
                 {
                     data: 'id',
                     orderable: false,
@@ -407,6 +420,7 @@
         // Handle Edit Button Click
         $('#products-table').on('click', '.edit-btn', function() {
             var product = $(this).data('product'); // This might be an object if processed by jQuery, or string
+            console.log(product);
             if (typeof product === 'string') {
                 // In case it's still a string despite data() magic
                 // It shouldn't happen usually with data() if proper JSON, but safe to check.
@@ -414,22 +428,30 @@
                 // jQuery's .data() automatically parses JSON if it looks like JSON.
             }
 
+            function removeCommas(value) {
+                return value ? value.toString().replace(/,/g, '') : '';
+            }
+
             // Populate fields
             $('#edit_product_code').val(product.product_code);
             $('#edit_product_name').val(product.product_name);
             $('#edit_generic_name').val(product.generic_name);
 
+            $('#edit_strip_size').val(product.strip_size);
             $('#edit_box_size').val(product.box_size);
             $('#edit_carton_size').val(product.carton_size);
             $('#edit_hsn_code').val(product.hsn_code);
             $('#edit_batch_no').val(product.batch_no);
-            $('#edit_mrp').val(product.mrp);
-            $('#edit_ptr').val(product.ptr);
+
+
+            $('#edit_mrp').val(removeCommas(product.mrp));
+            $('#edit_ptr').val(removeCommas(product.ptr));
+            $('#edit_pts').val(removeCommas(product.pts));
             $('#edit_taxable_value').val(product.taxable_value);
             $('#edit_gst').val(product.gst);
             $('#edit_offer').val(product.offer);
             $('#edit_discount').val(product.discount);
-            $('#edit_net_amount').val(product.net_amount);
+            // $('#edit_net_amount').val(product.net_amount);
 
             // Update form action
             let updateUrl = "{{ route('products.update', ':id') }}".replace(':id', product.id);
@@ -461,9 +483,8 @@
                             <dt class="col-sm-4 text-muted small text-uppercase">Batch No</dt>
                             <dd class="col-sm-8 fw-medium">${product.batch_no}</dd>
 
-
-
-
+                            <dt class="col-sm-4 text-muted small text-uppercase">Tablet/Strip</dt>
+                            <dd class="col-sm-8 fw-medium">${product.strip_size || '-'}</dd>
 
                             <dt class="col-sm-4 text-muted small text-uppercase">Strip / Box</dt>
                             <dd class="col-sm-8 fw-medium">${product.box_size || '-'}</dd>
@@ -485,6 +506,9 @@
 
                             <dt class="col-sm-4 text-muted small text-uppercase">PTR</dt>
                             <dd class="col-sm-8 fw-medium">₹${parseFloat(product.ptr).toFixed(2)}</dd>
+
+                            <dt class="col-sm-4 text-muted small text-uppercase">PTS</dt>
+                            <dd class="col-sm-8 fw-medium">₹${parseFloat(product.pts).toFixed(2)}</dd>                                      
 
                             <dt class="col-sm-4 text-muted small text-uppercase">Taxable</dt>
                             <dd class="col-sm-8 fw-medium">₹${parseFloat(product.taxable_value).toFixed(2)}</dd>
