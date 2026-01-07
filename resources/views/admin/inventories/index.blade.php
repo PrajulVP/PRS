@@ -111,6 +111,7 @@
                             @foreach($products as $p)
                             <option value="{{ $p->id }}"
                                 data-code="{{ $p->product_code }}"
+                                data-strip-size="{{ $p->strip_size ?? 0 }}"
                                 data-box-size="{{ $p->box_size ?? 0 }}"
                                 data-carton-size="{{ $p->carton_size ?? 0 }}">
                                 {{ $p->product_name }} ({{ $p->product_code }})
@@ -455,7 +456,7 @@
 
                         let html = '';
                         if (cartonSize > 0 && cartons > 0) html += `<span class="badge bg-primary me-1">${cartons} Ctn</span>`;
-                        if (boxes > 0) html += `<span class="badge bg-info text-dark me-1">${boxes} Box</span>`;
+                        if (boxes > 0) html += `<span class="badge bg-info text-white me-1">${boxes} Box</span>`;
                         if (strips > 0 || (cartons === 0 && boxes === 0)) html += `<span class="badge bg-secondary me-1">${strips} Str</span>`;
 
                         html += `<div class="mt-1 small text-muted" style="font-size: 0.7rem;">

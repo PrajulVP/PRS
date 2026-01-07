@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+  @extends('layouts.admin')
 
 <style>
     /* Flex wrapper for actions */
