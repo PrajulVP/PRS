@@ -127,6 +127,7 @@ class InventoryController extends Controller
                             'ptr' => $i->product->ptr,
                             'gst' => $i->product->gst,
                             'hsn_code' => $i->product->hsn_code,
+                            'strip_size' => $i->product->strip_size,
                             'box_size' => $i->product->box_size,
                             'carton_size' => $i->product->carton_size,
                             'description' => $i->product->description // Assuming description exists or null
@@ -147,7 +148,7 @@ class InventoryController extends Controller
         }
 
         // Non-AJAX view: pass products to populate the create form
-        $products = Product::select('id', 'product_name', 'product_code', 'box_size', 'carton_size')->orderBy('product_name')->get();
+        $products = Product::select('id', 'product_name', 'product_code', 'box_size', 'carton_size', 'strip_size')->orderBy('product_name')->get();
         $distributors = [];
         if (Auth::user()->hasRole(['admin', 'superadmin', 'manager'])) {
             $distributors = Distributor::with('user')->get();

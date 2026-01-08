@@ -158,7 +158,12 @@
                                 } else if (unit === 'box') {
                                     total = qty * boxSize;
                                 } else if (unit === 'carton') {
+                                    total = qty * boxSize;
+                                } else if (unit === 'carton') {
                                     total = qty * boxSize * (cartonSize || 1);
+                                } else if (unit === 'tablet') {
+                                    var sSize = parseInt(opt.getAttribute('data-strip-size')) || 0;
+                                    if (sSize > 0) total = (qty / sSize).toFixed(2); 
                                 }
 
                                 totalInput.value = total;
@@ -172,11 +177,15 @@
                                         var bSize = selected.getAttribute('data-box-size');
                                         var cSize = selected.getAttribute('data-carton-size');
 
+                                        var bSize = selected.getAttribute('data-box-size');
+                                        var cSize = selected.getAttribute('data-carton-size');
+                                        var sSize = selected.getAttribute('data-strip-size');
+
                                         if (code && (!code.value || code.value.trim() === '')) {
                                             code.value = prodCode || '';
                                         }
 
-                                        packInfo.innerHTML = `Packaging: <b>${bSize} Str/Box</b> | <b>${cSize} Box/Ctn</b>`;
+                                        packInfo.innerHTML = `Packaging: <b>${sSize} Tabs/Str</b> | <b>${bSize} Str/Box</b> | <b>${cSize} Box/Ctn</b>`;
                                         calculateCreateTotal();
                                     } else {
                                         packInfo.innerText = "Select a product to see packaging rules";
@@ -196,6 +205,7 @@
                         <div class="col-md-4">
                             <label class="form-label fw-bold">Unit</label>
                             <select id="create_input_unit" class="form-select">
+                                <option value="tablet">Tablets</option>
                                 <option value="strip">Strips</option>
                                 <option value="box">Boxes</option>
                                 <option value="carton">Cartons</option>
@@ -296,6 +306,7 @@
                             <label class="form-label fw-bold text-muted small uppercase">Unit</label>
                             <select id="adj_input_unit" class="form-select form-select-lg">
                                 <option value="strip">Strips</option>
+                                <option value="tablet">Tablets</option>
                                 <option value="box">Boxes</option>
                                 <option value="carton">Cartons</option>
                             </select>
@@ -438,6 +449,7 @@
 
                         let boxSize = parseInt(row.product_details.box_size) || 0;
                         let cartonSize = parseInt(row.product_details.carton_size) || 0;
+                        let stripSize = parseInt(row.product_details.strip_size) || 0;
 
                         if (boxSize <= 0) return '-';
 
@@ -460,7 +472,7 @@
                         if (strips > 0 || (cartons === 0 && boxes === 0)) html += `<span class="badge bg-secondary me-1">${strips} Str</span>`;
 
                         html += `<div class="mt-1 small text-muted" style="font-size: 0.7rem;">
-                                    (${boxSize} Str/Box | ${cartonSize || 0} Box/Ctn)
+                                    (${stripSize} Tabs/Str | ${boxSize} Str/Box | ${cartonSize || 0} Box/Ctn)
                                  </div>`;
 
                         return html || '0';
@@ -478,8 +490,8 @@
                         return `
                 <div class="action-buttons">
                     <button type="button" class="btn btn-sm btn-info edit-btn" data-inventory='${rowData}' title="Edit Inventory"><i class="fa fa-edit"></i></button>
-                    <button type="button" class="btn btn-sm btn-success stock-btn" data-id="${id}" data-op="add" data-name="${row.product_name}" data-box-size="${row.product_details?.box_size || 0}" data-carton-size="${row.product_details?.carton_size || 0}" title="Add Stock"><i class="fa fa-plus"></i></button>
-                    <button type="button" class="btn btn-sm btn-warning stock-btn" data-id="${id}" data-op="subtract" data-name="${row.product_name}" data-box-size="${row.product_details?.box_size || 0}" data-carton-size="${row.product_details?.carton_size || 0}" title="Reduce Stock"><i class="fa fa-minus"></i></button>
+                    <button type="button" class="btn btn-sm btn-success stock-btn" data-id="${id}" data-op="add" data-name="${row.product_name}" data-strip-size="${row.product_details?.strip_size || 0}" data-box-size="${row.product_details?.box_size || 0}" data-carton-size="${row.product_details?.carton_size || 0}" title="Add Stock"><i class="fa fa-plus"></i></button>
+                    <button type="button" class="btn btn-sm btn-warning stock-btn" data-id="${id}" data-op="subtract" data-name="${row.product_name}" data-strip-size="${row.product_details?.strip_size || 0}" data-box-size="${row.product_details?.box_size || 0}" data-carton-size="${row.product_details?.carton_size || 0}" title="Reduce Stock"><i class="fa fa-minus"></i></button>
 
                     <form id="delete-form-${id}" action="${deleteUrl}" method="POST" style="display:inline;">
                         <input type="hidden" name="_token" value="${csrf}">
@@ -513,6 +525,7 @@
         // Stock Adjustment Handler
         let currentBoxSize = 0;
         let currentCartonSize = 0;
+        let currentStripSize = 0;
 
         function calculateAdjTotal() {
             let qty = parseInt($('#adj_input_qty').val()) || 0;
@@ -525,6 +538,8 @@
                 total = qty * currentBoxSize;
             } else if (unit === 'carton') {
                 total = qty * currentBoxSize * (currentCartonSize || 1);
+            } else if (unit === 'tablet') {
+                if (currentStripSize > 0) total = (qty / currentStripSize).toFixed(2);
             }
             $('#stock_adj_quantity').val(total);
         }
@@ -535,11 +550,12 @@
             let name = $(this).data('name');
             currentBoxSize = parseInt($(this).data('box-size')) || 0;
             currentCartonSize = parseInt($(this).data('carton-size')) || 0;
+            currentStripSize = parseInt($(this).data('strip-size')) || 0;
 
             $('#stock_adj_id').val(id);
             $('#stock_adj_op').val(op);
             $('#stock_adj_product_name').text(name);
-            $('#adj_pack_info').html(`Packaging Pattern: <b>${currentBoxSize}</b> Strips/Box, <b>${currentCartonSize}</b> Boxes/Carton`);
+            $('#adj_pack_info').html(`Packaging Pattern: <b>${currentStripSize}</b> Tabs/Str, <b>${currentBoxSize}</b> Strips/Box, <b>${currentCartonSize}</b> Boxes/Carton`);
 
             // Reset calc fields
             $('#adj_input_qty').val('');
