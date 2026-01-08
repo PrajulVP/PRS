@@ -13,25 +13,15 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
-
-            // Basic details
             $table->string('product_code')->unique();
             $table->string('product_name');
-
-            // Additional product fields
             $table->string('generic_name')->nullable();
             $table->string('pack')->nullable();
-            $table->integer('quantity')->nullable();
-            $table->date('expiry')->nullable();
-
             $table->string('strip_size')->nullable();
             $table->string('box_size')->nullable();
             $table->string('carton_size')->nullable();
-
             $table->string('hsn_code')->nullable();
             $table->integer('batch_no')->nullable();
-
-            // Pricing
             $table->decimal('mrp', 10, 2)->nullable();
             $table->decimal('ptr', 10, 2)->nullable();
             $table->decimal('pts', 10, 2)->nullable();
@@ -40,10 +30,6 @@ return new class extends Migration
             $table->decimal('offer', 10, 2)->nullable();
             $table->decimal('discount', 10, 2)->nullable();
             $table->decimal('net_amount', 12, 2)->nullable();
-
-            // Stock
-            $table->integer('stock')->default(0);
-
             $table->timestamps();
         });
     }

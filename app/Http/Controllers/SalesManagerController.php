@@ -51,6 +51,13 @@ class SalesManagerController extends Controller
             'address' => $request->address,
         ]);
 
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Sales Manager added successfully!'
+            ]);
+        }
+
         return redirect()->route('admin.sales-managers.index')->with('success', 'Sales Manager added successfully!');
     }
 
@@ -64,11 +71,16 @@ class SalesManagerController extends Controller
             'address' => 'nullable|string',
         ]);
 
-        $salesManager->user->update([
+        $userData = [
             'name' => $request->name,
             'email' => $request->email,
-            'password' => $request->password ? Hash::make($request->password) : $salesManager->user->password,
-        ]);
+        ];
+
+        if ($request->filled('password')) {
+            $userData['password'] = Hash::make($request->password);
+        }
+
+        $salesManager->user->update($userData);
 
         $salesManager->update([
             'name' => $request->name,
@@ -76,6 +88,13 @@ class SalesManagerController extends Controller
             'contact_no' => $request->contact_no,
             'address' => $request->address,
         ]);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Sales Manager updated successfully!'
+            ]);
+        }
 
         return redirect()->route('admin.sales-managers.index')->with('success', 'Sales Manager updated successfully!');
     }

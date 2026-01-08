@@ -129,15 +129,6 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Sales Manager</label>
-                            <select name="sales_manager_id" class="form-select" required>
-                                <option value="">Select Sales Manager</option>
-                                @foreach($salesManagers as $salesManager)
-                                <option value="{{ $salesManager->id }}">{{ $salesManager->user->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-6">
                             <label class="form-label">Pincode</label>
                             <input type="text" name="pincode" class="form-control" required>
                         </div>
@@ -220,15 +211,6 @@
                             <label class="form-label">Area</label>
                             <select name="area_id" id="edit_area_id" class="form-select area-select" required>
                                 <option value="">Select Area</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Sales Manager</label>
-                            <select name="sales_manager_id" id="edit_sales_manager_id" class="form-select" required>
-                                <option value="">Select Sales Manager</option>
-                                @foreach($salesManagers as $salesManager)
-                                <option value="{{ $salesManager->id }}">{{ $salesManager->user->name }}</option>
-                                @endforeach
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -449,7 +431,6 @@
             $('#edit_latitude').val(data.latitude);
             $('#edit_longitude').val(data.longitude);
             $('#edit_district_id').val(data.district_id);
-            $('#edit_sales_manager_id').val(data.sales_manager_id);
 
             // Fetch areas for the selected district and select the correct area
             fetchAreas(data.district_id, $('#edit_area_id'), data.area_id);
@@ -473,7 +454,6 @@
                 <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Contact</label><p class="mb-0">${data.contact_no}</p></div>
                 <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">GST</label><p class="mb-0">${data.gst}</p></div>
                 <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">District / Area</label><p class="mb-0">${districtName} / ${areaName}</p></div>
-                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Sales Manager</label><p class="mb-0">${smName}</p></div>
                 <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Pincode</label><p class="mb-0">${data.pincode}</p></div>
                 <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Drug License</label><p class="mb-0">${data.drug_license_no || 'N/A'}</p></div>
                 <div class="col-12"><label class="fw-bold text-muted small text-uppercase">Address</label><p class="mb-0">${data.address}</p></div>
@@ -525,7 +505,7 @@
                     } else {
                         errorMessage = 'An error occurred. Please try again.';
                     }
-                    showToast('danger', errorMessage);
+                    showToast('error', errorMessage);
                 }
             });
         });
@@ -546,16 +526,49 @@
             });
         });
 
-        // Handle Edit Distributor Validation
+        // Handle Edit Distributor AJAX Submission
         $('#editDistributorForm').on('submit', function(e) {
+            e.preventDefault();
+
             let password = $('#edit_password').val();
             let confirmPassword = $('#edit_password_confirmation').val();
 
             if (password && password !== confirmPassword) {
-                e.preventDefault();
                 showToast('danger', 'Passwords do not match!');
                 return false;
             }
+
+            let formData = new FormData(this);
+            let submitBtn = $(this).find('button[type="submit"]');
+            submitBtn.prop('disabled', true).text('Updating...');
+
+            $.ajax({
+                url: $(this).attr('action'),
+                type: "POST",
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    $('#editDistributorModal').modal('hide');
+                    $('#editDistributorForm')[0].reset();
+                    $('#distributors-table').DataTable().ajax.reload();
+                    submitBtn.prop('disabled', false).text('Update');
+                    showToast('success', response.message);
+                },
+                error: function(xhr) {
+                    submitBtn.prop('disabled', false).text('Update');
+                    let errors = xhr.responseJSON.errors;
+                    let errorMessage = '';
+                    if (errors) {
+                        $.each(errors, function(key, value) {
+                            errorMessage += value[0] + '\n';
+                        });
+                    } else {
+                        errorMessage = 'An error occurred. Please try again.';
+                    }
+                    showToast('danger', errorMessage);
+                }
+            });
         });
     });
 

@@ -77,7 +77,7 @@
                 <h5 class="modal-title">Create Sales Manager</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('admin.sales-managers.store') }}" method="POST">
+            <form id="createSalesManagerForm" action="{{ route('admin.sales-managers.store') }}" method="POST">
                 @csrf
                 <div class="modal-body">
                     <div class="row">
@@ -145,11 +145,11 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Password (Leave blank to keep unchanged)</label>
-                            <input type="password" name="password" class="form-control">
+                            <input type="password" name="password" id="edit_password" class="form-control">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Confirm Password</label>
-                            <input type="password" name="password_confirmation" class="form-control">
+                            <input type="password" name="password_confirmation" id="edit_password_confirmation" class="form-control">
                         </div>
                     </div>
                     <div class="row">
@@ -215,6 +215,78 @@
 
 <script>
     $(document).ready(function() {
+        // Handle Create Form AJAX
+        $('#createSalesManagerForm').on('submit', function(e) {
+            e.preventDefault();
+            let formData = new FormData(this);
+            let submitBtn = $(this).find('button[type="submit"]');
+            submitBtn.prop('disabled', true).text('Creating...');
+
+            $.ajax({
+                url: $(this).attr('action'),
+                type: "POST",
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    $('#createSalesManagerModal').modal('hide');
+                    $('#createSalesManagerForm')[0].reset();
+                    $('#sales-managers-table').DataTable().ajax.reload();
+                    submitBtn.prop('disabled', false).text('Create');
+                    showToast('success', response.message);
+                },
+                error: function(xhr) {
+                    submitBtn.prop('disabled', false).text('Create');
+                    let errors = xhr.responseJSON.errors;
+                    let errorMessage = '';
+                    if (errors) {
+                        $.each(errors, function(key, value) {
+                            errorMessage += value[0] + '\n';
+                        });
+                    } else {
+                        errorMessage = 'An error occurred. Please try again.';
+                    }
+                    showToast('error', errorMessage);
+                }
+            });
+        });
+
+        // Handle Edit Form AJAX
+        $('#editSalesManagerForm').on('submit', function(e) {
+            e.preventDefault();
+            let formData = new FormData(this);
+            let submitBtn = $(this).find('button[type="submit"]');
+            submitBtn.prop('disabled', true).text('Updating...');
+
+            $.ajax({
+                url: $(this).attr('action'),
+                type: "POST", // Method spoofing will handle PUT
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    $('#editSalesManagerModal').modal('hide');
+                    $('#editSalesManagerForm')[0].reset();
+                    $('#sales-managers-table').DataTable().ajax.reload();
+                    submitBtn.prop('disabled', false).text('Update');
+                    showToast('success', response.message);
+                },
+                error: function(xhr) {
+                    submitBtn.prop('disabled', false).text('Update');
+                    let errors = xhr.responseJSON.errors;
+                    let errorMessage = '';
+                    if (errors) {
+                        $.each(errors, function(key, value) {
+                            errorMessage += value[0] + '\n';
+                        });
+                    } else {
+                        errorMessage = 'An error occurred. Please try again.';
+                    }
+                    showToast('error', errorMessage);
+                }
+            });
+        });
+
         var table = $('#sales-managers-table').DataTable({
             processing: true,
             serverSide: true,

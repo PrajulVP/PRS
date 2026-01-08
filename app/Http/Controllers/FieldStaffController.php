@@ -151,12 +151,21 @@ class FieldStaffController extends Controller
             'email' => $userData['email'],
             'role' => 'fieldstaff',
         ];
-        if (!empty($userData['password'])) {
-            $userUpdateData['password'] = Hash::make($userData['password']);
+
+        if ($request->filled('password')) {
+            $userUpdateData['password'] = Hash::make($request->password);
         }
+
         $fieldstaff->user->update($userUpdateData);
 
         $fieldstaff->update($fieldstaffData);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Field staff updated successfully!'
+            ]);
+        }
 
         return redirect()->route('admin.field-staffs.index')->with('success', 'Field staff updated successfully!');
     }

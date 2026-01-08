@@ -137,12 +137,21 @@ class RetailerController extends Controller
             'email' => $userData['email'],
             'role' => 'retailer',
         ];
-        if (!empty($userData['password'])) {
-            $userUpdateData['password'] = Hash::make($userData['password']);
+
+        if ($request->filled('password')) {
+            $userUpdateData['password'] = Hash::make($request->password);
         }
+
         $retailer->user->update($userUpdateData);
 
         $retailer->update(array_merge($retailerData, ['pincode' => $request->pincode]));
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Retailer updated successfully!'
+            ]);
+        }
 
         return redirect()->route('admin.retailers.index')->with('success', 'Retailer updated successfully!');
     }

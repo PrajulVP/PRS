@@ -578,21 +578,54 @@
                     } else {
                         errorMessage = 'An error occurred. Please try again.';
                     }
-                    showToast('danger', errorMessage);
+                    showToast('error', errorMessage);
                 }
             });
         });
 
-        // Handle Edit Field Staff Validation
+        // Handle Edit Field Staff AJAX Submission
         $('#editFieldStaffForm').on('submit', function(e) {
+            e.preventDefault();
+
             let password = $('#edit_password').val();
             let confirmPassword = $('#edit_password_confirmation').val();
 
             if (password && password !== confirmPassword) {
-                e.preventDefault();
                 showToast('danger', 'Passwords do not match!');
                 return false;
             }
+
+            let formData = new FormData(this);
+            let submitBtn = $(this).find('button[type="submit"]');
+            submitBtn.prop('disabled', true).text('Updating...');
+
+            $.ajax({
+                url: $(this).attr('action'),
+                type: "POST",
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    $('#editFieldStaffModal').modal('hide');
+                    $('#editFieldStaffForm')[0].reset();
+                    $('#fieldstaffs-table').DataTable().ajax.reload();
+                    submitBtn.prop('disabled', false).text('Update');
+                    showToast('success', response.message);
+                },
+                error: function(xhr) {
+                    submitBtn.prop('disabled', false).text('Update');
+                    let errors = xhr.responseJSON.errors;
+                    let errorMessage = '';
+                    if (errors) {
+                        $.each(errors, function(key, value) {
+                            errorMessage += value[0] + '\n';
+                        });
+                    } else {
+                        errorMessage = 'An error occurred. Please try again.';
+                    }
+                    showToast('danger', errorMessage);
+                }
+            });
         });
 
         // Modal Show Events for Map Resize

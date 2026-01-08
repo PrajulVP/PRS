@@ -14,9 +14,12 @@ return new class extends Migration
         Schema::create('fieldstaffs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('sales_manager_id')->constrained('sales_managers')->onDelete('cascade');
-            $table->string('pincode');
-            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->foreignId('sales_manager_id')->nullable()->constrained('sales_managers')->onDelete('set null');
+            $table->string('contact_no')->nullable();
+            $table->text('address')->nullable();
+            $table->string('pincode')->nullable();
+            $table->decimal('latitude', 10, 8)->nullable();
+            $table->decimal('longitude', 11, 8)->nullable();
             $table->timestamps();
         });
     }

@@ -17,7 +17,7 @@ class DistributorController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = Distributor::with('user', 'district', 'area', 'salesManager.user')->select('distributors.*');
+            $data = Distributor::with('user', 'district', 'area')->select('distributors.*');
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->make(true);
@@ -46,7 +46,6 @@ class DistributorController extends Controller
             'pincode' => 'required',
             'district_id' => 'required|exists:districts,id',
             'area_id' => 'required|exists:areas,id',
-            'sales_manager_id' => 'required|exists:sales_managers,id',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
         ]);
@@ -62,8 +61,14 @@ class DistributorController extends Controller
 
         $distributor = new Distributor($distributorData);
         $distributor->user_id = $user->id;
-        $distributor->sales_manager_id = $distributorData['sales_manager_id'];
         $distributor->save();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Distributor added successfully!'
+            ]);
+        }
 
         return redirect()->route('admin.distributors.index')->with('success', 'Distributor added successfully!');
     }
@@ -85,7 +90,6 @@ class DistributorController extends Controller
             'pincode' => 'required',
             'district_id' => 'required|exists:districts,id',
             'area_id' => 'required|exists:areas,id',
-            'sales_manager_id' => 'required|exists:sales_managers,id',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
         ]);
@@ -95,12 +99,21 @@ class DistributorController extends Controller
             'email' => $userData['email'],
             'role' => 'distributor',
         ];
-        if (!empty($userData['password'])) {
-            $userUpdateData['password'] = Hash::make($userData['password']);
+
+        if ($request->filled('password')) {
+            $userUpdateData['password'] = Hash::make($request->password);
         }
+
         $distributor->user->update($userUpdateData);
 
-        $distributor->update(array_merge($distributorData, ['sales_manager_id' => $distributorData['sales_manager_id']]));
+        $distributor->update($distributorData);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Distributor updated successfully!'
+            ]);
+        }
 
         return redirect()->route('admin.distributors.index')->with('success', 'Distributor updated successfully!');
     }

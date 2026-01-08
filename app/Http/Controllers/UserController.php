@@ -119,7 +119,9 @@ class UserController extends Controller
         $request->validate(['name' => 'required', 'email' => 'required|unique:users,email,' . $user->id, 'role' => 'required']);
 
         $data = ['name' => $request->name, 'email' => $request->email, 'role' => $request->role];
-        if ($request->password) $data['password'] = Hash::make($request->password);
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
 
         $user->update($data);
         $user->syncRoles([$request->role]);
