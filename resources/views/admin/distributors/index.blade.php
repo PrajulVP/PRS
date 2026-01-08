@@ -395,7 +395,8 @@
             areaSelect.empty().append('<option value="">Select Area</option>');
             if (districtId) {
                 $.ajax({
-                    url: "/distributors/get-areas/" + districtId,
+                    // url: "/distributors/get-areas/" + districtId,
+                    url: "{{ route('admin.distributors.get-areas') }}" + districtId,
                     type: "GET",
                     dataType: "json",
                     success: function(data) {
