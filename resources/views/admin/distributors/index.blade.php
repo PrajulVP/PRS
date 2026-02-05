@@ -357,8 +357,8 @@
                     }
                 }
             ],
-            dom: "<'row mb-3'<'col-sm-12'B>>" +
-                "<'row mb-3 d-flex align-items-center'<'col-md-6'f><'col-md-6'l>>" +
+            dom: "<'row mb-3'<'col-sm-12'B>>" + // Buttons on top
+                "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" + // 'l' (length) on left, 'f' (filter/search) on right
                 "rtip",
             buttons: {
                 dom: {
@@ -389,26 +389,6 @@
                 ]
             }
         });
-
-        // Dynamic Areas fetching
-        function fetchAreas(districtId, areaSelect, selectedAreaId = null) {
-            areaSelect.empty().append('<option value="">Select Area</option>');
-            if (districtId) {
-                $.ajax({
-                    // url: "/distributors/get-areas/" + districtId,
-                    url: "{{ route('distributors.get-areas') }}" + districtId,
-                    type: "GET",
-                    dataType: "json",
-                    success: function(data) {
-                        $.each(data, function(key, value) {
-                            let selected = (selectedAreaId && selectedAreaId == value.id) ? 'selected' : '';
-                            areaSelect.append('<option value="' + value.id + '" ' + selected + '>' + value.name + '</option>');
-                        });
-                    }
-                });
-            }
-        }
-
         // Handle District Change for Create
         $('.district-select').on('change', function() {
             let container = $(this).closest('form');

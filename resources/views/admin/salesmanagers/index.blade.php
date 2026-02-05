@@ -339,8 +339,8 @@
                     }
                 }
             ],
-            dom: "<'row mb-3'<'col-sm-12'B>>" +
-                "<'row mb-3 d-flex align-items-center'<'col-md-6'f><'col-md-6'l>>" +
+            dom: "<'row mb-3'<'col-sm-12'B>>" + // Buttons on top
+                "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" + // 'l' (length) on left, 'f' (filter/search) on right
                 "rtip",
             buttons: {
                 dom: {

@@ -21,6 +21,7 @@ class FieldStaffController extends Controller
                 $query->where('sales_manager_id', Auth::user()->salesManager->id);
             }
 
+
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->make(true);

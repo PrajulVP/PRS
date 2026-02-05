@@ -405,69 +405,70 @@
 
     $(document).ready(function() {
         var table = $('#retailers-table').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: "{{ route('admin.retailers.index') }}",
-            columns: [{
-                    data: 'id',
-                    name: 'id'
-                },
-                {
-                    data: 'user.name',
-                    name: 'user.name'
-                },
-                {
-                    data: 'user.email',
-                    name: 'user.email'
-                },
-                {
-                    data: 'gst',
-                    name: 'gst'
-                },
-                {
-                    data: 'distributor.user.name',
-                    name: 'distributor.user.name',
-                    defaultContent: 'Direct'
-                },
-                {
-                    data: 'sales_manager.user.name',
-                    name: 'sales_manager.user.name',
-                    defaultContent: 'N/A'
-                },
-                {
-                    data: 'field_staff.user.name',
-                    name: 'field_staff.user.name',
-                    defaultContent: 'N/A'
-                },
-                {
-                    data: 'contact_no',
-                    name: 'contact_no',
-                    defaultContent: 'N/A'
-                },
-                {
-                    data: 'id',
-                    orderable: false,
-                    searchable: false,
-                    render: function(id, type, row) {
-                        let deleteUrl = "{{ route('admin.retailers.destroy', ':id') }}".replace(':id', id);
-                        let csrf = "{{ csrf_token() }}";
-                        let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
-                        return `
-<div class="action-buttons">
-    <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>
-    <button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>
-    <form action="${deleteUrl}" method="POST" class="delete-form" onsubmit="return false;">
-        <input type="hidden" name="_token" value="${csrf}">
-        <input type="hidden" name="_method" value="DELETE">
-        <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
-    </form>
-</div>
-`;
+                processing: true,
+                serverSide: true,
+                ajax: "{{ route('admin.retailers.index') }}",
+                columns: [{
+                        data: 'id',
+                        name: 'id'
+                    },
+                    {
+                        data: 'user.name',
+                        name: 'user.name'
+                    },
+                    {
+                        data: 'user.email',
+                        name: 'user.email'
+                    },
+                    {
+                        data: 'gst',
+                        name: 'gst'
+                    },
+                    {
+                        data: 'distributor.user.name',
+                        name: 'distributor.user.name',
+                        defaultContent: 'Direct'
+                    },
+                    {
+                        data: 'sales_manager.user.name',
+                        name: 'sales_manager.user.name',
+                        defaultContent: 'N/A'
+                    },
+                    {
+                        data: 'field_staff.user.name',
+                        name: 'field_staff.user.name',
+                        defaultContent: 'N/A'
+                    },
+                    {
+                        data: 'contact_no',
+                        name: 'contact_no',
+                        defaultContent: 'N/A'
+                    },
+                    {
+                        data: 'id',
+                        orderable: false,
+                        searchable: false,
+                        render: function(id, type, row) {
+                            let deleteUrl = "{{ route('admin.retailers.destroy', ':id') }}".replace(':id', id);
+                            let csrf = "{{ csrf_token() }}";
+                            let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
+                            return `
+                                <div class="action-buttons">
+                                    <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>
+                                    <button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>
+                                    <form action="${deleteUrl}" method="POST" class="delete-form" onsubmit="return false;">
+                                        <input type="hidden" name="_token" value="${csrf}">
+                                        <input type="hidden" name="_method" value="DELETE">
+                                        <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
+                                    </form>
+                                </div>
+                                `;
+                        }
                     }
-                }
-            ],
-            dom: "<'row mb-3'<'col-sm-12'B>>" + "<'row mb-3 d-flex align-items-center'<'col-md-6'f><'col-md-6'l>>" + "rtip",
-            buttons: {
+                ],
+                dom: "<'row mb-3'<'col-sm-12'B>>" + 
+                    "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" + 
+                    "rtip",
                 dom: {
                     button: {
                         className: ''
@@ -497,121 +498,121 @@
             }
         });
 
-        // Handle Create Retailer AJAX Submission
-        $('#createRetailerForm').on('submit', function(e) {
-            e.preventDefault();
-            // JS Password Validation
-            let password = $('#create_password').val();
-            let confirmPassword = $('#create_password_confirmation').val();
-            if (password !== confirmPassword) {
-                showToast('danger', 'Passwords do not match!');
-                return false;
-            }
+    // Handle Create Retailer AJAX Submission
+    $('#createRetailerForm').on('submit', function(e) {
+        e.preventDefault();
+        // JS Password Validation
+        let password = $('#create_password').val();
+        let confirmPassword = $('#create_password_confirmation').val();
+        if (password !== confirmPassword) {
+            showToast('danger', 'Passwords do not match!');
+            return false;
+        }
 
-            let formData = new FormData(this);
-            let submitBtn = $(this).find('button[type="submit"]');
-            submitBtn.prop('disabled', true).text('Creating...');
+        let formData = new FormData(this);
+        let submitBtn = $(this).find('button[type="submit"]');
+        submitBtn.prop('disabled', true).text('Creating...');
 
-            $.ajax({
-                url: $(this).attr('action'),
-                type: "POST",
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response) {
-                    $('#createRetailerModal').modal('hide');
-                    $('#createRetailerForm')[0].reset();
-                    $('#retailers-table').DataTable().ajax.reload();
-                    submitBtn.prop('disabled', false).text('Create');
-                    showToast('success', response.message);
-                },
-                error: function(xhr) {
-                    submitBtn.prop('disabled', false).text('Create');
-                    let errors = xhr.responseJSON.errors;
-                    let errorMessage = '';
-                    if (errors) {
-                        $.each(errors, function(key, value) {
-                            errorMessage += value[0] + '\n';
-                        });
-                    } else {
-                        errorMessage = 'An error occurred. Please try again.';
-                    }
-                    showToast('error', errorMessage);
+        $.ajax({
+            url: $(this).attr('action'),
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                $('#createRetailerModal').modal('hide');
+                $('#createRetailerForm')[0].reset();
+                $('#retailers-table').DataTable().ajax.reload();
+                submitBtn.prop('disabled', false).text('Create');
+                showToast('success', response.message);
+            },
+            error: function(xhr) {
+                submitBtn.prop('disabled', false).text('Create');
+                let errors = xhr.responseJSON.errors;
+                let errorMessage = '';
+                if (errors) {
+                    $.each(errors, function(key, value) {
+                        errorMessage += value[0] + '\n';
+                    });
+                } else {
+                    errorMessage = 'An error occurred. Please try again.';
                 }
-            });
-        });
-
-        // Handle Edit Retailer AJAX Submission
-        $('#editRetailerForm').on('submit', function(e) {
-            e.preventDefault();
-
-            let password = $('#edit_password').val();
-            let confirmPassword = $('#edit_password_confirmation').val();
-
-            if (password && password !== confirmPassword) {
-                showToast('danger', 'Passwords do not match!');
-                return false;
+                showToast('error', errorMessage);
             }
+        });
+    });
 
-            let formData = new FormData(this);
-            let submitBtn = $(this).find('button[type="submit"]');
-            submitBtn.prop('disabled', true).text('Updating...');
+    // Handle Edit Retailer AJAX Submission
+    $('#editRetailerForm').on('submit', function(e) {
+        e.preventDefault();
 
-            $.ajax({
-                url: $(this).attr('action'),
-                type: "POST",
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response) {
-                    $('#editRetailerModal').modal('hide');
-                    $('#editRetailerForm')[0].reset();
-                    $('#retailers-table').DataTable().ajax.reload();
-                    submitBtn.prop('disabled', false).text('Update');
-                    showToast('success', response.message);
-                },
-                error: function(xhr) {
-                    submitBtn.prop('disabled', false).text('Update');
-                    let errors = xhr.responseJSON.errors;
-                    let errorMessage = '';
-                    if (errors) {
-                        $.each(errors, function(key, value) {
-                            errorMessage += value[0] + '\n';
-                        });
-                    } else {
-                        errorMessage = 'An error occurred. Please try again.';
-                    }
-                    showToast('error', errorMessage);
+        let password = $('#edit_password').val();
+        let confirmPassword = $('#edit_password_confirmation').val();
+
+        if (password && password !== confirmPassword) {
+            showToast('danger', 'Passwords do not match!');
+            return false;
+        }
+
+        let formData = new FormData(this);
+        let submitBtn = $(this).find('button[type="submit"]');
+        submitBtn.prop('disabled', true).text('Updating...');
+
+        $.ajax({
+            url: $(this).attr('action'),
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                $('#editRetailerModal').modal('hide');
+                $('#editRetailerForm')[0].reset();
+                $('#retailers-table').DataTable().ajax.reload();
+                submitBtn.prop('disabled', false).text('Update');
+                showToast('success', response.message);
+            },
+            error: function(xhr) {
+                submitBtn.prop('disabled', false).text('Update');
+                let errors = xhr.responseJSON.errors;
+                let errorMessage = '';
+                if (errors) {
+                    $.each(errors, function(key, value) {
+                        errorMessage += value[0] + '\n';
+                    });
+                } else {
+                    errorMessage = 'An error occurred. Please try again.';
                 }
-            });
+                showToast('error', errorMessage);
+            }
         });
+    });
 
-        // Handle Edit
-        $('#retailers-table').on('click', '.edit-btn', function() {
-            var data = $(this).data('row');
-            $('#edit_name').val(data.user.name);
-            $('#edit_email').val(data.user.email);
-            $('#edit_gst').val(data.gst);
-            $('#edit_contact_no').val(data.contact_no);
-            $('#edit_pincode').val(data.pincode);
-            $('#edit_address').val(data.address);
-            $('#edit_latitude').val(data.latitude);
-            $('#edit_longitude').val(data.longitude);
-            $('#edit_distributor_id').val(data.distributor_id);
-            $('#edit_sales_manager_id').val(data.sales_manager_id);
-            $('#edit_field_staff_id').val(data.field_staff_id);
-            var url = "{{ route('admin.retailers.update', ':id') }}".replace(':id', data.id);
-            $('#editRetailerForm').attr('action', url);
-            $('#editRetailerModal').modal('show');
-        });
+    // Handle Edit
+    $('#retailers-table').on('click', '.edit-btn', function() {
+        var data = $(this).data('row');
+        $('#edit_name').val(data.user.name);
+        $('#edit_email').val(data.user.email);
+        $('#edit_gst').val(data.gst);
+        $('#edit_contact_no').val(data.contact_no);
+        $('#edit_pincode').val(data.pincode);
+        $('#edit_address').val(data.address);
+        $('#edit_latitude').val(data.latitude);
+        $('#edit_longitude').val(data.longitude);
+        $('#edit_distributor_id').val(data.distributor_id);
+        $('#edit_sales_manager_id').val(data.sales_manager_id);
+        $('#edit_field_staff_id').val(data.field_staff_id);
+        var url = "{{ route('admin.retailers.update', ':id') }}".replace(':id', data.id);
+        $('#editRetailerForm').attr('action', url);
+        $('#editRetailerModal').modal('show');
+    });
 
-        // Handle View
-        $('#retailers-table').on('click', '.view-btn', function() {
-            var data = $(this).data('row');
-            let distName = data.distributor && data.distributor.user ? data.distributor.user.name : 'N/A';
-            let smName = data.sales_manager && data.sales_manager.user ? data.sales_manager.user.name : 'N/A';
-            let fsName = data.field_staff && data.field_staff.user ? data.field_staff.user.name : 'N/A';
-            let html = `
+    // Handle View
+    $('#retailers-table').on('click', '.view-btn', function() {
+        var data = $(this).data('row');
+        let distName = data.distributor && data.distributor.user ? data.distributor.user.name : 'N/A';
+        let smName = data.sales_manager && data.sales_manager.user ? data.sales_manager.user.name : 'N/A';
+        let fsName = data.field_staff && data.field_staff.user ? data.field_staff.user.name : 'N/A';
+        let html = `
             <tr>
                 <th>Name</th>
                 <td>${data.user.name}</td>
@@ -649,51 +650,50 @@
                 <td>${fsName}</td>
             </tr>
             `;
-            $('#showRetailerBody').html(html);
-            $('#showRetailerModal').modal('show');
-        });
+        $('#showRetailerBody').html(html);
+        $('#showRetailerModal').modal('show');
+    });
 
-        // Handle Delete
-        $('#retailers-table').on('click', '.delete-form button[type="submit"]', function(e) {
-            e.preventDefault();
-            let form = $(this).closest('form');
-            Swal.fire({
-                title: 'Delete Retailer?',
-                text: "Are you sure?",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'Yes, delete it!'
-            }).then((result) => {
-                if (result.isConfirmed) form.off('submit').submit();
-            });
+    // Handle Delete
+    $('#retailers-table').on('click', '.delete-form button[type="submit"]', function(e) {
+        e.preventDefault();
+        let form = $(this).closest('form');
+        Swal.fire({
+            title: 'Delete Retailer?',
+            text: "Are you sure?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) form.off('submit').submit();
         });
+    });
 
-        // Modal Show Events for Map Resize
-        $('#createRetailerModal').on('shown.bs.modal', function() {
-            if (createMap) {
-                google.maps.event.trigger(createMap, 'resize');
-                createMap.setCenter(createMarker.position);
+    // Modal Show Events for Map Resize
+    $('#createRetailerModal').on('shown.bs.modal', function() {
+        if (createMap) {
+            google.maps.event.trigger(createMap, 'resize');
+            createMap.setCenter(createMarker.position);
+        }
+    }); $('#editRetailerModal').on('shown.bs.modal', function() {
+        if (editMap) {
+            google.maps.event.trigger(editMap, 'resize');
+            let lat = parseFloat($('#edit_latitude').val());
+            let lng = parseFloat($('#edit_longitude').val());
+            if (lat && lng) {
+                let pos = {
+                    lat: lat,
+                    lng: lng
+                };
+                editMarker.position = pos;
+                editMap.setCenter(pos);
+                editMap.setZoom(15);
+            } else {
+                editMap.setCenter(editMarker.position);
             }
-        });
-        $('#editRetailerModal').on('shown.bs.modal', function() {
-            if (editMap) {
-                google.maps.event.trigger(editMap, 'resize');
-                let lat = parseFloat($('#edit_latitude').val());
-                let lng = parseFloat($('#edit_longitude').val());
-                if (lat && lng) {
-                    let pos = {
-                        lat: lat,
-                        lng: lng
-                    };
-                    editMarker.position = pos;
-                    editMap.setCenter(pos);
-                    editMap.setZoom(15);
-                } else {
-                    editMap.setCenter(editMarker.position);
-                }
-            }
-        });
+        }
+    });
     });
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&libraries=places,marker&v=weekly&loading=async&callback=initMap" async defer></script>

@@ -417,8 +417,8 @@
                     name: 'user.email'
                 },
                 {
-                    data: 'user.contact_no',
-                    name: 'user.contact_no',
+                    data: 'contact_no',
+                    name: 'contact_no',
                     defaultContent: 'N/A'
                 },
                 {
@@ -453,8 +453,8 @@
                     }
                 }
             ],
-            dom: "<'row mb-3'<'col-sm-12'B>>" +
-                "<'row mb-3 d-flex align-items-center'<'col-md-6'f><'col-md-6'l>>" +
+            dom: "<'row mb-3'<'col-sm-12'B>>" + // Buttons on top
+                "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" + // 'l' (length) on left, 'f' (filter/search) on right
                 "rtip",
             buttons: {
                 dom: {
@@ -492,7 +492,7 @@
 
             $('#edit_name').val(data.user.name);
             $('#edit_email').val(data.user.email);
-            $('#edit_contact_no').val(data.user.contact_no);
+            $('#edit_contact_no').val(data.contact_no);
             $('#edit_address').val(data.user.address);
             $('#edit_pincode').val(data.pincode);
             $('#edit_latitude').val(data.latitude);
@@ -511,7 +511,7 @@
             let html = `
                 <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Name</label><p class="fw-bold mb-0">${data.user.name}</p></div>
                 <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Email</label><p class="mb-0">${data.user.email}</p></div>
-                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Contact</label><p class="mb-0">${data.user.contact_no || 'N/A'}</p></div>
+                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Contact</label><p class="mb-0">${data.contact_no || 'N/A'}</p></div>
                 <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Sales Manager</label><p class="mb-0">${smName}</p></div>
                 <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Pincode</label><p class="mb-0">${data.pincode}</p></div>
                 <div class="col-12"><label class="fw-bold text-muted small text-uppercase">Address</label><p class="mb-0">${data.user.address || 'N/A'}</p></div>
