@@ -146,16 +146,18 @@
     if (!bodyModeDark) {
       $(".mode").addClass("active");
       localStorage.setItem("mode", "dark-only");
+      document.cookie = "mode=dark-only; path=/; max-age=31536000"; // Set cookie for 1 year
       $("body").addClass("dark-only");
       $("body").removeClass("light");
     }
     if (bodyModeDark) {
       $(".mode").removeClass("active");
       localStorage.setItem("mode", "light");
+      document.cookie = "mode=light; path=/; max-age=31536000"; // Set cookie for 1 year
       $("body").removeClass("dark-only");
       $("body").addClass("light");
     }
-  }); 
+  });
   // $("body").addClass(
   //   localStorage.getItem("mode")
   //     ? localStorage.getItem("mode")
@@ -369,40 +371,40 @@
       ae: "Ø§Ù„Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª",
     },
     {
-        en: "User Management",
-        pt: "Gerenciamento de Usuários",
-        es: "Gestión de Usuarios",
-        fr: "Gestion des utilisateurs",
-        de: "Benutzerverwaltung",
-        cn: "用户管理",
-        ae: "إدارة المستخدمين",
+      en: "User Management",
+      pt: "Gerenciamento de Usuários",
+      es: "Gestión de Usuarios",
+      fr: "Gestion des utilisateurs",
+      de: "Benutzerverwaltung",
+      cn: "用户管理",
+      ae: "إدارة المستخدمين",
     },
     {
-        en: "Products",
-        pt: "Produtos",
-        es: "Productos",
-        fr: "Produits",
-        de: "Produkte",
-        cn: "用户管理",
-        ae: "إدارة المستخدمين",
+      en: "Products",
+      pt: "Produtos",
+      es: "Productos",
+      fr: "Produits",
+      de: "Produkte",
+      cn: "用户管理",
+      ae: "إدارة المستخدمين",
     },
     {
-        en: "Orders",
-        pt: "Pedidos",
-        es: "Pedidos",
-        fr: "Commandes",
-        de: "Bestellungen",
-        cn: "用户管理",
-        ae: "إدارة المستخدمين",
+      en: "Orders",
+      pt: "Pedidos",
+      es: "Pedidos",
+      fr: "Commandes",
+      de: "Bestellungen",
+      cn: "用户管理",
+      ae: "إدارة المستخدمين",
     },
     {
-        en: "Locations",
-        pt: "Locais",
-        es: "Ubicaciones",
-        fr: "Emplacements",
-        de: "Standorte",
-        cn: "用户管理",
-        ae: "إدارة المستخدمين",
+      en: "Locations",
+      pt: "Locais",
+      es: "Ubicaciones",
+      fr: "Emplacements",
+      de: "Standorte",
+      cn: "用户管理",
+      ae: "إدارة المستخدمين",
     },
   ];
 
@@ -424,11 +426,11 @@
   // ================== show and hide input start
   const toggle = document.getElementById("searchIcon")
   let newinput = false
-  toggle.addEventListener("click", function(){
+  toggle.addEventListener("click", function () {
     newinput = !newinput
-    if(newinput){
+    if (newinput) {
       document.getElementById("searchInput").classList.add("show")
-    }else{
+    } else {
       document.getElementById("searchInput").classList.remove("show")
     }
   })
