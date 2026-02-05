@@ -22,8 +22,6 @@
         font-size: 0.75rem !important;
         line-height: 1 !important;
     }
-    
-
 </style>
 
 @section('page-body')
@@ -33,8 +31,8 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5><i class="fa fa-map-pin me-2"></i>Areas</h5>
-                    <button type="button" class="-btn -btn-primary button-64" data-bs-toggle="modal" data-bs-target="#createAreaModal">
-                        <span class="text"><i class="fa fa-plus me-1"></i>Add Area</span>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAreaModal">
+                        <i class="fa fa-plus me-1"></i>Add Area
                     </button>
                 </div>
                 <div class="card-body">

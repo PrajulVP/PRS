@@ -1,5 +1,5 @@
 <!-- Page Sidebar Start-->
-<div class="sidebar-wrapper bg-gradient-pb-2" data-layout="stroke-svg">
+<div class="sidebar-wrapper medical-theme-sidebar" data-layout="stroke-svg">
   <div class="logo-wrapper"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/atom-logo-main-white.png') }}" width="150" alt=""></a>
     <div class="back-btn"><i class="fa fa-angle-left"> </i></div>
     <div class="toggle-sidebar"><i class="status_toggle middle sidebar-toggle" data-feather="grid"> </i></div>
@@ -325,6 +325,18 @@
       width: auto !important;
       height: auto;
     }
+  }
+
+  /* Medical Theme Sidebar */
+  .medical-theme-sidebar {
+    background: linear-gradient(135deg, #00695C 0%, #283593 100%) !important;
+    /* Teal to Indigo */
+  }
+
+  /* Ensure logo wrapper allows gradient to show through */
+  .medical-theme-sidebar .logo-wrapper,
+  .medical-theme-sidebar .logo-icon-wrapper {
+    background: transparent !important;
   }
 </style>
 @endpush

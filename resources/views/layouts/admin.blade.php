@@ -5,7 +5,16 @@
     @include('layouts.partials.head')
 </head>
 
-<body>
+<body class="{{ $_COOKIE['mode'] ?? 'light' }}">
+    <script>
+        (function() {
+            var mode = localStorage.getItem('mode');
+            if (mode) {
+                document.body.classList.add(mode);
+                document.body.classList.remove(mode === 'dark-only' ? 'light' : 'dark-only');
+            }
+        })();
+    </script>
     <!-- Toast Container -->
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;" id="toastContainer"></div>
 
@@ -30,6 +39,11 @@
                 transform: scale(0.95);
                 opacity: 0.8;
             }
+        }
+
+        /* Apply dark background to loader immediately when body has dark-only class */
+        body.dark-only #global-loader {
+            background-color: #1d1e26 !important;
         }
     </style>
 

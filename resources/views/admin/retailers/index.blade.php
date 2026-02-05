@@ -31,8 +31,8 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5><i class="fa fa-users me-2"></i>Retailers</h5>
-                    <button type="button" class="-btn -btn-primary button-64" data-bs-toggle="modal" data-bs-target="#createRetailerModal">
-                        <span class="text"><i class="fa fa-plus me-1"></i>Add Retailer</span>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createRetailerModal">
+                        <i class="fa fa-plus me-1"></i>Add Retailer
                     </button>
                 </div>
                 <div class="card-body">
@@ -466,8 +466,8 @@
                         }
                     }
                 ],
-                dom: "<'row mb-3'<'col-sm-12'B>>" + 
-                    "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" + 
+                dom: "<'row mb-3'<'col-sm-12'B>>" +
+                    "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" +
                     "rtip",
                 dom: {
                     button: {
