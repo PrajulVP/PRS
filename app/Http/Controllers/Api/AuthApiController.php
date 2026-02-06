@@ -18,6 +18,10 @@ use App\Models\User;
  *      @OA\Contact(
  *          email="support@prs.com"
  *      )
+ * ),
+ * @OA\Server(
+ *      url=L5_SWAGGER_CONST_HOST,
+ *      description="API Server"
  * )
  * @OA\SecurityScheme(
  *     securityScheme="bearerAuth",
@@ -37,8 +41,8 @@ class AuthApiController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             required={"email","password"},
-     *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
-     *             @OA\Property(property="password", type="string", format="password", example="password")
+     *             @OA\Property(property="email", type="string", format="email", example="superadmin@gmail.com"),
+     *             @OA\Property(property="password", type="string", format="password", example="12345")
      *         )
      *     ),
      *     @OA\Response(

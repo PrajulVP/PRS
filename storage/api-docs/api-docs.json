@@ -8,6 +8,12 @@
         },
         "version": "1.0.0"
     },
+    "servers": [
+        {
+            "url": "https://logiprompt.com/atomed/public",
+            "description": "API Server"
+        }
+    ],
     "paths": {
         "/api/login": {
             "post": {
@@ -29,12 +35,12 @@
                                     "email": {
                                         "type": "string",
                                         "format": "email",
-                                        "example": "user@example.com"
+                                        "example": "superadmin@gmail.com"
                                     },
                                     "password": {
                                         "type": "string",
                                         "format": "password",
-                                        "example": "password"
+                                        "example": "12345"
                                     }
                                 },
                                 "type": "object"
@@ -107,6 +113,73 @@
                 "responses": {
                     "200": {
                         "description": "Successfully logged out"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/distributors/{distributorId}/products/{productId}/availability": {
+            "get": {
+                "tags": [
+                    "Distributors"
+                ],
+                "summary": "Check product availability in a distributor",
+                "operationId": "8174eb162b72d81bcea9c1af13e0e0d1",
+                "parameters": [
+                    {
+                        "name": "distributorId",
+                        "in": "path",
+                        "description": "Distributor ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "productId",
+                        "in": "path",
+                        "description": "Product ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Product availability status",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "distributor_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "product_id": {
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "available": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "stock": {
+                                            "type": "integer",
+                                            "example": 50
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Distributor or Product not found"
                     }
                 },
                 "security": [
@@ -364,6 +437,10 @@
         {
             "name": "Auth",
             "description": "Auth"
+        },
+        {
+            "name": "Distributors",
+            "description": "Distributors"
         },
         {
             "name": "Products",
