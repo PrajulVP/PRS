@@ -13,7 +13,6 @@ class Retailer extends Model
     use HasFactory;
     protected $fillable = [
         'user_id',
-        'shop_name',
         'distributor_id',
         'field_staff_id',
         'sales_manager_id',
@@ -54,15 +53,5 @@ class Retailer extends Model
     public function salesManager(): BelongsTo
     {
         return $this->belongsTo(SalesManager::class, 'sales_manager_id');
-    }
-
-    public function district()
-    {
-        return $this->belongsTo(District::class);
-    }
-
-    public function area()
-    {
-        return $this->belongsTo(Area::class);
     }
 }

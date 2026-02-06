@@ -158,54 +158,13 @@
                     data: null,
                     render: function(d, t, row) {
                         let json = JSON.stringify(row).replace(/"/g, '&quot;');
-                        let deleteUrl = "{{ route('admin.users.destroy', ':id') }}".replace(':id', row.id);
-                        let activateUrl = "{{ route('admin.users.activate', ':id') }}".replace(':id', row.id);
-
                         let btns = `<div class="d-flex gap-1">`;
                         btns += `<button class="btn btn-primary btn-sm edit-btn" data-row="${json}">Edit</button>`;
-
-                        if (row.status !== 'active') {
-                            btns += `
-                            <form action="${activateUrl}" method="POST">
-                                @csrf
-                                <button class="btn btn-success btn-sm">Activate</button>
-                            </form>`;
-                        }
-
-                        // Delete Button
-                        btns += `
-                            <button type="button" class="btn btn-danger btn-sm delete-btn" data-url="${deleteUrl}">Delete</button>
-                        `;
-
+                        if (row.status !== 'active') btns += `<form action="/users/${row.id}/activate" method="POST">@csrf<button class="btn btn-success btn-sm">Activate</button></form>`;
                         return btns + `</div>`;
                     }
                 }
             ]
-        });
-
-        // Handle Delete via AJAX
-        $('#users-table').on('click', '.delete-btn', function() {
-            let url = $(this).data('url');
-            if (!confirm('Are you sure you want to delete this user?')) return;
-
-            $.ajax({
-                url: url,
-                type: 'DELETE',
-                data: {
-                    _token: "{{ csrf_token() }}"
-                },
-                success: function(response) {
-                    if (response.success) {
-                        table.ajax.reload(null, false);
-                        alert(response.message);
-                    } else {
-                        alert(response.message);
-                    }
-                },
-                error: function(xhr) {
-                    alert('Error deleting user');
-                }
-            });
         });
 
         $('.role-select').change(function() {

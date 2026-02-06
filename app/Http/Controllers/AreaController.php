@@ -51,12 +51,7 @@ class AreaController extends Controller
             // Apply pagination
             $start = $request->input('start');
             $length = $request->input('length');
-
-            if ($length != -1 && $start !== null && $length !== null) {
-                $query->offset($start)->limit($length);
-            }
-
-            $areas = $query->get();
+            $areas = $query->offset($start)->limit($length)->get();
 
             $formattedAreas = $areas->map(function ($area) {
                 return [
@@ -92,14 +87,14 @@ class AreaController extends Controller
         $validated = $request->validate(['district_id' => 'required|exists:districts,id', 'name' => 'required|string']);
         $exists = Area::where('district_id', $validated['district_id'])->where('name', $validated['name'])->exists();
         if ($exists) {
-            if ($request->ajax()) {
+            if ($request->wantsJson()) {
                 return response()->json(['status' => false, 'message' => 'This area already exists for the selected district.', 'data' => null], 422);
             }
             return redirect()->back()->withErrors(['name' => 'This area already exists for the selected district.']);
         }
         $area = Area::create($validated);
 
-        if ($request->ajax()) {
+        if ($request->wantsJson()) {
             return response()->json(['status' => true, 'message' => 'Area created successfully', 'data' => $area], 201);
         }
         return redirect()->route('areas.index')->with('success', 'Area created successfully');
@@ -110,7 +105,7 @@ class AreaController extends Controller
     {
         $area->load('district');
 
-        if ($request->ajax()) {
+        if ($request->wantsJson()) {
             return response()->json(['status' => true, 'message' => 'Area fetched', 'data' => $area]);
         }
         return view('areas.index', compact('area'));
@@ -128,7 +123,7 @@ class AreaController extends Controller
         $validated = $request->validate(['district_id' => 'required|exists:districts,id', 'name' => 'required|string']);
         $exists = Area::where('district_id', $validated['district_id'])->where('name', $validated['name'])->where('id', '<>', $area->id)->exists();
         if ($exists) {
-            if ($request->ajax()) {
+            if ($request->wantsJson()) {
                 return response()->json(['status' => false, 'message' => 'This area already exists for the selected district.', 'data' => null], 422);
             }
             return redirect()->back()->withErrors(['name' => 'This area already exists for the selected district.']);
@@ -136,13 +131,13 @@ class AreaController extends Controller
         try {
             $area->update($validated);
         } catch (QueryException $e) {
-            if ($request->ajax()) {
+            if ($request->wantsJson()) {
                 return response()->json(['status' => false, 'message' => 'Update failed - duplicate', 'data' => null], 422);
             }
             return redirect()->back()->withErrors(['name' => 'Update failed - duplicate']);
         }
 
-        if ($request->ajax()) {
+        if ($request->wantsJson()) {
             return response()->json(['status' => true, 'message' => 'Area updated successfully', 'data' => $area]);
         }
         return redirect()->route('areas.index')->with('success', 'Area updated successfully');
@@ -154,7 +149,7 @@ class AreaController extends Controller
         try {
             $area->delete();
         } catch (QueryException $e) {
-            if ($request->ajax()) {
+            if ($request->wantsJson()) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Area could not be deleted due to related records.',
@@ -164,7 +159,7 @@ class AreaController extends Controller
             return redirect()->back()->withErrors(['error' => 'Area could not be deleted due to related records.']);
         }
 
-        if ($request->ajax()) {
+        if ($request->wantsJson()) {
             return response()->json([
                 'status' => true,
                 'message' => 'Area deleted',

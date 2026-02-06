@@ -157,10 +157,6 @@ class FieldStaffController extends Controller
             $userUpdateData['password'] = Hash::make($request->password);
         }
 
-        if ($request->filled('status')) {
-            $userUpdateData['status'] = $request->status;
-        }
-
         $fieldstaff->user->update($userUpdateData);
 
         $fieldstaff->update($fieldstaffData);
@@ -177,24 +173,8 @@ class FieldStaffController extends Controller
 
     public function destroy(FieldStaff $fieldstaff)
     {
-        try {
-            $fieldstaff->user->delete(); // Assuming cascading or manual user deletion. Original just $fieldstaff->delete();
-            // Sticking to original $fieldstaff->delete() to minimize risk unless logic dictates.
-            // Wait, SalesManager and User controllers use user->delete().
-            // Step 193 line 180: `$fieldstaff->delete()`.
-            // I will stick to what was there but add error handling and AJAX.
-
-            $fieldstaff->delete();
-            if (request()->ajax()) {
-                return response()->json(['success' => true, 'message' => 'Field staff deleted successfully!']);
-            }
-            return redirect()->route('admin.field-staffs.index')->with('success', 'Field staff deleted successfully!');
-        } catch (\Exception $e) {
-            if (request()->ajax()) {
-                return response()->json(['success' => false, 'message' => 'Cannot delete Field Staff. They may have active Retailers.'], 422);
-            }
-            return redirect()->back()->with('error', 'Cannot delete Field Staff.');
-        }
+        $fieldstaff->delete();
+        return redirect()->route('admin.field-staffs.index')->with('success', 'Field staff deleted successfully!');
     }
 
     public function activate(FieldStaff $fieldstaff)
@@ -207,17 +187,5 @@ class FieldStaffController extends Controller
         $fieldstaff->user->save();
 
         return redirect()->route('admin.field-staffs.index')->with('success', 'Field staff activated successfully!');
-    }
-
-    public function deactivate(FieldStaff $fieldstaff)
-    {
-        if (!Auth::user()->hasRole('admin')) {
-            return redirect()->route('fieldstaffs.index')->with('error', 'You are not authorized to deactivate a field staff.');
-        }
-
-        $fieldstaff->user->status = 'inactive';
-        $fieldstaff->user->save();
-
-        return redirect()->route('admin.field-staffs.index')->with('success', 'Field staff deactivated successfully!');
     }
 }

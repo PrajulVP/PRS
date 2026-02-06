@@ -131,39 +131,8 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
-        // Prevent deleting self
-        if (Auth::id() === $user->id) {
-            if (request()->ajax()) {
-                return response()->json(['success' => false, 'message' => 'You cannot delete yourself.'], 403);
-            }
-            return back()->with('error', 'You cannot delete yourself.');
-        }
-
-        // Prevent unauthorized deletion of Super Admins
-        if ($user->hasRole('superadmin') && !Auth::user()->hasRole('superadmin')) {
-            if (request()->ajax()) {
-                return response()->json(['success' => false, 'message' => 'You do not have permission to delete a Super Admin.'], 403);
-            }
-            return back()->with('error', 'You do not have permission to delete a Super Admin.');
-        }
-
-        try {
-            $user->delete();
-            if (request()->ajax()) {
-                return response()->json(['success' => true, 'message' => 'User deleted successfully.']);
-            }
-            return back()->with('success', 'User deleted successfully.');
-        } catch (\Illuminate\Database\QueryException $e) {
-            if (request()->ajax()) {
-                return response()->json(['success' => false, 'message' => 'Cannot delete user. They may have associated records.'], 422);
-            }
-            return back()->with('error', 'Cannot delete user. They may have associated records (e.g. Orders, Retailers) that must be deleted first.');
-        } catch (\Exception $e) {
-            if (request()->ajax()) {
-                return response()->json(['success' => false, 'message' => 'An error occurred.'], 500);
-            }
-            return back()->with('error', 'An error occurred while deleting the user.');
-        }
+        $user->delete();
+        return back()->with('success', 'User deleted.');
     }
 
     public function activateUser(User $user)

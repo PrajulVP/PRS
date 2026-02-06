@@ -170,6 +170,7 @@
 </div>
 
 {{-- Edit Modal --}}
+{{-- Edit Modal --}}
 <div class="modal fade" id="editOrderModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">

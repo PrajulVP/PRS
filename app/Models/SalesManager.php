@@ -26,9 +26,4 @@ class SalesManager extends Model
     {
         return $this->hasMany(FieldStaff::class);
     }
-
-    public function retailers()
-    {
-        return $this->hasMany(Retailer::class);
-    }
 }

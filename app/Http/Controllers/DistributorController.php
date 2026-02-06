@@ -104,10 +104,6 @@ class DistributorController extends Controller
             $userUpdateData['password'] = Hash::make($request->password);
         }
 
-        if ($request->filled('status')) {
-            $userUpdateData['status'] = $request->status;
-        }
-
         $distributor->user->update($userUpdateData);
 
         $distributor->update($distributorData);
@@ -124,53 +120,13 @@ class DistributorController extends Controller
 
     public function destroy(Distributor $distributor)
     {
-        try {
-            $distributor->user->delete(); // Assuming cascading delete or similar logic. Original code just had $distributor->delete() but usually user is parent.
-            // Wait, looking at Step 89 line 127: $distributor->delete();
-            // But if I delete distributor, the user remains?
-            // Usually we delete the user.
-            // SalesManagerController deletes user.
-            // Let's stick to original logic but add try-catch and AJAX.
-            // Actually, if I delete distributor model, foreign key on users table? No, usually user_id on distributor.
-            // If I delete distributor, user is orphaned.
-            // I should probably delete the User associated with it if strict 1:1.
-            // But I will stick to what was there to avoid breaking specific logic, just adding AJAX wrapper.
-            // However, SalesManagerController deletes `$salesManager->user->delete()`.
-            // DistributorController (Step 89) deletes `$distributor->delete()`.
-            // I will trust the original logic but wrap it.
-
-            $distributor->delete();
-            if (request()->ajax()) {
-                return response()->json(['success' => true, 'message' => 'Distributor deleted successfully!']);
-            }
-            return redirect()->route('admin.distributors.index')->with('success', 'Distributor deleted successfully!');
-        } catch (\Exception $e) {
-            if (request()->ajax()) {
-                return response()->json(['success' => false, 'message' => 'Cannot delete Distributor. They may have active Retailers or Orders.'], 422);
-            }
-            return redirect()->back()->with('error', 'Cannot delete Distributor.');
-        }
+        $distributor->delete();
+        return redirect()->route('admin.distributors.index')->with('success', 'Distributor deleted successfully!');
     }
 
     // AJAX: Get areas for selected district
     public function getAreas(District $district)
     {
         return response()->json($district->areas);
-    }
-
-    public function activate(Distributor $distributor)
-    {
-        $distributor->user->status = 'active';
-        $distributor->user->save();
-
-        return redirect()->route('admin.distributors.index')->with('success', 'Distributor activated successfully!');
-    }
-
-    public function deactivate(Distributor $distributor)
-    {
-        $distributor->user->status = 'inactive';
-        $distributor->user->save();
-
-        return redirect()->route('admin.distributors.index')->with('success', 'Distributor deactivated successfully!');
     }
 }
