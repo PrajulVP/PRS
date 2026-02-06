@@ -20,7 +20,8 @@ use App\Http\Controllers\{
     RetailerOrderController,
     RetailerOrderManagementController,
     SettingsController,
-    DistributorOrderController
+    DistributorOrderController,
+    SystemController
 };
 
 Route::get('/', function () {
@@ -155,4 +156,12 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/orders', [RetailerOrderController::class, 'store'])->name('orders.store');
         Route::post('/orders/{retailerOrder}/confirm-delivery', [RetailerOrderController::class, 'confirmDelivery'])->name('orders.confirmDelivery');
     });
+});
+
+Route::prefix('system')->name('system.')->group(function () {
+    Route::get('swagger-generate', [SystemController::class, 'swaggerGenerate'])->name('swagger.generate');
+    Route::get('migrate', [SystemController::class, 'migrate'])->name('migrate');
+    Route::get('migrate-fresh', [SystemController::class, 'migrateFresh'])->name('migrate.fresh');
+    Route::get('migrate-fresh-seed', [SystemController::class, 'migrateFreshSeed'])->name('migrate.fresh.seed');
+    Route::get('optimize', [SystemController::class, 'optimize'])->name('optimize');
 });
