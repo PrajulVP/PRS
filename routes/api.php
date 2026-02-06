@@ -5,7 +5,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthApiController;
 use App\Http\Controllers\Api\RetailerOrderController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\DistributorController;
 
+//add a prefix to all routes
 Route::post('login', [AuthApiController::class, 'login']);
 
 Route::middleware('auth:api')->group(function () {
@@ -14,4 +16,5 @@ Route::middleware('auth:api')->group(function () {
     Route::get('retailer-orders', [RetailerOrderController::class, 'index']);
     Route::get('retailer-orders/{id}/products', [RetailerOrderController::class, 'getOrderItems']);
     Route::get('products', [ProductController::class, 'index']);
+    Route::get('distributors/{distributorId}/products/{productId}/availability', [DistributorController::class, 'checkProductAvailability']);
 });
