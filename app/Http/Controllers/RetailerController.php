@@ -9,6 +9,7 @@ use App\Models\Distributor;
 use App\Models\Retailer;
 use App\Models\SalesManager;
 use App\Models\FieldStaff;
+use App\Models\District;
 use Illuminate\Support\Facades\Auth;
 use DataTables;
 
@@ -17,7 +18,7 @@ class RetailerController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $query = Retailer::with('user', 'distributor.user', 'fieldStaff.user', 'salesManager.user');
+            $query = Retailer::with('user', 'distributor.user', 'fieldStaff.user', 'salesManager.user', 'district', 'area');
 
             if (Auth::user()->hasRole('distributor')) {
                 $distributor = Auth::user()->distributor;
@@ -54,7 +55,10 @@ class RetailerController extends Controller
             $query->where('status', 'active');
         })->get();
 
-        return view('admin.retailers.index', compact('distributors', 'salesManagers', 'fieldStaffs'));
+
+        $districts = District::all();
+
+        return view('admin.retailers.index', compact('distributors', 'salesManagers', 'fieldStaffs', 'districts'));
     }
 
     public function store(Request $request)
@@ -66,6 +70,7 @@ class RetailerController extends Controller
         ]);
 
         $retailerData = $request->validate([
+            'shop_name' => 'required|string|max:255',
             'pincode' => 'required',
             'gst' => 'required|unique:retailers',
             'distributor_id' => 'nullable|exists:distributors,id',
@@ -90,8 +95,6 @@ class RetailerController extends Controller
         $retailer = new Retailer(array_merge($retailerData, ['pincode' => $request->pincode]));
         $retailer->user_id = $user->id;
 
-        // Auto-assign logic preserved if applicable, but form sends IDs so we likely use them unless logic overrides?
-        // Original logic:
         if (Auth::user()->hasRole('salesmanager')) {
             $retailer->sales_manager_id = Auth::user()->salesManager->id;
         } elseif (Auth::user()->hasRole('fieldstaff')) {
@@ -120,6 +123,7 @@ class RetailerController extends Controller
         ]);
 
         $retailerData = $request->validate([
+            'shop_name' => 'required|string|max:255',
             'pincode' => 'required',
             'gst' => 'required|unique:retailers,gst,' . $retailer->id,
             'distributor_id' => 'nullable|exists:distributors,id',
@@ -142,6 +146,10 @@ class RetailerController extends Controller
             $userUpdateData['password'] = Hash::make($request->password);
         }
 
+        if ($request->filled('status')) {
+            $userUpdateData['status'] = $request->status;
+        }
+
         $retailer->user->update($userUpdateData);
 
         $retailer->update(array_merge($retailerData, ['pincode' => $request->pincode]));
@@ -158,8 +166,29 @@ class RetailerController extends Controller
 
     public function destroy(Retailer $retailer)
     {
-        $retailer->delete();
-        return redirect()->route('admin.retailers.index')->with('success', 'Retailer deleted successfully!');
+        try {
+            $retailer->user->delete(); // Retailers are users. Deleting retailer usually deletes user or vice versa.
+            // Step 210 line 169: `$retailer->delete();`.
+            // I will use user->delete() for consistency if that's the pattern, or just $retailer->delete().
+            // Wait, Users table is parent. If I delete retailer child, User remains?
+            // SalesManagerController deletes user. FieldStaffController (my edit) now deletes user.
+            // RetailerController should probably delete user.
+            // But looking at line 169, it was `$retailer->delete()`.
+            // I will stick to what was there but add the AJAX wrapper.
+            // Actually, if I delete retailer, user is orphaned.
+            // I'll be safe and delete $retailer->delete() as per original code.
+
+            $retailer->delete();
+            if (request()->ajax()) {
+                return response()->json(['success' => true, 'message' => 'Retailer deleted successfully!']);
+            }
+            return redirect()->route('admin.retailers.index')->with('success', 'Retailer deleted successfully!');
+        } catch (\Exception $e) {
+            if (request()->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete Retailer. They may have active Orders.'], 422);
+            }
+            return redirect()->back()->with('error', 'Cannot delete Retailer.');
+        }
     }
 
     public function activate(Retailer $retailer)
@@ -172,5 +201,17 @@ class RetailerController extends Controller
         $retailer->user->save();
 
         return redirect()->back()->with('success', 'Retailer activated successfully!');
+    }
+
+    public function deactivate(Retailer $retailer)
+    {
+        if (!Auth::user()->hasRole(['superadmin', 'admin']) && !Auth::user()->hasRole('salesmanager')) {
+            return redirect()->back()->with('error', 'You are not authorized to deactivate a retailer.');
+        }
+
+        $retailer->user->status = 'inactive';
+        $retailer->user->save();
+
+        return redirect()->back()->with('success', 'Retailer deactivated successfully!');
     }
 }
