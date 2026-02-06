@@ -32,9 +32,13 @@ class CreateRetailerEntriesSeeder extends Seeder
             if (!$user->retailer) {
                 Retailer::create([
                     'user_id' => $user->id,
+                    'shop_name' => $user->name . ' Shop',
                     'field_staff_id' => $fieldStaff->id,
                     'sales_manager_id' => $salesManager->id,
                     'distributor_id' => $distributor->id,
+                    'contact_no' => '9876543210',
+                    'address' => 'Default Seeded Address',
+                    'gst' => '22AAAAA0000A1Z5',
                     'pincode' => '600001', // Dummy pincode
                 ]);
             }
