@@ -115,6 +115,240 @@
                     }
                 ]
             }
+        },
+        "/api/products": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Get all products",
+                "operationId": "d97d1c3727cbac49708b85f7d11f7d58",
+                "responses": {
+                    "200": {
+                        "description": "List of products",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "product_code": {
+                                                "type": "string",
+                                                "example": "P001"
+                                            },
+                                            "product_name": {
+                                                "type": "string",
+                                                "example": "Paracetamol 500mg"
+                                            },
+                                            "generic_name": {
+                                                "type": "string",
+                                                "example": "Paracetamol"
+                                            },
+                                            "strip_size": {
+                                                "type": "integer",
+                                                "example": 10
+                                            },
+                                            "box_size": {
+                                                "type": "integer",
+                                                "example": 10
+                                            },
+                                            "carton_size": {
+                                                "type": "integer",
+                                                "example": 100
+                                            },
+                                            "hsn_code": {
+                                                "type": "string",
+                                                "example": "3004"
+                                            },
+                                            "mrp": {
+                                                "type": "string",
+                                                "example": "20.00"
+                                            },
+                                            "ptr": {
+                                                "type": "string",
+                                                "example": "15.00"
+                                            },
+                                            "pts": {
+                                                "type": "string",
+                                                "example": "12.00"
+                                            },
+                                            "gst": {
+                                                "type": "string",
+                                                "example": "12.00"
+                                            },
+                                            "net_amount": {
+                                                "type": "string",
+                                                "example": "18.00"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/retailer-orders": {
+            "get": {
+                "tags": [
+                    "Retailer Orders"
+                ],
+                "summary": "Get all orders for the authenticated retailer",
+                "operationId": "5075d7ee92fb32884388ffd987a770c5",
+                "responses": {
+                    "200": {
+                        "description": "List of retailer orders",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "order_code": {
+                                                "type": "string",
+                                                "example": "RO-X9Y8Z7"
+                                            },
+                                            "total_amount": {
+                                                "type": "string",
+                                                "example": "1500.00"
+                                            },
+                                            "total_items": {
+                                                "type": "integer",
+                                                "example": 3
+                                            },
+                                            "total_quantity": {
+                                                "type": "integer",
+                                                "example": 12
+                                            },
+                                            "status": {
+                                                "type": "string",
+                                                "example": "pending"
+                                            },
+                                            "notes": {
+                                                "type": "string",
+                                                "example": "Urgent delivery"
+                                            },
+                                            "placed_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2023-10-25 10:00:00"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorized - User is not a retailer"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/retailer-orders/{id}/products": {
+            "get": {
+                "tags": [
+                    "Retailer Orders"
+                ],
+                "summary": "Get products in a retailer order",
+                "operationId": "8f98ef572e41da1b9af0fa2d2fd61f5d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Retailer Order ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "order_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "order_code": {
+                                            "type": "string",
+                                            "example": "RO-X9Y8Z7"
+                                        },
+                                        "products": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "product_id": {
+                                                        "type": "integer",
+                                                        "example": 10
+                                                    },
+                                                    "product_name": {
+                                                        "type": "string",
+                                                        "example": "Paracetamol 500mg"
+                                                    },
+                                                    "quantity": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "unit_price": {
+                                                        "type": "string",
+                                                        "example": "10.00"
+                                                    },
+                                                    "total_amount": {
+                                                        "type": "string",
+                                                        "example": "50.00"
+                                                    },
+                                                    "product_details": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Order not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -130,6 +364,14 @@
         {
             "name": "Auth",
             "description": "Auth"
+        },
+        {
+            "name": "Products",
+            "description": "Products"
+        },
+        {
+            "name": "Retailer Orders",
+            "description": "Retailer Orders"
         }
     ],
     "security": [
