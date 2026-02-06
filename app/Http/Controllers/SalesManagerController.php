@@ -22,6 +22,17 @@ class SalesManagerController extends Controller
         return view('admin.salesmanagers.index');
     }
 
+    public function show(SalesManager $salesManager)
+    {
+        // Load relationships needed for the view modal
+        $salesManager->load(['user', 'fieldStaffs.user', 'retailers.user']);
+
+        return response()->json([
+            'success' => true,
+            'data' => $salesManager
+        ]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -80,6 +91,10 @@ class SalesManagerController extends Controller
             $userData['password'] = Hash::make($request->password);
         }
 
+        if ($request->filled('status')) {
+            $userData['status'] = $request->status;
+        }
+
         $salesManager->user->update($userData);
 
         $salesManager->update([
@@ -101,7 +116,38 @@ class SalesManagerController extends Controller
 
     public function destroy(SalesManager $salesManager)
     {
-        $salesManager->user->delete();
-        return redirect()->route('admin.sales-managers.index')->with('success', 'Sales Manager deleted successfully!');
+        try {
+            $salesManager->user->delete();
+            if (request()->ajax()) {
+                return response()->json(['success' => true, 'message' => 'Sales Manager deleted successfully!']);
+            }
+            return redirect()->route('admin.sales-managers.index')->with('success', 'Sales Manager deleted successfully!');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (request()->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete Sales Manager. They likely have assigned Field Staff or Retailers.'], 422);
+            }
+            return redirect()->back()->with('error', 'Cannot delete Sales Manager. They likely have assigned Field Staff or Retailers.');
+        } catch (\Exception $e) {
+            if (request()->ajax()) {
+                return response()->json(['success' => false, 'message' => 'An error occurred while deleting the Sales Manager.'], 500);
+            }
+            return redirect()->back()->with('error', 'An error occurred while deleting the Sales Manager.');
+        }
+    }
+
+    public function activate(SalesManager $salesManager)
+    {
+        $salesManager->user->status = 'active';
+        $salesManager->user->save();
+
+        return redirect()->route('admin.sales-managers.index')->with('success', 'Sales Manager activated successfully!');
+    }
+
+    public function deactivate(SalesManager $salesManager)
+    {
+        $salesManager->user->status = 'inactive';
+        $salesManager->user->save();
+
+        return redirect()->route('admin.sales-managers.index')->with('success', 'Sales Manager deactivated successfully!');
     }
 }

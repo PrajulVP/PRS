@@ -9,14 +9,12 @@
         flex-wrap: nowrap;
     }
 
-    /* Make every child inline-flex (buttons + forms) */
     .action-buttons>* {
         display: inline-flex !important;
         margin: 0 !important;
         padding: 0 !important;
     }
 
-    /* Normalize button sizes */
     .action-buttons .btn {
         padding: 6px 12px !important;
         font-size: 0.75rem !important;
@@ -57,6 +55,7 @@
                                     <th>Email</th>
                                     <th>Contact No</th>
                                     <th>Address</th>
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -119,7 +118,7 @@
         </div>
     </div>
 </div>
-<!-- Create Sales Manager Modal -->
+
 <!-- Edit Modal -->
 <div class="modal fade" id="editSalesManagerModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -157,9 +156,18 @@
                             <label class="form-label">Contact No</label>
                             <input type="text" name="contact_no" id="edit_contact_no" class="form-control">
                         </div>
+                    </div>
+                    <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Address</label>
                             <textarea name="address" id="edit_address" class="form-control"></textarea>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" id="edit_status" class="form-select">
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -174,18 +182,58 @@
 
 <!-- Show Modal -->
 <div class="modal fade" id="showSalesManagerModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Sales Manager Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <table class="table table-bordered">
-                    <tbody id="showSalesManagerBody">
-                        <!-- Filled by JS -->
-                    </tbody>
-                </table>
+                <div class="row">
+                    <div class="col-md-12">
+                        <h6 class="fw-bold mb-3 border-bottom pb-2">Basic Information</h6>
+                        <table class="table table-bordered mb-4">
+                            <tbody id="showSalesManagerBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-3 border-bottom pb-2">Assigned Field Staff (<span id="fieldStaffCount">0</span>)</h6>
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <table class="table table-sm table-striped table-hover">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Contact</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="showFieldStaffBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-3 border-bottom pb-2">Assigned Retailers (<span id="retailerCount">0</span>)</h6>
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <table class="table table-sm table-striped table-hover">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th>Shop Name</th>
+                                        <th>Owner</th>
+                                        <th>Contact</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="showRetailerBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -193,7 +241,6 @@
         </div>
     </div>
 </div>
-
 @endsection
 
 @push('styles')
@@ -215,6 +262,8 @@
 
 <script>
     $(document).ready(function() {
+        const canActivate = @json(Auth::user()->hasRole('superadmin'));
+
         // Handle Create Form AJAX
         $('#createSalesManagerForm').on('submit', function(e) {
             e.preventDefault();
@@ -316,24 +365,45 @@
                     name: 'address'
                 },
                 {
+                    data: 'user.status',
+                    name: 'user.status',
+                    render: function(data, type, row) {
+                        if (data === 'active') {
+                            return `<span class="badge bg-success status-toggle cursor-pointer" style="cursor: pointer;" data-id="${row.id}" data-status="active" title="Click to deactivate">Active</span>`;
+                        } else {
+                            return `<span class="badge bg-danger status-toggle cursor-pointer" style="cursor: pointer;" data-id="${row.id}" data-status="inactive" title="Click to activate">Inactive</span>`;
+                        }
+                    }
+                },
+                {
                     data: 'id',
                     orderable: false,
                     searchable: false,
                     render: function(id, type, row) {
                         let deleteUrl = "{{ route('admin.sales-managers.destroy', ':id') }}".replace(':id', id);
                         let csrf = "{{ csrf_token() }}";
-                        // JSON stringify the row for data usage
                         let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
+
+                        /*
+                        // Removed separate Activate button as requested
+                        let activateBtn = '';
+                        if (canActivate && row.user.status === 'inactive') {
+                            activateBtn = `
+                                <button class="btn btn-sm btn-success activate-btn" 
+                                        data-id="${id}"
+                                        title="Activate">
+                                    <i class="fa fa-check"></i>
+                                </button>`;
+                        }
+                        */
+                        let activateBtn = '';
 
                         return `
                         <div class="action-buttons">
+                            ${activateBtn}
                             <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>
                             <button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>
-                            <form action="${deleteUrl}" method="POST" class="delete-form" onsubmit="return false;">
-                                <input type="hidden" name="_token" value="${csrf}">
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
-                            </form>
+                            <button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>
                         </div>
                     `;
                     }
@@ -378,26 +448,14 @@
 
             $('#edit_name').val(data.name);
             var email = data.user ? data.user.email : (data.email || '');
-            var address = data.user ? data.user.address : (data.address || ''); // Assuming address is on user or sales manager? Table col says 'user.address' but create form says 'address'. Controller: 'address' => $request->address. Wait, in create(), address is stored in SM?
-            // Controller store(): $user->address is not set? invalid code in store(): 'role'=>'salesmanager', 'status'=>'inactive' on User::create. But address is in SalesManager::create.
-            // However, table column 'user.address' implies it is on User?
-            // Looking at Controller: 'address' is stored in SalesManager.
-            // But 'user.address' in DataTable columns?
-            // Wait, previous file had: { data: 'user.address', name: 'user.address' } ?
-            // Let's check previous file content.
-            // Line 189: { data: 'user.address', name: 'user.address' }
-            // Line 89 (Store): 'address' => $request->address maps to SalesManager::create(... 'address' => ...)
-            // Line 121 (Update): 'address' => ... maps to SalesManager->update
-            // So address is on SalesManager, NOT User directly?
-            // BUT, line 24: SalesManager::with('user')->select('sales_managers.*');
-            // If address is on SM, it should be data: 'address'.
-            // Why was it 'user.address'? Maybe incorrect previous code?
-            // I will assume it's on SalesManager as per Controller store/update.
-            // I will fix the column to 'address' in my rewrite.
+            var address = data.address || '';
 
             $('#edit_email').val(email);
             $('#edit_contact_no').val(data.contact_no);
-            $('#edit_address').val(data.address);
+            $('#edit_address').val(address);
+            if (data.user) {
+                $('#edit_status').val(data.user.status);
+            }
 
             var url = "{{ route('admin.sales-managers.update', ':id') }}".replace(':id', data.id);
             $('#editSalesManagerForm').attr('action', url);
@@ -415,24 +473,92 @@
                 <tr><th>Email</th><td>${email}</td></tr>
                 <tr><th>Contact No</th><td>${data.contact_no || 'N/A'}</td></tr>
                 <tr><th>Address</th><td>${data.address || 'N/A'}</td></tr>
+                <tr><th>Status</th><td>${data.user ? (data.user.status === 'active' ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>') : 'N/A'}</td></tr>
             `;
             $('#showSalesManagerBody').html(html);
             $('#showSalesManagerModal').modal('show');
         });
 
-        // Handle Delete
-        $('#sales-managers-table').on('click', '.delete-form button[type="submit"]', function(e) {
-            e.preventDefault();
-            let form = $(this).closest('form');
+        // Handle Delete via AJAX
+        $('#sales-managers-table').on('click', '.delete-btn', function() {
+            let url = $(this).data('url');
             Swal.fire({
                 title: 'Delete Sales Manager?',
-                text: "Are you sure?",
+                text: "Are you sure? This action cannot be undone.",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 confirmButtonText: 'Yes, delete it!'
             }).then((result) => {
-                if (result.isConfirmed) form.off('submit').submit();
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: url,
+                        type: 'DELETE',
+                        data: {
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                table.ajax.reload(null, false);
+                                Swal.fire('Deleted!', response.message, 'success');
+                            } else {
+                                Swal.fire('Error!', response.message, 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            let msg = 'Something went wrong.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            }
+                            Swal.fire('Error!', msg, 'error');
+                        }
+                    });
+                }
+            });
+        });
+
+        // Handle Activate
+        // Handle Status Toggle (Activate/Deactivate)
+        $('#sales-managers-table').on('click', '.status-toggle', function() {
+            if (!canActivate) {
+                showToast('warning', 'You do not have permission to change status.');
+                return;
+            }
+
+            let id = $(this).data('id');
+            let currentStatus = $(this).data('status');
+            let newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+            let actionName = newStatus === 'active' ? 'Activate' : 'Deactivate';
+            let btnColor = newStatus === 'active' ? '#28a745' : '#dc3545'; // Green for activate, Red for deactivate
+
+            // Determine URL based on action
+            let url = "";
+            if (newStatus === 'active') {
+                url = "{{ route('admin.sales-managers.activate', ':id') }}".replace(':id', id);
+            } else {
+                url = "{{ route('admin.sales-managers.deactivate', ':id') }}".replace(':id', id);
+            }
+
+            Swal.fire({
+                title: `${actionName} Sales Manager?`,
+                text: `Are you sure you want to ${actionName.toLowerCase()} this user?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: btnColor,
+                confirmButtonText: `Yes, ${actionName.toLowerCase()}!`
+            }).then(result => {
+                if (result.isConfirmed) {
+                    $.post(url, {
+                        _token: "{{ csrf_token() }}",
+                        _method: 'PATCH'
+                    }, () => {
+                        table.ajax.reload(null, false);
+                        let msg = newStatus === 'active' ? 'Sales Manager activated successfully.' : 'Sales Manager deactivated successfully.';
+                        Swal.fire('Updated!', msg, 'success');
+                    }).fail(function(xhr) {
+                        Swal.fire('Error!', 'Something went wrong.', 'error');
+                    });
+                }
             });
         });
 
