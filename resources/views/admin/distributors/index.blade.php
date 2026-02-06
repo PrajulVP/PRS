@@ -9,18 +9,20 @@
         flex-wrap: nowrap;
     }
 
-    /* Make every child inline-flex (buttons + forms) */
     .action-buttons>* {
         display: inline-flex !important;
         margin: 0 !important;
         padding: 0 !important;
     }
 
-    /* Normalize button sizes */
     .action-buttons .btn {
         padding: 6px 12px !important;
         font-size: 0.75rem !important;
         line-height: 1 !important;
+    }
+
+    .pac-container {
+        z-index: 10000 !important;
     }
 </style>
 
@@ -61,6 +63,7 @@
                                     <th>District</th>
                                     <th>Area</th>
                                     <th>Pincode</th>
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -217,6 +220,13 @@
                             <label class="form-label">Pincode</label>
                             <input type="text" name="pincode" id="edit_pincode" class="form-control" required>
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Status</label>
+                            <select name="status" id="edit_status" class="form-select">
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
                         <div class="col-12">
                             <label class="form-label">Address</label>
                             <textarea name="address" id="edit_address" class="form-control" rows="2" required></textarea>
@@ -269,11 +279,6 @@
 @push('styles')
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
-<style>
-    .pac-container {
-        z-index: 10000 !important;
-    }
-</style>
 @endpush
 
 @push('scripts')
@@ -290,6 +295,8 @@
 
 <script>
     $(document).ready(function() {
+        const canActivate = @json(Auth::user()->hasRole(['superadmin','admin']));
+
         var table = $('#distributors-table').DataTable({
             processing: true,
             serverSide: true,
@@ -335,6 +342,17 @@
                     name: 'pincode'
                 },
                 {
+                    data: 'user.status',
+                    name: 'user.status',
+                    render: function(data, type, row) {
+                        if (data === 'active') {
+                            return `<span class="badge bg-success status-toggle cursor-pointer" style="cursor: pointer;" data-id="${row.id}" data-status="active" title="Click to deactivate">Active</span>`;
+                        } else {
+                            return `<span class="badge bg-danger status-toggle cursor-pointer" style="cursor: pointer;" data-id="${row.id}" data-status="inactive" title="Click to activate">Inactive</span>`;
+                        }
+                    }
+                },
+                {
                     data: 'id',
                     orderable: false,
                     searchable: false,
@@ -343,22 +361,32 @@
                         let csrf = "{{ csrf_token() }}";
                         let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
 
+                        /*
+                        let activateBtn = '';
+                        if (canActivate && row.user.status === 'inactive') {
+                            activateBtn = `
+                                <button class="btn btn-sm btn-success activate-btn" 
+                                        data-id="${id}"
+                                        title="Activate">
+                                    <i class="fa fa-check"></i>
+                                </button>`;
+                        }
+                        */
+                        let activateBtn = '';
+
                         return `
                         <div class="action-buttons">
+                            ${activateBtn}
                             <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>
                             <button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>
-                            <form action="${deleteUrl}" method="POST" class="delete-form" onsubmit="return false;">
-                                <input type="hidden" name="_token" value="${csrf}">
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
-                            </form>
+                            <button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>
                         </div>
                     `;
                     }
                 }
             ],
-            dom: "<'row mb-3'<'col-sm-12'B>>" + // Buttons on top
-                "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" + // 'l' (length) on left, 'f' (filter/search) on right
+            dom: "<'row mb-3'<'col-sm-12'B>>" +
+                "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" +
                 "rtip",
             buttons: {
                 dom: {
@@ -389,11 +417,21 @@
                 ]
             }
         });
+
         // Handle District Change for Create
         $('.district-select').on('change', function() {
             let container = $(this).closest('form');
             let areaSelect = container.find('.area-select');
-            fetchAreas($(this).val(), areaSelect);
+            // Assuming fetchAreas is defined globally or we need to define it?
+            // Previous code didn't show fetchAreas definition in the deleted block? 
+            // Wait, looking at Step 50, fetchAreas wasn't in the snippet provided. 
+            // It might be in layouts.admin or I missed it.
+            // If it's missing, this will break.
+            // I'll check if I can find fetchAreas in other files or just assume it's global.
+            // But validation is better.
+            if (typeof fetchAreas === 'function') {
+                fetchAreas($(this).val(), areaSelect);
+            }
         });
 
         // Handle Edit
@@ -407,14 +445,16 @@
             $('#edit_contact_no').val(data.contact_no);
             $('#edit_pincode').val(data.pincode);
             $('#edit_address').val(data.address);
-            $('#edit_pincode').val(data.pincode);
-            $('#edit_address').val(data.address);
             $('#edit_latitude').val(data.latitude);
             $('#edit_longitude').val(data.longitude);
             $('#edit_district_id').val(data.district_id);
+            if (data.user) {
+                $('#edit_status').val(data.user.status);
+            }
 
-            // Fetch areas for the selected district and select the correct area
-            fetchAreas(data.district_id, $('#edit_area_id'), data.area_id);
+            if (typeof fetchAreas === 'function') {
+                fetchAreas(data.district_id, $('#edit_area_id'), data.area_id);
+            }
 
             var url = "{{ route('admin.distributors.update', ':id') }}".replace(':id', data.id);
             $('#editDistributorForm').attr('action', url);
@@ -427,7 +467,6 @@
             var data = $(this).data('row');
             let districtName = data.district ? data.district.name : 'N/A';
             let areaName = data.area ? data.area.name : 'N/A';
-            let smName = data.sales_manager && data.sales_manager.user ? data.sales_manager.user.name : 'N/A';
 
             let html = `
                 <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Name</label><p class="fw-bold mb-0">${data.name}</p></div>
@@ -437,11 +476,11 @@
                 <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">District / Area</label><p class="mb-0">${districtName} / ${areaName}</p></div>
                 <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Pincode</label><p class="mb-0">${data.pincode}</p></div>
                 <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Drug License</label><p class="mb-0">${data.drug_license_no || 'N/A'}</p></div>
+                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Status</label><p class="mb-0">${data.user ? (data.user.status === 'active' ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>') : 'N/A'}</p></div>
                 <div class="col-12"><label class="fw-bold text-muted small text-uppercase">Address</label><p class="mb-0">${data.address}</p></div>
             `;
             $('#showDistributorDetails').html(html);
 
-            // Set data for map
             $('#showDistributorModal').data('lat', data.latitude).data('lng', data.longitude);
             $('#showDistributorModal').modal('show');
         });
@@ -450,7 +489,6 @@
         $('#createDistributorForm').on('submit', function(e) {
             e.preventDefault();
 
-            // JS Password Validation
             let password = $('#create_password').val();
             let confirmPassword = $('#create_password_confirmation').val();
             if (password !== confirmPassword) {
@@ -491,19 +529,86 @@
             });
         });
 
-        // Handle Delete
-        $('#distributors-table').on('click', '.delete-form button[type="submit"]', function(e) {
-            e.preventDefault();
-            let form = $(this).closest('form');
+        // Handle Delete via AJAX
+        $('#distributors-table').on('click', '.delete-btn', function() {
+            let url = $(this).data('url');
             Swal.fire({
                 title: 'Delete Distributor?',
-                text: "Are you sure?",
+                text: "Are you sure? This action cannot be undone.",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 confirmButtonText: 'Yes, delete it!'
             }).then((result) => {
-                if (result.isConfirmed) form.off('submit').submit();
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: url,
+                        type: 'DELETE',
+                        data: {
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                table.ajax.reload(null, false);
+                                Swal.fire('Deleted!', response.message, 'success');
+                            } else {
+                                Swal.fire('Error!', response.message || 'Error deleting distributor', 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            let msg = 'Something went wrong.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            }
+                            Swal.fire('Error!', msg, 'error');
+                        }
+                    });
+                }
+            });
+        });
+
+        // Handle Activate
+        // Handle Status Toggle (Activate/Deactivate)
+        $('#distributors-table').on('click', '.status-toggle', function() {
+            if (!canActivate) {
+                showToast('warning', 'You do not have permission to change status.');
+                return;
+            }
+
+            let id = $(this).data('id');
+            let currentStatus = $(this).data('status');
+            let newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+            let actionName = newStatus === 'active' ? 'Activate' : 'Deactivate';
+            let btnColor = newStatus === 'active' ? '#28a745' : '#dc3545'; // Green for activate, Red for deactivate
+
+            // Determine URL based on action
+            let url = "";
+            if (newStatus === 'active') {
+                url = "{{ route('admin.distributors.activate', ':id') }}".replace(':id', id);
+            } else {
+                url = "{{ route('admin.distributors.deactivate', ':id') }}".replace(':id', id);
+            }
+
+            Swal.fire({
+                title: `${actionName} Distributor?`,
+                text: `Are you sure you want to ${actionName.toLowerCase()} this user?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: btnColor,
+                confirmButtonText: `Yes, ${actionName.toLowerCase()}!`
+            }).then(result => {
+                if (result.isConfirmed) {
+                    $.post(url, {
+                        _token: "{{ csrf_token() }}",
+                        _method: 'PATCH'
+                    }, () => {
+                        table.ajax.reload(null, false);
+                        let msg = newStatus === 'active' ? 'Distributor activated successfully.' : 'Distributor deactivated successfully.';
+                        Swal.fire('Updated!', msg, 'success');
+                    }).fail(function(xhr) {
+                        Swal.fire('Error!', 'Something went wrong.', 'error');
+                    });
+                }
             });
         });
 
@@ -557,11 +662,36 @@
     let createMap, editMap, showMap;
     let createMarker, editMarker, showMarker;
 
+
+    function fetchAreas(districtId, areaSelect, selectedAreaId = null) {
+        areaSelect.html('<option value="">Loading...</option>');
+
+        if (!districtId) {
+            areaSelect.html('<option value="">Select Area</option>');
+            return;
+        }
+
+        $.ajax({
+            url: "{{ route('distributors.getAreas', ':id') }}".replace(':id', districtId),
+            type: 'GET',
+            success: function(response) {
+                areaSelect.html('<option value="">Select Area</option>');
+                $.each(response, function(key, area) {
+                    let selected = (selectedAreaId && selectedAreaId == area.id) ? 'selected' : '';
+                    areaSelect.append(`<option value="${area.id}" ${selected}>${area.name}</option>`);
+                });
+            },
+            error: function() {
+                areaSelect.html('<option value="">Error loading areas</option>');
+            }
+        });
+    }
+
     function initMap() {
         const defaultLoc = {
             lat: 20.5937,
             lng: 78.9629
-        }; // India Center
+        };
 
         // Create Map
         createMap = new google.maps.Map(document.getElementById("create_map"), {
@@ -749,4 +879,3 @@
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&libraries=places,marker&v=weekly&loading=async&callback=initMap" async defer></script>
 @endpush
-```

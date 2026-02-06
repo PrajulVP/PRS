@@ -71,14 +71,20 @@ Route::middleware(['auth'])->group(function () {
 
     Route::name('admin.')->group(function () {
         Route::resource('sales-managers', SalesManagerController::class);
+        Route::patch('sales-managers/{salesManager}/activate', [SalesManagerController::class, 'activate'])->name('sales-managers.activate');
+        Route::patch('sales-managers/{salesManager}/deactivate', [SalesManagerController::class, 'deactivate'])->name('sales-managers.deactivate');
 
         Route::resource('distributors', DistributorController::class);
+        Route::patch('distributors/{distributor}/activate', [DistributorController::class, 'activate'])->name('distributors.activate');
+        Route::patch('distributors/{distributor}/deactivate', [DistributorController::class, 'deactivate'])->name('distributors.deactivate');
 
         Route::resource('field-staffs', FieldStaffController::class);
         Route::patch('field-staffs/{fieldstaff}/activate', [FieldStaffController::class, 'activate'])->name('field-staffs.activate');
+        Route::patch('field-staffs/{fieldstaff}/deactivate', [FieldStaffController::class, 'deactivate'])->name('field-staffs.deactivate');
 
         Route::resource('retailers', RetailerController::class);
         Route::patch('retailers/{retailer}/activate', [RetailerController::class, 'activate'])->name('retailers.activate');
+        Route::patch('retailers/{retailer}/deactivate', [RetailerController::class, 'deactivate'])->name('retailers.deactivate');
 
         Route::resource('retailer-orders', RetailerOrderManagementController::class)
             // ->except(['create']) // Removed to allow create route
