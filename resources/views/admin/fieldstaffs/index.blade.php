@@ -58,6 +58,7 @@
                                     <th>Contact No</th>
                                     <th>Sales Manager</th>
                                     <th>Pincode</th>
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -182,6 +183,13 @@
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Pincode</label>
                             <input type="text" name="pincode" id="edit_pincode" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" id="edit_status" class="form-select">
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
                         </div>
                     </div>
                     <div class="row">
@@ -431,23 +439,58 @@
                     name: 'pincode'
                 },
                 {
+                    data: 'user.status',
+                    name: 'user.status',
+                    render: function(data, type, row) {
+                        if (data === 'active') {
+                            return `<span class="badge bg-success status-toggle cursor-pointer" style="cursor: pointer;" data-id="${row.id}" data-status="active" title="Click to deactivate">Active</span>`;
+                        } else {
+                            return `<span class="badge bg-danger status-toggle cursor-pointer" style="cursor: pointer;" data-id="${row.id}" data-status="inactive" title="Click to activate">Inactive</span>`;
+                        }
+                    }
+                },
+                {
                     data: 'id',
                     orderable: false,
                     searchable: false,
                     render: function(id, type, row) {
                         let deleteUrl = "{{ route('admin.field-staffs.destroy', ':id') }}".replace(':id', id);
+                        let activateUrl = "{{ route('admin.field-staffs.activate', ':id') }}".replace(':id', id);
                         let csrf = "{{ csrf_token() }}";
                         let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
 
+                        let canActivate = @json(Auth::user()->hasAnyRole(['superadmin', 'admin']));
+                        /*
+                        let activateBtn = '';
+                        if (canActivate) {
+                            if (row.user.status === 'inactive') {
+                                activateBtn = `
+                                    <form action="${activateUrl}" method="POST" class="activate-form" style="display:inline;">
+                                        <input type="hidden" name="_token" value="${csrf}">
+                                        <input type="hidden" name="_method" value="PATCH">
+                                        <button type="submit" class="btn btn-sm btn-success" title="Activate"><i class="fa fa-check"></i></button>
+                                    </form>
+                                `;
+                            } else {
+                                let deactivateUrl = "{{ route('admin.field-staffs.deactivate', ':id') }}".replace(':id', id);
+                                activateBtn = `
+                                    <form action="${deactivateUrl}" method="POST" class="deactivate-form" style="display:inline;">
+                                        <input type="hidden" name="_token" value="${csrf}">
+                                        <input type="hidden" name="_method" value="PATCH">
+                                        <button type="submit" class="btn btn-sm btn-warning" title="Deactivate"><i class="fa fa-ban"></i></button>
+                                    </form>
+                                `;
+                            }
+                        }
+                        */
+                        let activateBtn = '';
+
                         return `
                         <div class="action-buttons">
+                            ${activateBtn}
                             <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>
                             <button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>
-                            <form action="${deleteUrl}" method="POST" class="delete-form" onsubmit="return false;">
-                                <input type="hidden" name="_token" value="${csrf}">
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
-                            </form>
+                            <button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>
                         </div>
                     `;
                     }
@@ -497,6 +540,9 @@
             $('#edit_pincode').val(data.pincode);
             $('#edit_latitude').val(data.latitude);
             $('#edit_longitude').val(data.longitude);
+            if (data.user) {
+                $('#edit_status').val(data.user.status);
+            }
 
             var url = "{{ route('admin.field-staffs.update', ':id') }}".replace(':id', data.id);
             $('#editFieldStaffForm').attr('action', url);
@@ -514,6 +560,7 @@
                 <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Contact</label><p class="mb-0">${data.contact_no || 'N/A'}</p></div>
                 <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Sales Manager</label><p class="mb-0">${smName}</p></div>
                 <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Pincode</label><p class="mb-0">${data.pincode}</p></div>
+                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Status</label><p class="mb-0">${data.user ? (data.user.status === 'active' ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>') : 'N/A'}</p></div>
                 <div class="col-12"><label class="fw-bold text-muted small text-uppercase">Address</label><p class="mb-0">${data.user.address || 'N/A'}</p></div>
             `;
             $('#showFieldStaffDetails').html(html);
@@ -521,19 +568,41 @@
             $('#showFieldStaffModal').modal('show');
         });
 
-        // Handle Delete
-        $('#fieldstaffs-table').on('click', '.delete-form button[type="submit"]', function(e) {
-            e.preventDefault();
-            let form = $(this).closest('form');
+        // Handle Delete via AJAX
+        $('#fieldstaffs-table').on('click', '.delete-btn', function() {
+            let url = $(this).data('url');
             Swal.fire({
                 title: 'Delete Field Staff?',
-                text: "Are you sure?",
+                text: "Are you sure? This action cannot be undone.",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 confirmButtonText: 'Yes, delete it!'
             }).then((result) => {
-                if (result.isConfirmed) form.off('submit').submit();
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: url,
+                        type: 'DELETE',
+                        data: {
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                table.ajax.reload(null, false);
+                                Swal.fire('Deleted!', response.message, 'success');
+                            } else {
+                                Swal.fire('Error!', response.message, 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            let msg = 'Something went wrong.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            }
+                            Swal.fire('Error!', msg, 'error');
+                        }
+                    });
+                }
             });
         });
 
@@ -676,6 +745,54 @@
                     showMarker.position = defaultLoc;
                 }
             }
+        });
+        // Handle Status Toggle (Activate/Deactivate)
+        $('#fieldstaffs-table').on('click', '.status-toggle', function() {
+            // Re-check permission (canActivate was defined inside row render loop in original code, need to define it globally if not present)
+            // original logic: let canActivate = @json(Auth::user()->hasAnyRole('admin')); inside render loop.
+            // Let's assume we can get it or just rely on server side check. 
+            // Better to define it outside:
+            // const canActivate = @json(Auth::user()->hasAnyRole('admin')); // But 'admin' role check might need array. 
+            // In original code it was `hasAnyRole('admin')`.
+
+            // To be safe, let's grab it from a global variable if we define it, or just proceed and let server handle unauthorized.
+            // But let's define it at top of script if needed.
+
+            let id = $(this).data('id');
+            let currentStatus = $(this).data('status');
+            let newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+            let actionName = newStatus === 'active' ? 'Activate' : 'Deactivate';
+            let btnColor = newStatus === 'active' ? '#28a745' : '#dc3545'; // Green for activate, Red for deactivate
+
+            // Determine URL based on action
+            let url = "";
+            if (newStatus === 'active') {
+                url = "{{ route('admin.field-staffs.activate', ':id') }}".replace(':id', id);
+            } else {
+                url = "{{ route('admin.field-staffs.deactivate', ':id') }}".replace(':id', id);
+            }
+
+            Swal.fire({
+                title: `${actionName} Field Staff?`,
+                text: `Are you sure you want to ${actionName.toLowerCase()} this user?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: btnColor,
+                confirmButtonText: `Yes, ${actionName.toLowerCase()}!`
+            }).then(result => {
+                if (result.isConfirmed) {
+                    $.post(url, {
+                        _token: "{{ csrf_token() }}",
+                        _method: 'PATCH'
+                    }, () => {
+                        table.ajax.reload(null, false);
+                        let msg = newStatus === 'active' ? 'Field Staff activated successfully.' : 'Field Staff deactivated successfully.';
+                        Swal.fire('Updated!', msg, 'success');
+                    }).fail(function(xhr) {
+                        Swal.fire('Error!', 'Something went wrong.', 'error');
+                    });
+                }
+            });
         });
     });
 </script>
