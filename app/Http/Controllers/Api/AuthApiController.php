@@ -74,20 +74,16 @@ class AuthApiController extends Controller
 
         $credentials = $request->only('email', 'password');
 
-        try {
-            if (! $token = JWTAuth::attempt($credentials)) {
-                return response()->json(['error' => 'Invalid credentials'], 401);
-            }
-        } catch (JWTException $e) {
-            return response()->json(['error' => 'Could not create token'], 500);
+        if (! $token = auth('api')->attempt($credentials)) {
+            return response()->json(['error' => 'Invalid credentials'], 401);
         }
 
-        $user = auth()->user();
+        $user = auth('api')->user();
 
         return response()->json([
             'access_token' => $token,
             'token_type'   => 'bearer',
-            'expires_in'   => auth('api')->factory()->getTTL() * 60,
+            'expires_in'   => JWTAuth::factory()->getTTL() * 60,
             'user'         => $user,
         ]);
     }
@@ -106,7 +102,7 @@ class AuthApiController extends Controller
      */
     public function profile(Request $request)
     {
-        return response()->json(auth()->user());
+        return response()->json(auth('api')->user());
     }
 
     /**
