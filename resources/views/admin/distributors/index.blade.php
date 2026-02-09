@@ -1,6 +1,26 @@
 @extends('layouts.admin')
 
 <style>
+    .dataTables_filter {
+        text-align: right !important;
+    }
+
+    .dataTables_filter input {
+        width: 230px !important;
+        margin-left: 10px !important;
+    }
+
+    .dataTables_length {
+        text-align: left !important;
+    }
+
+    .dataTables_length select {
+        padding: 5px 10px !important;
+        padding-right: 30px !important;
+        display: inline-block !important;
+        width: auto !important;
+    }
+
     /* Flex wrapper for actions */
     .action-buttons {
         display: inline-flex !important;
@@ -8,6 +28,8 @@
         gap: 4px;
         flex-wrap: nowrap;
     }
+
+
 
     .action-buttons>* {
         display: inline-flex !important;

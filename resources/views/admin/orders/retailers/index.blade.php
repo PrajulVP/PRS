@@ -2,7 +2,7 @@
 
 <style>
     .dataTables_filter {
-        text-align: left !important;
+        text-align: right !important;
     }
 
     .dataTables_filter input {
@@ -11,7 +11,14 @@
     }
 
     .dataTables_length {
-        text-align: right !important;
+        text-align: left !important;
+    }
+
+    .dataTables_length select {
+        padding: 5px 10px !important;
+        padding-right: 30px !important;
+        display: inline-block !important;
+        width: auto !important;
     }
 
     .action-buttons {
@@ -19,6 +26,7 @@
         gap: 4px;
         align-items: center;
     }
+
 
     .action-buttons .btn {
         padding: 4px 8px !important;
@@ -277,7 +285,7 @@
 
         var table = $('#orders-table').DataTable({
             dom: "<'row mb-3'<'col-sm-12'B>>" +
-                "<'row mb-3 d-flex align-items-center'<'col-md-6'f><'col-md-6'l>>" +
+                "<'row mb-3 d-flex align-items-center'<'col-md-6'l><'col-md-6'f>>" +
                 "rtip",
             buttons: {
                 dom: {

@@ -191,15 +191,28 @@ class RetailerOrderManagementController extends Controller
                     $distributor = Auth::user()->distributor;
                     if ($distributor) {
                         $query->where('distributor_id', $distributor->id);
-                        // Distributors see pending, accepted, assigned, etc.
                     } else {
-                        return response()->json(['data' => []]);
+                        // Return empty if no distributor profile found for this user
+                        return response()->json(['draw' => intval($request->input('draw')), 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => []]);
                     }
                 } elseif (Auth::user()->hasRole('fieldstaff')) {
-                    // Field staff logic is usually separate (fieldStaffIndex), but if they access main index:
                     $fieldStaff = Auth::user()->fieldStaff;
                     if ($fieldStaff) {
-                        $query->where('fieldstaff_id', $fieldStaff->id);
+                        // Show orders assigned to this field staff directly
+                        // OR orders from retailers managed by this field staff
+                        $query->where(function ($q) use ($fieldStaff) {
+                            $q->where('fieldstaff_id', $fieldStaff->id)
+                                ->orWhereHas('retailer', function ($subQ) use ($fieldStaff) {
+                                    $subQ->where('field_staff_id', $fieldStaff->id);
+                                });
+                        });
+                    }
+                } elseif (Auth::user()->hasRole('retailer')) {
+                    $retailer = Auth::user()->retailer;
+                    if ($retailer) {
+                        $query->where('retailer_id', $retailer->id);
+                    } else {
+                        return response()->json(['draw' => intval($request->input('draw')), 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => []]);
                     }
                 }
 
@@ -638,5 +651,15 @@ class RetailerOrderManagementController extends Controller
             return response()->json(['success' => 'Invoice removed successfully']);
         }
         return response()->json(['error' => 'No invoice to remove'], 400);
+    }
+
+    public function distributorIndex(Request $request)
+    {
+        return $this->index($request);
+    }
+
+    public function fieldStaffIndex(Request $request)
+    {
+        return $this->index($request);
     }
 }
