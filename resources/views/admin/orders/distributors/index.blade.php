@@ -3,7 +3,7 @@
 <style>
     /* Compact the table */
     .dataTables_filter {
-        text-align: left !important;
+        text-align: right !important;
     }
 
     .dataTables_filter input {
@@ -12,13 +12,14 @@
     }
 
     .dataTables_length {
-        text-align: right !important;
+        text-align: left !important;
     }
 
     .dataTables_length select {
-        margin: 0 5px !important;
-        width: 70px !important;
-        display: inline-block;
+        padding: 5px 10px !important;
+        padding-right: 30px !important;
+        display: inline-block !important;
+        width: auto !important;
     }
 
     #distributor-orders-table tbody td {
@@ -428,7 +429,7 @@
                 }
             ],
             dom: "<'row mb-3'<'col-sm-12'B>>" +
-                "<'row mb-3 d-flex align-items-center'<'col-md-6'f><'col-md-6'l>>" +
+                "<'row mb-3 d-flex align-items-center'<'col-md-6'l><'col-md-6'f>>" +
                 "rtip",
             buttons: {
                 dom: {

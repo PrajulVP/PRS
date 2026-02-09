@@ -11,8 +11,7 @@
             $user = auth()->user();
             @endphp
 
-            @if ($user->hasRole('superadmin') || $user->hasRole('admin'))
-            <!-- Super Admin / Admin Dashboard Content -->
+            <!-- Dashboard Content for All Roles -->
             <div class="row">
                 <!-- Count Cards -->
                 <div class="col-sm-6 col-xl-3 col-lg-6">
@@ -176,11 +175,26 @@
 
                     // Order Status Donut Chart
                     var statusOptions = {
-                        series: [
-                                {{ $retailerOrderStats['pending'] }},
-                                {{ $retailerOrderStats['approved'] }},
-                                {{ $retailerOrderStats['delivered'] }},
-                                {{ $retailerOrderStats['cancelled'] }}
+                        series: [{
+                                {
+                                    $retailerOrderStats['pending']
+                                }
+                            },
+                            {
+                                {
+                                    $retailerOrderStats['approved']
+                                }
+                            },
+                            {
+                                {
+                                    $retailerOrderStats['delivered']
+                                }
+                            },
+                            {
+                                {
+                                    $retailerOrderStats['cancelled']
+                                }
+                            }
                         ],
                         labels: ['Pending', 'Approved', 'Delivered', 'Cancelled'],
                         chart: {
@@ -208,7 +222,7 @@
             </script>
             @endpush
 
-            @endif
+            <!-- End Dashboard Content -->
 
         </div>
     </div>

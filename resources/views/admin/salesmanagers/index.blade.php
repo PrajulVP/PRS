@@ -1,6 +1,26 @@
 @extends('layouts.admin')
 
 <style>
+    .dataTables_filter {
+        text-align: right !important;
+    }
+
+    .dataTables_filter input {
+        width: 230px !important;
+        margin-left: 10px !important;
+    }
+
+    .dataTables_length {
+        text-align: left !important;
+    }
+
+    .dataTables_length select {
+        padding: 5px 10px !important;
+        padding-right: 30px !important;
+        display: inline-block !important;
+        width: auto !important;
+    }
+
     /* Flex wrapper for actions */
     .action-buttons {
         display: inline-flex !important;
@@ -8,6 +28,7 @@
         gap: 4px;
         flex-wrap: nowrap;
     }
+
 
     .action-buttons>* {
         display: inline-flex !important;
@@ -409,8 +430,8 @@
                     }
                 }
             ],
-            dom: "<'row mb-3'<'col-sm-12'B>>" + // Buttons on top
-                "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" + // 'l' (length) on left, 'f' (filter/search) on right
+            dom: "<'row mb-3'<'col-sm-12'B>>" +
+                "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" +
                 "rtip",
             buttons: {
                 dom: {
@@ -466,17 +487,91 @@
         // Handle View Button
         $('#sales-managers-table').on('click', '.view-btn', function() {
             var data = $(this).data('row');
-            var email = data.user ? data.user.email : (data.email || 'N/A');
+            var id = data.id;
+            var url = "{{ route('admin.sales-managers.show', ':id') }}".replace(':id', id);
 
-            let html = `
-                <tr><th>Name</th><td>${data.name}</td></tr>
-                <tr><th>Email</th><td>${email}</td></tr>
-                <tr><th>Contact No</th><td>${data.contact_no || 'N/A'}</td></tr>
-                <tr><th>Address</th><td>${data.address || 'N/A'}</td></tr>
-                <tr><th>Status</th><td>${data.user ? (data.user.status === 'active' ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>') : 'N/A'}</td></tr>
-            `;
-            $('#showSalesManagerBody').html(html);
+            // Clear previous data
+            $('#showSalesManagerBody').html('<tr><td colspan="2" class="text-center">Loading...</td></tr>');
+            $('#showFieldStaffBody').html('<tr><td colspan="4" class="text-center">Loading...</td></tr>');
+            $('#showRetailerBody').html('<tr><td colspan="4" class="text-center">Loading...</td></tr>');
+            $('#fieldStaffCount').text('0');
+            $('#retailerCount').text('0');
+
             $('#showSalesManagerModal').modal('show');
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        let sm = response.data;
+                        let email = sm.user ? sm.user.email : (sm.email || 'N/A');
+                        let status = sm.user ? (sm.user.status === 'active' ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>') : 'N/A';
+
+                        let basicHtml = `
+                            <tr><th>Name</th><td>${sm.name}</td></tr>
+                            <tr><th>Email</th><td>${email}</td></tr>
+                            <tr><th>Contact No</th><td>${sm.contact_no || 'N/A'}</td></tr>
+                            <tr><th>Address</th><td>${sm.address || 'N/A'}</td></tr>
+                            <tr><th>Status</th><td>${status}</td></tr>
+                        `;
+                        $('#showSalesManagerBody').html(basicHtml);
+
+                        // Populate Field Staff
+                        let fsHtml = '';
+                        if (sm.field_staffs && sm.field_staffs.length > 0) {
+                            $('#fieldStaffCount').text(sm.field_staffs.length);
+                            sm.field_staffs.forEach(fs => {
+                                let fsName = fs.user ? fs.user.name : 'N/A';
+                                let fsEmail = fs.user ? fs.user.email : 'N/A';
+                                let fsStatus = fs.user ? (fs.user.status === 'active' ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>') : 'N/A';
+                                fsHtml += `
+                                    <tr>
+                                        <td>${fsName}</td>
+                                        <td>${fsEmail}</td>
+                                        <td>${fs.contact_no || 'N/A'}</td>
+                                        <td>${fsStatus}</td>
+                                    </tr>
+                                `;
+                            });
+                        } else {
+                            fsHtml = '<tr><td colspan="4" class="text-center">No assigned field staff.</td></tr>';
+                        }
+                        $('#showFieldStaffBody').html(fsHtml);
+
+                        // Populate Retailers
+                        // Note: Retailers might be linked directly to SM or via Field Staff.
+                        // The Model has `retailers()` hasMany(Retailer::class), assuming direct link via `sales_manager_id`
+                        let retHtml = '';
+                        if (sm.retailers && sm.retailers.length > 0) {
+                            $('#retailerCount').text(sm.retailers.length);
+                            sm.retailers.forEach(ret => {
+                                let retName = ret.shop_name; // Retailer usually has shop_name
+                                let retOwner = ret.user ? ret.user.name : 'N/A';
+                                let retContact = ret.contact_no || 'N/A';
+                                let retStatus = ret.user ? (ret.user.status === 'active' ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>') : 'N/A';
+                                retHtml += `
+                                    <tr>
+                                        <td>${retName}</td>
+                                        <td>${retOwner}</td>
+                                        <td>${retContact}</td>
+                                        <td>${retStatus}</td>
+                                    </tr>
+                                `;
+                            });
+                        } else {
+                            retHtml = '<tr><td colspan="4" class="text-center">No assigned retailers.</td></tr>';
+                        }
+                        $('#showRetailerBody').html(retHtml);
+
+                    } else {
+                        Swal.fire('Error!', 'Failed to fetch details.', 'error');
+                    }
+                },
+                error: function() {
+                    Swal.fire('Error!', 'Something went wrong fetching details.', 'error');
+                }
+            });
         });
 
         // Handle Delete via AJAX

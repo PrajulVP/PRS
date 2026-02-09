@@ -66,22 +66,27 @@
             </svg><span>Orders</span>
           </a>
           <ul class="sidebar-submenu">
-            {{-- Retailer Role: My Orders --}}
+            {{-- Retailer Role --}}
             @if (Auth::user()->hasRole('retailer'))
             <li><a href="{{ route('retailer.orders.index') }}">My Orders</a></li>
             @endif
 
-            <!-- {{-- Distributor Role --}}
+            {{-- Distributor Role --}}
             @if (Auth::user()->hasRole('distributor'))
-            @if (Auth::user()->hasPermissionToCategory('retailer_orders', 'view'))
             <li><a href="{{ route('distributor.orders.index') }}">Received Orders</a></li>
-            @endif
+
             @if (Auth::user()->hasPermissionToCategory('distributor_orders', 'view'))
             <li><a href="{{ route('admin.distributor-orders.index') }}">My Orders</a></li>
             @endif
-            @endif -->
+            @endif
 
-            @if (!Auth::user()->hasRole('retailer') || !Auth::user()->hasRole('distributor'))
+            {{-- Field Staff Role --}}
+            @if (Auth::user()->hasRole('fieldstaff'))
+            <li><a href="{{ route('fieldstaff.orders.index') }}">Orders</a></li>
+            @endif
+
+            {{-- Admin / Sales Manager / SuperAdmin --}}
+            @if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('superadmin') || Auth::user()->hasRole('salesmanager'))
             @if (Auth::user()->hasPermissionToCategory('retailer_orders', 'view'))
             <li><a href="{{ route('admin.retailer-orders.index') }}">Retailer Orders</a></li>
             @endif
