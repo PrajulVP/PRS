@@ -295,7 +295,7 @@
 
 <script>
     $(document).ready(function() {
-        const canActivate = @json(Auth::user()->hasRole(['superadmin','admin']));
+        const canActivate = @json(Auth::user()->hasRole(['superadmin']));
 
         var table = $('#distributors-table').DataTable({
             processing: true,

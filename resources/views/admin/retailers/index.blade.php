@@ -334,12 +334,12 @@
                     name: 'contact_no'
                 },
                 {
-                    data: 'district.name',
-                    name: 'district.name'
+                    data: 'district_name',
+                    name: 'district_name'
                 },
                 {
-                    data: 'area.name',
-                    name: 'area.name'
+                    data: 'area_name',
+                    name: 'area_name'
                 },
                 {
                     data: 'pincode',
@@ -657,6 +657,33 @@
         });
 
     });
+
+    function fetchAreas(districtId, areaSelect, selectedAreaId = null) {
+        areaSelect.html('<option value="">Loading...</option>');
+
+        if (districtId) {
+            $.ajax({
+                url: "{{ route('retailers.getAreas', ':district') }}".replace(':district', districtId),
+                type: "GET",
+                dataType: "json",
+                success: function(data) {
+                    areaSelect.html('<option value="">Select Area</option>');
+                    $.each(data, function(key, value) {
+                        areaSelect.append('<option value="' + value.id + '">' + value.name + '</option>');
+                    });
+                    if (selectedAreaId) {
+                        areaSelect.val(selectedAreaId);
+                    }
+                },
+                error: function(xhr) {
+                    areaSelect.html('<option value="">Error loading areas</option>');
+                    console.error('Error fetching areas:', xhr);
+                }
+            });
+        } else {
+            areaSelect.html('<option value="">Select Area</option>');
+        }
+    }
 
     // Global Map Variables
     let createMap, editMap, showMap;
