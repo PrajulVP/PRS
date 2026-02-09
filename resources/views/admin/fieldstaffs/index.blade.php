@@ -408,6 +408,12 @@
     }
 
     $(document).ready(function() {
+        const currentUserRole = @json(Auth::user()->getRoleNames());
+        const isSuperAdmin = currentUserRole.includes('superadmin');
+        const isAdmin = currentUserRole.includes('admin');
+        const isSalesManager = currentUserRole.includes('salesmanager');
+        const currentSalesManagerId = @json(Auth::user()->salesManager ? Auth::user()->salesManager->id : null);
+
         var table = $('#fieldstaffs-table').DataTable({
             processing: true,
             serverSide: true,
@@ -441,11 +447,20 @@
                 {
                     data: 'user.status',
                     name: 'user.status',
-                    render: function(data, type, row) {
+                    render: function(data, type, row, meta) {
+                        let canToggle = false;
+                        if (isSuperAdmin || isAdmin) {
+                            canToggle = true;
+                        }
+
+                        let toggleClass = canToggle ? 'status-toggle cursor-pointer' : '';
+                        let cursorStyle = canToggle ? 'style="cursor: pointer;"' : '';
+                        let titleAttr = canToggle ? (data === 'active' ? 'Click to deactivate' : 'Click to activate') : 'Permission denied';
+
                         if (data === 'active') {
-                            return `<span class="badge bg-success status-toggle cursor-pointer" style="cursor: pointer;" data-id="${row.id}" data-status="active" title="Click to deactivate">Active</span>`;
+                            return `<span class="badge bg-success ${toggleClass}" ${cursorStyle} data-id="${row.id}" data-status="active" title="${titleAttr}">Active</span>`;
                         } else {
-                            return `<span class="badge bg-danger status-toggle cursor-pointer" style="cursor: pointer;" data-id="${row.id}" data-status="inactive" title="Click to activate">Inactive</span>`;
+                            return `<span class="badge bg-danger ${toggleClass}" ${cursorStyle} data-id="${row.id}" data-status="inactive" title="${titleAttr}">Inactive</span>`;
                         }
                     }
                 },
@@ -459,7 +474,7 @@
                         let csrf = "{{ csrf_token() }}";
                         let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
 
-                        let canActivate = @json(Auth::user()->hasAnyRole(['superadmin', 'admin']));
+                        let canActivate = @json(Auth::user()->hasAnyRole(['superadmin', 'admin','salesmanager']));
                         /*
                         let activateBtn = '';
                         if (canActivate) {

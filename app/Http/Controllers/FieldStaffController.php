@@ -199,25 +199,23 @@ class FieldStaffController extends Controller
 
     public function activate(FieldStaff $fieldstaff)
     {
-        if (!Auth::user()->hasRole('admin')) {
-            return redirect()->route('fieldstaffs.index')->with('error', 'You are not authorized to activate a field staff.');
+        if (Auth::user()->hasAnyRole(['superadmin', 'admin'])) {
+            $fieldstaff->user->status = 'active';
+            $fieldstaff->user->save();
+            return redirect()->route('admin.field-staffs.index')->with('success', 'Field staff activated successfully!');
         }
 
-        $fieldstaff->user->status = 'active';
-        $fieldstaff->user->save();
-
-        return redirect()->route('admin.field-staffs.index')->with('success', 'Field staff activated successfully!');
+        return redirect()->route('admin.field-staffs.index')->with('error', 'You are not authorized to activate a field staff.');
     }
 
     public function deactivate(FieldStaff $fieldstaff)
     {
-        if (!Auth::user()->hasRole('admin')) {
-            return redirect()->route('fieldstaffs.index')->with('error', 'You are not authorized to deactivate a field staff.');
+        if (Auth::user()->hasAnyRole(['superadmin', 'admin'])) {
+            $fieldstaff->user->status = 'inactive';
+            $fieldstaff->user->save();
+            return redirect()->route('admin.field-staffs.index')->with('success', 'Field staff deactivated successfully!');
         }
 
-        $fieldstaff->user->status = 'inactive';
-        $fieldstaff->user->save();
-
-        return redirect()->route('admin.field-staffs.index')->with('success', 'Field staff deactivated successfully!');
+        return redirect()->route('admin.field-staffs.index')->with('error', 'You are not authorized to deactivate a field staff.');
     }
 }
