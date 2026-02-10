@@ -220,7 +220,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <h6 class="fw-bold mb-3 border-bottom pb-2">Assigned Field Staff (<span id="fieldStaffCount">0</span>)</h6>
                         <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                             <table class="table table-sm table-striped table-hover">
@@ -237,7 +237,7 @@
                             </table>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-12 mt-4">
                         <h6 class="fw-bold mb-3 border-bottom pb-2">Assigned Retailers (<span id="retailerCount">0</span>)</h6>
                         <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                             <table class="table table-sm table-striped table-hover">
@@ -245,6 +245,7 @@
                                     <tr>
                                         <th>Shop Name</th>
                                         <th>Owner</th>
+                                        <th>Email</th>
                                         <th>Contact</th>
                                         <th>Status</th>
                                     </tr>
@@ -360,6 +361,7 @@
         var table = $('#sales-managers-table').DataTable({
             processing: true,
             serverSide: true,
+            order: [],
             ajax: "{{ route('admin.sales-managers.index') }}",
             columns: [{
                     data: null,
@@ -548,12 +550,14 @@
                             sm.retailers.forEach(ret => {
                                 let retName = ret.shop_name; // Retailer usually has shop_name
                                 let retOwner = ret.user ? ret.user.name : 'N/A';
+                                let retEmail = ret.user ? ret.user.email : 'N/A';
                                 let retContact = ret.contact_no || 'N/A';
                                 let retStatus = ret.user ? (ret.user.status === 'active' ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>') : 'N/A';
                                 retHtml += `
                                     <tr>
                                         <td>${retName}</td>
                                         <td>${retOwner}</td>
+                                        <td>${retEmail}</td>
                                         <td>${retContact}</td>
                                         <td>${retStatus}</td>
                                     </tr>

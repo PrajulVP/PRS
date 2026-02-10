@@ -330,6 +330,7 @@
         var table = $('#retailers-table').DataTable({
             processing: true,
             serverSide: true,
+            order: [],
             ajax: "{{ route('admin.retailers.index') }}",
             columns: [{
                     data: null,

@@ -19,7 +19,7 @@ class RetailerController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $query = Retailer::with('user', 'distributor.user', 'fieldStaff.user', 'salesManager.user');
+            $query = Retailer::with('user', 'distributor.user', 'fieldStaff.user', 'salesManager.user')->orderBy('retailers.id', 'desc');
             // 'district' and 'area' relations might be broken if columns missing, so removing them from eager load to be safe, 
             // OR keeping them if they don't crash. 
             // If I keep 'district', and column is missing, it won't crash, just returns null.
