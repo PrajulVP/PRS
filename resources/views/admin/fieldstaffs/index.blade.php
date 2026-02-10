@@ -433,6 +433,7 @@
         var table = $('#fieldstaffs-table').DataTable({
             processing: true,
             serverSide: true,
+            order: [],
             ajax: "{{ route('admin.field-staffs.index') }}",
             columns: [{
                     data: 'id',

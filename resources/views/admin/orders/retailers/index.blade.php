@@ -284,6 +284,7 @@
         var ajaxUrl = "{{ route('admin.retailer-orders.index') }}";
 
         var table = $('#orders-table').DataTable({
+            order: [],
             dom: "<'row mb-3'<'col-sm-12'B>>" +
                 "<'row mb-3 d-flex align-items-center'<'col-md-6'l><'col-md-6'f>>" +
                 "rtip",

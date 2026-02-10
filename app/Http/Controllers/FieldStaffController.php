@@ -15,7 +15,7 @@ class FieldStaffController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $query = FieldStaff::with('user', 'salesManager.user');
+            $query = FieldStaff::with('user', 'salesManager.user')->orderBy('fieldstaffs.id', 'desc');
 
             if (Auth::user()->hasRole('salesmanager')) {
                 $query->where('sales_manager_id', Auth::user()->salesManager->id);

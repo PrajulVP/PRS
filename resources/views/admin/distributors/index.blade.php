@@ -322,6 +322,7 @@
         var table = $('#distributors-table').DataTable({
             processing: true,
             serverSide: true,
+            order: [],
             ajax: "{{ route('admin.distributors.index') }}",
             columns: [{
                     data: null,

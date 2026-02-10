@@ -1,18 +1,5 @@
 @extends('layouts.admin')
 <style>
-    .dataTables_filter {
-        text-align: left !important;
-    }
-
-    .dataTables_filter input {
-        width: 230px !important;
-        margin-left: 10px !important;
-    }
-
-    .dataTables_length {
-        text-align: right !important;
-    }
-
     .action-buttons {
         display: flex !important;
         gap: 4px;
@@ -48,6 +35,14 @@
 
     .full-content.d-none {
         display: none;
+    }
+
+    /* Fix DataTable Length Select Arrow Issue */
+    .dataTables_length select.form-select {
+        padding-right: 2.5rem !important;
+        background-position: right 0.75rem center;
+        width: auto !important;
+        display: inline-block !important;
     }
 </style>
 
@@ -365,11 +360,19 @@
 
 @push('styles')
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
 @endpush
 
 @push('scripts')
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
 <script>
     $(document).ready(function() {
         var table = $('#inventories-table').DataTable({
@@ -383,6 +386,38 @@
                     console.error('Inventories AJAX error:', xhr.responseText);
                     alert('Inventories AJAX Error: ' + (xhr.status ? xhr.status + ' - ' + xhr.statusText : error));
                 }
+            },
+            dom: "<'row mb-3'<'col-sm-12'B>>" +
+                "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+            buttons: {
+                dom: {
+                    button: {
+                        className: ''
+                    }
+                },
+                buttons: [{
+                        extend: 'copy',
+                        className: 'btn btn-sm btn-primary'
+                    },
+                    {
+                        extend: 'csv',
+                        className: 'btn btn-sm btn-secondary'
+                    },
+                    {
+                        extend: 'excel',
+                        className: 'btn btn-sm btn-success'
+                    },
+                    {
+                        extend: 'pdf',
+                        className: 'btn btn-sm btn-danger'
+                    },
+                    {
+                        extend: 'print',
+                        className: 'btn btn-sm btn-info'
+                    }
+                ]
             },
             order: [
                 [2, 'desc']

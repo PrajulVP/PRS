@@ -14,7 +14,7 @@ class SalesManagerController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = SalesManager::with('user')->select('sales_managers.*');
+            $data = SalesManager::with('user')->select('sales_managers.*')->orderBy('sales_managers.id', 'desc');
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->make(true);

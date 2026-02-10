@@ -332,251 +332,254 @@
 @push('scripts')
 <script>
     $(document).ready(function() {
-        // --- Data Variables ---
-        var createItems = {}; // { productId: { id, name, price, stock, quantity } }
-        var editItems = {}; // { productId: { id, name, price, stock, quantity, orderItemId } }
+                // --- Data Variables ---
+                var createItems = {}; // { productId: { id, name, price, stock, quantity } }
+                var editItems = {}; // { productId: { id, name, price, stock, quantity, orderItemId } }
 
-        var table = $('#distributor-orders-table').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: "{{ route('admin.distributor-orders.index') }}",
-            columns: [{
-                    data: 'id',
-                    name: 'id'
-                },
-                {
-                    data: 'order_code',
-                    name: 'order_code'
-                },
-                @if(!Auth::user()->hasRole('distributor')) {
-                    data: 'name',
-                    name: 'distributor.user.name'
-                }, // Distributor Name
-                @endif {
-                    data: 'sales_manager_name',
-                    name: 'salesManager.user.name'
-                },
-                {
-                    data: 'product_summary',
-                    name: 'items.product.product_name',
-                    render: function(data, type, row) {
-                        if (!data) return '-';
-                        let items = data.split('<br>');
-                        if (items.length > 2) {
-                            let visible = items.slice(0, 2).join('<br>');
-                            return `<div>
+                var table = $('#distributor-orders-table').DataTable({
+                    processing: true,
+                    serverSide: true,
+                    order: [],
+                    ajax: "{{ route('admin.distributor-orders.index') }}",
+                    columns: [{
+                            data: 'id',
+                            name: 'id'
+                        },
+                        {
+                            data: 'order_code',
+                            name: 'order_code'
+                        },
+                        @if(!Auth::user()->hasRole('distributor')) {
+                            data: 'name',
+                            name: 'distributor.user.name'
+                        }, // Distributor Name
+                        @endif {
+                            data: 'sales_manager_name',
+                            name: 'salesManager.user.name'
+                        },
+                        {
+                            data: 'product_summary',
+                            name: 'items.product.product_name',
+                            render: function(data, type, row) {
+                                if (!data) return '-';
+                                let items = data.split('<br>');
+                                if (items.length > 2) {
+                                    let visible = items.slice(0, 2).join('<br>');
+                                    return `<div>
                                         <span class="preview-content">${visible}</span>
                                         <span class="full-content d-none">${data}</span>
                                         <br>
                                         <a href="#" class="small text-primary toggle-more-btn" onclick="event.preventDefault(); let p = $(this).parent(); if(p.find('.full-content').hasClass('d-none')){ p.find('.full-content').removeClass('d-none'); p.find('.preview-content').addClass('d-none'); $(this).text('Show Less'); } else { p.find('.full-content').addClass('d-none'); p.find('.preview-content').removeClass('d-none'); $(this).text('Read More'); }">Read More</a>
                                     </div>`;
+                                }
+                                return data;
+                            }
+                        },
+                        {
+                            data: 'total_amount',
+                            name: 'total_amount',
+                            render: function(data, type, row) {
+                                return `<span class="fw-bold text-success"><i class="fa fa-rupee"></i> ${data}</span>`;
+                            }
+                        },
+                        {
+                            data: 'status',
+                            name: 'status',
+                            render: function(data, type, row) {
+                                let status = data.toLowerCase();
+                                let badgeClass = 'bg-secondary';
+                                if (status.includes('pending')) badgeClass = 'bg-warning text-dark';
+                                else if (status.includes('accepted')) badgeClass = 'bg-primary';
+                                else if (status.includes('delivered')) badgeClass = 'bg-success';
+                                else if (status.includes('cancelled')) badgeClass = 'bg-danger';
+
+                                return `<span class="badge ${badgeClass}">${data}</span>`;
+                            }
+                        },
+                        {
+                            data: 'invoice_url',
+                            name: 'invoice_url',
+                            orderable: false,
+                            searchable: false,
+                            render: function(data) {
+                                if (data) {
+                                    let ext = data.split('.').pop().toLowerCase();
+                                    let icon = ext === 'pdf' ? 'fa-file-pdf-o' : 'fa-file-image-o';
+                                    return `<a href="${data}" target="_blank" class="btn btn-xs btn-success"><i class="fa ${icon}"></i> View</a>`;
+                                }
+                                return '<span class="text-muted small">No Invoice</span>';
+                            }
+                        },
+                        {
+                            data: 'id',
+                            orderable: false,
+                            searchable: false,
+                            render: function(data, type, row) {
+                                let btns = `<div class="action-buttons">`;
+                                btns += `<button class="btn btn-info btn-sm view-btn" data-row='${JSON.stringify(row).replace(/'/g, "&apos;")}'><i class="fa fa-eye"></i></button>`;
+                                btns += `<button class="btn btn-primary btn-sm edit-btn" data-row='${JSON.stringify(row).replace(/'/g, "&apos;")}'><i class="fa fa-edit"></i></button>`;
+
+                                if (row.status.toLowerCase().includes('pending')) {
+                                    btns += `<button class="btn btn-warning btn-sm cancel-order-btn" title="Cancel Order" data-id="${row.id}"><i class="fa fa-times"></i></button>`;
+                                }
+                                btns += `<button class="btn btn-danger btn-sm delete-order-btn" title="Delete Order" data-id="${row.id}"><i class="fa fa-trash"></i></button>`;
+
+                                btns += `</div>`;
+                                return btns;
+                            }
                         }
-                        return data;
-                    }
-                },
-                {
-                    data: 'total_amount',
-                    name: 'total_amount',
-                    render: function(data, type, row) {
-                        return `<span class="fw-bold text-success"><i class="fa fa-rupee"></i> ${data}</span>`;
-                    }
-                },
-                {
-                    data: 'status',
-                    name: 'status',
-                    render: function(data, type, row) {
-                        let status = data.toLowerCase();
-                        let badgeClass = 'bg-secondary';
-                        if (status.includes('pending')) badgeClass = 'bg-warning text-dark';
-                        else if (status.includes('accepted')) badgeClass = 'bg-primary';
-                        else if (status.includes('delivered')) badgeClass = 'bg-success';
-                        else if (status.includes('cancelled')) badgeClass = 'bg-danger';
-
-                        return `<span class="badge ${badgeClass}">${data}</span>`;
-                    }
-                },
-                {
-                    data: 'invoice_url',
-                    name: 'invoice_url',
-                    orderable: false,
-                    searchable: false,
-                    render: function(data) {
-                        if (data) {
-                            let ext = data.split('.').pop().toLowerCase();
-                            let icon = ext === 'pdf' ? 'fa-file-pdf-o' : 'fa-file-image-o';
-                            return `<a href="${data}" target="_blank" class="btn btn-xs btn-success"><i class="fa ${icon}"></i> View</a>`;
+                    ],
+                    var table = $('#distributor-orders-table').DataTable({
+                        order: [],
+                        dom: "<'row mb-3'<'col-sm-12'B>>" +
+                            "<'row mb-3 d-flex align-items-center'<'col-md-6'l><'col-md-6'f>>" +
+                            "rtip",
+                        buttons: {
+                            dom: {
+                                button: {
+                                    className: ''
+                                }
+                            },
+                            buttons: [{
+                                    extend: 'copy',
+                                    className: 'btn btn-secondary btn-sm',
+                                    text: '<i class="fa fa-copy"></i> Copy'
+                                },
+                                {
+                                    extend: 'csv',
+                                    className: 'btn btn-info btn-sm text-white',
+                                    text: '<i class="fa fa-file-csv"></i> CSV'
+                                },
+                                {
+                                    extend: 'excel',
+                                    className: 'btn btn-success btn-sm',
+                                    text: '<i class="fa fa-file-excel"></i> Excel'
+                                },
+                                {
+                                    extend: 'pdf',
+                                    className: 'btn btn-danger btn-sm',
+                                    text: '<i class="fa fa-file-pdf"></i> PDF'
+                                },
+                                {
+                                    extend: 'print',
+                                    className: 'btn btn-dark btn-sm',
+                                    text: '<i class="fa fa-print"></i> Print'
+                                }
+                            ]
                         }
-                        return '<span class="text-muted small">No Invoice</span>';
-                    }
-                },
-                {
-                    data: 'id',
-                    orderable: false,
-                    searchable: false,
-                    render: function(data, type, row) {
-                        let btns = `<div class="action-buttons">`;
-                        btns += `<button class="btn btn-info btn-sm view-btn" data-row='${JSON.stringify(row).replace(/'/g, "&apos;")}'><i class="fa fa-eye"></i></button>`;
-                        btns += `<button class="btn btn-primary btn-sm edit-btn" data-row='${JSON.stringify(row).replace(/'/g, "&apos;")}'><i class="fa fa-edit"></i></button>`;
+                    });
 
-                        if (row.status.toLowerCase().includes('pending')) {
-                            btns += `<button class="btn btn-warning btn-sm cancel-order-btn" title="Cancel Order" data-id="${row.id}"><i class="fa fa-times"></i></button>`;
+                    // --- Create Modal Logic ---
+                    $('#btnOpenCreate').click(function() {
+                        createItems = {};
+                        renderCreateItems();
+                        $('#createOrderForm')[0].reset();
+                    });
+
+                    // ... (existing code) ...
+
+                    // --- Actions ---
+
+                    // ... (existing actions) ...
+
+                    // Delete Order Logic
+                    let deleteOrderId = null;
+                    $(document).on('click', '.delete-order-btn', function() {
+                        deleteOrderId = $(this).data('id');
+                        $('#deleteConfirmModal').modal('show');
+                    });
+
+                    $('#confirmDeleteBtn').click(function() {
+                        if (!deleteOrderId) return;
+
+                        $.ajax({
+                            url: `/distributor-orders/${deleteOrderId}`, // Assuming resource route uses destroy
+                            type: 'DELETE',
+                            data: {
+                                _token: '{{ csrf_token() }}'
+                            },
+                            success: function(res) {
+                                $('#deleteConfirmModal').modal('hide');
+                                if (res.success) {
+                                    table.ajax.reload();
+                                    showToast('success', res.success || 'Order deleted successfully');
+                                } else {
+                                    showToast('error', res.error || 'Failed to delete order');
+                                }
+                            },
+                            error: function(xhr) {
+                                $('#deleteConfirmModal').modal('hide');
+                                let err = 'An error occurred.';
+                                if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
+                                showToast('error', err);
+                            }
+                        });
+                    });
+
+                    // --- Create Modal Logic ---
+                    $('#btnOpenCreate').click(function() {
+                        createItems = {};
+                        renderCreateItems();
+                        $('#createOrderForm')[0].reset();
+                    });
+
+                    $('#btn_add_product_create').click(function() {
+                        let select = $('#create_product_select option:selected');
+                        let id = select.val();
+                        if (!id) {
+                            showToast('error', 'Select a product');
+                            return;
                         }
-                        btns += `<button class="btn btn-danger btn-sm delete-order-btn" title="Delete Order" data-id="${row.id}"><i class="fa fa-trash"></i></button>`;
+                        if (createItems[id]) {
+                            showToast('error', 'Already added');
+                            return;
+                        }
 
-                        btns += `</div>`;
-                        return btns;
-                    }
-                }
-            ],
-            dom: "<'row mb-3'<'col-sm-12'B>>" +
-                "<'row mb-3 d-flex align-items-center'<'col-md-6'l><'col-md-6'f>>" +
-                "rtip",
-            buttons: {
-                dom: {
-                    button: {
-                        className: ''
-                    }
-                },
-                buttons: [{
-                        extend: 'copy',
-                        className: 'btn btn-secondary btn-sm',
-                        text: '<i class="fa fa-copy"></i> Copy'
-                    },
-                    {
-                        extend: 'csv',
-                        className: 'btn btn-info btn-sm text-white',
-                        text: '<i class="fa fa-file-csv"></i> CSV'
-                    },
-                    {
-                        extend: 'excel',
-                        className: 'btn btn-success btn-sm',
-                        text: '<i class="fa fa-file-excel"></i> Excel'
-                    },
-                    {
-                        extend: 'pdf',
-                        className: 'btn btn-danger btn-sm',
-                        text: '<i class="fa fa-file-pdf"></i> PDF'
-                    },
-                    {
-                        extend: 'print',
-                        className: 'btn btn-dark btn-sm',
-                        text: '<i class="fa fa-print"></i> Print'
-                    }
-                ]
-            }
-        });
+                        createItems[id] = {
+                            id: id,
+                            name: select.text(),
+                            price: parseFloat(select.data('price')),
+                            stock: parseInt(select.data('stock')),
+                            quantity: 1
+                        };
+                        renderCreateItems();
+                    });
 
-        // --- Create Modal Logic ---
-        $('#btnOpenCreate').click(function() {
-            createItems = {};
-            renderCreateItems();
-            $('#createOrderForm')[0].reset();
-        });
+                    $('#createOrderForm').submit(function(e) {
+                        e.preventDefault();
+                        let form = $(this);
+                        $.ajax({
+                            url: form.attr('action'),
+                            type: 'POST',
+                            data: form.serialize(),
+                            success: function(res) {
+                                if (res.success || res.message) {
+                                    $('#createOrderModal').modal('hide');
+                                    table.ajax.reload();
+                                    showToast('success', res.success || res.message);
+                                } else {
+                                    showToast('error', res.error);
+                                }
+                            },
+                            error: function(xhr) {
+                                let err = 'An error occurred.';
+                                if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
+                                showToast('error', err);
+                            }
+                        });
+                    });
 
-        // ... (existing code) ...
-
-        // --- Actions ---
-
-        // ... (existing actions) ...
-
-        // Delete Order Logic
-        let deleteOrderId = null;
-        $(document).on('click', '.delete-order-btn', function() {
-            deleteOrderId = $(this).data('id');
-            $('#deleteConfirmModal').modal('show');
-        });
-
-        $('#confirmDeleteBtn').click(function() {
-            if (!deleteOrderId) return;
-
-            $.ajax({
-                url: `/distributor-orders/${deleteOrderId}`, // Assuming resource route uses destroy
-                type: 'DELETE',
-                data: {
-                    _token: '{{ csrf_token() }}'
-                },
-                success: function(res) {
-                    $('#deleteConfirmModal').modal('hide');
-                    if (res.success) {
-                        table.ajax.reload();
-                        showToast('success', res.success || 'Order deleted successfully');
-                    } else {
-                        showToast('error', res.error || 'Failed to delete order');
-                    }
-                },
-                error: function(xhr) {
-                    $('#deleteConfirmModal').modal('hide');
-                    let err = 'An error occurred.';
-                    if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
-                    showToast('error', err);
-                }
-            });
-        });
-
-        // --- Create Modal Logic ---
-        $('#btnOpenCreate').click(function() {
-            createItems = {};
-            renderCreateItems();
-            $('#createOrderForm')[0].reset();
-        });
-
-        $('#btn_add_product_create').click(function() {
-            let select = $('#create_product_select option:selected');
-            let id = select.val();
-            if (!id) {
-                showToast('error', 'Select a product');
-                return;
-            }
-            if (createItems[id]) {
-                showToast('error', 'Already added');
-                return;
-            }
-
-            createItems[id] = {
-                id: id,
-                name: select.text(),
-                price: parseFloat(select.data('price')),
-                stock: parseInt(select.data('stock')),
-                quantity: 1
-            };
-            renderCreateItems();
-        });
-
-        $('#createOrderForm').submit(function(e) {
-            e.preventDefault();
-            let form = $(this);
-            $.ajax({
-                url: form.attr('action'),
-                type: 'POST',
-                data: form.serialize(),
-                success: function(res) {
-                    if (res.success || res.message) {
-                        $('#createOrderModal').modal('hide');
-                        table.ajax.reload();
-                        showToast('success', res.success || res.message);
-                    } else {
-                        showToast('error', res.error);
-                    }
-                },
-                error: function(xhr) {
-                    let err = 'An error occurred.';
-                    if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
-                    showToast('error', err);
-                }
-            });
-        });
-
-        function renderCreateItems() {
-            let tbody = $('#create_items_table tbody');
-            tbody.empty();
-            let total = 0;
-            if (Object.keys(createItems).length === 0) {
-                tbody.html('<tr><td colspan="6">No Items</td></tr>');
-            } else {
-                $.each(createItems, function(id, item) {
-                    let sub = item.quantity * item.price;
-                    total += sub;
-                    tbody.append(`
+                    function renderCreateItems() {
+                        let tbody = $('#create_items_table tbody');
+                        tbody.empty();
+                        let total = 0;
+                        if (Object.keys(createItems).length === 0) {
+                            tbody.html('<tr><td colspan="6">No Items</td></tr>');
+                        } else {
+                            $.each(createItems, function(id, item) {
+                                let sub = item.quantity * item.price;
+                                total += sub;
+                                tbody.append(`
                     <tr>
                         <td>${item.name}<input type="hidden" name="items[${id}][product_id]" value="${id}"></td>
                         <td>${item.stock}</td>
@@ -590,136 +593,136 @@
                         <td><button type="button" class="btn btn-danger btn-sm remove-create" data-id="${id}">X</button></td>
                     </tr>
                 `);
-                });
-            }
-            $('#create_grand_total').text(total.toFixed(2));
-        }
-
-        $(document).on('change', '.qty-input-create', function() {
-            let id = $(this).data('id');
-            let val = parseInt($(this).val());
-            if (val < 1) val = 1;
-            if (val > createItems[id].stock) {
-                showToast('error', 'Exceeds stock');
-                val = createItems[id].stock;
-            }
-            createItems[id].quantity = val;
-            renderCreateItems();
-        });
-
-        $(document).on('click', '.remove-create', function() {
-            delete createItems[$(this).data('id')];
-            renderCreateItems();
-        });
-
-        // --- Edit Modal Logic ---
-        $('#distributor-orders-table').on('click', '.edit-btn', function() {
-            let row = $(this).data('row');
-            $('#edit_order_code').text(row.order_code);
-            $('#edit_distributor_name').text(row.name);
-            $('#edit_distributor_id_hidden').val(row.distributor_id);
-
-            let st = row.status.toLowerCase().replace(/ /g, '_');
-            if (st.includes('pending')) st = 'pending';
-            else if (st.includes('accepted_by_sales_manager')) st = 'accepted_by_sales_manager';
-            else if (st.includes('delivered')) st = 'delivered';
-            else if (st.includes('cancelled')) st = 'cancelled';
-            $('#edit_status').val(st);
-
-            // Removed delivery notes population
-
-            editItems = {};
-            row.items.forEach(function(item) {
-                editItems[item.product_id] = {
-                    id: item.product_id,
-                    name: item.product_name,
-                    price: parseFloat(item.unit_price),
-                    stock: 9999,
-                    quantity: item.quantity,
-                    unit: item.unit || 'Box',
-                    orderItemId: item.order_item_id
-                };
-            });
-            renderEditItems();
-
-            let url = "{{ route('admin.distributor-orders.update', ':id') }}".replace(':id', row.id);
-            $('#editOrderForm').attr('action', url);
-            $('#editOrderModal').modal('show');
-        });
-
-        $('#btn_add_product_edit').click(function() {
-            let selectEl = $('#edit_product_select');
-            let id = selectEl.val(); // Get value directly from select
-            let selectedOption = selectEl.find('option:selected'); // Get selected option
-
-            if (!id) {
-                showToast('error', 'Select a product');
-                return;
-            }
-            if (editItems[id]) {
-                editItems[id].quantity += 1;
-                renderEditItems();
-                return;
-            }
-
-            editItems[id] = {
-                id: id,
-                name: selectedOption.text(),
-                price: parseFloat(selectedOption.data('price')) || 0,
-                stock: parseInt(selectedOption.data('stock')) || 0,
-                quantity: 1,
-                unit: 'Box',
-                orderItemId: null
-            };
-            renderEditItems();
-        });
-
-        $('#editOrderForm').submit(function(e) {
-            e.preventDefault();
-            let form = $(this);
-            $.ajax({
-                url: form.attr('action'),
-                type: 'POST',
-                data: form.serialize(),
-                success: function(res) {
-                    if (res.success || res.message) {
-                        $('#editOrderModal').modal('hide');
-                        table.ajax.reload();
-                        showToast('success', res.success || res.message);
-                    } else {
-                        showToast('error', res.error);
+                            });
+                        }
+                        $('#create_grand_total').text(total.toFixed(2));
                     }
-                },
-                error: function(xhr) {
-                    let err = 'An error occurred.';
-                    if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
-                    showToast('error', err);
-                }
-            });
-        });
 
-        function renderEditItems() {
-            let tbody = $('#edit_items_table tbody');
-            tbody.empty();
-            let total = 0;
-            if (Object.keys(editItems).length === 0) {
-                tbody.html('<tr><td colspan="5" class="text-center text-muted">No Items Added</td></tr>');
-            } else {
-                $.each(editItems, function(key, item) {
-                    let price = parseFloat(item.price) || 0;
-                    let qty = parseInt(item.quantity) || 1;
-                    let sub = qty * price;
-                    total += sub;
-
-                    // Ensure ID is passed as string to avoid type confusion
-                    let rowId = item.id;
-                    let unit = item.unit || 'Box';
-                    let options = '';
-                    ['Box', 'Carton', 'Strips'].forEach(function(u) {
-                        options += `<option value="${u}" ${unit === u ? 'selected' : ''}>${u}</option>`;
+                    $(document).on('change', '.qty-input-create', function() {
+                        let id = $(this).data('id');
+                        let val = parseInt($(this).val());
+                        if (val < 1) val = 1;
+                        if (val > createItems[id].stock) {
+                            showToast('error', 'Exceeds stock');
+                            val = createItems[id].stock;
+                        }
+                        createItems[id].quantity = val;
+                        renderCreateItems();
                     });
 
-                    tbody.append(`
+                    $(document).on('click', '.remove-create', function() {
+                        delete createItems[$(this).data('id')];
+                        renderCreateItems();
+                    });
+
+                    // --- Edit Modal Logic ---
+                    $('#distributor-orders-table').on('click', '.edit-btn', function() {
+                        let row = $(this).data('row');
+                        $('#edit_order_code').text(row.order_code);
+                        $('#edit_distributor_name').text(row.name);
+                        $('#edit_distributor_id_hidden').val(row.distributor_id);
+
+                        let st = row.status.toLowerCase().replace(/ /g, '_');
+                        if (st.includes('pending')) st = 'pending';
+                        else if (st.includes('accepted_by_sales_manager')) st = 'accepted_by_sales_manager';
+                        else if (st.includes('delivered')) st = 'delivered';
+                        else if (st.includes('cancelled')) st = 'cancelled';
+                        $('#edit_status').val(st);
+
+                        // Removed delivery notes population
+
+                        editItems = {};
+                        row.items.forEach(function(item) {
+                            editItems[item.product_id] = {
+                                id: item.product_id,
+                                name: item.product_name,
+                                price: parseFloat(item.unit_price),
+                                stock: 9999,
+                                quantity: item.quantity,
+                                unit: item.unit || 'Box',
+                                orderItemId: item.order_item_id
+                            };
+                        });
+                        renderEditItems();
+
+                        let url = "{{ route('admin.distributor-orders.update', ':id') }}".replace(':id', row.id);
+                        $('#editOrderForm').attr('action', url);
+                        $('#editOrderModal').modal('show');
+                    });
+
+                    $('#btn_add_product_edit').click(function() {
+                        let selectEl = $('#edit_product_select');
+                        let id = selectEl.val(); // Get value directly from select
+                        let selectedOption = selectEl.find('option:selected'); // Get selected option
+
+                        if (!id) {
+                            showToast('error', 'Select a product');
+                            return;
+                        }
+                        if (editItems[id]) {
+                            editItems[id].quantity += 1;
+                            renderEditItems();
+                            return;
+                        }
+
+                        editItems[id] = {
+                            id: id,
+                            name: selectedOption.text(),
+                            price: parseFloat(selectedOption.data('price')) || 0,
+                            stock: parseInt(selectedOption.data('stock')) || 0,
+                            quantity: 1,
+                            unit: 'Box',
+                            orderItemId: null
+                        };
+                        renderEditItems();
+                    });
+
+                    $('#editOrderForm').submit(function(e) {
+                        e.preventDefault();
+                        let form = $(this);
+                        $.ajax({
+                            url: form.attr('action'),
+                            type: 'POST',
+                            data: form.serialize(),
+                            success: function(res) {
+                                if (res.success || res.message) {
+                                    $('#editOrderModal').modal('hide');
+                                    table.ajax.reload();
+                                    showToast('success', res.success || res.message);
+                                } else {
+                                    showToast('error', res.error);
+                                }
+                            },
+                            error: function(xhr) {
+                                let err = 'An error occurred.';
+                                if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
+                                showToast('error', err);
+                            }
+                        });
+                    });
+
+                    function renderEditItems() {
+                        let tbody = $('#edit_items_table tbody');
+                        tbody.empty();
+                        let total = 0;
+                        if (Object.keys(editItems).length === 0) {
+                            tbody.html('<tr><td colspan="5" class="text-center text-muted">No Items Added</td></tr>');
+                        } else {
+                            $.each(editItems, function(key, item) {
+                                let price = parseFloat(item.price) || 0;
+                                let qty = parseInt(item.quantity) || 1;
+                                let sub = qty * price;
+                                total += sub;
+
+                                // Ensure ID is passed as string to avoid type confusion
+                                let rowId = item.id;
+                                let unit = item.unit || 'Box';
+                                let options = '';
+                                ['Box', 'Carton', 'Strips'].forEach(function(u) {
+                                    options += `<option value="${u}" ${unit === u ? 'selected' : ''}>${u}</option>`;
+                                });
+
+                                tbody.append(`
                     <tr>
                         <td>${item.name}
                             <input type="hidden" name="items[${rowId}][product_id]" value="${rowId}">
@@ -741,173 +744,173 @@
                         <td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm remove-edit" data-id="${rowId}"><i class="fa fa-times"></i></button></td>
                     </tr>
                 `);
-                });
-            }
-            $('#edit_grand_total').text(total.toFixed(2));
-        }
+                            });
+                        }
+                        $('#edit_grand_total').text(total.toFixed(2));
+                    }
 
-        $(document).on('change', '.unit-select-edit', function() {
-            let id = $(this).data('id');
-            let val = $(this).val();
-            if (editItems[id]) {
-                editItems[id].unit = val;
-                // Update hidden input directly to avoid full table re-render
-                $(`input[name="items[${id}][unit]"]`).val(val);
-            }
-        });
+                    $(document).on('change', '.unit-select-edit', function() {
+                        let id = $(this).data('id');
+                        let val = $(this).val();
+                        if (editItems[id]) {
+                            editItems[id].unit = val;
+                            // Update hidden input directly to avoid full table re-render
+                            $(`input[name="items[${id}][unit]"]`).val(val);
+                        }
+                    });
 
-        $(document).on('change', '.qty-input-edit', function() {
-            let id = $(this).data('id');
-            let val = parseInt($(this).val());
-            if (val < 1) val = 1;
-            if (editItems[id]) {
-                editItems[id].quantity = val;
-                renderEditItems();
-            }
-        });
+                    $(document).on('change', '.qty-input-edit', function() {
+                        let id = $(this).data('id');
+                        let val = parseInt($(this).val());
+                        if (val < 1) val = 1;
+                        if (editItems[id]) {
+                            editItems[id].quantity = val;
+                            renderEditItems();
+                        }
+                    });
 
-        $(document).on('click', '.remove-edit', function() {
-            let id = $(this).data('id');
-            if (editItems[id]) {
-                delete editItems[id];
-                renderEditItems();
-            }
-        });
+                    $(document).on('click', '.remove-edit', function() {
+                        let id = $(this).data('id');
+                        if (editItems[id]) {
+                            delete editItems[id];
+                            renderEditItems();
+                        }
+                    });
 
-        // --- Show Modal ---
-        $('#distributor-orders-table').on('click', '.view-btn', function() {
-            let row = $(this).data('row');
-            let html = `
+                    // --- Show Modal ---
+                    $('#distributor-orders-table').on('click', '.view-btn', function() {
+                        let row = $(this).data('row');
+                        let html = `
             <tr><th>Order Code</th><td>${row.order_code}</td></tr>
             <tr><th>Distributor</th><td>${row.name}</td></tr>
             <tr><th>Sales Manager</th><td>${row.sales_manager_name}</td></tr>
             <tr><th>Status</th><td>${row.status}</td></tr>
             <tr><th>Placed At</th><td>${row.placed_at}</td></tr>
          `;
-            $('#showOrderBody').html(html);
+                        $('#showOrderBody').html(html);
 
-            let itemsHtml = '';
-            row.items.forEach(function(item) {
-                itemsHtml += `<tr>
+                        let itemsHtml = '';
+                        row.items.forEach(function(item) {
+                            itemsHtml += `<tr>
                 <td>${item.product_name}</td>
                 <td>${item.quantity}</td>
                 <td>${item.unit_price}</td>
                 <td>${item.total_amount}</td>
              </tr>`;
-            });
-            $('#showOrderItemsBody').html(itemsHtml);
-            $('#showOrderModal').modal('show');
-        });
-
-        // --- Actions ---
-        $(document).on('click', '.accept-btn', function() {
-            let id = $(this).data('id');
-            let action = $(this).data('action'); // 'sm' or 'admin'
-            let url = action === 'sm' ? `/distributor-orders/${id}/accept-by-sales-manager` : `/distributor-orders/${id}/accept-by-admin`;
-
-            Swal.fire({
-                title: 'Accept this order?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, Accept'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.post(url, {
-                        _token: '{{ csrf_token() }}'
-                    }, function(res) {
-                        if (res.success) {
-                            table.ajax.reload();
-                            showToast('success', res.success);
-                        } else showToast('error', res.error);
-                    }).fail(function() {
-                        showToast('error', 'Request failed');
+                        });
+                        $('#showOrderItemsBody').html(itemsHtml);
+                        $('#showOrderModal').modal('show');
                     });
-                }
-            });
-        });
 
-        // Cancel Order Logic (Pending Orders)
-        let cancelOrderId = null;
-        $(document).on('click', '.cancel-order-btn', function() {
-            cancelOrderId = $(this).data('id');
-            $('#cancel_reason_input').val(''); // Reset input
-            $('#cancelConfirmModal').modal('show');
-        });
+                    // --- Actions ---
+                    $(document).on('click', '.accept-btn', function() {
+                        let id = $(this).data('id');
+                        let action = $(this).data('action'); // 'sm' or 'admin'
+                        let url = action === 'sm' ? `/distributor-orders/${id}/accept-by-sales-manager` : `/distributor-orders/${id}/accept-by-admin`;
 
-        $('#confirmCancelBtn').click(function() {
-            if (!cancelOrderId) return;
-
-            let reason = $('#cancel_reason_input').val().trim();
-            if (!reason) {
-                showToast('error', 'Please provide a cancellation reason.');
-                return;
-            }
-
-            $.post(`/distributor-orders/${cancelOrderId}/cancel-order`, {
-                _token: '{{ csrf_token() }}',
-                cancellation_reason: reason
-            }, function(res) {
-                $('#cancelConfirmModal').modal('hide');
-                if (res.success) {
-                    table.ajax.reload();
-                    showToast('success', res.success);
-                } else showToast('error', res.error);
-            }).fail(function(xhr) {
-                $('#cancelConfirmModal').modal('hide');
-                let err = 'Request failed';
-                if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
-                showToast('error', err);
-            });
-        });
-
-        $(document).on('click', '.request-cancel-btn', function() {
-            let id = $(this).data('id');
-            Swal.fire({
-                title: 'Request Cancellation',
-                input: 'text',
-                inputLabel: 'Reason',
-                inputPlaceholder: 'Enter cancellation reason',
-                showCancelButton: true,
-                inputValidator: (value) => {
-                    if (!value) {
-                        return 'You need to write something!'
-                    }
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.post(`/distributor-orders/${id}/request-cancellation`, {
-                        _token: '{{ csrf_token() }}',
-                        cancellation_reason: result.value
-                    }, function(res) {
-                        if (res.success) {
-                            table.ajax.reload();
-                            showToast('success', res.success);
-                        } else showToast('error', res.error);
+                        Swal.fire({
+                            title: 'Accept this order?',
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonText: 'Yes, Accept'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post(url, {
+                                    _token: '{{ csrf_token() }}'
+                                }, function(res) {
+                                    if (res.success) {
+                                        table.ajax.reload();
+                                        showToast('success', res.success);
+                                    } else showToast('error', res.error);
+                                }).fail(function() {
+                                    showToast('error', 'Request failed');
+                                });
+                            }
+                        });
                     });
-                }
-            });
-        });
 
-        $(document).on('click', '.approve-cancel-btn', function() {
-            let id = $(this).data('id');
-            Swal.fire({
-                title: 'Approve cancellation and restore stock?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, Approve'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.post(`/distributor-orders/${id}/approve-cancellation`, {
-                        _token: '{{ csrf_token() }}'
-                    }, function(res) {
-                        if (res.success) {
-                            table.ajax.reload();
-                            showToast('success', res.success);
-                        } else showToast('error', res.error);
+                    // Cancel Order Logic (Pending Orders)
+                    let cancelOrderId = null;
+                    $(document).on('click', '.cancel-order-btn', function() {
+                        cancelOrderId = $(this).data('id');
+                        $('#cancel_reason_input').val(''); // Reset input
+                        $('#cancelConfirmModal').modal('show');
                     });
-                }
-            });
-        });
-    });
+
+                    $('#confirmCancelBtn').click(function() {
+                        if (!cancelOrderId) return;
+
+                        let reason = $('#cancel_reason_input').val().trim();
+                        if (!reason) {
+                            showToast('error', 'Please provide a cancellation reason.');
+                            return;
+                        }
+
+                        $.post(`/distributor-orders/${cancelOrderId}/cancel-order`, {
+                            _token: '{{ csrf_token() }}',
+                            cancellation_reason: reason
+                        }, function(res) {
+                            $('#cancelConfirmModal').modal('hide');
+                            if (res.success) {
+                                table.ajax.reload();
+                                showToast('success', res.success);
+                            } else showToast('error', res.error);
+                        }).fail(function(xhr) {
+                            $('#cancelConfirmModal').modal('hide');
+                            let err = 'Request failed';
+                            if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
+                            showToast('error', err);
+                        });
+                    });
+
+                    $(document).on('click', '.request-cancel-btn', function() {
+                        let id = $(this).data('id');
+                        Swal.fire({
+                            title: 'Request Cancellation',
+                            input: 'text',
+                            inputLabel: 'Reason',
+                            inputPlaceholder: 'Enter cancellation reason',
+                            showCancelButton: true,
+                            inputValidator: (value) => {
+                                if (!value) {
+                                    return 'You need to write something!'
+                                }
+                            }
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post(`/distributor-orders/${id}/request-cancellation`, {
+                                    _token: '{{ csrf_token() }}',
+                                    cancellation_reason: result.value
+                                }, function(res) {
+                                    if (res.success) {
+                                        table.ajax.reload();
+                                        showToast('success', res.success);
+                                    } else showToast('error', res.error);
+                                });
+                            }
+                        });
+                    });
+
+                    $(document).on('click', '.approve-cancel-btn', function() {
+                        let id = $(this).data('id');
+                        Swal.fire({
+                            title: 'Approve cancellation and restore stock?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Yes, Approve'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post(`/distributor-orders/${id}/approve-cancellation`, {
+                                    _token: '{{ csrf_token() }}'
+                                }, function(res) {
+                                    if (res.success) {
+                                        table.ajax.reload();
+                                        showToast('success', res.success);
+                                    } else showToast('error', res.error);
+                                });
+                            }
+                        });
+                    });
+                });
 </script>
 @endpush
