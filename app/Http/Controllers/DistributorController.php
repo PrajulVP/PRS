@@ -46,6 +46,7 @@ class DistributorController extends Controller
             'pincode' => 'required',
             'district_id' => 'required|exists:districts,id',
             'area_id' => 'required|exists:areas,id',
+            'sales_manager_id' => 'nullable|exists:sales_managers,id',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
         ]);
@@ -90,6 +91,7 @@ class DistributorController extends Controller
             'pincode' => 'required',
             'district_id' => 'required|exists:districts,id',
             'area_id' => 'required|exists:areas,id',
+            'sales_manager_id' => 'nullable|exists:sales_managers,id',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
         ]);

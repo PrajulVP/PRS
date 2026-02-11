@@ -8,6 +8,8 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class DistributorOrderController extends Controller
 {
@@ -26,16 +28,19 @@ class DistributorOrderController extends Controller
                 // Filter by sales manager if authenticated user is a salesmanager
                 if (Auth::user()->hasRole('salesmanager')) {
                     $salesManager = Auth::user()->salesManager;
-                    $query->where(function ($q) use ($salesManager) {
-                        $q->where('sales_manager_id', $salesManager->id)
-                            ->orWhere('status', DistributorOrder::STATUS_PENDING)
-                            ->orWhere('status', DistributorOrder::STATUS_CANCELLATION_REQUESTED);
+                    $query->whereHas('distributor', function ($q) use ($salesManager) {
+                        $q->where('sales_manager_id', $salesManager->id);
                     });
                 }
 
                 // Filter for Admin/Superadmin: Show all orders
                 if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('superadmin')) {
                     // No additional filtering needed to show all orders
+                }
+
+                // Apply payment_status filter if exists
+                if ($request->has('payment_status') && !empty($request->input('payment_status'))) {
+                    $query->where('payment_status', $request->input('payment_status'));
                 }
 
                 $totalData = $query->count();
@@ -107,9 +112,9 @@ class DistributorOrderController extends Controller
                                 'product_name' => $item->product->product_name,
                                 'product_code' => $item->product->product_code,
                                 'quantity' => $item->quantity,
-                                'unit_price' => $item->unit_price,
-                                'total_amount' => $item->total_amount,
-                                'stock_at_time' => $item->product->stock, // Note: This is current stock, not at time of order
+                                'unit_price' => $item->price,
+                                'total_amount' => $item->subtotal,
+                                'stock_at_time' => null, // Stock check disabled
                                 'unit' => $item->unit,
                                 'order_item_id' => $item->id
                             ];
@@ -117,6 +122,7 @@ class DistributorOrderController extends Controller
                         'delivery_notes' => $order->delivery_notes,
                         'cancellation_reason' => $order->cancellation_reason,
                         'invoice_url' => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
+                        'payment_status' => $order->payment_status // Added for payment status display
                     ];
                 });
 
@@ -215,12 +221,8 @@ class DistributorOrderController extends Controller
                     throw new \Exception('One or more selected products not found.');
                 }
 
-                if ($product->stock < $itemData['quantity']) {
-                    throw new \Exception('Insufficient stock for ' . $product->product_name . '. Available: ' . $product->stock);
-                }
-
-                $product->stock -= $itemData['quantity'];
-                $product->save();
+                //$product->stock -= $itemData['quantity'];
+                //$product->save();
 
                 $unitPrice = $product->mrp;
                 $itemTotalAmount = $itemData['quantity'] * $unitPrice;
@@ -229,8 +231,8 @@ class DistributorOrderController extends Controller
                     'product_id' => $product->id,
                     'quantity' => $itemData['quantity'],
                     'unit' => $itemData['unit'] ?? 'Box',
-                    'unit_price' => $unitPrice,
-                    'total_amount' => $itemTotalAmount,
+                    'price' => $unitPrice,
+                    'subtotal' => $itemTotalAmount,
                 ]);
 
                 $totalAmount += $itemTotalAmount;
@@ -315,8 +317,8 @@ class DistributorOrderController extends Controller
                     $currentOrderItem->update([
                         'quantity' => $newQuantity,
                         'unit' => $itemData['unit'] ?? 'Box',
-                        'unit_price' => $unitPrice,
-                        'total_amount' => $itemTotalAmount,
+                        'price' => $unitPrice,
+                        'subtotal' => $itemTotalAmount,
                     ]);
                     $requestItemIds[] = $currentOrderItem->id;
                 } else {
@@ -324,8 +326,8 @@ class DistributorOrderController extends Controller
                         'product_id' => $product->id,
                         'quantity' => $newQuantity,
                         'unit' => $itemData['unit'] ?? 'Box',
-                        'unit_price' => $unitPrice,
-                        'total_amount' => $itemTotalAmount,
+                        'price' => $unitPrice,
+                        'subtotal' => $itemTotalAmount,
                     ]);
                     $requestItemIds[] = $newItem->id;
                 }
@@ -337,7 +339,7 @@ class DistributorOrderController extends Controller
 
             // Delete removed items
             $distributorOrder->items()->whereNotIn('id', $requestItemIds)->get()->each(function ($item) {
-                $item->product->increment('stock', $item->quantity); // Restore stock
+                // $item->product->increment('stock', $item->quantity); // Restore stock (Skipped)
                 $item->delete();
             });
 
@@ -352,9 +354,6 @@ class DistributorOrderController extends Controller
         return response()->json(['success' => 'Order updated successfully.']);
     }
 
-    // ... keep acceptBySalesManager, acceptByAdmin, requestCancellation, approveCancellation, cancelOrder methods as is ...
-    // Since I am overwriting the file, I MUST include them.
-
     public function acceptBySalesManager(distributorOrder $distributorOrder)
     {
         if (!Auth::user()->hasRole('salesmanager')) return response()->json(['error' => 'No permission'], 403);
@@ -367,31 +366,51 @@ class DistributorOrderController extends Controller
         return response()->json(['success' => 'Order accepted successfully!']);
     }
 
-    public function acceptByAdmin(distributorOrder $distributorOrder)
+    public function acceptByAdmin(Request $request, DistributorOrder $distributorOrder)
     {
-        if (!Auth::user()->hasRole('admin')) return response()->json(['error' => 'No permission'], 403);
-        if ($distributorOrder->status !== DistributorOrder::STATUS_ACCEPTED_BY_SALES_MANAGER) return response()->json(['error' => 'Invalid status'], 400);
-
-        $distributorOrder->status = DistributorOrder::STATUS_DELIVERED;
-        $distributorOrder->save();
-
-        $distributor = $distributorOrder->distributor;
-        if ($distributor) {
-            foreach ($distributorOrder->items as $item) {
-                $product = $item->product;
-                if ($product) {
-                    $pivot = $distributor->products()->where('product_id', $product->id)->first();
-                    if ($pivot) {
-                        $newStock = $pivot->pivot->stock + $item->quantity;
-                        $distributor->products()->updateExistingPivot($product->id, ['stock' => $newStock]);
-                    } else {
-                        $distributor->products()->attach($product->id, ['stock' => $item->quantity]);
-                    }
-                }
-            }
+        if (!Auth::user()->hasRole('admin')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        return response()->json(['success' => 'Order accepted by Admin successfully!']);
+        $request->validate([
+            'payment_status' => 'required|in:pending,paid,failed',
+            'invoice' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            foreach ($distributorOrder->items as $item) {
+                $stock = \App\Models\Stock::where('product_id', $item->product_id)->first();
+                if ($stock) {
+                    if ($stock->quantity < $item->quantity) {
+                        throw new \Exception("Insufficient stock for product: " . $item->product->name);
+                    }
+                    $stock->decrement('quantity', $item->quantity);
+                }
+            }
+
+            // Handle Invoice Upload
+            $invoicePath = $distributorOrder->invoice_path;
+            if ($request->hasFile('invoice')) {
+                // Delete old invoice if exists
+                if ($invoicePath && Storage::disk('public')->exists($invoicePath)) {
+                    Storage::disk('public')->delete($invoicePath);
+                }
+                $invoicePath = $request->file('invoice')->store('invoices/distributors', 'public');
+            }
+
+            $distributorOrder->update([
+                'status' => DistributorOrder::STATUS_DELIVERED,
+                'payment_status' => $request->payment_status,
+                'invoice_path' => $invoicePath
+            ]);
+
+            DB::commit();
+            return response()->json(['success' => 'Order accepted (delivered), payment status updated, and invoice saved.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
     }
 
     public function requestCancellation(Request $request, distributorOrder $distributorOrder)
@@ -416,10 +435,6 @@ class DistributorOrderController extends Controller
         $distributorOrder->status = DistributorOrder::STATUS_CANCELLED;
         $distributorOrder->save();
 
-        foreach ($distributorOrder->items as $item) {
-            $item->product->increment('stock', $item->quantity);
-        }
-
         return response()->json(['success' => 'Order cancellation approved successfully! Stock restored.']);
     }
 
@@ -430,10 +445,6 @@ class DistributorOrderController extends Controller
         ]);
 
         if ($distributorOrder->status === DistributorOrder::STATUS_PENDING) {
-            foreach ($distributorOrder->items as $item) {
-                $item->product->increment('stock', $item->quantity);
-            }
-
             $distributorOrder->update([
                 'status' => DistributorOrder::STATUS_CANCELLED,
                 'cancellation_reason' => $request->cancellation_reason
@@ -444,6 +455,7 @@ class DistributorOrderController extends Controller
 
         return response()->json(['error' => 'Only pending orders can be directly cancelled.'], 400);
     }
+
     public function updateStatus(Request $request, distributorOrder $distributorOrder)
     {
         $request->validate([
@@ -453,11 +465,6 @@ class DistributorOrderController extends Controller
         // Permission check
         if (Auth::user()->hasRole('distributor') && $distributorOrder->distributor_id !== Auth::user()->distributor->id) {
             return response()->json(['error' => 'Unauthorized'], 403);
-        }
-        // SM check
-        if (Auth::user()->hasRole('salesmanager')) {
-            // Ensure order belongs to their distributor? Or just allow if they are SM.
-            // For now assuming if they can see it, they can update it (logic in index filters visibility)
         }
 
         $oldStatus = $distributorOrder->status;
@@ -469,29 +476,6 @@ class DistributorOrderController extends Controller
         if ($newStatus === 'accepted_by_sales_manager') {
             if (Auth::user()->hasRole('salesmanager')) {
                 $distributorOrder->sales_manager_id = Auth::user()->salesManager->id;
-            }
-        }
-
-        if ($newStatus === 'rejected' || $newStatus === 'cancelled') {
-            // Restore stock if it was reserved?
-            // Only restore if not already restored (i.e. check oldStatus)
-            if (!in_array($oldStatus, ['rejected', 'cancelled'])) {
-                foreach ($distributorOrder->items as $item) {
-                    $item->product->increment('stock', $item->quantity);
-                }
-            }
-        } else {
-            // If moving FROM filtered/cancelled TO active, we should re-deduct stock?
-            // This is complex. For now assuming we don't move back from Cancelled -> Pending easily without stock checks.
-            // But if user does it:
-            if (in_array($oldStatus, ['rejected', 'cancelled']) && !in_array($newStatus, ['rejected', 'cancelled'])) {
-                // Try to deduct stock again
-                foreach ($distributorOrder->items as $item) {
-                    if ($item->product->stock < $item->quantity) {
-                        return response()->json(['error' => 'Insufficient stock to reactivate order for product: ' . $item->product->product_name], 400);
-                    }
-                    $item->product->decrement('stock', $item->quantity);
-                }
             }
         }
 
@@ -507,13 +491,10 @@ class DistributorOrderController extends Controller
         ]);
 
         $user = Auth::user();
-        // Permission check can be same as updateStatus or specific.
-        // Assuming same people who can approve orders can update payment.
         if (!$user->hasRole(['superadmin', 'admin', 'salesmanager'])) {
             return response()->json(['error' => 'You do not have permission to update payment status.'], 403);
         }
 
-        // Sales Manager check
         if ($user->hasRole('salesmanager') && $distributorOrder->sales_manager_id !== $user->salesManager->id) {
             return response()->json(['error' => 'You are not authorized to update this order.'], 403);
         }
@@ -530,7 +511,7 @@ class DistributorOrderController extends Controller
         $distributorOrder->load(['distributor.user', 'items.product', 'salesManager.user']);
         $cgst = \App\Models\Setting::getValue('cgst', 9);
         $sgst = \App\Models\Setting::getValue('sgst', 9);
-        return view('admin.distributor_orders.invoice', compact('distributorOrder', 'cgst', 'sgst'));
+        return view('admin.orders.distributors.invoice', compact('distributorOrder', 'cgst', 'sgst'));
     }
 
     public function uploadInvoice(Request $request, distributorOrder $distributorOrder)
@@ -541,8 +522,8 @@ class DistributorOrderController extends Controller
 
         if ($request->hasFile('invoice')) {
             // Delete old invoice if exists
-            if ($distributorOrder->invoice_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($distributorOrder->invoice_path)) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($distributorOrder->invoice_path);
+            if ($distributorOrder->invoice_path && Storage::disk('public')->exists($distributorOrder->invoice_path)) {
+                Storage::disk('public')->delete($distributorOrder->invoice_path);
             }
 
             $path = $request->file('invoice')->store('invoices/distributors', 'public');
@@ -564,26 +545,47 @@ class DistributorOrderController extends Controller
             return response()->json(['error' => 'No permission to delete orders.'], 403);
         }
 
-        // Restore stock if the order wasn't already cancelled (assuming stock was deducted on creation)
-        if (!in_array($distributorOrder->status, [DistributorOrder::STATUS_CANCELLED])) {
-            foreach ($distributorOrder->items as $item) {
-                // Determine logic: 
-                // Creating order REDUCES global product stock? Yes, usually.
-                // So deleting order should RESTORE it.
-                $item->product->increment('stock', $item->quantity);
-            }
-        }
-
         $distributorOrder->items()->delete(); // Delete items first
         $distributorOrder->delete();
 
         return response()->json(['success' => 'Order deleted successfully! Stock restored.']);
     }
+
+    public function approveOrder(Request $request, DistributorOrder $distributorOrder)
+    {
+        // Invoice validation (still optional) and no payment status here
+        $request->validate([
+            'invoice' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ]);
+
+        if (!Auth::user()->hasRole('salesmanager')) {
+            return response()->json(['error' => 'Only Sales Managers can approve orders.'], 403);
+        }
+
+        // Upload Invoice (Optional)
+        $path = $distributorOrder->invoice_path;
+        if ($request->hasFile('invoice')) {
+            $path = $request->file('invoice')->store('invoices/distributors', 'public');
+        }
+
+        // Update Order - NO payment status update here
+        $distributorOrder->update([
+            'status' => DistributorOrder::STATUS_ACCEPTED_BY_SALES_MANAGER,
+            'sales_manager_id' => Auth::user()->salesManager->id,
+            'invoice_path' => $path,
+        ]);
+
+        return response()->json([
+            'success' => 'Order approved successfully!',
+            'invoice_url' => $path ? asset('storage/' . $path) : null
+        ]);
+    }
+
     public function removeInvoice(Request $request, DistributorOrder $distributorOrder)
     {
         if ($distributorOrder->invoice_path) {
-            if (\Illuminate\Support\Facades\Storage::disk('public')->exists($distributorOrder->invoice_path)) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($distributorOrder->invoice_path);
+            if (Storage::disk('public')->exists($distributorOrder->invoice_path)) {
+                Storage::disk('public')->delete($distributorOrder->invoice_path);
             }
             $distributorOrder->invoice_path = null;
             $distributorOrder->save();
