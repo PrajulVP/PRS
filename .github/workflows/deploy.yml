@@ -38,6 +38,7 @@ jobs:
 
       - name: 📦 Install Composer Dependencies
         run: |
+          rm -rf vendor
           composer install --no-interaction --prefer-dist --optimize-autoloader
           composer dump-autoload -o
 
