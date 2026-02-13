@@ -18,6 +18,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/admin/login',
         ]);
 
+        // ✅ Force JSON response for API routes
+        $middleware->api(prepend: [
+            \App\Http\Middleware\ForceJsonResponse::class,
+        ]);
+
         // ✅ Add cookie support to API (if needed for JWT in cookies)
         $middleware->api(append: [
             \Illuminate\Cookie\Middleware\EncryptCookies::class,

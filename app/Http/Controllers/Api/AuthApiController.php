@@ -86,7 +86,11 @@ class AuthApiController extends Controller
      */
     public function profile(Request $request)
     {
-        return response()->json(auth('api')->user());
+        $user = auth('api')->user();
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+        return response()->json($user);
     }
 
     /**
