@@ -51,6 +51,18 @@ class PendingApprovalController extends Controller
                     $query->where('status', $request->input('status'));
                 }
 
+                if ($request->input('payment_status')) {
+                    $status = $request->input('payment_status');
+                    if ($status === 'pending') {
+                        $query->where(function ($q) {
+                            $q->whereIn('payment_status', ['pending', 'unpaid'])
+                                ->orWhereNull('payment_status');
+                        });
+                    } else {
+                        $query->where('payment_status', $status);
+                    }
+                }
+
                 $data = $query->latest()->get();
             } elseif ($viewType === 'retailer') {
                 // Fetch Retailer Orders
