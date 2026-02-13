@@ -17,6 +17,7 @@ class AugmentTags
 {
     /** @var array<string> */
     protected array $whitelist;
+
     protected bool $withDescription;
 
     public function __construct(array $whitelist = [], bool $withDescription = true)
@@ -81,6 +82,13 @@ class AugmentTags
                             : Generator::UNDEFINED,
                     ])]);
                 }
+            }
+        }
+
+        // clear invalid parents
+        foreach ($declaredTags as $tag) {
+            if (!array_key_exists($tag->parent, $declaredTags)) {
+                $tag->parent = Generator::UNDEFINED;
             }
         }
 

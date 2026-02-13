@@ -78,6 +78,13 @@
       0 => 'Spatie\\Permission\\PermissionServiceProvider',
     ),
   ),
+  'sreyas-a-s/unslay-shell' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'SreyasAS\\UnSlayShell\\UnSlayShellServiceProvider',
+    ),
+  ),
   'tymon/jwt-auth' => 
   array (
     'aliases' => 

@@ -15,6 +15,15 @@ class ForceJsonResponse
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Fix for missing Authorization header on some shared hosting setups
+        if (!$request->headers->has('Authorization')) {
+            if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+                $request->headers->set('Authorization', $_SERVER['HTTP_AUTHORIZATION']);
+            } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+                $request->headers->set('Authorization', $_SERVER['REDIRECT_HTTP_AUTHORIZATION']);
+            }
+        }
+
         $request->headers->set('Accept', 'application/json');
         return $next($request);
     }
