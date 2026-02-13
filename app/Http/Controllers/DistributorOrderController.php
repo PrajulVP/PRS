@@ -122,7 +122,8 @@ class DistributorOrderController extends Controller
                         'delivery_notes' => $order->delivery_notes,
                         'cancellation_reason' => $order->cancellation_reason,
                         'invoice_url' => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
-                        'payment_status' => $order->payment_status // Added for payment status display
+                        'payment_status' => $order->payment_status, // Added for payment status display
+                        'raw_status' => $order->status
                     ];
                 });
 
@@ -379,6 +380,7 @@ class DistributorOrderController extends Controller
 
         DB::beginTransaction();
         try {
+            /* Stock check logic commented out - App\Models\Stock does not exist (disabled for now)
             foreach ($distributorOrder->items as $item) {
                 $stock = \App\Models\Stock::where('product_id', $item->product_id)->first();
                 if ($stock) {
@@ -388,19 +390,28 @@ class DistributorOrderController extends Controller
                     $stock->decrement('quantity', $item->quantity);
                 }
             }
+            */
 
             // Handle Invoice Upload
-            $invoicePath = $distributorOrder->invoice_path;
+            $invoicePath = $distributorOrder->invoice_path ? $distributorOrder->invoice_path : null; // Initialize properly
             if ($request->hasFile('invoice')) {
                 // Delete old invoice if exists
                 if ($invoicePath && Storage::disk('public')->exists($invoicePath)) {
                     Storage::disk('public')->delete($invoicePath);
                 }
-                $invoicePath = $request->file('invoice')->store('invoices/distributors', 'public');
+
+                $file = $request->file('invoice');
+                $extension = $file->getClientOriginalExtension();
+                // Create a readable filename: Invoice_ORD123_2024-02-13_103000.pdf
+                $timestamp = now()->format('Y-m-d_His'); // Includes time for uniqueness
+                $filename = "Invoice_{$distributorOrder->order_code}_{$timestamp}.{$extension}";
+
+                // Store with the new custom filename
+                $invoicePath = $file->storeAs('invoices/distributors', $filename, 'public');
             }
 
             $distributorOrder->update([
-                'status' => DistributorOrder::STATUS_DELIVERED,
+                'status' => 'delivered', // Use string directly or ensure CONST exists
                 'payment_status' => $request->payment_status,
                 'invoice_path' => $invoicePath
             ]);

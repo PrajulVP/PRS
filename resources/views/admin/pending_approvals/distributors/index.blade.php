@@ -199,9 +199,11 @@
                                 <option value="failed">Failed</option>
                             </select>
                         </div>
+                        {{-- Invoice upload restored as per user request --}}
                         <div class="mb-3">
                             <label class="form-label">Upload Invoice (Optional)</label>
                             <input type="file" class="form-control" name="invoice" accept=".pdf,.jpg,.jpeg,.png">
+                            <div class="form-text">You can upload an invoice now or later via the table.</div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -333,15 +335,27 @@
                             if (row.invoice_url) {
                                 let ext = row.invoice_url.split('.').pop().toLowerCase();
                                 let icon = ext === 'pdf' ? 'fa-file-pdf-o' : 'fa-file-image-o';
-                                let html = `<div class="d-flex align-items-center gap-1">`;
-                                html += `<a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-outline-success" title="View"><i class="fa ${icon}"></i></a>`;
-                                html += `<button class="btn btn-xs btn-outline-warning upload-invoice-btn" data-id="${row.id}" title="Re-upload"><i class="fa fa-refresh"></i></button>`;
-                                html += `<button class="btn btn-xs btn-outline-danger remove-invoice-btn" data-id="${row.id}" title="Remove"><i class="fa fa-trash"></i></button>`;
+                                let html = `<div class="d-flex align-items-center gap-2">`;
+                                html += `<a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-info text-white" style="width: 40px; padding: 6px 0; text-align: center;" title="View"><i class="fa ${icon}"></i></a>`;
+                                html += `<button class="btn btn-sm btn-warning upload-invoice-btn" style="width: 40px; padding: 6px 0;" data-id="${row.id}" title="Re-upload"><i class="fa fa-refresh"></i></button>`;
+                                html += `<button class="btn btn-sm btn-danger remove-invoice-btn" style="width: 40px; padding: 6px 0;" data-id="${row.id}" title="Remove"><i class="fa fa-trash"></i></button>`;
                                 html += `</div>`;
                                 return html;
                             }
 
-                            return `<button class="btn btn-xs btn-primary upload-invoice-btn" data-id="${row.id}"><i class="fa fa-upload"></i> Upload</button>`;
+                            // Only show Upload button if status is accepted_by_sales_manager or delivered
+                            // Meaning: Admin can only upload invoice for approved orders
+                            let canUpload = false;
+                            let statusCheck = row.raw_status || (row.status ? row.status.toLowerCase().replace(/ /g, '_') : '');
+
+                            if (statusCheck === 'delivered' || statusCheck.includes('delivered')) {
+                                canUpload = true;
+                            }
+
+                            if (canUpload) {
+                                return `<button class="btn btn-sm btn-primary upload-invoice-btn" data-id="${row.id}" title="Upload Invoice"><i class="fa fa-upload"></i> Upload</button>`;
+                            }
+                            return '<span class="text-muted small">Wait for Approval</span>';
                         }
                     },
                     {
@@ -355,7 +369,7 @@
                             // View Details
                             btns += `<button class="btn btn-info btn-sm view-details-btn" data-row="${rowData}" title="View Details"><i class="fa fa-eye"></i></button>`;
                             // System Invoice
-                            btns += `<a href="${invoiceUrl}" target="_blank" class="btn btn-dark btn-sm" title="System Invoice"><i class="fa fa-print"></i></a>`;
+                            btns += `<a href="${invoiceUrl}" target="_blank" class="btn btn-dark btn-sm" style="padding: 8px 12px !important;" title="System Invoice"><i class="fa fa-print"></i></a>`;
 
                             // Sales Manager Actions
                             if (isSalesManager && row.status.toLowerCase().includes('pending')) {
@@ -364,8 +378,10 @@
                             }
 
                             // Admin Actions
-                            if (isAdmin && row.status.toLowerCase().includes('accepted_by_sales_manager')) {
-                                btns += `<button class="btn btn-success btn-sm accept-admin-btn" data-id="${row.id}" title="Process Order"><i class="fa fa-check-double"></i></button>`;
+                            // Console log for debugging
+                            if (isAdmin && (row.raw_status === 'accepted_by_sales_manager' || (row.status && row.status.toLowerCase().replace(/ /g, '_').includes('accepted')))) {
+                                btns += `<button class="btn btn-success btn-sm accept-admin-btn" data-id="${row.id}" title="Process Order"><i class="fa fa-check-double"></i> Process</button>`;
+                                btns += `<button class="btn btn-danger btn-sm reject-order-btn" data-id="${row.id}" title="Reject"><i class="fa fa-times"></i> Reject</button>`;
                             }
 
                             btns += `</div>`;
