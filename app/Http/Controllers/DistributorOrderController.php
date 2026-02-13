@@ -416,6 +416,35 @@ class DistributorOrderController extends Controller
                 'invoice_path' => $invoicePath
             ]);
 
+            // Update Distributor Inventory
+            foreach ($distributorOrder->items as $item) {
+                $inventory = \App\Models\Inventory::firstOrNew([
+                    'product_id' => $item->product_id,
+                    'distributor_id' => $distributorOrder->distributor_id
+                ]);
+
+                // Set basic details for new records
+                if (!$inventory->exists) {
+                    $inventory->product_name = $item->product->product_name;
+                    $inventory->distributor_product_code = $item->product->product_code;
+                }
+
+                $previousStock = $inventory->stock ?? 0;
+                $inventory->stock = $previousStock + $item->quantity;
+                $inventory->save();
+
+                // Optional: Log stock history if needed
+                \App\Models\StockHistory::create([
+                    'inventory_id' => $inventory->id,
+                    'user_id' => Auth::id(), // Admin performed action
+                    'previous_stock' => $previousStock,
+                    'new_stock' => $inventory->stock,
+                    'quantity_change' => $item->quantity,
+                    'change_type' => 'order_received',
+                    'remarks' => 'Order #' . $distributorOrder->order_code
+                ]);
+            }
+
             DB::commit();
             return response()->json(['success' => 'Order accepted (delivered), payment status updated, and invoice saved.']);
         } catch (\Exception $e) {

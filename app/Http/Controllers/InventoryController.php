@@ -78,6 +78,11 @@ class InventoryController extends Controller
                     });
                 }
 
+                // Add Distributor Filter
+                if ($request->has('distributor_id') && !empty($request->input('distributor_id'))) {
+                    $query->where('distributor_id', $request->input('distributor_id'));
+                }
+
                 // Correct totals for grouped data
                 $totalDataQuery = Inventory::query();
                 if (Auth::user()->hasRole('distributor')) {

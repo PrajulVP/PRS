@@ -115,7 +115,7 @@
         </li>
         @endif
 
-        @if (Auth::user()->hasPermissionToCategory('products', 'view'))
+        @if (Auth::user()->hasPermissionToCategory('products', 'view') || Auth::user()->hasRole('distributor'))
         <li class="sidebar-main-title">
           <div>
             <h6 class="lan-12">Products</h6>

@@ -189,6 +189,207 @@
                 ]
             }
         },
+        "/api/distributor/inventory": {
+            "get": {
+                "tags": [
+                    "Inventory"
+                ],
+                "summary": "Get distributor inventory",
+                "operationId": "560b8849ea450f272dc9c4c07ea2affc",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by product name or code",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of inventory items",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "product_id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "distributor_id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "stock": {
+                                                "type": "integer",
+                                                "example": 100
+                                            },
+                                            "distributor_product_code": {
+                                                "type": "string",
+                                                "example": "P001"
+                                            },
+                                            "product": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "product_name": {
+                                                        "type": "string",
+                                                        "example": "Product Name"
+                                                    },
+                                                    "product_code": {
+                                                        "type": "string",
+                                                        "example": "P001"
+                                                    },
+                                                    "generic_name": {
+                                                        "type": "string",
+                                                        "example": "Generic Name"
+                                                    },
+                                                    "mrp": {
+                                                        "type": "string",
+                                                        "example": "100.00"
+                                                    },
+                                                    "ptr": {
+                                                        "type": "string",
+                                                        "example": "80.00"
+                                                    },
+                                                    "pts": {
+                                                        "type": "string",
+                                                        "example": "70.00"
+                                                    },
+                                                    "gst": {
+                                                        "type": "string",
+                                                        "example": "12"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/inventory/{id}": {
+            "get": {
+                "tags": [
+                    "Inventory"
+                ],
+                "summary": "Get specific inventory item",
+                "operationId": "cb12f630662944c0f607dbc8f9fd14be",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Inventory ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Inventory item details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "product_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "distributor_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "stock": {
+                                            "type": "integer",
+                                            "example": 100
+                                        },
+                                        "distributor_product_code": {
+                                            "type": "string",
+                                            "example": "P001"
+                                        },
+                                        "product": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "product_name": {
+                                                    "type": "string",
+                                                    "example": "Product Name"
+                                                },
+                                                "product_code": {
+                                                    "type": "string",
+                                                    "example": "P001"
+                                                },
+                                                "generic_name": {
+                                                    "type": "string",
+                                                    "example": "Generic Name"
+                                                },
+                                                "mrp": {
+                                                    "type": "string",
+                                                    "example": "100.00"
+                                                },
+                                                "ptr": {
+                                                    "type": "string",
+                                                    "example": "80.00"
+                                                },
+                                                "pts": {
+                                                    "type": "string",
+                                                    "example": "70.00"
+                                                },
+                                                "gst": {
+                                                    "type": "string",
+                                                    "example": "12"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Inventory not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/products": {
             "get": {
                 "tags": [
@@ -441,6 +642,10 @@
         {
             "name": "Distributors",
             "description": "Distributors"
+        },
+        {
+            "name": "Inventory",
+            "description": "Inventory"
         },
         {
             "name": "Products",

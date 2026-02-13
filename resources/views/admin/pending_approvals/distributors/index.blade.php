@@ -278,9 +278,17 @@
                     { extend: 'print', className: 'btn btn-dark btn-sm', text: '<i class="fa fa-print"></i>' }
                 ],
                 initComplete: function () {
-                    var $filter = $('#filter_container').children().first();
-                    $('.dt-buttons').append($filter);
-                    $('#filter_container').remove();
+                    // Move custom filters to the DataTables filter area
+                    var $filterContainer = $('#filter_container').removeClass('d-none');
+                    $('.dt-buttons').parent().append($filterContainer);
+
+                    // Re-bind events since moving elements might detach them in some browsers/versions
+                    $('#status_filter').off('change').on('change', function () {
+                        table.ajax.reload();
+                    });
+                    $('#payment_status_filter').off('change').on('change', function () {
+                        table.ajax.reload();
+                    });
                 },
                 ajax: {
                     url: window.location.href,
@@ -343,8 +351,6 @@
                                 return html;
                             }
 
-                            // Only show Upload button if status is accepted_by_sales_manager or delivered
-                            // Meaning: Admin can only upload invoice for approved orders
                             let canUpload = false;
                             let statusCheck = row.raw_status || (row.status ? row.status.toLowerCase().replace(/ /g, '_') : '');
 
