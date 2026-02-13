@@ -38,7 +38,13 @@ class PendingApprovalController extends Controller
                 $query = \App\Models\DistributorOrder::with(['distributor.user', 'items.product', 'salesManager.user']);
 
                 if ($user->hasRole('salesmanager') && $user->salesManager) {
-                    $query->where('sales_manager_id', $user->salesManager->id);
+                    $salesManagerId = $user->salesManager->id;
+                    $query->where(function ($q) use ($salesManagerId) {
+                        $q->where('sales_manager_id', $salesManagerId)
+                            ->orWhereHas('distributor', function ($q) use ($salesManagerId) {
+                                $q->where('sales_manager_id', $salesManagerId);
+                            });
+                    });
                 }
 
                 if ($request->input('status')) {

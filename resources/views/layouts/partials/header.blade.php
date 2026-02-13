@@ -28,11 +28,10 @@
           ?>
 
           <?php if (Auth::guard('web')->check()): ?>
-            <h4 class="f-w-600">Welcome <?php echo e(Auth::guard('web')->user()->name); ?></h4><img class="mt-0" src="<?php echo e(asset('admin/assets/images/hand.gif')); ?>" alt="hand-gif">
+            <h4 class="fs-4">Welcome <?php echo e(Auth::guard('web')->user()->name); ?></h4><img class="mt-0" src="<?php echo e(asset('admin/assets/images/hand.gif')); ?>" alt="hand-gif">
           <?php endif; ?>
         </div>
       </div>
-      <div class="welcome-content d-xl-block d-none"><span class="text-truncate col-12">Here’s what’s happening with your store today. </span></div>
     </div>
     <div class="nav-right col-xxl-7 col-xl-6 col-md-7 col-8 pull-right right-header p-0 ms-auto">
       <ul class="nav-menus">
