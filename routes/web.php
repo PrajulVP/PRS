@@ -133,6 +133,8 @@ Route::middleware(['auth'])->group(function () {
             ->name('distributor-orders.approve');
         Route::post('distributor-orders/{distributor_order}/remove-invoice', [DistributorOrderController::class, 'removeInvoice'])
             ->name('distributor-orders.remove-invoice');
+        Route::post('distributor-orders/{distributor_order}/confirm-receipt', [DistributorOrderController::class, 'confirmReceipt'])
+            ->name('distributor-orders.confirm-receipt');
 
         // Master settings
         Route::get('settings/general', [SettingsController::class, 'general'])->name('settings.general');

@@ -196,7 +196,6 @@
                             <select class="form-select" name="payment_status" required>
                                 <option value="pending">Pending</option>
                                 <option value="paid">Paid</option>
-                                <option value="failed">Failed</option>
                             </select>
                         </div>
                         {{-- Invoice upload restored as per user request --}}
@@ -386,8 +385,8 @@
                             // Admin Actions
                             // Console log for debugging
                             if (isAdmin && (row.raw_status === 'accepted_by_sales_manager' || (row.status && row.status.toLowerCase().replace(/ /g, '_').includes('accepted')))) {
-                                btns += `<button class="btn btn-success btn-sm accept-admin-btn" data-id="${row.id}" title="Process Order"><i class="fa fa-check-double"></i> Process</button>`;
-                                btns += `<button class="btn btn-danger btn-sm reject-order-btn" data-id="${row.id}" title="Reject"><i class="fa fa-times"></i> Reject</button>`;
+                                btns += `<button class="btn btn-success btn-sm accept-admin-btn" data-id="${row.id}" title="Process Order"><i class="fa fa-check"></i></button>`;
+                                btns += `<button class="btn btn-danger btn-sm reject-order-btn" data-id="${row.id}" title="Reject"><i class="fa fa-times"></i></button>`;
                             }
 
                             btns += `</div>`;

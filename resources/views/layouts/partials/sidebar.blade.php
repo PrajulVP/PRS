@@ -115,7 +115,7 @@
         </li>
         @endif
 
-        @if (Auth::user()->hasPermissionToCategory('products', 'view') || Auth::user()->hasRole('distributor'))
+        @if (Auth::user()->hasAnyRole(['admin', 'superadmin']) || Auth::user()->hasRole('distributor') || Auth::user()->hasPermissionToCategory('products', 'view'))
         <li class="sidebar-main-title">
           <div>
             <h6 class="lan-12">Products</h6>
@@ -129,6 +129,16 @@
               <use href="{{ $iconSprite }}#fill-form"></use>
             </svg><span>Products</span></a>
         </li>
+        @endif
+        
+        @if (Auth::user()->hasPermissionToCategory('inventory', 'view'))
+        @if(!Auth::user()->hasAnyRole(['admin', 'superadmin']))
+        <li class="sidebar-main-title">
+          <div>
+            <h6 class="lan-12">Products</h6>
+          </div>
+        </li>
+        @endif
         <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('inventories.index') }}">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-form"></use>

@@ -63,8 +63,8 @@
                             <div class="alert alert-success">{{ session('success') }}</div>
                         @endif
 
-                        @if(Auth::user()->hasRole(['admin', 'superadmin', 'manager']))
-                            <div id="distributor_filter_container" class="d-none">
+                        <div id="distributor_filter_container" class="d-none">
+                            @if(Auth::user()->hasRole(['admin', 'superadmin', 'salesmanager']))
                                 <select id="distributor_filter" class="form-select form-select-sm border-primary"
                                     style="width: 200px; display: inline-block;">
                                     <option value="">All Distributors</option>
@@ -72,8 +72,8 @@
                                         <option value="{{ $d->id }}">{{ $d->user->name }}</option>
                                     @endforeach
                                 </select>
-                            </div>
-                        @endif
+                            @endif
+                        </div>
 
                         <div class="table-responsive">
                             <table class="display table table-striped table-hover" id="inventories-table">
@@ -83,7 +83,7 @@
 
                                         <th>Product Code</th>
                                         <th>Product Name</th>
-                                        @if(Auth::user()->hasRole(['admin', 'superadmin', 'manager']))
+                                        @if(Auth::user()->hasRole(['admin', 'superadmin', 'salesmanager']))
                                             <th>Distributor</th>
                                         @endif
                                         <th>Stock (Total)</th>
@@ -128,7 +128,7 @@
                             </select>
                         </div>
 
-                        @if(Auth::user()->hasRole(['admin', 'superadmin', 'manager']))
+                        @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'manager']))
                             <div class="mb-3">
                                 <label for="create_distributor_id" class="form-label">Distributor</label>
                                 <select name="distributor_id" id="create_distributor_id" class="form-select" required>
@@ -254,19 +254,19 @@
 
                         <input type="hidden" name="product_id" id="edit_product_id">
 
-                        @if(Auth::user()->hasRole(['admin', 'superadmin', 'manager']))
-                            <div class="mb-3">
-                                <label for="edit_distributor_id" class="form-label">Distributor</label>
-                                <select name="distributor_id" id="edit_distributor_id" class="form-select" required>
-                                    <option value="">-- Select Distributor --</option>
-                                    @foreach($distributors as $d)
-                                        <option value="{{ $d->id }}">{{ $d->user->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        @else
-                            <input type="hidden" name="distributor_id" id="edit_distributor_id">
-                        @endif
+                    @if(Auth::user()->hasRole(['admin', 'superadmin', 'manager']))
+                    <div class="mb-3">
+                        <label for="edit_distributor_id" class="form-label">Distributor</label>
+                        <select name="distributor_id" id="edit_distributor_id" class="form-select" required>
+                            <option value="">-- Select Distributor --</option>
+                            @foreach($distributors as $d)
+                            <option value="{{ $d->id }}">{{ $d->user->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @else
+                    <input type="hidden" name="distributor_id" id="edit_distributor_id">
+                    @endif
 
                         <div class="mb-3">
                             <label class="form-label">Stock</label>
@@ -472,23 +472,23 @@
                     render: function (data, type, row) {
                         let detailJson = JSON.stringify(row.product_details).replace(/"/g, '&quot;');
                         return `
-                                                            <div class="d-flex align-items-center">
-                                                                <img src="${row.image}" class="img-fluid me-2" width="40" height="40" alt="Product" style="object-fit:cover; border-radius:4px;">
-                                                                <a href="javascript:void(0)" class="text-primary fw-bold product-detail-link" 
-                                                                   data-name="${data}" 
-                                                                   data-image="${row.image}"
-                                                                   data-details='${detailJson}'>
-                                                                   ${data}
-                                                                </a>
-                                                            </div>
-                                                        `;
+                            <div class="d-flex align-items-center">
+                                <img src="${row.image}" class="img-fluid me-2" width="40" height="40" alt="Product" style="object-fit:cover; border-radius:4px;">
+                                <a href="javascript:void(0)" class="text-primary fw-bold product-detail-link" 
+                                   data-name="${data}" 
+                                   data-image="${row.image}"
+                                   data-details='${detailJson}'>
+                                   ${data}
+                                </a>
+                            </div>
+                        `;
                     }
                 },
-                    @if(Auth::user()->hasRole(['admin', 'superadmin', 'manager'])) {
-                            data: 'distributor_name',
-                            name: 'distributor_name'
-                        },
-                    @endif{
+                @if(Auth::user()->hasRole(['admin', 'superadmin', 'manager'])) {
+                    data: 'distributor_name',
+                    name: 'distributor_name'
+                },
+                @endif {
                     data: 'stock',
                     name: 'stock',
                     render: function (data, type, row) {
@@ -527,8 +527,8 @@
                         if (strips > 0 || (cartons === 0 && boxes === 0)) html += `<span class="badge bg-secondary me-1">${strips} Str</span>`;
 
                         html += `<div class="mt-1 small text-muted" style="font-size: 0.7rem;">
-                                                                    (${boxSize} Str/Box | ${cartonSize || 0} Box/Ctn)
-                                                                 </div>`;
+                                    (${boxSize} Str/Box | ${cartonSize || 0} Box/Ctn)
+                                 </div>`;
 
                         return html || '0';
                     }
@@ -543,18 +543,18 @@
                         let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
 
                         return `
-                                                <div class="action-buttons">
-                                                    <button type="button" class="btn btn-sm btn-info edit-btn" data-inventory='${rowData}' title="Edit Inventory"><i class="fa fa-edit"></i></button>
-                                                    <button type="button" class="btn btn-sm btn-success stock-btn" data-id="${id}" data-op="add" data-name="${row.product_name}" data-box-size="${row.product_details?.box_size || 0}" data-carton-size="${row.product_details?.carton_size || 0}" title="Add Stock"><i class="fa fa-plus"></i></button>
-                                                    <button type="button" class="btn btn-sm btn-warning stock-btn" data-id="${id}" data-op="subtract" data-name="${row.product_name}" data-box-size="${row.product_details?.box_size || 0}" data-carton-size="${row.product_details?.carton_size || 0}" title="Reduce Stock"><i class="fa fa-minus"></i></button>
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-sm btn-info edit-btn" data-inventory='${rowData}' title="Edit Inventory"><i class="fa fa-edit"></i></button>
+                    <button type="button" class="btn btn-sm btn-success stock-btn" data-id="${id}" data-op="add" data-name="${row.product_name}" data-box-size="${row.product_details?.box_size || 0}" data-carton-size="${row.product_details?.carton_size || 0}" title="Add Stock"><i class="fa fa-plus"></i></button>
+                    <button type="button" class="btn btn-sm btn-warning stock-btn" data-id="${id}" data-op="subtract" data-name="${row.product_name}" data-box-size="${row.product_details?.box_size || 0}" data-carton-size="${row.product_details?.carton_size || 0}" title="Reduce Stock"><i class="fa fa-minus"></i></button>
 
-                                                    <form id="delete-form-${id}" action="${deleteUrl}" method="POST" style="display:inline;">
-                                                        <input type="hidden" name="_token" value="${csrf}">
-                                                        <input type="hidden" name="_method" value="DELETE">
-                                                        <button type="button" class="btn btn-sm btn-danger delete-btn" data-id="${id}" title="Remove from Inventory"><i class="fa fa-trash"></i></button>
-                                                    </form>
-                                                </div>
-                                                `;
+                    <form id="delete-form-${id}" action="${deleteUrl}" method="POST" style="display:inline;">
+                        <input type="hidden" name="_token" value="${csrf}">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="button" class="btn btn-sm btn-danger delete-btn" data-id="${id}" title="Remove from Inventory"><i class="fa fa-trash"></i></button>
+                    </form>
+                </div>
+                `;
                     }
                 }
                 ]

@@ -13,6 +13,19 @@ use App\Models\Distributor;
 
 class InventoryController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            if (\Illuminate\Support\Facades\Auth::user()->hasAnyRole(['admin', 'superadmin'])) {
+                return $next($request);
+            }
+            if (!\Illuminate\Support\Facades\Auth::user()->hasPermissionToCategory('inventory', 'view')) {
+                abort(403, 'Unauthorized action. You do not have permission to view inventory.');
+            }
+            return $next($request);
+        });
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -68,6 +81,10 @@ class InventoryController extends Controller
                     } else {
                         return response()->json(['draw' => intval($request->input('draw')), 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => []]);
                     }
+                }
+
+                if ($request->has('distributor_id') && !empty($request->input('distributor_id'))) {
+                    $query->where('distributor_id', $request->input('distributor_id'));
                 }
 
                 if ($request->has('search') && !empty($request->input('search')['value'])) {
@@ -154,7 +171,7 @@ class InventoryController extends Controller
         // Non-AJAX view: pass products to populate the create form
         $products = Product::select('id', 'product_name', 'product_code', 'box_size', 'carton_size')->orderBy('product_name')->get();
         $distributors = [];
-        if (Auth::user()->hasRole(['admin', 'superadmin', 'manager'])) {
+        if (Auth::user()->hasRole(['admin', 'superadmin', 'salesmanager'])) {
             $distributors = Distributor::with('user')->get();
         }
 
