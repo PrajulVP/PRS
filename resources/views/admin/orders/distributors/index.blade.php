@@ -388,11 +388,11 @@
                         if (items.length > 2) {
                             let visible = items.slice(0, 2).join('<br>');
                             return `<div>
-                                                                        <span class="preview-content">${visible}</span>
-                                                                        <span class="full-content d-none">${data}</span>
-                                                                        <br>
-                                                                        <a href="#" class="small text-primary toggle-more-btn" onclick="event.preventDefault(); let p = $(this).parent(); if(p.find('.full-content').hasClass('d-none')){ p.find('.full-content').removeClass('d-none'); p.find('.preview-content').addClass('d-none'); $(this).text('Show Less'); } else { p.find('.full-content').addClass('d-none'); p.find('.preview-content').removeClass('d-none'); $(this).text('Read More'); }">Read More</a>
-                                                                    </div>`;
+                                                                                    <span class="preview-content">${visible}</span>
+                                                                                    <span class="full-content d-none">${data}</span>
+                                                                                    <br>
+                                                                                    <a href="#" class="small text-primary toggle-more-btn" onclick="event.preventDefault(); let p = $(this).parent(); if(p.find('.full-content').hasClass('d-none')){ p.find('.full-content').removeClass('d-none'); p.find('.preview-content').addClass('d-none'); $(this).text('Show Less'); } else { p.find('.full-content').addClass('d-none'); p.find('.preview-content').removeClass('d-none'); $(this).text('Read More'); }">Read More</a>
+                                                                                </div>`;
                         }
                         return data;
                     }
@@ -410,8 +410,9 @@
                     render: function (data, type, row) {
                         let status = data.toLowerCase();
                         let badgeClass = 'bg-secondary';
-                        if (status.includes('pending')) badgeClass = 'bg-warning text-dark';
+                        if (status.includes('pending')) badgeClass = 'bg-warning';
                         else if (status.includes('accepted')) badgeClass = 'bg-primary';
+                        else if (status.includes('approved')) badgeClass = 'bg-info';
                         else if (status.includes('delivered')) badgeClass = 'bg-success';
                         else if (status.includes('cancelled')) badgeClass = 'bg-danger';
 
@@ -439,7 +440,7 @@
                             let code = row.order_code || 'Order';
 
                             let filename = `Invoice_${code}_${name}_${date}.${ext}`;
-                            return `<a href="${data}" download="${filename}" target="_blank" class="btn btn-sm btn-success" style="padding: 4px 10px;"><i class="fa ${icon}"></i> View</a>`;
+                            return `<a href="${data}" download="${filename}" target="_blank" class="btn btn-sm btn-success" style="padding: 4px 10px;"><i class="fa ${icon}"></i> Download</a>`;
                         }
                         return '<span class="text-muted small">No Invoice</span>';
                     }
@@ -473,6 +474,24 @@
                             else if (st.includes('accepted_by_sales_manager')) {
                                 btns += `<button class="btn btn-secondary btn-sm request-cancel-btn" title="Request Cancellation" data-id="${row.id}"><i class="fa fa-ban"></i></button>`;
                             }
+                            else if (st.includes('approved')) {
+                                btns += `<button class="btn btn-success btn-sm confirm-receipt-btn" title="Confirm Receipt" data-id="${row.id}"><i class="fa fa-check-circle"></i> Confirm</button>`;
+                            }
+                        }
+
+                        // Sales Manager Actions
+                        if (isSalesManager) {
+                            if (st.includes('pending')) {
+                                btns += `<button class="btn btn-success btn-sm approve-order-btn" title="Approve Order" data-id="${row.id}"><i class="fa fa-check"></i></button>`;
+                            }
+                            if (st.includes('cancellation_requested')) {
+                                btns += `<button class="btn btn-danger btn-sm approve-cancel-btn" title="Approve Cancellation" data-id="${row.id}"><i class="fa fa-times-circle"></i></button>`;
+                            }
+                        }
+
+                        // Admin Actions
+                        if (isAdmin && st.includes('accepted_by_sales_manager')) {
+                            btns += `<button class="btn btn-warning btn-sm accept-admin-btn" title="Approve Order" data-id="${row.id}"><i class="fa fa-check-double"></i></button>`;
                         }
 
                         btns += `</div>`;
@@ -629,19 +648,19 @@
                         let sub = item.quantity * item.price;
                         total += sub;
                         tbody.append(`
-                                                                        <tr>
-                                                                            <td>${item.name}<input type="hidden" name="items[${id}][product_id]" value="${id}"></td>
-                                                                                                                                        <td>${item.stock}</td>
-                                                                                                                                        <td>
-                                                                                                                                            <input type="number" class="form-control form-control-sm qty-input-create" 
-                                                                                                                                            data-id="${id}" value="${item.quantity}" min="1" max="${item.stock}" style="width:80px">
-                                                                                                                                            <input type="hidden" name="items[${id}][quantity]" value="${item.quantity}">
-                                                                                                                                        </td>
-                                                                                                                                        <td>${item.price}</td>
-                                                                                                                                        <td>${sub.toFixed(2)}</td>
-                                                                                                                                        <td><button type="button" class="btn btn-danger btn-sm remove-create" data-id="${id}">X</button></td>
-                                                                                                                                    </tr>
-                                                                                                                                `);
+                                                                                    <tr>
+                                                                                        <td>${item.name}<input type="hidden" name="items[${id}][product_id]" value="${id}"></td>
+                                                                                                                                                    <td>${item.stock}</td>
+                                                                                                                                                    <td>
+                                                                                                                                                        <input type="number" class="form-control form-control-sm qty-input-create" 
+                                                                                                                                                        data-id="${id}" value="${item.quantity}" min="1" max="${item.stock}" style="width:80px">
+                                                                                                                                                        <input type="hidden" name="items[${id}][quantity]" value="${item.quantity}">
+                                                                                                                                                    </td>
+                                                                                                                                                    <td>${item.price}</td>
+                                                                                                                                                    <td>${sub.toFixed(2)}</td>
+                                                                                                                                                    <td><button type="button" class="btn btn-danger btn-sm remove-create" data-id="${id}">X</button></td>
+                                                                                                                                                </tr>
+                                                                                                                                            `);
                     });
                 }
                 $('#create_grand_total').text(total.toFixed(2));
@@ -772,27 +791,27 @@
                         });
 
                         tbody.append(`
-                                                                                                                                    <tr>
-                                                                                                                                        <td>${item.name}
-                                                                                                                                            <input type="hidden" name="items[${rowId}][product_id]" value="${rowId}">
-                                                                                                                                            ${item.orderItemId ? `<input type="hidden" name="items[${rowId}][order_item_id]" value="${item.orderItemId}">` : ''}
-                                                                                                                                        </td>
-                                                                                                                                        <td>
-                                                                                                                                            <select class="form-select form-select-sm unit-select-edit" data-id="${rowId}" style="width: 90px; margin: 0 auto;">
-                                                                                                                                                ${options}
-                                                                                                                                            </select>
-                                                                                                                                            <input type="hidden" name="items[${rowId}][unit]" value="${unit}">
-                                                                                                                                        </td>
-                                                                                                                                        <td>
-                                                                                                                                            <input type="number" class="form-control form-control-sm qty-input-edit" 
-                                                                                                                                            data-id="${rowId}" value="${qty}" min="1" style="width:80px; margin: 0 auto;">
-                                                                                                                                            <input type="hidden" name="items[${rowId}][quantity]" value="${qty}">
-                                                                                                                                        </td>
-                                                                                                                                        <td class="text-end">${price.toFixed(2)}</td>
-                                                                                                                                        <td class="text-end">${sub.toFixed(2)}</td>
-                                                                                                                                        <td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm remove-edit" data-id="${rowId}"><i class="fa fa-times"></i></button></td>
-                                                                                                                                    </tr>
-                                                                                                                                `);
+                                                                                                                                                <tr>
+                                                                                                                                                    <td>${item.name}
+                                                                                                                                                        <input type="hidden" name="items[${rowId}][product_id]" value="${rowId}">
+                                                                                                                                                        ${item.orderItemId ? `<input type="hidden" name="items[${rowId}][order_item_id]" value="${item.orderItemId}">` : ''}
+                                                                                                                                                    </td>
+                                                                                                                                                    <td>
+                                                                                                                                                        <select class="form-select form-select-sm unit-select-edit" data-id="${rowId}" style="width: 90px; margin: 0 auto;">
+                                                                                                                                                            ${options}
+                                                                                                                                                        </select>
+                                                                                                                                                        <input type="hidden" name="items[${rowId}][unit]" value="${unit}">
+                                                                                                                                                    </td>
+                                                                                                                                                    <td>
+                                                                                                                                                        <input type="number" class="form-control form-control-sm qty-input-edit" 
+                                                                                                                                                        data-id="${rowId}" value="${qty}" min="1" style="width:80px; margin: 0 auto;">
+                                                                                                                                                        <input type="hidden" name="items[${rowId}][quantity]" value="${qty}">
+                                                                                                                                                    </td>
+                                                                                                                                                    <td class="text-end">${price.toFixed(2)}</td>
+                                                                                                                                                    <td class="text-end">${sub.toFixed(2)}</td>
+                                                                                                                                                    <td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm remove-edit" data-id="${rowId}"><i class="fa fa-times"></i></button></td>
+                                                                                                                                                </tr>
+                                                                                                                                            `);
                     });
                 }
                 $('#edit_grand_total').text(total.toFixed(2));
@@ -830,22 +849,22 @@
             $('#distributor-orders-table').on('click', '.view-btn', function () {
                 let row = $(this).data('row');
                 let html = `
-                                                                                                                            <tr><th>Order Code</th><td>${row.order_code}</td></tr>
-                                                                                                                            <tr><th>Distributor</th><td>${row.name}</td></tr>
-                                                                                                                            <tr><th>Sales Manager</th><td>${row.sales_manager_name}</td></tr>
-                                                                                                                            <tr><th>Status</th><td>${row.status}</td></tr>
-                                                                                                                            <tr><th>Placed At</th><td>${row.placed_at}</td></tr>
-                                                                                                                         `;
+                                                                                                                                        <tr><th>Order Code</th><td>${row.order_code}</td></tr>
+                                                                                                                                        <tr><th>Distributor</th><td>${row.name}</td></tr>
+                                                                                                                                        <tr><th>Sales Manager</th><td>${row.sales_manager_name}</td></tr>
+                                                                                                                                        <tr><th>Status</th><td>${row.status}</td></tr>
+                                                                                                                                        <tr><th>Placed At</th><td>${row.placed_at}</td></tr>
+                                                                                                                                     `;
                 $('#showOrderBody').html(html);
 
                 let itemsHtml = '';
                 row.items.forEach(function (item) {
                     itemsHtml += `<tr>
-                                                                                                                                <td>${item.product_name}</td>
-                                                                                                                                <td>${item.quantity}</td>
-                                                                                                                                <td>${item.unit_price}</td>
-                                                                                                                                <td>${item.total_amount}</td>
-                                                                                                                             </tr>`;
+                                                                                                                                            <td>${item.product_name}</td>
+                                                                                                                                            <td>${item.quantity}</td>
+                                                                                                                                            <td>${item.unit_price}</td>
+                                                                                                                                            <td>${item.total_amount}</td>
+                                                                                                                                         </tr>`;
                 });
                 $('#showOrderItemsBody').html(itemsHtml);
                 $('#showOrderModal').modal('show');
@@ -1000,14 +1019,49 @@
             $(document).on('click', '.accept-admin-btn', function () {
                 let id = $(this).data('id');
                 Swal.fire({
-                    title: 'Process this order?',
-                    text: "This will mark the order as delivered and update stock.",
+                    title: 'Approve Order',
+                    text: "Select payment status for this order:",
                     icon: 'warning',
+                    input: 'select',
+                    inputOptions: {
+                        'pending': 'Pending',
+                        'paid': 'Paid'
+                    },
+                    inputValue: 'pending',
                     showCancelButton: true,
-                    confirmButtonText: 'Yes, Process'
+                    confirmButtonText: 'Approve & Process',
+                    inputValidator: (value) => {
+                        if (!value) {
+                            return 'You need to choose a payment status!'
+                        }
+                    }
                 }).then((result) => {
                     if (result.isConfirmed) {
                         $.post(`/distributor-orders/${id}/accept-by-admin`, {
+                            _token: '{{ csrf_token() }}',
+                            payment_status: result.value
+                        }, function (res) {
+                            if (res.success) {
+                                table.ajax.reload();
+                                showToast('success', res.success);
+                            } else showToast('error', res.error);
+                        });
+                    }
+                });
+            });
+
+            // Confirm Receipt Logic
+            $(document).on('click', '.confirm-receipt-btn', function () {
+                let id = $(this).data('id');
+                Swal.fire({
+                    title: 'Confirm Receipt?',
+                    text: "Have you received the order? This will mark it as Delivered.",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, Confirm'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.post(`/distributor-orders/${id}/confirm-receipt`, {
                             _token: '{{ csrf_token() }}'
                         }, function (res) {
                             if (res.success) {

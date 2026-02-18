@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DistributorOrder;
+use App\Models\Inventory;
 use App\Models\Distributor;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -369,7 +370,7 @@ class DistributorOrderController extends Controller
 
     public function acceptByAdmin(Request $request, DistributorOrder $distributorOrder)
     {
-        if (!Auth::user()->hasRole('admin')) {
+        if (!Auth::user()->hasAnyRole(['admin', 'superadmin'])) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -411,13 +412,13 @@ class DistributorOrderController extends Controller
             }
 
             $distributorOrder->update([
-                'status' => 'delivered', // Use string directly or ensure CONST exists
+                'status' => DistributorOrder::STATUS_APPROVED, // Admin accepted, now awaiting distributor confirmation
                 'payment_status' => $request->payment_status,
                 'invoice_path' => $invoicePath
             ]);
 
             DB::commit();
-            return response()->json(['success' => 'Order accepted (delivered), payment status updated, and invoice saved.']);
+            return response()->json(['success' => 'Order accepted, payment status updated, and invoice saved.']);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 400);
@@ -449,7 +450,20 @@ class DistributorOrderController extends Controller
         return response()->json(['success' => 'Order cancellation approved successfully! Stock restored.']);
     }
 
-    public function cancelOrder(Request $request, distributorOrder $distributorOrder)
+    public function confirmReceipt(DistributorOrder $distributorOrder)
+    {
+        if (!Auth::user()->hasRole('distributor')) return response()->json(['error' => 'No permission'], 403);
+        if ($distributorOrder->distributor_id !== Auth::user()->distributor->id) return response()->json(['error' => 'Not your order'], 403);
+        if ($distributorOrder->status !== DistributorOrder::STATUS_APPROVED) return response()->json(['error' => 'Order is not approved yet'], 400);
+
+        $distributorOrder->status = DistributorOrder::STATUS_DELIVERED;
+        $distributorOrder->save();
+        $this->addOrderItemsToInventory($distributorOrder);
+
+        return response()->json(['success' => 'Order recieved successfully.']);
+    }
+
+    public function cancelOrder(Request $request, DistributorOrder $distributorOrder)
     {
         $request->validate([
             'cancellation_reason' => 'required|string|min:3',
@@ -470,7 +484,7 @@ class DistributorOrderController extends Controller
     public function updateStatus(Request $request, distributorOrder $distributorOrder)
     {
         $request->validate([
-            'status' => 'required|in:pending,hold,accepted_by_sales_manager,rejected,cancelled,delivered',
+            'status' => 'required|in:pending,hold,accepted_by_sales_manager,approved,rejected,cancelled,delivered',
         ]);
 
         // Permission check
@@ -491,6 +505,10 @@ class DistributorOrderController extends Controller
         }
 
         $distributorOrder->save();
+
+        if ($oldStatus !== 'delivered' && $newStatus === 'delivered') {
+            $this->addOrderItemsToInventory($distributorOrder);
+        }
 
         return response()->json(['success' => 'Status updated successfully to ' . ucfirst(str_replace('_', ' ', $newStatus))]);
     }
@@ -603,5 +621,39 @@ class DistributorOrderController extends Controller
             return response()->json(['success' => 'Invoice removed successfully']);
         }
         return response()->json(['error' => 'No invoice to remove'], 400);
+    }
+    private function addOrderItemsToInventory(DistributorOrder $order)
+    {
+        foreach ($order->items as $item) {
+            $product = $item->product;
+            if (!$product) continue;
+
+            $qty = $item->quantity;
+            $unit = strtolower($item->unit);
+            $totalStrips = $qty;
+
+            if ($unit === 'box') {
+                $totalStrips = $qty * ($product->box_size ?? 1);
+            } elseif ($unit === 'carton') {
+                $boxSize = $product->box_size ?? 1;
+                $cartonSize = $product->carton_size ?? 1;
+                $totalStrips = $qty * $boxSize * $cartonSize;
+            }
+
+            $inventory = Inventory::firstOrNew([
+                'distributor_id' => $order->distributor_id,
+                'product_id' => $product->id,
+            ]);
+
+            if (!$inventory->exists) {
+                $inventory->distributor_product_code = $product->product_code;
+                $inventory->product_name = $product->product_name;
+                $inventory->stock = 0;
+            }
+            $inventory->product_name = $product->product_name;
+
+            $inventory->stock += $totalStrips;
+            $inventory->save();
+        }
     }
 }

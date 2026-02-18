@@ -8,6 +8,16 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            if (!\Illuminate\Support\Facades\Auth::user()->hasAnyRole(['admin', 'superadmin'])) {
+                abort(403, 'Unauthorized action. Only Admins can manage products.');
+            }
+            return $next($request);
+        });
+    }
+
     /**
      * Display a listing of the resource.
      */
