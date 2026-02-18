@@ -41,7 +41,15 @@ class DistributorOrderController extends Controller
 
                 // Apply payment_status filter if exists
                 if ($request->has('payment_status') && !empty($request->input('payment_status'))) {
-                    $query->where('payment_status', $request->input('payment_status'));
+                    $status = $request->input('payment_status');
+                    if ($status === 'pending') {
+                        $query->where(function ($q) {
+                            $q->where('payment_status', 'pending')
+                                ->orWhereNull('payment_status');
+                        });
+                    } else {
+                        $query->where('payment_status', $status);
+                    }
                 }
 
                 $totalData = $query->count();
@@ -370,7 +378,9 @@ class DistributorOrderController extends Controller
 
     public function acceptByAdmin(Request $request, DistributorOrder $distributorOrder)
     {
-        if (!Auth::user()->hasAnyRole(['admin', 'superadmin'])) {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasAnyRole(['admin', 'superadmin'])) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 

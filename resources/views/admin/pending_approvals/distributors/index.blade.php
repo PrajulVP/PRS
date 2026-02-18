@@ -70,7 +70,7 @@
                             <select id="payment_status_filter" class="form-select form-select-sm" style="width: 150px;">
                                 <option value="">All Payments</option>
                                 <option value="paid">Paid</option>
-                                <option value="pending">Unpaid</option>
+                                <option value="pending">Pending</option>
                             </select>
                         </div>
                     </div>

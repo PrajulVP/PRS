@@ -55,7 +55,7 @@ class PendingApprovalController extends Controller
                     $status = $request->input('payment_status');
                     if ($status === 'pending') {
                         $query->where(function ($q) {
-                            $q->whereIn('payment_status', ['pending', 'unpaid'])
+                            $q->where('payment_status', 'pending')
                                 ->orWhereNull('payment_status');
                         });
                     } else {
