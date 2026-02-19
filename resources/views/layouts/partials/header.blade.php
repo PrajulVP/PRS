@@ -57,9 +57,12 @@
         </div>
       </form>
       <div class="header-logo-wrapper col-auto p-0">
-        <div class="logo-wrapper"> <a href="index.html"><img class="img-fluid for-light"
-              src="../../admin/assets/images/logo/logo_dark.png" alt="logo-light"><img class="img-fluid for-dark"
-              src="../../admin/assets/images/logo/logo.png" alt="logo-dark"></a></div>
+        <div class="logo-wrapper">
+          <a href="{{ route('dashboard') }}">
+            <img class="img-fluid for-light" src="{{ asset('admin/assets/images/logo/logo_dark.png') }}" alt="logo-light">
+            <img class="img-fluid for-dark" src="{{ asset('admin/assets/images/logo/logo.png') }}" alt="logo-dark">
+          </a>
+        </div>
         <div class="toggle-sidebar"> <i class="status_toggle middle sidebar-toggle" data-feather="align-center"></i></div>
       </div>
       <div class="left-header col-xxl-5 col-xl-6 col-lg-5 col-md-4 col-sm-3 p-0">
@@ -70,7 +73,7 @@
     if (Auth::guard('web')->check()) {
       $loggedInRole = Auth::guard('web')->user()->getRoleNames()->first();
     }
-                                        ?>
+                                                                ?>
 
             <?php  if (Auth::guard('web')->check()): ?>
             <h4 class="fs-4">Welcome <?php    echo e(Auth::guard('web')->user()->name); ?></h4><img class="mt-0"
@@ -107,22 +110,139 @@
             <div class="mode"><i class="moon" data-feather="moon"> </i></div>
           </li>
 
+          @if(Auth::guard('web')->check() && Auth::guard('web')->user()->hasRole('retailer') && Auth::guard('web')->user()->retailer)
+            <li class="onhover-dropdown loyalty-header-item">
+              <a href="{{ route('admin.loyalty-points.index') }}">
+                <div
+                  class="d-flex align-items-center bg-light rounded-pill px-3 py-1 border-warning shadow-sm position-relative overflow-hidden"
+                  style="border: 2px solid #ffc107;">
+
+                  <div class="coin-flip-wrapper me-2 text-warning" style="font-size: 12px;">
+                    <span class="fa-stack">
+                      <i class="fa fa-circle fa-stack-2x"></i>
+                      <i class="fa fa-star fa-stack-1x text-white fa-inverse"></i>
+                    </span>
+                  </div>
+
+                  <span
+                    class="fw-bold text-dark fs-6">{{ number_format(Auth::guard('web')->user()->retailer->loyalty_points, 2) }}</span>
+                  <div class="shine-effect"></div>
+                </div>
+              </a>
+            </li>
+            <style>
+              .coin-flip-wrapper {
+                animation: flip-coin-shine 3s ease-in-out infinite;
+                transform-style: preserve-3d;
+                display: inline-block;
+              }
+
+              @keyframes flip-coin-shine {
+                0% {
+                  transform: rotateY(0deg);
+                  filter: brightness(1);
+                }
+
+                25% {
+                  transform: rotateY(90deg);
+                  filter: brightness(1.5);
+                }
+
+                50% {
+                  transform: rotateY(180deg);
+                  filter: brightness(1);
+                }
+
+                75% {
+                  transform: rotateY(270deg);
+                  filter: brightness(1.5);
+                }
+
+                100% {
+                  transform: rotateY(360deg);
+                  filter: brightness(1);
+                }
+              }
+
+              .shine-effect {
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+                animation: shine-sweep 3s infinite;
+              }
+
+              @keyframes shine-sweep {
+                0% {
+                  left: -100%;
+                }
+
+                20% {
+                  left: 100%;
+                }
+
+                100% {
+                  left: 100%;
+                }
+              }
+            </style>
+          @endif
+
           <li class="onhover-dropdown">
             <div class="notification-box">
-              <i data-feather="bell"></i>
+              <i data-feather="bell" style="animation: none !important; transform: none !important;"></i>
               @php $unreadCount = Auth::user()->unreadNotifications->count(); @endphp
               @if($unreadCount > 0)
-                <span class="badge rounded-pill badge-primary text-white">{{ $unreadCount }}</span>
+                <span class="badge rounded-pill badge-primary text-white pulse-badge">{{ $unreadCount }}</span>
               @endif
             </div>
+            <style>
+              .pulse-badge {
+                animation: shake-pump 2s infinite ease-in-out;
+                display: inline-block;
+              }
+
+              @keyframes shake-pump {
+                0% {
+                  transform: scale(1) rotate(0deg);
+                }
+
+                10% {
+                  transform: scale(1.2) rotate(-10deg);
+                }
+
+                20% {
+                  transform: scale(1.2) rotate(10deg);
+                }
+
+                30% {
+                  transform: scale(1.2) rotate(-10deg);
+                }
+
+                40% {
+                  transform: scale(1.1) rotate(5deg);
+                }
+
+                50% {
+                  transform: scale(1) rotate(0deg);
+                }
+
+                100% {
+                  transform: scale(1) rotate(0deg);
+                }
+              }
+            </style>
             <div class="onhover-show-div notification-dropdown">
               <h6 class="f-18 mb-0 dropdown-title">Notifications</h6>
               <ul>
                 @forelse(Auth::user()->unreadNotifications->take(5) as $notification)
                   <li class="b-l-primary border-4" data-id="{{ $notification->id }}">
                     <div style="display: block; width: 100%; color: inherit; cursor: default;">
-                      <p class="mb-0">{{ $notification->data['message'] }} </p>
-                      <span class="font-danger">( {{ $notification->created_at->diffForHumans() }} )</span>
+                      <p class="mb-0" style="font-size: 0.75rem;">{{ $notification->data['message'] }} </p>
+                      <span class="font-danger" style="font-size: 0.75rem;">(
+                        {{ $notification->created_at->diffForHumans() }} )</span>
                     </div>
                   </li>
                 @empty
@@ -146,8 +266,8 @@
               <div class="media-body d-xxl-block d-none box-col-none">
                 @if(Auth::guard('web')->check())
                   <div class="d-flex align-items-center justify-content-between gap-2 pt-1">
-                    <span>{{ Auth::guard('web')->user()->name }}</span>
-                    <i class="middle fa fa-angle-down"></i>
+                    <span style="color: var(--med-text-main);">{{ Auth::guard('web')->user()->name }}</span>
+                    <i class="middle fa fa-angle-down" style="color: var(--med-text-main);"></i>
                   </div>
                   <p class="mb-0 font-roboto"><?php    echo e($loggedInRole); ?></p>
                 @endif
@@ -155,12 +275,12 @@
             </div>
 
             <ul class="profile-dropdown onhover-show-div">
-              <li><a href="{{ route('profile.index') }}"><i data-feather="user"></i><span>My Profile</span></a></li>
-              <li> <a href="edit-profile.html"> <i data-feather="settings"></i><span>Settings</span></a></li>
+              <li><a href="{{ route('profile.index') }}"><i data-feather="user"></i><span>Edit Profile</span></a></li>
+              {{-- <li> <a href="edit-profile.html"> <i data-feather="settings"></i><span>Settings</span></a></li> --}}
               <li>
                 <form id="logout-form" action="{{ route('admin.logout') }}" method="POST" class="d-inline">
                   @csrf
-                  <button type="submit" class="btn btn-pill btn-outline-primary btn-sm">Log Out</button>
+                  <button type="submit" class="btn btn-pill btn-outline-primary btn-sm">Logout</button>
                 </form>
               </li>
             </ul>
@@ -168,13 +288,13 @@
         </ul>
       </div>
       <script class="result-template" type="text/x-handlebars-template">
-                                    <div class="ProfileCard u-cf">                        
-                                          <div class="ProfileCard-avatar"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-airplay m-0"><path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"></path><polygon points="12 15 17 21 7 21 12 15"></polygon></svg></div>
-                                          <div class="ProfileCard-details"> 
-                                          <div class="ProfileCard-realName">name</div>
-                                          </div> 
-                                          </div>
-                                        </script>
+                <div class="ProfileCard u-cf">                        
+                    <div class="ProfileCard-avatar"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-airplay m-0"><path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"></path><polygon points="12 15 17 21 7 21 12 15"></polygon></svg></div>
+                    <div class="ProfileCard-details"> 
+                    <div class="ProfileCard-realName">name</div>
+                    </div> 
+                </div>
+              </script>
       <script class="empty-template"
         type="text/x-handlebars-template"><div class="EmptyMessage">Your search turned up 0 results. This most likely means the backend is down, yikes!</div></script>
     </div>

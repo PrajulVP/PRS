@@ -21,6 +21,7 @@ use App\Http\Controllers\{
     RetailerOrderManagementController,
     SettingsController,
     DistributorOrderController,
+    LoyaltyPointsController,
     SystemController
 };
 
@@ -136,6 +137,10 @@ Route::middleware(['auth'])->group(function () {
             ->name('distributor-orders.remove-invoice');
         Route::post('distributor-orders/{distributor_order}/confirm-receipt', [DistributorOrderController::class, 'confirmReceipt'])
             ->name('distributor-orders.confirm-receipt');
+
+        // Loyalty Points Dashboard
+        Route::get('loyalty-points', [LoyaltyPointsController::class, 'index'])->name('loyalty-points.index');
+        Route::get('loyalty-points/{retailer}/summary', [LoyaltyPointsController::class, 'getSummary'])->name('loyalty-points.summary');
 
         // Master settings
         Route::get('settings/general', [SettingsController::class, 'general'])->name('settings.general');

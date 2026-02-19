@@ -3,6 +3,368 @@
 
 <head>
     @include('layouts.partials.head')
+    <style>
+        :root {
+            /* === Emerald Excellence: State-of-the-Art Medical Palette === */
+            --med-bg-body: #f8faf9;
+            /* Ultra-clean biological white */
+            --med-bg-card: #ffffff;
+            --med-bg-sidebar: linear-gradient(165deg, #064e3b 0%, #065f46 40%, #10b981 100%);
+            /* Organic Emerald Wave */
+            --med-primary: #10b981;
+            /* Biotech Green */
+            --med-secondary: #34d399;
+            /* Mint Pulse */
+            --med-accent: #059669;
+            --med-text-main: #064e3b;
+            /* Deep Forest Slate */
+            --med-text-muted: #6b7280;
+            --med-text-sidebar: #f0fdf4;
+            --med-border: rgba(16, 185, 129, 0.1);
+            --med-shadow-soft: 0 10px 40px -10px rgba(6, 78, 59, 0.08);
+            /* Organic floating shadow */
+            --med-shadow-glow: 0 0 20px rgba(16, 185, 129, 0.1);
+            --med-glass: rgba(255, 255, 255, 0.9);
+        }
+
+        body.dark-only {
+            /* === Deep Biotech: Premium Dark Theme === */
+            --med-bg-body: #011611;
+            /* Absolute Deep Forest */
+            --med-bg-card: #022c22;
+            /* Dark Jade */
+            --med-bg-sidebar: linear-gradient(165deg, #011611 0%, #022c22 100%);
+            --med-primary: #34d399;
+            --med-secondary: #6ee7b7;
+            --med-text-main: #ecfdf5;
+            --med-text-muted: #94a3b8;
+            --med-text-sidebar: #ecfdf5;
+            --med-border: rgba(52, 211, 153, 0.1);
+            --med-shadow-soft: 0 20px 50px -12px rgba(0, 0, 0, 0.5);
+            --med-shadow-glow: 0 0 30px rgba(52, 211, 153, 0.05);
+            --med-glass: rgba(2, 44, 34, 0.9);
+        }
+
+        /* === Premium Global Foundations === */
+        body {
+            background-color: var(--med-bg-body) !important;
+            color: var(--med-text-main) !important;
+            font-family: 'Montserrat', sans-serif;
+            background-image:
+                radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.03) 0, transparent 50%),
+                radial-gradient(at 50% 0%, rgba(52, 211, 153, 0.02) 0, transparent 50%);
+            background-attachment: fixed;
+            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .page-body {
+            background-color: transparent !important;
+        }
+
+        /* === The Floating Card Concept === */
+        .card {
+            background-color: var(--med-bg-card) !important;
+            border: 1px solid var(--med-border) !important;
+            box-shadow: var(--med-shadow-soft) !important;
+            border-radius: 24px !important;
+            /* Extra smooth corners */
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--med-primary), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 60px -15px rgba(6, 78, 59, 0.12) !important;
+            border-color: rgba(16, 185, 129, 0.3) !important;
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card-header,
+        .card-footer {
+            background-color: transparent !important;
+            border-bottom: 1px solid var(--med-border) !important;
+            color: var(--med-text-main) !important;
+            padding: 1.5rem 2rem !important;
+        }
+
+        /* === The Biotech Sidebar === */
+        .sidebar-wrapper {
+            background: var(--med-bg-sidebar) !important;
+            border-right: none !important;
+            box-shadow: 10px 0 50px rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar-wrapper .logo-wrapper {
+            background: rgba(255, 255, 255, 0.03) !important;
+            backdrop-filter: blur(5px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-wrapper .sidebar-main .sidebar-links .sidebar-list .sidebar-link,
+        .sidebar-wrapper .sidebar-main .sidebar-links .sidebar-list .sidebar-title {
+            color: var(--med-text-sidebar) !important;
+            opacity: 0.8;
+            border-radius: 16px;
+            margin: 6px 18px;
+            padding: 12px 20px !important;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .sidebar-wrapper .sidebar-main .sidebar-links .sidebar-list .sidebar-link:hover,
+        .sidebar-wrapper .sidebar-main .sidebar-links .sidebar-list .sidebar-link.active {
+            background: rgba(255, 255, 255, 0.15) !important;
+            opacity: 1;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.1);
+            transform: translateX(5px);
+        }
+
+        .sidebar-wrapper .sidebar-main .sidebar-links .sidebar-list .sidebar-link svg {
+            stroke: var(--med-text-sidebar) !important;
+        }
+
+        /* === Crystal Header === */
+        .page-header {
+            background-color: var(--med-glass) !important;
+            backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid var(--med-border) !important;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03) !important;
+        }
+
+        .page-header .header-wrapper h4 {
+            color: var(--med-text-main) !important;
+        }
+
+        /* === Utilities === */
+        .text-muted {
+            color: var(--med-text-muted) !important;
+        }
+
+        /* === Premium Modal Concepts === */
+        .modal-content {
+            background-color: var(--med-bg-card) !important;
+            color: var(--med-text-main) !important;
+            border: 1px solid var(--med-border) !important;
+            border-radius: 24px !important;
+            box-shadow: var(--med-shadow-soft) !important;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--med-border) !important;
+            padding: 1.5rem 2rem !important;
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--med-border) !important;
+            padding: 1.25rem 2rem !important;
+        }
+
+        .modal-title {
+            font-weight: 700 !important;
+            color: var(--med-text-main) !important;
+        }
+
+        .btn-close {
+            filter: var(--med-close-filter, none);
+        }
+
+        body.dark-only .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+
+        .pt-6 {
+            padding-top: 5rem !important;
+        }
+
+        /* === Form Elements === */
+        .form-control,
+        .form-select {
+            background-color: var(--med-bg-card) !important;
+            border: 1px solid var(--med-border) !important;
+            color: var(--med-text-main) !important;
+            border-radius: 10px !important;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+            border-color: var(--med-primary) !important;
+            transform: translateY(-1px);
+        }
+
+        /* === Buttons & Interactive Elements === */
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+            border: none !important;
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3) !important;
+            border-radius: 10px !important;
+            font-weight: 600 !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.4) !important;
+            filter: brightness(1.1);
+        }
+
+        .btn-secondary {
+            background: #ffffff !important;
+            color: var(--med-primary) !important;
+            border: 2px solid var(--med-primary) !important;
+            border-radius: 12px !important;
+            font-weight: 700 !important;
+            text-transform: uppercase;
+            font-size: 0.75rem !important;
+            letter-spacing: 0.05em;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.05) !important;
+        }
+
+        .btn-secondary:hover {
+            background: var(--med-primary) !important;
+            color: #ffffff !important;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(16, 185, 129, 0.2) !important;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #34d399 0%, #10b981 100%) !important;
+            border: none !important;
+            border-radius: 12px !important;
+            font-weight: 600 !important;
+        }
+
+        /* DT Export Buttons specific refinement */
+        .dt-buttons .btn {
+            margin-right: 5px !important;
+            margin-bottom: 10px !important;
+        }
+
+        /* DataTables Premium Emerald Styling */
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            border-radius: 12px !important;
+            margin: 0 4px !important;
+            border: 1px solid var(--med-border) !important;
+            background: var(--med-bg-card) !important;
+            color: var(--med-text-main) !important;
+            transition: all 0.3s ease !important;
+            padding: 6px 14px !important;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background: var(--med-primary) !important;
+            color: white !important;
+            border-color: var(--med-primary) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+            color: white !important;
+            border: none !important;
+            font-weight: 700 !important;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+        }
+
+        .dataTables_wrapper .dataTables_filter input,
+        .dataTables_wrapper .dataTables_length select {
+            background-color: var(--med-bg-card) !important;
+            border: 1px solid var(--med-border) !important;
+            color: var(--med-text-main) !important;
+            border-radius: 12px !important;
+            padding: 8px 15px !important;
+            transition: all 0.3s ease;
+        }
+
+        .dataTables_wrapper .dataTables_filter input:focus,
+        .dataTables_wrapper .dataTables_length select:focus {
+            outline: none !important;
+            border-color: var(--med-primary) !important;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1) !important;
+        }
+
+        /* Table Emerald Refinements */
+        .table {
+            color: var(--med-text-main) !important;
+            border-collapse: separate !important;
+            border-spacing: 0 8px !important;
+            /* Visual spacing for rows */
+        }
+
+        .table thead th {
+            background-color: rgba(16, 185, 129, 0.03) !important;
+            border: none !important;
+            color: var(--med-text-main) !important;
+            font-weight: 700 !important;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            padding: 15px !important;
+            border-radius: 10px;
+        }
+
+        .table tbody tr {
+            background-color: var(--med-bg-card) !important;
+            transition: all 0.2s ease;
+        }
+
+        .table tbody tr:hover {
+            background-color: #ffffff !important;
+            transform: scale(1.005);
+            box-shadow: 0 5px 15px rgba(6, 78, 59, 0.05);
+            z-index: 10;
+            position: relative;
+        }
+
+        .table td {
+            border: none !important;
+            padding: 15px !important;
+            border-bottom: 1px solid var(--med-border) !important;
+        }
+
+        .table tr td:first-child {
+            border-radius: 12px 0 0 12px;
+        }
+
+        .table tr td:last-child {
+            border-radius: 0 12px 12px 0;
+        }
+
+        /* Datatable Info Text */
+        .dataTables_info {
+            color: var(--med-text-muted) !important;
+            font-size: 0.85rem !important;
+            font-weight: 500 !important;
+        }
+
+        /* Dark Mode Adjustments */
+        body.dark-only .table tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.03) !important;
+        }
+
+        body.dark-only .table thead th {
+            background-color: rgba(52, 211, 153, 0.05) !important;
+        }
+    </style>
 </head>
 
 <body class="{{ $_COOKIE['mode'] ?? 'light' }}">
@@ -45,11 +407,7 @@
 
         /* Apply dark background to loader immediately when body has dark-only class */
         body.dark-only #global-loader {
-            background-color: #1d1e26 !important;
-        }
-
-        .pt-6 {
-            padding-top: 4rem !important;
+            background-color: var(--med-bg-body) !important;
         }
     </style>
 
@@ -135,7 +493,5 @@
         });
     </script>
 </body>
-
-</html>
 
 </html>

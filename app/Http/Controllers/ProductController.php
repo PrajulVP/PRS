@@ -76,6 +76,7 @@ class ProductController extends Controller
                     'gst' => $product->gst,
                     'offer' => $product->offer,
                     'discount' => $product->discount,
+                    'loyalty_point_percentage' => $product->loyalty_point_percentage,
                     'actions' => null, // Actions column will be rendered by DataTables
                 ];
             });
@@ -121,6 +122,7 @@ class ProductController extends Controller
             'offer' => 'nullable|numeric|min:0',
             'discount' => 'nullable|numeric|min:0',
             'net_amount' => '|numeric|min:0',
+            'loyalty_point_percentage' => 'nullable|numeric|min:0',
         ]);
 
         Product::create($request->all());
@@ -166,6 +168,7 @@ class ProductController extends Controller
             'offer' => 'nullable|numeric|min:0',
             'discount' => 'nullable|numeric|min:0',
             'net_amount' => '|numeric|min:0',
+            'loyalty_point_percentage' => 'nullable|numeric|min:0',
         ]);
 
         $product->update($request->all());

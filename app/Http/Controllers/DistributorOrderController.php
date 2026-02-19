@@ -166,7 +166,7 @@ class DistributorOrderController extends Controller
     // Create Order Page
     public function create()
     {
-        $products = Product::select('id', 'product_name', 'mrp')->get();
+        $products = Product::select('id', 'product_name', 'mrp', 'pts')->get();
         $distributors = collect();
         /** @var \App\Models\User $user */
         $user = Auth::user();
@@ -240,7 +240,8 @@ class DistributorOrderController extends Controller
                 //$product->stock -= $itemData['quantity'];
                 //$product->save();
 
-                $unitPrice = $product->mrp;
+                // Price Logic: Distributor buys at PTS (Price to Stockist)
+                $unitPrice = $product->pts; // Strictly PTS
                 $itemTotalAmount = $itemData['quantity'] * $unitPrice;
 
                 $order->items()->create([
@@ -326,7 +327,7 @@ class DistributorOrderController extends Controller
                 // "So, no stock adjustment needed during update for stock that was already decremented at creation." 
                 // "Restore stock for items that were in the old order but not in the new request"
 
-                $unitPrice = $product->mrp;
+                $unitPrice = $product->pts;
                 $itemTotalAmount = $newQuantity * $unitPrice;
 
                 if ($currentOrderItem) {

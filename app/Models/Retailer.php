@@ -24,6 +24,7 @@ class Retailer extends Model
         'credit_limit',
         'latitude',
         'longitude',
+        'loyalty_points',
     ];
 
     public function user()

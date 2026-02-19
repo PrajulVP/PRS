@@ -124,8 +124,19 @@
           </ul>
         </li>
         @endif
+        
+        @if (Auth::user()->hasPermissionToCategory('loyalty_points', 'view') || Auth::user()->hasRole('retailer'))
+        <li class="sidebar-list"><a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.loyalty-points.index') }}">
+            <svg class="stroke-icon">
+              <use href="{{ $iconSprite }}#stroke-task"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{{ $iconSprite }}#fill-task"></use>
+            </svg><span>Loyalty Points</span></a>
+        </li>
+        @endif
 
-        @if (Auth::user()->hasAnyRole(['admin', 'superadmin']) || Auth::user()->hasRole('distributor') || Auth::user()->hasPermissionToCategory('products', 'view'))
+        @if (Auth::user()->hasAnyRole(['admin', 'superadmin']) || Auth::user()->hasPermissionToCategory('products', 'view'))
         <li class="sidebar-main-title">
           <div>
             <h6 class="lan-12">Products</h6>
@@ -145,7 +156,7 @@
         @if(!Auth::user()->hasAnyRole(['admin', 'superadmin']))
         <li class="sidebar-main-title">
           <div>
-            <h6 class="lan-12">Products</h6>
+            <h6 class="lan-15">Inventory</h6>
           </div>
         </li>
         @endif
@@ -292,6 +303,9 @@
             <li class="sidebar-list">
               
               <a class="sidebar-link sidebar-title link-nav" href="{{ route('areas.index') }}">
+                <svg class="stroke-icon">
+                  <use href="{{ $iconSprite }}#stroke-form"></use>
+                </svg>
                 <svg class="fill-icon">
                   <use href="{{ $iconSprite }}#fill-form"></use>
                 </svg>
@@ -312,7 +326,7 @@
 
 
             {{-- General settings page --}}
-            <li class="sidebar-list">
+            {{-- <li class="sidebar-list">
               <!-- <i class="fa fa-cog"></i> -->
               <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.settings.general') }}">
                 <svg class="stroke-icon">
@@ -323,7 +337,7 @@
                 </svg> -->
                 <span>General</span>
               </a>
-            </li>
+            </li> --}}
           </ul>
         </li>
 

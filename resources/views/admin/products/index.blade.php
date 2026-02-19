@@ -67,12 +67,12 @@
                                         <th>Code</th>
                                         <th>Name</th>
                                         <th>Generic Name</th>
-                                        <!-- <th>Batch No</th> -->
                                         <th>MRP</th>
                                         <th>PTR</th>
                                         <th>PTS</th>
                                         <th>Net Amount</th>
-                                        <!-- <th>Net Amount</th> -->
+                                        <th>gst</th> 
+                                        <th>Loyalty %</th> 
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -122,9 +122,9 @@
                                 <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Stock & Packaging</h6>
                                 <div class="row g-3">
                                     <!-- <div class="col-md-12">
-                                        <label for="create_batch_no" class="form-label fw-medium">Batch No.</label>
-                                        <input type="text" name="batch_no" id="create_batch_no" class="form-control" required>
-                                    </div> -->
+                                            <label for="create_batch_no" class="form-label fw-medium">Batch No.</label>
+                                            <input type="text" name="batch_no" id="create_batch_no" class="form-control" required>
+                                        </div> -->
                                     <div class="col-md-6">
                                         <label for="create_strip_size" class="form-label fw-medium">Tablet / Strip</label>
                                         <input type="text" name="strip_size" id="create_strip_size" class="form-control"
@@ -182,16 +182,17 @@
                                             class="form-control">
                                     </div>
                                     <div class="col-md-6">
-                                        <label for="create_discount" class="form-label fw-medium">Discount</label>
-                                        <input type="number" step="0.01" name="discount" id="create_discount"
-                                            class="form-control">
+                                        <label for="create_loyalty_point_percentage" class="form-label fw-medium">Loyalty
+                                            %</label>
+                                        <input type="number" step="0.01" name="loyalty_point_percentage"
+                                            id="create_loyalty_point_percentage" class="form-control" placeholder="0.00">
                                     </div>
                                     <!-- <div class="col-md-12">
-                                        <div class="alert alert-light border text-center mt-3 mb-0">
-                                            <label for="create_net_amount" class="form-label text-muted small text-uppercase fw-bold mb-0">Net Amount</label>
-                                            <input type="number" step="0.01" name="net_amount" id="create_net_amount" class="form-control form-control-lg fw-bold text-primary text-center border-0 bg-transparent" readonly placeholder="0.00">
-                                        </div>
-                                    </div> -->
+                                            <div class="alert alert-light border text-center mt-3 mb-0">
+                                                <label for="create_net_amount" class="form-label text-muted small text-uppercase fw-bold mb-0">Net Amount</label>
+                                                <input type="number" step="0.01" name="net_amount" id="create_net_amount" class="form-control form-control-lg fw-bold text-primary text-center border-0 bg-transparent" readonly placeholder="0.00">
+                                            </div>
+                                        </div> -->
                                 </div>
                             </div>
                         </div>
@@ -240,9 +241,9 @@
                                 <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Stock & Packaging</h6>
                                 <div class="row g-3">
                                     <!-- <div class="col-md-12">
-                                        <label for="edit_batch_no" class="form-label fw-medium">Batch No.</label>
-                                        <input type="text" name="batch_no" id="edit_batch_no" class="form-control" required>
-                                    </div> -->
+                                            <label for="edit_batch_no" class="form-label fw-medium">Batch No.</label>
+                                            <input type="text" name="batch_no" id="edit_batch_no" class="form-control" required>
+                                        </div> -->
                                     <div class="col-md-6">
                                         <label for="edit_strip_size" class="form-label fw-medium">Tablet / Strip</label>
                                         <input type="text" name="strip_size" id="edit_strp_size" class="form-control"
@@ -294,21 +295,22 @@
                                         <input type="number" step="0.01" name="gst" id="edit_gst" class="form-control"
                                             required>
                                     </div>
-                                    <div class="col-md-6">
+                                    {{-- <div class="col-md-6">
                                         <label for="edit_offer" class="form-label fw-medium">Offer</label>
                                         <input type="number" step="0.01" name="offer" id="edit_offer" class="form-control">
-                                    </div>
+                                    </div> --}}
                                     <div class="col-md-6">
-                                        <label for="edit_discount" class="form-label fw-medium">Discount</label>
-                                        <input type="number" step="0.01" name="discount" id="edit_discount"
-                                            class="form-control">
+                                        <label for="edit_loyalty_point_percentage" class="form-label fw-medium">Loyalty
+                                            %</label>
+                                        <input type="number" step="0.01" name="loyalty_point_percentage"
+                                            id="edit_loyalty_point_percentage" class="form-control" placeholder="0.00">
                                     </div>
                                     <!-- <div class="col-md-12">
-                                        <div class="alert alert-light border text-center mt-3 mb-0">
-                                            <label for="edit_net_amount" class="form-label text-muted small text-uppercase fw-bold mb-0">Net Amount</label>
-                                            <input type="number" step="0.01" name="net_amount" id="edit_net_amount" class="form-control form-control-lg fw-bold text-primary text-center border-0 bg-transparent" readonly placeholder="0.00">
-                                        </div>
-                                    </div> -->
+                                            <div class="alert alert-light border text-center mt-3 mb-0">
+                                                <label for="edit_net_amount" class="form-label text-muted small text-uppercase fw-bold mb-0">Net Amount</label>
+                                                <input type="number" step="0.01" name="net_amount" id="edit_net_amount" class="form-control form-control-lg fw-bold text-primary text-center border-0 bg-transparent" readonly placeholder="0.00">
+                                            </div>
+                                        </div> -->
                                 </div>
                             </div>
                         </div>
@@ -405,6 +407,14 @@
                     data: 'net_amount',
                     name: 'net_amount'
                 },
+                {
+                    data: 'gst',
+                    name: 'gst'
+                },
+                {
+                    data: 'loyalty_point_percentage',
+                    name: 'loyalty_point_percentage'
+                },
 
                 {
                     data: 'id',
@@ -417,16 +427,16 @@
                         let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
 
                         return `
-                            <div class="action-buttons">
-                                <button type="button" class="btn btn-sm btn-primary view-btn" data-product="${rowData}"><i class="fa fa-eye"></i></button>
-                                <button type="button" class="btn btn-sm btn-primary edit-btn" data-product="${rowData}"><i class="fa fa-edit"></i></button>
-                                <form action="${deleteUrl}" method="POST" onsubmit="return confirm('Are you sure?')">
-                                    <input type="hidden" name="_token" value="${csrf}">
-                                    <input type="hidden" name="_method" value="DELETE">
-                                    <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
-                                </form>
-                            </div>
-                        `;
+                                <div class="action-buttons">
+                                    <button type="button" class="btn btn-sm btn-primary view-btn" data-product="${rowData}"><i class="fa fa-eye"></i></button>
+                                    <button type="button" class="btn btn-sm btn-primary edit-btn" data-product="${rowData}"><i class="fa fa-edit"></i></button>
+                                    <form action="${deleteUrl}" method="POST" onsubmit="return confirm('Are you sure?')">
+                                        <input type="hidden" name="_token" value="${csrf}">
+                                        <input type="hidden" name="_method" value="DELETE">
+                                        <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
+                                    </form>
+                                </div>
+                            `;
                     }
                 }
                 ],
@@ -498,6 +508,7 @@
                 $('#edit_gst').val(product.gst);
                 $('#edit_offer').val(product.offer);
                 $('#edit_discount').val(product.discount);
+                $('#edit_loyalty_point_percentage').val(product.loyalty_point_percentage);
                 // $('#edit_net_amount').val(product.net_amount);
 
                 // Update form action
@@ -513,69 +524,74 @@
                 var product = $(this).data('product');
 
                 let html = `
-                    <div class="row g-3">
-                        <div class="col-md-12 mb-3">
-                            <div class="p-4 bg-light rounded text-center">
-                                <h3 class="fw-bold text-primary mb-1">${product.product_name}</h3>
-                                <div class="text-secondary">${product.product_code} <span class="mx-2">|</span> ${product.generic_name || 'Generic N/A'}</div>
+                        <div class="row g-3">
+                            <div class="col-md-12 mb-3">
+                                <div class="p-4 bg-light rounded text-center">
+                                    <h3 class="fw-bold text-primary mb-1">${product.product_name}</h3>
+                                    <div class="text-secondary">${product.product_code} <span class="mx-2">|</span> ${product.generic_name || 'Generic N/A'}</div>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="row g-4">
-                        <!-- Left Column: Stock & Packaging -->
-                        <div class="col-md-6 border-end">
-                            <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Stock & Packaging</h6>
-                            <dl class="row mb-0">
-                                <dt class="col-sm-4 text-muted small text-uppercase">Batch No</dt>
-                                <dd class="col-sm-8 fw-medium">${product.batch_no}</dd>
+                        <div class="row g-4">
+                            <!-- Left Column: Stock & Packaging -->
+                            <div class="col-md-6 border-end">
+                                <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Stock & Packaging</h6>
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-4 text-muted small text-uppercase">Batch No</dt>
+                                    <dd class="col-sm-8 fw-medium">${product.batch_no}</dd>
 
-                                <dt class="col-sm-4 text-muted small text-uppercase">Tablet/Strip</dt>
-                                <dd class="col-sm-8 fw-medium">${product.strip_size || '-'}</dd>
+                                    <dt class="col-sm-4 text-muted small text-uppercase">Tablet/Strip</dt>
+                                    <dd class="col-sm-8 fw-medium">${product.strip_size || '-'}</dd>
 
-                                <dt class="col-sm-4 text-muted small text-uppercase">Strip / Box</dt>
-                                <dd class="col-sm-8 fw-medium">${product.box_size || '-'}</dd>
+                                    <dt class="col-sm-4 text-muted small text-uppercase">Strip / Box</dt>
+                                    <dd class="col-sm-8 fw-medium">${product.box_size || '-'}</dd>
 
-                                <dt class="col-sm-4 text-muted small text-uppercase">Box / Carton</dt>
-                                <dd class="col-sm-8 fw-medium">${product.carton_size || '-'}</dd>
+                                    <dt class="col-sm-4 text-muted small text-uppercase">Box / Carton</dt>
+                                    <dd class="col-sm-8 fw-medium">${product.carton_size || '-'}</dd>
 
-                                <dt class="col-sm-4 text-muted small text-uppercase">HSN</dt>
-                                <dd class="col-sm-8 fw-medium">${product.hsn_code || '-'}</dd>
-                            </dl>
-                        </div>
+                                    <dt class="col-sm-4 text-muted small text-uppercase">HSN</dt>
+                                    <dd class="col-sm-8 fw-medium">${product.hsn_code || '-'}</dd>
+                                </dl>
+                            </div>
 
-                        <!-- Right Column: Pricing -->
-                        <div class="col-md-6">
-                            <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Pricing Details</h6>
-                            <dl class="row mb-0">
-                                <dt class="col-sm-4 text-muted small text-uppercase">MRP</dt>
-                                <dd class="col-sm-8 fw-medium">₹${parseFloat(product.mrp).toFixed(2)}</dd>
+                            <!-- Right Column: Pricing -->
+                            <div class="col-md-6">
+                                <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Pricing Details</h6>
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-4 text-muted small text-uppercase">MRP</dt>
+                                    <dd class="col-sm-8 fw-medium">₹${parseFloat(product.mrp).toFixed(2)}</dd>
 
-                                <dt class="col-sm-4 text-muted small text-uppercase">PTR</dt>
-                                <dd class="col-sm-8 fw-medium">₹${parseFloat(product.ptr).toFixed(2)}</dd>
+                                    <dt class="col-sm-4 text-muted small text-uppercase">PTR</dt>
+                                    <dd class="col-sm-8 fw-medium">₹${parseFloat(product.ptr).toFixed(2)}</dd>
 
-                                <dt class="col-sm-4 text-muted small text-uppercase">PTS</dt>
-                                <dd class="col-sm-8 fw-medium">₹${parseFloat(product.pts).toFixed(2)}</dd>                                      
+                                    <dt class="col-sm-4 text-muted small text-uppercase">PTS</dt>
+                                    <dd class="col-sm-8 fw-medium">₹${parseFloat(product.pts).toFixed(2)}</dd>                                      
 
-                                <dt class="col-sm-4 text-muted small text-uppercase">Taxable</dt>
-                                <dd class="col-sm-8 fw-medium">₹${parseFloat(product.taxable_value).toFixed(2)}</dd>
+                                    <dt class="col-sm-4 text-muted small text-uppercase">Taxable</dt>
+                                    <dd class="col-sm-8 fw-medium">₹${parseFloat(product.taxable_value).toFixed(2)}</dd>
 
-                                <dt class="col-sm-4 text-muted small text-uppercase">GST</dt>
-                                <dd class="col-sm-8 fw-medium">${parseFloat(product.gst).toFixed(2)}%</dd>
+                                    <dt class="col-sm-4 text-muted small text-uppercase">GST</dt>
+                                    <dd class="col-sm-8 fw-medium">${parseFloat(product.gst).toFixed(2)}%</dd>
 
-                                <dt class="col-sm-4 text-muted small text-uppercase">Offer / Disc</dt>
-                                <dd class="col-sm-8 fw-medium text-success">
-                                    ${parseFloat(product.offer || 0).toFixed(2)} / ${parseFloat(product.discount || 0).toFixed(2)}
-                                </dd>
-                            </dl>
+                                    <dt class="col-sm-4 text-muted small text-uppercase">Offer / Disc</dt>
+                                    <dd class="col-sm-8 fw-medium text-success">
+                                        ${parseFloat(product.offer || 0).toFixed(2)} / ${parseFloat(product.discount || 0).toFixed(2)}
+                                    </dd>
 
-                            <div class="alert alert-light border text-center mt-3">
-                                <small class="text-muted text-uppercase fw-bold d-block">Net Amount</small>
-                                <span class="h4 fw-bold text-primary">₹${parseFloat(product.net_amount).toFixed(2)}</span>
+                                    <dt class="col-sm-4 text-muted small text-uppercase">Loyalty %</dt>
+                                    <dd class="col-sm-8 fw-medium text-info">
+                                        ${parseFloat(product.loyalty_point_percentage || 0).toFixed(2)}%
+                                    </dd>
+                                </dl>
+
+                                <div class="alert alert-light border text-center mt-3">
+                                    <small class="text-muted text-uppercase fw-bold d-block">Net Amount</small>
+                                    <span class="h4 fw-bold text-primary">₹${parseFloat(product.net_amount).toFixed(2)}</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `;
+                    `;
                 // Note: We need to change the modal body structure slightly in the blade file to accommodate this if it expects a table structure.
                 // The current blade has <tbody id="showProductTableBody"> inside a <table>. We should check if we need to replace the table with a div.
                 $('#showProductTableBody').html(html);
