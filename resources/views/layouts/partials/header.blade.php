@@ -70,7 +70,7 @@
     if (Auth::guard('web')->check()) {
       $loggedInRole = Auth::guard('web')->user()->getRoleNames()->first();
     }
-                                    ?>
+                                        ?>
 
             <?php  if (Auth::guard('web')->check()): ?>
             <h4 class="fs-4">Welcome <?php    echo e(Auth::guard('web')->user()->name); ?></h4><img class="mt-0"
@@ -82,13 +82,13 @@
       <div class="nav-right col-xxl-7 col-xl-6 col-md-7 col-8 pull-right right-header p-0 ms-auto">
         <ul class="nav-menus">
           <li class="d-md-block d-none">
-            <div class="form search-form mb-0">
+            {{-- <div class="form search-form mb-0">
               <div class="input-group"><span class="input-icon">
                   <svg>
                     <use href="../../admin/assets/svg/icon-sprite.svg#search-header"></use>
                   </svg>
                   <input class="w-100" type="search" placeholder="Search"></span></div>
-            </div>
+            </div> --}}
           </li>
           <li class="d-md-none d-block">
             <div class="form search-form mb-0">
@@ -122,8 +122,7 @@
                   <li class="b-l-primary border-4" data-id="{{ $notification->id }}">
                     <div style="display: block; width: 100%; color: inherit; cursor: default;">
                       <p class="mb-0">{{ $notification->data['message'] }} </p>
-                      <span
-                          class="font-danger">( {{ $notification->created_at->diffForHumans() }} )</span>
+                      <span class="font-danger">( {{ $notification->created_at->diffForHumans() }} )</span>
                     </div>
                   </li>
                 @empty
@@ -142,12 +141,11 @@
 
           <li class="profile-nav onhover-dropdown">
             <div class="media profile-media">
-              <img class="b-r-10" src="{{ Auth::guard('web')->user()->profile_pic
-                  ? asset('storage/' . Auth::guard('web')->user()->profile_pic)
-                  : asset('admin/assets/images/dashboard/profile.png') }}" width="45" height="45" alt="Profile Picture">
+              <img class="rounded-circle" src="{{ Auth::guard('web')->user()->avatar_url }}" width="43" height="43"
+                alt="Profile Picture">
               <div class="media-body d-xxl-block d-none box-col-none">
                 @if(Auth::guard('web')->check())
-                  <div class="d-flex align-items-center justify-content-between gap-2">
+                  <div class="d-flex align-items-center justify-content-between gap-2 pt-1">
                     <span>{{ Auth::guard('web')->user()->name }}</span>
                     <i class="middle fa fa-angle-down"></i>
                   </div>
@@ -170,13 +168,13 @@
         </ul>
       </div>
       <script class="result-template" type="text/x-handlebars-template">
-                                <div class="ProfileCard u-cf">                        
-                                      <div class="ProfileCard-avatar"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-airplay m-0"><path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"></path><polygon points="12 15 17 21 7 21 12 15"></polygon></svg></div>
-                                      <div class="ProfileCard-details"> 
-                                      <div class="ProfileCard-realName">name</div>
-                                      </div> 
-                                      </div>
-                                    </script>
+                                    <div class="ProfileCard u-cf">                        
+                                          <div class="ProfileCard-avatar"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-airplay m-0"><path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"></path><polygon points="12 15 17 21 7 21 12 15"></polygon></svg></div>
+                                          <div class="ProfileCard-details"> 
+                                          <div class="ProfileCard-realName">name</div>
+                                          </div> 
+                                          </div>
+                                        </script>
       <script class="empty-template"
         type="text/x-handlebars-template"><div class="EmptyMessage">Your search turned up 0 results. This most likely means the backend is down, yikes!</div></script>
     </div>

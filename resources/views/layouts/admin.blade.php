@@ -74,6 +74,7 @@
             <div class="page-body-wrapper">
                 @include('layouts.partials.sidebar')
                 <div class="page-body pt-6">
+                    {{-- @include('layouts.partials.breadcrumbs') --}}
                     @yield('page-body')
                 </div>
                 @include('layouts.partials.footer')
@@ -134,5 +135,7 @@
         });
     </script>
 </body>
+
+</html>
 
 </html>

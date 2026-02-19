@@ -18,30 +18,71 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
 
-        $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'address' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'pincode' => 'nullable|string|max:20',
-        ]);
+            'fathers_name' => 'nullable|string|max:255',
+            'mothers_name' => 'nullable|string|max:255',
+        ];
 
+        // Add role-specific validation
+        if ($user->hasRole('retailer')) {
+            $rules['shop_name'] = 'nullable|string|max:255';
+            $rules['gst'] = 'nullable|string|max:50';
+            // Assuming drug_license_no might be added to retailers, but for now just shop_name/gst which are known
+            $rules['drug_license_no'] = 'nullable|string|max:50';
+        } elseif ($user->hasRole('distributor')) {
+            $rules['gst'] = 'nullable|string|max:50';
+            $rules['drug_license_no'] = 'nullable|string|max:50';
+        }
+
+        if ($user->hasAnyRole(['superadmin', 'admin'])) {
+            $rules['email'] = 'required|email|unique:users,email,' . $user->id;
+            $rules['contact_no'] = 'nullable|string|max:20';
+        }
+
+        $request->validate($rules);
+
+        // Update User Common Fields
         $user->name = $request->name;
         $user->address = $request->address;
         $user->city = $request->city;
         $user->pincode = $request->pincode;
+        $user->fathers_name = $request->fathers_name;
+        $user->mothers_name = $request->mothers_name;
+
+        if ($user->hasAnyRole(['superadmin', 'admin'])) {
+            $user->email = $request->email;
+            $user->contact_no = $request->contact_no;
+        }
 
         if ($request->hasFile('profile_pic')) {
-            // Delete old profile pic if exists
             if ($user->profile_pic) {
                 Storage::delete('public/' . $user->profile_pic);
             }
-            // Store new profile pic
             $path = $request->file('profile_pic')->store('profile_pics', 'public');
             $user->profile_pic = $path;
         }
 
         $user->save();
+
+        // Update Role Specific Fields
+        if ($user->hasRole('retailer') && $user->retailer) {
+            $user->retailer->update([
+                'shop_name' => $request->shop_name,
+                'gst' => $request->gst,
+                // Update drug_license_no if the column exists (we'll ensure it does via migration)
+                'drug_license_no' => $request->drug_license_no,
+            ]);
+        } elseif ($user->hasRole('distributor') && $user->distributor) {
+            $user->distributor->update([
+                'gst' => $request->gst,
+                'drug_license_no' => $request->drug_license_no,
+            ]);
+        }
 
         return redirect()->route('profile.index')->with('success', 'Profile updated successfully.');
     }

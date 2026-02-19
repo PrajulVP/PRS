@@ -111,7 +111,7 @@ class User extends Authenticatable implements JWTSubject
             $role = Role::where('name', $roleName)->first();
 
             if ($role) {
-                $query = \DB::table('roles_permissions')
+                $query = DB::table('roles_permissions')
                     ->where('role_id', $role->id)
                     ->where('permission_category_id', $permissionCategory->id);
 
@@ -190,6 +190,35 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTIdentifier()
     {
         return $this->getKey();
+    }
+
+    public function getAvatarUrlAttribute()
+    {
+        if ($this->profile_pic) {
+            return asset('storage/' . $this->profile_pic);
+        }
+
+        $name = urlencode($this->name);
+
+        // Define role-based colors (Dark Backgrounds)
+        $roleColors = [
+            'admin' => '000000',          // Black
+            'superadmin' => '000000',     // Black
+            'salesmanager' => '1E3A8A',   // Dark Blue
+            'distributor' => '064E3B',    // Dark Green
+            'fieldstaff' => '7C2D12',     // Dark Orange/Brown
+            'retailer' => '7F1D1D',        // Dark Red
+        ];
+
+        // Get first role or default
+        $role = $this->getRoleNames()->first();
+        // Normalize role name just in case
+        $roleKey = $role ? strtolower($role) : 'default';
+
+        $background = $roleColors[$roleKey] ?? '374151'; // Default Dark Gray
+        $color = 'FFFFFF'; // White Text
+
+        return "https://ui-avatars.com/api/?name={$name}&color={$color}&background={$background}";
     }
 
     public function getJWTCustomClaims()
