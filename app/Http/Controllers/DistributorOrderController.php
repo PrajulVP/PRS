@@ -14,28 +14,30 @@ use Illuminate\Support\Facades\Storage;
 
 class DistributorOrderController extends Controller
 {
-    // Admin/Distributor: list all orders
     public function index(Request $request)
     {
         if ($request->ajax()) {
             try {
                 $query = DistributorOrder::with(['distributor.user', 'items.product', 'salesManager.user']);
 
+                /** @var \App\Models\User $user */
+                $user = Auth::user();
+
                 // Filter by distributor if authenticated user is a distributor
-                if (Auth::user()->hasRole('distributor')) {
-                    $distributor = Auth::user()->distributor;
+                if ($user->hasRole('distributor')) {
+                    $distributor = $user->distributor;
                     $query->where('distributor_id', $distributor->id);
                 }
                 // Filter by sales manager if authenticated user is a salesmanager
-                if (Auth::user()->hasRole('salesmanager')) {
-                    $salesManager = Auth::user()->salesManager;
+                if ($user->hasRole('salesmanager')) {
+                    $salesManager = $user->salesManager;
                     $query->whereHas('distributor', function ($q) use ($salesManager) {
                         $q->where('sales_manager_id', $salesManager->id);
                     });
                 }
 
                 // Filter for Admin/Superadmin: Show all orders
-                if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('superadmin')) {
+                if ($user->hasRole('admin') || $user->hasRole('superadmin')) {
                     // No additional filtering needed to show all orders
                 }
 
@@ -152,7 +154,9 @@ class DistributorOrderController extends Controller
 
         $products = Product::all();
         $distributors = collect();
-        if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('superadmin')) {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if ($user->hasRole('admin') || $user->hasRole('superadmin')) {
             $distributors = Distributor::with('user')->get();
         }
 
@@ -164,7 +168,9 @@ class DistributorOrderController extends Controller
     {
         $products = Product::select('id', 'product_name', 'mrp')->get();
         $distributors = collect();
-        if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('superadmin')) {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if ($user->hasRole('admin') || $user->hasRole('superadmin')) {
             $distributors = Distributor::with('user')->whereHas('user', function ($q) {
                 $q->where('status', 'active');
             })->get();
@@ -366,7 +372,9 @@ class DistributorOrderController extends Controller
 
     public function acceptBySalesManager(distributorOrder $distributorOrder)
     {
-        if (!Auth::user()->hasRole('salesmanager')) return response()->json(['error' => 'No permission'], 403);
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasPermissionToCategory('distributor_approvals', 'edit') && !$user->hasRole('salesmanager')) return response()->json(['error' => 'No permission'], 403);
         if ($distributorOrder->status !== DistributorOrder::STATUS_PENDING) return response()->json(['error' => 'Not pending'], 400);
 
         $distributorOrder->status = DistributorOrder::STATUS_ACCEPTED_BY_SALES_MANAGER;
@@ -380,7 +388,7 @@ class DistributorOrderController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        if (!$user->hasAnyRole(['admin', 'superadmin'])) {
+        if (!$user->hasPermissionToCategory('distributor_approvals', 'edit') && !$user->hasAnyRole(['admin', 'superadmin'])) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -480,7 +488,7 @@ class DistributorOrderController extends Controller
 
     public function approveCancellation(distributorOrder $distributorOrder)
     {
-        if (!Auth::user()->hasRole('salesmanager')) return response()->json(['error' => 'No permission'], 403);
+        if (!Auth::user()->hasPermissionToCategory('distributor_approvals', 'edit') && !Auth::user()->hasRole('salesmanager')) return response()->json(['error' => 'No permission'], 403);
         if ($distributorOrder->status !== DistributorOrder::STATUS_CANCELLATION_REQUESTED) return response()->json(['error' => 'Invalid status'], 400);
 
         $distributorOrder->status = DistributorOrder::STATUS_CANCELLED;
@@ -626,7 +634,7 @@ class DistributorOrderController extends Controller
             'invoice' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
 
-        if (!Auth::user()->hasRole('salesmanager')) {
+        if (!Auth::user()->hasPermissionToCategory('distributor_approvals', 'edit') && !Auth::user()->hasRole('salesmanager')) {
             return response()->json(['error' => 'Only Sales Managers can approve orders.'], 403);
         }
 

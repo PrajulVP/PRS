@@ -49,7 +49,7 @@ class RolePermissionSeeder extends Seeder
                 $canDelete = false;
 
                 // Customize admin permissions here based on typical admin needs
-                if (in_array($category->short_code, ['managers', 'distributors', 'field_staff', 'retailers', 'products', 'retailer_orders', 'distributor_orders'])) {
+                if (in_array($category->short_code, ['managers', 'distributors', 'field_staff', 'retailers', 'products', 'retailer_orders', 'distributor_orders', 'retailer_approvals', 'distributor_approvals'])) {
                     $canAdd = true;
                     $canEdit = true;
                     $canDelete = true;
@@ -114,6 +114,25 @@ class RolePermissionSeeder extends Seeder
                     ]
                 );
             }
+
+            // Add retailer_approvals permission
+            $retailerApprovalsCategory = PermissionCategory::where('short_code', 'retailer_approvals')->first();
+            if ($retailerApprovalsCategory) {
+                DB::table('roles_permissions')->updateOrInsert(
+                    [
+                        'role_id' => $fieldstaffRole->id,
+                        'permission_category_id' => $retailerApprovalsCategory->id,
+                    ],
+                    [
+                        'can_view' => true,
+                        'can_add' => false,
+                        'can_edit' => true,
+                        'can_delete' => false,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
+            }
         }
 
         // Seed permissions for Distributor
@@ -148,6 +167,25 @@ class RolePermissionSeeder extends Seeder
                         'can_view' => true,
                         'can_add' => false,
                         'can_edit' => false,
+                        'can_delete' => false,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
+            }
+
+            // Add retailer_approvals permission
+            $retailerApprovalsCategory = PermissionCategory::where('short_code', 'retailer_approvals')->first();
+            if ($retailerApprovalsCategory) {
+                DB::table('roles_permissions')->updateOrInsert(
+                    [
+                        'role_id' => $distributorRole->id,
+                        'permission_category_id' => $retailerApprovalsCategory->id,
+                    ],
+                    [
+                        'can_view' => true,
+                        'can_add' => false,
+                        'can_edit' => true,
                         'can_delete' => false,
                         'created_at' => now(),
                         'updated_at' => now(),

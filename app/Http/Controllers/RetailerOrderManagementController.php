@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Notifications\OrderActionRequired;
 
 class RetailerOrderManagementController extends Controller
 {
@@ -111,6 +112,9 @@ class RetailerOrderManagementController extends Controller
             'items' => 'required|array|min:1',
         ]);
 
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
         try {
             \DB::beginTransaction();
 
@@ -129,6 +133,7 @@ class RetailerOrderManagementController extends Controller
                 $order = RetailerOrder::create([
                     'retailer_id' => $retailer->id,
                     'distributor_id' => $distributor ? $distributor->id : null,
+                    'fieldstaff_id' => ($user->hasRole('fieldstaff') && $user->fieldStaff) ? $user->fieldStaff->id : $retailer->field_staff_id,
                     'order_code' => 'ORD-' . strtoupper(uniqid()),
                     'status' => $request->status,
                     'notes' => $request->notes,
@@ -168,6 +173,11 @@ class RetailerOrderManagementController extends Controller
                     'total_items' => $totalItems,
                     'total_quantity' => $totalQuantity
                 ]);
+
+                // Notify Field Staff
+                if ($order->fieldStaff && $order->fieldStaff->user) {
+                    $order->fieldStaff->user->notify(new OrderActionRequired($order, "New order #{$order->order_code} assigned to you. Action required: Approve or Reject.", url('/admin/pending-approvals?type=retailer')));
+                }
             }
 
             \DB::commit();
@@ -185,9 +195,13 @@ class RetailerOrderManagementController extends Controller
         if ($request->ajax()) {
             try {
                 // Determine query based on role
-                $query = RetailerOrder::with(['retailer.user', 'fieldStaff.user', 'items.product', 'distributor.user'])->orderBy('retailer_orders.id', 'desc');
+                $query = RetailerOrder::with(['retailer.user', 'fieldStaff.user', 'items.product', 'distributor.user'])
+                    ->select('retailer_orders.*') 
+                    ->distinct(); 
+                /** @var \App\Models\User $user */
+                $user = Auth::user();
 
-                if (Auth::user()->hasRole('distributor')) {
+                if ($user->hasRole('distributor')) {
                     $distributor = Auth::user()->distributor;
                     if ($distributor) {
                         $query->where('distributor_id', $distributor->id);
@@ -195,8 +209,8 @@ class RetailerOrderManagementController extends Controller
                         // Return empty if no distributor profile found for this user
                         return response()->json(['draw' => intval($request->input('draw')), 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => []]);
                     }
-                } elseif (Auth::user()->hasRole('fieldstaff')) {
-                    $fieldStaff = Auth::user()->fieldStaff;
+                } elseif ($user->hasRole('fieldstaff')) {
+                    $fieldStaff = $user->fieldStaff;
                     if ($fieldStaff) {
                         // Show orders assigned to this field staff directly
                         // OR orders from retailers managed by this field staff
@@ -207,8 +221,8 @@ class RetailerOrderManagementController extends Controller
                                 });
                         });
                     }
-                } elseif (Auth::user()->hasRole('retailer')) {
-                    $retailer = Auth::user()->retailer;
+                } elseif ($user->hasRole('retailer')) {
+                    $retailer = $user->retailer;
                     if ($retailer) {
                         $query->where('retailer_id', $retailer->id);
                     } else {
@@ -337,27 +351,105 @@ class RetailerOrderManagementController extends Controller
         return view('admin.orders.retailers.index', compact('fieldstaffs', 'retailers', 'products', 'distributors'));
     }
 
-    // Manager/Admin/Superadmin: Accept Order
+    // Manager/Admin/Superadmin/FieldStaff/Distributor: Accept Order
     public function acceptOrder(RetailerOrder $retailerOrder)
     {
-        if (!Auth::user()->hasRole(['distributor', 'admin', 'superadmin', 'manager'])) {
-            return response()->json(['error' => 'Permission denied'], 403);
-        }
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
 
-        // Logic for Distributor accepting
-        if (Auth::user()->hasRole('distributor')) {
-            if ($retailerOrder->distributor_id !== Auth::user()->distributor->id) {
-                return response()->json(['error' => 'Not your order'], 403);
+        // Permission check: Need retailer_approvals.edit or Admin/Manager roles
+        if (!$user->hasPermissionToCategory('retailer_approvals', 'edit') && !$user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
+            // Also allow Field Staff and Distributor to accept if it's their order
+            if (!$user->hasRole(['fieldstaff', 'distributor'])) {
+                return response()->json(['error' => 'Permission denied'], 403);
             }
         }
 
-        if ($retailerOrder->status !== 'pending') {
-            return response()->json(['error' => 'Only pending orders can be accepted.'], 400);
+        $status = $retailerOrder->status;
+
+        // --- Role Specific Logic ---
+
+        // 1. Field Staff accepting pending order
+        if ($user->hasRole('fieldstaff')) {
+            $fieldStaff = $user->fieldStaff;
+            if (!$fieldStaff) {
+                Log::error("Field Staff approval failed: User ID {$user->id} has fieldstaff role but no associated FieldStaff model.");
+                return response()->json(['error' => 'Field Staff profile not found.'], 403);
+            }
+
+            // Allowed if assigned to the order OR assigned to the retailer
+            $isAssignedToOrder = ($retailerOrder->fieldstaff_id == $fieldStaff->id);
+            $isAssignedToRetailer = ($retailerOrder->retailer && $retailerOrder->retailer->field_staff_id == $fieldStaff->id);
+
+            if (!$isAssignedToOrder && !$isAssignedToRetailer) {
+                return response()->json(['error' => 'This order is not assigned to you, and the retailer is not in your list.'], 403);
+            }
+
+            if ($status !== 'pending') {
+                return response()->json(['error' => 'Only pending orders can be accepted by Field Staff.'], 400);
+            }
+
+            // If it wasn't assigned to this specific FS order-wise but they are the retailer's FS, assign them now
+            if (!$retailerOrder->fieldstaff_id) {
+                $retailerOrder->fieldstaff_id = $fieldStaff->id;
+            }
+
+            $retailerOrder->status = 'accepted_by_fieldstaff';
+            $retailerOrder->save();
+
+            // Notify Distributor
+            if ($retailerOrder->distributor && $retailerOrder->distributor->user) {
+                $retailerOrder->distributor->user->notify(new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} has been accepted by Field Staff and is ready for your approval.", url('/admin/pending-approvals?type=retailer')));
+            }
+
+            return response()->json(['success' => 'Order accepted by Field Staff!']);
         }
 
-        $retailerOrder->update(['status' => 'accepted_by_distributor']);
+        // 2. Distributor accepting fieldstaff-accepted order
+        if ($user->hasRole('distributor')) {
+            $distributor = $user->distributor;
+            if (!$distributor) {
+                return response()->json(['error' => 'Distributor profile not found.'], 403);
+            }
 
-        return response()->json(['success' => 'Order accepted!']);
+            if ($retailerOrder->distributor_id != $distributor->id) {
+                return response()->json(['error' => 'This order is not for your distributorship.'], 403);
+            }
+            if ($status !== 'accepted_by_fieldstaff') {
+                return response()->json(['error' => 'Order must be accepted by Field Staff first.'], 400);
+            }
+            $retailerOrder->update(['status' => 'accepted_by_distributor']);
+
+            // Notify Retailer
+            if ($retailerOrder->retailer && $retailerOrder->retailer->user) {
+                $retailerOrder->retailer->user->notify(new OrderActionRequired($retailerOrder, "Your order #{$retailerOrder->order_code} has been approved by the Distributor. Please confirm order upon delivery.", url('/retailer-orders')));
+            }
+
+            return response()->json(['success' => 'Order approved by Distributor!']);
+        }
+
+        // 3. Admin / Sales Manager (can perform any stage or maybe skip)
+        if ($user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
+            if ($status === 'pending') {
+                $retailerOrder->update(['status' => 'accepted_by_fieldstaff']);
+                // Notify Distributor
+                if ($retailerOrder->distributor && $retailerOrder->distributor->user) {
+                    $retailerOrder->distributor->user->notify(new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} is ready for your approval (Field Staff stage bypassed by Admin).", url('/admin/pending-approvals?type=retailer')));
+                }
+                return response()->json(['success' => 'Order accepted (Field Staff stage bypassed by Admin)!']);
+            } elseif ($status === 'accepted_by_fieldstaff') {
+                $retailerOrder->update(['status' => 'accepted_by_distributor']);
+                // Notify Retailer
+                if ($retailerOrder->retailer && $retailerOrder->retailer->user) {
+                    $retailerOrder->retailer->user->notify(new OrderActionRequired($retailerOrder, "Your order #{$retailerOrder->order_code} has been approved. Please confirm order upon delivery.", url('/retailer-orders')));
+                }
+                return response()->json(['success' => 'Order approved (Distributor stage)!']);
+            } else {
+                return response()->json(['error' => 'Order is in a state that cannot be accepted/approved further.'], 400);
+            }
+        }
+
+        return response()->json(['error' => 'Unauthorized or invalid state'], 403);
     }
 
     // Manager: Assign Field Staff
@@ -365,8 +457,11 @@ class RetailerOrderManagementController extends Controller
     {
         $request->validate(['fieldstaff_id' => 'required|exists:field_staff,id']);
 
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
         // Permission check
-        if (!Auth::user()->hasRole(['admin', 'superadmin', 'manager', 'distributor'])) {
+        if (!$user->hasPermissionToCategory('retailer_approvals', 'edit') && !$user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
             return response()->json(['error' => 'Permission denied'], 403);
         }
 
@@ -579,8 +674,13 @@ class RetailerOrderManagementController extends Controller
             'status' => 'required',
         ]);
 
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
         // Permission check
-        // Add robust permission checks as needed (Admin, Manager, Distributor if assigned)
+        if (!$user->hasPermissionToCategory('retailer_approvals', 'edit') && !$user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
+            return response()->json(['error' => 'Permission denied'], 403);
+        }
 
         $oldStatus = $retailerOrder->status;
         $newStatus = $request->status;
@@ -661,5 +761,35 @@ class RetailerOrderManagementController extends Controller
     public function fieldStaffIndex(Request $request)
     {
         return $this->index($request);
+    }
+
+    public function confirmReceipt(RetailerOrder $retailerOrder)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        // Check if user is the retailer for this order
+        if (!$user->hasRole('retailer') || $retailerOrder->retailer_id !== $user->retailer->id) {
+            // Allow Admin/Manager too? Usually it's for retailer.
+            if (!$user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
+                return response()->json(['error' => 'Permission denied. Only the retailer can confirm order.'], 403);
+            }
+        }
+
+        if ($retailerOrder->status !== 'accepted_by_distributor') {
+            return response()->json(['error' => 'Order must be approved by Distributor before confirmation.'], 400);
+        }
+
+        $retailerOrder->update([
+            'status' => 'delivered',
+            'delivered_at' => now()
+        ]);
+
+        // Optional: Notify Field Staff / Distributor that order is closed
+        if ($retailerOrder->fieldStaff && $retailerOrder->fieldStaff->user) {
+            $retailerOrder->fieldStaff->user->notify(new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} has been successfully delivered and confirmed by the retailer.", url('/admin/retailer-orders')));
+        }
+
+        return response()->json(['success' => 'Order delivery confirmed!']);
     }
 }

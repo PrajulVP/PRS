@@ -18,6 +18,7 @@ class PermissionCategorySeeder extends Seeder
         $regionsAreaGroup = PermissionGroup::firstOrCreate(['name' => 'Regions & Area']);
         $productsGroup = PermissionGroup::firstOrCreate(['name' => 'Products']);
         $ordersGroup = PermissionGroup::firstOrCreate(['name' => 'Orders']);
+        $approvalsGroup = PermissionGroup::firstOrCreate(['name' => 'Approvals']);
 
         $categories = [
             // User Management
@@ -108,6 +109,25 @@ class PermissionCategorySeeder extends Seeder
                 'enable_add' => true,
                 'enable_edit' => true,
                 'enable_delete' => true,
+            ],
+            // Approvals
+            [
+                'name' => 'Retailer Approvals',
+                'short_code' => 'retailer_approvals',
+                'perm_group_id' => $approvalsGroup->id,
+                'enable_view' => true,
+                'enable_add' => false,
+                'enable_edit' => true, // Allows 'Approve/Reject' actions
+                'enable_delete' => false,
+            ],
+            [
+                'name' => 'Distributor Approvals',
+                'short_code' => 'distributor_approvals',
+                'perm_group_id' => $approvalsGroup->id,
+                'enable_view' => true,
+                'enable_add' => false,
+                'enable_edit' => true,
+                'enable_delete' => false,
             ],
         ];
 

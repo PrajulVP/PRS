@@ -14,8 +14,8 @@ class PendingApprovalController extends Controller
 {
     public function index(Request $request)
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
-        // Retrieve 'type' from route parameter (defaults) or query string
         $reqType = $request->route('type') ?? $request->input('type');
 
         // Determine effective type or fallback to role-based default
@@ -23,10 +23,24 @@ class PendingApprovalController extends Controller
             $viewType = $reqType;
         } else {
             // Default fallback if no type specified
-            if ($user->hasRole('superadmin')) $viewType = 'distributor'; // Default view
-            elseif ($user->hasRole('admin')) $viewType = 'field_staff';
+            if ($user->hasPermissionToCategory('distributor_approvals', 'view')) $viewType = 'distributor';
+            elseif ($user->hasPermissionToCategory('retailer_approvals', 'view')) $viewType = 'retailer';
+            elseif ($user->hasRole('superadmin')) $viewType = 'distributor';
+            elseif ($user->hasRole('admin')) $viewType = 'distributor';
             elseif ($user->hasRole('salesmanager')) $viewType = 'retailer';
+            elseif ($user->hasRole('retailer')) $viewType = 'retailer';
             else $viewType = 'none';
+        }
+
+        // Final Permission Check
+        if ($viewType === 'retailer') {
+            if (!$user->hasPermissionToCategory('retailer_approvals', 'view') && !$user->hasRole(['superadmin', 'admin', 'salesmanager', 'distributor', 'fieldstaff', 'retailer'])) {
+                abort(403, 'Unauthorized access to retailer approvals.');
+            }
+        } elseif ($viewType === 'distributor') {
+            if (!$user->hasPermissionToCategory('distributor_approvals', 'view') && !$user->hasRole(['superadmin', 'admin', 'salesmanager'])) {
+                abort(403, 'Unauthorized access to distributor approvals.');
+            }
         }
 
         if ($request->ajax()) {
@@ -70,6 +84,10 @@ class PendingApprovalController extends Controller
 
                 if ($user->hasRole('distributor') && $user->distributor) {
                     $query->where('distributor_id', $user->distributor->id);
+                }
+
+                if ($user->hasRole('retailer') && $user->retailer) {
+                    $query->where('retailer_id', $user->retailer->id);
                 }
 
                 if ($request->input('status')) {
