@@ -106,6 +106,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('retailer-orders/{retailerOrder}/invoice', [RetailerOrderManagementController::class, 'invoice'])->name('retailer-orders.invoice');
         Route::post('retailer-orders/{retailerOrder}/upload-invoice', [RetailerOrderManagementController::class, 'uploadInvoice'])->name('retailer-orders.upload-invoice');
         Route::post('retailer-orders/{retailerOrder}/remove-invoice', [RetailerOrderManagementController::class, 'removeInvoice'])->name('retailer-orders.remove-invoice');
+        Route::post('retailer-orders/{retailerOrder}/confirm-receipt', [RetailerOrderManagementController::class, 'confirmReceipt'])->name('retailer-orders.confirm-receipt');
 
 
         Route::resource('distributor-orders', DistributorOrderController::class);
@@ -160,6 +161,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/orders', [RetailerOrderController::class, 'store'])->name('orders.store');
         Route::post('/orders/{retailerOrder}/confirm-delivery', [RetailerOrderController::class, 'confirmDelivery'])->name('orders.confirmDelivery');
     });
+
+    Route::post('notifications/{id}/read', function ($id) {
+        $user = auth()->user();
+        if (!$user) abort(401);
+        $user->unreadNotifications()->where('id', $id)->update(['read_at' => now()]);
+        return response()->json(['success' => true]);
+    })->name('notifications.read');
 });
 
 Route::prefix('system')->name('system.')->group(function () {

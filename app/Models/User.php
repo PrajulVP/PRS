@@ -141,6 +141,52 @@ class User extends Authenticatable implements JWTSubject
 
         return false;
     }
+    public function getActionCounts()
+    {
+        $counts = [
+            'retailer_approvals' => 0,
+            'distributor_approvals' => 0,
+            'retailer_orders' => 0,
+            'distributor_orders' => 0,
+        ];
+
+        // 1. Retailer Approvals (Retailer Orders in pending states)
+        if ($this->hasPermissionToCategory('retailer_approvals', 'view') || $this->hasAnyRole(['admin', 'superadmin', 'salesmanager', 'fieldstaff', 'distributor'])) {
+            $query = \App\Models\RetailerOrder::query();
+
+            if ($this->hasRole('fieldstaff') && $this->fieldStaff) {
+                $query->where('fieldstaff_id', $this->fieldStaff->id)->where('status', 'pending');
+            } elseif ($this->hasRole('distributor') && $this->distributor) {
+                $query->where('distributor_id', $this->distributor->id)->where('status', 'accepted_by_fieldstaff');
+            } elseif ($this->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
+                $query->whereIn('status', ['pending', 'accepted_by_fieldstaff']);
+            } else {
+                $query->whereRaw('1=0');
+            }
+            $counts['retailer_approvals'] = $query->count();
+        }
+
+        // 2. Distributor Order Approvals
+        if ($this->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
+            $query = \App\Models\DistributorOrder::query();
+            if ($this->hasRole('salesmanager')) {
+                $query->where('status', 'pending');
+            } else {
+                $query->whereIn('status', ['pending', 'accepted_by_sales_manager']);
+            }
+            $counts['distributor_approvals'] = $query->count();
+        }
+
+        // 3. Retailer Orders (Orders to confirm receipt)
+        if ($this->hasRole('retailer') && $this->retailer) {
+            $counts['retailer_orders'] = \App\Models\RetailerOrder::where('retailer_id', $this->retailer->id)
+                ->where('status', 'accepted_by_distributor')
+                ->count();
+        }
+
+        return $counts;
+    }
+
     public function getJWTIdentifier()
     {
         return $this->getKey();

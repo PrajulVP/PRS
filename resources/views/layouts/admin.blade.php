@@ -7,7 +7,7 @@
 
 <body class="{{ $_COOKIE['mode'] ?? 'light' }}">
     <script>
-        (function() {
+        (function () {
             var mode = localStorage.getItem('mode');
             if (mode) {
                 document.body.classList.add(mode);
@@ -19,8 +19,10 @@
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;" id="toastContainer"></div>
 
     <!-- Loader -->
-    <div id="global-loader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #ffffff; z-index: 99999; display: flex; justify-content: center; align-items: center; transition: opacity 0.5s ease-out;">
-        <img src="{{ asset('admin/assets/images/logo/favicon.ico') }}" width="60" alt="Loading..." style="width: 60px; height: auto; animation: pulse 1.5s infinite ease-in-out;">
+    <div id="global-loader"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #ffffff; z-index: 99999; display: flex; justify-content: center; align-items: center; transition: opacity 0.5s ease-out;">
+        <img src="{{ asset('admin/assets/images/logo/favicon.ico') }}" width="60" alt="Loading..."
+            style="width: 60px; height: auto; animation: pulse 1.5s infinite ease-in-out;">
     </div>
 
     <style>
@@ -45,15 +47,19 @@
         body.dark-only #global-loader {
             background-color: #1d1e26 !important;
         }
+
+        .pt-6 {
+            padding-top: 4rem !important;
+        }
     </style>
 
     <script>
-        window.addEventListener('load', function() {
-            setTimeout(function() {
+        window.addEventListener('load', function () {
+            setTimeout(function () {
                 var loader = document.getElementById('global-loader');
                 if (loader) {
                     loader.style.opacity = '0';
-                    setTimeout(function() {
+                    setTimeout(function () {
                         loader.style.display = 'none';
                     }, 500);
                 }
@@ -63,31 +69,30 @@
 
     {{-- If authenticated as any role → show full dashboard layout --}}
     @if(Auth::guard('web')->check())
-    <div class="page-wrapper compact-wrapper" id="pageWrapper">
-        @include('layouts.partials.header')
-        <div class="page-body-wrapper">
-            @include('layouts.partials.sidebar')
-            <div class="page-body">
-                @include('layouts.partials.breadcrumbs')
-                @yield('page-body')
+        <div class="page-wrapper compact-wrapper" id="pageWrapper">
+            @include('layouts.partials.header')
+            <div class="page-body-wrapper">
+                @include('layouts.partials.sidebar')
+                <div class="page-body pt-6">
+                    @yield('page-body')
+                </div>
+                @include('layouts.partials.footer')
             </div>
-            @include('layouts.partials.footer')
         </div>
-    </div>
-    @include('layouts.partials.scripts')
+        @include('layouts.partials.scripts')
 
-    @stack('scripts')
+        @stack('scripts')
     @else
-    {{-- If NOT authenticated as any role → show only login content --}}
-    @yield('content')
+        {{-- If NOT authenticated as any role → show only login content --}}
+        @yield('content')
     @endif
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             var currentUrl = window.location.href;
             var sidebarLinks = document.querySelectorAll('.sidebar-link, .sidebar-submenu a');
 
-            sidebarLinks.forEach(function(link) {
+            sidebarLinks.forEach(function (link) {
                 if (link.href === currentUrl || currentUrl.startsWith(link.href)) {
                     link.classList.add('active');
 
@@ -102,6 +107,29 @@
                         }
                     }
                 }
+            });
+
+            // Notification Click Handler
+            document.querySelectorAll('.notification-dropdown a').forEach(function (link) {
+                link.addEventListener('click', function (e) {
+                    var li = link.closest('li');
+                    var notificationId = li ? li.dataset.id : null;
+                    if (notificationId) {
+                        e.preventDefault();
+                        var targetUrl = link.getAttribute('href');
+
+                        fetch("{{ route('notifications.read', ':id') }}".replace(':id', notificationId), {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            }
+                        }).finally(function () {
+                            window.location.href = targetUrl;
+                        });
+                    }
+                });
             });
         });
     </script>

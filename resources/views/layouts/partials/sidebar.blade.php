@@ -27,7 +27,7 @@
         $iconSprite = asset('admin/assets/svg/icon-sprite.svg');
         @endphp
 
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('dashboard') }}">
+        <li class="sidebar-list"><a class="sidebar-link sidebar-title link-nav" href="{{ route('dashboard') }}">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-home"></use>
             </svg>
@@ -45,6 +45,9 @@
         $hasApprovalRoles = Auth::user()->hasRole('superadmin') ||
         Auth::user()->hasRole('admin') ||
         Auth::user()->hasRole('salesmanager');
+
+        $actionCounts = Auth::user()->getActionCounts();
+        $totalOrdersAction = $actionCounts['retailer_orders'] + $actionCounts['distributor_orders'];
         @endphp
 
         @if ($hasOrderPerms || $hasApprovalRoles)
@@ -56,7 +59,7 @@
         @endif
 
         @if ($hasOrderPerms)
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+        <li class="sidebar-list" style="position: relative;">
           <a class="sidebar-link sidebar-title" id="orders" href="#orders">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-form"></use>
@@ -68,12 +71,12 @@
           <ul class="sidebar-submenu">
             {{-- Retailer Role --}}
             @if (Auth::user()->hasRole('retailer'))
-            <li><a href="{{ route('retailer.orders.index') }}">My Orders</a></li>
+              <li style="position: relative;"><a href="{{ route('retailer.orders.index') }}">My Orders</a></li>
             @endif
 
             {{-- Distributor Role --}}
             @if (Auth::user()->hasRole('distributor'))
-            <li><a href="{{ route('distributor.orders.index') }}">Received Orders</a></li>
+            <li style="position: relative;"><a href="{{ route('distributor.orders.index') }}">Received Orders</a></li>
 
             @if (Auth::user()->hasPermissionToCategory('distributor_orders', 'view'))
             <li><a href="{{ route('admin.distributor-orders.index') }}">My Orders</a></li>
@@ -82,7 +85,7 @@
 
             {{-- Field Staff Role --}}
             @if (Auth::user()->hasRole('fieldstaff'))
-            <li><a href="{{ route('fieldstaff.orders.index') }}">Orders</a></li>
+            <li style="position: relative;"><a href="{{ route('fieldstaff.orders.index') }}">Orders</a></li>
             @endif
 
             {{-- Admin / Sales Manager / SuperAdmin --}}
@@ -98,8 +101,11 @@
         </li>
         @endif
 
-        @if ($hasApprovalRoles)
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+        @if (Auth::user()->hasPermissionToCategory('retailer_approvals', 'view') || 
+             Auth::user()->hasPermissionToCategory('distributor_approvals', 'view') || 
+             $hasApprovalRoles)
+        <li class="sidebar-list" style="position: relative;">
+          @php $totalApprovals = $actionCounts['retailer_approvals'] + $actionCounts['distributor_approvals']; @endphp
           <a class="sidebar-link sidebar-title" id="approvals" href="#approvals">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-user"></use>
@@ -109,8 +115,12 @@
             </svg><span>Approvals</span>
           </a>
           <ul class="sidebar-submenu">
-            <li><a href="{{ route('approvals.retailer') }}">Retailers</a></li>
-            <li><a href="{{ route('approvals.distributor') }}">Distributors</a></li>
+             @if(Auth::user()->hasPermissionToCategory('retailer_approvals', 'view') || $hasApprovalRoles)
+             <li style="position: relative;"><a href="{{ route('approvals.retailer') }}">Retailers</a></li>
+            @endif
+             @if(Auth::user()->hasPermissionToCategory('distributor_approvals', 'view') || $hasApprovalRoles)
+             <li style="position: relative;"><a href="{{ route('approvals.distributor') }}">Distributors</a></li>
+            @endif
           </ul>
         </li>
         @endif
@@ -121,7 +131,7 @@
             <h6 class="lan-12">Products</h6>
           </div>
         </li>
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('products.index') }}">
+        <li class="sidebar-list"><a class="sidebar-link sidebar-title link-nav" href="{{ route('products.index') }}">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-form"></use>
             </svg>
@@ -139,7 +149,7 @@
           </div>
         </li>
         @endif
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('inventories.index') }}">
+        <li class="sidebar-list"><a class="sidebar-link sidebar-title link-nav" href="{{ route('inventories.index') }}">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-form"></use>
             </svg>
@@ -165,7 +175,7 @@
 
         @if (Auth::user()->hasPermissionToCategory('districts', 'view') || Auth::user()->hasPermissionToCategory('districts', 'add'))
         <li class="sidebar-list">
-          <i class="fa fa-thumb-tack"></i>
+          
           <a class="sidebar-link sidebar-title link-nav" href="{{ route('districts.index') }}">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-form"></use>
@@ -180,7 +190,7 @@
 
         @if (Auth::user()->hasPermissionToCategory('areas', 'view') || Auth::user()->hasPermissionToCategory('areas', 'add'))
         <li class="sidebar-list">
-          <i class="fa fa-thumb-tack"></i>
+          
           <a class="sidebar-link sidebar-title link-nav" href="{{ route('areas.index') }}">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-form"></use>
@@ -201,10 +211,8 @@
         </li>
         @endif
 
-
-
         @if (Auth::user()->hasPermissionToCategory('sales_managers', 'view'))
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+        <li class="sidebar-list">
           <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.sales-managers.index') }}">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-form"></use>
@@ -216,7 +224,7 @@
         @endif
 
         @if (Auth::user()->hasPermissionToCategory('distributors', 'view'))
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+        <li class="sidebar-list">
           <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.distributors.index') }}">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-form"></use>
@@ -228,7 +236,7 @@
         @endif
 
         @if (Auth::user()->hasPermissionToCategory('field_staff', 'view'))
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+        <li class="sidebar-list">
           <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.field-staffs.index') }}">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-form"></use>
@@ -240,7 +248,7 @@
         @endif
 
         @if (Auth::user()->hasPermissionToCategory('retailers', 'view'))
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+        <li class="sidebar-list">
           <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.retailers.index') }}">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-form"></use>
@@ -257,7 +265,7 @@
             <h6 class="lan-10">Settings</h6>
           </div>
         </li>
-        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title -link-nav" href="#">
+        <li class="sidebar-list"><a class="sidebar-link sidebar-title -link-nav" href="#">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-user"></use>
             </svg>
@@ -267,7 +275,7 @@
           <ul class="sidebar-submenu">
             @if (Auth::user()->hasPermissionToCategory('districts', 'view') || Auth::user()->hasPermissionToCategory('districts', 'add'))
             <li class="sidebar-list">
-              <i class="fa fa-thumb-tack"></i>
+              
               <a class="sidebar-link sidebar-title link-nav" href="{{ route('districts.index') }}">
                 <svg class="stroke-icon">
                   <use href="{{ $iconSprite }}#stroke-form"></use>
@@ -282,11 +290,8 @@
 
             @if (Auth::user()->hasPermissionToCategory('areas', 'view') || Auth::user()->hasPermissionToCategory('areas', 'add'))
             <li class="sidebar-list">
-              <i class="fa fa-thumb-tack"></i>
+              
               <a class="sidebar-link sidebar-title link-nav" href="{{ route('areas.index') }}">
-                <svg class="stroke-icon">
-                  <use href="{{ $iconSprite }}#stroke-form"></use>
-                </svg>
                 <svg class="fill-icon">
                   <use href="{{ $iconSprite }}#fill-form"></use>
                 </svg>
@@ -296,7 +301,7 @@
             @endif
 
 
-            <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.permissions.index') }}">
+            <li class="sidebar-list"><a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.permissions.index') }}">
                 <svg class="stroke-icon">
                   <use href="{{ $iconSprite }}#stroke-user"></use>
                 </svg>
@@ -352,6 +357,26 @@
   .medical-theme-sidebar .logo-wrapper,
   .medical-theme-sidebar .logo-icon-wrapper {
     background: transparent !important;
+  }
+
+  /* Pulse Animation for Notification Badges */
+  .pulse-badge {
+    background-color: #ffffff !important;
+    color: var(--theme-default, #7366ff) !important;
+    border: 2px solid var(--theme-default, #7366ff) !important;
+    animation: pulse-white 2s infinite;
+  }
+
+  @keyframes pulse-white {
+    0% {
+      box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    }
   }
 </style>
 @endpush

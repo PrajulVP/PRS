@@ -1,6 +1,66 @@
 @extends('layouts.admin')
 
 @section('page-body')
+<style>
+    .dataTables_filter {
+        text-align: right !important;
+    }
+
+    .dataTables_filter input {
+        width: 230px !important;
+        margin-left: 10px !important;
+    }
+
+    .dataTables_length {
+        text-align: left !important;
+    }
+
+    .dataTables_length select {
+        padding: 5px 10px !important;
+        padding-right: 30px !important;
+        display: inline-block !important;
+        width: auto !important;
+    }
+
+    .action-buttons {
+        display: inline-flex !important;
+        gap: 4px;
+        align-items: center;
+    }
+
+
+    .action-buttons .btn {
+        padding: 2px 6px !important;
+        font-size: 0.75rem !important;
+        height: 28px !important;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        line-height: 1 !important;
+    }
+
+    /* Modal sizing and table compacting */
+    .modal-xl {
+        max-width: 1140px;
+    }
+
+    #retailer-approval-table td:last-child {
+        white-space: nowrap !important;
+    }
+
+    /* Preview / full content helper */
+    .preview-content {
+        display: inline-block;
+    }
+
+    .full-content {
+        display: block;
+    }
+
+    .full-content.d-none {
+        display: none;
+    }
+</style>
     <div class="container-fluid">
         <div class="card shadow-sm border-0 rounded-3">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -18,8 +78,8 @@
                         <select id="status_filter" class="form-select form-select-sm" style="width: 150px;">
                             <option value="">All Statuses</option>
                             <option value="pending">Pending</option>
-                            <option value="accepted_by_distributor">Approve</option>
-                            <option value="assigned_to_field_staff">Assigned</option>
+                            <option value="accepted_by_fieldstaff">Accepted by Sales Rep</option>
+                            <option value="accepted_by_distributor">Approved</option>
                             <option value="delivered">Delivered</option>
                             <option value="cancelled">Cancelled</option>
                             <option value="rejected">Rejected</option>
@@ -153,9 +213,15 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
     <style>
-        .action-buttons .btn {
-            padding: 4px 8px;
-            font-size: 0.75rem;
+        .action-buttons .btn,
+        .table td .btn {
+            padding: 2px 6px !important;
+            font-size: 0.75rem !important;
+            height: 28px !important;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            line-height: 1 !important;
         }
     </style>
 @endpush
@@ -163,6 +229,12 @@
 @push('scripts')
     <script>
         $(document).ready(function () {
+            const isFieldStaff = {{ Auth::user()->hasRole('fieldstaff') ? 'true' : 'false' }};
+            const isDistributor = {{ Auth::user()->hasRole('distributor') ? 'true' : 'false' }};
+            const isRetailer = {{ Auth::user()->hasRole('retailer') ? 'true' : 'false' }};
+            const isSalesManager = {{ Auth::user()->hasRole('salesmanager') ? 'true' : 'false' }};
+            const isAdmin = {{ Auth::user()->hasAnyRole(['admin', 'superadmin']) ? 'true' : 'false' }};
+
             var table = $('#retailer-approval-table').DataTable({
                 dom: "<'row mb-3'<'col-sm-12'B>>" + // Buttons on top
                     "<'row mb-3 d-flex align-items-center'<'col-md-6'l><'col-md-6'f>>" + // 'l' (length) on left, 'f' (filter/search) on right
@@ -250,30 +322,30 @@
                 {
                     data: 'status',
                     name: 'status',
-                    render: function (d, type, row) {
+                    render: function (data, type, row) {
                         let statusRaw = row.status ? row.status.toLowerCase().replace(/ /g, '_') : '';
                         let bgClass = 'bg-secondary text-white';
+                        let displayStatus = row.status;
 
-                        if (statusRaw.includes('pending')) bgClass = 'bg-warning text-dark';
-                        else if (statusRaw.includes('accepted')) bgClass = 'bg-info text-white';
-                        else if (statusRaw.includes('delivered')) bgClass = 'bg-success text-white';
+                        if (statusRaw === 'pending') bgClass = 'bg-warning text-dark';
+                        else if (statusRaw === 'accepted_by_fieldstaff') {
+                            bgClass = 'bg-info text-white';
+                            displayStatus = 'Accepted by Sales Rep';
+                        }
+                        else if (statusRaw === 'accepted_by_distributor') {
+                            bgClass = 'bg-primary text-white';
+                            displayStatus = 'Approved';
+                        }
+                        else if (statusRaw === 'delivered') bgClass = 'bg-success text-white';
                         else if (statusRaw.includes('rejected') || statusRaw.includes('cancelled')) bgClass = 'bg-danger text-white';
 
-                        return `
-                                <select class="form-select form-select-sm status-select ${bgClass}" data-id="${row.id}" data-original="${statusRaw}" style="width: 130px; font-weight: 500; border: 1px solid rgba(0,0,0,0.1);">
-                                    <option value="pending" ${statusRaw.includes('pending') ? 'selected' : ''} class="bg-white text-dark">Pending</option>
-                                    <option value="accepted_by_distributor" ${statusRaw.includes('accepted') ? 'selected' : ''} class="bg-white text-dark">Accepted by Manager</option>
-                                    <option value="delivered" ${statusRaw.includes('delivered') ? 'selected' : ''} class="bg-white text-dark">Delivered</option>
-                                    <option value="rejected" ${statusRaw.includes('rejected') ? 'selected' : ''} class="bg-white text-dark">Rejected</option>
-                                    <option value="cancelled" ${statusRaw.includes('cancelled') ? 'selected' : ''} class="bg-white text-dark">Cancelled</option>
-                                </select>
-                                `;
+                        return `<span class="badge ${bgClass}">${displayStatus}</span>`;
                     }
                 },
                 {
                     data: 'payment_status',
                     name: 'payment_status',
-                    render: function (d, type, row) {
+                    render: function (data, type, row) {
                         let payStatus = row.payment_status ? row.payment_status.toLowerCase() : 'pending';
                         let bgClass = 'bg-secondary text-white';
 
@@ -281,13 +353,7 @@
                         else if (payStatus === 'paid') bgClass = 'bg-success text-white';
                         else if (payStatus === 'failed') bgClass = 'bg-danger text-white';
 
-                        return `
-                                <select class="form-select form-select-sm payment-status-select ${bgClass}" data-id="${row.id}" data-original="${payStatus}" style="width: 120px; font-weight: 500; border: 1px solid rgba(0,0,0,0.1);">
-                                    <option value="pending" ${payStatus === 'pending' ? 'selected' : ''} class="bg-white text-dark">Pending</option>
-                                    <option value="paid" ${payStatus === 'paid' ? 'selected' : ''} class="bg-white text-dark">Paid</option>
-                                    <option value="failed" ${payStatus === 'failed' ? 'selected' : ''} class="bg-white text-dark">Failed</option>
-                                </select>
-                                `;
+                        return `<span class="badge ${bgClass}">${payStatus}</span>`;
                     }
                 },
                 {
@@ -299,25 +365,35 @@
                         if (row.invoice_url) {
                             let ext = row.invoice_url.split('.').pop().toLowerCase();
                             let icon = ext === 'pdf' ? 'fa-file-pdf-o' : 'fa-file-image-o';
-                            return `
-                                        <div class="d-flex align-items-center gap-1">
-                                            <a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-success" title="View Invoice">
-                                                <i class="fa ${icon}"></i> View
-                                            </a>
-                                            <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}" title="Re-upload Invoice">
-                                                <i class="fa fa-refresh"></i>
-                                            </button>
-                                            <button class="btn btn-xs btn-danger remove-invoice-btn" data-id="${row.id}" title="Remove Invoice">
-                                                <i class="fa fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    `;
+                            let btnsHtml = `
+                                                                                                    <div class="d-flex align-items-center gap-1">
+                                                                                                        <a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-success" title="View Invoice">
+                                                                                                            <i class="fa ${icon}"></i> View
+                                                                                                        </a>`;
+                            if (!isFieldStaff) {
+                                btnsHtml += `
+                                                                                                        <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}" title="Re-upload Invoice">
+                                                                                                            <i class="fa fa-refresh"></i>
+                                                                                                        </button>
+                                                                                                        <button class="btn btn-xs btn-danger remove-invoice-btn" data-id="${row.id}" title="Remove Invoice">
+                                                                                                            <i class="fa fa-trash"></i>
+                                                                                                        </button>`;
+                            }
+                            btnsHtml += `</div>`;
+                            return btnsHtml;
                         }
+                        if (isFieldStaff) return '<span class="text-muted small">No Invoice</span>';
+
+                        let statusRaw = row.status ? row.status.toLowerCase().replace(/ /g, '_') : '';
+                        if (statusRaw === 'pending') {
+                            return '<span class="text-muted small">Waiting for FS Approval</span>';
+                        }
+
                         return `
-                                    <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}">
-                                        <i class="fa fa-upload"></i> Upload
-                                    </button>
-                                `;
+                                                                                                <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}">
+                                                                                                    <i class="fa fa-upload"></i> Upload
+                                                                                                </button>
+                                                                                            `;
                     }
                 },
                 {
@@ -327,9 +403,29 @@
                     render: function (data, type, row) {
                         let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
                         let btns = `<div class="action-buttons d-flex gap-1">`;
+                        let statusRaw = row.status ? row.status.toLowerCase().replace(/ /g, '_') : '';
+
+                        // Tiered Approval Buttons
+                        let canApprove = false;
+                        if (isFieldStaff && statusRaw === 'pending') canApprove = true;
+                        if (isDistributor && statusRaw === 'accepted_by_fieldstaff') canApprove = true;
+                        if ((isAdmin || isSalesManager) && (statusRaw === 'pending' || statusRaw === 'accepted_by_fieldstaff')) canApprove = true;
+
+                        if (canApprove) {
+                            btns += `<button class="btn btn-success btn-sm approve-retailer-btn" data-id="${row.id}" title="Approve"><i class="fa fa-check"></i></button>`;
+                            btns += `<button class="btn btn-danger btn-sm reject-retailer-btn" data-id="${row.id}" title="Reject"><i class="fa fa-times"></i></button>`;
+                        }
+
                         btns += `<button class="btn btn-info btn-sm view-details-btn" data-row="${rowData}" title="View Details"><i class="fa fa-eye"></i></button>`;
                         let invoiceUrl = "{{ route('admin.retailer-orders.invoice', ':id') }}".replace(':id', row.id);
                         btns += `<a href="${invoiceUrl}" target="_blank" class="btn btn-dark btn-sm" title="Print Invoice"><i class="fa fa-print"></i></a>`;
+
+                        // Retailer Confirmation
+                        if (statusRaw === 'accepted_by_distributor') {
+                            if (isRetailer || isAdmin || isSalesManager) {
+                                btns += `<button class="btn btn-primary btn-sm confirm-receipt-btn" data-id="${row.id}" title="Confirm Order"> Confirm</button>`;
+                            }
+                        }
                         btns += `</div>`;
                         return btns;
                     }
@@ -534,16 +630,123 @@
                 if (row.items && row.items.length) {
                     row.items.forEach(item => {
                         tbody.append(`<tr>
-                            <td>${item.product_name}</td>
-                            <td>${item.quantity}</td>
-                            <td>${item.unit_price}</td>
-                            <td>${item.total_amount}</td>
-                        </tr>`);
+                                                                                        <td>${item.product_name}</td>
+                                                                                        <td>${item.quantity}</td>
+                                                                                        <td>${item.unit_price}</td>
+                                                                                        <td>${item.total_amount}</td>
+                                                                                    </tr>`);
                     });
                 } else {
                     tbody.html('<tr><td colspan="4" class="text-center">No items</td></tr>');
                 }
                 $('#viewOrderModal').modal('show');
+            });
+
+            // Approve Retailer Order (Field Staff / Manager)
+            $(document).on('click', '.approve-retailer-btn', function () {
+                let id = $(this).data('id');
+                Swal.fire({
+                    title: 'Approve Order?',
+                    text: "Are you sure you want to approve this order?",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, Approve',
+                    confirmButtonColor: '#28a745'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        let url = "{{ route('admin.retailer-orders.acceptOrder', ':id') }}".replace(':id', id);
+                        $.post(url, { _token: '{{ csrf_token() }}' }, function (res) {
+                            if (res.success) {
+                                table.ajax.reload(null, false);
+                                showToast('success', res.success);
+                            } else {
+                                showToast('error', res.error || 'Failed to approve');
+                            }
+                        }).fail(function (xhr) {
+                            showToast('error', 'Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Request failed'));
+                        });
+                    }
+                });
+            });
+
+            $(document).on('click', '.confirm-receipt-btn', function () {
+                let id = $(this).data('id');
+                Swal.fire({
+                    title: 'Confirm Order?',
+                    text: "Are you sure you have received this order?",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, I received it',
+                    confirmButtonColor: '#28a745'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        let url = "{{ route('admin.retailer-orders.confirm-receipt', ':id') }}".replace(':id', id);
+                        $.post(url, { _token: '{{ csrf_token() }}' }, function (res) {
+                            if (res.success) {
+                                table.ajax.reload(null, false);
+                                showToast('success', res.success);
+                            } else {
+                                showToast('error', res.error || 'Failed to confirm order');
+                            }
+                        }).fail(function (xhr) {
+                            showToast('error', 'Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Request failed'));
+                        });
+                    }
+                });
+            });
+
+            // Reject Retailer Order
+            $(document).on('click', '.reject-retailer-btn', function () {
+                let id = $(this).data('id');
+                Swal.fire({
+                    title: 'Reject Order?',
+                    text: "Are you sure you want to reject this order?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, Reject',
+                    confirmButtonColor: '#dc3545'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        let url = "{{ route('admin.retailer-orders.update-status', ':id') }}".replace(':id', id);
+                        $.post(url, { _token: '{{ csrf_token() }}', status: 'rejected' }, function (res) {
+                            if (res.success) {
+                                table.ajax.reload(null, false);
+                                showToast('success', res.success);
+                            } else {
+                                showToast('error', res.error || 'Failed to reject');
+                            }
+                        }).fail(function (xhr) {
+                            showToast('error', 'Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Request failed'));
+                        });
+                    }
+                });
+            });
+
+            // Approve Cancellation
+            $(document).on('click', '.approve-cancel-btn', function () {
+                let id = $(this).data('id');
+                Swal.fire({
+                    title: 'Approve Cancellation?',
+                    text: "Are you sure you want to cancel this order and restore stock?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, Approve Cancellation',
+                    confirmButtonColor: '#28a745'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        let url = "{{ route('admin.retailer-orders.approve-cancellation', ':id') }}".replace(':id', id);
+                        $.post(url, { _token: '{{ csrf_token() }}' }, function (res) {
+                            if (res.success) {
+                                table.ajax.reload(null, false);
+                                showToast('success', res.success);
+                            } else {
+                                showToast('error', res.error || 'Failed to approve cancellation');
+                            }
+                        }).fail(function (xhr) {
+                            showToast('error', 'Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Request failed'));
+                        });
+                    }
+                });
             });
         });
     </script>
