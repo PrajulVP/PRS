@@ -167,6 +167,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/orders/{retailerOrder}/confirm-delivery', [RetailerOrderController::class, 'confirmDelivery'])->name('orders.confirmDelivery');
     });
 
+    Route::get('notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
     Route::post('notifications/{id}/read', function ($id) {
         $user = auth()->user();
         if (!$user) abort(401);

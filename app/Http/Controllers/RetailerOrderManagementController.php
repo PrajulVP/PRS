@@ -194,7 +194,7 @@ class RetailerOrderManagementController extends Controller
 
                 // Notify Field Staff
                 if ($order->fieldStaff && $order->fieldStaff->user) {
-                    $order->fieldStaff->user->notify(new OrderActionRequired($order, "New order #{$order->order_code} assigned to you. Action required: Approve or Reject.", url('/admin/pending-approvals?type=retailer')));
+                    $order->fieldStaff->user->notify(new OrderActionRequired($order, "New order #{$order->order_code} assigned to you. Action required: Approve or Reject.", url('/approvals/retailers')));
                 }
             }
 
@@ -417,7 +417,7 @@ class RetailerOrderManagementController extends Controller
 
             // Notify Distributor
             if ($retailerOrder->distributor && $retailerOrder->distributor->user) {
-                $retailerOrder->distributor->user->notify(new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} has been accepted by Field Staff and is ready for your approval.", url('/admin/pending-approvals?type=retailer')));
+                $retailerOrder->distributor->user->notify(new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} has been accepted by Field Staff and is ready for your approval.", url('/approvals/retailers')));
             }
 
             return response()->json(['success' => 'Order accepted by Field Staff!']);
@@ -489,7 +489,7 @@ class RetailerOrderManagementController extends Controller
                 $retailerOrder->update(['status' => 'accepted_by_fieldstaff']);
                 // Notify Distributor
                 if ($retailerOrder->distributor && $retailerOrder->distributor->user) {
-                    $retailerOrder->distributor->user->notify(new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} is ready for your approval (Field Staff stage bypassed by Admin).", url('/admin/pending-approvals?type=retailer')));
+                    $retailerOrder->distributor->user->notify(new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} is ready for your approval (Field Staff stage bypassed by Admin).", url('/approvals/retailers')));
                 }
                 return response()->json(['success' => 'Order accepted (Field Staff stage bypassed by Admin)!']);
             } elseif ($status === 'accepted_by_fieldstaff') {
@@ -892,7 +892,7 @@ class RetailerOrderManagementController extends Controller
 
             // Optional: Notify Field Staff / Distributor that order is closed
             if ($retailerOrder->fieldStaff && $retailerOrder->fieldStaff->user) {
-                $retailerOrder->fieldStaff->user->notify(new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} has been successfully delivered and confirmed by the retailer.", url('/admin/retailer-orders')));
+                $retailerOrder->fieldStaff->user->notify(new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} has been successfully delivered and confirmed by the retailer.", url('/retailer-orders')));
             }
 
             DB::commit();

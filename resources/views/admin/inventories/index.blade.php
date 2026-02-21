@@ -366,10 +366,10 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="text-center mb-4">
+                    {{-- <div class="text-center mb-4">
                         <img id="prodDetailImage" src="" class="img-fluid rounded" style="max-height: 150px;"
                             alt="Product Image">
-                    </div>
+                    </div> --}}
                     <ul class="list-group list-group-flush" id="prodDetailList">
                         <!-- Details populated via JS -->
                     </ul>
@@ -473,10 +473,8 @@
                         let detailJson = JSON.stringify(row.product_details).replace(/"/g, '&quot;');
                         return `
                                 <div class="d-flex align-items-center">
-                                    <img src="${row.image}" class="img-fluid me-2" width="40" height="40" alt="Product" style="object-fit:cover; border-radius:4px;">
                                     <a href="javascript:void(0)" class="text-primary fw-bold product-detail-link" 
-                                       data-name="${data}" 
-                                       data-image="${row.image}"
+                                       data-name="${data}" \
                                        data-details='${detailJson}'>
                                        ${data}
                                     </a>

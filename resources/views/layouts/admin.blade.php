@@ -5,44 +5,46 @@
     @include('layouts.partials.head')
     <style>
         :root {
-            /* === Emerald Excellence: State-of-the-Art Medical Palette === */
-            --med-bg-body: #f8faf9;
-            /* Ultra-clean biological white */
+            /* === Deep Navy Corporate Palette === */
+            --med-bg-body: rgba(0, 53, 114, 0.02);
+            /* Soft pastel navy-tinted light background */
             --med-bg-card: #ffffff;
-            --med-bg-sidebar: linear-gradient(165deg, #064e3b 0%, #065f46 40%, #10b981 100%);
-            /* Organic Emerald Wave */
-            --med-primary: #10b981;
-            /* Biotech Green */
-            --med-secondary: #34d399;
-            /* Mint Pulse */
-            --med-accent: #059669;
-            --med-text-main: #064e3b;
-            /* Deep Forest Slate */
+            --med-bg-sidebar: linear-gradient(165deg, rgb(44, 44, 44) 0%, rgb(0, 80, 133) 40%, #002b5cf5 100%);
+            /* Dark slate into Deep Corporate Navy */
+            --med-primary: #00497a;
+            /* Corporate Blue */
+            --med-secondary: #0067ab;
+            /* Lighter Blue */
+            --med-accent: #002b5c;
+            --med-text-main: #1f2937;
+            /* Deep Slate */
             --med-text-muted: #6b7280;
-            --med-text-sidebar: #f0fdf4;
-            --med-border: rgba(16, 185, 129, 0.1);
-            --med-shadow-soft: 0 10px 40px -10px rgba(6, 78, 59, 0.08);
+            --med-text-sidebar: #f8fafc;
+            --med-border: rgba(0, 73, 122, 0.15);
+            --med-shadow-soft: 0 10px 40px -10px rgba(0, 73, 122, 0.08);
             /* Organic floating shadow */
-            --med-shadow-glow: 0 0 20px rgba(16, 185, 129, 0.1);
-            --med-glass: rgba(255, 255, 255, 0.9);
+            --med-shadow-glow: 0 0 20px rgba(0, 73, 122, 0.1);
+            --med-glass: rgba(255, 255, 255, 0.95);
         }
 
         body.dark-only {
-            /* === Deep Biotech: Premium Dark Theme === */
-            --med-bg-body: #011611;
-            /* Absolute Deep Forest */
-            --med-bg-card: #022c22;
-            /* Dark Jade */
-            --med-bg-sidebar: linear-gradient(165deg, #011611 0%, #022c22 100%);
-            --med-primary: #34d399;
-            --med-secondary: #6ee7b7;
-            --med-text-main: #ecfdf5;
+            /* === Deep Navy Premium Dark Theme === */
+            --med-bg-body: #0a0f18;
+            /* Absolute Deep Slate Blue */
+            --med-bg-card: #121b2a;
+            /* Dark Slate Panel */
+            --med-bg-sidebar: linear-gradient(165deg, #121b2a 0%, #001f3e 100%);
+            /* Dark mode sidebar gradient */
+            --med-primary: #38bdf8;
+            /* Keep lighter accessible blue for dark mode primary elements */
+            --med-secondary: #7dd3fc;
+            --med-text-main: #f8fafc;
             --med-text-muted: #94a3b8;
-            --med-text-sidebar: #ecfdf5;
-            --med-border: rgba(52, 211, 153, 0.1);
+            --med-text-sidebar: #f8fafc;
+            --med-border: rgba(56, 189, 248, 0.1);
             --med-shadow-soft: 0 20px 50px -12px rgba(0, 0, 0, 0.5);
-            --med-shadow-glow: 0 0 30px rgba(52, 211, 153, 0.05);
-            --med-glass: rgba(2, 44, 34, 0.9);
+            --med-shadow-glow: 0 0 30px rgba(56, 189, 248, 0.05);
+            --med-glass: rgba(18, 27, 42, 0.9);
         }
 
         /* === Premium Global Foundations === */
@@ -51,14 +53,17 @@
             color: var(--med-text-main) !important;
             font-family: 'Montserrat', sans-serif;
             background-image:
-                radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.03) 0, transparent 50%),
-                radial-gradient(at 50% 0%, rgba(52, 211, 153, 0.02) 0, transparent 50%);
+                radial-gradient(at 0% 0%, rgba(0, 73, 122, 0.03) 0, transparent 50%),
+                radial-gradient(at 50% 0%, rgba(0, 103, 171, 0.02) 0, transparent 50%);
             background-attachment: fixed;
             transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .page-body {
-            background-color: transparent !important;
+        .page-body,
+        .page-wrapper,
+        .page-body-wrapper {
+            background-color: var(--med-bg-body) !important;
+            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         /* === The Floating Card Concept === */
@@ -86,9 +91,10 @@
         }
 
         .card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 60px -15px rgba(6, 78, 59, 0.12) !important;
-            border-color: rgba(16, 185, 129, 0.3) !important;
+            transform: none;
+            /* Removed translateY to stop jumping */
+            box-shadow: 0 20px 60px -15px rgba(0, 73, 122, 0.12) !important;
+            border-color: rgba(0, 73, 122, 0.3) !important;
         }
 
         .card:hover::before {
@@ -121,8 +127,7 @@
             color: var(--med-text-sidebar) !important;
             opacity: 0.8;
             border-radius: 16px;
-            margin: 6px 18px;
-            padding: 12px 20px !important;
+            padding: 8px 20px !important;
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
@@ -138,12 +143,11 @@
             stroke: var(--med-text-sidebar) !important;
         }
 
-        /* === Crystal Header === */
-        .page-header {
-            background-color: var(--med-glass) !important;
-            backdrop-filter: blur(20px) saturate(180%);
-            border-bottom: 1px solid var(--med-border) !important;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03) !important;
+        /* === Transparent Header & Footer === */
+        .page-header,
+        .footer {
+            background-color: transparent !important;
+            backdrop-filter: none !important;
         }
 
         .page-header .header-wrapper h4 {
@@ -193,6 +197,13 @@
 
         /* === Form Elements === */
         .form-control,
+        .form-select,
+        select,
+        .select2-container * {
+            font-family: 'Montserrat', sans-serif !important;
+        }
+
+        .form-control,
         .form-select {
             background-color: var(--med-bg-card) !important;
             border: 1px solid var(--med-border) !important;
@@ -203,16 +214,16 @@
 
         .form-control:focus,
         .form-select:focus {
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+            box-shadow: 0 0 0 3px rgba(0, 73, 122, 0.1) !important;
             border-color: var(--med-primary) !important;
             transform: translateY(-1px);
         }
 
         /* === Buttons & Interactive Elements === */
         .btn-primary {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+            background: linear-gradient(135deg, #0067ab 0%, #00497a 100%) !important;
             border: none !important;
-            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3) !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 73, 122, 0.3) !important;
             border-radius: 10px !important;
             font-weight: 600 !important;
             transition: all 0.3s ease !important;
@@ -220,7 +231,7 @@
 
         .btn-primary:hover {
             transform: translateY(-1px);
-            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.4) !important;
+            box-shadow: 0 10px 15px -3px rgba(0, 73, 122, 0.4) !important;
             filter: brightness(1.1);
         }
 
@@ -234,14 +245,14 @@
             font-size: 0.75rem !important;
             letter-spacing: 0.05em;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.05) !important;
+            box-shadow: 0 2px 4px rgba(0, 73, 122, 0.05) !important;
         }
 
         .btn-secondary:hover {
             background: var(--med-primary) !important;
             color: #ffffff !important;
             transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(16, 185, 129, 0.2) !important;
+            box-shadow: 0 6px 15px rgba(0, 73, 122, 0.2) !important;
         }
 
         .btn-success {
@@ -257,7 +268,22 @@
             margin-bottom: 10px !important;
         }
 
-        /* DataTables Premium Emerald Styling */
+        /* DataTables Premium Corporate Styling */
+        .dataTables_length select {
+            padding: 6px 36px 6px 12px !important;
+            min-width: 80px !important;
+            display: inline-block !important;
+            border-radius: 8px !important;
+            background-position: right 10px center !important;
+        }
+
+        .dataTables_filter input {
+            padding: 6px 16px !important;
+            border-radius: 8px !important;
+            margin-left: 10px !important;
+            width: auto !important;
+        }
+
         .dataTables_wrapper .dataTables_paginate .paginate_button {
             border-radius: 12px !important;
             margin: 0 4px !important;
@@ -266,6 +292,9 @@
             color: var(--med-text-main) !important;
             transition: all 0.3s ease !important;
             padding: 6px 14px !important;
+            display: inline-block !important;
+            /* Fix inline layout for arrows */
+            vertical-align: middle !important;
         }
 
         .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
@@ -273,16 +302,16 @@
             color: white !important;
             border-color: var(--med-primary) !important;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 73, 122, 0.2);
         }
 
         .dataTables_wrapper .dataTables_paginate .paginate_button.current,
         .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+            background: linear-gradient(135deg, #0067ab 0%, #00497a 100%) !important;
             color: white !important;
             border: none !important;
             font-weight: 700 !important;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+            box-shadow: 0 4px 12px rgba(0, 73, 122, 0.3) !important;
         }
 
         .dataTables_wrapper .dataTables_filter input,
@@ -299,11 +328,12 @@
         .dataTables_wrapper .dataTables_length select:focus {
             outline: none !important;
             border-color: var(--med-primary) !important;
-            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1) !important;
+            box-shadow: 0 0 0 4px rgba(0, 73, 122, 0.1) !important;
         }
 
-        /* Table Emerald Refinements */
+        /* Table Corporate Refinements */
         .table {
+            font-family: 'Montserrat', sans-serif !important;
             color: var(--med-text-main) !important;
             border-collapse: separate !important;
             border-spacing: 0 8px !important;
@@ -311,7 +341,7 @@
         }
 
         .table thead th {
-            background-color: rgba(16, 185, 129, 0.03) !important;
+            background-color: rgba(0, 73, 122, 0.04) !important;
             border: none !important;
             color: var(--med-text-main) !important;
             font-weight: 700 !important;
@@ -329,8 +359,9 @@
 
         .table tbody tr:hover {
             background-color: #ffffff !important;
-            transform: scale(1.005);
-            box-shadow: 0 5px 15px rgba(6, 78, 59, 0.05);
+            transform: none;
+            /* Stopped scale jump */
+            box-shadow: 0 5px 15px rgba(0, 73, 122, 0.06);
             z-index: 10;
             position: relative;
         }
@@ -363,6 +394,19 @@
 
         body.dark-only .table thead th {
             background-color: rgba(52, 211, 153, 0.05) !important;
+        }
+
+        body.dark-only .btn-secondary,
+        body.dark-only .dt-buttons .btn {
+            background-color: var(--med-bg-card) !important;
+            color: var(--med-text-main) !important;
+            border-color: var(--med-border) !important;
+        }
+
+        body.dark-only .btn-secondary:hover,
+        body.dark-only .dt-buttons .btn:hover {
+            background-color: var(--med-primary) !important;
+            color: #ffffff !important;
         }
     </style>
 </head>

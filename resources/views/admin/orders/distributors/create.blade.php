@@ -36,24 +36,31 @@
                             <p class="text-muted small mb-3" id="previewGeneric">Generic Name</p>
 
                             <div class="row g-2">
-                                <div class="col-4">
+                                <div class="col-3">
+                                    <div class="p-2 border rounded bg-light text-center">
+                                        <small class="text-muted d-block text-uppercase fw-bold"
+                                            style="font-size: 0.7rem;">Offer</small>
+                                        <span id="previewOffer" class="fw-bold small">-</span>
+                                    </div>
+                                </div>
+                                <div class="col-3">
                                     <div class="p-2 border rounded bg-light text-center">
                                         <small class="text-muted d-block text-uppercase fw-bold"
                                             style="font-size: 0.7rem;">Pack</small>
                                         <span id="previewPack" class="fw-bold small">-</span>
                                     </div>
                                 </div>
-                                <div class="col-4">
+                                <div class="col-3">
                                     <div class="p-2 border rounded bg-light text-center">
                                         <small class="text-muted d-block text-uppercase fw-bold"
                                             style="font-size: 0.7rem;">HSN</small>
                                         <span id="previewHsn" class="fw-bold small">-</span>
                                     </div>
                                 </div>
-                                <div class="col-4">
+                                <div class="col-3">
                                     <div class="p-2 border rounded bg-light text-center">
                                         <small class="text-muted d-block text-uppercase fw-bold"
-                                            style="font-size: 0.7rem;">Box Size</small>
+                                            style="font-size: 0.7rem;">Box</small>
                                         <span id="previewBox" class="fw-bold small">-</span>
                                     </div>
                                 </div>
@@ -250,9 +257,10 @@
 
                         $('#previewName').text(details.product_name);
                         // Show PTS as the primary price for Distributors
-                        $('#previewMrp').text(parseFloat(details.pts).toFixed(2));
+                        $('#previewMrp').text(parseFloat(details.pts || 0).toFixed(2));
                         $('#previewLabel').text('PTS');
                         $('#previewGeneric').text(details.generic_name || 'N/A');
+                        $('#previewOffer').text(details.offer ? parseFloat(details.offer).toFixed(2) : '-');
                         $('#previewPack').text(details.pack || '-');
                         $('#previewHsn').text(details.hsn_code || '-');
                         $('#previewBox').text(details.box_size || '-');
@@ -340,29 +348,29 @@
                     let rowClass = (key === lastAddedKey) ? 'new-row' : '';
 
                     tbody.append(`
-                                                <tr class="${rowClass}">
-                                                    <td class="ps-4 text-muted">${index++}</td>
-                                                    <td>
-                                                        <div class="fw-bold">${item.name}</div>
-                                                        <input type="hidden" name="items[${key}][product_id]" value="${item.id}">
-                                                    </td>
-                                                    <td>
-                                                        <div class="input-group input-group-sm" style="width: 150px;">
-                                                            <input type="number" class="form-control qty-change" data-key="${key}" value="${item.qty}" name="items[${key}][quantity]" min="1">
-                                                            <select class="form-select unit-change" data-key="${key}" name="items[${key}][unit]" style="max-width: 80px;">
-                                                                <option value="Strips" ${item.unit === 'Strips' ? 'selected' : ''}>Strips</option>
-                                                                <option value="Carton" ${item.unit === 'Carton' ? 'selected' : ''}>Carton</option>
-                                                                <option value="Box" ${item.unit === 'Box' ? 'selected' : ''}>Box</option>
-                                                            </select>
-                                                        </div>
-                                                    </td>
-                                                    <td>₹${item.price.toFixed(2)}</td>
-                                                    <td>₹${lineTotal.toFixed(2)}</td>
-                                                    <td>
-                                                        <button type="button" class="btn btn-danger btn-xs remove-btn" data-key="${key}"><i class="fa fa-times"></i></button>
-                                                    </td>
-                                                </tr>
-                                            `);
+                                                    <tr class="${rowClass}">
+                                                        <td class="ps-4 text-muted">${index++}</td>
+                                                        <td>
+                                                            <div class="fw-bold">${item.name}</div>
+                                                            <input type="hidden" name="items[${key}][product_id]" value="${item.id}">
+                                                        </td>
+                                                        <td>
+                                                            <div class="input-group input-group-sm" style="width: 150px;">
+                                                                <input type="number" class="form-control qty-change" data-key="${key}" value="${item.qty}" name="items[${key}][quantity]" min="1">
+                                                                <select class="form-select unit-change" data-key="${key}" name="items[${key}][unit]" style="max-width: 80px;">
+                                                                    <option value="Strips" ${item.unit === 'Strips' ? 'selected' : ''}>Strips</option>
+                                                                    <option value="Carton" ${item.unit === 'Carton' ? 'selected' : ''}>Carton</option>
+                                                                    <option value="Box" ${item.unit === 'Box' ? 'selected' : ''}>Box</option>
+                                                                </select>
+                                                            </div>
+                                                        </td>
+                                                        <td>₹${item.price.toFixed(2)}</td>
+                                                        <td>₹${lineTotal.toFixed(2)}</td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-danger btn-xs remove-btn" data-key="${key}"><i class="fa fa-times"></i></button>
+                                                        </td>
+                                                    </tr>
+                                                `);
                 });
 
                 lastAddedKey = null;

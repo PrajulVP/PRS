@@ -257,10 +257,17 @@ class DistributorOrderController extends Controller
                 $totalQuantity += $itemData['quantity'];
             }
 
-            $order->total_amount = $totalAmount;
-            $order->total_items = $totalItems;
             $order->total_quantity = $totalQuantity;
             $order->save();
+
+            // Notify Sales Manager
+            if ($order->salesManager && $order->salesManager->user) {
+                $order->salesManager->user->notify(new \App\Notifications\OrderActionRequired(
+                    $order,
+                    "New Distributor Order #{$order->order_code} is ready for your approval.",
+                    url('/approvals/distributors')
+                ));
+            }
         } catch (\Exception $e) {
             Log::error('Order creation failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             $order->items()->delete();
@@ -382,6 +389,16 @@ class DistributorOrderController extends Controller
         $distributorOrder->sales_manager_id = Auth::user()->salesManager->id;
         $distributorOrder->save();
 
+        // Notify Admins
+        $admins = \App\Models\User::role(['admin', 'superadmin'])->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new \App\Notifications\OrderActionRequired(
+                $distributorOrder,
+                "Distributor Order #{$distributorOrder->order_code} has been accepted by Sales Manager and is ready for your approval.",
+                url('/approvals/distributors')
+            ));
+        }
+
         return response()->json(['success' => 'Order accepted successfully!']);
     }
 
@@ -437,6 +454,8 @@ class DistributorOrderController extends Controller
             ]);
 
             // Update Distributor Inventory
+            // This logic is now handled by confirmReceipt
+            /*
             foreach ($distributorOrder->items as $item) {
                 $inventory = \App\Models\Inventory::firstOrNew([
                     'product_id' => $item->product_id,
@@ -464,8 +483,19 @@ class DistributorOrderController extends Controller
                     'remarks' => 'Order #' . $distributorOrder->order_code
                 ]);
             }
+            */
 
             DB::commit();
+
+            // Notify Distributor
+            if ($distributorOrder->distributor && $distributorOrder->distributor->user) {
+                $distributorOrder->distributor->user->notify(new \App\Notifications\OrderActionRequired(
+                    $distributorOrder,
+                    "Your order #{$distributorOrder->order_code} has been approved. Please confirm receipt upon delivery.",
+                    url('/distributor-orders')
+                ));
+            }
+
             return response()->json(['success' => 'Order accepted, payment status updated, and invoice saved.']);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -561,7 +591,7 @@ class DistributorOrderController extends Controller
         return response()->json(['success' => 'Status updated successfully to ' . ucfirst(str_replace('_', ' ', $newStatus))]);
     }
 
-    public function updatePaymentStatus(Request $request, distributorOrder $distributorOrder)
+    public function updatePaymentStatus(Request $request, DistributorOrder $distributorOrder)
     {
         $request->validate([
             'payment_status' => 'required|in:pending,paid,failed',
@@ -583,7 +613,7 @@ class DistributorOrderController extends Controller
         return response()->json(['success' => 'Payment status updated successfully to ' . ucfirst($newStatus)]);
     }
 
-    public function invoice(distributorOrder $distributorOrder)
+    public function invoice(DistributorOrder $distributorOrder)
     {
         $distributorOrder->load(['distributor.user', 'items.product', 'salesManager.user']);
         $cgst = \App\Models\Setting::getValue('cgst', 9);
@@ -645,12 +675,21 @@ class DistributorOrderController extends Controller
             $path = $request->file('invoice')->store('invoices/distributors', 'public');
         }
 
-        // Update Order - NO payment status update here
         $distributorOrder->update([
             'status' => DistributorOrder::STATUS_ACCEPTED_BY_SALES_MANAGER,
             'sales_manager_id' => Auth::user()->salesManager->id,
             'invoice_path' => $path,
         ]);
+
+        // Notify Admins
+        $admins = \App\Models\User::role(['admin', 'superadmin'])->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new \App\Notifications\OrderActionRequired(
+                $distributorOrder,
+                "Distributor Order #{$distributorOrder->order_code} has been accepted by Sales Manager and is ready for your approval.",
+                url('/approvals/distributors')
+            ));
+        }
 
         return response()->json([
             'success' => 'Order approved successfully!',

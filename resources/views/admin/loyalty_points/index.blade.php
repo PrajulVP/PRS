@@ -1,6 +1,12 @@
 @extends('layouts.admin')
 
 @section('page-body')
+
+    <style>
+        .page-title {
+            padding-top: 0px !important;
+        }
+    </style>
     <div class="container-fluid">
         <div class="page-title">
             <div class="row">
@@ -9,7 +15,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div>  
 
     <div class="container-fluid">
         <div class="row">
@@ -27,7 +33,8 @@
                                         <option value="">-- Choose Retailer --</option>
                                         @foreach($retailers as $r)
                                             <option value="{{ $r->id }}">{{ $r->shop_name }} ({{ $r->user->name }}) -
-                                                {{ $r->loyalty_points }} pts</option>
+                                                {{ number_format($r->loyalty_points, 2) }} pts
+                                            </option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -45,7 +52,7 @@
                         <div class="card bg-warning text-white widget-visitor-card">
                             <div class="card-body text-center">
                                 <h3 id="display_total_points">0</h3>
-                                <h6 class="text-uppercase font-secondary">Total Loyalty Points</h6>
+                                <h6 class="text-uppercase mt-3">Total Loyalty Points</h6>
                                 <i class="fa fa-coins font-warning"
                                     style="font-size: 50px; opacity: 0.3; position: absolute; right: 20px; bottom: 20px;"></i>
                             </div>
@@ -60,12 +67,13 @@
                             <h5>Points History</h5>
                         </div>
                         <div class="card-body">
-                            <div class="table-responsive">
+                            <div class="table-responsive p-2">
                                 <table class="display" id="points-table">
                                     <thead>
                                         <tr>
                                             <th>Date</th>
                                             <th>Order Code</th>
+                                            <th>Product Summary</th>
                                             <th>Points Earned</th>
                                             <th>Status</th>
                                         </tr>
@@ -84,11 +92,18 @@
 
 @endsection
 
-@section('scripts')
+@push('scripts')
+    <!-- Select2 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
     <script>
         $(document).ready(function () {
             // Initialize Select2
-            $('.select2').select2();
+            $('.select2').select2({
+                placeholder: "-- Choose Retailer --",
+                allowClear: true
+            });
 
             let table;
 
@@ -104,9 +119,13 @@
             });
 
             function fetchRetailerData(retailerId) {
+                let retailerText = $('#retailer_selector option:selected').text();
+                let retailerName = retailerText.split('-')[0].trim();
+                let exportTitle = 'Loyalty Points History - ' + retailerName;
+
                 // 1. Fetch Summary
                 $.get("{{ route('admin.loyalty-points.summary', ':id') }}".replace(':id', retailerId), function (data) {
-                    $('#display_total_points').text(Math.round(data.total_points));
+                    $('#display_total_points').text(parseFloat(data.total_points).toFixed(2));
                 });
 
                 // 2. Load DataTable
@@ -123,14 +142,26 @@
                             d.retailer_id = retailerId;
                         }
                     },
+                    dom: "<'row mb-3 d-flex align-items-center'<'col-sm-12 col-md-4'l><'col-sm-12 col-md-4 text-center'B><'col-sm-12 col-md-4'f>>" +
+                        "<'row '<'col-sm-12'tr>>" +
+                        "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
+                    buttons: [
+                        { extend: 'copy', className: 'btn btn-secondary btn-sm', title: exportTitle },
+                        { extend: 'csv', className: 'btn btn-secondary btn-sm', title: exportTitle },
+                        { extend: 'excel', className: 'btn btn-secondary btn-sm', title: exportTitle },
+                        { extend: 'pdf', className: 'btn btn-secondary btn-sm', title: exportTitle },
+                        { extend: 'print', className: 'btn btn-secondary btn-sm', title: exportTitle }
+                    ],
                     columns: [
                         { data: 'updated_at', name: 'updated_at' },
                         { data: 'order_code', name: 'order_code' },
+                        { data: 'product_summary', name: 'product_summary', orderable: false },
                         {
                             data: 'loyalty_points_earned',
                             name: 'loyalty_points_earned',
                             render: function (data) {
-                                return `<span class="badge bg-warning text-dark"><i class="fa fa-coins me-1"></i> ${data}</span>`;
+                                let displayPts = parseFloat(data).toFixed(2);
+                                return `<span class="badge bg-warning text-dark"><i class="fa fa-coins me-1"></i> ${displayPts}</span>`;
                             }
                         },
                         {
@@ -145,4 +176,4 @@
             }
         });
     </script>
-@endsection
+@endpush

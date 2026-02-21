@@ -361,16 +361,46 @@
     }
   }
 
-  /* Medical Theme Sidebar */
+  /* Medical Theme Sidebar - Reversed & Changed Color (Light top, Dark bottom) */
   .medical-theme-sidebar {
-    background: linear-gradient(135deg, #00695C 0%, #283593 100%) !important;
-    /* Teal to Indigo */
+    /* background: linear-gradient(180deg, #20B2AA 0%, #004D40 100%) !important; */
+    /* Light Sea Green to Dark Emerald/Teal */
   }
 
   /* Ensure logo wrapper allows gradient to show through */
   .medical-theme-sidebar .logo-wrapper,
   .medical-theme-sidebar .logo-icon-wrapper {
     background: transparent !important;
+  }
+
+  /* Decrease the line height and spacing of modules inside the navbar */
+  .sidebar-wrapper .sidebar-list {
+    margin-bottom: 4px !important;
+  }
+  
+  .sidebar-wrapper .sidebar-main .sidebar-links .sidebar-list .sidebar-link {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .sidebar-wrapper .sidebar-main .sidebar-links .sidebar-list .sidebar-link svg {
+    margin: 0 12px 0 0 !important;
+    position: relative !important;
+    top: 3px !important; /* Push icon firmly down to optical center */
+  }
+
+  .sidebar-wrapper .sidebar-main .sidebar-links .sidebar-list .sidebar-link span {
+    margin: 0 !important;
+    position: relative !important;
+    top: 0px !important;
+    line-height: normal !important;
+  }
+
+  .sidebar-wrapper .sidebar-main-title {
+    padding-top: 8px !important;
+    padding-bottom: 4px !important;
   }
 
   /* Pulse Animation for Notification Badges */

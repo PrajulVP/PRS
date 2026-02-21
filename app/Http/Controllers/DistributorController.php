@@ -64,6 +64,16 @@ class DistributorController extends Controller
         $distributor->user_id = $user->id;
         $distributor->save();
 
+        // Notify Superadmins for approval
+        $superAdmins = User::role('superadmin')->get();
+        foreach ($superAdmins as $superAdmin) {
+            $superAdmin->notify(new \App\Notifications\UserApprovalRequired(
+                $user,
+                "New Distributor {$user->name} has been added and requires approval/activation.",
+                url('/distributors')
+            ));
+        }
+
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,

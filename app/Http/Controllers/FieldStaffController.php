@@ -120,6 +120,16 @@ class FieldStaffController extends Controller
         }
         $fieldstaff->save();
 
+        // Notify Admins for approval
+        $admins = User::role(['admin', 'superadmin'])->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new \App\Notifications\UserApprovalRequired(
+                $user,
+                "New Field Staff {$user->name} has been added and requires approval/activation.",
+                url('/field-staffs')
+            ));
+        }
+
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,

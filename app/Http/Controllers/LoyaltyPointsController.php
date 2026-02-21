@@ -52,17 +52,25 @@ class LoyaltyPointsController extends Controller
                 }
 
                 $orders = $retailer->retailerOrders()
+                    ->with('items.product')
                     ->whereIn('status', ['accepted_by_distributor', 'delivered'])
                     ->orderBy('updated_at', 'desc');
 
                 return DataTables::of($orders)
                     ->addIndexColumn()
+                    ->addColumn('product_summary', function ($row) {
+                        return $row->items->map(function ($item) {
+                            $prodName = $item->product ? $item->product->product_name : 'Unknown';
+                            return $prodName . ' (' . $item->quantity . ' qty)';
+                        })->implode('<br>');
+                    })
                     ->editColumn('updated_at', function ($row) {
                         return $row->updated_at->format('d M Y, h:i A');
                     })
                     ->editColumn('loyalty_points_earned', function ($row) {
                         return number_format($row->loyalty_points_earned, 2);
                     })
+                    ->rawColumns(['product_summary', 'loyalty_points_earned'])
                     ->make(true);
             }
         }

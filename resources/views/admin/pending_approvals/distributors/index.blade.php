@@ -189,7 +189,7 @@
                         <input type="hidden" id="process_order_id" name="order_id">
                         <div class="alert alert-warning">
                             <i class="fa fa-exclamation-triangle"></i> This action will mark the order as
-                            <strong>Delivered</strong> and update stock.
+                            <strong>Approved</strong> and send it to the distributor for final confirmation.
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Set Payment Status</label>
@@ -207,7 +207,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success">Process & Deliver</button>
+                        <button type="submit" class="btn btn-success">Process & Approve</button>
                     </div>
                 </form>
             </div>
@@ -268,7 +268,8 @@
             var table = $('#distributor-approval-table').DataTable({
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
                     "<'row mb-3 d-flex align-items-center'<'col-md-6'l><'col-md-6'f>>" +
-                    "rtip",
+                    "<'row '<'col-sm-12'tr>>" +
+                    "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
                 buttons: [
                     { extend: 'copy', className: 'btn btn-secondary btn-sm', text: '<i class="fa fa-copy"></i>' },
                     { extend: 'csv', className: 'btn btn-info btn-sm text-white', text: '<i class="fa fa-file-csv"></i>' },

@@ -1,21 +1,21 @@
 @extends('layouts.admin')
 @section('page-body')
     <!-- <div class="container-fluid">
-                                                                                            <div class="page-title">
-                                                                                                <div class="row">
-                                                                                                    <div class="col-6">
-                                                                                                        <h3>Create New Order</h3>
-                                                                                                    </div>
-                                                                                                    <div class="col-6">
-                                                                                                        <ol class="breadcrumb">
-                                                                                                            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}"><i data-feather="home"></i></a></li>
-                                                                                                            <li class="breadcrumb-item"><a href="{{ route('admin.retailer-orders.index') }}">Orders</a></li>
-                                                                                                            <li class="breadcrumb-item active">Create</li>
-                                                                                                        </ol>
+                                                                                                <div class="page-title">
+                                                                                                    <div class="row">
+                                                                                                        <div class="col-6">
+                                                                                                            <h3>Create New Order</h3>
+                                                                                                        </div>
+                                                                                                        <div class="col-6">
+                                                                                                            <ol class="breadcrumb">
+                                                                                                                <li class="breadcrumb-item"><a href="{{ route('dashboard') }}"><i data-feather="home"></i></a></li>
+                                                                                                                <li class="breadcrumb-item"><a href="{{ route('admin.retailer-orders.index') }}">Orders</a></li>
+                                                                                                                <li class="breadcrumb-item active">Create</li>
+                                                                                                            </ol>
+                                                                                                        </div>
                                                                                                     </div>
                                                                                                 </div>
-                                                                                            </div>
-                                                                                        </div> -->
+                                                                                            </div> -->
 
     <div class="container-fluid">
         <form id="createOrderForm" method="POST" action="{{ route('admin.retailer-orders.store') }}">
@@ -273,14 +273,14 @@
                     let distBadge = (distance && distance !== 'null') ? `<span class="badge bg-light text-dark border me-1"><i class="fa fa-map-marker-alt text-primary me-1"></i>${distance} km</span>` : '';
 
                     return $(`
-                                                                                                            <div class="d-flex justify-content-between align-items-center">
-                                                                                                                <span>${opt.text}</span>
-                                                                                                                <div class="d-flex align-items-center">
-                                                                                                                    ${distBadge}
-                                                                                                                    <span class="badge ${stockBadgeClass} rounded-pill" style="min-width: 30px;">${stock}</span>
+                                                                                                                <div class="d-flex justify-content-between align-items-center">
+                                                                                                                    <span>${opt.text}</span>
+                                                                                                                    <div class="d-flex align-items-center">
+                                                                                                                        ${distBadge}
+                                                                                                                        <span class="badge ${stockBadgeClass} rounded-pill" style="min-width: 30px;">${stock}</span>
+                                                                                                                    </div>
                                                                                                                 </div>
-                                                                                                            </div>
-                                                                                                        `);
+                                                                                                            `);
                 }
                 return opt.text;
             }
@@ -329,7 +329,7 @@
 
                         $('#previewName').text(details.product_name);
                         // Show PTR as the primary price for Retailers
-                        $('#previewMrp').text(parseFloat(details.ptr).toFixed(2));
+                        $('#previewMrp').text(parseFloat(details.ptr || 0).toFixed(2));
                         $('#previewLabel').text('PTR');
                         $('#previewGeneric').text(details.generic_name || 'N/A');
                         $('#previewPack').text(details.pack || '-');
@@ -447,32 +447,32 @@
                     let rowClass = (key === lastAddedKey) ? 'new-row' : '';
 
                     tbody.append(`
-                                                                                                            <tr class="${rowClass}">
-                                                                                                                <td class="ps-4 text-muted">${index++}</td>
-                                                                                                                <td>
-                                                                                                                    <div class="fw-bold">${item.prodName}</div>
-                                                                                                                    <div class="small text-muted">Unit: ${item.pack}</div>
-                                                                                                                    <input type="hidden" name="items[${key}][product_id]" value="${item.prodId}">
-                                                                                                                    <input type="hidden" name="items[${key}][distributor_id]" value="${item.distId}">
-                                                                                                                </td>
-                                                                                                                <td>${item.distName}</td>
-                                                                                                                <td>
-                                                                                                                    <div class="input-group input-group-sm" style="width: 150px;">
-                                                                                                                        <input type="number" class="form-control qty-change" data-key="${key}" value="${item.qty}" name="items[${key}][quantity]" min="1">
-                                                                                                                        <select class="form-select unit-change" data-key="${key}" name="items[${key}][unit]" style="max-width: 80px;">
-                                                                                                                            <option value="Strips" ${item.unit === 'Strips' ? 'selected' : ''}>Strips</option>
-                                                                                                                            <option value="Carton" ${item.unit === 'Carton' ? 'selected' : ''}>Carton</option>
-                                                                                                                            <option value="Box" ${item.unit === 'Box' ? 'selected' : ''}>Box</option>
-                                                                                                                        </select>
-                                                                                                                    </div>
-                                                                                                                </td>
-                                                                                                                <td>₹${item.price.toFixed(2)}</td>
-                                                                                                                <td>₹${lineTotal.toFixed(2)}</td>
-                                                                                                                <td>
-                                                                                                                    <button type="button" class="btn btn-danger btn-xs remove-btn" data-key="${key}"><i class="fa fa-times"></i></button>
-                                                                                                                </td>
-                                                                                                            </tr>
-                                                                                                        `);
+                                                                                                                <tr class="${rowClass}">
+                                                                                                                    <td class="ps-4 text-muted">${index++}</td>
+                                                                                                                    <td>
+                                                                                                                        <div class="fw-bold">${item.prodName}</div>
+                                                                                                                        <div class="small text-muted">Unit: ${item.pack}</div>
+                                                                                                                        <input type="hidden" name="items[${key}][product_id]" value="${item.prodId}">
+                                                                                                                        <input type="hidden" name="items[${key}][distributor_id]" value="${item.distId}">
+                                                                                                                    </td>
+                                                                                                                    <td>${item.distName}</td>
+                                                                                                                    <td>
+                                                                                                                        <div class="input-group input-group-sm" style="width: 150px;">
+                                                                                                                            <input type="number" class="form-control qty-change" data-key="${key}" value="${item.qty}" name="items[${key}][quantity]" min="1">
+                                                                                                                            <select class="form-select unit-change" data-key="${key}" name="items[${key}][unit]" style="max-width: 80px;">
+                                                                                                                                <option value="Strips" ${item.unit === 'Strips' ? 'selected' : ''}>Strips</option>
+                                                                                                                                <option value="Carton" ${item.unit === 'Carton' ? 'selected' : ''}>Carton</option>
+                                                                                                                                <option value="Box" ${item.unit === 'Box' ? 'selected' : ''}>Box</option>
+                                                                                                                            </select>
+                                                                                                                        </div>
+                                                                                                                    </td>
+                                                                                                                    <td>₹${item.price.toFixed(2)}</td>
+                                                                                                                    <td>₹${lineTotal.toFixed(2)}</td>
+                                                                                                                    <td>
+                                                                                                                        <button type="button" class="btn btn-danger btn-xs remove-btn" data-key="${key}"><i class="fa fa-times"></i></button>
+                                                                                                                    </td>
+                                                                                                                </tr>
+                                                                                                            `);
                 });
 
                 lastAddedKey = null; // Reset highlight

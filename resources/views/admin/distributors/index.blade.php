@@ -422,7 +422,8 @@
                 ],
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
                     "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" +
-                    "rtip",
+                    "<'row '<'col-sm-12'tr>>" +
+                    "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
                 buttons: {
                     dom: {
                         button: {

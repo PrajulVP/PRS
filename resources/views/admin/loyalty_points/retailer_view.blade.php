@@ -1,6 +1,12 @@
 @extends('layouts.admin')
 
 @section('page-body')
+
+    <style>
+        .page-title {
+            padding-top: 0px !important;
+        }
+    </style>
     <div class="container-fluid">
         <div class="page-title">
             <div class="row">
@@ -20,7 +26,7 @@
             <div class="col-sm-6 col-xl-3 mb-4">
                 <div
                     class="card bg-warning text-white widget-visitor-card shadow-sm border-0 overflow-hidden position-relative loyalty-card">
-                    <div class="card-body text-center py-4 position-relative z-index-1">
+                    <div class="card-body text-center py-2 position-relative z-index-1">
                         <div class="coin-container mb-2">
                             <i class="fa fa-coins text-white fa-3x animate-bounce"></i>
                         </div>
@@ -134,44 +140,46 @@
             <!-- Transaction History -->
             <div class="col-sm-12">
                 <div class="card shadow-sm border-0">
-                    <div class="card-header bg-white py-3 border-bottom">
+                    <div class="card-header bg-white py-2 border-bottom">
                         <h5 class="card-title mb-0"><i class="fa fa-history me-2"></i>Points History</h5>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-hover align-middle">
+                            <table id="retailer-points-table" class="display table table-hover align-middle"
+                                style="width:100%">
                                 <thead class="table">
                                     <tr>
                                         <th>Date</th>
                                         <th>Order Reference</th>
+                                        <th>Product Summary</th>
                                         <th>Points Earned</th>
                                         <th>Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse($orders as $order)
-                                        <tr>
-                                            <td>{{ $order->updated_at->format('d M Y, h:i A') }}</td>
-                                            <td>
-                                                <span class="fw-bold text-primary">#{{ $order->order_code }}</span>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-warning text-dark fs-6">
-                                                    {{ number_format($order->loyalty_points_earned, 2) }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-success">
-                                                    {{ ucfirst(str_replace('_', ' ', $order->status)) }}
-                                                </span>
-                                            </td>
-                                        </tr>
+                                                                    <tr>
+                                                                        <td>{{ $order->updated_at->format('d M Y, h:i A') }}</td>
+                                                                        <td>
+                                                                            <span class="fw-bold text-primary">#{{ $order->order_code }}</span>
+                                                                        </td>
+                                                                        <td>
+                                                                            {!! $order->items->map(function ($item) {
+                                            return ($item->product ? $item->product->product_name : 'Unknown') . ' (' . $item->quantity . ' qty)';
+                                        })->implode('<br>') !!}
+                                                                        </td>
+                                                                        <td>
+                                                                            <span class="badge bg-warning text-dark fs-6">
+                                                                                {{ number_format($order->loyalty_points_earned, 2) }}
+                                                                            </span>
+                                                                        </td>
+                                                                        <td>
+                                                                            <span class="badge bg-success">
+                                                                                {{ ucfirst(str_replace('_', ' ', $order->status)) }}
+                                                                            </span>
+                                                                        </td>
+                                                                    </tr>
                                     @empty
-                                        <tr>
-                                            <td colspan="4" class="text-center py-4 text-muted">
-                                                <i class="fa fa-info-circle me-2"></i> No points earned yet.
-                                            </td>
-                                        </tr>
                                     @endforelse
                                 </tbody>
                             </table>
@@ -182,3 +190,31 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        $(document).ready(function () {
+            let retailerName = '{{ $retailer->shop_name }} ({{ $retailer->user->name }})';
+            let exportTitle = 'Loyalty Points History - ' + retailerName;
+
+            $('#retailer-points-table').DataTable({
+                // Let it look similar to the admin datatables with exports
+                dom: "<'row mb-3 d-flex align-items-center'<'col-sm-12 col-md-4'l><'col-sm-12 col-md-4 text-center'B><'col-sm-12 col-md-4'f>>" +
+                    "<'row '<'col-sm-12'tr>>" +
+                    "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
+                buttons: [
+                    { extend: 'copy', className: 'btn btn-secondary btn-sm', title: exportTitle },
+                    { extend: 'csv', className: 'btn btn-secondary btn-sm', title: exportTitle },
+                    { extend: 'excel', className: 'btn btn-secondary btn-sm', title: exportTitle },
+                    { extend: 'pdf', className: 'btn btn-secondary btn-sm', title: exportTitle },
+                    { extend: 'print', className: 'btn btn-secondary btn-sm', title: exportTitle }
+                ],
+                order: [[0, 'desc']], // Order by Date descending initially
+                pageLength: 10,
+                language: {
+                    emptyTable: "<i class='fa fa-info-circle me-2'></i> No points earned yet."
+                }
+            });
+        });
+    </script>
+@endpush

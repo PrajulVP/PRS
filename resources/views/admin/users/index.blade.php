@@ -113,7 +113,10 @@
 <script>
     $(document).ready(function() {
         var table = $('#users-table').DataTable({
-            dom: 'Bfrtip',
+            dom: "<'row mb-3'<'col-sm-12'B>>" +
+                    "<'row mb-3 d-flex align-items-center'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                    "<'row '<'col-sm-12'tr>>" +
+                    "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
             buttons: {
                 dom: {
                     button: {
