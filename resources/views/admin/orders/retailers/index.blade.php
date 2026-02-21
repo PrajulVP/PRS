@@ -310,7 +310,7 @@
                 buttons: {
                     dom: {
                         button: {
-                            className: ''
+                            className: 'btn btn-sm btn-icon'
                         }
                     },
                     buttons: [{

@@ -43,6 +43,39 @@ class NotificationController extends Controller
         }
 
         $notifications = auth()->user()->notifications()->paginate(15);
+        $notifications->getCollection()->transform(function ($notification) {
+            $notification->is_pending_action = self::checkActionStatus($notification);
+            return $notification;
+        });
         return view('notifications.index', compact('notifications'));
+    }
+
+    public static function checkActionStatus($notification)
+    {
+        $data = $notification->data;
+        if (!isset($data['order_code'])) {
+            return false;
+        }
+
+        $code = $data['order_code'];
+        $msg = $data['message'] ?? '';
+
+        if (str_starts_with($code, 'RO-')) {
+            $order = \App\Models\RetailerOrder::where('order_code', $code)->first();
+            if ($order) {
+                if (str_contains(strtolower($msg), 'assigned to you') && $order->status !== 'pending') return false;
+                if (str_contains(strtolower($msg), 'ready for your approval') && $order->status !== 'accepted_by_fieldstaff') return false;
+                if (str_contains(strtolower($msg), 'confirm order upon delivery') && in_array($order->status, ['delivered', 'confirmed'])) return false;
+                return true;
+            }
+        } elseif (str_starts_with($code, 'DO-')) {
+            $order = \App\Models\DistributorOrder::where('order_code', $code)->first();
+            if ($order) {
+                if (str_contains(strtolower($msg), 'ready for your approval') && !in_array($order->status, ['pending', 'accepted_by_sales_manager'])) return false;
+                return true;
+            }
+        }
+
+        return false;
     }
 }

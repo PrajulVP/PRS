@@ -346,7 +346,7 @@
             color: var(--med-text-main) !important;
             font-weight: 700 !important;
             text-transform: uppercase;
-            font-size: 0.75rem;
+            font-size: 0.8rem !important;
             letter-spacing: 0.08em;
             padding: 15px !important;
             border-radius: 10px;
@@ -370,6 +370,9 @@
             border: none !important;
             padding: 15px !important;
             border-bottom: 1px solid var(--med-border) !important;
+            font-size: 0.85rem !important;
+            font-weight: 500 !important;
+            vertical-align: middle !important;
         }
 
         .table tr td:first-child {
@@ -407,6 +410,72 @@
         body.dark-only .dt-buttons .btn:hover {
             background-color: var(--med-primary) !important;
             color: #ffffff !important;
+        }
+
+        /* Datatable Export Buttons Global Resizing */
+        .dt-buttons .btn {
+            padding: 4px 10px !important;
+            font-size: 0.75rem !important;
+            height: auto !important;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.2 !important;
+            gap: 4px;
+        }
+
+        .dt-buttons .btn i {
+            font-size: 0.75rem !important;
+        }
+
+        /* Targeted Row Highlight */
+        @keyframes pulseHighlight {
+            0% {
+                background-color: rgba(56, 189, 248, 0.05) !important;
+                box-shadow: inset 0 0 0 transparent;
+            }
+
+            50% {
+                background-color: rgba(56, 189, 248, 0.25) !important;
+                box-shadow: inset 0 0 10px rgba(56, 189, 248, 0.4);
+            }
+
+            100% {
+                background-color: rgba(56, 189, 248, 0.05) !important;
+                box-shadow: inset 0 0 0 transparent;
+            }
+        }
+
+        .highlighted-row td {
+            animation: pulseHighlight 2s infinite ease-in-out !important;
+            border-top: 1px solid var(--med-primary) !important;
+            border-bottom: 1px solid var(--med-primary) !important;
+        }
+
+        .highlighted-row td:first-child {
+            border-left: 3px solid var(--med-primary) !important;
+        }
+
+        .highlighted-row td:last-child {
+            border-right: 3px solid var(--med-primary) !important;
+        }
+
+        @keyframes pulseHighlightDark {
+            0% {
+                background-color: rgba(56, 189, 248, 0.1) !important;
+            }
+
+            50% {
+                background-color: rgba(56, 189, 248, 0.35) !important;
+            }
+
+            100% {
+                background-color: rgba(56, 189, 248, 0.1) !important;
+            }
+        }
+
+        body.dark-only .highlighted-row td {
+            animation: pulseHighlightDark 2s infinite ease-in-out !important;
         }
     </style>
 </head>
@@ -534,6 +603,56 @@
                     }
                 });
             });
+
+            // Datatables Global Highlight Logic
+            var urlParams = new URLSearchParams(window.location.search);
+            var highlightCode = urlParams.get('highlight');
+            if (highlightCode && window.jQuery) {
+                var attemptHighlight = function () {
+                    if ($.fn.DataTable) {
+                        var tables = $.fn.dataTable.tables(true);
+                        if (tables.length > 0) {
+                            var api = $(tables[0]).DataTable();
+
+                            // Wait for table to draw/load data
+                            api.on('draw.dt', function () {
+                                setTimeout(function () {
+                                    $(tables[0]).find('tbody tr').each(function () {
+                                        if ($(this).text().includes(highlightCode)) {
+                                            $(this).addClass('highlighted-row');
+
+                                            // Optional: Scroll to the row so it's visible
+                                            this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        } else {
+                                            $(this).removeClass('highlighted-row');
+                                        }
+                                    });
+                                }, 100);
+                            });
+
+                            // Trigger initial check
+                            setTimeout(function () {
+                                $(tables[0]).find('tbody tr').each(function () {
+                                    if ($(this).text().includes(highlightCode)) {
+                                        $(this).addClass('highlighted-row');
+                                        this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }
+                                });
+                            }, 500);
+                        }
+                    }
+                };
+
+                var maxAttempts = 20; // 10 seconds total
+                var dtInterval = setInterval(function () {
+                    maxAttempts--;
+                    if ($.fn.DataTable && $.fn.dataTable.tables(true).length > 0) {
+                        clearInterval(dtInterval);
+                        attemptHighlight();
+                    }
+                    if (maxAttempts <= 0) clearInterval(dtInterval);
+                }, 500);
+            }
         });
     </script>
 </body>

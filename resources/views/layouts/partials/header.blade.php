@@ -196,32 +196,10 @@
                 foreach ($notificationsList as $notification) {
                   $data = $notification->data;
                   if (isset($data['order_code'])) {
-                    $code = $data['order_code'];
-                    $msg = $data['message'] ?? '';
-                    $needsAction = true;
-                    $orderExists = false;
+                    $needsAction = \App\Http\Controllers\NotificationController::checkActionStatus($notification);
+                    $orderExists = isset($data['order_code']) && (\App\Models\RetailerOrder::where('order_code', $data['order_code'])->exists() || \App\Models\DistributorOrder::where('order_code', $data['order_code'])->exists());
 
-                    if (str_starts_with($code, 'RO-')) {
-                      $order = \App\Models\RetailerOrder::where('order_code', $code)->first();
-                      if ($order) {
-                        $orderExists = true;
-                        if (str_contains(strtolower($msg), 'assigned to you') && $order->status !== 'pending')
-                          $needsAction = false;
-                        elseif (str_contains(strtolower($msg), 'ready for your approval') && $order->status !== 'accepted_by_field_staff')
-                          $needsAction = false;
-                        elseif (str_contains(strtolower($msg), 'confirm order upon delivery') && in_array($order->status, ['delivered', 'accepted']))
-                          $needsAction = false;
-                      }
-                    } elseif (str_starts_with($code, 'DO-')) {
-                      $order = \App\Models\DistributorOrder::where('order_code', $code)->first();
-                      if ($order) {
-                        $orderExists = true;
-                        if (str_contains(strtolower($msg), 'ready for your approval') && !in_array($order->status, ['pending', 'accepted_by_sales_manager']))
-                          $needsAction = false;
-                      }
-                    }
-
-                    if (!$orderExists) {
+                    if (!$orderExists && isset($data['order_code'])) {
                       $notification->delete(); // Clean up deleted orders
                     } elseif (!$needsAction && $notification->unread()) {
                       $notification->markAsRead(); // Mark as read
@@ -268,21 +246,15 @@
               <h6 class="f-18 mb-0 dropdown-title">Notifications</h6>
               <ul>
                 @forelse(Auth::user()->notifications()->latest()->take(2)->get() as $notification)
-                  <li class="{{ $notification->unread() ? 'b-l-primary border-4' : 'b-l-secondary border-4 bg-light' }}"
+                  @php $is_pending = \App\Http\Controllers\NotificationController::checkActionStatus($notification); @endphp
+                  <li class="{{ $is_pending ? 'b-l-primary border-4' : 'b-l-secondary border-4 bg-light' }}"
                     data-id="{{ $notification->id }}">
                     <a href="{{ $notification->data['action_url'] ?? '#' }}" style="display: block; width: 100%; color: inherit; cursor: pointer; text-decoration: none;">
-                      <p class="mb-1 {{ $notification->unread() ? 'fw-bold text-dark' : 'text-muted' }}"
+                      <p class="mb-1 {{ $is_pending ? 'fw-bold text-dark' : 'text-muted' }}"
                         style="font-size: 0.8rem;">
-                          {{-- @if($notification->unread())
-                            <span class="badge bg-primary me-1" style="font-size: 9px; padding: 2px 5px;"><i
-                                class="fa fa-circle"></i> Needs Action</span>
-                          @else
-                          <span class="badge bg-secondary me-1" style="font-size: 9px; padding: 2px 5px;"><i
-                              class="fa fa-check"></i> Action Done</span>
-                          @endif --}}
                       {{ $notification->data['message'] ?? 'Notification' }}
                     </p>
-                    <span class="{{ $notification->unread() ? 'font-danger' : 'text-muted' }}"
+                    <span class="{{ $is_pending ? 'font-danger' : 'text-muted' }}"
                       style="font-size: 0.70rem;">
                       <i class="fa fa-clock-o"></i> {{ $notification->created_at->diffForHumans() }}
                       </span>
