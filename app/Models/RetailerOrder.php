@@ -31,6 +31,7 @@ class RetailerOrder extends Model
         'invoice_path',
         'fieldstaff_id',
         'cancellation_reason',
+        'loyalty_points_earned',
     ];
 
     protected $casts = [

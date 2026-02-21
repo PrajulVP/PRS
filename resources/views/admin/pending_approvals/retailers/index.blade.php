@@ -1,66 +1,66 @@
 @extends('layouts.admin')
 
 @section('page-body')
-<style>
-    .dataTables_filter {
-        text-align: right !important;
-    }
+    <style>
+        .dataTables_filter {
+            text-align: right !important;
+        }
 
-    .dataTables_filter input {
-        width: 230px !important;
-        margin-left: 10px !important;
-    }
+        .dataTables_filter input {
+            width: 230px !important;
+            margin-left: 10px !important;
+        }
 
-    .dataTables_length {
-        text-align: left !important;
-    }
+        .dataTables_length {
+            text-align: left !important;
+        }
 
-    .dataTables_length select {
-        padding: 5px 10px !important;
-        padding-right: 30px !important;
-        display: inline-block !important;
-        width: auto !important;
-    }
+        .dataTables_length select {
+            padding: 5px 10px !important;
+            padding-right: 30px !important;
+            display: inline-block !important;
+            width: auto !important;
+        }
 
-    .action-buttons {
-        display: inline-flex !important;
-        gap: 4px;
-        align-items: center;
-    }
+        .action-buttons {
+            display: inline-flex !important;
+            gap: 4px;
+            align-items: center;
+        }
 
 
-    .action-buttons .btn {
-        padding: 2px 6px !important;
-        font-size: 0.75rem !important;
-        height: 28px !important;
-        display: inline-flex !important;
-        align-items: center;
-        justify-content: center;
-        line-height: 1 !important;
-    }
+        .action-buttons .btn {
+            padding: 2px 6px !important;
+            font-size: 0.75rem !important;
+            height: 28px !important;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            line-height: 1 !important;
+        }
 
-    /* Modal sizing and table compacting */
-    .modal-xl {
-        max-width: 1140px;
-    }
+        /* Modal sizing and table compacting */
+        .modal-xl {
+            max-width: 1140px;
+        }
 
-    #retailer-approval-table td:last-child {
-        white-space: nowrap !important;
-    }
+        #retailer-approval-table td:last-child {
+            white-space: nowrap !important;
+        }
 
-    /* Preview / full content helper */
-    .preview-content {
-        display: inline-block;
-    }
+        /* Preview / full content helper */
+        .preview-content {
+            display: inline-block;
+        }
 
-    .full-content {
-        display: block;
-    }
+        .full-content {
+            display: block;
+        }
 
-    .full-content.d-none {
-        display: none;
-    }
-</style>
+        .full-content.d-none {
+            display: none;
+        }
+    </style>
     <div class="container-fluid">
         <div class="card shadow-sm border-0 rounded-3">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -238,7 +238,8 @@
             var table = $('#retailer-approval-table').DataTable({
                 dom: "<'row mb-3'<'col-sm-12'B>>" + // Buttons on top
                     "<'row mb-3 d-flex align-items-center'<'col-md-6'l><'col-md-6'f>>" + // 'l' (length) on left, 'f' (filter/search) on right
-                    "rtip",
+                    "<'row '<'col-sm-12'tr>>" +
+                    "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
                 buttons: {
                     dom: {
                         button: {
@@ -366,18 +367,18 @@
                             let ext = row.invoice_url.split('.').pop().toLowerCase();
                             let icon = ext === 'pdf' ? 'fa-file-pdf-o' : 'fa-file-image-o';
                             let btnsHtml = `
-                                                                                                    <div class="d-flex align-items-center gap-1">
-                                                                                                        <a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-success" title="View Invoice">
-                                                                                                            <i class="fa ${icon}"></i> View
-                                                                                                        </a>`;
+                                                                                                        <div class="d-flex align-items-center gap-1">
+                                                                                                            <a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-success" title="View Invoice">
+                                                                                                                <i class="fa ${icon}"></i> View
+                                                                                                            </a>`;
                             if (!isFieldStaff) {
                                 btnsHtml += `
-                                                                                                        <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}" title="Re-upload Invoice">
-                                                                                                            <i class="fa fa-refresh"></i>
-                                                                                                        </button>
-                                                                                                        <button class="btn btn-xs btn-danger remove-invoice-btn" data-id="${row.id}" title="Remove Invoice">
-                                                                                                            <i class="fa fa-trash"></i>
-                                                                                                        </button>`;
+                                                                                                            <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}" title="Re-upload Invoice">
+                                                                                                                <i class="fa fa-refresh"></i>
+                                                                                                            </button>
+                                                                                                            <button class="btn btn-xs btn-danger remove-invoice-btn" data-id="${row.id}" title="Remove Invoice">
+                                                                                                                <i class="fa fa-trash"></i>
+                                                                                                            </button>`;
                             }
                             btnsHtml += `</div>`;
                             return btnsHtml;
@@ -386,14 +387,14 @@
 
                         let statusRaw = row.status ? row.status.toLowerCase().replace(/ /g, '_') : '';
                         if (statusRaw === 'pending') {
-                            return '<span class="text-muted small">Waiting for FS Approval</span>';
+                            return '<span class="text-muted small">Waiting for Sales Rep Approval</span>';
                         }
 
                         return `
-                                                                                                <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}">
-                                                                                                    <i class="fa fa-upload"></i> Upload
-                                                                                                </button>
-                                                                                            `;
+                                                                                                    <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}">
+                                                                                                        <i class="fa fa-upload"></i> Upload
+                                                                                                    </button>
+                                                                                                `;
                     }
                 },
                 {
@@ -630,11 +631,11 @@
                 if (row.items && row.items.length) {
                     row.items.forEach(item => {
                         tbody.append(`<tr>
-                                                                                        <td>${item.product_name}</td>
-                                                                                        <td>${item.quantity}</td>
-                                                                                        <td>${item.unit_price}</td>
-                                                                                        <td>${item.total_amount}</td>
-                                                                                    </tr>`);
+                                                                                            <td>${item.product_name}</td>
+                                                                                            <td>${item.quantity}</td>
+                                                                                            <td>${item.unit_price}</td>
+                                                                                            <td>${item.total_amount}</td>
+                                                                                        </tr>`);
                     });
                 } else {
                     tbody.html('<tr><td colspan="4" class="text-center">No items</td></tr>');

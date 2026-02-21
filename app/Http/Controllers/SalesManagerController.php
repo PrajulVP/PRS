@@ -62,6 +62,16 @@ class SalesManagerController extends Controller
             'address' => $request->address,
         ]);
 
+        // Notify Superadmins for approval
+        $superAdmins = User::role('superadmin')->get();
+        foreach ($superAdmins as $superAdmin) {
+            $superAdmin->notify(new \App\Notifications\UserApprovalRequired(
+                $user,
+                "New Sales Manager {$user->name} has been added and requires approval/activation.",
+                url('/sales-managers')
+            ));
+        }
+
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,

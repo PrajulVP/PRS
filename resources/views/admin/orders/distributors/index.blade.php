@@ -67,10 +67,11 @@
                     <div class="alert alert-danger">{{ session('error') }}</div>
                 @endif
 
-                <div class="row align-items-center mb-3">
-                    <div class="col-md-3">
-                        <label class="form-label fw-bold">Payment Status Filter</label>
-                        <select id="payment_status_filter" class="form-select form-select-sm">
+                <!-- Hidden filter element to be moved into datatable wrapper -->
+                <div class="d-none" id="payment-filter-wrapper">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <label class="form-label fw-bold mb-0 me-2 text-nowrap">Payment Status:</label>
+                        <select id="payment_status_filter" class="form-select form-select-sm w-auto">
                             <option value="">All Payments</option>
                             <option value="paid">Paid</option>
                             <option value="pending">Pending</option>
@@ -346,13 +347,37 @@
                 </div>
             </div>
         </div>
+        {{-- Upload Invoice Modal --}}
+        <div class="modal fade" id="uploadInvoiceModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Upload / Change Invoice</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="uploadInvoiceForm">
+                        @csrf
+                        <input type="hidden" id="upload_invoice_order_id">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label required">Select Invoice File (PDF, JPG, PNG)</label>
+                                <input type="file" name="invoice" class="form-control" accept=".pdf,.jpg,.jpeg,.png"
+                                    required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Upload</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
     </div>
     </div>
     </div>
     </div>
-    </div>
-
 
 @endsection
 
@@ -404,11 +429,11 @@
                         if (items.length > 2) {
                             let visible = items.slice(0, 2).join('<br>');
                             return `<div>
-                                                                                                    <span class="preview-content">${visible}</span>
-                                                                                                    <span class="full-content d-none">${data}</span>
-                                                                                                    <br>
-                                                                                                    <a href="#" class="small text-primary toggle-more-btn" onclick="event.preventDefault(); let p = $(this).parent(); if(p.find('.full-content').hasClass('d-none')){ p.find('.full-content').removeClass('d-none'); p.find('.preview-content').addClass('d-none'); $(this).text('Show Less'); } else { p.find('.full-content').addClass('d-none'); p.find('.preview-content').removeClass('d-none'); $(this).text('Read More'); }">Read More</a>
-                                                                                                </div>`;
+                                                                                                                    <span class="preview-content">${visible}</span>
+                                                                                                                    <span class="full-content d-none">${data}</span>
+                                                                                                                    <br>
+                                                                                                                    <a href="#" class="small text-primary toggle-more-btn" onclick="event.preventDefault(); let p = $(this).parent(); if(p.find('.full-content').hasClass('d-none')){ p.find('.full-content').removeClass('d-none'); p.find('.preview-content').addClass('d-none'); $(this).text('Show Less'); } else { p.find('.full-content').addClass('d-none'); p.find('.preview-content').removeClass('d-none'); $(this).text('Read More'); }">Read More</a>
+                                                                                                                </div>`;
                         }
                         return data;
                     }
@@ -479,14 +504,23 @@
                         // Interactions simplified for history page
                         // Approval buttons moved to separate Approvals page
 
+                        if (!isDistributor && st !== 'pending' && st !== 'cancelled' && st !== 'rejected') {
+                            btns += `<button class="btn btn-warning btn-sm upload-invoice-btn" data-id="${row.id}" title="Upload/Change Invoice"><i class="fa fa-upload"></i></button>`;
+                        }
+
+                        if (isDistributor && st === 'approved') {
+                            btns += `<button class="btn btn-primary btn-sm confirm-receipt-btn" data-id="${row.id}" title="Confirm Receipt"> Confirm</button>`;
+                        }
+
                         btns += `</div>`;
                         return btns;
                     }
                 }
                 ],
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
-                    "<'row mb-3 d-flex align-items-center'<'col-md-6'l><'col-md-6'f>>" +
-                    "rtip",
+                    "<'row mb-3 d-flex align-items-center'<'col-md-4'l><'col-md-4 payment-filter-container'><'col-md-4'f>>" +
+                    "<'row '<'col-sm-12'tr>>" +
+                    "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
                 buttons: {
                     dom: {
                         button: {
@@ -522,8 +556,11 @@
                 }
             });
 
+            // Move Custom Filter
+            $('#payment-filter-wrapper').children().appendTo('.payment-filter-container');
+
             // Filter Change
-            $('#payment_status_filter').change(function () {
+            $(document).on('change', '#payment_status_filter', function () {
                 table.ajax.reload();
             });
 
@@ -568,6 +605,43 @@
                     error: function (xhr) {
                         $('#deleteConfirmModal').modal('hide');
                         let err = 'An error occurred.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
+                        showToast('error', err);
+                    }
+                });
+            });
+
+            // Upload Invoice Logic
+            $(document).on('click', '.upload-invoice-btn', function () {
+                $('#upload_invoice_order_id').val($(this).data('id'));
+                $('#uploadInvoiceForm')[0].reset();
+                $('#uploadInvoiceModal').modal('show');
+            });
+
+            $('#uploadInvoiceForm').submit(function (e) {
+                e.preventDefault();
+                let form = $(this)[0];
+                let orderId = $('#upload_invoice_order_id').val();
+                let formData = new FormData(form);
+                let url = "{{ route('admin.distributor-orders.upload-invoice', ':id') }}".replace(':id', orderId);
+
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (res) {
+                        if (res.success) {
+                            $('#uploadInvoiceModal').modal('hide');
+                            table.ajax.reload();
+                            showToast('success', res.success);
+                        } else {
+                            showToast('error', res.error || 'Failed to upload invoice');
+                        }
+                    },
+                    error: function (xhr) {
+                        let err = 'An error occurred';
                         if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
                         showToast('error', err);
                     }
@@ -638,19 +712,19 @@
                         let sub = item.quantity * item.price;
                         total += sub;
                         tbody.append(`
-                                                                                                    <tr>
-                                                                                                        <td>${item.name}<input type="hidden" name="items[${id}][product_id]" value="${id}"></td>
-                                                                                                                                                                    <td>${item.stock}</td>
-                                                                                                                                                                    <td>
-                                                                                                                                                                        <input type="number" class="form-control form-control-sm qty-input-create" 
-                                                                                                                                                                        data-id="${id}" value="${item.quantity}" min="1" max="${item.stock}" style="width:80px">
-                                                                                                                                                                        <input type="hidden" name="items[${id}][quantity]" value="${item.quantity}">
-                                                                                                                                                                    </td>
-                                                                                                                                                                    <td>${item.price}</td>
-                                                                                                                                                                    <td>${sub.toFixed(2)}</td>
-                                                                                                                                                                    <td><button type="button" class="btn btn-danger btn-sm remove-create" data-id="${id}">X</button></td>
-                                                                                                                                                                </tr>
-                                                                                                                                                            `);
+                                                                                                                    <tr>
+                                                                                                                        <td>${item.name}<input type="hidden" name="items[${id}][product_id]" value="${id}"></td>
+                                                                                                                                                                                    <td>${item.stock}</td>
+                                                                                                                                                                                    <td>
+                                                                                                                                                                                        <input type="number" class="form-control form-control-sm qty-input-create" 
+                                                                                                                                                                                        data-id="${id}" value="${item.quantity}" min="1" max="${item.stock}" style="width:80px">
+                                                                                                                                                                                        <input type="hidden" name="items[${id}][quantity]" value="${item.quantity}">
+                                                                                                                                                                                    </td>
+                                                                                                                                                                                    <td>${item.price}</td>
+                                                                                                                                                                                    <td>${sub.toFixed(2)}</td>
+                                                                                                                                                                                    <td><button type="button" class="btn btn-danger btn-sm remove-create" data-id="${id}">X</button></td>
+                                                                                                                                                                                </tr>
+                                                                                                                                                                            `);
                     });
                 }
                 $('#create_grand_total').text(total.toFixed(2));
@@ -781,27 +855,27 @@
                         });
 
                         tbody.append(`
-                                                                                                                                                                <tr>
-                                                                                                                                                                    <td>${item.name}
-                                                                                                                                                                        <input type="hidden" name="items[${rowId}][product_id]" value="${rowId}">
-                                                                                                                                                                        ${item.orderItemId ? `<input type="hidden" name="items[${rowId}][order_item_id]" value="${item.orderItemId}">` : ''}
-                                                                                                                                                                    </td>
-                                                                                                                                                                    <td>
-                                                                                                                                                                        <select class="form-select form-select-sm unit-select-edit" data-id="${rowId}" style="width: 90px; margin: 0 auto;">
-                                                                                                                                                                            ${options}
-                                                                                                                                                                        </select>
-                                                                                                                                                                        <input type="hidden" name="items[${rowId}][unit]" value="${unit}">
-                                                                                                                                                                    </td>
-                                                                                                                                                                    <td>
-                                                                                                                                                                        <input type="number" class="form-control form-control-sm qty-input-edit" 
-                                                                                                                                                                        data-id="${rowId}" value="${qty}" min="1" style="width:80px; margin: 0 auto;">
-                                                                                                                                                                        <input type="hidden" name="items[${rowId}][quantity]" value="${qty}">
-                                                                                                                                                                    </td>
-                                                                                                                                                                    <td class="text-end">${price.toFixed(2)}</td>
-                                                                                                                                                                    <td class="text-end">${sub.toFixed(2)}</td>
-                                                                                                                                                                    <td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm remove-edit" data-id="${rowId}"><i class="fa fa-times"></i></button></td>
-                                                                                                                                                                </tr>
-                                                                                                                                                            `);
+                                                                                                                                                                                <tr>
+                                                                                                                                                                                    <td>${item.name}
+                                                                                                                                                                                        <input type="hidden" name="items[${rowId}][product_id]" value="${rowId}">
+                                                                                                                                                                                        ${item.orderItemId ? `<input type="hidden" name="items[${rowId}][order_item_id]" value="${item.orderItemId}">` : ''}
+                                                                                                                                                                                    </td>
+                                                                                                                                                                                    <td>
+                                                                                                                                                                                        <select class="form-select form-select-sm unit-select-edit" data-id="${rowId}" style="width: 90px; margin: 0 auto;">
+                                                                                                                                                                                            ${options}
+                                                                                                                                                                                        </select>
+                                                                                                                                                                                        <input type="hidden" name="items[${rowId}][unit]" value="${unit}">
+                                                                                                                                                                                    </td>
+                                                                                                                                                                                    <td>
+                                                                                                                                                                                        <input type="number" class="form-control form-control-sm qty-input-edit" 
+                                                                                                                                                                                        data-id="${rowId}" value="${qty}" min="1" style="width:80px; margin: 0 auto;">
+                                                                                                                                                                                        <input type="hidden" name="items[${rowId}][quantity]" value="${qty}">
+                                                                                                                                                                                    </td>
+                                                                                                                                                                                    <td class="text-end">${price.toFixed(2)}</td>
+                                                                                                                                                                                    <td class="text-end">${sub.toFixed(2)}</td>
+                                                                                                                                                                                    <td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm remove-edit" data-id="${rowId}"><i class="fa fa-times"></i></button></td>
+                                                                                                                                                                                </tr>
+                                                                                                                                                                            `);
                     });
                 }
                 $('#edit_grand_total').text(total.toFixed(2));
@@ -839,22 +913,22 @@
             $('#distributor-orders-table').on('click', '.view-btn', function () {
                 let row = $(this).data('row');
                 let html = `
-                                                                                                                                                        <tr><th>Order Code</th><td>${row.order_code}</td></tr>
-                                                                                                                                                        <tr><th>Distributor</th><td>${row.name}</td></tr>
-                                                                                                                                                        <tr><th>Sales Manager</th><td>${row.sales_manager_name}</td></tr>
-                                                                                                                                                        <tr><th>Status</th><td>${row.status}</td></tr>
-                                                                                                                                                        <tr><th>Placed At</th><td>${row.placed_at}</td></tr>
-                                                                                                                                                     `;
+                                                                                                                                                                        <tr><th>Order Code</th><td>${row.order_code}</td></tr>
+                                                                                                                                                                        <tr><th>Distributor</th><td>${row.name}</td></tr>
+                                                                                                                                                                        <tr><th>Sales Manager</th><td>${row.sales_manager_name}</td></tr>
+                                                                                                                                                                        <tr><th>Status</th><td>${row.status}</td></tr>
+                                                                                                                                                                        <tr><th>Placed At</th><td>${row.placed_at}</td></tr>
+                                                                                                                                                                     `;
                 $('#showOrderBody').html(html);
 
                 let itemsHtml = '';
                 row.items.forEach(function (item) {
                     itemsHtml += `<tr>
-                                                                                                                                                            <td>${item.product_name}</td>
-                                                                                                                                                            <td>${item.quantity}</td>
-                                                                                                                                                            <td>${item.unit_price}</td>
-                                                                                                                                                            <td>${item.total_amount}</td>
-                                                                                                                                                         </tr>`;
+                                                                                                                                                                            <td>${item.product_name}</td>
+                                                                                                                                                                            <td>${item.quantity}</td>
+                                                                                                                                                                            <td>${item.unit_price}</td>
+                                                                                                                                                                            <td>${item.total_amount}</td>
+                                                                                                                                                                         </tr>`;
                 });
                 $('#showOrderItemsBody').html(itemsHtml);
                 $('#showOrderModal').modal('show');

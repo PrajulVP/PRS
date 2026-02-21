@@ -189,7 +189,8 @@
             ],
             dom: "<'row mb-3'<'col-sm-12'B>>" + // Buttons on top
                 "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" + // 'l' (length) on left, 'f' (filter/search) on right
-                "rtip",
+                "<'row '<'col-sm-12'tr>>" +
+                    "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
             buttons: [
                 'copy', 'csv', 'excel', 'pdf', 'print'
             ]

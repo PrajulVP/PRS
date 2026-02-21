@@ -132,6 +132,21 @@ class RetailerController extends Controller
 
         $retailer->save();
 
+        // Notify the assigned Sales Manager
+        if ($retailer->sales_manager_id) {
+            $salesManagerUser = User::whereHas('salesManager', function ($q) use ($retailer) {
+                $q->where('id', $retailer->sales_manager_id);
+            })->first();
+
+            if ($salesManagerUser) {
+                $salesManagerUser->notify(new \App\Notifications\UserApprovalRequired(
+                    $user,
+                    "New Retailer {$user->name} has been added to your team and requires review/activation.",
+                    url('/retailers')
+                ));
+            }
+        }
+
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,

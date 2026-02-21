@@ -31,7 +31,7 @@ class RetailerOrderManagementController extends Controller
         // User asked for AJAX to fetch info.
 
         // Revised: We will keep the products list for the dropdown, but minimal data.
-        $products = Product::select('id', 'product_name', 'mrp')->get();
+        $products = Product::select('id', 'product_name', 'mrp', 'ptr')->get();
 
         return view('admin.orders.retailers.create', compact('retailers', 'products'));
     }
@@ -152,7 +152,25 @@ class RetailerOrderManagementController extends Controller
                     $product = Product::find($itemData['product_id']);
                     if (!$product) continue;
 
-                    $price = $product->mrp; // Default MRP
+                    // Deduct Stock
+                    if ($distributor) {
+                        $distProduct = $distributor->products()->where('product_id', $product->id)->first();
+                        if ($distProduct) {
+                            if ($distProduct->pivot->stock < $itemData['quantity']) {
+                                throw new \Exception("Insufficient stock for product: " . $product->product_name);
+                            }
+                            $distributor->products()->updateExistingPivot($product->id, ['stock' => $distProduct->pivot->stock - $itemData['quantity']]);
+                        }
+                    }
+
+                    // Price Logic: Retailer buys at PTR (Price to Retailer)
+                    $price = $product->ptr; // Strictly PTR
+
+                    if ($distributor) {
+                        // Optional: If distributor has logic to override price, add here. 
+                        // Currently assuming they sell at standard PTR.
+                    }
+
                     $qty = $itemData['quantity'];
                     $subtotal = $qty * $price;
 
@@ -176,7 +194,7 @@ class RetailerOrderManagementController extends Controller
 
                 // Notify Field Staff
                 if ($order->fieldStaff && $order->fieldStaff->user) {
-                    $order->fieldStaff->user->notify(new OrderActionRequired($order, "New order #{$order->order_code} assigned to you. Action required: Approve or Reject.", url('/admin/pending-approvals?type=retailer')));
+                    $order->fieldStaff->user->notify(new OrderActionRequired($order, "New order #{$order->order_code} assigned to you. Action required: Approve or Reject.", url('/approvals/retailers')));
                 }
             }
 
@@ -196,8 +214,8 @@ class RetailerOrderManagementController extends Controller
             try {
                 // Determine query based on role
                 $query = RetailerOrder::with(['retailer.user', 'fieldStaff.user', 'items.product', 'distributor.user'])
-                    ->select('retailer_orders.*') 
-                    ->distinct(); 
+                    ->select('retailer_orders.*')
+                    ->distinct();
                 /** @var \App\Models\User $user */
                 $user = Auth::user();
 
@@ -399,7 +417,7 @@ class RetailerOrderManagementController extends Controller
 
             // Notify Distributor
             if ($retailerOrder->distributor && $retailerOrder->distributor->user) {
-                $retailerOrder->distributor->user->notify(new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} has been accepted by Field Staff and is ready for your approval.", url('/admin/pending-approvals?type=retailer')));
+                $retailerOrder->distributor->user->notify(new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} has been accepted by Field Staff and is ready for your approval.", url('/approvals/retailers')));
             }
 
             return response()->json(['success' => 'Order accepted by Field Staff!']);
@@ -425,7 +443,44 @@ class RetailerOrderManagementController extends Controller
                 $retailerOrder->retailer->user->notify(new OrderActionRequired($retailerOrder, "Your order #{$retailerOrder->order_code} has been approved by the Distributor. Please confirm order upon delivery.", url('/retailer-orders')));
             }
 
-            return response()->json(['success' => 'Order approved by Distributor!']);
+            // Award Loyalty Points on Distributor Acceptance
+            $totalPoints = 0;
+            $retailerOrder->load('items.product');
+            Log::info("Distributor Acceptance - Calculating Loyalty Points for Order: {$retailerOrder->id}");
+
+            foreach ($retailerOrder->items as $item) {
+                if ($item->product) {
+                    $ptr = (float) ($item->product->ptr ?? $item->product->mrp ?? 0);
+                    $percentage = (float) $item->product->loyalty_point_percentage;
+
+                    Log::info("Item: {$item->product->product_name} (ID: {$item->product->id}) - Qty: {$item->quantity}, PTR: {$ptr}, Perc: {$percentage}");
+
+                    if ($percentage > 0 && $ptr > 0) {
+                        $subtotal = $item->quantity * $ptr;
+                        $points = $subtotal * ($percentage / 100);
+                        $totalPoints += $points;
+                    } else {
+                        Log::info("Skipping points: Percentage or PTR is 0");
+                    }
+                }
+            }
+            Log::info("Total Points to Add: {$totalPoints}");
+
+            if ($totalPoints > 0) {
+                // Ensure the points are saved to the order history (use update to force DB write)
+                $retailerOrder->update(['loyalty_points_earned' => $totalPoints]);
+                Log::info("Order ID {$retailerOrder->id} loyalty_points_earned updated to: {$totalPoints}");
+
+                $retailer = $retailerOrder->retailer;
+                if ($retailer) {
+                    $oldPoints = $retailer->loyalty_points ?? 0;
+                    $retailer->loyalty_points = $oldPoints + $totalPoints;
+                    $retailer->save();
+                    Log::info("Retailer ID {$retailer->id} points updated. Old: {$oldPoints}, New: {$retailer->loyalty_points}");
+                }
+            }
+
+            return response()->json(['success' => 'Order approved by Distributor!', 'new_points' => $retailerOrder->retailer->loyalty_points ?? 0]);
         }
 
         // 3. Admin / Sales Manager (can perform any stage or maybe skip)
@@ -434,7 +489,7 @@ class RetailerOrderManagementController extends Controller
                 $retailerOrder->update(['status' => 'accepted_by_fieldstaff']);
                 // Notify Distributor
                 if ($retailerOrder->distributor && $retailerOrder->distributor->user) {
-                    $retailerOrder->distributor->user->notify(new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} is ready for your approval (Field Staff stage bypassed by Admin).", url('/admin/pending-approvals?type=retailer')));
+                    $retailerOrder->distributor->user->notify(new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} is ready for your approval (Field Staff stage bypassed by Admin).", url('/approvals/retailers')));
                 }
                 return response()->json(['success' => 'Order accepted (Field Staff stage bypassed by Admin)!']);
             } elseif ($status === 'accepted_by_fieldstaff') {
@@ -443,7 +498,49 @@ class RetailerOrderManagementController extends Controller
                 if ($retailerOrder->retailer && $retailerOrder->retailer->user) {
                     $retailerOrder->retailer->user->notify(new OrderActionRequired($retailerOrder, "Your order #{$retailerOrder->order_code} has been approved. Please confirm order upon delivery.", url('/retailer-orders')));
                 }
-                return response()->json(['success' => 'Order approved (Distributor stage)!']);
+
+                // Award Loyalty Points (Admin Override)
+                $totalPoints = 0;
+                $retailerOrder->load('items.product');
+
+                Log::info("Admin/Manager Acceptance - Calculating Loyalty Points for Order: {$retailerOrder->id}");
+
+                foreach ($retailerOrder->items as $item) {
+                    if ($item->product) {
+                        $ptr = (float) ($item->product->ptr ?? $item->product->mrp ?? 0);
+                        $percentage = (float) $item->product->loyalty_point_percentage;
+
+                        Log::info("Item: {$item->product->product_name} (ID: {$item->product->id}) - Qty: {$item->quantity}, PTR: {$ptr}, Perc: {$percentage}");
+
+                        if ($percentage > 0 && $ptr > 0) {
+                            $subtotal = $item->quantity * $ptr;
+                            $points = $subtotal * ($percentage / 100);
+                            $totalPoints += $points;
+                            Log::info("Points adding: {$points}");
+                        } else {
+                            Log::info("Skipping points: Percentage or PTR is 0");
+                        }
+                    } else {
+                        Log::warning("Item ID {$item->id} has no product attached.");
+                    }
+                }
+
+                Log::info("Total Points to Add: {$totalPoints}");
+
+                if ($totalPoints > 0) {
+                    // Ensure the points are saved to the order history (use update to force DB write)
+                    $retailerOrder->update(['loyalty_points_earned' => $totalPoints]);
+                    Log::info("Order ID {$retailerOrder->id} loyalty_points_earned updated to: {$totalPoints}");
+
+                    $retailer = $retailerOrder->retailer;
+                    if ($retailer) {
+                        $oldPoints = $retailer->loyalty_points ?? 0;
+                        $retailer->loyalty_points = $oldPoints + $totalPoints;
+                        $retailer->save();
+                        Log::info("Retailer ID {$retailer->id} points updated. Old: {$oldPoints}, New: {$retailer->loyalty_points}");
+                    }
+                }
+                return response()->json(['success' => 'Order approved (Distributor stage)!', 'new_points' => $retailerOrder->retailer->loyalty_points ?? 0]);
             } else {
                 return response()->json(['error' => 'Order is in a state that cannot be accepted/approved further.'], 400);
             }
@@ -529,8 +626,8 @@ class RetailerOrderManagementController extends Controller
                 // Actually, omitting stock logic might break inventory.
 
                 // Basic:
-                $unitPrice = $product->mrp ?? 0;
-                if ($distributor) $unitPrice = $product->pivot->stock ? $product->mrp : 0; // Just verifying access
+                $unitPrice = $product->ptr;
+                if ($distributor) $unitPrice = $product->pivot->stock ? $product->ptr : 0; // Just verifying access
 
                 $currentOrderItem = null;
                 if (isset($itemData['order_item_id'])) {
@@ -538,12 +635,12 @@ class RetailerOrderManagementController extends Controller
                 }
 
                 $qty = $itemData['quantity'];
-                $subtotal = $qty * $product->mrp;
+                $subtotal = $qty * $product->ptr;
 
                 if ($currentOrderItem) {
                     $currentOrderItem->update([
                         'quantity' => $qty,
-                        'unit_price' => $product->mrp,
+                        'unit_price' => $product->ptr,
                         'total_amount' => $subtotal
                     ]);
                     $requestItemIds[] = $currentOrderItem->id;
@@ -551,7 +648,7 @@ class RetailerOrderManagementController extends Controller
                     $newItem = $retailerOrder->items()->create([
                         'product_id' => $itemData['product_id'],
                         'quantity' => $qty,
-                        'unit_price' => $product->mrp, // Assuming MRP
+                        'unit_price' => $product->ptr, // Assuming PTR
                         'total_amount' => $subtotal
                     ]);
                     $requestItemIds[] = $newItem->id;
@@ -620,6 +717,11 @@ class RetailerOrderManagementController extends Controller
     {
         $request->validate(['cancellation_reason' => 'required|string|min:3']);
 
+        $user = Auth::user();
+        if ($user->hasRole('retailer') && $retailerOrder->retailer_id !== $user->retailer->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         if ($retailerOrder->status === 'pending') {
             // Restore stock if needed
             $distributor = $retailerOrder->distributor;
@@ -687,7 +789,7 @@ class RetailerOrderManagementController extends Controller
 
         $retailerOrder->status = $newStatus;
         if ($newStatus == 'delivered') {
-            $retailerOrder->delivered_at = now();
+            $retailerOrder->delivered_at = \Illuminate\Support\Carbon::now();
         }
         $retailerOrder->save();
 
@@ -769,27 +871,38 @@ class RetailerOrderManagementController extends Controller
         $user = Auth::user();
 
         // Check if user is the retailer for this order
-        if (!$user->hasRole('retailer') || $retailerOrder->retailer_id !== $user->retailer->id) {
-            // Allow Admin/Manager too? Usually it's for retailer.
-            if (!$user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
-                return response()->json(['error' => 'Permission denied. Only the retailer can confirm order.'], 403);
-            }
+        // Allow Admin/Manager too? Usually it's for retailer.
+        if ((!$user->hasRole('retailer') || $retailerOrder->retailer_id !== $user->retailer->id) && !$user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
+            return response()->json(['error' => 'Permission denied. Only the retailer can confirm order.'], 403);
         }
 
         if ($retailerOrder->status !== 'accepted_by_distributor') {
             return response()->json(['error' => 'Order must be approved by Distributor before confirmation.'], 400);
         }
 
-        $retailerOrder->update([
-            'status' => 'delivered',
-            'delivered_at' => now()
-        ]);
+        try {
+            DB::beginTransaction();
 
-        // Optional: Notify Field Staff / Distributor that order is closed
-        if ($retailerOrder->fieldStaff && $retailerOrder->fieldStaff->user) {
-            $retailerOrder->fieldStaff->user->notify(new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} has been successfully delivered and confirmed by the retailer.", url('/admin/retailer-orders')));
+            $retailerOrder->update([
+                'status' => 'delivered',
+                'delivered_at' => now()
+            ]);
+
+            // Loyalty points calculation moved to be awarded when Distributor Accepts order.
+
+            // Optional: Notify Field Staff / Distributor that order is closed
+            if ($retailerOrder->fieldStaff && $retailerOrder->fieldStaff->user) {
+                $retailerOrder->fieldStaff->user->notify(new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} has been successfully delivered and confirmed by the retailer.", url('/retailer-orders')));
+            }
+
+            DB::commit();
+
+            $msg = 'Order delivery confirmed!';
+
+            return response()->json(['success' => $msg, 'new_points' => $retailerOrder->retailer->loyalty_points ?? 0]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Error confirming order: ' . $e->getMessage()], 500);
         }
-
-        return response()->json(['success' => 'Order delivery confirmed!']);
     }
 }

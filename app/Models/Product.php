@@ -27,6 +27,7 @@ class Product extends Model
         'offer',
         'discount',
         'net_amount',
+        'loyalty_point_percentage',
     ];
 
     protected $casts = [
@@ -38,6 +39,7 @@ class Product extends Model
         'offer' => 'decimal:2',
         'discount' => 'decimal:2',
         'net_amount' => 'decimal:2',
+        'loyalty_point_percentage' => 'decimal:2',
     ];
 
     // Relation with distributors via inventories
