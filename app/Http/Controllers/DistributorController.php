@@ -17,7 +17,7 @@ class DistributorController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = Distributor::with('user', 'district', 'area')->select('distributors.*')->orderBy('distributors.id', 'desc');
+            $data = Distributor::with('user', 'district', 'area', 'salesManager.user')->select('distributors.*')->orderBy('distributors.id', 'desc');
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->make(true);

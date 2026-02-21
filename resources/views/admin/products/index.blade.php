@@ -447,28 +447,33 @@
                 buttons: {
                     dom: {
                         button: {
-                            className: ''
+                            className: 'btn btn-sm btn-icon'
                         }
                     },
                     buttons: [{
                         extend: 'copy',
-                        className: 'btn btn-sm btn-primary'
+                        className: 'btn btn-secondary btn-sm',
+                        text: '<i class="fa fa-copy"></i> Copy'
                     },
                     {
                         extend: 'csv',
-                        className: 'btn btn-sm btn-secondary'
+                        className: 'btn btn-info btn-sm text-white',
+                        text: '<i class="fa fa-file-csv"></i> CSV'
                     },
                     {
                         extend: 'excel',
-                        className: 'btn btn-sm btn-success'
+                        className: 'btn btn-success btn-sm',
+                        text: '<i class="fa fa-file-excel"></i> Excel'
                     },
                     {
                         extend: 'pdf',
-                        className: 'btn btn-sm btn-danger'
+                        className: 'btn btn-danger btn-sm',
+                        text: '<i class="fa fa-file-pdf"></i> PDF'
                     },
                     {
                         extend: 'print',
-                        className: 'btn btn-sm btn-info'
+                        className: 'btn btn-dark btn-sm',
+                        text: '<i class="fa fa-print"></i> Print'
                     }
                     ]
                 }

@@ -67,7 +67,7 @@ class SalesManagerController extends Controller
         foreach ($superAdmins as $superAdmin) {
             $superAdmin->notify(new \App\Notifications\UserApprovalRequired(
                 $user,
-                "New Sales Manager {$user->name} has been added and requires approval/activation.",
+                "New Sales Manager {$user->name} has been added and requires activation.",
                 url('/sales-managers')
             ));
         }

@@ -38,33 +38,42 @@
                             <table class="table table-hover mb-0">
                                 <thead class="bg-light">
                                     <tr>
-                                        <th width="15%">Status</th>
-                                        <th>Message</th>
+                                        <th width="65%">Message</th>
                                         <th width="20%">Date</th>
+                                        <th width="15%" class="text-center">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse($notifications as $notification)
-                                        <tr class="{{ $notification->unread() ? 'fw-bold bg-light' : 'text-muted' }}"
-                                            style="cursor: pointer;"
-                                            onclick="window.location.href='{{ $notification->data['action_url'] ?? '#' }}'">
+                                        @php
+                                            $actionUrl = $notification->data['action_url'] ?? '#';
+                                            $orderCode = $notification->data['order_code'] ?? '';
+                                            if ($actionUrl !== '#' && !empty($orderCode)) {
+                                                $separator = parse_url($actionUrl, PHP_URL_QUERY) ? '&' : '?';
+                                                $actionUrl .= $separator . 'highlight=' . urlencode($orderCode);
+                                            }
+                                        @endphp
+                                        <tr class="{{ $notification->is_pending_action ? 'fw-bold bg-light' : 'text-muted' }}">
                                             <td>
-                                                @if($notification->unread())
-                                                    <span class="badge bg-primary rounded-pill"><i class="fa fa-circle me-1"
-                                                            style="font-size: 8px;"></i> Unread</span>
-                                                @else
-                                                    <span class="badge bg-secondary rounded-pill"><i class="fa fa-check me-1"></i>
-                                                        Read</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                {{ $notification->data['message'] ?? 'Notification' }}
+                                                <div class="d-flex align-items-center">
+                                                    @if($notification->is_pending_action)
+                                                        <i class="fa fa-circle text-primary me-2" style="font-size: 8px;"></i>
+                                                    @endif
+                                                    {{ $notification->data['message'] ?? 'Notification' }}
+                                                </div>
                                             </td>
                                             <td class="small">
                                                 {{ $notification->created_at->format('d M Y, h:i A') }}
                                                 <br>
                                                 <span class="text-muted"
                                                     style="font-size: 0.75rem;">{{ $notification->created_at->diffForHumans() }}</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <a href="{{ $actionUrl }}"
+                                                    onclick="event.preventDefault(); window.markNotificationAsRead('{{ $notification->id }}', '{{ $actionUrl }}');"
+                                                    class="btn btn-sm {{ $notification->is_pending_action ? 'btn-primary' : 'btn-outline-secondary' }}">
+                                                    {{ $notification->is_pending_action ? 'Process' : 'View' }}
+                                                </a>
                                             </td>
                                         </tr>
                                     @empty
@@ -84,3 +93,21 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        window.markNotificationAsRead = function (id, url) {
+            let readUrl = "{{ route('notifications.read', ':id') }}".replace(':id', id);
+            fetch(readUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            }).finally(function () {
+                window.location.href = url;
+            });
+        };
+    </script>
+@endpush

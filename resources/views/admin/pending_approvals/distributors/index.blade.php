@@ -57,7 +57,7 @@
                 <div id="filter_container" class="d-none">
                     <div class="d-flex align-items-center gap-3">
                         <div class="d-flex align-items-center">
-                            <label for="status_filter" class="form-label me-2 mb-0 fw-bold">Status:</label>
+                            <label for="status_filter" class="form-label me-2 mb- fw-bold">Status:</label>
                             <select id="status_filter" class="form-select form-select-sm" style="width: 150px;">
                                 <option value="">All Statuses</option>
                                 <option value="pending">Pending</option>
@@ -270,13 +270,39 @@
                     "<'row mb-3 d-flex align-items-center'<'col-md-6'l><'col-md-6'f>>" +
                     "<'row '<'col-sm-12'tr>>" +
                     "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
-                buttons: [
-                    { extend: 'copy', className: 'btn btn-secondary btn-sm', text: '<i class="fa fa-copy"></i>' },
-                    { extend: 'csv', className: 'btn btn-info btn-sm text-white', text: '<i class="fa fa-file-csv"></i>' },
-                    { extend: 'excel', className: 'btn btn-success btn-sm', text: '<i class="fa fa-file-excel"></i>' },
-                    { extend: 'pdf', className: 'btn btn-danger btn-sm', text: '<i class="fa fa-file-pdf"></i>' },
-                    { extend: 'print', className: 'btn btn-dark btn-sm', text: '<i class="fa fa-print"></i>' }
-                ],
+                buttons: {
+                    dom: {
+                        button: {
+                            className: 'btn btn-sm btn-icon'
+                        }
+                    },
+                    buttons: [{
+                        extend: 'copy',
+                        className: 'btn btn-secondary btn-sm',
+                        text: '<i class="fa fa-copy"></i> Copy'
+                    },
+                    {
+                        extend: 'csv',
+                        className: 'btn btn-info btn-sm text-white',
+                        text: '<i class="fa fa-file-csv"></i> CSV'
+                    },
+                    {
+                        extend: 'excel',
+                        className: 'btn btn-success btn-sm',
+                        text: '<i class="fa fa-file-excel"></i> Excel'
+                    },
+                    {
+                        extend: 'pdf',
+                        className: 'btn btn-danger btn-sm',
+                        text: '<i class="fa fa-file-pdf"></i> PDF'
+                    },
+                    {
+                        extend: 'print',
+                        className: 'btn btn-dark btn-sm',
+                        text: '<i class="fa fa-print"></i> Print'
+                    }
+                    ]
+                },
                 initComplete: function () {
                     // Move custom filters to the DataTables filter area
                     var $filterContainer = $('#filter_container').removeClass('d-none');

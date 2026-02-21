@@ -202,13 +202,39 @@
                 dom: "<'row mb-3 d-flex align-items-center'<'col-sm-12 col-md-4'l><'col-sm-12 col-md-4 text-center'B><'col-sm-12 col-md-4'f>>" +
                     "<'row '<'col-sm-12'tr>>" +
                     "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
-                buttons: [
-                    { extend: 'copy', className: 'btn btn-secondary btn-sm', title: exportTitle },
-                    { extend: 'csv', className: 'btn btn-secondary btn-sm', title: exportTitle },
-                    { extend: 'excel', className: 'btn btn-secondary btn-sm', title: exportTitle },
-                    { extend: 'pdf', className: 'btn btn-secondary btn-sm', title: exportTitle },
-                    { extend: 'print', className: 'btn btn-secondary btn-sm', title: exportTitle }
-                ],
+                buttons: {
+                    dom: {
+                        button: {
+                            className: 'btn btn-sm btn-icon'
+                        }
+                    },
+                    buttons: [{
+                        extend: 'copy',
+                        className: 'btn btn-secondary btn-sm',
+                        text: '<i class="fa fa-copy"></i> Copy'
+                    },
+                    {
+                        extend: 'csv',
+                        className: 'btn btn-info btn-sm text-white',
+                        text: '<i class="fa fa-file-csv"></i> CSV'
+                    },
+                    {
+                        extend: 'excel',
+                        className: 'btn btn-success btn-sm',
+                        text: '<i class="fa fa-file-excel"></i> Excel'
+                    },
+                    {
+                        extend: 'pdf',
+                        className: 'btn btn-danger btn-sm',
+                        text: '<i class="fa fa-file-pdf"></i> PDF'
+                    },
+                    {
+                        extend: 'print',
+                        className: 'btn btn-dark btn-sm',
+                        text: '<i class="fa fa-print"></i> Print'
+                    }
+                    ]
+                },
                 order: [[0, 'desc']], // Order by Date descending initially
                 pageLength: 10,
                 language: {

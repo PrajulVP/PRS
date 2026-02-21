@@ -125,7 +125,7 @@ class FieldStaffController extends Controller
         foreach ($admins as $admin) {
             $admin->notify(new \App\Notifications\UserApprovalRequired(
                 $user,
-                "New Field Staff {$user->name} has been added and requires approval/activation.",
+                "New Field Staff {$user->name} has been added and requires activation.",
                 url('/field-staffs')
             ));
         }

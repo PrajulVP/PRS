@@ -79,6 +79,7 @@
                                     <tr>
                                         <th>No.</th>
                                         <th>Name</th>
+                                        <th>Manager</th>
                                         <th>Email</th>
                                         <th>GST</th>
                                         <th>Drug Lic.</th>
@@ -139,6 +140,15 @@
                             <div class="col-md-6">
                                 <label class="form-label">Contact No</label>
                                 <input type="text" name="contact_no" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Sales Manager</label>
+                                <select name="sales_manager_id" class="form-select">
+                                    <option value="">Select Sales Manager</option>
+                                    @foreach($salesManagers as $manager)
+                                        <option value="{{ $manager->id }}">{{ $manager->user->name ?? 'N/A' }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">District</label>
@@ -228,6 +238,15 @@
                             <div class="col-md-6">
                                 <label class="form-label">Contact No</label>
                                 <input type="text" name="contact_no" id="edit_contact_no" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Sales Manager</label>
+                                <select name="sales_manager_id" id="edit_sales_manager_id" class="form-select">
+                                    <option value="">Select Sales Manager</option>
+                                    @foreach($salesManagers as $manager)
+                                        <option value="{{ $manager->id }}">{{ $manager->user->name ?? 'N/A' }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">District</label>
@@ -349,6 +368,14 @@
                     name: 'name'
                 },
                 {
+                    data: 'sales_manager',
+                    name: 'salesManager.user.name',
+                    orderable: false,
+                    render: function (data, type, row) {
+                        return data && data.user ? data.user.name : '<span class="text-muted small">Not Assigned</span>';
+                    }
+                },
+                {
                     data: 'user.email',
                     name: 'user.email'
                 },
@@ -410,13 +437,13 @@
                         let activateBtn = '';
 
                         return `
-                                                    <div class="action-buttons">
-                                                        ${activateBtn}
-                                                        <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>
-                                                        <button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>
-                                                        <button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>
-                                                    </div>
-                                                `;
+                                                        <div class="action-buttons">
+                                                            ${activateBtn}
+                                                            <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>
+                                                            <button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>
+                                                            <button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>
+                                                        </div>
+                                                    `;
                     }
                 }
                 ],
@@ -427,28 +454,33 @@
                 buttons: {
                     dom: {
                         button: {
-                            className: ''
+                            className: 'btn btn-sm btn-icon'
                         }
                     },
                     buttons: [{
                         extend: 'copy',
-                        className: 'btn btn-primary btn-sm'
+                        className: 'btn btn-secondary btn-sm',
+                        text: '<i class="fa fa-copy"></i> Copy'
                     },
                     {
                         extend: 'csv',
-                        className: 'btn btn-sm btn-secondary'
+                        className: 'btn btn-info btn-sm text-white',
+                        text: '<i class="fa fa-file-csv"></i> CSV'
                     },
                     {
                         extend: 'excel',
-                        className: 'btn btn-sm'
+                        className: 'btn btn-success btn-sm',
+                        text: '<i class="fa fa-file-excel"></i> Excel'
                     },
                     {
                         extend: 'pdf',
-                        className: 'btn btn-sm'
+                        className: 'btn btn-danger btn-sm',
+                        text: '<i class="fa fa-file-pdf"></i> PDF'
                     },
                     {
                         extend: 'print',
-                        className: 'btn btn-sm'
+                        className: 'btn btn-dark btn-sm',
+                        text: '<i class="fa fa-print"></i> Print'
                     }
                     ]
                 }
@@ -477,6 +509,7 @@
                 $('#edit_latitude').val(data.latitude);
                 $('#edit_longitude').val(data.longitude);
                 $('#edit_district_id').val(data.district_id);
+                $('#edit_sales_manager_id').val(data.sales_manager_id || '');
                 if (data.user) {
                     $('#edit_status').val(data.user.status);
                 }
@@ -496,18 +529,20 @@
                 var data = $(this).data('row');
                 let districtName = data.district ? data.district.name : 'N/A';
                 let areaName = data.area ? data.area.name : 'N/A';
+                let managerName = (data.sales_manager && data.sales_manager.user) ? data.sales_manager.user.name : 'N/A';
 
                 let html = `
-                                            <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Name</label><p class="fw-bold mb-0">${data.name}</p></div>
-                                            <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Email</label><p class="mb-0">${data.user.email}</p></div>
-                                            <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Contact</label><p class="mb-0">${data.contact_no}</p></div>
-                    <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">GST</label><p class="mb-0">${data.gst}</p></div>
-                    <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">District / Area</label><p class="mb-0">${districtName} / ${areaName}</p></div>
-                    <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Pincode</label><p class="mb-0">${data.pincode}</p></div>
-                                            <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Drug License</label><p class="mb-0">${data.drug_license_no || 'N/A'}</p></div>
-                                            <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Status</label><p class="mb-0">${data.user ? (data.user.status === 'active' ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>') : 'N/A'}</p></div>
-                                            <div class="col-12"><label class="fw-bold text-muted small text-uppercase">Address</label><p class="mb-0">${data.address}</p></div>
-                                        `;
+                                                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Name</label><p class="fw-bold mb-0">${data.name}</p></div>
+                                                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Sales Manager</label><p class="fw-bold text-primary mb-0">${managerName}</p></div>
+                                                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Email</label><p class="mb-0">${data.user ? data.user.email : 'N/A'}</p></div>
+                                                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Contact</label><p class="mb-0">${data.contact_no}</p></div>
+                        <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">GST</label><p class="mb-0">${data.gst}</p></div>
+                        <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">District / Area</label><p class="mb-0">${districtName} / ${areaName}</p></div>
+                        <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Pincode</label><p class="mb-0">${data.pincode}</p></div>
+                                                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Drug License</label><p class="mb-0">${data.drug_license_no || 'N/A'}</p></div>
+                                                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Status</label><p class="mb-0">${data.user ? (data.user.status === 'active' ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>') : 'N/A'}</p></div>
+                                                <div class="col-12"><label class="fw-bold text-muted small text-uppercase">Address</label><p class="mb-0">${data.address}</p></div>
+                                            `;
                 $('#showDistributorDetails').html(html);
 
                 $('#showDistributorModal').data('lat', data.latitude).data('lng', data.longitude);

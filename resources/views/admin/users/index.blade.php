@@ -118,33 +118,38 @@
                     "<'row '<'col-sm-12'tr>>" +
                     "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
             buttons: {
-                dom: {
-                    button: {
-                        className: ''
-                    }
-                },
-                buttons: [{
+                    dom: {
+                        button: {
+                            className: 'btn btn-sm btn-icon'
+                        }
+                    },
+                    buttons: [{
                         extend: 'copy',
-                        className: 'btn btn-primary btn-sm'
+                        className: 'btn btn-secondary btn-sm',
+                        text: '<i class="fa fa-copy"></i> Copy'
                     },
                     {
                         extend: 'csv',
-                        className: 'btn btn-sm btn-secondary'
+                        className: 'btn btn-info btn-sm text-white',
+                        text: '<i class="fa fa-file-csv"></i> CSV'
                     },
                     {
                         extend: 'excel',
-                        className: 'btn btn-sm'
+                        className: 'btn btn-success btn-sm',
+                        text: '<i class="fa fa-file-excel"></i> Excel'
                     },
                     {
                         extend: 'pdf',
-                        className: 'btn btn-sm'
+                        className: 'btn btn-danger btn-sm',
+                        text: '<i class="fa fa-file-pdf"></i> PDF'
                     },
                     {
                         extend: 'print',
-                        className: 'btn btn-sm'
+                        className: 'btn btn-dark btn-sm',
+                        text: '<i class="fa fa-print"></i> Print'
                     }
-                ]
-            },
+                    ]
+                },
             ajax: "{{ route('admin.users') }}",
             columns: [{
                     data: 'name'
