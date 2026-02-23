@@ -16,10 +16,10 @@ class InventoryController extends Controller
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
-            if (\Illuminate\Support\Facades\Auth::user()->hasAnyRole(['admin', 'superadmin'])) {
+            if (\Illuminate\Support\Facades\Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager', 'distributor'])) {
                 return $next($request);
             }
-            if (!\Illuminate\Support\Facades\Auth::user()->hasPermissionToCategory('inventory', 'view')) {
+            if (!\Illuminate\Support\Facades\Auth::user()->hasPermissionToCategory('inventories', 'view')) {
                 abort(403, 'Unauthorized action. You do not have permission to view inventory.');
             }
             return $next($request);
@@ -171,7 +171,7 @@ class InventoryController extends Controller
         // Non-AJAX view: pass products to populate the create form
         $products = Product::select('id', 'product_name', 'product_code', 'box_size', 'carton_size')->orderBy('product_name')->get();
         $distributors = [];
-        if (Auth::user()->hasRole(['admin', 'superadmin', 'manager'])) {
+        if (Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
             $distributors = Distributor::with('user')->get();
         }
 

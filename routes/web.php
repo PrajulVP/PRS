@@ -52,6 +52,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::resource('districts', DistrictController::class);
     Route::resource('areas', AreaController::class);
+    Route::get('products/download-template', [ProductController::class, 'downloadTemplate'])->name('products.download-template');
+    Route::post('products/import', [ProductController::class, 'import'])->name('products.import');
     Route::resource('products', ProductController::class);
     Route::post('inventories/{inventory}/adjust-stock', [InventoryController::class, 'adjustStock'])->name('inventories.adjust-stock');
     Route::resource('inventories', InventoryController::class);

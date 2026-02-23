@@ -40,16 +40,7 @@ class PermissionSeeder extends Seeder
 
         // Explicitly create all Permission Categories
         $categoriesToCreate = [
-            // User Management Group
-            [
-                'short_code' => 'users',
-                'name' => 'Users',
-                'perm_group_id' => $userManagementGroup->id,
-                'enable_view' => true,
-                'enable_add' => true,
-                'enable_edit' => true,
-                'enable_delete' => true,
-            ],
+            // User Management Group (Users removed as requested)
             [
                 'short_code' => 'distributors',
                 'name' => 'Distributors',
@@ -115,16 +106,16 @@ class PermissionSeeder extends Seeder
                 'enable_edit' => true,
                 'enable_delete' => true,
             ],
-            // Orders Group (already defined in $newCategories later, but ensuring consistency)
             [
-                'short_code' => 'distributor_bulk_orders',
-                'name' => 'Distributor Bulk Orders',
-                'perm_group_id' => $ordersGroup->id,
+                'short_code' => 'inventories',
+                'name' => 'Inventories',
+                'perm_group_id' => $productsGroup->id,
                 'enable_view' => true,
                 'enable_add' => true,
                 'enable_edit' => true,
                 'enable_delete' => true,
             ],
+            // Orders Group
             [
                 'short_code' => 'retailer_orders',
                 'name' => 'Retailer Orders',

@@ -259,7 +259,7 @@
     <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 1000px;">
             <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header border-1 bg-info  py-2 px-3">
+                <div class="modal-header border-1py-2 px-3">
                     <h5 class="modal-title text-white fw-bold fs-6"><i class="fa fa-user-edit me-2"></i> Edit Profile
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
