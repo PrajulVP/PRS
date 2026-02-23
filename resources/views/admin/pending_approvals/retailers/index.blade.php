@@ -205,6 +205,34 @@
         </div>
     </div>
 
+    {{-- Approve Retailer Order Modal --}}
+    <div class="modal fade" id="approveRetailerOrderModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Approve Retailer Order</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="approveRetailerOrderForm" enctype="multipart/form-data">
+                    @csrf
+                    <input type="hidden" id="approve_retailer_order_id" name="order_id">
+                    <div class="modal-body">
+                        <p class="mb-3" id="approveModalText">Are you sure you want to approve this order? You may
+                            optionally upload an invoice.</p>
+                        <div class="mb-3" id="invoiceUploadGroup">
+                            <label class="form-label">Upload Invoice (PDF, JPG, PNG)</label>
+                            <input type="file" name="invoice" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Approve Order</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 
@@ -367,18 +395,18 @@
                             let ext = row.invoice_url.split('.').pop().toLowerCase();
                             let icon = ext === 'pdf' ? 'fa-file-pdf-o' : 'fa-file-image-o';
                             let btnsHtml = `
-                                                                                                        <div class="d-flex align-items-center gap-1">
-                                                                                                            <a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-success" title="View Invoice">
-                                                                                                                <i class="fa ${icon}"></i> View
-                                                                                                            </a>`;
+                                                                                                                        <div class="d-flex align-items-center gap-1 p-2">
+                                                                                                                            <a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-success" title="View Invoice">
+                                                                                                                                <i class="fa ${icon}"></i> &nbsp;View
+                                                                                                                                                           </a>`;
                             if (!isFieldStaff) {
                                 btnsHtml += `
-                                                                                                            <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}" title="Re-upload Invoice">
-                                                                                                                <i class="fa fa-refresh"></i>
-                                                                                                            </button>
-                                                                                                            <button class="btn btn-xs btn-danger remove-invoice-btn" data-id="${row.id}" title="Remove Invoice">
-                                                                                                                <i class="fa fa-trash"></i>
-                                                                                                            </button>`;
+                                                                                                                            <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}" title="Re-upload Invoice">
+                                                                                                                                <i class="fa fa-refresh"></i>
+                                                                                                                            </button>
+                                                                                                                            <button class="btn btn-xs btn-danger remove-invoice-btn" data-id="${row.id}" title="Remove Invoice">
+                                                                                                                                <i class="fa fa-trash"></i>
+                                                                                                                            </button>`;
                             }
                             btnsHtml += `</div>`;
                             return btnsHtml;
@@ -391,10 +419,10 @@
                         }
 
                         return `
-                                                                                                    <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}">
-                                                                                                        <i class="fa fa-upload"></i> Upload
-                                                                                                    </button>
-                                                                                                `;
+                                                                                                                    <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}">
+                                                                                                                        <i class="fa fa-upload"></i> Upload
+                                                                                                                    </button>
+                                                                                                                `;
                     }
                 },
                 {
@@ -423,7 +451,7 @@
 
                         // Retailer Confirmation
                         if (statusRaw === 'accepted_by_distributor') {
-                            if (isRetailer || isAdmin || isSalesManager) {
+                            if (isRetailer) {
                                 btns += `<button class="btn btn-primary btn-sm confirm-receipt-btn" data-id="${row.id}" title="Confirm Order"> Confirm</button>`;
                             }
                         }
@@ -631,11 +659,11 @@
                 if (row.items && row.items.length) {
                     row.items.forEach(item => {
                         tbody.append(`<tr>
-                                                                                            <td>${item.product_name}</td>
-                                                                                            <td>${item.quantity}</td>
-                                                                                            <td>${item.unit_price}</td>
-                                                                                            <td>${item.total_amount}</td>
-                                                                                        </tr>`);
+                                                                                                            <td>${item.product_name}</td>
+                                                                                                            <td>${item.quantity}</td>
+                                                                                                            <td>${item.unit_price}</td>
+                                                                                                            <td>${item.total_amount}</td>
+                                                                                                        </tr>`);
                     });
                 } else {
                     tbody.html('<tr><td colspan="4" class="text-center">No items</td></tr>');
@@ -643,29 +671,54 @@
                 $('#viewOrderModal').modal('show');
             });
 
-            // Approve Retailer Order (Field Staff / Manager)
+            // Approve Retailer Order (Field Staff / Manager / Distributor)
             $(document).on('click', '.approve-retailer-btn', function () {
                 let id = $(this).data('id');
-                Swal.fire({
-                    title: 'Approve Order?',
-                    text: "Are you sure you want to approve this order?",
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, Approve',
-                    confirmButtonColor: '#28a745'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        let url = "{{ route('admin.retailer-orders.acceptOrder', ':id') }}".replace(':id', id);
-                        $.post(url, { _token: '{{ csrf_token() }}' }, function (res) {
-                            if (res.success) {
-                                table.ajax.reload(null, false);
-                                showToast('success', res.success);
-                            } else {
-                                showToast('error', res.error || 'Failed to approve');
-                            }
-                        }).fail(function (xhr) {
-                            showToast('error', 'Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Request failed'));
-                        });
+                $('#approve_retailer_order_id').val(id);
+                $('#approveRetailerOrderForm')[0].reset();
+
+                if (isFieldStaff) {
+                    $('#invoiceUploadGroup').hide();
+                    $('#approveModalText').text('Are you sure you want to approve this order?');
+                } else {
+                    $('#invoiceUploadGroup').show();
+                    $('#approveModalText').text('Are you sure you want to approve this order? You may optionally upload an invoice.');
+                }
+
+                $('#approveRetailerOrderModal').modal('show');
+            });
+
+            $('#approveRetailerOrderForm').submit(function (e) {
+                e.preventDefault();
+                let formData = new FormData(this);
+                let id = $('#approve_retailer_order_id').val();
+                let url = "{{ route('admin.retailer-orders.acceptOrder', ':id') }}".replace(':id', id);
+
+                let $btn = $(this).find('button[type="submit"]');
+                let oldHtml = $btn.html();
+                $btn.html('<i class="fa fa-spinner fa-spin"></i> Approving...').prop('disabled', true);
+
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (res) {
+                        $('#approveRetailerOrderModal').modal('hide');
+                        if (res.success) {
+                            table.ajax.reload(null, false);
+                            showToast('success', res.success);
+                        } else {
+                            showToast('error', res.error || 'Failed to approve');
+                        }
+                    },
+                    error: function (xhr) {
+                        $('#approveRetailerOrderModal').modal('hide');
+                        showToast('error', 'Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Request failed'));
+                    },
+                    complete: function () {
+                        $btn.html(oldHtml).prop('disabled', false);
                     }
                 });
             });

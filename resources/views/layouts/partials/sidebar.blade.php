@@ -112,7 +112,7 @@
             </svg>
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-user"></use>
-            </svg><span>Approvals</span>
+            </svg><span>Order Approvals</span>
           </a>
           <ul class="sidebar-submenu">
              @if(Auth::user()->hasPermissionToCategory('retailer_approvals', 'view') || $hasApprovalRoles)

@@ -90,6 +90,16 @@ class PendingApprovalController extends Controller
                     $query->where('retailer_id', $user->retailer->id);
                 }
 
+                if ($user->hasRole('fieldstaff') && $user->fieldStaff) {
+                    $fieldStaffId = $user->fieldStaff->id;
+                    $query->where(function ($q) use ($fieldStaffId) {
+                        $q->where('fieldstaff_id', $fieldStaffId)
+                            ->orWhereHas('retailer', function ($qr) use ($fieldStaffId) {
+                                $qr->where('field_staff_id', $fieldStaffId);
+                            });
+                    });
+                }
+
                 if ($request->input('status')) {
                     $query->where('status', $request->input('status'));
                 }

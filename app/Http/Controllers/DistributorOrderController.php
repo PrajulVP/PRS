@@ -257,6 +257,8 @@ class DistributorOrderController extends Controller
                 $totalQuantity += $itemData['quantity'];
             }
 
+            $order->total_amount = $totalAmount;
+            $order->total_items = $totalItems;
             $order->total_quantity = $totalQuantity;
             $order->save();
 

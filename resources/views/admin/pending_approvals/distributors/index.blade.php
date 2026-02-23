@@ -380,7 +380,7 @@
                             let canUpload = false;
                             let statusCheck = row.raw_status || (row.status ? row.status.toLowerCase().replace(/ /g, '_') : '');
 
-                            if (statusCheck === 'delivered' || statusCheck.includes('delivered')) {
+                            if (statusCheck === 'delivered' || statusCheck.includes('delivered') || statusCheck.includes('approved') || statusCheck.includes('accepted')) {
                                 canUpload = true;
                             }
 

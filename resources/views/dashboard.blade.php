@@ -66,9 +66,6 @@
 
             @php $user = auth()->user(); @endphp
 
-            {{-- ========================================== --}}
-            {{-- RETAILER DASHBOARD (Clients - Attractive!) --}}
-            {{-- ========================================== --}}
             @if(Auth::user()->hasRole('retailer'))
                 <div class="retailer-hero d-flex align-items-center justify-content-between">
                     <div>

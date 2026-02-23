@@ -246,10 +246,18 @@
               <h6 class="f-18 mb-0 dropdown-title">Notifications</h6>
               <ul>
                 @forelse(Auth::user()->notifications()->latest()->take(2)->get() as $notification)
-                  @php $is_pending = \App\Http\Controllers\NotificationController::checkActionStatus($notification); @endphp
+                  @php 
+                    $is_pending = \App\Http\Controllers\NotificationController::checkActionStatus($notification); 
+                    $actionUrl = $notification->data['action_url'] ?? '#';
+                    $orderCode = $notification->data['order_code'] ?? '';
+                    if ($actionUrl !== '#' && !empty($orderCode)) {
+                        $separator = parse_url($actionUrl, PHP_URL_QUERY) ? '&' : '?';
+                        $actionUrl .= $separator . 'highlight=' . urlencode($orderCode);
+                    }
+                  @endphp
                   <li class="{{ $is_pending ? 'b-l-primary border-4' : 'b-l-secondary border-4 bg-light' }}"
                     data-id="{{ $notification->id }}">
-                    <a href="{{ $notification->data['action_url'] ?? '#' }}" style="display: block; width: 100%; color: inherit; cursor: pointer; text-decoration: none;">
+                    <a href="{{ $actionUrl }}" style="display: block; width: 100%; color: inherit; cursor: pointer; text-decoration: none;">
                       <p class="mb-1 {{ $is_pending ? 'fw-bold text-dark' : 'text-muted' }}"
                         style="font-size: 0.8rem;">
                       {{ $notification->data['message'] ?? 'Notification' }}

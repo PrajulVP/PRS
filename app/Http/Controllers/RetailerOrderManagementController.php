@@ -343,6 +343,7 @@ class RetailerOrderManagementController extends Controller
                         'total_amount' => number_format($order->total_amount, 2),
                         'status' => ucfirst(str_replace('_', ' ', $order->status)),
                         'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d H:i:s') : '-',
+                        'invoice_url' => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
                     ];
                 });
 
@@ -370,7 +371,7 @@ class RetailerOrderManagementController extends Controller
     }
 
     // Manager/Admin/Superadmin/FieldStaff/Distributor: Accept Order
-    public function acceptOrder(RetailerOrder $retailerOrder)
+    public function acceptOrder(Request $request, RetailerOrder $retailerOrder)
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
@@ -438,6 +439,13 @@ class RetailerOrderManagementController extends Controller
             }
             $retailerOrder->update(['status' => 'accepted_by_distributor']);
 
+            if ($request->hasFile('invoice')) {
+                $file = $request->file('invoice');
+                $filename = 'invoice_' . $retailerOrder->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('retailer_invoices', $filename, 'public');
+                $retailerOrder->update(['invoice_path' => $path]);
+            }
+
             // Notify Retailer
             if ($retailerOrder->retailer && $retailerOrder->retailer->user) {
                 $retailerOrder->retailer->user->notify(new OrderActionRequired($retailerOrder, "Your order #{$retailerOrder->order_code} has been approved by the Distributor. Please confirm order upon delivery.", url('/retailer-orders')));
@@ -494,6 +502,14 @@ class RetailerOrderManagementController extends Controller
                 return response()->json(['success' => 'Order accepted (Field Staff stage bypassed by Admin)!']);
             } elseif ($status === 'accepted_by_fieldstaff') {
                 $retailerOrder->update(['status' => 'accepted_by_distributor']);
+
+                if ($request->hasFile('invoice')) {
+                    $file = $request->file('invoice');
+                    $filename = 'invoice_' . $retailerOrder->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+                    $path = $file->storeAs('retailer_invoices', $filename, 'public');
+                    $retailerOrder->update(['invoice_path' => $path]);
+                }
+
                 // Notify Retailer
                 if ($retailerOrder->retailer && $retailerOrder->retailer->user) {
                     $retailerOrder->retailer->user->notify(new OrderActionRequired($retailerOrder, "Your order #{$retailerOrder->order_code} has been approved. Please confirm order upon delivery.", url('/retailer-orders')));
