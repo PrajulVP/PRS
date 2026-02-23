@@ -103,6 +103,96 @@
                 ]
             }
         },
+        "/api/profile/update": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Update authenticated user profile",
+                "operationId": "9f4f48f99972e2128bc191cea5a8adbe",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "123 Main St"
+                                    },
+                                    "city": {
+                                        "type": "string",
+                                        "example": "New York"
+                                    },
+                                    "pincode": {
+                                        "type": "string",
+                                        "example": "10001"
+                                    },
+                                    "fathers_name": {
+                                        "type": "string",
+                                        "example": "Michael Doe"
+                                    },
+                                    "mothers_name": {
+                                        "type": "string",
+                                        "example": "Jane Doe"
+                                    },
+                                    "shop_name": {
+                                        "description": "Only for retailers",
+                                        "type": "string"
+                                    },
+                                    "gst": {
+                                        "description": "For retailers and distributors",
+                                        "type": "string"
+                                    },
+                                    "drug_license_no": {
+                                        "description": "For retailers and distributors",
+                                        "type": "string"
+                                    },
+                                    "profile_pic": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profile updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Profile updated successfully."
+                                        },
+                                        "user": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/logout": {
             "post": {
                 "tags": [
