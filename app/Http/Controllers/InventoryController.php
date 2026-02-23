@@ -151,7 +151,7 @@ class InventoryController extends Controller
                             'hsn_code' => $i->product->hsn_code,
                             'box_size' => $i->product->box_size,
                             'carton_size' => $i->product->carton_size,
-                            'description' => $i->product->description // Assuming description exists or null
+                            'description' => $i->product->description
                         ] : null
                     ];
                 });

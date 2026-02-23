@@ -47,8 +47,22 @@ class AuthApiController extends Controller
      */
     public function login(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email'    => 'required|email',
+        $data = $request->all();
+
+        // Host header stripping or Content-Type overriding workaround for live servers
+        if (empty($data['email']) && empty($data['password'])) {
+            $content = $request->getContent();
+            if (!empty($content)) {
+                $parsed = json_decode($content, true);
+                if (is_array($parsed)) {
+                    $data = array_merge($data, $parsed);
+                    $request->merge($parsed);
+                }
+            }
+        }
+
+        $validator = Validator::make($data, [
+            'email'    => 'required|string',
             'password' => 'required'
         ]);
 
@@ -56,7 +70,10 @@ class AuthApiController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $credentials = $request->only('email', 'password');
+        $credentials = [
+            'email' => $data['email'] ?? '',
+            'password' => $data['password'] ?? '',
+        ];
 
         if (! $token = auth('api')->attempt($credentials)) {
             return response()->json(['error' => 'Invalid credentials'], 401);
