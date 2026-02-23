@@ -18,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/admin/login',
         ]);
 
+        // ✅ Global intercept to fix rigid hosting platforms stripping Authorization
+        $middleware->append(\App\Http\Middleware\TokenRecoveryMiddleware::class);
+
         // ✅ Force JSON response for API routes
         $middleware->api(prepend: [
             \App\Http\Middleware\ForceJsonResponse::class,
