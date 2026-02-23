@@ -152,7 +152,7 @@
         </li>
         @endif
         
-        @if (Auth::user()->hasPermissionToCategory('inventory', 'view'))
+        @if (Auth::user()->hasAnyRole(['admin', 'superadmin']) || Auth::user()->hasPermissionToCategory('inventories', 'view'))
         @if(!Auth::user()->hasAnyRole(['admin', 'superadmin']))
         <li class="sidebar-main-title">
           <div>
