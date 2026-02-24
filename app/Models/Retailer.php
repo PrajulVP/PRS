@@ -19,6 +19,7 @@ class Retailer extends Model
         'sales_manager_id',
         'contact_no',
         'gst',
+        'drug_license_no',
         'address',
         'pincode',
         'credit_limit',

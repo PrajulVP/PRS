@@ -11,7 +11,7 @@
         <div class="page-title">
             <div class="row">
                 <div class="col-6">
-                    <h3>My Loyalty Points</h3>
+                    <h3>Loyalty Points</h3>
                 </div>
                 <div class="col-6 text-end">
                     <i class="fa fa-coins text-warning fa-3x"></i>
