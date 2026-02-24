@@ -78,7 +78,7 @@ class LoyaltyPointsController extends Controller
         // Fetch list of retailers available to this user for the dropdown
         $retailers = collect();
 
-        if ($user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
+        if ($user->hasPermissionToCategory('loyalty_points', 'view')) {
             $retailers = Retailer::with('user')->get();
         } elseif ($user->hasRole('fieldstaff')) {
             if ($user->fieldStaff) {

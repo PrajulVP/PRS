@@ -22,7 +22,7 @@
                             <td>{{ $index + 1 }}</td>
                             <td>{{ ucfirst($role->name) }}</td>
                             <td>
-                                <a href="{{ route('admin.permissions.edit', $role->id) }}" class="btn btn-primary btn-sm">Manage Permissions</a>
+                                <a href="{{ route('admin.permissions.edit', $role->id) }}" class="btn btn-primary btn-sm">Manage</a>
                             </td>
                         </tr>
                         @endforeach

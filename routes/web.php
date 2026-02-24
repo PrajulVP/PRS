@@ -67,6 +67,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('roles', [PermissionController::class, 'index'])->name('admin.permissions.index');
     Route::get('roles/{role}/permissions', [PermissionController::class, 'edit'])->name('admin.permissions.edit');
     Route::put('roles/{role}/permissions', [PermissionController::class, 'update'])->name('admin.permissions.update');
+    Route::post('roles/{role}/permissions/update-single', [PermissionController::class, 'updateSingle'])->name('admin.permissions.updateSingle');
 
     // Route::get('pending-approvals', [PendingApprovalController::class, 'index'])->name('pending-approvals'); // Deprecated generic route
     Route::get('approvals/retailers', [PendingApprovalController::class, 'index'])->defaults('type', 'retailer')->name('approvals.retailer');
@@ -170,12 +171,8 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::get('notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
-    Route::post('notifications/{id}/read', function ($id) {
-        $user = auth()->user();
-        if (!$user) abort(401);
-        $user->unreadNotifications()->where('id', $id)->update(['read_at' => now()]);
-        return response()->json(['success' => true]);
-    })->name('notifications.read');
+    Route::post('notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
+    Route::post('notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
 });
 
 Route::prefix('system')->name('system.')->group(function () {

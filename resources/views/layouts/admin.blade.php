@@ -597,6 +597,12 @@
             var urlParams = new URLSearchParams(window.location.search);
             var highlightCode = urlParams.get('highlight');
             if (highlightCode && window.jQuery) {
+                // Clear the highlight parameter from URL immediately so it doesn't persist on refresh
+                urlParams.delete('highlight');
+                let newSearch = urlParams.toString();
+                let cleanUrl = window.location.pathname + (newSearch ? '?' + newSearch : '');
+                window.history.replaceState({}, document.title, cleanUrl);
+
                 var attemptHighlight = function () {
                     if ($.fn.DataTable) {
                         var tables = $.fn.dataTable.tables(true);

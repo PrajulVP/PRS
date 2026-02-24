@@ -78,4 +78,19 @@ class NotificationController extends Controller
 
         return false;
     }
+    public function markAsRead($id)
+    {
+        $user = auth()->user();
+        if (!$user) return response()->json(['error' => 'Unauthorized'], 401);
+        $user->unreadNotifications()->where('id', $id)->update(['read_at' => now()]);
+        return response()->json(['success' => true]);
+    }
+
+    public function markAllRead()
+    {
+        $user = auth()->user();
+        if (!$user) return response()->json(['error' => 'Unauthorized'], 401);
+        $user->unreadNotifications->markAsRead();
+        return response()->json(['success' => true]);
+    }
 }

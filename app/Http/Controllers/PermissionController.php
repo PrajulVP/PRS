@@ -96,4 +96,55 @@ class PermissionController extends Controller
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
+    public function updateSingle(Request $request, Role $role)
+    {
+        $request->validate([
+            'category_id' => 'required|exists:permission_categories,id',
+            'permission_type' => 'required|in:can_view,can_add,can_edit,can_delete',
+            'value' => 'required|boolean'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Check if superadmin is being edited by a simple admin
+            if ($role->name === 'superadmin' && !Auth::user()->hasRole('superadmin')) {
+                return response()->json(['error' => 'No permission to edit superadmin'], 403);
+            }
+
+            $current = DB::table('roles_permissions')
+                ->where('role_id', $role->id)
+                ->where('permission_category_id', $request->category_id)
+                ->first();
+
+            if ($current) {
+                DB::table('roles_permissions')
+                    ->where('role_id', $role->id)
+                    ->where('permission_category_id', $request->category_id)
+                    ->update([
+                        $request->permission_type => $request->value,
+                        'updated_at' => now()
+                    ]);
+            } else {
+                $data = [
+                    'role_id' => $role->id,
+                    'permission_category_id' => $request->category_id,
+                    'can_view' => false,
+                    'can_add' => false,
+                    'can_edit' => false,
+                    'can_delete' => false,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ];
+                $data[$request->permission_type] = $request->value;
+                DB::table('roles_permissions')->insert($data);
+            }
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Permission updated.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 }

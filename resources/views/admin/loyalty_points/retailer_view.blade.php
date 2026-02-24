@@ -23,16 +23,17 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Total Points Card -->
-            <div class="col-sm-6 col-xl-3 mb-4">
+            <div class="col-sm-6 col-xl-3 mb-4 entrance-delay-1">
                 <div
                     class="card bg-warning text-white widget-visitor-card shadow-sm border-0 overflow-hidden position-relative loyalty-card">
                     <div class="card-body text-center py-2 position-relative z-index-1">
                         <div class="coin-container mb-2">
                             <i class="fa fa-coins text-white fa-3x animate-bounce"></i>
                         </div>
-                        <h1 class="display-4 fw-bold mb-0 text-shadow">{{ number_format($retailer->loyalty_points, 2) }}
+                        <h1 class="fw-bold mb-0 mt-0 text-shadow text-nowrap" style="font-size: 3rem;">
+                            {{ number_format($retailer->loyalty_points, 2) }}
                         </h1>
-                        <h6 class="text-uppercase font-weight-bold mt-2">Total Points Earned</h6>
+                        <h6 class="text-uppercase font-weight-bold m-2">Total Points Earned</h6>
                     </div>
                     <!-- Decorative huge icon -->
                     <i class="fa fa-coins font-warning"
@@ -80,7 +81,7 @@
                     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
                 }
 
-                /* Falling Coins Animation */
+                /* Falling Coins Animation - Slower & More Graceful */
                 .falling-coin {
                     position: absolute;
                     top: -50px;
@@ -89,26 +90,63 @@
                     background-color: #ffd700;
                     border-radius: 50%;
                     border: 2px solid #fff;
-                    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+                    box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
                     animation: fall linear infinite;
                     z-index: 0;
-                    opacity: 0.7;
+                    opacity: 0.6;
                 }
 
                 .falling-coin::after {
-                    content: '$';
+                    content: '₹';
                     position: absolute;
                     top: 50%;
                     left: 50%;
                     transform: translate(-50%, -50%);
-                    font-size: 12px;
+                    font-size: 10px;
                     color: #b8860b;
                     font-weight: bold;
                 }
 
                 @keyframes fall {
+                    0% {
+                        transform: translateY(0) rotate(0deg);
+                        opacity: 0;
+                    }
+
+                    10% {
+                        opacity: 0.7;
+                    }
+
+                    90% {
+                        opacity: 0.7;
+                    }
+
+                    100% {
+                        transform: translateY(400px) rotate(720deg);
+                        opacity: 0;
+                    }
+                }
+
+                /* Page Entry Animations */
+                .entrance-delay-1 {
+                    animation: entranceSlideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+                    opacity: 0;
+                }
+
+                .entrance-delay-2 {
+                    animation: entranceSlideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards;
+                    opacity: 0;
+                }
+
+                @keyframes entranceSlideUp {
+                    from {
+                        transform: translateY(30px);
+                        opacity: 0;
+                    }
+
                     to {
-                        transform: translateY(300px) rotate(360deg);
+                        transform: translateY(0);
+                        opacity: 1;
                     }
                 }
             </style>
@@ -122,13 +160,13 @@
                         let coin = document.createElement('div');
                         coin.classList.add('falling-coin');
 
-                        // Randomize position and animation properties
+                        // Randomize position and animation properties - SLOWER
                         coin.style.left = Math.random() * 100 + '%';
-                        coin.style.animationDuration = (Math.random() * 3 + 2) + 's'; // 2-5s
-                        coin.style.animationDelay = (Math.random() * 5) + 's';
+                        coin.style.animationDuration = (Math.random() * 6 + 6) + 's'; // 6-12s for slow flow
+                        coin.style.animationDelay = (Math.random() * 8) + 's';
 
                         // Randomize size slightly
-                        let size = Math.random() * 10 + 15; // 15-25px
+                        let size = Math.random() * 8 + 12; // 12-20px
                         coin.style.width = size + 'px';
                         coin.style.height = size + 'px';
 
@@ -138,7 +176,7 @@
             </script>
 
             <!-- Transaction History -->
-            <div class="col-sm-12">
+            <div class="col-sm-12 entrance-delay-2">
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-white py-2 border-bottom">
                         <h5 class="card-title mb-0"><i class="fa fa-history me-2"></i>Points History</h5>

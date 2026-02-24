@@ -365,7 +365,7 @@
                         </div>
                     </div>
                     <div class="col-sm-6 col-xl-3 col-lg-6 mb-4">
-                        <div class="card o-hidden border-0 med-widget-card h-100" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%) !important;">
+                        <div class="card o-hidden border-0 med-widget-card h-100" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%) !important; cursor: pointer;" onclick="window.location.href='{{ route('admin.loyalty-points.index') }}'">
                             <div class="card-body">
                                 <div class="media static-top-widget">
                                     <div class="media-body m-2"><span class="m-0 text-uppercase font-weight-bold">Global Loyalty Pts</span>
@@ -380,10 +380,10 @@
                     
                     @if(Auth::user()->hasRole('salesmanager'))
                     <div class="col-sm-6 col-xl-3 col-lg-6 mb-4">
-                        <div class="card o-hidden border-0 med-widget-card h-100" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;">
+                        <div class="card o-hidden border-0 med-widget-card h-100" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;" onclick="window.location.href='{{ route('admin.field-staffs.index') }}'">
                             <div class="card-body">
                                 <div class="media static-top-widget">
-                                    <div class="media-body m-2"><span class="m-0 text-uppercase font-weight-bold">My Field Staff</span>
+                                    <div class="media-body m-2"><span class="m-0 text-uppercase font-weight-bold">Field Staff</span>
                                         <h4 class="mb-0 counter mt-2">{{ $counts['field_staff'] }}</h4>
                                     </div>
                                     <i data-feather="users"></i>
@@ -392,10 +392,10 @@
                         </div>
                     </div>
                     <div class="col-sm-6 col-xl-3 col-lg-6 mb-4">
-                        <div class="card o-hidden border-0 med-widget-card h-100" onclick="window.location.href='{{ route('products.index') }}'">
+                        <div class="card o-hidden border-0 med-widget-card h-100">
                             <div class="card-body">
                                 <div class="media static-top-widget">
-                                    <div class="media-body m-2"><span class="m-0 text-uppercase font-weight-bold">Platform Products</span>
+                                    <div class="media-body m-2"><span class="m-0 text-uppercase font-weight-bold">Products</span>
                                         <h4 class="mb-0 counter mt-2">{{ $counts['products'] }}</h4>
                                     </div>
                                     <i data-feather="box"></i>
