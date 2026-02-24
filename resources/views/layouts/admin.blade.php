@@ -570,6 +570,23 @@
                 }
             });
 
+            // Dynamic Notification Badge Helper
+            window.updateNotificationBadge = function (decrement = 1) {
+                const badge = document.querySelector('.notification-box .badge');
+                if (!badge) return;
+
+                let count = parseInt(badge.innerText.replace(/,/g, ''));
+                if (isNaN(count)) return;
+
+                count = Math.max(0, count - decrement);
+
+                if (count > 0) {
+                    badge.innerText = count;
+                } else {
+                    badge.remove();
+                }
+            };
+
             // Notification Click Handler
             document.querySelectorAll('.notification-dropdown a').forEach(function (link) {
                 link.addEventListener('click', function (e) {
@@ -579,6 +596,12 @@
                         e.preventDefault();
                         var targetUrl = link.getAttribute('href');
 
+                        // Decrease badge immediately for dynamic feedback
+                        // Only if the notification looks unread (has a pending action indicator)
+                        if (li.classList.contains('b-l-primary')) {
+                            window.updateNotificationBadge(1);
+                        }
+
                         fetch("{{ route('notifications.read', ':id') }}".replace(':id', notificationId), {
                             method: 'POST',
                             headers: {
@@ -587,7 +610,9 @@
                                 'Accept': 'application/json'
                             }
                         }).finally(function () {
-                            window.location.href = targetUrl;
+                            if (targetUrl && targetUrl !== '#') {
+                                window.location.href = targetUrl;
+                            }
                         });
                     }
                 });

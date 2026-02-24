@@ -46,10 +46,11 @@
                 }
                 
                 .retailer-hero {
-                    background: linear-gradient(to right, #ffffff, #f0f7fb);
+                    background: var(--med-bg-card);
+                    background: linear-gradient(to right, var(--med-bg-card), rgba(0, 103, 171, 0.05));
                     border-radius: 15px;
                     padding: 30px;
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+                    box-shadow: var(--med-shadow-soft);
                     margin-bottom: 30px;
                     border-left: 5px solid var(--med-accent);
                 }
@@ -58,7 +59,21 @@
                     color: var(--med-primary);
                     margin-bottom: 20px;
                     padding-bottom: 10px;
-                    border-bottom: 2px solid #edf2f9;
+                    border-bottom: 2px solid var(--med-border);
+                }
+
+                body.dark-only .retailer-hero {
+                    background: var(--med-bg-card);
+                    background: linear-gradient(to right, var(--med-bg-card), rgba(56, 189, 248, 0.05));
+                }
+
+                .med-loyalty-badge {
+                    background: rgba(0, 73, 122, 0.08);
+                    transition: all 0.3s ease;
+                }
+
+                body.dark-only .med-loyalty-badge {
+                    background: rgba(56, 189, 248, 0.1);
                 }
 
 
@@ -72,9 +87,10 @@
                         <h2>Welcome back, <span style="color: var(--med-primary)">{{ $user->name }}</span>!</h2>
                         <p class="text-muted f-16 mb-0 mt-2">Manage your orders, track your loyalty points, and explore our catalog from your dashboard.</p>
                     </div>
-                    <div class="text-center p-3 rounded" style="background: rgba(0,73,122,0.1);">
-                        <h6 class="mb-1" style="color: var(--med-primary)"><i data-feather="award" class="mr-2"></i>My Loyalty Points</h6>
-                        <h2 class="mb-0" style="color: var(--med-accent); font-weight:800;">{{ number_format($totalLoyaltyPoints) }}</h2>
+                    <div class="text-center p-3 rounded med-loyalty-badge">
+                        <i data-feather="coin" class="mr-2"></i>
+                        <h5 class="mb-1" style="color: var(--med-primary)">My Loyalty Points</h5>
+                        <h2 class="mb-0" style="color: var(--med-primary); font-weight:800;">{{ number_format($totalLoyaltyPoints) }}</h2>
                     </div>
                 </div>
 
@@ -93,7 +109,7 @@
                         </div>
                     </div>
                     <div class="col-xl-3 col-sm-6 mb-4">
-                        <div class="card border-0 h-100" style="background:#fff; border-left: 5px solid #f59e0b !important; box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer;" onclick="window.location.href='{{ route('retailer.orders.index') }}'">
+                        <div class="card border-0 h-100" style="background: var(--med-bg-card) !important; border-left: 5px solid #f59e0b !important; box-shadow: var(--med-shadow-soft); cursor: pointer;" onclick="window.location.href='{{ route('retailer.orders.index') }}'">
                             <div class="card-body">
                                 <div class="media">
                                     <div class="media-body">
@@ -106,7 +122,7 @@
                         </div>
                     </div>
                     <div class="col-xl-3 col-sm-6 mb-4">
-                        <div class="card border-0 h-100" style="background:#fff; border-left: 5px solid #10b981 !important; box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer;" onclick="window.location.href='{{ route('retailer.orders.index') }}'">
+                        <div class="card border-0 h-100" style="background: var(--med-bg-card) !important; border-left: 5px solid #10b981 !important; box-shadow: var(--med-shadow-soft); cursor: pointer;" onclick="window.location.href='{{ route('retailer.orders.index') }}'">
                             <div class="card-body">
                                 <div class="media">
                                     <div class="media-body">
@@ -119,11 +135,11 @@
                         </div>
                     </div>
                     <div class="col-xl-3 col-sm-6 mb-4">
-                        <div class="card border-0 h-100" style="background:#fff; border-left: 5px solid var(--med-primary) !important; box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer;" onclick="window.location.href='{{ route('products.index') }}'">
+                        <div class="card border-0 h-100" style="background: var(--med-bg-card) !important; border-left: 5px solid var(--med-primary) !important; box-shadow: var(--med-shadow-soft); cursor: pointer;" onclick="window.location.href='{{ route('products.index') }}'">
                             <div class="card-body">
                                 <div class="media">
                                     <div class="media-body">
-                                        <p class="mb-1 text-muted font-weight-bold text-uppercase">Catalog</p>
+                                        <p class="mb-1 text-muted font-weight-bold text-uppercase">products</p>
                                         <h3 class="mb-0" style="color: var(--med-primary)">{{ $counts['products'] }} Items</h3>
                                     </div>
                                     <div class="align-self-center"><i data-feather="grid" style="color: var(--med-primary); width:40px; height:40px;"></i></div>
@@ -294,7 +310,7 @@
                             <div class="card-body">
                                 <div class="media static-top-widget">
                                     <div class="media-body m-2">
-                                        <span class="m-0 font-weight-bold text-uppercase">Total Catalog</span>
+                                        <span class="m-0 font-weight-bold text-uppercase">Total Products</span>
                                         <h4 class="mb-0 counter mt-2">{{ $counts['products'] }}</h4>
                                     </div>
                                     <i data-feather="grid"></i>

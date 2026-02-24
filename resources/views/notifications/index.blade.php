@@ -143,17 +143,9 @@
                     rowElement.classList.add('notification-read');
                     rowElement.classList.remove('fw-bold', 'border-start', 'border-primary', 'border-4');
                     
-                    // Update header badge count
-                    const headerBadge = document.querySelector('.notification-box .badge');
-                    if(headerBadge) {
-                        let count = parseInt(headerBadge.innerText);
-                        if(count > 1) {
-                            headerBadge.innerText = count - 1;
-                        } else {
-                            headerBadge.remove();
-                            // Also hide mark all as read since this was the last one
-                            document.getElementById('mark-all-read-checkbox')?.closest('.form-check')?.parentElement?.remove();
-                        }
+                    // Update header badge count using global helper
+                    if (window.updateNotificationBadge) {
+                        window.updateNotificationBadge(1);
                     }
                 }
             });
@@ -184,9 +176,10 @@
                     // Hide the "Mark all read" section
                     checkbox.closest('.form-check').parentElement.remove();
                     
-                    // Update header badge if exists
-                    const headerBadge = document.querySelector('.notification-box .badge');
-                    if(headerBadge) headerBadge.remove();
+                    // Update header badge using global helper (remove everything)
+                    if (window.updateNotificationBadge) {
+                        window.updateNotificationBadge(999); // Force remove
+                    }
 
                     showToast('success', 'All notifications marked as read');
                 } else {
