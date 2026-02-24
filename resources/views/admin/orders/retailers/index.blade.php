@@ -833,7 +833,6 @@
                                                                                                             <tr><th>Retailer</th><td>${row.retailer_name || '-'}</td></tr>
                                                                                                             <tr><th>Distributor</th><td>${row.distributor_name || row.distributor || '-'}</td></tr>
                                                                                                             <tr><th>Status</th><td>${row.status}</td></tr>
-                                                                                                            <tr><th>Notes</th><td>${row.notes || '-'}</td></tr>
                                                                                                             <tr><th>Placed At</th><td>${row.placed_at || '-'}</td></tr>
                                                                                                          `);
                 let h = '';

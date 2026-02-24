@@ -91,6 +91,9 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
             'role' => $request->role,
             'status' => 'inactive',
+            'contact_no' => $request->contact_no,
+            'address' => $request->address,
+            'pincode' => $request->pincode,
         ];
 
         $user = User::create($userData);
@@ -99,15 +102,41 @@ class UserController extends Controller
         // Role specific
         if ($request->role === 'retailer') {
             $request->validate(['gst' => 'required', 'distributor_id' => 'required']);
-            Retailer::create(['user_id' => $user->id, 'gst' => $request->gst, 'distributor_id' => $request->distributor_id]);
+            Retailer::create([
+                'user_id' => $user->id,
+                'gst' => $request->gst,
+                'distributor_id' => $request->distributor_id,
+                'contact_no' => $request->contact_no,
+                'address' => $request->address,
+                'pincode' => $request->pincode,
+            ]);
         } elseif ($request->role === 'distributor') {
-            Distributor::create(['user_id' => $user->id, 'name' => $request->name, 'email' => $request->email]);
+            Distributor::create([
+                'user_id' => $user->id,
+                'name' => $request->name,
+                'email' => $request->email,
+                'contact_no' => $request->contact_no,
+                'address' => $request->address,
+                'pincode' => $request->pincode,
+            ]);
         } elseif ($request->role === 'fieldstaff') {
-            // Logic ? Original had distributor_id required.
             $request->validate(['distributor_id' => 'required']);
-            FieldStaff::create(['user_id' => $user->id, 'distributor_id' => $request->distributor_id]);
+            FieldStaff::create([
+                'user_id' => $user->id,
+                'distributor_id' => $request->distributor_id,
+                'contact_no' => $request->contact_no,
+                'address' => $request->address,
+                'pincode' => $request->pincode,
+            ]);
         } elseif ($request->role === 'salesmanager') {
-            SalesManager::create(['user_id' => $user->id, 'name' => $user->name, 'email' => $user->email, 'status' => 'active']);
+            SalesManager::create([
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'status' => 'active',
+                'contact_no' => $request->contact_no,
+                'address' => $request->address,
+            ]);
         }
 
         return back()->with('success', 'User created.');
@@ -118,12 +147,48 @@ class UserController extends Controller
         // Same Update logic
         $request->validate(['name' => 'required', 'email' => 'required|unique:users,email,' . $user->id, 'role' => 'required']);
 
-        $data = ['name' => $request->name, 'email' => $request->email, 'role' => $request->role];
+        $data = [
+            'name' => $request->name,
+            'email' => $request->email,
+            'role' => $request->role,
+            'contact_no' => $request->contact_no,
+            'address' => $request->address,
+            'pincode' => $request->pincode,
+        ];
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
 
         $user->update($data);
+
+        // Update role specific data if it exists
+        if ($user->distributor) {
+            $user->distributor->update([
+                'contact_no' => $request->contact_no,
+                'address' => $request->address,
+                'pincode' => $request->pincode,
+            ]);
+        }
+        if ($user->retailer) {
+            $user->retailer->update([
+                'contact_no' => $request->contact_no,
+                'address' => $request->address,
+                'pincode' => $request->pincode,
+            ]);
+        }
+        if ($user->fieldStaff) {
+            $user->fieldStaff->update([
+                'contact_no' => $request->contact_no,
+                'address' => $request->address,
+                'pincode' => $request->pincode,
+            ]);
+        }
+        if ($user->salesManager) {
+            $user->salesManager->update([
+                'contact_no' => $request->contact_no,
+                'address' => $request->address,
+            ]);
+        }
         $user->syncRoles([$request->role]);
 
         return back()->with('success', 'User updated.');

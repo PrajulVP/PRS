@@ -49,6 +49,8 @@ class SalesManagerController extends Controller
             'password' => Hash::make($request->password),
             'role' => 'salesmanager',
             'status' => 'inactive',
+            'contact_no' => $request->contact_no,
+            'address' => $request->address,
         ]);
 
         $role = Role::firstOrCreate(['name' => 'salesmanager', 'guard_name' => 'web']);
@@ -95,6 +97,8 @@ class SalesManagerController extends Controller
         $userData = [
             'name' => $request->name,
             'email' => $request->email,
+            'contact_no' => $request->contact_no,
+            'address' => $request->address,
         ];
 
         if ($request->filled('password')) {

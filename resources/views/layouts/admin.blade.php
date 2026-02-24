@@ -428,54 +428,43 @@
             font-size: 0.75rem !important;
         }
 
-        /* Targeted Row Highlight */
-        @keyframes pulseHighlight {
+        /* Targeted Row Highlight - Subtle One-time Shine */
+        @keyframes rowShine {
             0% {
-                background-color: rgba(56, 189, 248, 0.05) !important;
-                box-shadow: inset 0 0 0 transparent;
+                background-color: transparent;
             }
 
-            50% {
-                background-color: rgba(56, 189, 248, 0.25) !important;
-                box-shadow: inset 0 0 10px rgba(56, 189, 248, 0.4);
+            15% {
+                background-color: rgba(56, 189, 248, 0.15);
             }
 
             100% {
-                background-color: rgba(56, 189, 248, 0.05) !important;
-                box-shadow: inset 0 0 0 transparent;
+                background-color: transparent;
             }
         }
 
         .highlighted-row td {
-            animation: pulseHighlight 2s infinite ease-in-out !important;
-            border-top: 1px solid var(--med-primary) !important;
-            border-bottom: 1px solid var(--med-primary) !important;
+            animation: rowShine 2.5s ease-out forwards !important;
+            border: none !important;
         }
 
-        .highlighted-row td:first-child {
-            border-left: 3px solid var(--med-primary) !important;
-        }
-
-        .highlighted-row td:last-child {
-            border-right: 3px solid var(--med-primary) !important;
-        }
-
-        @keyframes pulseHighlightDark {
+        @keyframes rowShineDark {
             0% {
-                background-color: rgba(56, 189, 248, 0.1) !important;
+                background-color: transparent;
             }
 
-            50% {
-                background-color: rgba(56, 189, 248, 0.35) !important;
+            15% {
+                background-color: rgba(56, 189, 248, 0.25);
             }
 
             100% {
-                background-color: rgba(56, 189, 248, 0.1) !important;
+                background-color: transparent;
             }
         }
 
         body.dark-only .highlighted-row td {
-            animation: pulseHighlightDark 2s infinite ease-in-out !important;
+            animation: rowShineDark 2.5s ease-out forwards !important;
+            border: none !important;
         }
     </style>
 </head>
@@ -619,10 +608,15 @@
                                 setTimeout(function () {
                                     $(tables[0]).find('tbody tr').each(function () {
                                         if ($(this).text().includes(highlightCode)) {
-                                            $(this).addClass('highlighted-row');
+                                            var $row = $(this);
+                                            $row.addClass('highlighted-row');
 
                                             // Optional: Scroll to the row so it's visible
                                             this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                                            setTimeout(function () {
+                                                $row.removeClass('highlighted-row');
+                                            }, 3000);
                                         } else {
                                             $(this).removeClass('highlighted-row');
                                         }
@@ -634,8 +628,14 @@
                             setTimeout(function () {
                                 $(tables[0]).find('tbody tr').each(function () {
                                     if ($(this).text().includes(highlightCode)) {
-                                        $(this).addClass('highlighted-row');
+                                        var $row = $(this);
+                                        $row.addClass('highlighted-row');
                                         this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                                        // Remove highlight class after animation finishes (once)
+                                        setTimeout(function () {
+                                            $row.removeClass('highlighted-row');
+                                        }, 3000);
                                     }
                                 });
                             }, 500);

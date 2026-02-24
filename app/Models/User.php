@@ -32,6 +32,10 @@ class User extends Authenticatable implements JWTSubject
         'status',
         'contact_no',
         'address',
+        'city',
+        'pincode',
+        'fathers_name',
+        'mothers_name',
     ];
 
     public function distributor()
