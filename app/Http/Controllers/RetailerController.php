@@ -117,6 +117,9 @@ class RetailerController extends Controller
             'password' => Hash::make($userData['password']),
             'role' => 'retailer',
             'status' => 'inactive',
+            'contact_no' => $retailerData['contact_no'],
+            'address' => $retailerData['address'],
+            'pincode' => $retailerData['pincode'],
         ]);
         $user->assignRole('retailer');
 
@@ -183,6 +186,9 @@ class RetailerController extends Controller
             'name' => $userData['name'],
             'email' => $userData['email'],
             'role' => 'retailer',
+            'contact_no' => $retailerData['contact_no'],
+            'address' => $retailerData['address'],
+            'pincode' => $retailerData['pincode'],
         ];
 
         if ($request->filled('password')) {

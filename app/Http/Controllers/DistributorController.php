@@ -57,6 +57,9 @@ class DistributorController extends Controller
             'password' => Hash::make($userData['password']),
             'role' => 'distributor',
             'status' => 'inactive',
+            'contact_no' => $distributorData['contact_no'],
+            'address' => $distributorData['address'],
+            'pincode' => $distributorData['pincode'],
         ]);
         $user->assignRole('distributor');
 
@@ -110,6 +113,9 @@ class DistributorController extends Controller
             'name' => $userData['name'],
             'email' => $userData['email'],
             'role' => 'distributor',
+            'contact_no' => $distributorData['contact_no'],
+            'address' => $distributorData['address'],
+            'pincode' => $distributorData['pincode'],
         ];
 
         if ($request->filled('password')) {

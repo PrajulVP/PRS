@@ -279,14 +279,241 @@
                 ]
             }
         },
+        "/api/distributor-orders": {
+            "get": {
+                "tags": [
+                    "Distributor Orders"
+                ],
+                "summary": "List distributor orders (Unified Endpoint)",
+                "description": "Returns orders for the logged-in user. If a Sales Manager, can optionally filter by distributor_id.",
+                "operationId": "62124b28528742068352b1753983571e",
+                "parameters": [
+                    {
+                        "name": "distributor_id",
+                        "in": "query",
+                        "description": "Filter by specific distributor (Manager/Admin only)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "payment_status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of orders"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Distributor Orders"
+                ],
+                "summary": "Place a new distributor order",
+                "operationId": "2f083d52d32ebe796d33e33c29600302",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "product_id": {
+                                                    "type": "integer"
+                                                },
+                                                "quantity": {
+                                                    "type": "integer"
+                                                },
+                                                "unit": {
+                                                    "type": "string",
+                                                    "example": "Box"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Order placed successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/distributor-orders/{id}": {
+            "get": {
+                "tags": [
+                    "Distributor Orders"
+                ],
+                "summary": "Get details of a single distributor order",
+                "operationId": "2df49f1a24a961f2774b105f9bc24e40",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Order details"
+                    },
+                    "404": {
+                        "description": "Order not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/distributor-orders/{id}/update-status": {
+            "post": {
+                "tags": [
+                    "Distributor Orders"
+                ],
+                "summary": "Update order status (Unified Action Endpoint)",
+                "description": "Handles Manager Acceptance, Admin Approval, Receipt Confirmation, and Cancellations.",
+                "operationId": "5a5f2c826dba20f3d22f173698afb966",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "action": {
+                                        "type": "string",
+                                        "enum": [
+                                            "accept_manager",
+                                            "approve_admin",
+                                            "confirm_receipt",
+                                            "request_cancellation",
+                                            "approve_cancellation"
+                                        ]
+                                    },
+                                    "payment_status": {
+                                        "description": "Required for approve_admin",
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "paid",
+                                            "failed"
+                                        ]
+                                    },
+                                    "invoice": {
+                                        "description": "Optional for approve_admin",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "cancellation_reason": {
+                                        "description": "Required for request_cancellation",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Status updated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/distributor/inventory": {
             "get": {
                 "tags": [
                     "Inventory"
                 ],
-                "summary": "Get distributor inventory",
+                "summary": "Get distributor inventory (Unified Endpoint)",
+                "description": "Returns inventory for the logged-in user. If a Sales Manager, can optionally filter by distributor_id.",
                 "operationId": "560b8849ea450f272dc9c4c07ea2affc",
                 "parameters": [
+                    {
+                        "name": "distributor_id",
+                        "in": "query",
+                        "description": "Filter by specific distributor (Manager/Admin only)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
                     {
                         "name": "search",
                         "in": "query",
@@ -299,79 +526,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "List of inventory items",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "properties": {
-                                            "id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "product_id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "distributor_id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "stock": {
-                                                "type": "integer",
-                                                "example": 100
-                                            },
-                                            "distributor_product_code": {
-                                                "type": "string",
-                                                "example": "P001"
-                                            },
-                                            "product": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "product_name": {
-                                                        "type": "string",
-                                                        "example": "Product Name"
-                                                    },
-                                                    "product_code": {
-                                                        "type": "string",
-                                                        "example": "P001"
-                                                    },
-                                                    "generic_name": {
-                                                        "type": "string",
-                                                        "example": "Generic Name"
-                                                    },
-                                                    "mrp": {
-                                                        "type": "string",
-                                                        "example": "100.00"
-                                                    },
-                                                    "ptr": {
-                                                        "type": "string",
-                                                        "example": "80.00"
-                                                    },
-                                                    "pts": {
-                                                        "type": "string",
-                                                        "example": "70.00"
-                                                    },
-                                                    "gst": {
-                                                        "type": "string",
-                                                        "example": "12"
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        },
-                                        "type": "object"
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized"
+                        "description": "List of inventory items"
                     }
                 },
                 "security": [
@@ -732,6 +887,10 @@
         {
             "name": "Distributors",
             "description": "Distributors"
+        },
+        {
+            "name": "Distributor Orders",
+            "description": "Distributor Orders"
         },
         {
             "name": "Inventory",

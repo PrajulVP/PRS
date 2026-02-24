@@ -154,31 +154,33 @@
                                     </div>
 
                                     <!-- Personal Details Section -->
-                                    @if($user->fathers_name || $user->mothers_name)
-                                        <div class="col-12 mt-3 mb-1">
-                                            <h6 class="text-secondary text-uppercase fw-bold border-start border-warning border-3 ps-2 mb-2"
-                                                style="font-size: 0.8rem;">
-                                                Personal Details</h6>
-                                        </div>
-                                        @if($user->fathers_name)
-                                            <div class="col-md-6">
-                                                <div class="p-2 border rounded h-100 bg-white">
-                                                    <label class="text-muted small text-uppercase fw-bold mb-1"
-                                                        style="font-size: 0.6rem;">Father's Name</label>
-                                                    <span
-                                                        class="fs-6 text-dark fw-bold d-block small">{{ $user->fathers_name }}</span>
-                                                </div>
+                                    @if($user->hasRole('fieldstaff'))
+                                        @if($user->fathers_name || $user->mothers_name)
+                                            <div class="col-12 mt-3 mb-1">
+                                                <h6 class="text-secondary text-uppercase fw-bold border-start border-warning border-3 ps-2 mb-2"
+                                                    style="font-size: 0.8rem;">
+                                                    Personal Details</h6>
                                             </div>
-                                        @endif
-                                        @if($user->mothers_name)
-                                            <div class="col-md-6">
-                                                <div class="p-2 border rounded h-100 bg-white">
-                                                    <label class="text-muted small text-uppercase fw-bold mb-1"
-                                                        style="font-size: 0.6rem;">Mother's Name</label>
-                                                    <span
-                                                        class="fs-6 text-dark fw-bold d-block small">{{ $user->mothers_name }}</span>
+                                            @if($user->fathers_name)
+                                                <div class="col-md-6">
+                                                    <div class="p-2 border rounded h-100 bg-white">
+                                                        <label class="text-muted small text-uppercase fw-bold mb-1"
+                                                            style="font-size: 0.6rem;">Father's Name</label>
+                                                        <span
+                                                            class="fs-6 text-dark fw-bold d-block small">{{ $user->fathers_name }}</span>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            @endif
+                                            @if($user->mothers_name)
+                                                <div class="col-md-6">
+                                                    <div class="p-2 border rounded h-100 bg-white">
+                                                        <label class="text-muted small text-uppercase fw-bold mb-1"
+                                                            style="font-size: 0.6rem;">Mother's Name</label>
+                                                        <span
+                                                            class="fs-6 text-dark fw-bold d-block small">{{ $user->mothers_name }}</span>
+                                                    </div>
+                                                </div>
+                                            @endif
                                         @endif
                                     @endif
 
@@ -281,18 +283,20 @@
                                         value="{{ $user->name }}" required>
                                 </div>
 
-                                <div class="row g-2 mb-2">
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-bold small mb-1">Father's Name</label>
-                                        <input type="text" name="fathers_name" class="form-control form-control-sm"
-                                            value="{{ $user->fathers_name }}">
+                                @if($user->hasRole('fieldstaff'))
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold small mb-1">Father's Name</label>
+                                            <input type="text" name="fathers_name" class="form-control form-control-sm"
+                                                value="{{ $user->fathers_name }}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold small mb-1">Mother's Name</label>
+                                            <input type="text" name="mothers_name" class="form-control form-control-sm"
+                                                value="{{ $user->mothers_name }}">
+                                        </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-bold small mb-1">Mother's Name</label>
-                                        <input type="text" name="mothers_name" class="form-control form-control-sm"
-                                            value="{{ $user->mothers_name }}">
-                                    </div>
-                                </div>
+                                @endif
 
                                 {{-- Role Specific Editable Fields --}}
                                 @if($user->hasRole('retailer'))
@@ -383,14 +387,14 @@
                                     <div class="col-12">
                                         <label class="form-label text-muted small text-uppercase mb-1"
                                             style="font-size: 0.6rem;">Email</label>
-                                            <input type="text" class="form-control form-control-sm bg-light text-dark"
-                                                value="{{ $user->email }}" readonly>
+                                        <input type="text" class="form-control form-control-sm bg-light text-dark"
+                                            value="{{ $user->email }}" readonly>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label text-muted small text-uppercase mb-1"
                                             style="font-size: 0.6rem;">Phone</label>
-                                            <input type="text" class="form-control form-control-sm bg-light text-dark"
-                                                value="{{ $user->contact_no ?? $user->phone_number ?? 'N/A' }}" readonly>
+                                        <input type="text" class="form-control form-control-sm bg-light text-dark"
+                                            value="{{ $user->contact_no ?? $user->phone_number ?? 'N/A' }}" readonly>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label text-muted small text-uppercase mb-1"

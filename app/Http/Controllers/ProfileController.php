@@ -24,9 +24,12 @@ class ProfileController extends Controller
             'address' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'pincode' => 'nullable|string|max:20',
-            'fathers_name' => 'nullable|string|max:255',
-            'mothers_name' => 'nullable|string|max:255',
         ];
+
+        if (!$user->hasRole('distributor')) {
+            $rules['fathers_name'] = 'nullable|string|max:255';
+            $rules['mothers_name'] = 'nullable|string|max:255';
+        }
 
         // Add role-specific validation
         if ($user->hasRole('retailer')) {
@@ -39,9 +42,11 @@ class ProfileController extends Controller
             $rules['drug_license_no'] = 'nullable|string|max:50';
         }
 
-        if ($user->hasAnyRole(['superadmin', 'admin'])) {
-            $rules['email'] = 'required|email|unique:users,email,' . $user->id;
+        if ($user->hasAnyRole(['superadmin', 'admin', 'distributor'])) {
             $rules['contact_no'] = 'nullable|string|max:20';
+            if ($user->hasAnyRole(['superadmin', 'admin'])) {
+                $rules['email'] = 'required|email|unique:users,email,' . $user->id;
+            }
         }
 
         $request->validate($rules);
@@ -51,12 +56,16 @@ class ProfileController extends Controller
         $user->address = $request->address;
         $user->city = $request->city;
         $user->pincode = $request->pincode;
-        $user->fathers_name = $request->fathers_name;
-        $user->mothers_name = $request->mothers_name;
+        if (!$user->hasRole('distributor')) {
+            $user->fathers_name = $request->fathers_name;
+            $user->mothers_name = $request->mothers_name;
+        }
 
-        if ($user->hasAnyRole(['superadmin', 'admin'])) {
-            $user->email = $request->email;
+        if ($user->hasAnyRole(['superadmin', 'admin', 'distributor'])) {
             $user->contact_no = $request->contact_no;
+            if ($user->hasAnyRole(['superadmin', 'admin'])) {
+                $user->email = $request->email;
+            }
         }
 
         if ($request->hasFile('profile_pic')) {
@@ -81,6 +90,7 @@ class ProfileController extends Controller
             $user->distributor->update([
                 'gst' => $request->gst,
                 'drug_license_no' => $request->drug_license_no,
+                'contact_no' => $request->contact_no,
             ]);
         }
 

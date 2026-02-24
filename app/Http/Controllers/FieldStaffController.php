@@ -106,6 +106,9 @@ class FieldStaffController extends Controller
             'password' => Hash::make($userData['password']),
             'role' => 'fieldstaff',
             'status' => 'inactive',
+            'contact_no' => $fieldstaffData['contact_no'],
+            'address' => $fieldstaffData['address'],
+            'pincode' => $fieldstaffData['pincode'],
         ]);
         $user->assignRole('fieldstaff');
 
@@ -161,6 +164,9 @@ class FieldStaffController extends Controller
             'name' => $userData['name'],
             'email' => $userData['email'],
             'role' => 'fieldstaff',
+            'contact_no' => $fieldstaffData['contact_no'],
+            'address' => $fieldstaffData['address'],
+            'pincode' => $fieldstaffData['pincode'],
         ];
 
         if ($request->filled('password')) {

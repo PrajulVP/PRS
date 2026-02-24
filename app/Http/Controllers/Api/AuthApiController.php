@@ -85,8 +85,25 @@ class AuthApiController extends Controller
             'access_token' => $token,
             'token_type'   => 'bearer',
             'expires_in'   => JWTAuth::factory()->getTTL() * 60,
-            'user'         => $user,
+            'user'         => $this->prepareUserResponse($user),
         ]);
+    }
+
+    /**
+     * Helper to prepare user response with consistent relationship loading and field hiding.
+     */
+    private function prepareUserResponse($user)
+    {
+        if (!$user) return null;
+
+        $user->load(['distributor', 'retailer', 'fieldStaff', 'salesManager']);
+
+        // Hide father's and mother's name for everyone except fieldstaff
+        if (!$user->hasRole('fieldstaff')) {
+            $user->makeHidden(['fathers_name', 'mothers_name']);
+        }
+
+        return $user;
     }
 
     /**
@@ -107,7 +124,7 @@ class AuthApiController extends Controller
         if (!$user) {
             return response()->json(['error' => 'User not found'], 404);
         }
-        return response()->json($user);
+        return response()->json($this->prepareUserResponse($user));
     }
 
     /**
@@ -161,9 +178,12 @@ class AuthApiController extends Controller
             'address' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'pincode' => 'nullable|string|max:20',
-            'fathers_name' => 'nullable|string|max:255',
-            'mothers_name' => 'nullable|string|max:255',
         ];
+
+        if ($user->hasRole('fieldstaff')) {
+            $rules['fathers_name'] = 'nullable|string|max:255';
+            $rules['mothers_name'] = 'nullable|string|max:255';
+        }
 
         // Add role-specific validation
         if ($user->hasRole('retailer')) {
@@ -175,9 +195,11 @@ class AuthApiController extends Controller
             $rules['drug_license_no'] = 'nullable|string|max:50';
         }
 
-        if ($user->hasAnyRole(['superadmin', 'admin'])) {
-            $rules['email'] = 'required|email|unique:users,email,' . $user->id;
+        if ($user->hasAnyRole(['superadmin', 'admin', 'distributor'])) {
             $rules['contact_no'] = 'nullable|string|max:20';
+            if ($user->hasAnyRole(['superadmin', 'admin'])) {
+                $rules['email'] = 'required|email|unique:users,email,' . $user->id;
+            }
         }
 
         $validator = Validator::make($request->all(), $rules);
@@ -194,12 +216,16 @@ class AuthApiController extends Controller
         if ($request->has('address')) $user->address = $request->address;
         if ($request->has('city')) $user->city = $request->city;
         if ($request->has('pincode')) $user->pincode = $request->pincode;
-        if ($request->has('fathers_name')) $user->fathers_name = $request->fathers_name;
-        if ($request->has('mothers_name')) $user->mothers_name = $request->mothers_name;
+        if ($user->hasRole('fieldstaff')) {
+            if ($request->has('fathers_name')) $user->fathers_name = $request->fathers_name;
+            if ($request->has('mothers_name')) $user->mothers_name = $request->mothers_name;
+        }
 
-        if ($user->hasAnyRole(['superadmin', 'admin'])) {
-            if ($request->has('email')) $user->email = $request->email;
+        if ($user->hasAnyRole(['superadmin', 'admin', 'distributor'])) {
             if ($request->has('contact_no')) $user->contact_no = $request->contact_no;
+            if ($user->hasAnyRole(['superadmin', 'admin'])) {
+                if ($request->has('email')) $user->email = $request->email;
+            }
         }
 
         if ($request->hasFile('profile_pic')) {
@@ -224,13 +250,14 @@ class AuthApiController extends Controller
             $distData = [];
             if ($request->has('gst')) $distData['gst'] = $request->gst;
             if ($request->has('drug_license_no')) $distData['drug_license_no'] = $request->drug_license_no;
+            if ($request->has('contact_no')) $distData['contact_no'] = $request->contact_no;
 
             if (!empty($distData)) $user->distributor->update($distData);
         }
 
         return response()->json([
             'message' => 'Profile updated successfully.',
-            'user' => $user->fresh()
+            'user' => $this->prepareUserResponse($user->fresh())
         ], 200);
     }
 
