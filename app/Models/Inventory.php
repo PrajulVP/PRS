@@ -15,6 +15,8 @@ class Inventory extends Model
         'product_id',
         'distributor_id',
         'stock',
+        'batch_no',
+        'expiry_date',
     ];
 
     // Optional relationships if needed later

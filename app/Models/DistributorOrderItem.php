@@ -25,4 +25,9 @@ class DistributorOrderItem extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    public function batches()
+    {
+        return $this->hasMany(DistributorOrderItemBatch::class, 'distributor_order_item_id');
+    }
 }

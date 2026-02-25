@@ -38,7 +38,7 @@ class PendingApprovalController extends Controller
                 abort(403, 'Unauthorized access to retailer approvals.');
             }
         } elseif ($viewType === 'distributor') {
-            if (!$user->hasPermissionToCategory('distributor_approvals', 'view') && !$user->hasRole(['superadmin', 'admin', 'salesmanager'])) {
+            if (!$user->hasPermissionToCategory('distributor_approvals', 'view') && !$user->hasRole(['superadmin', 'admin', 'salesmanager', 'distributor'])) {
                 abort(403, 'Unauthorized access to distributor approvals.');
             }
         }
@@ -49,7 +49,7 @@ class PendingApprovalController extends Controller
 
             // Logic based on requested view type
             if ($viewType === 'distributor') {
-                $query = \App\Models\DistributorOrder::with(['distributor.user', 'items.product', 'salesManager.user']);
+                $query = \App\Models\DistributorOrder::with(['distributor.user', 'items.product', 'items.batches', 'salesManager.user']);
 
                 if ($user->hasRole('salesmanager') && $user->salesManager) {
                     $salesManagerId = $user->salesManager->id;
@@ -59,6 +59,10 @@ class PendingApprovalController extends Controller
                                 $q->where('sales_manager_id', $salesManagerId);
                             });
                     });
+                }
+
+                if ($user->hasRole('distributor') && $user->distributor) {
+                    $query->where('distributor_id', $user->distributor->id);
                 }
 
                 if ($request->input('status')) {
@@ -104,6 +108,17 @@ class PendingApprovalController extends Controller
                     $query->where('status', $request->input('status'));
                 }
 
+                if ($request->input('payment_status')) {
+                    $pStatus = $request->input('payment_status');
+                    if ($pStatus === 'pending') {
+                        $query->where(function ($q) {
+                            $q->where('payment_status', 'pending')->orWhereNull('payment_status');
+                        });
+                    } else {
+                        $query->where('payment_status', $pStatus);
+                    }
+                }
+
                 $data = $query->latest()->get();
             }
             // ... (other types removed as we focus on Orders for approvals page in this context)
@@ -112,7 +127,7 @@ class PendingApprovalController extends Controller
             $formatted = collect($data)->map(function ($item) use ($viewType) {
                 // Common Order Formatting
                 $productSummary = $item->items->map(function ($i) {
-                    return $i->product->product_name . ' (' . $i->quantity . ')';
+                    return ($i->product?->product_name ?? 'N/A') . ' (' . $i->quantity . ')';
                 })->implode(', ');
 
                 $res = [
@@ -123,13 +138,30 @@ class PendingApprovalController extends Controller
                     'product_summary' => $productSummary,
                     'placed_at' => $item->placed_at ? $item->placed_at->format('Y-m-d H:i') : '-',
                     'role_type' => 'order',
-                    'items' => $item->items->map(function ($i) {
-                        return [
-                            'product_name' => $i->product->product_name ?? 'N/A',
+                    'items' => $item->items->map(function ($i) use ($viewType) {
+                        $itemData = [
+                            'order_item_id' => $i->id,
+                            'product_name' => $i->product?->product_name ?? 'N/A',
                             'quantity' => $i->quantity,
-                            'unit_price' => number_format($i->unit_price, 2),
-                            'total_amount' => number_format($i->total_amount, 2),
                         ];
+
+                        if ($viewType === 'distributor') {
+                            $itemData['unit_price'] = number_format($i->price ?? 0, 2);
+                            $itemData['total_amount'] = number_format($i->subtotal ?? 0, 2);
+                            $itemData['batches'] = ($i->batches ?? collect())->map(function ($b) {
+                                return [
+                                    'batch_no' => $b->batch_no,
+                                    'expiry_date' => $b->expiry_date,
+                                    'quantity' => $b->quantity,
+                                ];
+                            });
+                        } else {
+                            $itemData['unit_price'] = number_format($i->unit_price ?? 0, 2);
+                            $itemData['total_amount'] = number_format($i->total_amount ?? 0, 2);
+                            $itemData['batches'] = [];
+                        }
+
+                        return $itemData;
                     }),
                     'delivery_notes' => $item->delivery_notes ?? '-',
                 ];

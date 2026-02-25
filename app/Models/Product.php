@@ -18,7 +18,6 @@ class Product extends Model
         'box_size',
         'carton_size',
         'hsn_code',
-        // 'batch_no',
         'mrp',
         'ptr',
         'pts',

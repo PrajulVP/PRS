@@ -86,6 +86,8 @@
                                         @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
                                             <th>Distributor</th>
                                         @endif
+                                        <th>Batch No</th>
+                                        <th>Expiry Date</th>
                                         <th>Stock (Total)</th>
                                         <th>Breakdown</th>
                                         <th>Actions</th>
@@ -197,6 +199,18 @@
                         </script>
 
                         <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Batch No</label>
+                                <input type="text" name="batch_no" class="form-control" placeholder="Enter Batch No"
+                                    required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Expiry Date</label>
+                                <input type="date" name="expiry_date" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-3">
                             <div class="col-md-8">
                                 <label class="form-label fw-bold">Quantity</label>
                                 <input type="number" id="create_input_qty" class="form-control" placeholder="0" min="0">
@@ -267,6 +281,17 @@
                         @else
                             <input type="hidden" name="distributor_id" id="edit_distributor_id">
                         @endif
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Batch No</label>
+                                <input type="text" name="batch_no" id="edit_batch_no" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Expiry Date</label>
+                                <input type="date" name="expiry_date" id="edit_expiry_date" class="form-control">
+                            </div>
+                        </div>
 
                         <div class="mb-3">
                             <label class="form-label">Stock</label>
@@ -477,14 +502,14 @@
                     render: function (data, type, row) {
                         let detailJson = JSON.stringify(row.product_details).replace(/"/g, '&quot;');
                         return `
-                                    <div class="d-flex align-items-center">
-                                        <a href="javascript:void(0)" class="text-primary fw-bold product-detail-link" 
-                                           data-name="${data}" \
-                                           data-details='${detailJson}'>
-                                           ${data}
-                                        </a>
-                                    </div>
-                                `;
+                                                <div class="d-flex align-items-center">
+                                                    <a href="javascript:void(0)" class="text-primary fw-bold product-detail-link" 
+                                                       data-name="${data}" \
+                                                       data-details='${detailJson}'>
+                                                       ${data}
+                                                    </a>
+                                                </div>
+                                            `;
                     }
                 },
                     @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
@@ -492,6 +517,14 @@
                             name: 'distributor_name'
                         },
                     @endif{
+                    data: 'batch_no',
+                    name: 'batch_no'
+                },
+                {
+                    data: 'expiry_date',
+                    name: 'expiry_date'
+                },
+                {
                     data: 'stock',
                     name: 'stock',
                     render: function (data, type, row) {
@@ -530,8 +563,8 @@
                         if (strips > 0 || (cartons === 0 && boxes === 0)) html += `<span class="badge bg-secondary me-1">${strips} Str</span>`;
 
                         html += `<div class="mt-1 small text-muted" style="font-size: 0.7rem;">
-                                            (${boxSize} Str/Box | ${cartonSize || 0} Box/Ctn)
-                                         </div>`;
+                                                        (${boxSize} Str/Box | ${cartonSize || 0} Box/Ctn)
+                                                     </div>`;
 
                         return html || '0';
                     }
@@ -546,18 +579,18 @@
                         let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
 
                         return `
-                        <div class="action-buttons">
-                            <button type="button" class="btn btn-sm btn-info edit-btn" data-inventory='${rowData}' title="Edit Inventory"><i class="fa fa-edit"></i></button>
-                            <button type="button" class="btn btn-sm btn-success stock-btn" data-id="${id}" data-op="add" data-name="${row.product_name}" data-box-size="${row.product_details?.box_size || 0}" data-carton-size="${row.product_details?.carton_size || 0}" title="Add Stock"><i class="fa fa-plus"></i></button>
-                            <button type="button" class="btn btn-sm btn-warning stock-btn" data-id="${id}" data-op="subtract" data-name="${row.product_name}" data-box-size="${row.product_details?.box_size || 0}" data-carton-size="${row.product_details?.carton_size || 0}" title="Reduce Stock"><i class="fa fa-minus"></i></button>
+                                    <div class="action-buttons">
+                                        <button type="button" class="btn btn-sm btn-info edit-btn" data-inventory='${rowData}' title="Edit Inventory"><i class="fa fa-edit"></i></button>
+                                        <button type="button" class="btn btn-sm btn-success stock-btn" data-id="${id}" data-op="add" data-name="${row.product_name}" data-box-size="${row.product_details?.box_size || 0}" data-carton-size="${row.product_details?.carton_size || 0}" title="Add Stock"><i class="fa fa-plus"></i></button>
+                                        <button type="button" class="btn btn-sm btn-warning stock-btn" data-id="${id}" data-op="subtract" data-name="${row.product_name}" data-box-size="${row.product_details?.box_size || 0}" data-carton-size="${row.product_details?.carton_size || 0}" title="Reduce Stock"><i class="fa fa-minus"></i></button>
 
-                            <form id="delete-form-${id}" action="${deleteUrl}" method="POST" style="display:inline;">
-                                <input type="hidden" name="_token" value="${csrf}">
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button type="button" class="btn btn-sm btn-danger delete-btn" data-id="${id}" title="Remove from Inventory"><i class="fa fa-trash"></i></button>
-                            </form>
-                        </div>
-                        `;
+                                        <form id="delete-form-${id}" action="${deleteUrl}" method="POST" style="display:inline;">
+                                            <input type="hidden" name="_token" value="${csrf}">
+                                            <input type="hidden" name="_method" value="DELETE">
+                                            <button type="button" class="btn btn-sm btn-danger delete-btn" data-id="${id}" title="Remove from Inventory"><i class="fa fa-trash"></i></button>
+                                        </form>
+                                    </div>
+                                    `;
                     }
                 }
                 ]
@@ -571,9 +604,25 @@
             // Edit Handler
             $('#inventories-table').on('click', '.edit-btn', function () {
                 var data = $(this).data('inventory');
+                if (typeof data === 'string') {
+                    data = JSON.parse(data);
+                }
 
                 $('#edit_product_name').val(data.product_name);
                 $('#edit_stock').val(data.stock);
+                $('#edit_batch_no').val(data.batch_no);
+                $('#edit_expiry_date').val(data.expiry_date ? data.expiry_date.split('-').reverse().join('-') : ''); // Convert d-m-Y back to Y-m-d if needed, but wait, data format is d-m-Y in JS
+
+                // If expiry_date is d-m-Y, convert it to Y-m-d for date input
+                if (data.expiry_date && data.expiry_date.includes('-')) {
+                    let parts = data.expiry_date.split('-');
+                    if (parts[0].length === 2) {
+                        $('#edit_expiry_date').val(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                    } else {
+                        $('#edit_expiry_date').val(data.expiry_date);
+                    }
+                }
+
                 $('#edit_distributor_id').val(data.distributor_id);
                 // Hide dist code field if it's auto-managed or read-only in edit too
                 // But let's keep it in edit form if admin needs to fix it.

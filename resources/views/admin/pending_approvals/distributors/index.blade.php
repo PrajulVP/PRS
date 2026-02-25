@@ -62,6 +62,7 @@
                                 <option value="">All Statuses</option>
                                 <option value="pending">Pending</option>
                                 <option value="accepted_by_sales_manager">Approved by Manager</option>
+                                <option value="delivered">Delivered</option>
                                 <option value="rejected">Rejected</option>
                             </select>
                         </div>
@@ -70,7 +71,7 @@
                             <select id="payment_status_filter" class="form-select form-select-sm" style="width: 150px;">
                                 <option value="">All Payments</option>
                                 <option value="paid">Paid</option>
-                                <option value="pending">Pending</option>
+                                <option value="pending">Unpaid</option>
                             </select>
                         </div>
                     </div>
@@ -178,7 +179,7 @@
 
     {{-- Process Order Modal for Admins --}}
     <div class="modal fade" id="processOrderModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Process Order (Admin)</h5>
@@ -187,22 +188,41 @@
                 <form id="processOrderForm">
                     <div class="modal-body">
                         <input type="hidden" id="process_order_id" name="order_id">
-                        <div class="alert alert-warning">
+                        <div class="alert alert-primary">
                             <i class="fa fa-exclamation-triangle"></i> This action will mark the order as
                             <strong>Approved</strong> and send it to the distributor for final confirmation.
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Set Payment Status</label>
-                            <select class="form-select" name="payment_status" required>
-                                <option value="pending">Pending</option>
-                                <option value="paid">Paid</option>
-                            </select>
-                        </div>
-                        {{-- Invoice upload restored as per user request --}}
-                        <div class="mb-3">
-                            <label class="form-label">Upload Invoice (Optional)</label>
-                            <input type="file" class="form-control" name="invoice" accept=".pdf,.jpg,.jpeg,.png">
-                            <div class="form-text">You can upload an invoice now or later via the table.</div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Set Payment Status</label>
+                                    <select class="form-select" name="payment_status" required>
+                                        <option value="pending">Pending</option>
+                                        <option value="paid">Paid</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Upload Invoice (Optional)</label>
+                                    <input type="file" class="form-control" name="invoice" accept=".pdf,.jpg,.jpeg,.png">
+                                    <div class="form-text">You can upload an invoice now or later.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-8 border-start">
+                                <h6 class="fw-bold mb-3">Item Wise Batch Details</h6>
+                                <div class="table-responsive bg-light p-2 rounded"
+                                    style="max-height: 400px; overflow-y: auto;">
+                                    <table class="table table-bordered table-sm mb-0 bg-white" id="batch_entry_table">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Product</th>
+                                                <th>Ordered Qty</th>
+                                                <th>Batch Details</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="batch_entry_body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -229,9 +249,37 @@
                     <p class="mb-0">Are you sure you want to remove this invoice? This action cannot be undone.</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-danger" id="confirmRemoveInvoiceBtn">Remove</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger" id="confirmRemoveInvoiceBtn">Remove Invoice</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Change Payment Status Modal --}}
+    <div class="modal fade" id="paymentStatusModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Payment Status</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="paymentStatusForm">
+                    <div class="modal-body">
+                        <input type="hidden" name="order_id" id="payment_order_id">
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="payment_status" id="payment_status_select">
+                                <option value="pending">Unpaid</option>
+                                <option value="paid">Paid</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -353,11 +401,18 @@
                         render: function (d, type, row) {
                             let payStatus = row.payment_status ? row.payment_status.toLowerCase() : 'pending';
                             let bgClass = 'bg-secondary';
-                            if (payStatus === 'paid') bgClass = 'bg-success';
-                            else if (payStatus === 'failed') bgClass = 'bg-danger';
-                            else bgClass = 'bg-warning text-dark';
+                            let displayLabel = payStatus.charAt(0).toUpperCase() + payStatus.slice(1);
 
-                            return `<span class="badge ${bgClass}" style="font-size: 0.85rem;">${payStatus.charAt(0).toUpperCase() + payStatus.slice(1)}</span>`;
+                            if (payStatus === 'paid') bgClass = 'bg-success';
+                            else {
+                                bgClass = 'bg-warning text-dark';
+                                displayLabel = 'Unpaid';
+                            }
+
+                            let cursorStyle = isAdmin ? 'cursor: pointer;' : '';
+                            let clickableClass = isAdmin ? 'change-payment-status' : '';
+
+                            return `<span class="badge ${bgClass} ${clickableClass}" data-id="${row.id}" data-status="${payStatus}" style="font-size: 0.85rem; ${cursorStyle}">${displayLabel}</span>`;
                         }
                     },
                     {
@@ -532,6 +587,43 @@
                 });
             });
 
+            // Update Payment Status (Clicking on Badge)
+            $(document).on('click', '.change-payment-status', function () {
+                let id = $(this).data('id');
+                let status = $(this).data('status') || 'pending';
+                $('#payment_order_id').val(id);
+                $('#payment_status_select').val(status.toLowerCase());
+                $('#paymentStatusModal').modal('show');
+            });
+
+            $('#paymentStatusForm').submit(function (e) {
+                e.preventDefault();
+                let id = $('#payment_order_id').val();
+                let $btn = $(this).find('button[type="submit"]');
+                let oldText = $btn.text();
+                $btn.prop('disabled', true).text('Updating...');
+
+                $.ajax({
+                    url: "{{ route('admin.distributor-orders.update-payment-status', ':id') }}".replace(':id', id),
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        payment_status: $('#payment_status_select').val()
+                    },
+                    success: function (res) {
+                        $('#paymentStatusModal').modal('hide');
+                        showToast('success', res.success || 'Updated');
+                        table.ajax.reload(null, false);
+                    },
+                    error: function (xhr) {
+                        showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Update failed');
+                    },
+                    complete: function () {
+                        $btn.prop('disabled', false).text(oldText);
+                    }
+                });
+            });
+
             // View Details
             $(document).on('click', '.view-details-btn', function () {
                 let row = $(this).data('row');
@@ -544,7 +636,15 @@
                 let tbody = $('#view_items_body'); tbody.empty();
                 if (row.items && row.items.length) {
                     row.items.forEach(item => {
-                        tbody.append(`<tr><td>${item.product_name}</td><td>${item.quantity}</td><td>${item.unit_price}</td><td>${item.total_amount}</td></tr>`);
+                        let batchHtml = '';
+                        if (item.batches && item.batches.length) {
+                            batchHtml = '<div class="small text-muted mt-1">';
+                            item.batches.forEach(b => {
+                                batchHtml += `Batch: ${b.batch_no} | Exp: ${b.expiry_date} | Qty: ${b.quantity}<br>`;
+                            });
+                            batchHtml += '</div>';
+                        }
+                        tbody.append(`<tr><td>${item.product_name}${batchHtml}</td><td>${item.quantity}</td><td>${item.unit_price}</td><td>${item.total_amount}</td></tr>`);
                     });
                 } else { tbody.html('<tr><td colspan="4" class="text-center">No items</td></tr>'); }
                 $('#view_total').text(row.total_amount); // Grand total again
@@ -562,9 +662,76 @@
             // Admin Process/Accept Click
             $(document).on('click', '.accept-admin-btn', function () {
                 let id = $(this).data('id');
+                let row = $(this).closest('tr').find('.view-details-btn').data('row');
+
                 $('#process_order_id').val(id);
                 $('#processOrderForm')[0].reset();
+
+                let tbody = $('#batch_entry_body');
+                tbody.empty();
+
+                if (row && row.items) {
+                    row.items.forEach(item => {
+                        let rowHtml = `
+                                                            <tr data-item-id="${item.order_item_id}">
+                                                                <td>${item.product_name}</td>
+                                                                <td class="text-center">${item.quantity}</td>
+                                                                <td>
+                                                                    <div class="batch-list" id="batches_for_${item.order_item_id}">
+                                                                        <div class="batch-item border-bottom pb-2 mb-2">
+                                                                            <div class="row g-1">
+                                                                                <div class="col-md-5">
+                                                                                    <input type="text" name="batches[${item.order_item_id}][0][batch_no]" class="form-control form-control-sm" placeholder="Batch No" required>
+                                                                                </div>
+                                                                                <div class="col-md-4">
+                                                                                    <input type="date" name="batches[${item.order_item_id}][0][expiry_date]" class="form-control form-control-sm" required>
+                                                                                </div>
+                                                                                <div class="col-md-3">
+                                                                                    <input type="number" name="batches[${item.order_item_id}][0][quantity]" class="form-control form-control-sm" value="${item.quantity}" min="1" required>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <button type="button" class="btn btn-link btn-sm p-0 add-batch-btn" data-item-id="${item.order_item_id}" data-item-qty="${item.quantity}">+ Add Multiple Batch</button>
+                                                                </td>
+                                                            </tr>
+                                                        `;
+                        tbody.append(rowHtml);
+                    });
+                }
+
                 $('#processOrderModal').modal('show');
+            });
+
+            // Add more batch rows for an item
+            $(document).on('click', '.add-batch-btn', function () {
+                let itemId = $(this).data('item-id');
+                let container = $(`#batches_for_${itemId}`);
+                let index = container.find('.batch-item').length;
+
+                let html = `
+                                                    <div class="batch-item border-bottom pb-2 mb-2">
+                                                        <div class="row g-1">
+                                                            <div class="col-md-5">
+                                                                <input type="text" name="batches[${itemId}][${index}][batch_no]" class="form-control form-control-sm" placeholder="Batch No" required>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <input type="date" name="batches[${itemId}][${index}][expiry_date]" class="form-control form-control-sm" required>
+                                                            </div>
+                                                            <div class="col-md-2">
+                                                                <input type="number" name="batches[${itemId}][${index}][quantity]" class="form-control form-control-sm" value="0" min="1" required>
+                                                            </div>
+                                                            <div class="col-md-1">
+                                                                <button type="button" class="btn btn-sm btn-outline-danger border-0 remove-batch-row"><i class="fa fa-times"></i></button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                `;
+                container.append(html);
+            });
+
+            $(document).on('click', '.remove-batch-row', function () {
+                $(this).closest('.batch-item').remove();
             });
 
             // Admin Process Form Submit
