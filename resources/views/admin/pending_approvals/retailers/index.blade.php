@@ -73,17 +73,27 @@
                 <div class="alert alert-danger">{{ session('error') }}</div> @endif
 
                 <div id="filter_container" class="d-none">
-                    <div class="d-inline-flex align-items-center ms-2">
-                        <label for="status_filter" class="form-label me-2 mb-0 fw-bold">Status:</label>
-                        <select id="status_filter" class="form-select form-select-sm" style="width: 150px;">
-                            <option value="">All Statuses</option>
-                            <option value="pending">Pending</option>
-                            <option value="accepted_by_fieldstaff">Accepted by Sales Rep</option>
-                            <option value="accepted_by_distributor">Approved</option>
-                            <option value="delivered">Delivered</option>
-                            <option value="cancelled">Cancelled</option>
-                            <option value="rejected">Rejected</option>
-                        </select>
+                    <div class="d-inline-flex align-items-center gap-3 ms-2">
+                        <div class="d-flex align-items-center">
+                            <label for="status_filter" class="form-label me-2 mb-0 fw-bold">Status:</label>
+                            <select id="status_filter" class="form-select form-select-sm" style="width: 150px;">
+                                <option value="">All Statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="accepted_by_fieldstaff">Accepted by Sales Rep</option>
+                                <option value="accepted_by_distributor">Approved</option>
+                                <option value="delivered">Delivered</option>
+                                <option value="cancelled">Cancelled</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <label for="payment_status_filter" class="form-label me-2 mb-0 fw-bold">Payment:</label>
+                            <select id="payment_status_filter" class="form-select form-select-sm" style="width: 150px;">
+                                <option value="">All Payments</option>
+                                <option value="paid">Paid</option>
+                                <option value="pending">Unpaid</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -94,7 +104,7 @@
                                 <th>Sl No</th>
                                 <th>Order Code</th>
                                 <th>Retailer</th>
-                                <th>Summary</th>
+                                <th>Products</th>
                                 <th>Total</th>
                                 <th>Placed At</th>
                                 <th>Status</th>
@@ -147,10 +157,10 @@
                             </tfoot>
                         </table>
                     </div>
-                    <div class="mt-3">
+                    {{-- <div class="mt-3">
                         <strong>Delivery Notes:</strong>
                         <p id="view_notes" class="text-muted small"></p>
-                    </div>
+                    </div> --}}
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -223,10 +233,47 @@
                             <label class="form-label">Upload Invoice (PDF, JPG, PNG)</label>
                             <input type="file" name="invoice" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
                         </div>
+                        @if(Auth::user()->hasRole('distributor'))
+                            <div class="mb-3" id="paymentStatusGroup">
+                                <label class="form-label fw-bold">Payment Status</label>
+                                <select name="payment_status" class="form-select">
+                                    <option value="pending">Unpaid</option>
+                                    <option value="paid">Paid</option>
+                                </select>
+                            </div>
+                        @endif
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-success">Approve Order</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- Retailer Payment Status Modal --}}
+    <div class="modal fade" id="retailerPaymentStatusModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Payment Status</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="retailerPaymentStatusForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="retailer_payment_order_id">
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="retailer_payment_status_select" name="payment_status">
+                                <option value="pending">Unpaid</option>
+                                <option value="paid">Paid</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary btn-sm">Update</button>
                     </div>
                 </form>
             </div>
@@ -310,6 +357,7 @@
                     url: window.location.href,
                     data: function (d) {
                         d.status = $('#status_filter').val();
+                        d.payment_status = $('#payment_status_filter').val();
                     }
                 },
                 columns: [{
@@ -376,13 +424,21 @@
                     name: 'payment_status',
                     render: function (data, type, row) {
                         let payStatus = row.payment_status ? row.payment_status.toLowerCase() : 'pending';
-                        let bgClass = 'bg-secondary text-white';
+                        let bgClass, displayLabel;
 
-                        if (payStatus === 'pending') bgClass = 'bg-warning text-dark';
-                        else if (payStatus === 'paid') bgClass = 'bg-success text-white';
-                        else if (payStatus === 'failed') bgClass = 'bg-danger text-white';
+                        if (payStatus === 'paid') {
+                            bgClass = 'bg-success text-white';
+                            displayLabel = 'Paid';
+                        } else {
+                            bgClass = 'bg-warning text-dark';
+                            displayLabel = 'Unpaid';
+                        }
 
-                        return `<span class="badge ${bgClass}">${payStatus}</span>`;
+                        let canChangePayment = isAdmin || isDistributor;
+                        let cursorStyle = canChangePayment ? 'cursor: pointer;' : '';
+                        let clickableClass = canChangePayment ? 'change-payment-status' : '';
+
+                        return `<span class="badge ${bgClass} ${clickableClass}" data-id="${row.id}" data-status="${payStatus}" style="font-size: 0.85rem; ${cursorStyle}">${displayLabel}</span>`;
                     }
                 },
                 {
@@ -395,18 +451,18 @@
                             let ext = row.invoice_url.split('.').pop().toLowerCase();
                             let icon = ext === 'pdf' ? 'fa-file-pdf-o' : 'fa-file-image-o';
                             let btnsHtml = `
-                                                                                                                        <div class="d-flex align-items-center gap-1 p-2">
-                                                                                                                            <a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-success" title="View Invoice">
-                                                                                                                                <i class="fa ${icon}"></i> &nbsp;View
-                                                                                                                                                           </a>`;
+                                                                                                                                        <div class="d-flex align-items-center gap-1 p-2">
+                                                                                                                                            <a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-success" title="View Invoice">
+                                                                                                                                                <i class="fa ${icon}"></i> &nbsp;View
+                                                                                                                                                                           </a>`;
                             if (!isFieldStaff) {
                                 btnsHtml += `
-                                                                                                                            <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}" title="Re-upload Invoice">
-                                                                                                                                <i class="fa fa-refresh"></i>
-                                                                                                                            </button>
-                                                                                                                            <button class="btn btn-xs btn-danger remove-invoice-btn" data-id="${row.id}" title="Remove Invoice">
-                                                                                                                                <i class="fa fa-trash"></i>
-                                                                                                                            </button>`;
+                                                                                                                                            <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}" title="Re-upload Invoice">
+                                                                                                                                                <i class="fa fa-refresh"></i>
+                                                                                                                                            </button>
+                                                                                                                                            <button class="btn btn-xs btn-danger remove-invoice-btn" data-id="${row.id}" title="Remove Invoice">
+                                                                                                                                                <i class="fa fa-trash"></i>
+                                                                                                                                            </button>`;
                             }
                             btnsHtml += `</div>`;
                             return btnsHtml;
@@ -419,10 +475,10 @@
                         }
 
                         return `
-                                                                                                                    <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}">
-                                                                                                                        <i class="fa fa-upload"></i> Upload
-                                                                                                                    </button>
-                                                                                                                `;
+                                                                                                                                    <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}">
+                                                                                                                                        <i class="fa fa-upload"></i> Upload
+                                                                                                                                    </button>
+                                                                                                                                `;
                     }
                 },
                 {
@@ -464,6 +520,46 @@
 
             $('#status_filter').change(function () {
                 table.ajax.reload();
+            });
+            $('#payment_status_filter').change(function () {
+                table.ajax.reload();
+            });
+
+            // Update Payment Status (Admin only - click badge)
+            $(document).on('click', '.change-payment-status', function () {
+                let id = $(this).data('id');
+                let status = $(this).data('status') || 'pending';
+                $('#retailer_payment_order_id').val(id);
+                $('#retailer_payment_status_select').val(status.toLowerCase());
+                $('#retailerPaymentStatusModal').modal('show');
+            });
+
+            $('#retailerPaymentStatusForm').submit(function (e) {
+                e.preventDefault();
+                let id = $('#retailer_payment_order_id').val();
+                let $btn = $(this).find('button[type="submit"]');
+                let oldText = $btn.text();
+                $btn.prop('disabled', true).text('Updating...');
+
+                $.ajax({
+                    url: "{{ route('admin.retailer-orders.update-payment-status', ':id') }}".replace(':id', id),
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        payment_status: $('#retailer_payment_status_select').val()
+                    },
+                    success: function (res) {
+                        $('#retailerPaymentStatusModal').modal('hide');
+                        showToast('success', res.success || 'Updated');
+                        table.ajax.reload(null, false);
+                    },
+                    error: function (xhr) {
+                        showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Update failed');
+                    },
+                    complete: function () {
+                        $btn.prop('disabled', false).text(oldText);
+                    }
+                });
             });
 
             // Status Update Logic
@@ -659,11 +755,11 @@
                 if (row.items && row.items.length) {
                     row.items.forEach(item => {
                         tbody.append(`<tr>
-                                                                                                            <td>${item.product_name}</td>
-                                                                                                            <td>${item.quantity}</td>
-                                                                                                            <td>${item.unit_price}</td>
-                                                                                                            <td>${item.total_amount}</td>
-                                                                                                        </tr>`);
+                                                                                                                            <td>${item.product_name}</td>
+                                                                                                                            <td>${item.quantity}</td>
+                                                                                                                            <td>${item.unit_price}</td>
+                                                                                                                            <td>${item.total_amount}</td>
+                                                                                                                        </tr>`);
                     });
                 } else {
                     tbody.html('<tr><td colspan="4" class="text-center">No items</td></tr>');

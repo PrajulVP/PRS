@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\RetailerOrder;
 use App\Models\Product;
+use App\Models\Inventory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class RetailerOrderController extends Controller
 {
@@ -97,23 +99,40 @@ class RetailerOrderController extends Controller
             $totalQty = 0;
 
             foreach ($request->items as $item) {
-                $prod = $distributor->products()->where('product_id', $item['product_id'])->first();
-                if (!$prod || $prod->pivot->stock < $item['quantity']) {
-                    throw new \Exception('Insufficient stock for product id ' . $item['product_id']);
+                $product = Product::find($item['product_id']);
+                if (!$product) throw new \Exception('Product not found');
+
+                $needed = (int)$item['quantity'];
+
+                // Fetch inventory batches for this distributor and product, FEFO
+                $inventories = Inventory::where('distributor_id', $distributor->id)
+                    ->where('product_id', $product->id)
+                    ->where('stock', '>', 0)
+                    ->orderBy('expiry_date', 'asc')
+                    ->get();
+
+                $available = $inventories->sum('stock');
+                if ($available < $needed) {
+                    throw new \Exception("Insufficient stock for product: {$product->product_name}");
                 }
 
-                // Decrement
-                $distributor->products()->updateExistingPivot($prod->id, ['stock' => $prod->pivot->stock - $item['quantity']]);
+                $remainingNeeded = $needed;
+                foreach ($inventories as $inv) {
+                    if ($remainingNeeded <= 0) break;
+                    $take = min($inv->stock, $remainingNeeded);
+                    $inv->decrement('stock', $take);
+                    $remainingNeeded -= $take;
+                }
 
-                $sub = $item['quantity'] * $prod->mrp;
+                $sub = $needed * $product->mrp;
                 $order->items()->create([
-                    'product_id' => $prod->id,
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $prod->mrp,
+                    'product_id' => $product->id,
+                    'quantity' => $needed,
+                    'unit_price' => $product->mrp,
                     'total_amount' => $sub
                 ]);
                 $totalAmt += $sub;
-                $totalQty += $item['quantity'];
+                $totalQty += $needed;
             }
 
             $order->update(['total_amount' => $totalAmt, 'total_items' => count($request->items), 'total_quantity' => $totalQty]);

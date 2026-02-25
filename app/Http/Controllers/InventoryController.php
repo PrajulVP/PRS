@@ -70,9 +70,7 @@ class InventoryController extends Controller
         // Treat DataTables requests as AJAX or when 'draw' param is present
         if ($request->ajax() || $request->has('draw') || $request->expectsJson()) {
             try {
-                $query = Inventory::with(['product', 'distributor.user'])
-                    ->selectRaw('MAX(id) as id, product_id, distributor_id, SUM(stock) as stock, MAX(distributor_product_code) as distributor_product_code, MAX(product_name) as product_name')
-                    ->groupBy('product_id', 'distributor_id');
+                $query = Inventory::with(['product', 'distributor.user']);
 
                 if (Auth::user()->hasRole('distributor')) {
                     $distributor = Auth::user()->distributor;
@@ -101,11 +99,7 @@ class InventoryController extends Controller
                 }
 
                 // Correct totals for grouped data
-                $totalDataQuery = Inventory::query();
-                if (Auth::user()->hasRole('distributor')) {
-                    $totalDataQuery->where('distributor_id', Auth::user()->distributor->id);
-                }
-                $totalData = $totalDataQuery->select('product_id', 'distributor_id')->groupBy('product_id', 'distributor_id')->get()->count();
+                $totalData = Inventory::count();
 
                 $totalFiltered = (clone $query)->get()->count();
 
@@ -142,6 +136,8 @@ class InventoryController extends Controller
                         'distributor_name' => $i->distributor?->user?->name ?? 'N/A',
                         'stock' => (int) $i->stock,
                         'image' => $i->product && $i->product->image ? asset('storage/' . $i->product->image) : asset('admin/assets/images/dashboard/product-1.png'), // Placeholder
+                        'batch_no' => $i->batch_no ?? '-',
+                        'expiry_date' => $i->expiry_date ? \Carbon\Carbon::parse($i->expiry_date)->format('d-m-Y') : '-',
                         'product_details' => $i->product ? [
                             'generic_name' => $i->product->generic_name,
                             'pack' => $i->product->pack,
@@ -188,6 +184,8 @@ class InventoryController extends Controller
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'stock' => 'required|integer|min:0',
+            'batch_no' => 'required|string|max:255',
+            'expiry_date' => 'required|date',
         ]);
 
         $product = Product::find($request->product_id);
@@ -208,6 +206,8 @@ class InventoryController extends Controller
 
         $inventory = Inventory::where('product_id', $product->id)
             ->where('distributor_id', $distributorId)
+            ->where('batch_no', $request->batch_no)
+            ->where('expiry_date', $request->expiry_date)
             ->first();
 
         if ($inventory) {
@@ -225,6 +225,8 @@ class InventoryController extends Controller
                 'product_name' => $product->product_name,
                 'distributor_id' => $distributorId,
                 'stock' => $request->stock,
+                'batch_no' => $request->batch_no,
+                'expiry_date' => $request->expiry_date,
             ]);
             $changeType = 'initial_stock';
             $remarks = 'Initial stock on creation';
@@ -263,13 +265,15 @@ class InventoryController extends Controller
     {
         $request->validate([
             'stock' => 'required|integer|min:0',
+            'batch_no' => 'nullable|string|max:255',
+            'expiry_date' => 'nullable|date',
         ]);
 
         $previousStock = $inventory->stock;
         $newStock = $request->stock;
         $quantityChange = $newStock - $previousStock;
 
-        $inventory->update($request->only(['distributor_product_code', 'product_name', 'product_id', 'distributor_id', 'stock']));
+        $inventory->update($request->only(['distributor_product_code', 'product_name', 'product_id', 'distributor_id', 'stock', 'batch_no', 'expiry_date']));
 
         if ($quantityChange !== 0) {
             StockHistory::create([

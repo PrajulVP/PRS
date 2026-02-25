@@ -11,10 +11,45 @@ class ProductController extends Controller
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
-            if (!\Illuminate\Support\Facades\Auth::user()->hasAnyRole(['admin', 'superadmin'])) {
-                abort(403, 'Unauthorized action. Only Admins can manage products.');
+            /** @var \App\Models\User $user */
+            $user = \Illuminate\Support\Facades\Auth::user();
+            if (!$user) return redirect()->route('login');
+
+            if ($user->hasAnyRole(['admin', 'superadmin'])) {
+                return $next($request);
             }
-            return $next($request);
+
+            $routeName = $request->route()->getName();
+
+            // Broad check for index/show
+            if (in_array($routeName, ['products.index', 'products.show'])) {
+                if ($user->hasPermissionToCategory('products', 'view')) {
+                    return $next($request);
+                }
+            }
+
+            // check for creation/import
+            if (in_array($routeName, ['products.create', 'products.store', 'products.import', 'products.download-template'])) {
+                if ($user->hasPermissionToCategory('products', 'add')) {
+                    return $next($request);
+                }
+            }
+
+            // check for editing
+            if (in_array($routeName, ['products.edit', 'products.update'])) {
+                if ($user->hasPermissionToCategory('products', 'edit')) {
+                    return $next($request);
+                }
+            }
+
+            // check for deletion
+            if ($routeName === 'products.destroy') {
+                if ($user->hasPermissionToCategory('products', 'delete')) {
+                    return $next($request);
+                }
+            }
+
+            abort(403, 'Unauthorized action. You do not have permission to manage products.');
         });
     }
 
@@ -34,8 +69,7 @@ class ProductController extends Controller
                 $query->where(function ($q) use ($searchValue) {
                     $q->where('product_code', 'like', "%{$searchValue}%")
                         ->orWhere('product_name', 'like', "%{$searchValue}%")
-                        ->orWhere('generic_name', 'like', "%{$searchValue}%")
-                        ->orWhere('batch_no', 'like', "%{$searchValue}%");
+                        ->orWhere('generic_name', 'like', "%{$searchValue}%");
                 });
             }
 
@@ -67,7 +101,6 @@ class ProductController extends Controller
                     'box_size' => $product->box_size,
                     'carton_size' => $product->carton_size,
                     'hsn_code' => $product->hsn_code,
-                    'batch_no' => $product->batch_no,
                     'mrp' => number_format((float)$product->mrp, 2),
                     'ptr' => number_format((float)$product->ptr, 2),
                     'pts' => number_format((float)$product->pts, 2),
@@ -109,11 +142,10 @@ class ProductController extends Controller
             'product_code' => 'required|string|unique:products|max:255',
             'product_name' => 'required|string|max:255',
             'generic_name' => 'nullable|string|max:255',
-            'strip_size' => 'nullable|integer|min:0',
-            'box_size' => 'nullable|integer|min:0',
-            'carton_size' => 'nullable|integer|min:0',
+            'strip_size' => 'nullable|string|max:255',
+            'box_size' => 'nullable|string|max:255',
+            'carton_size' => 'nullable|string|max:255',
             'hsn_code' => 'nullable|string|max:255',
-            // 'batch_no' => 'string|unique:products|max:255',
             'mrp' => 'required|numeric|min:0',
             'ptr' => 'required|numeric|min:0',
             'pts' => 'required|numeric|min:0',
@@ -121,11 +153,14 @@ class ProductController extends Controller
             'gst' => 'required|numeric|min:0',
             'offer' => 'nullable|numeric|min:0',
             'discount' => 'nullable|numeric|min:0',
-            'net_amount' => '|numeric|min:0',
+            'net_amount' => 'nullable|numeric|min:0',
             'loyalty_point_percentage' => 'nullable|numeric|min:0',
         ]);
 
-        Product::create($request->all());
+        $data = $request->all();
+        $data['net_amount'] = $data['taxable_value'] + ($data['taxable_value'] * $data['gst'] / 100);
+
+        Product::create($data);
 
         return redirect()->route('products.index')->with('success', 'Product created successfully.');
     }
@@ -155,11 +190,10 @@ class ProductController extends Controller
             'product_code' => 'required|string|max:255|unique:products,product_code,' . $product->id,
             'product_name' => 'required|string|max:255',
             'generic_name' => 'nullable|string|max:255',
-            'strip_size' => 'nullable|integer|min:0',
-            'box_size' => 'nullable|integer|min:0',
-            'carton_size' => 'nullable|integer|min:0',
+            'strip_size' => 'nullable|string|max:255',
+            'box_size' => 'nullable|string|max:255',
+            'carton_size' => 'nullable|string|max:255',
             'hsn_code' => 'nullable|string|max:255',
-            // 'batch_no' => '|string|max:255|unique:products,batch_no,' . $product->id,
             'mrp' => 'required|numeric|min:0',
             'ptr' => 'required|numeric|min:0',
             'pts' => 'required|numeric|min:0',
@@ -167,11 +201,14 @@ class ProductController extends Controller
             'gst' => 'required|numeric|min:0',
             'offer' => 'nullable|numeric|min:0',
             'discount' => 'nullable|numeric|min:0',
-            'net_amount' => '|numeric|min:0',
+            'net_amount' => 'nullable|numeric|min:0',
             'loyalty_point_percentage' => 'nullable|numeric|min:0',
         ]);
 
-        $product->update($request->all());
+        $data = $request->all();
+        $data['net_amount'] = $data['taxable_value'] + ($data['taxable_value'] * $data['gst'] / 100);
+
+        $product->update($data);
 
         return redirect()->route('products.index')->with('success', 'Product updated successfully.');
     }
@@ -233,16 +270,18 @@ class ProductController extends Controller
         $errors = [];
 
         if (($handle = fopen($file->getRealPath(), "r")) !== FALSE) {
-            $header = fgetcsv($handle, 1000, ",");
+            $header = fgetcsv($handle, 0, ","); // length 0 for no limit
 
             if (!$header || count($header) < 16) {
-                return redirect()->route('products.index')->with('error', 'Invalid CSV format or missing columns.');
+                return redirect()->route('products.index')->with('error', 'Invalid CSV format or missing columns. Expected at least 16 columns, found ' . (is_array($header) ? count($header) : 0));
             }
 
-            // Remove BOM if present
-            $header[0] = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $header[0]);
+            // Trim headers and remove BOM
+            $header = array_map(function ($h) {
+                return trim(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $h));
+            }, $header);
 
-            while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+            while (($data = fgetcsv($handle, 0, ",")) !== FALSE) {
                 $row++;
                 if (count($header) !== count($data)) {
                     $errors[] = "Row $row: Column count mismatch.";
@@ -257,28 +296,32 @@ class ProductController extends Controller
                     continue;
                 }
 
-                // Create or Update
-                Product::updateOrCreate(
-                    ['product_code' => $productData['product_code']],
-                    [
-                        'product_name' => $productData['product_name'],
-                        'generic_name' => $productData['generic_name'] ?? null,
-                        'strip_size' => $productData['strip_size'] ?: null,
-                        'box_size' => $productData['box_size'] ?: null,
-                        'carton_size' => $productData['carton_size'] ?: null,
-                        'hsn_code' => $productData['hsn_code'] ?? null,
-                        'mrp' => (float)($productData['mrp'] ?? 0),
-                        'ptr' => (float)($productData['ptr'] ?? 0),
-                        'pts' => (float)($productData['pts'] ?? 0),
-                        'taxable_value' => (float)($productData['taxable_value'] ?? 0),
-                        'gst' => (float)($productData['gst'] ?? 0),
-                        'offer' => (float)($productData['offer'] ?? 0),
-                        'discount' => (float)($productData['discount'] ?? 0),
-                        'net_amount' => (float)($productData['net_amount'] ?? 0),
-                        'loyalty_point_percentage' => (float)($productData['loyalty_point_percentage'] ?? 0),
-                    ]
-                );
-                $successCount++;
+                try {
+                    // Create or Update
+                    Product::updateOrCreate(
+                        ['product_code' => $productData['product_code']],
+                        [
+                            'product_name' => $productData['product_name'],
+                            'generic_name' => $productData['generic_name'] ?? null,
+                            'strip_size' => $productData['strip_size'] ?: null,
+                            'box_size' => $productData['box_size'] ?: null,
+                            'carton_size' => $productData['carton_size'] ?: null,
+                            'hsn_code' => $productData['hsn_code'] ?? null,
+                            'mrp' => (float)($productData['mrp'] ?? 0),
+                            'ptr' => (float)($productData['ptr'] ?? 0),
+                            'pts' => (float)($productData['pts'] ?? 0),
+                            'taxable_value' => $taxable = (float)($productData['taxable_value'] ?? 0),
+                            'gst' => $gst = (float)($productData['gst'] ?? 0),
+                            'offer' => (float)($productData['offer'] ?? 0),
+                            'discount' => (float)($productData['discount'] ?? 0),
+                            'net_amount' => (float)($productData['net_amount'] ?: ($taxable + ($taxable * $gst / 100))),
+                            'loyalty_point_percentage' => (float)($productData['loyalty_point_percentage'] ?? 0),
+                        ]
+                    );
+                    $successCount++;
+                } catch (\Exception $e) {
+                    $errors[] = "Row $row: " . $e->getMessage();
+                }
             }
             fclose($handle);
         }

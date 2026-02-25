@@ -82,7 +82,7 @@
                                 <th>Order Code</th>
                                 <th>Retailer</th>
                                 <th>Distributor</th>
-                                <th>Summary</th>
+                                <th>Products</th>
                                 <th>Total</th>
                                 <th>Status</th>
                                 <th>Placed At</th>
@@ -361,7 +361,7 @@
                     data: 'retailer_name',
                     name: 'retailer_name',
                     visible: !{{ Auth::user()->hasRole('retailer') ? 'true' : 'false' }} 
-                                                                    },
+                                                                        },
                 {
                     data: 'distributor_name',
                     name: 'distributor_name',
@@ -379,11 +379,11 @@
                         if (items.length > 2) {
                             let visible = items.slice(0, 2).join('<br>');
                             return `<div>
-                                                                                                                                        <span class="preview-content">${visible}</span>
-                                                                                                                                        <span class="full-content d-none">${data}</span>
-                                                                                                                                        <br>
-                                                                                                                                        <a href="#" class="small text-primary toggle-more-btn" onclick="event.preventDefault(); let p = $(this).parent(); if(p.find('.full-content').hasClass('d-none')){ p.find('.full-content').removeClass('d-none'); p.find('.preview-content').addClass('d-none'); $(this).text('Show Less'); } else { p.find('.full-content').addClass('d-none'); p.find('.preview-content').removeClass('d-none'); $(this).text('Read More'); }">Read More</a>
-                                                                                                                                    </div>`;
+                                                                                                                                            <span class="preview-content">${visible}</span>
+                                                                                                                                            <span class="full-content d-none">${data}</span>
+                                                                                                                                            <br>
+                                                                                                                                            <a href="#" class="small text-primary toggle-more-btn" onclick="event.preventDefault(); let p = $(this).parent(); if(p.find('.full-content').hasClass('d-none')){ p.find('.full-content').removeClass('d-none'); p.find('.preview-content').addClass('d-none'); $(this).text('Show Less'); } else { p.find('.full-content').addClass('d-none'); p.find('.preview-content').removeClass('d-none'); $(this).text('Read More'); }">Read More</a>
+                                                                                                                                        </div>`;
                         }
                         return data;
                     }
@@ -536,24 +536,24 @@
                         });
 
                         tbody.append(`
-                                                                                                                    <tr>
-                                                                                                                        <td>${item.name}
-                                                                                                                            <input type="hidden" name="items[${id}][product_id]" value="${id}">
-                                                                                                                            ${item.order_item_id ? `<input type="hidden" name="items[${id}][order_item_id]" value="${item.order_item_id}">` : ''}
-                                                                                                                        </td>
-                                                                                                                        <td>
-                                                                                                                            <select class="form-select form-select-sm unit-select-edit" data-id="${id}" name="items[${id}][unit]" style="width:90px; margin: 0 auto;">
-                                                                                                                                ${options}
-                                                                                                                            </select>
-                                                                                                                        </td>
-                                                                                                                        <td>
-                                                                                                                            <input type="number" class="form-control form-control-sm edit-qty" data-id="${id}" value="${qty}" name="items[${id}][quantity]" min="1" style="width:80px; margin: 0 auto;">
-                                                                                                                        </td>
-                                                                                                                        <td class="text-end">${price.toFixed(2)}<input type="hidden" name="items[${id}][unit_price]" value="${price}"></td>
-                                                                                                                        <td class="text-end">${sub.toFixed(2)}</td>
-                                                                                                                        <td class="text-center"><button type="button" class="btn btn-danger btn-sm remove-edit" data-id="${id}">X</button></td>
-                                                                                                                    </tr>
-                                                                                                                    `);
+                                                                                                                        <tr>
+                                                                                                                            <td>${item.name}
+                                                                                                                                <input type="hidden" name="items[${id}][product_id]" value="${id}">
+                                                                                                                                ${item.order_item_id ? `<input type="hidden" name="items[${id}][order_item_id]" value="${item.order_item_id}">` : ''}
+                                                                                                                            </td>
+                                                                                                                            <td>
+                                                                                                                                <select class="form-select form-select-sm unit-select-edit" data-id="${id}" name="items[${id}][unit]" style="width:90px; margin: 0 auto;">
+                                                                                                                                    ${options}
+                                                                                                                                </select>
+                                                                                                                            </td>
+                                                                                                                            <td>
+                                                                                                                                <input type="number" class="form-control form-control-sm edit-qty" data-id="${id}" value="${qty}" name="items[${id}][quantity]" min="1" style="width:80px; margin: 0 auto;">
+                                                                                                                            </td>
+                                                                                                                            <td class="text-end">${price.toFixed(2)}<input type="hidden" name="items[${id}][unit_price]" value="${price}"></td>
+                                                                                                                            <td class="text-end">${sub.toFixed(2)}</td>
+                                                                                                                            <td class="text-center"><button type="button" class="btn btn-danger btn-sm remove-edit" data-id="${id}">X</button></td>
+                                                                                                                        </tr>
+                                                                                                                        `);
                     });
                 }
                 $('#edit_grand_total').text(total.toFixed(2));
@@ -829,12 +829,12 @@
             $(document).on('click', '.view-btn', function () {
                 let row = $(this).data('row');
                 $('#showOrderBody').html(`
-                                                                                                            <tr><th>Order Code</th><td>${row.order_code}</td></tr>
-                                                                                                            <tr><th>Retailer</th><td>${row.retailer_name || '-'}</td></tr>
-                                                                                                            <tr><th>Distributor</th><td>${row.distributor_name || row.distributor || '-'}</td></tr>
-                                                                                                            <tr><th>Status</th><td>${row.status}</td></tr>
-                                                                                                            <tr><th>Placed At</th><td>${row.placed_at || '-'}</td></tr>
-                                                                                                         `);
+                                                                                                                <tr><th>Order Code</th><td>${row.order_code}</td></tr>
+                                                                                                                <tr><th>Retailer</th><td>${row.retailer_name || '-'}</td></tr>
+                                                                                                                <tr><th>Distributor</th><td>${row.distributor_name || row.distributor || '-'}</td></tr>
+                                                                                                                <tr><th>Status</th><td>${row.status}</td></tr>
+                                                                                                                <tr><th>Placed At</th><td>${row.placed_at || '-'}</td></tr>
+                                                                                                             `);
                 let h = '';
                 let total = 0;
                 (row.items || []).forEach(function (i) {

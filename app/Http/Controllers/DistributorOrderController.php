@@ -102,13 +102,13 @@ class DistributorOrderController extends Controller
 
                 $formattedOrders = $orders->map(function ($order) {
                     $productSummary = $order->items->map(function ($item) {
-                        return $item->product->product_name . ' - ' . $item->quantity . ' ' . ($item->product->pack ?? '');
+                        return ($item->product?->product_name ?? 'Unknown Product') . ' - ' . $item->quantity . ' ' . ($item->product?->pack ?? '');
                     })->implode('<br>');
 
                     return [
                         'id' => $order->id,
                         'order_code' => $order->order_code,
-                        'name' => $order->distributor->user->name ?? 'N/A',
+                        'name' => $order->distributor?->user?->name ?? 'N/A',
                         'distributor_id' => $order->distributor_id,
                         'sales_manager_name' => $order->salesManager?->user?->name ?? 'N/A',
                         'total_items' => $order->total_items,
@@ -120,8 +120,8 @@ class DistributorOrderController extends Controller
                         'items' => $order->items->map(function ($item) {
                             return [
                                 'product_id' => $item->product_id,
-                                'product_name' => $item->product->product_name,
-                                'product_code' => $item->product->product_code,
+                                'product_name' => $item->product?->product_name ?? 'Unknown Product',
+                                'product_code' => $item->product?->product_code ?? 'N/A',
                                 'quantity' => $item->quantity,
                                 'unit_price' => $item->price,
                                 'total_amount' => $item->subtotal,
@@ -415,6 +415,11 @@ class DistributorOrderController extends Controller
         $request->validate([
             'payment_status' => 'required|in:pending,paid,failed',
             'invoice' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'batches' => 'required|array',
+            'batches.*' => 'required|array|min:1',
+            'batches.*.*.batch_no' => 'required|string|max:255',
+            'batches.*.*.expiry_date' => 'required|date',
+            'batches.*.*.quantity' => 'required|integer|min:1',
         ]);
 
         DB::beginTransaction();
@@ -450,10 +455,27 @@ class DistributorOrderController extends Controller
             }
 
             $distributorOrder->update([
-                'status' => DistributorOrder::STATUS_APPROVED, // Admin accepted, now awaiting distributor confirmation
+                'status' => DistributorOrder::STATUS_APPROVED,
                 'payment_status' => $request->payment_status,
                 'invoice_path' => $invoicePath
             ]);
+
+            // Save Batch Details
+            foreach ($request->batches as $itemId => $batches) {
+                $orderItem = $distributorOrder->items()->find($itemId);
+                if (!$orderItem) continue;
+
+                // Delete existing batches if re-approving (though usually direct approved)
+                $orderItem->batches()->delete();
+
+                foreach ($batches as $batchData) {
+                    $orderItem->batches()->create([
+                        'batch_no' => $batchData['batch_no'],
+                        'expiry_date' => $batchData['expiry_date'],
+                        'quantity' => $batchData['quantity'],
+                    ]);
+                }
+            }
 
             // Update Distributor Inventory
             // This logic is now handled by confirmReceipt
@@ -717,32 +739,37 @@ class DistributorOrderController extends Controller
             $product = $item->product;
             if (!$product) continue;
 
-            $qty = $item->quantity;
             $unit = strtolower($item->unit);
-            $totalStrips = $qty;
 
-            if ($unit === 'box') {
-                $totalStrips = $qty * ($product->box_size ?? 1);
-            } elseif ($unit === 'carton') {
-                $boxSize = $product->box_size ?? 1;
-                $cartonSize = $product->carton_size ?? 1;
-                $totalStrips = $qty * $boxSize * $cartonSize;
-            }
+            foreach ($item->batches as $batch) {
+                $qty = $batch->quantity;
+                $totalStrips = $qty;
 
-            $inventory = Inventory::firstOrNew([
-                'distributor_id' => $order->distributor_id,
-                'product_id' => $product->id,
-            ]);
+                if ($unit === 'box') {
+                    $totalStrips = $qty * ($product->box_size ?? 1);
+                } elseif ($unit === 'carton') {
+                    $boxSize = $product->box_size ?? 1;
+                    $cartonSize = $product->carton_size ?? 1;
+                    $totalStrips = $qty * $boxSize * $cartonSize;
+                }
 
-            if (!$inventory->exists) {
-                $inventory->distributor_product_code = $product->product_code;
+                $inventory = Inventory::firstOrNew([
+                    'distributor_id' => $order->distributor_id,
+                    'product_id' => $product->id,
+                    'batch_no' => $batch->batch_no,
+                    'expiry_date' => $batch->expiry_date
+                ]);
+
+                if (!$inventory->exists) {
+                    $inventory->distributor_product_code = $product->product_code;
+                    $inventory->product_name = $product->product_name;
+                    $inventory->stock = 0;
+                }
                 $inventory->product_name = $product->product_name;
-                $inventory->stock = 0;
-            }
-            $inventory->product_name = $product->product_name;
 
-            $inventory->stock += $totalStrips;
-            $inventory->save();
+                $inventory->stock += $totalStrips;
+                $inventory->save();
+            }
         }
     }
 }

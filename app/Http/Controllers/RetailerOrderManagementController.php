@@ -437,7 +437,11 @@ class RetailerOrderManagementController extends Controller
             if ($status !== 'accepted_by_fieldstaff') {
                 return response()->json(['error' => 'Order must be accepted by Field Staff first.'], 400);
             }
-            $retailerOrder->update(['status' => 'accepted_by_distributor']);
+            $updateData = ['status' => 'accepted_by_distributor'];
+            if ($request->filled('payment_status') && in_array($request->payment_status, ['pending', 'paid'])) {
+                $updateData['payment_status'] = $request->payment_status;
+            }
+            $retailerOrder->update($updateData);
 
             if ($request->hasFile('invoice')) {
                 $file = $request->file('invoice');
@@ -818,13 +822,28 @@ class RetailerOrderManagementController extends Controller
     public function updatePaymentStatus(Request $request, RetailerOrder $retailerOrder)
     {
         $request->validate([
-            'payment_status' => 'required|in:pending,paid,failed',
+            'payment_status' => 'required|in:pending,paid',
         ]);
+
+        $user = Auth::user();
+
+        // Allow admins, superadmins, salesmanagers
+        if (!$user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
+            // Allow distributor — only for their own orders
+            if ($user->hasRole('distributor')) {
+                if (!$user->distributor || $retailerOrder->distributor_id != $user->distributor->id) {
+                    return response()->json(['error' => 'You are not authorized to update this order.'], 403);
+                }
+            } else {
+                return response()->json(['error' => 'Permission denied.'], 403);
+            }
+        }
 
         $retailerOrder->payment_status = $request->payment_status;
         $retailerOrder->save();
 
-        return response()->json(['success' => 'Payment status updated successfully to ' . ucfirst($request->payment_status)]);
+        $label = $request->payment_status === 'paid' ? 'Paid' : 'Unpaid';
+        return response()->json(['success' => 'Payment status updated to ' . $label]);
     }
 
     public function invoice(RetailerOrder $retailerOrder)

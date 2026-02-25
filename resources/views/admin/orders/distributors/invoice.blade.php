@@ -149,7 +149,8 @@
                     <table>
                         <tr>
                             <td class="title">
-                                <img src="{{ asset('admin/assets/images/logo/logo.png') }}" style="width:100%; max-width:150px;">
+                                <img src="{{ asset('admin/assets/images/logo/logo.png') }}"
+                                    style="width:100%; max-width:150px;">
                             </td>
 
                             <td>
@@ -193,22 +194,33 @@
             </tr>
 
             @foreach($distributorOrder->items as $item)
-            <tr class="item">
-                <td>{{ $item->product->product_name }}</td>
-                <td style="text-align: center;">{{ number_format($item->unit_price, 2) }}</td>
-                <td style="text-align: center;">{{ $item->quantity }}</td>
-                <td style="text-align: right;">{{ number_format($item->total_amount, 2) }}</td>
-            </tr>
+                <tr class="item">
+                    <td>
+                        <strong>{{ $item->product->product_name }}</strong>
+                        @if($item->batches->count() > 0)
+                            <div style="font-size: 0.8em; color: #777; margin-left: 10px;">
+                                @foreach($item->batches as $batch)
+                                    Batch: {{ $batch->batch_no }} | Exp:
+                                    {{ \Carbon\Carbon::parse($batch->expiry_date)->format('m/Y') }} | Qty:
+                                    {{ $batch->quantity }}<br>
+                                @endforeach
+                            </div>
+                        @endif
+                    </td>
+                    <td style="text-align: center;">{{ number_format($item->price, 2) }}</td>
+                    <td style="text-align: center;">{{ $item->quantity }} {{ $item->unit }}</td>
+                    <td style="text-align: right;">{{ number_format($item->subtotal, 2) }}</td>
+                </tr>
             @endforeach
 
             @php
-            $cgstRate = $cgst ?? 9;
-            $sgstRate = $sgst ?? 9;
-            $totalTaxRate = $cgstRate + $sgstRate;
-            $divisor = 1 + ($totalTaxRate / 100);
-            $taxableAmount = $distributorOrder->total_amount / $divisor;
-            $cgstAmount = $taxableAmount * ($cgstRate / 100);
-            $sgstAmount = $taxableAmount * ($sgstRate / 100);
+                $cgstRate = $cgst ?? 9;
+                $sgstRate = $sgst ?? 9;
+                $totalTaxRate = $cgstRate + $sgstRate;
+                $divisor = 1 + ($totalTaxRate / 100);
+                $taxableAmount = $distributorOrder->total_amount / $divisor;
+                $cgstAmount = $taxableAmount * ($cgstRate / 100);
+                $sgstAmount = $taxableAmount * ($sgstRate / 100);
             @endphp
 
             <tr class="total">
