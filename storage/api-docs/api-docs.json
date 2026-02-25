@@ -496,6 +496,160 @@
                 ]
             }
         },
+        "/api/distributor/retailer-orders": {
+            "get": {
+                "tags": [
+                    "Distributor Retailer Orders"
+                ],
+                "summary": "List retailer orders placed to the authenticated distributor",
+                "operationId": "72a5517bd7345406f7720a43f461857c",
+                "parameters": [
+                    {
+                        "name": "retailer_id",
+                        "in": "query",
+                        "description": "Filter by retailer ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by order status (pending, accepted_by_fieldstaff, accepted_by_distributor, delivered, etc.)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "payment_status",
+                        "in": "query",
+                        "description": "Filter by payment status: paid or pending (unpaid)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "paid",
+                                "pending"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Results per page (default 15)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated list of retailer orders",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "order_code": {
+                                                        "type": "string"
+                                                    },
+                                                    "retailer_id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "retailer_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "retailer_shop": {
+                                                        "type": "string"
+                                                    },
+                                                    "total_amount": {
+                                                        "type": "string"
+                                                    },
+                                                    "status": {
+                                                        "type": "string"
+                                                    },
+                                                    "payment_status": {
+                                                        "type": "string"
+                                                    },
+                                                    "placed_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "last_page": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Not a distributor"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/distributor/retailer-orders/{id}": {
+            "get": {
+                "tags": [
+                    "Distributor Retailer Orders"
+                ],
+                "summary": "Get a single retailer order detail (must belong to authenticated distributor)",
+                "operationId": "b94fdcac50fc87653afaca73c8137929",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Retailer Order ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Order detail with items"
+                    },
+                    "403": {
+                        "description": "Not a distributor"
+                    },
+                    "404": {
+                        "description": "Order not found or not yours"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/distributor/inventory": {
             "get": {
                 "tags": [
@@ -891,6 +1045,10 @@
         {
             "name": "Distributor Orders",
             "description": "Distributor Orders"
+        },
+        {
+            "name": "Distributor Retailer Orders",
+            "description": "Distributor Retailer Orders"
         },
         {
             "name": "Inventory",

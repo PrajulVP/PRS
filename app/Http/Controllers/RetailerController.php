@@ -19,16 +19,7 @@ class RetailerController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $query = Retailer::with('user', 'distributor.user', 'fieldStaff.user', 'salesManager.user')->orderBy('retailers.id', 'desc');
-            // 'district' and 'area' relations might be broken if columns missing, so removing them from eager load to be safe, 
-            // OR keeping them if they don't crash. 
-            // If I keep 'district', and column is missing, it won't crash, just returns null.
-            // But if I try to JOIN, it crashes.
-            // I will remove them from 'with' if I suspect they are invalid, but the View expects them.
-            // Let's try to keep them in 'with' (Eloquent is soft on missing keys sometimes, or throws Exception?)
-            // Actually, looks like `belongsTo` will try to select `district_id`.
-            // If `district_id` is missing, `Retailer::with('district')->get()` WILL FAIL with "Column not found".
-            // So I MUST remove 'district' and 'area' from `with()`.
+            $query = Retailer::with(['user', 'distributor.user', 'fieldStaff.user', 'salesManager.user', 'district', 'area'])->orderBy('retailers.id', 'desc');
 
             if (Auth::user()->hasRole('distributor')) {
                 $distributor = Auth::user()->distributor;
@@ -51,11 +42,10 @@ class RetailerController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('district_name', function ($row) {
-                    // Manual fetch or N/A
-                    return 'N/A';
+                    return $row->district ? $row->district->name : 'N/A';
                 })
                 ->addColumn('area_name', function ($row) {
-                    return 'N/A';
+                    return $row->area ? $row->area->name : 'N/A';
                 })
                 ->addColumn('user_name', function ($row) {
                     return $row->user ? $row->user->name : 'N/A';
@@ -66,8 +56,7 @@ class RetailerController extends Controller
                 ->editColumn('user.status', function ($row) {
                     return $row->user ? $row->user->status : 'N/A';
                 })
-                ->rawColumns(['user.status', 'action']) // 'action' if I added it? No, 'Actions' column is handled in Blade usually? 
-                // Wait, Blade has `action-buttons`.
+                ->rawColumns(['user.status', 'action'])
                 ->make(true);
         }
 
@@ -110,6 +99,8 @@ class RetailerController extends Controller
             'longitude' => 'nullable|numeric|between:-180,180',
             'contact_no' => 'required',
             'address' => 'required',
+            'district_id' => 'required|exists:districts,id',
+            'area_id' => 'required|exists:areas,id',
         ]);
 
         $user = User::create([
@@ -182,6 +173,8 @@ class RetailerController extends Controller
             'longitude' => 'nullable|numeric|between:-180,180',
             'contact_no' => 'required',
             'address' => 'required',
+            'district_id' => 'required|exists:districts,id',
+            'area_id' => 'required|exists:areas,id',
         ]);
 
         $userUpdateData = [

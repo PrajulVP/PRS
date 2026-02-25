@@ -32,22 +32,21 @@ class UserController extends Controller
 
             $formatted = $users->map(function ($u) {
                 return [
-                    'id' => $u->id,
-                    'name' => $u->name,
-                    'email' => $u->email,
-                    'role' => $u->role,
-                    'status' => $u->status,
-                    'roles_display' => $u->getRoleNames()->implode(', '),
+                    'id'              => $u->id,
+                    'name'            => $u->name,
+                    'email'           => $u->email,
+                    'role'            => $u->role,
+                    'status'          => $u->status,
+                    'roles_display'   => $u->getRoleNames()->implode(', '),
+                    'profile_image_url' => $u->profile_image
+                        ? asset('storage/' . $u->profile_image)
+                        : null,
+                    'contact_no'      => $u->salesManager?->contact_no ?? $u->distributor?->contact_no ?? $u->retailer?->contact_no ?? $u->fieldStaff?->contact_no ?? '—',
+                    'address'         => $u->salesManager?->address ?? $u->retailer?->address ?? $u->fieldStaff?->address ?? $u->distributor?->address ?? '—',
                     // For Edit Modal
-                    'distributor_id' => $u->distributor?->id ?? $u->retailer?->distributor_id ?? $u->fieldStaff?->distributor_id,
-                    'gst' => $u->retailer?->gst,
+                    'distributor_id'  => $u->distributor?->id ?? $u->retailer?->distributor_id ?? $u->fieldStaff?->distributor_id,
+                    'gst'             => $u->retailer?->gst,
                     'sales_manager_id' => $u->fieldStaff?->sales_manager_id,
-                    'contact_no' => $u->salesManager?->contact_no ?? $u->distributor?->contact_no ?? $u->retailer?->contact_no,
-                    // Contact is scattered. User should have 'contact_no'? No, standard user table might not have it unless migration added it.
-                    // The `store` method uses `$request->contact_no` but `User::create` doesn't seem to have it in fillable?
-                    // Ah, Step 213 line 106: `SalesManager::create([... 'contact_no' => $request->contact_no])`.
-                    // It is in specific profile tables.
-                    'address' => $u->salesManager?->address ?? $u->retailer?->address ?? $u->fieldStaff?->address ?? $u->distributor?->address,
                 ];
             });
 
