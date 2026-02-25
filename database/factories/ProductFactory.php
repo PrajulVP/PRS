@@ -28,7 +28,7 @@ class ProductFactory extends Factory
             'pack' => $this->faker->word, // Using 'pack' column
             'box_size' => $this->faker->numberBetween(1, 10),
             'carton_size' => $this->faker->numberBetween(1, 20),
-            'batch_no' => $this->faker->unique()->numberBetween(1000, 9999), // batch_no is integer
+
             'mrp' => $this->faker->randomFloat(2, 10, 1000),
             'ptr' => $this->faker->randomFloat(2, 5, 900),
             'taxable_value' => $this->faker->randomFloat(2, 5, 800),
