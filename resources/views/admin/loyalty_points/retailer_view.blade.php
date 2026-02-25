@@ -6,6 +6,22 @@
         .page-title {
             padding-top: 0px !important;
         }
+
+        @keyframes pageEnter {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .page-animate-in {
+            animation: pageEnter 0.45s ease both;
+        }
     </style>
     <div class="container-fluid">
         <div class="page-title">
@@ -20,7 +36,7 @@
         </div>
     </div>
 
-    <div class="container-fluid">
+    <div class="container-fluid page-animate-in">
         <div class="row">
             <!-- Total Points Card -->
             <div class="col-sm-6 col-xl-3 mb-4 entrance-delay-1">
@@ -46,8 +62,21 @@
 
             <style>
                 .loyalty-card {
-                    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%) !important;
+                    background: linear-gradient(135deg, rgb(131, 204, 97) 0%, #35c26b 100%) !important;
                     transition: transform 0.3s;
+                    animation: cardGlow 2.5s ease-in-out infinite;
+                }
+
+                @keyframes cardGlow {
+
+                    0%,
+                    100% {
+                        box-shadow: 0 0 12px 2px rgba(56, 239, 125, 0.4);
+                    }
+
+                    50% {
+                        box-shadow: 0 0 28px 8px rgba(56, 239, 125, 0.75);
+                    }
                 }
 
                 .loyalty-card:hover {
@@ -151,28 +180,106 @@
                 }
             </style>
 
+            {{-- Confetti Canvas Overlay --}}
+            <canvas id="confetti-canvas"
+                style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;"></canvas>
+
             <script>
-                document.addEventListener("DOMContentLoaded", function () {
-                    const container = document.getElementById('falling-coins-container');
-                    const coinCount = 15; // Number of coins
+                (function () {
+                    // --- Falling coins inside card ---
+                    document.addEventListener("DOMContentLoaded", function () {
+                        const container = document.getElementById('falling-coins-container');
+                        const coinCount = 12;
+                        for (let i = 0; i < coinCount; i++) {
+                            let coin = document.createElement('div');
+                            coin.classList.add('falling-coin');
+                            coin.style.left = Math.random() * 100 + '%';
+                            coin.style.animationDuration = (Math.random() * 7 + 7) + 's';
+                            coin.style.animationDelay = (Math.random() * 8) + 's';
+                            let size = Math.random() * 8 + 12;
+                            coin.style.width = size + 'px';
+                            coin.style.height = size + 'px';
+                            container.appendChild(coin);
+                        }
+                    });
 
-                    for (let i = 0; i < coinCount; i++) {
-                        let coin = document.createElement('div');
-                        coin.classList.add('falling-coin');
+                    // --- Confetti burst on page load ---
+                    const canvas = document.getElementById('confetti-canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
 
-                        // Randomize position and animation properties - SLOWER
-                        coin.style.left = Math.random() * 100 + '%';
-                        coin.style.animationDuration = (Math.random() * 6 + 6) + 's'; // 6-12s for slow flow
-                        coin.style.animationDelay = (Math.random() * 8) + 's';
+                    const colors = ['#11998e', '#38ef7d', '#ffd700', '#ff6b6b', '#a18cd1', '#fbc2eb', '#fff', '#43e97b'];
+                    const shapes = ['circle', 'rect', 'triangle'];
+                    let pieces = [];
+                    let running = true;
 
-                        // Randomize size slightly
-                        let size = Math.random() * 8 + 12; // 12-20px
-                        coin.style.width = size + 'px';
-                        coin.style.height = size + 'px';
-
-                        container.appendChild(coin);
+                    for (let i = 0; i < 180; i++) {
+                        pieces.push({
+                            x: Math.random() * canvas.width,
+                            y: -20 - Math.random() * 300,
+                            r: Math.random() * 7 + 4,
+                            d: Math.random() * 3 + 1.5,
+                            color: colors[Math.floor(Math.random() * colors.length)],
+                            shape: shapes[Math.floor(Math.random() * shapes.length)],
+                            tilt: Math.random() * 10 - 5,
+                            tiltAngle: 0,
+                            tiltSpeed: Math.random() * 0.07 + 0.03,
+                            angle: Math.random() * Math.PI * 2,
+                            spin: (Math.random() - 0.5) * 0.15,
+                            opacity: 1,
+                        });
                     }
-                });
+
+                    let startTime = null;
+                    const duration = 4000;
+
+                    function draw(ts) {
+                        if (!startTime) startTime = ts;
+                        const elapsed = ts - startTime;
+                        const fade = Math.max(0, 1 - (elapsed - 2500) / 1500);
+
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                        pieces.forEach(p => {
+                            ctx.save();
+                            ctx.globalAlpha = p.opacity * fade;
+                            ctx.fillStyle = p.color;
+                            ctx.translate(p.x, p.y);
+                            ctx.rotate(p.angle);
+                            if (p.shape === 'circle') {
+                                ctx.beginPath();
+                                ctx.arc(0, 0, p.r, 0, Math.PI * 2);
+                                ctx.fill();
+                            } else if (p.shape === 'rect') {
+                                ctx.fillRect(-p.r, -p.r / 2, p.r * 2, p.r);
+                            } else {
+                                ctx.beginPath();
+                                ctx.moveTo(0, -p.r);
+                                ctx.lineTo(p.r, p.r);
+                                ctx.lineTo(-p.r, p.r);
+                                ctx.closePath();
+                                ctx.fill();
+                            }
+                            ctx.restore();
+
+                            p.y += p.d;
+                            p.x += Math.sin(p.angle) * 1.2;
+                            p.angle += p.spin;
+                            p.tiltAngle += p.tiltSpeed;
+                            p.tilt = Math.sin(p.tiltAngle) * 12;
+                        });
+
+                        if (elapsed < duration && fade > 0) {
+                            requestAnimationFrame(draw);
+                        } else {
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                            canvas.style.display = 'none';
+                        }
+                    }
+
+                    requestAnimationFrame(draw);
+                })();
             </script>
 
             <!-- Transaction History -->
