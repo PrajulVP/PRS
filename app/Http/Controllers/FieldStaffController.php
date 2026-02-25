@@ -34,6 +34,15 @@ class FieldStaffController extends Controller
         return view('admin.fieldstaffs.index', compact('salesManagers'));
     }
 
+    public function show(FieldStaff $fieldStaff)
+    {
+        $fieldStaff->load(['user', 'salesManager.user', 'retailers.user']);
+        return response()->json([
+            'success' => true,
+            'data' => $fieldStaff
+        ]);
+    }
+
     public function store(Request $request)
     {
         if (!Auth::user()->hasRole('salesmanager') && !Auth::user()->hasRole('admin')) {

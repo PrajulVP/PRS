@@ -306,21 +306,112 @@
     {{-- Show Modal --}}
     <div class="modal fade" id="showDistributorModal" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Distributor Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-0"
+                    style="background: linear-gradient(135deg, #1e3a5f, #2e6da4); border-radius: 0.5rem 0.5rem 0 0;">
+                    <h5 class="modal-title text-white" style="color: #fff !important;"><i class="fa fa-user-circle me-2"
+                            style="color: #fff !important;"></i>Distributor Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <div class="row g-3" id="showDistributorDetails">
-                        <!-- Dynamic Details -->
+                <div class="modal-body p-0">
+                    {{-- Avatar + Name Header --}}
+                    <div class="d-flex align-items-center gap-4 p-4"
+                        style="background: var(--med-bg-body); border-bottom:1px solid var(--med-border);">
+                        <div style="flex-shrink:0;">
+                            <img id="dist_avatar_img" src="" alt="" class="rounded-circle shadow"
+                                style="width:85px;height:85px;object-fit:cover;display:none;border:3px solid #fff;">
+                            <div id="dist_avatar_initials"
+                                style="width:85px;height:85px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+                                                                    font-size:1.9rem;font-weight:700;color:#fff;
+                                                                    background:linear-gradient(135deg,#1e3a5f,#2e6da4);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="mb-1 fw-bold" id="dist_view_name"></h4>
+                            <div class="mb-1 text-muted small" id="dist_view_manager"></div>
+                            <span class="badge" id="dist_view_status"></span>
+                        </div>
                     </div>
-                    <hr class="my-4">
-                    <h6 class="mb-3"><i class="fa fa-map-marker-alt me-2"></i>Location on Map</h6>
-                    <div id="show_map" style="height: 350px; width: 100%; border-radius: 12px; border: 1px solid #eee;">
+                    {{-- Info Cards --}}
+                    <div class="p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start gap-2 p-3 rounded"
+                                    style="background: var(--med-bg-body);">
+                                    <i class="fa fa-envelope mt-1 text-primary"></i>
+                                    <div>
+                                        <div class="text-muted small">Email</div>
+                                        <div class="fw-semibold" id="dist_view_email"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start gap-2 p-3 rounded"
+                                    style="background: var(--med-bg-body);">
+                                    <i class="fa fa-phone mt-1 text-success"></i>
+                                    <div>
+                                        <div class="text-muted small">Contact</div>
+                                        <div class="fw-semibold" id="dist_view_contact"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start gap-2 p-3 rounded"
+                                    style="background: var(--med-bg-body);">
+                                    <i class="fa fa-file-alt mt-1 text-warning"></i>
+                                    <div>
+                                        <div class="text-muted small">GST</div>
+                                        <div class="fw-semibold" id="dist_view_gst"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start gap-2 p-3 rounded"
+                                    style="background: var(--med-bg-body);">
+                                    <i class="fa fa-id-card mt-1 text-info"></i>
+                                    <div>
+                                        <div class="text-muted small">Drug License</div>
+                                        <div class="fw-semibold" id="dist_view_drug"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start gap-2 p-3 rounded"
+                                    style="background: var(--med-bg-body);">
+                                    <i class="fa fa-map mt-1 text-secondary"></i>
+                                    <div>
+                                        <div class="text-muted small">District / Area</div>
+                                        <div class="fw-semibold" id="dist_view_location"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start gap-2 p-3 rounded"
+                                    style="background: var(--med-bg-body);">
+                                    <i class="fa fa-hashtag mt-1 text-dark"></i>
+                                    <div>
+                                        <div class="text-muted small">Pincode</div>
+                                        <div class="fw-semibold" id="dist_view_pincode"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="d-flex align-items-start gap-2 p-3 rounded"
+                                    style="background: var(--med-bg-body);">
+                                    <i class="fa fa-map-marker-alt mt-1 text-danger"></i>
+                                    <div>
+                                        <div class="text-muted small">Address</div>
+                                        <div class="fw-semibold" id="dist_view_address"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="my-4">
+                        <h6 class="mb-3"><i class="fa fa-map-marker-alt me-2"></i>Location on Map</h6>
+                        <div id="show_map" style="height:300px;width:100%;border-radius:12px;border:1px solid #eee;"></div>
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer border-0" style="background: var(--med-bg-body);">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
@@ -437,13 +528,13 @@
                         let activateBtn = '';
 
                         return `
-                                                        <div class="action-buttons">
-                                                            ${activateBtn}
-                                                            <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>
-                                                            <button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>
-                                                            <button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>
-                                                        </div>
-                                                    `;
+                                                                                    <div class="action-buttons">
+                                                                                        ${activateBtn}
+                                                                                        <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>
+                                                                                        <button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>
+                                                                                        <button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>
+                                                                                    </div>
+                                                                                `;
                     }
                 }
                 ],
@@ -530,20 +621,28 @@
                 let districtName = data.district ? data.district.name : 'N/A';
                 let areaName = data.area ? data.area.name : 'N/A';
                 let managerName = (data.sales_manager && data.sales_manager.user) ? data.sales_manager.user.name : 'N/A';
+                let profileImg = data.user && data.user.profile_image ? '/storage/' + data.user.profile_image : null;
 
-                let html = `
-                                                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Name</label><p class="fw-bold mb-0">${data.name}</p></div>
-                                                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Sales Manager</label><p class="fw-bold text-primary mb-0">${managerName}</p></div>
-                                                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Email</label><p class="mb-0">${data.user ? data.user.email : 'N/A'}</p></div>
-                                                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Contact</label><p class="mb-0">${data.contact_no}</p></div>
-                        <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">GST</label><p class="mb-0">${data.gst}</p></div>
-                        <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">District / Area</label><p class="mb-0">${districtName} / ${areaName}</p></div>
-                        <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Pincode</label><p class="mb-0">${data.pincode}</p></div>
-                                                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Drug License</label><p class="mb-0">${data.drug_license_no || 'N/A'}</p></div>
-                                                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Status</label><p class="mb-0">${data.user ? (data.user.status === 'active' ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>') : 'N/A'}</p></div>
-                                                <div class="col-12"><label class="fw-bold text-muted small text-uppercase">Address</label><p class="mb-0">${data.address}</p></div>
-                                            `;
-                $('#showDistributorDetails').html(html);
+                if (profileImg) {
+                    $('#dist_avatar_img').attr('src', profileImg).show();
+                    $('#dist_avatar_initials').hide();
+                } else {
+                    let initials = data.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+                    $('#dist_avatar_initials').text(initials).show();
+                    $('#dist_avatar_img').hide();
+                }
+
+                let status = data.user ? data.user.status : '';
+                $('#dist_view_name').text(data.name);
+                $('#dist_view_manager').html('<i class="fa fa-user-tie me-1"></i>Manager: ' + managerName);
+                $('#dist_view_status').attr('class', 'badge ' + (status === 'active' ? 'bg-success' : 'bg-danger')).text(status === 'active' ? 'Active' : 'Inactive');
+                $('#dist_view_email').text(data.user ? data.user.email : 'N/A');
+                $('#dist_view_contact').text(data.contact_no || 'N/A');
+                $('#dist_view_gst').text(data.gst || 'N/A');
+                $('#dist_view_drug').text(data.drug_license_no || 'N/A');
+                $('#dist_view_location').text(districtName + ' / ' + areaName);
+                $('#dist_view_pincode').text(data.pincode || 'N/A');
+                $('#dist_view_address').text(data.address || 'N/A');
 
                 $('#showDistributorModal').data('lat', data.latitude).data('lng', data.longitude);
                 $('#showDistributorModal').modal('show');

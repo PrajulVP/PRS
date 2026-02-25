@@ -23,6 +23,8 @@ class Retailer extends Model
         'address',
         'pincode',
         'credit_limit',
+        'district_id',
+        'area_id',
         'latitude',
         'longitude',
         'loyalty_points',

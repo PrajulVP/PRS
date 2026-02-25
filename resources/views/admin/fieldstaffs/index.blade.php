@@ -47,395 +47,504 @@
 </style>
 
 @section('page-body')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5><i class="fa fa-users me-2"></i>Field Staff</h5>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createFieldStaffModal">
-                        <i class="fa fa-plus me-1"></i>Add Field Staff
-                    </button>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fa fa-users me-2"></i>Field Staff</h5>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                            data-bs-target="#createFieldStaffModal">
+                            <i class="fa fa-plus me-1"></i>Add Field Staff
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        @if(session('success'))
+                            <div class="alert alert-success">{{ session('success') }}</div>
+                        @endif
+                        @if($errors->any())
+                            <div class="alert alert-danger">
+                                <ul class="mb-0">
+                                    @foreach($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                        <div class="table-responsive">
+                            <table class="display table table-striped table-hover" id="fieldstaffs-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Contact No</th>
+                                        <th>Sales Manager</th>
+                                        <th>Pincode</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    @if(session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
-                    @endif
-                    @if($errors->any())
-                    <div class="alert alert-danger">
-                        <ul class="mb-0">
-                            @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                            @endforeach
+            </div>
+        </div>
+    </div>
+
+    {{-- Create Modal --}}
+    <div class="modal fade" id="createFieldStaffModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create Field Staff</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="createFieldStaffForm" action="{{ route('admin.field-staffs.store') }}" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Name</label>
+                                <input type="text" name="name" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" name="email" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Password</label>
+                                <input type="password" name="password" id="create_password" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Confirm Password</label>
+                                <input type="password" name="password_confirmation" id="create_password_confirmation"
+                                    class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Contact No</label>
+                                <input type="text" name="contact_no" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Pincode</label>
+                                <input type="text" name="pincode" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Address</label>
+                                <textarea name="address" class="form-control"></textarea>
+                            </div>
+                        </div>
+                        <!-- Map Section -->
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Location</label>
+                                <div class="input-group">
+                                    <input id="create_pac-input" class="form-control" type="text"
+                                        placeholder="Search for a location">
+                                    <button type="button" class="btn btn-info"
+                                        onclick="getGeoLocation('create_lat', 'create_long', 'create')"><i
+                                            class="fa fa-map-marker"></i> Get Current Location</button>
+                                </div>
+                                <div id="create_map"
+                                    style="height: 300px; width: 100%; margin-top: 10px; border-radius: 8px;"></div>
+                            </div>
+                        </div>
+                        <input type="hidden" name="latitude" id="create_lat">
+                        <input type="hidden" name="longitude" id="create_long">
+                        <div class="row">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Create</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- Edit Modal --}}
+    <div class="modal fade" id="editFieldStaffModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Field Staff</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editFieldStaffForm" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Name</label>
+                                <input type="text" name="name" id="edit_name" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" name="email" id="edit_email" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Password (Leave blank to keep unchanged)</label>
+                                <input type="password" name="password" id="edit_password" class="form-control">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Confirm Password</label>
+                                <input type="password" name="password_confirmation" id="edit_password_confirmation"
+                                    class="form-control">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Contact No</label>
+                                <input type="text" name="contact_no" id="edit_contact_no" class="form-control">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Pincode</label>
+                                <input type="text" name="pincode" id="edit_pincode" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Status</label>
+                                <select name="status" id="edit_status" class="form-select">
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Address</label>
+                                <textarea name="address" id="edit_address" class="form-control"></textarea>
+                            </div>
+                        </div>
+                        <!-- Map Section -->
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Location</label>
+                                <div class="input-group">
+                                    <input id="edit_pac-input" class="form-control" type="text"
+                                        placeholder="Search for a location">
+                                    <button type="button" class="btn btn-info"
+                                        onclick="getGeoLocation('edit_latitude', 'edit_longitude', 'edit')"><i
+                                            class="fa fa-map-marker"></i> Get Current Location</button>
+                                </div>
+                                <div id="edit_map"
+                                    style="height: 300px; width: 100%; margin-top: 10px; border-radius: 8px;"></div>
+                            </div>
+                        </div>
+                        <input type="hidden" name="latitude" id="edit_latitude">
+                        <input type="hidden" name="longitude" id="edit_longitude">
+                        <div class="row">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- Show Modal --}}
+    <div class="modal fade" id="showFieldStaffModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-0"
+                    style="background: linear-gradient(135deg, #1e3a5f, #2e6da4); border-radius: 0.5rem 0.5rem 0 0;">
+                    <h5 class="modal-title text-white" style="color: #fff !important;"><i class="fa fa-user-circle me-2"
+                            style="color: #fff !important;"></i>Field Staff Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    {{-- Avatar + Name Header --}}
+                    <div class="d-flex align-items-center gap-4 p-4"
+                        style="background: var(--med-bg-body); border-bottom:1px solid var(--med-border);">
+                        <div style="flex-shrink:0;">
+                            <img id="fs_avatar_img" src="" alt="" class="rounded-circle shadow"
+                                style="width:85px;height:85px;object-fit:cover;display:none;border:3px solid #fff;">
+                            <div id="fs_avatar_initials"
+                                style="width:85px;height:85px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+                                                                font-size:1.9rem;font-weight:700;color:#fff;
+                                                                background:linear-gradient(135deg,#1e3a5f,#2e6da4);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="mb-1 fw-bold" id="fs_view_name"></h4>
+                            <div class="mb-1 text-muted small" id="fs_view_manager"></div>
+                            <span class="badge" id="fs_view_status"></span>
+                        </div>
+                    </div>
+                    {{-- Assignments Section --}}
+                    <div class="px-4">
+                        <ul class="nav nav-tabs" id="fsModalTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active fw-bold" id="fs-info-tab" data-bs-toggle="tab"
+                                    data-bs-target="#fs-info-panel" type="button" role="tab">
+                                    <i class="fa fa-info-circle me-1"></i>Basic Information
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link fw-bold" id="fs-retailer-tab" data-bs-toggle="tab"
+                                    data-bs-target="#fs-retailer-panel" type="button" role="tab">
+                                    <i class="fa fa-store me-1"></i>Retailers (<span id="fsRetailerCount">0</span>)
+                                </button>
+                            </li>
                         </ul>
-                    </div>
-                    @endif
-                    <div class="table-responsive">
-                        <table class="display table table-striped table-hover" id="fieldstaffs-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Contact No</th>
-                                    <th>Sales Manager</th>
-                                    <th>Pincode</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- Create Modal --}}
-<div class="modal fade" id="createFieldStaffModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Create Field Staff</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="createFieldStaffForm" action="{{ route('admin.field-staffs.store') }}" method="POST">
-                @csrf
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Name</label>
-                            <input type="text" name="name" class="form-control" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" name="email" class="form-control" required>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Password</label>
-                            <input type="password" name="password" id="create_password" class="form-control" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Confirm Password</label>
-                            <input type="password" name="password_confirmation" id="create_password_confirmation" class="form-control" required>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Contact No</label>
-                            <input type="text" name="contact_no" class="form-control" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Pincode</label>
-                            <input type="text" name="pincode" class="form-control" required>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <label class="form-label">Address</label>
-                            <textarea name="address" class="form-control"></textarea>
-                        </div>
-                    </div>
-                    <!-- Map Section -->
-                    <div class="row">
-                        <div class="col-12 mb-3">
-                            <label class="form-label">Location</label>
-                            <div class="input-group">
-                                <input id="create_pac-input" class="form-control" type="text" placeholder="Search for a location">
-                                <button type="button" class="btn btn-info" onclick="getGeoLocation('create_lat', 'create_long', 'create')"><i class="fa fa-map-marker"></i> Get Current Location</button>
+                        <div class="tab-content border border-top-0 p-3" id="fsModalTabsContent"
+                            style="border-radius: 0 0 0.5rem 0.5rem; background: var(--med-bg-body);">
+                            <div class="tab-pane fade show active" id="fs-info-panel" role="tabpanel">
+                                {{-- Info Cards --}}
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-start gap-2 p-3 rounded"
+                                            style="background: var(--med-bg-body);">
+                                            <i class="fa fa-envelope mt-1 text-primary"></i>
+                                            <div>
+                                                <div class="text-muted small">Email</div>
+                                                <div class="fw-semibold" id="fs_view_email"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-start gap-2 p-3 rounded"
+                                            style="background: var(--med-bg-body);">
+                                            <i class="fa fa-phone mt-1 text-success"></i>
+                                            <div>
+                                                <div class="text-muted small">Contact</div>
+                                                <div class="fw-semibold" id="fs_view_contact"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-start gap-2 p-3 rounded"
+                                            style="background: var(--med-bg-body);">
+                                            <i class="fa fa-hashtag mt-1 text-dark"></i>
+                                            <div>
+                                                <div class="text-muted small">Pincode</div>
+                                                <div class="fw-semibold" id="fs_view_pincode"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="d-flex align-items-start gap-2 p-3 rounded"
+                                            style="background: var(--med-bg-body);">
+                                            <i class="fa fa-map-marker-alt mt-1 text-danger"></i>
+                                            <div>
+                                                <div class="text-muted small">Address</div>
+                                                <div class="fw-semibold" id="fs_view_address"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr class="my-4">
+                                <h6 class="mb-3"><i class="fa fa-map-marker-alt me-2"></i>Location on Map</h6>
+                                <div id="show_map"
+                                    style="height:300px;width:100%;border-radius:12px;border:1px solid #eee;"></div>
                             </div>
-                            <div id="create_map" style="height: 300px; width: 100%; margin-top: 10px; border-radius: 8px;"></div>
-                        </div>
-                    </div>
-                    <input type="hidden" name="latitude" id="create_lat">
-                    <input type="hidden" name="longitude" id="create_long">
-                    <div class="row">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Create</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-{{-- Edit Modal --}}
-<div class="modal fade" id="editFieldStaffModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit Field Staff</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="editFieldStaffForm" method="POST">
-                @csrf
-                @method('PUT')
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Name</label>
-                            <input type="text" name="name" id="edit_name" class="form-control" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" name="email" id="edit_email" class="form-control" required>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Password (Leave blank to keep unchanged)</label>
-                            <input type="password" name="password" id="edit_password" class="form-control">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Confirm Password</label>
-                            <input type="password" name="password_confirmation" id="edit_password_confirmation" class="form-control">
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Contact No</label>
-                            <input type="text" name="contact_no" id="edit_contact_no" class="form-control">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Pincode</label>
-                            <input type="text" name="pincode" id="edit_pincode" class="form-control" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Status</label>
-                            <select name="status" id="edit_status" class="form-select">
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <label class="form-label">Address</label>
-                            <textarea name="address" id="edit_address" class="form-control"></textarea>
-                        </div>
-                    </div>
-                    <!-- Map Section -->
-                    <div class="row">
-                        <div class="col-12 mb-3">
-                            <label class="form-label">Location</label>
-                            <div class="input-group">
-                                <input id="edit_pac-input" class="form-control" type="text" placeholder="Search for a location">
-                                <button type="button" class="btn btn-info" onclick="getGeoLocation('edit_latitude', 'edit_longitude', 'edit')"><i class="fa fa-map-marker"></i> Get Current Location</button>
+                            <div class="tab-pane fade" id="fs-retailer-panel" role="tabpanel">
+                                <div class="table-responsive" style="max-height: 400px;">
+                                    <table class="table table-sm table-striped table-hover mb-0">
+                                        <thead class="sticky-top" style="background: var(--med-bg-card);">
+                                            <tr>
+                                                <th style="color: var(--med-text-main) !important;">Shop Name</th>
+                                                <th style="color: var(--med-text-main) !important;">Owner</th>
+                                                <th style="color: var(--med-text-main) !important;">Contact</th>
+                                                <th style="color: var(--med-text-main) !important;">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="fs_view_retailers_body"></tbody>
+                                    </table>
+                                </div>
                             </div>
-                            <div id="edit_map" style="height: 300px; width: 100%; margin-top: 10px; border-radius: 8px;"></div>
                         </div>
                     </div>
-                    <input type="hidden" name="latitude" id="edit_latitude">
-                    <input type="hidden" name="longitude" id="edit_longitude">
-                    <div class="row">
-                    </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer border-0" style="background: var(--med-bg-body);">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Update</button>
                 </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-{{-- Show Modal --}}
-<div class="modal fade" id="showFieldStaffModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Field Staff Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row g-3" id="showFieldStaffDetails">
-                    <!-- Dynamic Details -->
-                </div>
-                <hr class="my-4">
-                <h6 class="mb-3"><i class="fa fa-map-marker-alt me-2"></i>Location on Map</h6>
-                <div id="show_map" style="height: 350px; width: 100%; border-radius: 12px; border: 1px solid #eee;"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
-</div>
 
 @endsection
 
 @push('styles')
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
-<style>
-    .pac-container {
-        z-index: 10000 !important;
-    }
-</style>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+    <style>
+        .pac-container {
+            z-index: 10000 !important;
+        }
+    </style>
 @endpush
 
 @push('scripts')
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<script>
-    // Global Map Variables
-    let createMap, editMap, showMap;
-    let createMarker, editMarker, showMarker;
+    <script>
+        // Global Map Variables
+        let createMap, editMap, showMap;
+        let createMarker, editMarker, showMarker;
 
-    function initMap() {
-        const defaultLoc = {
-            lat: 20.5937,
-            lng: 78.9629
-        }; // India Center
+        function initMap() {
+            const defaultLoc = {
+                lat: 20.5937,
+                lng: 78.9629
+            }; // India Center
 
-        // Create Map
-        createMap = new google.maps.Map(document.getElementById("create_map"), {
-            zoom: 5,
-            center: defaultLoc,
-            mapId: "DEMO_MAP_ID",
-        });
-        createMarker = new google.maps.marker.AdvancedMarkerElement({
-            position: defaultLoc,
-            map: createMap,
-            gmpDraggable: true,
-        });
-        createMarker.addListener("dragend", () => {
-            const pos = createMarker.position;
-            let lat = (typeof pos.lat === 'function') ? pos.lat() : pos.lat;
-            let lng = (typeof pos.lng === 'function') ? pos.lng() : pos.lng;
-            document.getElementById("create_lat").value = lat;
-            document.getElementById("create_long").value = lng;
-        });
-        createMap.addListener("click", (e) => {
-            createMarker.position = e.latLng;
-            document.getElementById("create_lat").value = e.latLng.lat();
-            document.getElementById("create_long").value = e.latLng.lng();
-        });
-
-        // Create Autocomplete
-        const createInput = document.getElementById("create_pac-input");
-        const createAutocomplete = new google.maps.places.Autocomplete(createInput);
-        createAutocomplete.bindTo("bounds", createMap);
-        createAutocomplete.addListener("place_changed", () => {
-            const place = createAutocomplete.getPlace();
-            if (!place.geometry || !place.geometry.location) return;
-            if (place.geometry.viewport) createMap.fitBounds(place.geometry.viewport);
-            else {
-                createMap.setCenter(place.geometry.location);
-                createMap.setZoom(17);
-            }
-            createMarker.position = place.geometry.location;
-            document.getElementById("create_lat").value = place.geometry.location.lat();
-            document.getElementById("create_long").value = place.geometry.location.lng();
-        });
-
-        // Edit Map
-        editMap = new google.maps.Map(document.getElementById("edit_map"), {
-            zoom: 5,
-            center: defaultLoc,
-            mapId: "DEMO_MAP_ID",
-        });
-        editMarker = new google.maps.marker.AdvancedMarkerElement({
-            position: defaultLoc,
-            map: editMap,
-            gmpDraggable: true,
-        });
-        editMarker.addListener("dragend", (event) => {
-            const pos = editMarker.position;
-            let lat = (typeof pos.lat === 'function') ? pos.lat() : pos.lat;
-            let lng = (typeof pos.lng === 'function') ? pos.lng() : pos.lng;
-            document.getElementById("edit_latitude").value = lat;
-            document.getElementById("edit_longitude").value = lng;
-        });
-        editMap.addListener("click", (e) => {
-            editMarker.position = e.latLng;
-            document.getElementById("edit_latitude").value = e.latLng.lat();
-            document.getElementById("edit_longitude").value = e.latLng.lng();
-        });
-
-        // Edit Autocomplete
-        const editInput = document.getElementById("edit_pac-input");
-        const editAutocomplete = new google.maps.places.Autocomplete(editInput);
-        editAutocomplete.bindTo("bounds", editMap);
-        editAutocomplete.addListener("place_changed", () => {
-            const place = editAutocomplete.getPlace();
-            if (!place.geometry || !place.geometry.location) return;
-            if (place.geometry.viewport) editMap.fitBounds(place.geometry.viewport);
-            else {
-                editMap.setCenter(place.geometry.location);
-                editMap.setZoom(17);
-            }
-            editMarker.position = place.geometry.location;
-            document.getElementById("edit_latitude").value = place.geometry.location.lat();
-            document.getElementById("edit_longitude").value = place.geometry.location.lng();
-        });
-
-        // Show Map
-        showMap = new google.maps.Map(document.getElementById("show_map"), {
-            zoom: 5,
-            center: defaultLoc,
-            mapId: "DEMO_MAP_ID",
-        });
-        showMarker = new google.maps.marker.AdvancedMarkerElement({
-            position: defaultLoc,
-            map: showMap,
-        });
-    }
-
-    // Expose initMap
-    window.initMap = initMap;
-
-    function getGeoLocation(latId, longId, mapType) {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(function(position) {
-                let lat = position.coords.latitude;
-                let lng = position.coords.longitude;
-                document.getElementById(latId).value = lat;
-                document.getElementById(longId).value = lng;
-                let pos = {
-                    lat: lat,
-                    lng: lng
-                };
-
-                if (mapType === 'create' && createMap) {
-                    createMarker.position = pos;
-                    createMap.setCenter(pos);
-                    createMap.setZoom(15);
-                } else if (mapType === 'edit' && editMap) {
-                    editMarker.position = pos;
-                    editMap.setCenter(pos);
-                    editMap.setZoom(15);
-                }
-            }, function(error) {
-                alert("Error getting location: " + error.message);
+            // Create Map
+            createMap = new google.maps.Map(document.getElementById("create_map"), {
+                zoom: 5,
+                center: defaultLoc,
+                mapId: "DEMO_MAP_ID",
             });
-        } else {
-            alert("Geolocation is not supported.");
-        }
-    }
+            createMarker = new google.maps.marker.AdvancedMarkerElement({
+                position: defaultLoc,
+                map: createMap,
+                gmpDraggable: true,
+            });
+            createMarker.addListener("dragend", () => {
+                const pos = createMarker.position;
+                let lat = (typeof pos.lat === 'function') ? pos.lat() : pos.lat;
+                let lng = (typeof pos.lng === 'function') ? pos.lng() : pos.lng;
+                document.getElementById("create_lat").value = lat;
+                document.getElementById("create_long").value = lng;
+            });
+            createMap.addListener("click", (e) => {
+                createMarker.position = e.latLng;
+                document.getElementById("create_lat").value = e.latLng.lat();
+                document.getElementById("create_long").value = e.latLng.lng();
+            });
 
-    $(document).ready(function() {
-        var table = $('#fieldstaffs-table').DataTable({
-            processing: true,
-            serverSide: true,
-            order: [],
-            ajax: "{{ route('admin.field-staffs.index') }}",
-            columns: [{
+            // Create Autocomplete
+            const createInput = document.getElementById("create_pac-input");
+            const createAutocomplete = new google.maps.places.Autocomplete(createInput);
+            createAutocomplete.bindTo("bounds", createMap);
+            createAutocomplete.addListener("place_changed", () => {
+                const place = createAutocomplete.getPlace();
+                if (!place.geometry || !place.geometry.location) return;
+                if (place.geometry.viewport) createMap.fitBounds(place.geometry.viewport);
+                else {
+                    createMap.setCenter(place.geometry.location);
+                    createMap.setZoom(17);
+                }
+                createMarker.position = place.geometry.location;
+                document.getElementById("create_lat").value = place.geometry.location.lat();
+                document.getElementById("create_long").value = place.geometry.location.lng();
+            });
+
+            // Edit Map
+            editMap = new google.maps.Map(document.getElementById("edit_map"), {
+                zoom: 5,
+                center: defaultLoc,
+                mapId: "DEMO_MAP_ID",
+            });
+            editMarker = new google.maps.marker.AdvancedMarkerElement({
+                position: defaultLoc,
+                map: editMap,
+                gmpDraggable: true,
+            });
+            editMarker.addListener("dragend", (event) => {
+                const pos = editMarker.position;
+                let lat = (typeof pos.lat === 'function') ? pos.lat() : pos.lat;
+                let lng = (typeof pos.lng === 'function') ? pos.lng() : pos.lng;
+                document.getElementById("edit_latitude").value = lat;
+                document.getElementById("edit_longitude").value = lng;
+            });
+            editMap.addListener("click", (e) => {
+                editMarker.position = e.latLng;
+                document.getElementById("edit_latitude").value = e.latLng.lat();
+                document.getElementById("edit_longitude").value = e.latLng.lng();
+            });
+
+            // Edit Autocomplete
+            const editInput = document.getElementById("edit_pac-input");
+            const editAutocomplete = new google.maps.places.Autocomplete(editInput);
+            editAutocomplete.bindTo("bounds", editMap);
+            editAutocomplete.addListener("place_changed", () => {
+                const place = editAutocomplete.getPlace();
+                if (!place.geometry || !place.geometry.location) return;
+                if (place.geometry.viewport) editMap.fitBounds(place.geometry.viewport);
+                else {
+                    editMap.setCenter(place.geometry.location);
+                    editMap.setZoom(17);
+                }
+                editMarker.position = place.geometry.location;
+                document.getElementById("edit_latitude").value = place.geometry.location.lat();
+                document.getElementById("edit_longitude").value = place.geometry.location.lng();
+            });
+
+            // Show Map
+            showMap = new google.maps.Map(document.getElementById("show_map"), {
+                zoom: 5,
+                center: defaultLoc,
+                mapId: "DEMO_MAP_ID",
+            });
+            showMarker = new google.maps.marker.AdvancedMarkerElement({
+                position: defaultLoc,
+                map: showMap,
+            });
+        }
+
+        // Expose initMap
+        window.initMap = initMap;
+
+        function getGeoLocation(latId, longId, mapType) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    let lat = position.coords.latitude;
+                    let lng = position.coords.longitude;
+                    document.getElementById(latId).value = lat;
+                    document.getElementById(longId).value = lng;
+                    let pos = {
+                        lat: lat,
+                        lng: lng
+                    };
+
+                    if (mapType === 'create' && createMap) {
+                        createMarker.position = pos;
+                        createMap.setCenter(pos);
+                        createMap.setZoom(15);
+                    } else if (mapType === 'edit' && editMap) {
+                        editMarker.position = pos;
+                        editMap.setCenter(pos);
+                        editMap.setZoom(15);
+                    }
+                }, function (error) {
+                    alert("Error getting location: " + error.message);
+                });
+            } else {
+                alert("Geolocation is not supported.");
+            }
+        }
+
+        $(document).ready(function () {
+            var table = $('#fieldstaffs-table').DataTable({
+                processing: true,
+                serverSide: true,
+                order: [],
+                ajax: "{{ route('admin.field-staffs.index') }}",
+                columns: [{
                     data: 'id',
                     name: 'id'
                 },
@@ -464,7 +573,7 @@
                 {
                     data: 'user.status',
                     name: 'user.status',
-                    render: function(data, type, row) {
+                    render: function (data, type, row) {
                         if (data === 'active') {
                             return `<span class="badge bg-success status-toggle cursor-pointer" style="cursor: pointer;" data-id="${row.id}" data-status="active" title="Click to deactivate">Active</span>`;
                         } else {
@@ -476,90 +585,90 @@
                     data: 'id',
                     orderable: false,
                     searchable: false,
-                    render: function(id, type, row) {
+                    render: function (id, type, row) {
                         let deleteUrl = "{{ route('admin.field-staffs.destroy', ':id') }}".replace(':id', id);
                         let activateUrl = "{{ route('admin.field-staffs.activate', ':id') }}".replace(':id', id);
                         let csrf = "{{ csrf_token() }}";
                         let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
 
                         let canActivate = @json(Auth::user()->hasAnyRole(['superadmin', 'admin']));
-                        /*
-                        let activateBtn = '';
-                        if (canActivate) {
-                            if (row.user.status === 'inactive') {
-                                activateBtn = `
-                                    <form action="${activateUrl}" method="POST" class="activate-form" style="display:inline;">
-                                        <input type="hidden" name="_token" value="${csrf}">
-                                        <input type="hidden" name="_method" value="PATCH">
-                                        <button type="submit" class="btn btn-sm btn-success" title="Activate"><i class="fa fa-check"></i></button>
-                                    </form>
-                                `;
-                            } else {
-                                let deactivateUrl = "{{ route('admin.field-staffs.deactivate', ':id') }}".replace(':id', id);
-                                activateBtn = `
-                                    <form action="${deactivateUrl}" method="POST" class="deactivate-form" style="display:inline;">
-                                        <input type="hidden" name="_token" value="${csrf}">
-                                        <input type="hidden" name="_method" value="PATCH">
-                                        <button type="submit" class="btn btn-sm btn-warning" title="Deactivate"><i class="fa fa-ban"></i></button>
-                                    </form>
-                                `;
-                            }
-                        }
-                        */
-                        let activateBtn = '';
+                                                    /*
+                                                    let activateBtn = '';
+                                                    if (canActivate) {
+                                                        if (row.user.status === 'inactive') {
+                                                            activateBtn = `
+                                                                <form action="${activateUrl}" method="POST" class="activate-form" style="display:inline;">
+                                                                    <input type="hidden" name="_token" value="${csrf}">
+                                                                    <input type="hidden" name="_method" value="PATCH">
+                                                                    <button type="submit" class="btn btn-sm btn-success" title="Activate"><i class="fa fa-check"></i></button>
+                                                                </form>
+                                                            `;
+                                                        } else {
+                                                            let deactivateUrl = "{{ route('admin.field-staffs.deactivate', ':id') }}".replace(':id', id);
+                        activateBtn = `
+                                                                <form action="${deactivateUrl}" method="POST" class="deactivate-form" style="display:inline;">
+                                                                    <input type="hidden" name="_token" value="${csrf}">
+                                                                    <input type="hidden" name="_method" value="PATCH">
+                                                                    <button type="submit" class="btn btn-sm btn-warning" title="Deactivate"><i class="fa fa-ban"></i></button>
+                                                                </form>
+                                                            `;
+                    }
+                }
+                */
+                                                    let activateBtn = '';
 
-                        return `
-                        <div class="action-buttons">
-                            ${activateBtn}
-                            <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>
-                            <button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>
-                            <button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>
-                        </div>
-                    `;
-                    }
-                }
-            ],
+                return `
+                                                    <div class="action-buttons">
+                                                        ${activateBtn}
+                                                        <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>
+                                                        <button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>
+                                                        <button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>
+                                                    </div>
+                                                `;
+            }
+                                            }
+                                        ],
             dom: "<'row mb-3'<'col-sm-12'B>>" +
-                "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" +
-                "<'row '<'col-sm-12'tr>>" +
-                    "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
+            "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" +
+            "<'row '<'col-sm-12'tr>>" +
+        "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
             buttons: {
-                    dom: {
-                        button: {
-                            className: 'btn btn-sm btn-icon'
-                        }
-                    },
-                    buttons: [{
-                        extend: 'copy',
-                        className: 'btn btn-secondary btn-sm',
-                        text: '<i class="fa fa-copy"></i> Copy'
-                    },
-                    {
-                        extend: 'csv',
-                        className: 'btn btn-info btn-sm text-white',
-                        text: '<i class="fa fa-file-csv"></i> CSV'
-                    },
-                    {
-                        extend: 'excel',
-                        className: 'btn btn-success btn-sm',
-                        text: '<i class="fa fa-file-excel"></i> Excel'
-                    },
-                    {
-                        extend: 'pdf',
-                        className: 'btn btn-danger btn-sm',
-                        text: '<i class="fa fa-file-pdf"></i> PDF'
-                    },
-                    {
-                        extend: 'print',
-                        className: 'btn btn-dark btn-sm',
-                        text: '<i class="fa fa-print"></i> Print'
-                    }
-                    ]
+            dom: {
+                button: {
+                    className: 'btn btn-sm btn-icon'
                 }
-        });
+            },
+            buttons: [{
+                extend: 'copy',
+                className: 'btn btn-secondary btn-sm',
+                text: '<i class="fa fa-copy"></i> Copy'
+            },
+            {
+                extend: 'csv',
+                className: 'btn btn-info btn-sm text-white',
+                text: '<i class="fa fa-file-csv"></i> CSV'
+            },
+            {
+                extend: 'excel',
+                className: 'btn btn-success btn-sm',
+                text: '<i class="fa fa-file-excel"></i> Excel'
+            },
+            {
+                extend: 'pdf',
+                className: 'btn btn-danger btn-sm',
+                text: '<i class="fa fa-file-pdf"></i> PDF'
+            },
+            {
+                extend: 'print',
+                className: 'btn btn-dark btn-sm',
+                text: '<i class="fa fa-print"></i> Print'
+            }
+            ]
+        }
+                                    });
 
         // Handle Edit Button
-        $('#fieldstaffs-table').on('click', '.edit-btn', function() {
+        $('#fieldstaffs-table').on('click', '.edit-btn', function () {
             var data = $(this).data('row');
 
             $('#edit_name').val(data.user.name);
@@ -580,25 +689,93 @@
         });
 
         // Handle View Button
-        $('#fieldstaffs-table').on('click', '.view-btn', function() {
+        $('#fieldstaffs-table').on('click', '.view-btn', function () {
             var data = $(this).data('row');
-            let smName = data.sales_manager && data.sales_manager.user ? data.sales_manager.user.name : 'N/A';
-            let html = `
-                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Name</label><p class="fw-bold mb-0">${data.user.name}</p></div>
-                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Email</label><p class="mb-0">${data.user.email}</p></div>
-                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Contact</label><p class="mb-0">${data.contact_no || 'N/A'}</p></div>
-                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Sales Manager</label><p class="mb-0">${smName}</p></div>
-                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Pincode</label><p class="mb-0">${data.pincode}</p></div>
-                <div class="col-md-6"><label class="fw-bold text-muted small text-uppercase">Status</label><p class="mb-0">${data.user ? (data.user.status === 'active' ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>') : 'N/A'}</p></div>
-                <div class="col-12"><label class="fw-bold text-muted small text-uppercase">Address</label><p class="mb-0">${data.user.address || 'N/A'}</p></div>
-            `;
-            $('#showFieldStaffDetails').html(html);
-            $('#showFieldStaffModal').data('lat', data.latitude).data('lng', data.longitude);
+            var id = data.id;
+            var url = "{{ route('admin.field-staffs.show', ':id') }}".replace(':id', id);
+
+            // Reset and show modal with loading state
+            $('#fs_view_name').text('Loading...');
+            $('#fs_view_manager').text('Loading...');
+            $('#fs_avatar_img').hide();
+            $('#fs_avatar_initials').text('').show();
+            $('#fs_view_retailers_body').html('<tr><td colspan="4" class="text-center">Loading...</td></tr>');
+            $('#fsRetailerCount').text('0');
+
+            // Switch to info tab by default
+            $('#fs-info-tab').tab('show');
+
             $('#showFieldStaffModal').modal('show');
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function (response) {
+                    if (response.success) {
+                        let fs = response.data;
+                        let smName = fs.sales_manager && fs.sales_manager.user ? fs.sales_manager.user.name : 'N/A';
+                        let profileImg = fs.user && fs.user.profile_image ? '/storage/' + fs.user.profile_image : null;
+
+                        // Avatar
+                        if (profileImg) {
+                            $('#fs_avatar_img').attr('src', profileImg).show();
+                            $('#fs_avatar_initials').hide();
+                        } else {
+                            let fsName = fs.user ? fs.user.name : 'User';
+                            let initials = fsName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+                            $('#fs_avatar_initials').text(initials).show();
+                            $('#fs_avatar_img').hide();
+                        }
+
+                        let status = fs.user ? fs.user.status : '';
+                        let userName = fs.user ? fs.user.name : 'N/A';
+                        let userEmail = fs.user ? fs.user.email : 'N/A';
+                        let userAddress = fs.user ? fs.user.address : (fs.address || 'N/A');
+
+                        $('#fs_view_name').text(userName);
+                        $('#fs_view_manager').html('<i class="fa fa-user-tie me-1"></i>Manager: ' + smName);
+                        $('#fs_view_status').attr('class', 'badge ' + (status === 'active' ? 'bg-success' : 'bg-danger')).text(status === 'active' ? 'Active' : 'Inactive');
+                        $('#fs_view_email').text(userEmail);
+                        $('#fs_view_contact').text(fs.contact_no || 'N/A');
+                        $('#fs_view_pincode').text(fs.pincode || 'N/A');
+                        $('#fs_view_address').text(userAddress);
+
+                        // Retailers
+                        let retailers = fs.retailers || [];
+                        $('#fsRetailerCount').text(retailers.length);
+                        let html = '';
+                        if (retailers.length > 0) {
+                            retailers.forEach(ret => {
+                                let rStatus = ret.user ? ret.user.status : 'inactive';
+                                let badgeClass = rStatus === 'active' ? 'bg-success' : 'bg-danger';
+                                let owner = ret.user ? ret.user.name : 'N/A';
+                                html += `
+                                        <tr>
+                                            <td style="color: var(--med-text-main) !important;">${ret.shop_name}</td>
+                                            <td style="color: var(--med-text-main) !important;">${owner}</td>
+                                            <td style="color: var(--med-text-main) !important;">${ret.contact_no || 'N/A'}</td>
+                                            <td style="color: var(--med-text-main) !important;"><span class="badge ${badgeClass}">${rStatus}</span></td>
+                                        </tr>
+                                    `;
+                            });
+                        } else {
+                            html = '<tr><td colspan="4" class="text-center text-muted">No retailers assigned.</td></tr>';
+                        }
+                        $('#fs_view_retailers_body').html(html);
+
+                        $('#showFieldStaffModal').data('lat', fs.latitude).data('lng', fs.longitude);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("AJAX Error:", status, error);
+                    $('#fs_view_name').text('Error loading data');
+                    $('#fs_view_retailers_body').html('<tr><td colspan="4" class="text-center text-danger">Failed to load assigned retailers.</td></tr>');
+                }
+            });
         });
 
         // Handle Delete via AJAX
-        $('#fieldstaffs-table').on('click', '.delete-btn', function() {
+        $('#fieldstaffs-table').on('click', '.delete-btn', function () {
             let url = $(this).data('url');
             Swal.fire({
                 title: 'Delete Field Staff?',
@@ -615,7 +792,7 @@
                         data: {
                             _token: "{{ csrf_token() }}"
                         },
-                        success: function(response) {
+                        success: function (response) {
                             if (response.success) {
                                 table.ajax.reload(null, false);
                                 Swal.fire('Deleted!', response.message, 'success');
@@ -623,7 +800,7 @@
                                 Swal.fire('Error!', response.message, 'error');
                             }
                         },
-                        error: function(xhr) {
+                        error: function (xhr) {
                             let msg = 'Something went wrong.';
                             if (xhr.responseJSON && xhr.responseJSON.message) {
                                 msg = xhr.responseJSON.message;
@@ -636,7 +813,7 @@
         });
 
         // Handle Create Field Staff AJAX Submission
-        $('#createFieldStaffForm').on('submit', function(e) {
+        $('#createFieldStaffForm').on('submit', function (e) {
             e.preventDefault();
 
             // JS Password Validation
@@ -658,19 +835,19 @@
                 data: formData,
                 processData: false,
                 contentType: false,
-                success: function(response) {
+                success: function (response) {
                     $('#createFieldStaffModal').modal('hide');
                     $('#createFieldStaffForm')[0].reset();
                     $('#fieldstaffs-table').DataTable().ajax.reload();
                     submitBtn.prop('disabled', false).text('Create');
                     showToast('success', response.message);
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     submitBtn.prop('disabled', false).text('Create');
                     let errors = xhr.responseJSON.errors;
                     let errorMessage = '';
                     if (errors) {
-                        $.each(errors, function(key, value) {
+                        $.each(errors, function (key, value) {
                             errorMessage += value[0] + '\n';
                         });
                     } else {
@@ -682,7 +859,7 @@
         });
 
         // Handle Edit Field Staff AJAX Submission
-        $('#editFieldStaffForm').on('submit', function(e) {
+        $('#editFieldStaffForm').on('submit', function (e) {
             e.preventDefault();
 
             let password = $('#edit_password').val();
@@ -703,19 +880,19 @@
                 data: formData,
                 processData: false,
                 contentType: false,
-                success: function(response) {
+                success: function (response) {
                     $('#editFieldStaffModal').modal('hide');
                     $('#editFieldStaffForm')[0].reset();
                     $('#fieldstaffs-table').DataTable().ajax.reload();
                     submitBtn.prop('disabled', false).text('Update');
                     showToast('success', response.message);
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     submitBtn.prop('disabled', false).text('Update');
                     let errors = xhr.responseJSON.errors;
                     let errorMessage = '';
                     if (errors) {
-                        $.each(errors, function(key, value) {
+                        $.each(errors, function (key, value) {
                             errorMessage += value[0] + '\n';
                         });
                     } else {
@@ -727,13 +904,13 @@
         });
 
         // Modal Show Events for Map Resize
-        $('#createFieldStaffModal').on('shown.bs.modal', function() {
+        $('#createFieldStaffModal').on('shown.bs.modal', function () {
             if (createMap) {
                 google.maps.event.trigger(createMap, 'resize');
                 createMap.setCenter(createMarker.position);
             }
         });
-        $('#editFieldStaffModal').on('shown.bs.modal', function() {
+        $('#editFieldStaffModal').on('shown.bs.modal', function () {
             if (editMap) {
                 google.maps.event.trigger(editMap, 'resize');
                 let lat = parseFloat($('#edit_latitude').val());
@@ -751,7 +928,7 @@
                 }
             }
         });
-        $('#showFieldStaffModal').on('shown.bs.modal', function() {
+        $('#showFieldStaffModal').on('shown.bs.modal', function () {
             if (showMap) {
                 google.maps.event.trigger(showMap, 'resize');
                 let lat = parseFloat($(this).data('lat'));
@@ -776,7 +953,7 @@
             }
         });
         // Handle Status Toggle (Activate/Deactivate)
-        $('#fieldstaffs-table').on('click', '.status-toggle', function() {
+        $('#fieldstaffs-table').on('click', '.status-toggle', function () {
             // Re-check permission (canActivate was defined inside row render loop in original code, need to define it globally if not present)
             // original logic: let canActivate = @json(Auth::user()->hasAnyRole('admin')); inside render loop.
             // Let's assume we can get it or just rely on server side check. 
@@ -817,13 +994,15 @@
                         table.ajax.reload(null, false);
                         let msg = newStatus === 'active' ? 'Field Staff activated successfully.' : 'Field Staff deactivated successfully.';
                         Swal.fire('Updated!', msg, 'success');
-                    }).fail(function(xhr) {
+                    }).fail(function (xhr) {
                         Swal.fire('Error!', 'Something went wrong.', 'error');
                     });
                 }
             });
         });
-    });
-</script>
-<script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&libraries=places,marker&v=weekly&loading=async&callback=initMap" async defer></script>
+                                });
+    </script>
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&libraries=places,marker&v=weekly&loading=async&callback=initMap"
+        async defer></script>
 @endpush
