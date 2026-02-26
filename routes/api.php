@@ -34,4 +34,12 @@ Route::middleware('auth:api')->group(function () {
     // Distributor — Retailer Orders (orders placed to this distributor by retailers)
     Route::get('distributor/retailer-orders', [\App\Http\Controllers\Api\DistributorRetailerOrderController::class, 'index']);
     Route::get('distributor/retailer-orders/{id}', [\App\Http\Controllers\Api\DistributorRetailerOrderController::class, 'show']);
+    // Distributor Dashboard
+    Route::prefix('distributor/dashboard')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\DistributorDashboardApiController::class, 'index']);
+        Route::get('order-status-distribution', [\App\Http\Controllers\Api\DistributorDashboardApiController::class, 'getOrderStatusDistribution']);
+        Route::get('total-orders-over-time', [\App\Http\Controllers\Api\DistributorDashboardApiController::class, 'getTotalOrdersOverTime']);
+        Route::get('orders-by-retailer', [\App\Http\Controllers\Api\DistributorDashboardApiController::class, 'getOrdersByRetailer']);
+        Route::get('top-products', [\App\Http\Controllers\Api\DistributorDashboardApiController::class, 'getTopProducts']);
+    });
 });
