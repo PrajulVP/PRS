@@ -279,6 +279,133 @@
                 ]
             }
         },
+        "/api/distributor/dashboard": {
+            "get": {
+                "tags": [
+                    "Distributor Dashboard"
+                ],
+                "summary": "Get distributor dashboard summary data",
+                "operationId": "f22d0fed0b6614112fc9072f00c80be7",
+                "responses": {
+                    "200": {
+                        "description": "Dashboard data for the logged-in distributor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "counts": {
+                                            "type": "object"
+                                        },
+                                        "retailer_order_stats": {
+                                            "type": "object"
+                                        },
+                                        "distributor_order_stats": {
+                                            "type": "object"
+                                        },
+                                        "recent_retailer_orders": {
+                                            "type": "array",
+                                            "items": {}
+                                        },
+                                        "chart_data": {
+                                            "type": "object"
+                                        },
+                                        "top_retailers": {
+                                            "type": "array",
+                                            "items": {}
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/distributor/dashboard/order-status-distribution": {
+            "get": {
+                "tags": [
+                    "Distributor Dashboard"
+                ],
+                "summary": "Get retailer order status distribution",
+                "operationId": "56c4b6c6556ce1dc7c35344c48456367",
+                "responses": {
+                    "200": {
+                        "description": "Status distribution"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/distributor/dashboard/total-orders-over-time": {
+            "get": {
+                "tags": [
+                    "Distributor Dashboard"
+                ],
+                "summary": "Get total orders over time",
+                "operationId": "c2ea9a6c3b783eb3f97f8590a2399776",
+                "responses": {
+                    "200": {
+                        "description": "Chart data"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/distributor/dashboard/orders-by-retailer": {
+            "get": {
+                "tags": [
+                    "Distributor Dashboard"
+                ],
+                "summary": "Get orders grouped by retailer",
+                "operationId": "4d2aaef1baf5f84c26ce7fe313d0bc70",
+                "responses": {
+                    "200": {
+                        "description": "Top retailers"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/distributor/dashboard/top-products": {
+            "get": {
+                "tags": [
+                    "Distributor Dashboard"
+                ],
+                "summary": "Get top products for this distributor",
+                "operationId": "749f3067a7cd9011087e630e63bae95a",
+                "responses": {
+                    "200": {
+                        "description": "Top products"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/distributor-orders": {
             "get": {
                 "tags": [
@@ -1041,6 +1168,10 @@
         {
             "name": "Distributors",
             "description": "Distributors"
+        },
+        {
+            "name": "Distributor Dashboard",
+            "description": "Distributor Dashboard"
         },
         {
             "name": "Distributor Orders",
