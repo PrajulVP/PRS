@@ -42,4 +42,14 @@ Route::middleware('auth:api')->group(function () {
         Route::get('orders-by-retailer', [\App\Http\Controllers\Api\DistributorDashboardApiController::class, 'getOrdersByRetailer']);
         Route::get('top-products', [\App\Http\Controllers\Api\DistributorDashboardApiController::class, 'getTopProducts']);
     });
+
+    // Sales Manager Dashboard
+    Route::prefix('sales-manager')->group(function () {
+        Route::get('dashboard', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'index']);
+        Route::get('pending-retailers', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getPendingRetailers']);
+        Route::get('fieldstaffs', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getFieldStaffs']);
+        Route::get('retailers', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getRetailers']);
+        Route::get('retailers/{id}/loyalty-points', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getRetailerLoyaltyDetails']);
+        Route::post('retailers/{id}/approve', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'approveRetailer']);
+    });
 });
