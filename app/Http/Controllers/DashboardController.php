@@ -110,7 +110,7 @@ class DashboardController extends Controller
                     ->join('retailer_orders', 'retailer_order_items.retailer_order_id', '=', 'retailer_orders.id')
                     ->join('products', 'retailer_order_items.product_id', '=', 'products.id')
                     ->where('retailer_orders.distributor_id', $distributor->id)
-                    ->select('products.product_name', DB::raw('SUM(retailer_order_items.quantity) as total_quantity_ordered'), DB::raw('SUM(retailer_order_items.total) as total_revenue'))
+                    ->select('products.product_name', DB::raw('SUM(retailer_order_items.quantity) as total_quantity_ordered'), DB::raw('SUM(retailer_order_items.total_amount) as total_revenue'))
                     ->groupBy('products.id', 'products.product_name')
                     ->orderByDesc('total_quantity_ordered')
                     ->take(5)
