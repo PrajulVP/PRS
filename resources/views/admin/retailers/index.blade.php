@@ -55,10 +55,12 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5><i class="fa fa-users me-2"></i>Retailers</h5>
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                            data-bs-target="#createRetailerModal">
-                            <i class="fa fa-plus me-1"></i>Add Retailer
-                        </button>
+                        @if(auth()->user()->hasPermissionToCategory('retailers', 'add') || auth()->user()->hasRole('superadmin'))
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#createRetailerModal">
+                                <i class="fa fa-plus me-1"></i>Add Retailer
+                            </button>
+                        @endif
                     </div>
                     <div class="card-body">
                         @if(session('success'))
@@ -310,8 +312,8 @@
                                 style="width:85px;height:85px;object-fit:cover;display:none;border:3px solid #fff;">
                             <div id="ret_avatar_initials"
                                 style="width:85px;height:85px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-                                                                    font-size:1.9rem;font-weight:700;color:#fff;
-                                                                    background:linear-gradient(135deg,#1e3a5f,#2e6da4);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+                                                                            font-size:1.9rem;font-weight:700;color:#fff;
+                                                                            background:linear-gradient(135deg,#1e3a5f,#2e6da4);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
                             </div>
                         </div>
                         <div>
@@ -429,6 +431,9 @@
         $(document).ready(function () {
             // Fix syntax error from previous version: remove spaces around '->'
             const canActivate = @json(Auth::user()->hasAnyRole(['superadmin', 'admin', 'salesmanager']));
+            const canEdit = @json(Auth::user()->hasPermissionToCategory('retailers', 'edit') || Auth::user()->hasRole('superadmin'));
+            const canDelete = @json(Auth::user()->hasPermissionToCategory('retailers', 'delete') || Auth::user()->hasRole('superadmin'));
+            const isDistributor = @json(Auth::user()->hasRole('distributor'));
 
             var table = $('#retailers-table').DataTable({
                 processing: true,
@@ -505,13 +510,14 @@
                         let activateBtn = '';
 
                         return `
-                                                        <div class="action-buttons">
-                                                            ${activateBtn}
-                                                            <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>
-                                                            <button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>
-                                                            <button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>
-                                                        </div>
-                                                    `;
+                                                                <div class="action-buttons">
+                                                                    ${activateBtn}
+                                                                    ${isDistributor ? `<a href="{{ route('admin.retailer-orders.index') }}?retailer_id=${id}" class="btn btn-sm btn-warning" title="View Orders"><i class="fa fa-shopping-cart"></i></a>` : ''}
+                                                                    <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>
+                                                                    ${canEdit ? `<button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>` : ''}
+                                                                    ${canDelete ? `<button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>` : ''}
+                                                                </div>
+                                                            `;
                     }
                 }
                 ],

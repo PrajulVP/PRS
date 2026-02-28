@@ -268,43 +268,15 @@
     <div class="modal fade" id="showOrderModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Order Details</h5>
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="fw-bold mb-0">Order Details <span id="modalOrderCode" class="text-primary ms-2"></span></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <div class="mb-4" id="showOrderInfo">
-                        <!-- Content via JS -->
-                    </div>
-
-                    <h6 class="fw-bold mb-3">Ordered Items</h6>
-                    <div class="table-responsive border rounded">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="ps-3">Product</th>
-                                    <th class="text-center">Qty</th>
-                                    <th class="text-end">Price</th>
-                                    <th class="text-end pe-3">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody id="showOrderItemsBody"></tbody>
-                            <tfoot class="table-light">
-                                <tr>
-                                    <td colspan="3" class="text-end fw-bold">Total Amount:</td>
-                                    <td class="text-end fw-bold pe-3"><i class="fa fa-rupee"></i> <span
-                                            id="showOrderTotal"></span></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <div class="modal-body pt-3" id="showOrderContent">
+                    <!-- Dynamic content will be injected here via JS -->
                 </div>
             </div>
         </div>
-
     </div>
 
     {{-- Delete Confirmation Modal --}}
@@ -430,11 +402,11 @@
                         if (items.length > 2) {
                             let visible = items.slice(0, 2).join('<br>');
                             return `<div>
-                                                                                                                                        <span class="preview-content">${visible}</span>
-                                                                                                                                        <span class="full-content d-none">${data}</span>
-                                                                                                                                        <br>
-                                                                                                                                        <a href="#" class="small text-primary toggle-more-btn" onclick="event.preventDefault(); let p = $(this).parent(); if(p.find('.full-content').hasClass('d-none')){ p.find('.full-content').removeClass('d-none'); p.find('.preview-content').addClass('d-none'); $(this).text('Show Less'); } else { p.find('.full-content').addClass('d-none'); p.find('.preview-content').removeClass('d-none'); $(this).text('Read More'); }">Read More</a>
-                                                                                                                                    </div>`;
+                                                                                                                                                            <span class="preview-content">${visible}</span>
+                                                                                                                                                            <span class="full-content d-none">${data}</span>
+                                                                                                                                                            <br>
+                                                                                                                                                            <a href="#" class="small text-primary toggle-more-btn" onclick="event.preventDefault(); let p = $(this).parent(); if(p.find('.full-content').hasClass('d-none')){ p.find('.full-content').removeClass('d-none'); p.find('.preview-content').addClass('d-none'); $(this).text('Show Less'); } else { p.find('.full-content').addClass('d-none'); p.find('.preview-content').removeClass('d-none'); $(this).text('Read More'); }">Read More</a>
+                                                                                                                                                        </div>`;
                         }
                         return data;
                     }
@@ -728,19 +700,19 @@
                         let sub = item.quantity * item.price;
                         total += sub;
                         tbody.append(`
-                                                                                                                                        <tr>
-                                                                                                                                            <td>${item.name}<input type="hidden" name="items[${id}][product_id]" value="${id}"></td>
-                                                                                                                                                                                                        <td>${item.stock}</td>
-                                                                                                                                                                                                        <td>
-                                                                                                                                                                                                            <input type="number" class="form-control form-control-sm qty-input-create" 
-                                                                                                                                                                                                            data-id="${id}" value="${item.quantity}" min="1" max="${item.stock}" style="width:80px">
-                                                                                                                                                                                                            <input type="hidden" name="items[${id}][quantity]" value="${item.quantity}">
-                                                                                                                                                                                                        </td>
-                                                                                                                                                                                                        <td>${item.price}</td>
-                                                                                                                                                                                                        <td>${sub.toFixed(2)}</td>
-                                                                                                                                                                                                        <td><button type="button" class="btn btn-danger btn-sm remove-create" data-id="${id}">X</button></td>
-                                                                                                                                                                                                    </tr>
-                                                                                                                                                                                                `);
+                                                                                                                                                            <tr>
+                                                                                                                                                                <td>${item.name}<input type="hidden" name="items[${id}][product_id]" value="${id}"></td>
+                                                                                                                                                                                                                            <td>${item.stock}</td>
+                                                                                                                                                                                                                            <td>
+                                                                                                                                                                                                                                <input type="number" class="form-control form-control-sm qty-input-create" 
+                                                                                                                                                                                                                                data-id="${id}" value="${item.quantity}" min="1" max="${item.stock}" style="width:80px">
+                                                                                                                                                                                                                                <input type="hidden" name="items[${id}][quantity]" value="${item.quantity}">
+                                                                                                                                                                                                                            </td>
+                                                                                                                                                                                                                            <td>${item.price}</td>
+                                                                                                                                                                                                                            <td>${sub.toFixed(2)}</td>
+                                                                                                                                                                                                                            <td><button type="button" class="btn btn-danger btn-sm remove-create" data-id="${id}">X</button></td>
+                                                                                                                                                                                                                        </tr>
+                                                                                                                                                                                                                    `);
                     });
                 }
                 $('#create_grand_total').text(total.toFixed(2));
@@ -871,27 +843,27 @@
                         });
 
                         tbody.append(`
-                                                                                                                                                                                                    <tr>
-                                                                                                                                                                                                        <td>${item.name}
-                                                                                                                                                                                                            <input type="hidden" name="items[${rowId}][product_id]" value="${rowId}">
-                                                                                                                                                                                                            ${item.orderItemId ? `<input type="hidden" name="items[${rowId}][order_item_id]" value="${item.orderItemId}">` : ''}
-                                                                                                                                                                                                        </td>
-                                                                                                                                                                                                        <td>
-                                                                                                                                                                                                            <select class="form-select form-select-sm unit-select-edit" data-id="${rowId}" style="width: 90px; margin: 0 auto;">
-                                                                                                                                                                                                                ${options}
-                                                                                                                                                                                                            </select>
-                                                                                                                                                                                                            <input type="hidden" name="items[${rowId}][unit]" value="${unit}">
-                                                                                                                                                                                                        </td>
-                                                                                                                                                                                                        <td>
-                                                                                                                                                                                                            <input type="number" class="form-control form-control-sm qty-input-edit" 
-                                                                                                                                                                                                            data-id="${rowId}" value="${qty}" min="1" style="width:80px; margin: 0 auto;">
-                                                                                                                                                                                                            <input type="hidden" name="items[${rowId}][quantity]" value="${qty}">
-                                                                                                                                                                                                        </td>
-                                                                                                                                                                                                        <td class="text-end">${price.toFixed(2)}</td>
-                                                                                                                                                                                                        <td class="text-end">${sub.toFixed(2)}</td>
-                                                                                                                                                                                                        <td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm remove-edit" data-id="${rowId}"><i class="fa fa-times"></i></button></td>
-                                                                                                                                                                                                    </tr>
-                                                                                                                                                                                                `);
+                                                                                                                                                                                                                        <tr>
+                                                                                                                                                                                                                            <td>${item.name}
+                                                                                                                                                                                                                                <input type="hidden" name="items[${rowId}][product_id]" value="${rowId}">
+                                                                                                                                                                                                                                ${item.orderItemId ? `<input type="hidden" name="items[${rowId}][order_item_id]" value="${item.orderItemId}">` : ''}
+                                                                                                                                                                                                                            </td>
+                                                                                                                                                                                                                            <td>
+                                                                                                                                                                                                                                <select class="form-select form-select-sm unit-select-edit" data-id="${rowId}" style="width: 90px; margin: 0 auto;">
+                                                                                                                                                                                                                                    ${options}
+                                                                                                                                                                                                                                </select>
+                                                                                                                                                                                                                                <input type="hidden" name="items[${rowId}][unit]" value="${unit}">
+                                                                                                                                                                                                                            </td>
+                                                                                                                                                                                                                            <td>
+                                                                                                                                                                                                                                <input type="number" class="form-control form-control-sm qty-input-edit" 
+                                                                                                                                                                                                                                data-id="${rowId}" value="${qty}" min="1" style="width:80px; margin: 0 auto;">
+                                                                                                                                                                                                                                <input type="hidden" name="items[${rowId}][quantity]" value="${qty}">
+                                                                                                                                                                                                                            </td>
+                                                                                                                                                                                                                            <td class="text-end">${price.toFixed(2)}</td>
+                                                                                                                                                                                                                            <td class="text-end">${sub.toFixed(2)}</td>
+                                                                                                                                                                                                                            <td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm remove-edit" data-id="${rowId}"><i class="fa fa-times"></i></button></td>
+                                                                                                                                                                                                                        </tr>
+                                                                                                                                                                                                                    `);
                     });
                 }
                 $('#edit_grand_total').text(total.toFixed(2));
@@ -928,26 +900,105 @@
             // --- Show Modal ---
             $('#distributor-orders-table').on('click', '.view-btn', function () {
                 let row = $(this).data('row');
-                let html = `
-                                                                                                                                                                                            <tr><th>Order Code</th><td>${row.order_code}</td></tr>
-                                                                                                                                                                                            <tr><th>Distributor</th><td>${row.name}</td></tr>
-                                                                                                                                                                                            <tr><th>Sales Manager</th><td>${row.sales_manager_name}</td></tr>
-                                                                                                                                                                                            <tr><th>Status</th><td>${row.status}</td></tr>
-                                                                                                                                                                                            <tr><th>Placed At</th><td>${row.placed_at}</td></tr>
-                                                                                                                                                                                         `;
-                $('#showOrderBody').html(html);
+                $('#modalOrderCode').text('#' + row.order_code);
 
-                let itemsHtml = '';
-                row.items.forEach(function (item) {
-                    itemsHtml += `<tr>
-                                                                                                                                                                                                <td>${item.product_name}</td>
-                                                                                                                                                                                                <td>${item.quantity}</td>
-                                                                                                                                                                                                <td>${item.unit_price}</td>
-                                                                                                                                                                                                <td>${item.total_amount}</td>
-                                                                                                                                                                                             </tr>`;
+                let detailsHtml = `
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <h6 class="text-uppercase text-muted fw-bold mb-3"><i class="fa fa-building me-2"></i>Distributor Info</h6>
+                                        <h5 class="fw-bold text-dark mb-1">${row.name || 'N/A'}</h5>
+                                        <div class="d-flex align-items-center mb-1"><i class="fa fa-envelope text-muted me-2" style="width: 16px;"></i> <span>${row.distributor_email || 'N/A'}</span></div>
+                                        <div class="d-flex align-items-center mb-1"><i class="fa fa-phone text-muted me-2" style="width: 16px;"></i> <span>${row.distributor_phone || 'N/A'}</span></div>
+                                        <div class="d-flex align-items-start mb-1"><i class="fa fa-map-marker text-muted me-2 mt-1" style="width: 16px;"></i> <span class="text-wrap">${row.distributor_address || 'N/A'}</span></div>
+                                        <div class="d-flex align-items-center mb-1"><i class="fa fa-id-card text-muted me-2" style="width: 16px;"></i> <span class="text-muted small me-1">GST:</span> <span>${row.distributor_gst || 'N/A'}</span></div>
+                                        <div class="d-flex align-items-center"><i class="fa fa-file-alt text-muted me-2" style="width: 16px;"></i> <span class="text-muted small me-1">DL No:</span> <span>${row.distributor_dl || 'N/A'}</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <h6 class="text-uppercase text-muted fw-bold mb-3"><i class="fa fa-industry me-2"></i>Company Info</h6>
+                                        <h5 class="fw-bold text-dark mb-2">PRS Company</h5>
+                                        <div class="text-muted small mb-2"><i class="fa fa-user-tie me-2"></i>Sales Manager: ${row.sales_manager_name || 'N/A'}</div>
+                                        <div class="d-flex align-items-center mb-1"><i class="fa fa-envelope text-muted me-2" style="width: 16px;"></i> <span>info@prs.com</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover mb-0">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th class="py-3 px-4">Product</th>
+                                                <th class="py-3 px-4 text-center">Batch/Exp</th>
+                                                <th class="py-3 px-4 text-center">Qty</th>
+                                                <th class="py-3 px-4 text-end">Price</th>
+                                                <th class="py-3 px-4 text-end">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                    `;
+
+                row.items.forEach(function (i) {
+                    let name = i.product_name || i.name || '-';
+                    let qty = i.quantity || i.qty || 0;
+                    let unitPrice = parseFloat(i.unit_price || 0);
+                    let totalAmt = parseFloat(i.total_amount || i.total || (i.unit_price ? (i.unit_price * qty) : 0));
+
+                    let batchHtml = '-';
+                    if (i.batches && i.batches.length > 0) {
+                        batchHtml = i.batches.map(b => `<div class="small"><span class="badge bg-soft-primary text-primary px-1 py-0 me-1">${b.batch_no}</span><span class="text-muted small">${b.expiry_date}</span></div>`).join('');
+                    }
+
+                    detailsHtml += `
+                                <tr>
+                                    <td class="py-3 px-4">
+                                        <div class="fw-bold text-dark">${name}</div>
+                                    </td>
+                                    <td class="py-3 px-4 text-center">${batchHtml}</td>
+                                    <td class="py-3 px-4 text-center"><span class="badge bg-soft-primary text-primary px-2 py-1">${qty} ${i.unit || ''}</span></td>
+                                    <td class="py-3 px-4 text-end">₹${unitPrice.toFixed(2)}</td>
+                                    <td class="py-3 px-4 text-end fw-bold text-primary">₹${totalAmt.toFixed(2)}</td>
+                                </tr>
+                            `;
                 });
-                $('#showOrderItemsBody').html(itemsHtml);
-                $('#showOrderTotal').text(row.total_amount);
+
+                detailsHtml += `
+                                            </tbody>
+                                            <tfoot class="bg-light">
+                                                <tr>
+                                                    <td colspan="4" class="text-end py-3 px-4 text-uppercase fw-bold text-muted">Grand Total:</td>
+                                                    <td class="py-3 px-4 text-end fw-bold text-success fs-5">₹${parseFloat(row.total_amount).toFixed(2)}</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <div class="bg-light rounded p-3 h-100">
+                                        <h6 class="text-muted fw-bold text-uppercase mb-2">Payment Status</h6>
+                                        <p class="mb-0 fs-5"><span class="badge ${row.payment_status === 'paid' ? 'bg-success' : 'bg-warning'}">${(row.payment_status || 'Pending').toUpperCase()}</span></p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="bg-light rounded p-3 h-100">
+                                        <h6 class="text-muted fw-bold text-uppercase mb-2">Order Timeline</h6>
+                                        <div class="d-flex align-items-center"><i class="fa fa-calendar-alt text-muted me-2"></i> <strong>${row.placed_at || 'N/A'}</strong></div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+
+                $('#showOrderContent').html(detailsHtml);
                 $('#showOrderModal').modal('show');
             });
 

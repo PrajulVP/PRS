@@ -16,6 +16,7 @@ use Carbon\Carbon;
 
 class DistributorOrderApiController extends Controller
 {
+    use \App\Traits\HandlesNotifications;
     /**
      * @OA\Get(
      *     path="/api/distributor-orders",
@@ -219,10 +220,11 @@ class DistributorOrderApiController extends Controller
             // Notifications logic...
             if ($order->salesManager && $order->salesManager->user) {
                 try {
-                    $order->salesManager->user->notify(new \App\Notifications\OrderActionRequired(
+                    $this->notifyUnique($order->salesManager->user, new \App\Notifications\OrderActionRequired(
                         $order,
                         "New Distributor Order #{$order->order_code} is ready for your approval.",
-                        url('/approvals/distributors')
+                        url('/approvals/distributors'),
+                        'distributor_order'
                     ));
                 } catch (\Exception $e) {
                     Log::error('Notification failed: ' . $e->getMessage());

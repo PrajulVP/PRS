@@ -104,36 +104,28 @@ class RetailerOrderController extends Controller
 
                 $needed = (int)$item['quantity'];
 
-                // Fetch inventory batches for this distributor and product, FEFO
-                $inventories = Inventory::where('distributor_id', $distributor->id)
+                // Availability check: ensure distributor has enough total stock across all active batches
+                $available = Inventory::where('distributor_id', $distributor->id)
                     ->where('product_id', $product->id)
                     ->where('stock', '>', 0)
-                    ->orderBy('expiry_date', 'asc')
-                    ->get();
+                    ->sum('stock');
 
-                $available = $inventories->sum('stock');
                 if ($available < $needed) {
-                    throw new \Exception("Insufficient stock for product: {$product->product_name}");
-                }
-
-                $remainingNeeded = $needed;
-                foreach ($inventories as $inv) {
-                    if ($remainingNeeded <= 0) break;
-                    $take = min($inv->stock, $remainingNeeded);
-                    $inv->decrement('stock', $take);
-                    $remainingNeeded -= $take;
+                    throw new \Exception("Insufficient total stock for product: {$product->product_name} (Requested: {$needed}, Available: {$available})");
                 }
 
                 $sub = $needed * $product->mrp;
                 $order->items()->create([
                     'product_id' => $product->id,
                     'quantity' => $needed,
+                    'unit' => $item['unit'] ?? 'Strips',
                     'unit_price' => $product->mrp,
                     'total_amount' => $sub
                 ]);
                 $totalAmt += $sub;
                 $totalQty += $needed;
             }
+
 
             $order->update(['total_amount' => $totalAmt, 'total_items' => count($request->items), 'total_quantity' => $totalQty]);
             DB::commit();

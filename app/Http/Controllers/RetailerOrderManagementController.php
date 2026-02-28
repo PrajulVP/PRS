@@ -14,9 +14,11 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Notifications\OrderActionRequired;
+use App\Traits\HandlesNotifications;
 
 class RetailerOrderManagementController extends Controller
 {
+    use HandlesNotifications;
     // Create Order Page
     public function create()
     {
@@ -152,16 +154,19 @@ class RetailerOrderManagementController extends Controller
                     $product = Product::find($itemData['product_id']);
                     if (!$product) continue;
 
-                    // Deduct Stock
+                    // Availability check (Only check sum, don't deduct)
                     if ($distributor) {
-                        $distProduct = $distributor->products()->where('product_id', $product->id)->first();
-                        if ($distProduct) {
-                            if ($distProduct->pivot->stock < $itemData['quantity']) {
-                                throw new \Exception("Insufficient stock for product: " . $product->product_name);
-                            }
-                            $distributor->products()->updateExistingPivot($product->id, ['stock' => $distProduct->pivot->stock - $itemData['quantity']]);
+                        $totalStock = DB::table('inventories')
+                            ->where('distributor_id', $distributor->id)
+                            ->where('product_id', $product->id)
+                            ->sum('stock');
+
+                        if ($totalStock < $itemData['quantity']) {
+                            throw new \Exception("Insufficient total stock for " . $product->product_name . " (Available: {$totalStock})");
                         }
                     }
+
+
 
                     // Price Logic: Retailer buys at PTR (Price to Retailer)
                     $price = $product->ptr; // Strictly PTR
@@ -248,6 +253,10 @@ class RetailerOrderManagementController extends Controller
                     }
                 }
 
+                if ($request->has('retailer_id') && !empty($request->retailer_id)) {
+                    $query->where('retailer_id', $request->retailer_id);
+                }
+
                 // Allow filtering by 'pending' for Manager dashboard link? 
                 // The original code had managerIndex separately. 
                 // We'll rely on DataTables search/filter if needed, or index handles general management.
@@ -321,21 +330,39 @@ class RetailerOrderManagementController extends Controller
                         'id' => $order->id,
                         'order_code' => $order->order_code,
                         'retailer_name' => $order->retailer?->user?->name ?? 'N/A',
+                        'retailer_shop' => $order->retailer?->shop_name ?? '',
+                        'retailer_phone' => $order->retailer?->contact_no ?? $order->retailer?->phone ?? '',
+                        'retailer_address' => trim(($order->retailer?->address ?? '') . ' ' . ($order->retailer?->pincode ?? '')),
                         'retailer_id' => $order->retailer_id,
                         'distributor_id' => $order->distributor_id,
-                        'distributor_name' => $order->distributor?->user?->name ?? 'N/A',
+                        'distributor_name' => $order->distributor?->name ?? $order->distributor?->user?->name ?? 'N/A',
+                        'distributor_phone' => $order->distributor?->contact_no ?? $order->distributor?->phone ?? '',
                         'product_summary' => $productSummary,
                         'items' => $order->items->map(function ($item) {
                             return [
                                 'product_id' => $item->product_id,
                                 'product_name' => $item->product ? $item->product->product_name : 'Unknown Product',
                                 'quantity' => $item->quantity,
+                                'unit' => $item->unit ?? 'Strips',
                                 'unit_price' => $item->unit_price,
                                 'total_amount' => $item->total_amount,
                                 'order_item_id' => $item->id,
-                                'stock' => 9999 // Admin edit view logic (distributor stock check on submit)
+                                'pack' => $item->product?->pack,
+                                'strip_size' => $item->product?->strip_size,
+                                'box_size' => $item->product?->box_size,
+                                'carton_size' => $item->product?->carton_size,
+                                'stock' => 9999,
+                                'batches' => $item->batches->map(function ($b) {
+                                    return [
+                                        'id' => $b->id,
+                                        'batch_no' => $b->batch_no,
+                                        'expiry_date' => $b->expiry_date,
+                                        'quantity' => $b->quantity
+                                    ];
+                                })
                             ];
                         }),
+
                         'notes' => $order->notes,
                         'delivery_notes' => $order->delivery_notes,
                         'total_items' => $order->total_items,
@@ -343,6 +370,7 @@ class RetailerOrderManagementController extends Controller
                         'total_amount' => number_format($order->total_amount, 2),
                         'status' => ucfirst(str_replace('_', ' ', $order->status)),
                         'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d H:i:s') : '-',
+                        'payment_status' => $order->payment_status ?? 'pending',
                         'invoice_url' => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
                     ];
                 });
@@ -371,6 +399,59 @@ class RetailerOrderManagementController extends Controller
     }
 
     // Manager/Admin/Superadmin/FieldStaff/Distributor: Accept Order
+    public function rejectOrder(Request $request, RetailerOrder $retailerOrder)
+    {
+        $request->validate([
+            'rejection_reason' => 'required|string|min:5'
+        ]);
+
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        // Check if distributor or admin/manager
+        if ($user->hasRole('distributor')) {
+            if ($retailerOrder->distributor_id !== $user->distributor->id) {
+                return response()->json(['error' => 'This order is not assigned to your distributorship.'], 403);
+            }
+        } elseif (!$user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
+            return response()->json(['error' => 'Unauthorized action.'], 403);
+        }
+
+        if (!in_array($retailerOrder->status, ['pending', 'accepted_by_fieldstaff'])) {
+            return response()->json(['error' => 'This order cannot be rejected in its current state.'], 400);
+        }
+
+        $retailerOrder->update([
+            'status' => 'rejected_by_distributor',
+            'cancellation_reason' => $request->rejection_reason
+        ]);
+
+        // Clear existing notifications for this order
+        $this->clearOrderNotifications($retailerOrder->id, 'retailer_order');
+
+        // Notify Retailer
+        if ($retailerOrder->retailer && $retailerOrder->retailer->user) {
+            $retailerOrder->retailer->user->notify(new OrderActionRequired(
+                $retailerOrder,
+                "Your order #{$retailerOrder->order_code} has been rejected by the Distributor. Reason: {$request->rejection_reason}",
+                url('/retailer-orders'),
+                'retailer_order'
+            ));
+        }
+
+        // Notify Field Staff
+        if ($retailerOrder->fieldStaff && $retailerOrder->fieldStaff->user) {
+            $retailerOrder->fieldStaff->user->notify(new OrderActionRequired(
+                $retailerOrder,
+                "Order #{$retailerOrder->order_code} has been rejected by the Distributor.",
+                url('/approvals/retailers'),
+                'retailer_order'
+            ));
+        }
+
+        return response()->json(['success' => 'Order rejected successfully!']);
+    }
+
     public function acceptOrder(Request $request, RetailerOrder $retailerOrder)
     {
         /** @var \App\Models\User $user */
@@ -418,7 +499,7 @@ class RetailerOrderManagementController extends Controller
 
             // Notify Distributor
             if ($retailerOrder->distributor && $retailerOrder->distributor->user) {
-                $retailerOrder->distributor->user->notify(new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} has been accepted by Field Staff and is ready for your approval.", url('/approvals/retailers')));
+                $this->notifyUnique($retailerOrder->distributor->user, new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} has been accepted by Field Staff and is ready for your approval.", url('/approvals/retailers'), 'retailer_order'));
             }
 
             return response()->json(['success' => 'Order accepted by Field Staff!']);
@@ -437,11 +518,120 @@ class RetailerOrderManagementController extends Controller
             if ($status !== 'accepted_by_fieldstaff') {
                 return response()->json(['error' => 'Order must be accepted by Field Staff first.'], 400);
             }
-            $updateData = ['status' => 'accepted_by_distributor'];
-            if ($request->filled('payment_status') && in_array($request->payment_status, ['pending', 'paid'])) {
-                $updateData['payment_status'] = $request->payment_status;
+
+            try {
+                DB::beginTransaction();
+
+                // 1. Batch Allocation Logic
+                if ($request->has('items_batches')) {
+                    $itemsBatches = $request->items_batches; // Expected: [ {order_item_id: X, batches: [ {id: Y, quantity: Z} ]} ]
+
+                    foreach ($itemsBatches as $allocation) {
+                        $orderItem = $retailerOrder->items()->findOrFail($allocation['order_item_id']);
+                        $product = $orderItem->product;
+                        // Conversion Factor
+                        $multiplier = 1;
+                        if ($orderItem->unit === 'Box') {
+                            $multiplier = (int)($product->box_size ?? 1);
+                        } elseif ($orderItem->unit === 'Carton') {
+                            $multiplier = (int)($product->box_size ?? 1) * (int)($product->carton_size ?? 1);
+                        }
+
+                        $totalAllocated = 0;
+                        foreach ($allocation['batches'] as $batchData) {
+                            $invId = str_replace(['"', "'"], '', $batchData['inventory_id']);
+                            $inventory = \App\Models\Inventory::where('distributor_id', $distributor->id)
+                                ->where('product_id', $product->id)
+                                ->findOrFail($invId);
+
+                            $deductQty = $batchData['quantity'] * $multiplier;
+
+                            if ($inventory->stock < $deductQty) {
+                                throw new \Exception("Insufficient stock in batch {$inventory->batch_no} for product {$product->product_name}");
+                            }
+
+                            // Deduct from Inventory
+                            DB::table('inventories')
+                                ->where('id', $inventory->id)
+                                ->decrement('stock', $deductQty);
+
+                            // Record in RetailerOrderItemBatch
+                            \App\Models\RetailerOrderItemBatch::create([
+                                'retailer_order_item_id' => $orderItem->id,
+                                'batch_no' => $inventory->batch_no,
+                                'expiry_date' => $inventory->expiry_date,
+                                'quantity' => $batchData['quantity'], // Keep original unit qty or strip qty? 
+                                // Usually better to record in strips for consistency?
+                                // Looking at existing code, it records $batchData['quantity'].
+                            ]);
+
+                            $totalAllocated += $batchData['quantity'];
+                        }
+
+                        if ($totalAllocated != $orderItem->quantity) {
+                            throw new \Exception("Total allocated quantity ({$totalAllocated}) does not match ordered quantity ({$orderItem->quantity}) for {$product->product_name}");
+                        }
+                    }
+                } else {
+                    // Fallback to FEFO if no manual batches provided (Optional: Remove if you want to FORCE manual allocation)
+                    foreach ($retailerOrder->items as $orderItem) {
+                        $product = $orderItem->product;
+
+                        // Conversion Factor
+                        $multiplier = 1;
+                        if ($orderItem->unit === 'Box') {
+                            $multiplier = (int)($product->box_size ?? 1);
+                        } elseif ($orderItem->unit === 'Carton') {
+                            $multiplier = (int)($product->box_size ?? 1) * (int)($product->carton_size ?? 1);
+                        }
+
+                        $neededStrips = $orderItem->quantity * $multiplier;
+
+                        $inventories = \App\Models\Inventory::where('distributor_id', $distributor->id)
+                            ->where('product_id', $product->id)
+                            ->where('stock', '>', 0)
+                            ->orderBy('expiry_date', 'asc')
+                            ->get();
+
+                        if ($inventories->sum('stock') < $neededStrips) {
+                            throw new \Exception("Insufficient stock for product: {$product->product_name}");
+                        }
+
+                        $remainingStrips = $neededStrips;
+                        foreach ($inventories as $inv) {
+                            if ($remainingStrips <= 0) break;
+                            $takeStrips = min($inv->stock, $remainingStrips);
+                            DB::table('inventories')
+                                ->where('id', $inv->id)
+                                ->decrement('stock', $takeStrips);
+
+                            \App\Models\RetailerOrderItemBatch::create([
+                                'retailer_order_item_id' => $orderItem->id,
+                                'batch_no' => $inv->batch_no,
+                                'expiry_date' => $inv->expiry_date,
+                                'quantity' => $takeStrips / $multiplier, // Store in order unit? 
+                                // Given manual allocation records $batchData['quantity'] (order unit),
+                                // we should record order unit here too.
+                            ]);
+
+                            $remainingStrips -= $takeStrips;
+                        }
+                    }
+                }
+
+                $updateData = ['status' => 'accepted_by_distributor'];
+                if ($request->filled('payment_status') && in_array($request->payment_status, ['pending', 'paid'])) {
+                    $updateData['payment_status'] = $request->payment_status;
+                }
+                $this->clearOrderNotifications($retailerOrder->id, 'retailer_order');
+                $retailerOrder->update($updateData);
+
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json(['error' => $e->getMessage()], 422);
             }
-            $retailerOrder->update($updateData);
+
 
             if ($request->hasFile('invoice')) {
                 $file = $request->file('invoice');
@@ -452,7 +642,7 @@ class RetailerOrderManagementController extends Controller
 
             // Notify Retailer
             if ($retailerOrder->retailer && $retailerOrder->retailer->user) {
-                $retailerOrder->retailer->user->notify(new OrderActionRequired($retailerOrder, "Your order #{$retailerOrder->order_code} has been approved by the Distributor. Please confirm order upon delivery.", url('/retailer-orders')));
+                $retailerOrder->retailer->user->notify(new OrderActionRequired($retailerOrder, "Your order #{$retailerOrder->order_code} has been approved by the Distributor. Please confirm order upon delivery.", url('/retailer-orders'), 'retailer_order'));
             }
 
             // Award Loyalty Points on Distributor Acceptance
@@ -495,13 +685,12 @@ class RetailerOrderManagementController extends Controller
             return response()->json(['success' => 'Order approved by Distributor!', 'new_points' => $retailerOrder->retailer->loyalty_points ?? 0]);
         }
 
-        // 3. Admin / Sales Manager (can perform any stage or maybe skip)
         if ($user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
             if ($status === 'pending') {
                 $retailerOrder->update(['status' => 'accepted_by_fieldstaff']);
                 // Notify Distributor
                 if ($retailerOrder->distributor && $retailerOrder->distributor->user) {
-                    $retailerOrder->distributor->user->notify(new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} is ready for your approval (Field Staff stage bypassed by Admin).", url('/approvals/retailers')));
+                    $this->notifyUnique($retailerOrder->distributor->user, new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} is ready for your approval (Field Staff stage bypassed by Admin).", url('/approvals/retailers'), 'retailer_order'));
                 }
                 return response()->json(['success' => 'Order accepted (Field Staff stage bypassed by Admin)!']);
             } elseif ($status === 'accepted_by_fieldstaff') {
@@ -516,7 +705,7 @@ class RetailerOrderManagementController extends Controller
 
                 // Notify Retailer
                 if ($retailerOrder->retailer && $retailerOrder->retailer->user) {
-                    $retailerOrder->retailer->user->notify(new OrderActionRequired($retailerOrder, "Your order #{$retailerOrder->order_code} has been approved. Please confirm order upon delivery.", url('/retailer-orders')));
+                    $this->notifyUnique($retailerOrder->retailer->user, new OrderActionRequired($retailerOrder, "Your order #{$retailerOrder->order_code} has been approved. Please confirm order upon delivery.", url('/retailer-orders'), 'retailer_order'));
                 }
 
                 // Award Loyalty Points (Admin Override)

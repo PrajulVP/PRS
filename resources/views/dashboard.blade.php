@@ -241,7 +241,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-lg-12">
+                    <div class="col-lg-6">
                         <div class="card p-4 mb-4">
                             <h5 class="section-title">Top Producing Retailers</h5>
                             <div class="table-responsive">
@@ -249,8 +249,7 @@
                                     <thead>
                                         <tr>
                                             <th>Retailer Name</th>
-                                            <th>Email</th>
-                                            <th>Total Orders</th>
+                                            <th>Top Product</th>
                                             <th>Revenue Generated</th>
                                         </tr>
                                     </thead>
@@ -258,12 +257,38 @@
                                         @forelse($topRetailers as $tr)
                                             <tr>
                                                 <td class="font-weight-bold">{{ $tr->retailer->user->name ?? 'Unknown' }}</td>
-                                                <td>{{ $tr->retailer->user->email ?? 'N/A' }}</td>
-                                                <td><span class="badge badge-primary">{{ $tr->total_orders }} Orders</span></td>
+                                                <td>{{ $tr->top_product_name ?? 'N/A' }}</td>
                                                 <td class="text-success font-weight-bold">₹{{ number_format($tr->total_revenue, 2) }}</td>
                                             </tr>
                                         @empty
-                                            <tr><td colspan="4" class="text-center text-muted py-4">No top retailers data available yet.</td></tr>
+                                            <tr><td colspan="3" class="text-center text-muted py-4">No top retailers data available yet.</td></tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card p-4 mb-4">
+                            <h5 class="section-title">Top Products Ordered</h5>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Product Name</th>
+                                            <th>Units Sold</th>
+                                            <th>Revenue</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($topProducts as $tp)
+                                            <tr>
+                                                <td class="font-weight-bold">{{ $tp->product_name }}</td>
+                                                <td><span class="badge badge-primary">{{ $tp->total_quantity_ordered }} Units</span></td>
+                                                <td class="text-success font-weight-bold">₹{{ number_format($tp->total_revenue, 2) }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr><td colspan="3" class="text-center text-muted py-4">No top products data available yet.</td></tr>
                                         @endforelse
                                     </tbody>
                                 </table>

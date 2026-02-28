@@ -245,9 +245,10 @@
               <div class="onhover-show-div notification-dropdown">
               <h6 class="f-18 mb-0 dropdown-title">Notifications</h6>
               <ul>
-                @forelse(Auth::user()->notifications()->latest()->take(2)->get() as $notification)
+                @forelse(Auth::user()->notifications()->latest()->take(5)->get() as $notification)
                   @php 
                     $is_pending = \App\Http\Controllers\NotificationController::checkActionStatus($notification); 
+                    $is_unread = $notification->unread();
                     $actionUrl = $notification->data['action_url'] ?? '#';
                     $orderCode = $notification->data['order_code'] ?? '';
                     if ($actionUrl !== '#' && !empty($orderCode)) {
@@ -255,14 +256,15 @@
                         $actionUrl .= $separator . 'highlight=' . urlencode($orderCode);
                     }
                   @endphp
-                  <li class="{{ $is_pending ? 'b-l-primary border-4' : 'b-l-secondary border-4 bg-light' }}"
+                  <li class="{{ $is_unread ? ($is_pending ? 'b-l-primary border-4' : 'b-l-secondary border-4') : 'notification-read' }}"
+                    style="{{ !$is_unread ? 'opacity: 0.6; background-color: #f8f9fa;' : '' }}"
                     data-id="{{ $notification->id }}">
                     <a href="{{ $actionUrl }}" style="display: block; width: 100%; color: inherit; cursor: pointer; text-decoration: none;">
-                      <p class="mb-1 {{ $is_pending ? 'fw-bold text-dark' : 'text-muted' }}"
+                      <p class="mb-1 {{ $is_unread ? 'fw-bold text-dark' : 'text-muted' }}"
                         style="font-size: 0.8rem;">
                       {{ $notification->data['message'] ?? 'Notification' }}
                     </p>
-                    <span class="{{ $is_pending ? 'font-danger' : 'text-muted' }}"
+                    <span class="{{ $is_unread ? ($is_pending ? 'font-danger' : 'text-primary') : 'text-muted' }}"
                       style="font-size: 0.70rem;">
                       <i class="fa fa-clock-o"></i> {{ $notification->created_at->diffForHumans() }}
                       </span>
