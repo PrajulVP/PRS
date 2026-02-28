@@ -24,11 +24,8 @@ class RetailerController extends Controller
             if (Auth::user()->hasRole('distributor')) {
                 $distributor = Auth::user()->distributor;
                 if ($distributor) {
-                    $query->where(function ($q) use ($distributor) {
-                        $q->where('distributor_id', $distributor->id)
-                            ->orWhereHas('retailerOrders', function ($orderQuery) use ($distributor) {
-                                $orderQuery->where('distributor_id', $distributor->id);
-                            });
+                    $query->whereHas('retailerOrders', function ($orderQuery) use ($distributor) {
+                        $orderQuery->where('distributor_id', $distributor->id);
                     });
                 }
             } elseif (Auth::user()->hasRole('fieldstaff')) {
