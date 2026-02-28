@@ -11,6 +11,7 @@ class RetailerOrderItem extends Model
         'retailer_order_id',
         'product_id',
         'quantity',
+        'unit',
         'unit_price',
         'total_amount',
     ];
@@ -23,5 +24,10 @@ class RetailerOrderItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function batches()
+    {
+        return $this->hasMany(RetailerOrderItemBatch::class, 'retailer_order_item_id');
     }
 }

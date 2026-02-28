@@ -36,6 +36,7 @@ class DashboardController extends Controller
         $topRetailers = collect();
         $topDistributors = collect();
         $topFieldStaff = collect();
+        $topProducts = collect();
         $totalLoyaltyPoints = 0;
         $monthlyDistributorOrdersChart = null;
 
@@ -90,6 +91,30 @@ class DashboardController extends Controller
                     ->where('distributor_id', $distributor->id)
                     ->groupBy('retailer_id')->orderByDesc('total_orders')->take(5)
                     ->with('retailer.user')->get();
+
+                foreach ($topRetailers as $tr) {
+                    $topProd = DB::table('retailer_order_items')
+                        ->join('retailer_orders', 'retailer_order_items.retailer_order_id', '=', 'retailer_orders.id')
+                        ->join('products', 'retailer_order_items.product_id', '=', 'products.id')
+                        ->where('retailer_orders.retailer_id', $tr->retailer_id)
+                        ->where('retailer_orders.distributor_id', $distributor->id)
+                        ->select('products.product_name', DB::raw('SUM(retailer_order_items.quantity) as total_qty'))
+                        ->groupBy('products.product_name')
+                        ->orderByDesc('total_qty')
+                        ->first();
+                    $tr->top_product_name = $topProd ? $topProd->product_name : 'N/A';
+                }
+
+                // Top products overall ordered by retailers from this distributor
+                $topProducts = DB::table('retailer_order_items')
+                    ->join('retailer_orders', 'retailer_order_items.retailer_order_id', '=', 'retailer_orders.id')
+                    ->join('products', 'retailer_order_items.product_id', '=', 'products.id')
+                    ->where('retailer_orders.distributor_id', $distributor->id)
+                    ->select('products.product_name', DB::raw('SUM(retailer_order_items.quantity) as total_quantity_ordered'), DB::raw('SUM(retailer_order_items.total) as total_revenue'))
+                    ->groupBy('products.id', 'products.product_name')
+                    ->orderByDesc('total_quantity_ordered')
+                    ->take(5)
+                    ->get();
             }
         } elseif ($user->hasRole('fieldstaff')) {
             // See retailers orders and statistics of their orders, performance to understand if they are working better or not.
@@ -204,8 +229,9 @@ class DashboardController extends Controller
             'recentDistributorOrders',
             'chartData',
             'topRetailers',
-            'topDistributors',
             'topFieldStaff',
+            'topProducts',
+            'topDistributors',
             'totalLoyaltyPoints',
             'monthlyDistributorOrdersChart'
         ));

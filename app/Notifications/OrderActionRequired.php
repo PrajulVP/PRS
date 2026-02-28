@@ -14,15 +14,17 @@ class OrderActionRequired extends Notification
     protected $order;
     protected $message;
     protected $actionUrl;
+    protected $orderType;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct($order, $message, $actionUrl = null)
+    public function __construct($order, $message, $actionUrl = null, $orderType = 'retailer_order')
     {
         $this->order = $order;
         $this->message = $message;
         $this->actionUrl = $actionUrl;
+        $this->orderType = $orderType;
     }
 
     /**
@@ -45,6 +47,7 @@ class OrderActionRequired extends Notification
         return [
             'order_id' => $this->order->id,
             'order_code' => $this->order->order_code,
+            'order_type' => $this->orderType,
             'message' => $this->message,
             'action_url' => $this->actionUrl,
             'type' => 'order_action'

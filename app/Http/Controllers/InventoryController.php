@@ -85,6 +85,11 @@ class InventoryController extends Controller
                     $query->where('distributor_id', $request->input('distributor_id'));
                 }
 
+                if ($request->has('product_id') && !empty($request->input('product_id'))) {
+                    $query->where('product_id', $request->input('product_id'));
+                }
+
+
                 if ($request->has('search') && !empty($request->input('search')['value'])) {
                     $searchValue = $request->input('search')['value'];
                     $query->where(function ($q) use ($searchValue) {

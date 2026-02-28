@@ -122,7 +122,7 @@
 
     {{-- View Details Modal --}}
     <div class="modal fade" id="viewOrderModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Order Details</h5>
@@ -215,9 +215,9 @@
         </div>
     </div>
 
-    {{-- Approve Retailer Order Modal --}}
+    {{-- Approve Retailer Order Modal (Simple) --}}
     <div class="modal fade" id="approveRetailerOrderModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Approve Retailer Order</h5>
@@ -233,15 +233,6 @@
                             <label class="form-label">Upload Invoice (PDF, JPG, PNG)</label>
                             <input type="file" name="invoice" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
                         </div>
-                        @if(Auth::user()->hasRole('distributor'))
-                            <div class="mb-3" id="paymentStatusGroup">
-                                <label class="form-label fw-bold">Payment Status</label>
-                                <select name="payment_status" class="form-select">
-                                    <option value="pending">Unpaid</option>
-                                    <option value="paid">Paid</option>
-                                </select>
-                            </div>
-                        @endif
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -252,9 +243,64 @@
         </div>
     </div>
 
+    {{-- Distributor Batch Selection Modal (Advanced) --}}
+    <div class="modal fade" id="distributorApproveModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Approve Retailer Order & Allocate Batches</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="distributorApproveForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="approve_order_id" name="order_id">
+                        <div class="alert alert-info py-2">
+                            <small><i class="fa fa-info-circle"></i> Please allocate specific batches for each product to
+                                fulfill this order. Total allocated quantity must match ordered quantity.</small>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Upload Invoice (PDF, JPG, PNG)</label>
+                                <input type="file" name="invoice" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Payment Status</label>
+                                <select name="payment_status" class="form-select">
+                                    <option value="pending">Unpaid</option>
+                                    <option value="paid">Paid</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm" id="batch_allocation_table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 30%;">Product</th>
+                                        <th style="width: 10%;" class="text-center">Ordered</th>
+                                        <th style="width: 60%;">Batch Allocation</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="batch_allocation_body">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success" id="btnSubmitDistributorApprove">Approve & Allocate
+                            Stock</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     {{-- Retailer Payment Status Modal --}}
     <div class="modal fade" id="retailerPaymentStatusModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-sm">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Payment Status</h5>
@@ -451,18 +497,18 @@
                             let ext = row.invoice_url.split('.').pop().toLowerCase();
                             let icon = ext === 'pdf' ? 'fa-file-pdf-o' : 'fa-file-image-o';
                             let btnsHtml = `
-                                                                                                                                        <div class="d-flex align-items-center gap-1 p-2">
-                                                                                                                                            <a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-success" title="View Invoice">
-                                                                                                                                                <i class="fa ${icon}"></i> &nbsp;View
-                                                                                                                                                                           </a>`;
+                                                                                                                                                                        <div class="d-flex align-items-center gap-1 p-2">
+                                                                                                                                                                            <a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-success" title="View Invoice">
+                                                                                                                                                                                <i class="fa ${icon}"></i> &nbsp;View
+                                                                                                                                                                                                           </a>`;
                             if (!isFieldStaff) {
                                 btnsHtml += `
-                                                                                                                                            <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}" title="Re-upload Invoice">
-                                                                                                                                                <i class="fa fa-refresh"></i>
-                                                                                                                                            </button>
-                                                                                                                                            <button class="btn btn-xs btn-danger remove-invoice-btn" data-id="${row.id}" title="Remove Invoice">
-                                                                                                                                                <i class="fa fa-trash"></i>
-                                                                                                                                            </button>`;
+                                                                                                                                                                            <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}" title="Re-upload Invoice">
+                                                                                                                                                                                <i class="fa fa-refresh"></i>
+                                                                                                                                                                            </button>
+                                                                                                                                                                            <button class="btn btn-xs btn-danger remove-invoice-btn" data-id="${row.id}" title="Remove Invoice">
+                                                                                                                                                                                <i class="fa fa-trash"></i>
+                                                                                                                                                                            </button>`;
                             }
                             btnsHtml += `</div>`;
                             return btnsHtml;
@@ -475,10 +521,10 @@
                         }
 
                         return `
-                                                                                                                                    <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}">
-                                                                                                                                        <i class="fa fa-upload"></i> Upload
-                                                                                                                                    </button>
-                                                                                                                                `;
+                                                                                                                                                                    <button class="btn btn-xs btn-warning upload-invoice-btn" data-id="${row.id}">
+                                                                                                                                                                        <i class="fa fa-upload"></i> Upload
+                                                                                                                                                                    </button>
+                                                                                                                                                                `;
                     }
                 },
                 {
@@ -497,7 +543,11 @@
                         if ((isAdmin || isSalesManager) && (statusRaw === 'pending' || statusRaw === 'accepted_by_fieldstaff')) canApprove = true;
 
                         if (canApprove) {
-                            btns += `<button class="btn btn-success btn-sm approve-retailer-btn" data-id="${row.id}" title="Approve"><i class="fa fa-check"></i></button>`;
+                            if (isDistributor && statusRaw === 'accepted_by_fieldstaff') {
+                                btns += `<button class="btn btn-success btn-sm distributor-approve-btn" data-row="${rowData}" title="Approve & Allocate Batches"><i class="fa fa-check-circle"></i></button>`;
+                            } else {
+                                btns += `<button class="btn btn-success btn-sm approve-retailer-btn" data-id="${row.id}" title="Approve"><i class="fa fa-check"></i></button>`;
+                            }
                             btns += `<button class="btn btn-danger btn-sm reject-retailer-btn" data-id="${row.id}" title="Reject"><i class="fa fa-times"></i></button>`;
                         }
 
@@ -739,6 +789,53 @@
                 });
             });
 
+            $(document).on('click', '.reject-retailer-btn', function () {
+                let id = $(this).data('id');
+                Swal.fire({
+                    title: 'Reject Order?',
+                    text: 'Please provide a reason for rejecting this order:',
+                    input: 'textarea',
+                    inputPlaceholder: 'Enter rejection reason here...',
+                    inputAttributes: {
+                        'aria-label': 'Type your message here'
+                    },
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, Reject',
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    preConfirm: (reason) => {
+                        if (!reason) {
+                            Swal.showValidationMessage('Reason is required for rejection');
+                        }
+                        return reason;
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        let url = "{{ route('admin.retailer-orders.reject', ':id') }}".replace(':id', id);
+                        $.ajax({
+                            url: url,
+                            type: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}',
+                                rejection_reason: result.value
+                            },
+                            success: function (res) {
+                                if (res.success) {
+                                    table.ajax.reload(null, false);
+                                    showToast('success', res.success);
+                                } else {
+                                    showToast('error', res.error || 'Failed to reject order');
+                                }
+                            },
+                            error: function (xhr) {
+                                showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'An error occurred during rejection.');
+                            }
+                        });
+                    }
+                });
+            });
+
             // View Modal Logic
             $(document).on('click', '.view-details-btn', function () {
                 let row = $(this).data('row');
@@ -755,11 +852,11 @@
                 if (row.items && row.items.length) {
                     row.items.forEach(item => {
                         tbody.append(`<tr>
-                                                                                                                            <td>${item.product_name}</td>
-                                                                                                                            <td>${item.quantity}</td>
-                                                                                                                            <td>${item.unit_price}</td>
-                                                                                                                            <td>${item.total_amount}</td>
-                                                                                                                        </tr>`);
+                                                                                                                                                            <td>${item.product_name}</td>
+                                                                                                                                                            <td>${item.quantity}</td>
+                                                                                                                                                            <td>${item.unit_price}</td>
+                                                                                                                                                            <td>${item.total_amount}</td>
+                                                                                                                                                        </tr>`);
                     });
                 } else {
                     tbody.html('<tr><td colspan="4" class="text-center">No items</td></tr>');
@@ -788,7 +885,7 @@
                 e.preventDefault();
                 let formData = new FormData(this);
                 let id = $('#approve_retailer_order_id').val();
-                let url = "{{ route('admin.retailer-orders.acceptOrder', ':id') }}".replace(':id', id);
+                let url = "{{ route('admin.retailer-orders.accept', ':id') }}".replace(':id', id);
 
                 let $btn = $(this).find('button[type="submit"]');
                 let oldHtml = $btn.html();
@@ -801,20 +898,192 @@
                     processData: false,
                     contentType: false,
                     success: function (res) {
-                        $('#approveRetailerOrderModal').modal('hide');
                         if (res.success) {
+                            $('#approveRetailerOrderModal').modal('hide');
                             table.ajax.reload(null, false);
                             showToast('success', res.success);
                         } else {
-                            showToast('error', res.error || 'Failed to approve');
+                            showToast('error', res.error || 'Failed to approve order');
                         }
                     },
                     error: function (xhr) {
-                        $('#approveRetailerOrderModal').modal('hide');
-                        showToast('error', 'Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Request failed'));
+                        showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Approval failed');
                     },
                     complete: function () {
                         $btn.html(oldHtml).prop('disabled', false);
+                    }
+                });
+            });
+
+            // --- Distributor Approve & Batch Allocation Logic ---
+            $(document).on('click', '.distributor-approve-btn', function () {
+                let row = $(this).data('row');
+                $('#approve_order_id').val(row.id);
+                let tbody = $('#batch_allocation_body');
+                tbody.empty().html('<tr><td colspan="3" class="text-center"><i class="fa fa-spinner fa-spin"></i> Loading items...</td></tr>');
+
+                $('#distributorApproveModal').modal('show');
+
+                let itemsHtml = '';
+                let itemsProcessed = 0;
+
+                if (!row.items || row.items.length === 0) {
+                    tbody.html('<tr><td colspan="3" class="text-center text-danger">No items found in this order.</td></tr>');
+                    return;
+                }
+
+                row.items.forEach(function (item, index) {
+                    let productId = item.product_id;
+                    let orderItemId = item.order_item_id;
+                    let orderedQty = item.quantity;
+                    let distributorId = row.distributor_id;
+
+                    // Fetch batches for this product and distributor
+                    $.get("{{ route('inventories.index') }}", {
+                        product_id: productId,
+                        distributor_id: distributorId,
+                        length: -1 // Fetch all batches
+                    }, function (res) {
+                        let batches = res.data || [];
+                        let batchOptions = '<option value="">-- Select Batch --</option>';
+                        batches.forEach(b => {
+                            if (b.stock > 0) {
+                                batchOptions += `<option value="${b.id}" data-stock="${b.stock}">Batch: ${b.batch_no} | Exp: ${b.expiry_date} | Stock: ${b.stock}</option>`;
+                            }
+                        });
+
+                        let itemRow = `
+                                                                    <tr class="product-row" data-item-id="${orderItemId}" data-ordered-qty="${orderedQty}">
+                                                                        <td>
+                                                                            <strong>${item.product_name}</strong>
+                                                                            <div class="small text-muted">
+                                                                                Pack: ${item.pack || 'N/A'} | 
+                                                                                Strip Size: ${item.strip_size || 1} | 
+                                                                                Box Size: ${item.box_size || 1} | 
+                                                                                Carton Size: ${item.carton_size || 1}
+                                                                            </div>
+                                                                            <input type="hidden" name="items[${orderItemId}][product_id]" value="${productId}">
+                                                                        </td>
+                                                                        <td class="text-center font-weight-bold">
+                                                                            <span class="fs-5">${orderedQty}</span><br>
+                                                                            <span class="badge bg-light text-dark border">${item.unit || 'Strips'}</span>
+                                                                        </td>
+                                                                        <td>
+                                                                            <div class="allocation-container" id="allocation_for_${orderItemId}">
+                                                                            <input type="hidden" name="items_batches[${orderItemId}][order_item_id]" value="${orderItemId}">
+                                                                                <div class="allocation-item mb-2 d-flex gap-2">
+                                                                                    <select name="items_batches[${orderItemId}][batches][0][inventory_id]" class="form-select form-select-sm batch-select" required style="flex: 2;">
+                                                                                        ${batchOptions}
+                                                                                    </select>
+                                                                                    <input type="number" name="items_batches[${orderItemId}][batches][0][quantity]" class="form-control form-control-sm qty-input" value="${orderedQty}" min="1" required style="flex: 1;" placeholder="Qty">
+                                                                                    <button type="button" class="btn btn-sm btn-outline-primary add-more-batch" data-item-id="${orderItemId}" data-options='${JSON.stringify(batchOptions).replace(/'/g, "&apos;")}' title="Split into multiple batches"><i class="fa fa-plus"></i></button>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="small text-danger validation-msg" style="display:none;">Total must match ${orderedQty}</div>
+                                                                        </td>
+                                                                    </tr>
+                                                                `;
+
+                        if (itemsProcessed === 0) tbody.empty();
+                        tbody.append(itemRow);
+                        itemsProcessed++;
+                    }).fail(function () {
+                        if (itemsProcessed === 0) tbody.empty();
+                        tbody.append(`<tr><td>${item.product_name}</td><td colspan="2" class="text-center text-danger">Failed to load batches</td></tr>`);
+                        itemsProcessed++;
+                    });
+                });
+            });
+
+            // Add more batch rows for an item
+            $(document).on('click', '.add-more-batch', function () {
+                let itemId = $(this).data('item-id');
+                let options = $(this).data('options');
+                let container = $(`#allocation_for_${itemId}`);
+                let idx = container.find('.allocation-item').length;
+
+                let html = `
+                                                            <div class="allocation-item mb-2 d-flex gap-2">
+                                                                <select name="items_batches[${itemId}][batches][${idx}][inventory_id]" class="form-select form-select-sm batch-select" required style="flex: 2;">
+                                                                    ${options}
+                                                                </select>
+                                                                <input type="number" name="items_batches[${itemId}][batches][${idx}][quantity]" class="form-control form-control-sm qty-input" value="0" min="1" required style="flex: 1;" placeholder="Qty">
+                                                                <button type="button" class="btn btn-sm btn-outline-danger remove-allocation-row"><i class="fa fa-times"></i></button>
+                                                            </div>
+                                                        `;
+                container.append(html);
+            });
+
+            $(document).on('click', '.remove-allocation-row', function () {
+                $(this).closest('.allocation-item').remove();
+            });
+
+            // Batch Form Validation and Submission
+            $('#distributorApproveForm').submit(function (e) {
+                e.preventDefault();
+                let isValid = true;
+
+                // Validate each product row
+                $('.product-row').each(function () {
+                    let ordered = parseInt($(this).data('ordered-qty'));
+                    let allocated = 0;
+                    $(this).find('.qty-input').each(function () {
+                        allocated += parseInt($(this).val() || 0);
+                    });
+
+                    if (allocated !== ordered) {
+                        isValid = false;
+                        $(this).find('.validation-msg').show().text(`Quantity mismatch: Allocated ${allocated} of ${ordered}`);
+                        $(this).find('.allocation-container').addClass('border border-danger rounded p-1');
+                    } else {
+                        $(this).find('.validation-msg').hide();
+                        $(this).find('.allocation-container').removeClass('border border-danger rounded p-1');
+                    }
+
+                    // Also check if batches are selected
+                    $(this).find('.batch-select').each(function () {
+                        if (!$(this).val()) {
+                            isValid = false;
+                            $(this).addClass('is-invalid');
+                        } else {
+                            $(this).removeClass('is-invalid');
+                        }
+                    });
+                });
+
+                if (!isValid) {
+                    Swal.fire('Validation Error', 'Please ensure all items have correctly allocated batches matching the ordered quantity.', 'error');
+                    return;
+                }
+
+                let formData = new FormData(this);
+                formData.append('_token', '{{ csrf_token() }}');
+                let orderId = $('#approve_order_id').val();
+                let url = "{{ route('admin.retailer-orders.accept', ':id') }}".replace(':id', orderId);
+
+                let $btn = $('#btnSubmitDistributorApprove');
+                $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Processing...');
+
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (res) {
+                        if (res.success) {
+                            $('#distributorApproveModal').modal('hide');
+                            table.ajax.reload(null, false);
+                            showToast('success', res.success);
+                        } else {
+                            showToast('error', res.error || 'Failed to approve order');
+                        }
+                    },
+                    error: function (xhr) {
+                        showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'An error occurred during approval.');
+                    },
+                    complete: function () {
+                        $btn.prop('disabled', false).text('Approve & Allocate Stock');
                     }
                 });
             });

@@ -95,7 +95,7 @@ Route::middleware(['auth'])->group(function () {
             // ->except(['create']) // Removed to allow create route
             ->parameters(['retailer-orders' => 'retailerOrder']);
 
-        Route::post('retailer-orders/{retailerOrder}/accept', [RetailerOrderManagementController::class, 'acceptOrder'])->name('retailer-orders.acceptOrder');
+        Route::post('retailer-orders/{retailerOrder}/accept', [RetailerOrderManagementController::class, 'acceptOrder'])->name('retailer-orders.accept');
         Route::post('retailer-orders/{retailerOrder}/assign-fieldstaff', [RetailerOrderManagementController::class, 'assignFieldStaff'])->name('retailer-orders.assignFieldStaff');
         Route::post('orders/{order}/assign-distributor', [RetailerOrderManagementController::class, 'assignDistributor'])->name('orders.assign_distributor');
         Route::get('retailer-orders/product/{product}', [RetailerOrderManagementController::class, 'getProductDetails'])->name('retailer-orders.product-details');
@@ -111,6 +111,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('retailer-orders/{retailerOrder}/upload-invoice', [RetailerOrderManagementController::class, 'uploadInvoice'])->name('retailer-orders.upload-invoice');
         Route::post('retailer-orders/{retailerOrder}/remove-invoice', [RetailerOrderManagementController::class, 'removeInvoice'])->name('retailer-orders.remove-invoice');
         Route::post('retailer-orders/{retailerOrder}/confirm-receipt', [RetailerOrderManagementController::class, 'confirmReceipt'])->name('retailer-orders.confirm-receipt');
+        Route::post('retailer-orders/{retailerOrder}/reject', [RetailerOrderManagementController::class, 'rejectOrder'])->name('retailer-orders.reject');
 
 
         Route::resource('distributor-orders', DistributorOrderController::class);

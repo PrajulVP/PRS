@@ -141,8 +141,14 @@ class PendingApprovalController extends Controller
                     'items' => $item->items->map(function ($i) use ($viewType) {
                         $itemData = [
                             'order_item_id' => $i->id,
+                            'product_id' => $i->product_id,
                             'product_name' => $i->product?->product_name ?? 'N/A',
                             'quantity' => $i->quantity,
+                            'unit' => $i->unit ?? 'Strips',
+                            'pack' => $i->product?->pack,
+                            'strip_size' => $i->product?->strip_size,
+                            'box_size' => $i->product?->box_size,
+                            'carton_size' => $i->product?->carton_size,
                         ];
 
                         if ($viewType === 'distributor') {
@@ -150,6 +156,7 @@ class PendingApprovalController extends Controller
                             $itemData['total_amount'] = number_format($i->subtotal ?? 0, 2);
                             $itemData['batches'] = ($i->batches ?? collect())->map(function ($b) {
                                 return [
+                                    'id' => $b->id,
                                     'batch_no' => $b->batch_no,
                                     'expiry_date' => $b->expiry_date,
                                     'quantity' => $b->quantity,
@@ -167,10 +174,13 @@ class PendingApprovalController extends Controller
                 ];
 
                 if ($viewType === 'distributor') {
+                    $res['distributor_id'] = $item->distributor_id;
                     $res['distributor_name'] = $item->distributor->user->name ?? 'N/A';
                     $res['payment_status'] = $item->payment_status ?? 'pending';
                     $res['invoice_url'] = $item->invoice_path ? asset('storage/' . $item->invoice_path) : null;
                 } elseif ($viewType === 'retailer') {
+                    $res['retailer_id'] = $item->retailer_id;
+                    $res['distributor_id'] = $item->distributor_id;
                     $res['retailer_name'] = $item->retailer->user->name ?? 'N/A';
                     $res['payment_status'] = $item->payment_status ?? 'pending';
                     $res['invoice_url'] = $item->invoice_path ? asset('storage/' . $item->invoice_path) : null;

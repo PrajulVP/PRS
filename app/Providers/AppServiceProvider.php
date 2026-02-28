@@ -24,5 +24,9 @@ class AppServiceProvider extends ServiceProvider
     {
         Schema::defaultStringLength(191);
         View::composer('layouts.partials.sidebar', PendingUsersComposer::class);
+
+        // Register Observers
+        \App\Models\RetailerOrder::observe(\App\Observers\RetailerOrderObserver::class);
+        \App\Models\DistributorOrder::observe(\App\Observers\DistributorOrderObserver::class);
     }
 }

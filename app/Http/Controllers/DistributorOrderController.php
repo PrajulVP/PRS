@@ -11,9 +11,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Notifications\OrderActionRequired;
+use App\Traits\HandlesNotifications;
 
 class DistributorOrderController extends Controller
 {
+    use HandlesNotifications;
     public function index(Request $request)
     {
         if ($request->ajax()) {
@@ -108,7 +111,12 @@ class DistributorOrderController extends Controller
                     return [
                         'id' => $order->id,
                         'order_code' => $order->order_code,
-                        'name' => $order->distributor?->user?->name ?? 'N/A',
+                        'name' => $order->distributor?->name ?? $order->distributor?->user?->name ?? 'N/A',
+                        'distributor_email' => $order->distributor?->email ?? $order->distributor?->user?->email ?? '',
+                        'distributor_phone' => $order->distributor?->contact_no ?? $order->distributor?->phone ?? '',
+                        'distributor_address' => trim(($order->distributor?->address ?? '') . ' ' . ($order->distributor?->pincode ?? '')),
+                        'distributor_gst' => $order->distributor?->gst_number ?? '',
+                        'distributor_dl' => $order->distributor?->drug_license_no ?? '',
                         'distributor_id' => $order->distributor_id,
                         'sales_manager_name' => $order->salesManager?->user?->name ?? 'N/A',
                         'total_items' => $order->total_items,
@@ -127,7 +135,15 @@ class DistributorOrderController extends Controller
                                 'total_amount' => $item->subtotal,
                                 'stock_at_time' => null, // Stock check disabled
                                 'unit' => $item->unit,
-                                'order_item_id' => $item->id
+                                'order_item_id' => $item->id,
+                                'batches' => $item->batches->map(function ($b) {
+                                    return [
+                                        'id' => $b->id,
+                                        'batch_no' => $b->batch_no,
+                                        'expiry_date' => $b->expiry_date,
+                                        'quantity' => $b->quantity
+                                    ];
+                                })
                             ];
                         }),
                         'delivery_notes' => $order->delivery_notes,
@@ -264,10 +280,11 @@ class DistributorOrderController extends Controller
 
             // Notify Sales Manager
             if ($order->salesManager && $order->salesManager->user) {
-                $order->salesManager->user->notify(new \App\Notifications\OrderActionRequired(
+                $this->notifyUnique($order->salesManager->user, new \App\Notifications\OrderActionRequired(
                     $order,
                     "New Distributor Order #{$order->order_code} is ready for your approval.",
-                    url('/approvals/distributors')
+                    url('/approvals/distributors'),
+                    'distributor_order'
                 ));
             }
         } catch (\Exception $e) {
@@ -394,10 +411,11 @@ class DistributorOrderController extends Controller
         // Notify Admins
         $admins = \App\Models\User::role(['admin', 'superadmin'])->get();
         foreach ($admins as $admin) {
-            $admin->notify(new \App\Notifications\OrderActionRequired(
+            $this->notifyUnique($admin, new \App\Notifications\OrderActionRequired(
                 $distributorOrder,
                 "Distributor Order #{$distributorOrder->order_code} has been accepted by Sales Manager and is ready for your approval.",
-                url('/approvals/distributors')
+                url('/approvals/distributors'),
+                'distributor_order'
             ));
         }
 
@@ -513,10 +531,11 @@ class DistributorOrderController extends Controller
 
             // Notify Distributor
             if ($distributorOrder->distributor && $distributorOrder->distributor->user) {
-                $distributorOrder->distributor->user->notify(new \App\Notifications\OrderActionRequired(
+                $this->notifyUnique($distributorOrder->distributor->user, new OrderActionRequired(
                     $distributorOrder,
                     "Your order #{$distributorOrder->order_code} has been approved. Please confirm receipt upon delivery.",
-                    url('/distributor-orders')
+                    url('/distributor-orders'),
+                    'distributor_order'
                 ));
             }
 
@@ -708,10 +727,11 @@ class DistributorOrderController extends Controller
         // Notify Admins
         $admins = \App\Models\User::role(['admin', 'superadmin'])->get();
         foreach ($admins as $admin) {
-            $admin->notify(new \App\Notifications\OrderActionRequired(
+            $this->notifyUnique($admin, new OrderActionRequired(
                 $distributorOrder,
                 "Distributor Order #{$distributorOrder->order_code} has been accepted by Sales Manager and is ready for your approval.",
-                url('/approvals/distributors')
+                url('/approvals/distributors'),
+                'distributor_order'
             ));
         }
 
