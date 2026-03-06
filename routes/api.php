@@ -16,6 +16,8 @@ Route::middleware('auth:api')->group(function () {
     Route::post('logout', [AuthApiController::class, 'logout']);
     Route::get('retailer-orders', [RetailerOrderController::class, 'index']);
     Route::get('retailer-orders/{id}/products', [RetailerOrderController::class, 'getOrderItems']);
+    Route::post('retailer-orders', [RetailerOrderController::class, 'store']);
+    Route::post('retailer-orders/{id}/update-status', [RetailerOrderController::class, 'updateStatus']);
 
     // Distributor Orders
     Route::get('distributor-orders', [\App\Http\Controllers\Api\DistributorOrderApiController::class, 'index']);
@@ -34,6 +36,8 @@ Route::middleware('auth:api')->group(function () {
     // Distributor — Retailer Orders (orders placed to this distributor by retailers)
     Route::get('distributor/retailer-orders', [\App\Http\Controllers\Api\DistributorRetailerOrderController::class, 'index']);
     Route::get('distributor/retailer-orders/{id}', [\App\Http\Controllers\Api\DistributorRetailerOrderController::class, 'show']);
+    Route::post('distributor/retailer-orders/{id}/accept', [\App\Http\Controllers\Api\DistributorRetailerOrderController::class, 'acceptOrder']);
+    Route::post('distributor/retailer-orders/{id}/reject', [\App\Http\Controllers\Api\DistributorRetailerOrderController::class, 'rejectOrder']);
 
     // Distributor — Retailers List
     Route::get('distributor/retailers', [\App\Http\Controllers\Api\DistributorRetailerApiController::class, 'index']);

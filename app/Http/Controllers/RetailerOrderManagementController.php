@@ -419,16 +419,17 @@ class RetailerOrderManagementController extends Controller
             if ($retailerOrder->distributor_id !== $user->distributor->id) {
                 return response()->json(['error' => 'This order is not assigned to your distributorship.'], 403);
             }
-        } elseif (!$user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
+        } elseif (!$user->hasAnyRole(['admin', 'superadmin', 'salesmanager', 'fieldstaff'])) {
+            // Also allow fieldstaff to reject IF it's in a state they can act on (e.g. pending)
             return response()->json(['error' => 'Unauthorized action.'], 403);
         }
 
-        if (!in_array($retailerOrder->status, ['pending', 'processing'])) {
-            return response()->json(['error' => 'This order cannot be cancelled in its current state.'], 400);
+        if (!in_array($retailerOrder->status, [RetailerOrder::STATUS_PENDING, RetailerOrder::STATUS_PROCESSING])) {
+            return response()->json(['error' => 'Only pending or processing orders can be rejected.'], 400);
         }
 
         $retailerOrder->update([
-            'status' => 'cancelled',
+            'status' => RetailerOrder::STATUS_REJECTED,
             'cancellation_reason' => $request->rejection_reason
         ]);
 
@@ -439,7 +440,7 @@ class RetailerOrderManagementController extends Controller
         if ($retailerOrder->retailer && $retailerOrder->retailer->user) {
             $retailerOrder->retailer->user->notify(new OrderActionRequired(
                 $retailerOrder,
-                "Your order #{$retailerOrder->order_code} has been cancelled. Reason: {$request->rejection_reason}",
+                "Your order #{$retailerOrder->order_code} has been rejected. Reason: {$request->rejection_reason}",
                 route('retailer.orders.index'),
                 'retailer_order'
             ));
@@ -449,13 +450,13 @@ class RetailerOrderManagementController extends Controller
         if ($retailerOrder->fieldStaff && $retailerOrder->fieldStaff->user) {
             $retailerOrder->fieldStaff->user->notify(new OrderActionRequired(
                 $retailerOrder,
-                "Order #{$retailerOrder->order_code} has been cancelled.",
+                "Order #{$retailerOrder->order_code} has been rejected.",
                 route('admin.approvals.retailer'),
                 'retailer_order'
             ));
         }
 
-        return response()->json(['success' => 'Order cancelled successfully!']);
+        return response()->json(['success' => 'Order rejected successfully!']);
     }
 
     public function acceptOrder(Request $request, RetailerOrder $retailerOrder)
@@ -896,14 +897,18 @@ class RetailerOrderManagementController extends Controller
     {
         $request->validate(['cancellation_reason' => 'required|string|min:3']);
 
-        // Only a distributor owning the order can request cancellation
         if (!Auth::user()->hasRole('distributor')) return response()->json(['error' => 'No permission'], 403);
         if ($retailerOrder->distributor_id !== Auth::user()->distributor->id) return response()->json(['error' => 'Not your order'], 403);
-        if ($retailerOrder->status !== 'accepted') return response()->json(['error' => 'Invalid status'], 400);
 
-        $retailerOrder->status = 'cancelled';
+        if (!in_array($retailerOrder->status, [RetailerOrder::STATUS_PENDING, RetailerOrder::STATUS_PROCESSING])) {
+            return response()->json(['error' => 'Orders can only be cancelled while in pending or processing status.'], 400);
+        }
+
+        $retailerOrder->status = RetailerOrder::STATUS_CANCELLED;
         $retailerOrder->cancellation_reason = $request->cancellation_reason;
         $retailerOrder->save();
+
+        $this->deleteOrderNotifications($retailerOrder->id, 'retailer_order');
 
         return response()->json(['success' => 'Order cancelled successfully!']);
     }
@@ -911,25 +916,12 @@ class RetailerOrderManagementController extends Controller
     public function approveCancellation(RetailerOrder $retailerOrder)
     {
         if (!Auth::user()->hasRole('salesmanager')) return response()->json(['error' => 'No permission'], 403);
-        if ($retailerOrder->status !== 'cancelled') return response()->json(['error' => 'Invalid status'], 400);
+        if ($retailerOrder->status !== RetailerOrder::STATUS_CANCELLED) return response()->json(['error' => 'Invalid status'], 400);
 
-        $retailerOrder->status = 'cancelled';
+        $retailerOrder->status = RetailerOrder::STATUS_CANCELLED;
         $retailerOrder->save();
 
-        // Restore stock to distributor products
-        $distributor = $retailerOrder->distributor;
-        if ($distributor) {
-            foreach ($retailerOrder->items as $item) {
-                $pivot = $distributor->products()->where('product_id', $item->product_id)->first();
-                if ($pivot) {
-                    $distributor->products()->updateExistingPivot($item->product_id, ['stock' => $pivot->pivot->stock + $item->quantity]);
-                } else {
-                    $distributor->products()->attach($item->product_id, ['stock' => $item->quantity]);
-                }
-            }
-        }
-
-        return response()->json(['success' => 'Order cancellation approved successfully! Stock restored.']);
+        return response()->json(['success' => 'Order cancellation approved successfully!']);
     }
 
     public function cancelOrder(Request $request, RetailerOrder $retailerOrder)
@@ -941,27 +933,18 @@ class RetailerOrderManagementController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        if ($retailerOrder->status === 'pending') {
-            // Restore stock if needed
-            $distributor = $retailerOrder->distributor;
-            if ($distributor) {
-                foreach ($retailerOrder->items as $item) {
-                    $pivot = $distributor->products()->where('product_id', $item->product_id)->first();
-                    if ($pivot) {
-                        $distributor->products()->updateExistingPivot($item->product_id, ['stock' => $pivot->pivot->stock + $item->quantity]);
-                    }
-                }
-            }
-
-            $retailerOrder->update([
-                'status' => 'cancelled',
-                'cancellation_reason' => $request->cancellation_reason
-            ]);
-
-            return response()->json(['success' => 'Order cancelled successfully!']);
+        if ($retailerOrder->status !== RetailerOrder::STATUS_PENDING) {
+            return response()->json(['error' => 'Orders can only be cancelled while in pending status.'], 400);
         }
 
-        return response()->json(['error' => 'Only pending orders can be directly cancelled.'], 400);
+        $retailerOrder->update([
+            'status' => RetailerOrder::STATUS_CANCELLED,
+            'cancellation_reason' => $request->cancellation_reason
+        ]);
+
+        $this->deleteOrderNotifications($retailerOrder->id, 'retailer_order');
+
+        return response()->json(['success' => 'Order cancelled successfully!']);
     }
 
     public function destroy(Request $request, RetailerOrder $retailerOrder)

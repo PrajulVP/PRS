@@ -19,6 +19,7 @@ class RetailerOrder extends Model
     const STATUS_ACCEPTED = 'accepted';
     const STATUS_DELIVERED = 'delivered';
     const STATUS_CANCELLED = 'cancelled';
+    const STATUS_REJECTED = 'rejected';
 
     protected $fillable = [
         'order_code',

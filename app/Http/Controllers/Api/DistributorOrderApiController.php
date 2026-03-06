@@ -107,7 +107,22 @@ class DistributorOrderApiController extends Controller
      *     tags={"Distributor Orders"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="Order details"),
+     *     @OA\Response(response=200, description="Order details",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="integer"),
+     *             @OA\Property(property="order_code", type="string"),
+     *             @OA\Property(property="distributor", type="string"),
+     *             @OA\Property(property="total_amount", type="string"),
+     *             @OA\Property(property="items", type="array", @OA\Items(
+     *                 @OA\Property(property="product_name", type="string"),
+     *                 @OA\Property(property="quantity", type="integer"),
+     *                 @OA\Property(property="batches", type="array", @OA\Items(
+     *                     @OA\Property(property="batch_no", type="string"),
+     *                     @OA\Property(property="expiry_date", type="string")
+     *                 ))
+     *             ))
+     *         )
+     *     ),
      *     @OA\Response(response=404, description="Order not found")
      * )
      */
@@ -144,7 +159,29 @@ class DistributorOrderApiController extends Controller
      *             ))
      *         )
      *     ),
-     *     @OA\Response(response=201, description="Order placed successfully")
+     *     @OA\Response(
+     *         response=201,
+     *         description="Order placed successfully (Status: pending)",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Order placed successfully"),
+     *             @OA\Property(property="order", type="object",
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="order_code", type="string"),
+     *                 @OA\Property(property="distributor", type="string"),
+     *                 @OA\Property(property="total_amount", type="string", description="Total Value (PTS) - GST calculated on invoice"),
+     *                 @OA\Property(property="total_items", type="integer"),
+     *                 @OA\Property(property="total_quantity", type="integer"),
+     *                 @OA\Property(property="status", type="string", example="pending"),
+     *                 @OA\Property(property="placed_at", type="string", format="date-time"),
+     *                 @OA\Property(property="items", type="array", @OA\Items(
+     *                     @OA\Property(property="product_name", type="string"),
+     *                     @OA\Property(property="quantity", type="integer"),
+     *                     @OA\Property(property="price", type="string"),
+     *                     @OA\Property(property="subtotal", type="string")
+     *                 ))
+     *             )
+     *         )
+     *     )
      * )
      */
     public function store(Request $request)
@@ -246,21 +283,16 @@ class DistributorOrderApiController extends Controller
     /**
      * @OA\Post(
      *     path="/api/distributor-orders/{id}/update-status",
-     *     summary="Update order status (Unified Action Endpoint)",
-     *     description="Handles Manager Acceptance, Admin Approval, Receipt Confirmation, and Cancellations.",
+     *     summary="Update order status (Unified Status Endpoint)",
+     *     description="Directly update order status. Handles logic for processing, accepted (admin), delivered (receipt), rejected, and cancelled.",
      *     tags={"Distributor Orders"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\MediaType(
-     *             mediaType="multipart/form-data",
-     *             @OA\Schema(
-     *                 @OA\Property(property="action", type="string", enum={"accept_manager", "approve_admin", "confirm_receipt", "request_cancellation", "approve_cancellation"}),
-     *                 @OA\Property(property="payment_status", type="string", enum={"pending","paid","failed"}, description="Required for approve_admin"),
-     *                 @OA\Property(property="invoice", type="string", format="binary", description="Optional for approve_admin"),
-     *                 @OA\Property(property="cancellation_reason", type="string", description="Required for request_cancellation")
-     *             )
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", enum={"processing", "accepted", "delivered", "cancelled", "rejected"}),
+     *             @OA\Property(property="cancellation_reason", type="string")
      *         )
      *     ),
      *     @OA\Response(response=200, description="Status updated successfully")
@@ -269,86 +301,104 @@ class DistributorOrderApiController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'action' => 'required|in:accept_manager,approve_admin,confirm_receipt,request_cancellation,approve_cancellation',
-            'payment_status' => 'required_if:action,approve_admin|in:pending,paid,failed',
-            'invoice' => 'required_if:action,approve_admin|file|mimes:pdf,jpg,jpeg,png|max:5120',
-            'cancellation_reason' => 'required_if:action,request_cancellation|string|min:5'
+            'status' => 'required|in:processing,accepted,delivered,cancelled,rejected',
+            'cancellation_reason' => 'nullable|string|min:5',
         ]);
 
         /** @var \App\Models\User $user */
         $user = Auth::user();
         $order = DistributorOrder::findOrFail($id);
-        $action = $request->action;
+        $status = $request->status;
 
         DB::beginTransaction();
         try {
-            switch ($action) {
-                case 'accept_manager':
-                    if (!$user->hasRole('salesmanager') || $order->sales_manager_id !== $user->salesManager->id) {
-                        return response()->json(['error' => 'Unauthorized'], 403);
+            switch ($status) {
+                case DistributorOrder::STATUS_PROCESSING:
+                    if (!$user->hasRole('salesmanager') && !$user->hasPermissionToCategory('distributor_approvals', 'edit')) {
+                        return response()->json(['error' => 'Only sales managers can process orders'], 403);
                     }
                     if ($order->status !== DistributorOrder::STATUS_PENDING) {
-                        return response()->json(['error' => 'Only pending orders can be accepted'], 400);
+                        return response()->json(['error' => 'Only pending orders can be processed'], 400);
                     }
-                    $order->update(['status' => DistributorOrder::STATUS_PROCESSING]);
+                    $order->update([
+                        'status' => $status,
+                        'sales_manager_id' => $user->salesManager->id ?? $order->sales_manager_id
+                    ]);
+                    $this->clearOrderNotifications($order->id, 'distributor_order');
+                    $admins = \App\Models\User::role(['admin', 'superadmin'])->get();
+                    foreach ($admins as $admin) {
+                        $this->notifyUnique($admin, new \App\Notifications\OrderActionRequired($order, "Distributor Order #{$order->order_code} has been processed and is ready for your approval.", url('/approvals/distributors'), 'distributor_order'));
+                    }
                     break;
 
-                case 'approve_admin':
-                    if (!$user->hasAnyRole(['admin', 'superadmin'])) {
+                case DistributorOrder::STATUS_ACCEPTED:
+                    if (!$user->hasAnyRole(['admin', 'superadmin']) && !$user->hasPermissionToCategory('distributor_approvals', 'edit')) {
                         return response()->json(['error' => 'Only admins can approve orders'], 403);
                     }
-                    $invoicePath = $order->invoice_path;
-                    if ($request->hasFile('invoice')) {
-                        if ($invoicePath) Storage::disk('public')->delete($invoicePath);
-                        $invoicePath = $request->file('invoice')->store('invoices/distributors', 'public');
-                    }
                     $order->update([
-                        'status' => DistributorOrder::STATUS_ACCEPTED,
-                        'payment_status' => $request->payment_status,
-                        'invoice_path' => $invoicePath
+                        'status' => $status,
                     ]);
+                    $this->clearOrderNotifications($order->id, 'distributor_order');
+                    if ($order->distributor && $order->distributor->user) {
+                        $this->notifyUnique($order->distributor->user, new \App\Notifications\OrderActionRequired($order, "Your order #{$order->order_code} has been accepted. Please confirm receipt upon delivery.", url('/distributor/orders'), 'distributor_order'));
+                    }
                     break;
 
-                case 'confirm_receipt':
+                case DistributorOrder::STATUS_DELIVERED:
                     if (!$user->hasRole('distributor') || $order->distributor_id !== $user->distributor->id) {
-                        return response()->json(['error' => 'Unauthorized'], 403);
+                        return response()->json(['error' => 'Only the ordering distributor can confirm receipt'], 403);
                     }
                     if ($order->status !== DistributorOrder::STATUS_ACCEPTED) {
-                        return response()->json(['error' => 'Only approved orders can be confirmed'], 400);
-                    }
-                    $order->update(['status' => DistributorOrder::STATUS_DELIVERED]);
-                    $this->addOrderItemsToInventory($order);
-                    break;
-
-                case 'request_cancellation':
-                    if (!$user->hasRole('distributor') || $order->distributor_id !== $user->distributor->id) {
-                        return response()->json(['error' => 'Unauthorized'], 403);
-                    }
-                    if ($order->status !== DistributorOrder::STATUS_PROCESSING) {
-                        return response()->json(['error' => 'Invalid status for cancellation request'], 400);
+                        return response()->json(['error' => 'Only accepted orders can be confirmed'], 400);
                     }
                     $order->update([
-                        'status' => DistributorOrder::STATUS_CANCELLED,
-                        'cancellation_reason' => $request->cancellation_reason
+                        'status' => $status,
+                        'delivered_at' => now(),
                     ]);
+                    $this->addOrderItemsToInventory($order);
+                    $this->clearOrderNotifications($order->id, 'distributor_order');
                     break;
 
-                case 'approve_cancellation':
-                    if (!$user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
-                        return response()->json(['error' => 'Unauthorized'], 403);
+                case DistributorOrder::STATUS_CANCELLED:
+                    if ($order->status !== DistributorOrder::STATUS_PENDING) {
+                        return response()->json(['error' => 'Orders can only be cancelled while in pending status.'], 400);
                     }
-                    if ($order->status !== DistributorOrder::STATUS_CANCELLED) {
-                        return response()->json(['error' => 'No cancellation request found'], 400);
+                    if (!$user->hasRole('distributor') || $order->distributor_id !== $user->distributor->id) {
+                        return response()->json(['error' => 'Unauthorized deletion'], 403);
                     }
-                    $order->update(['status' => DistributorOrder::STATUS_CANCELLED]);
+                    $order->update([
+                        'status' => $status,
+                        'cancellation_reason' => $request->cancellation_reason ?? 'Cancelled via API'
+                    ]);
+                    $this->deleteOrderNotifications($order->id, 'distributor_order');
+                    break;
+
+                case DistributorOrder::STATUS_REJECTED:
+                    if (!$user->hasAnyRole(['admin', 'superadmin', 'salesmanager']) && !$user->hasPermissionToCategory('distributor_approvals', 'edit')) {
+                        return response()->json(['error' => 'Unauthorized rejection'], 403);
+                    }
+                    if (!in_array($order->status, [DistributorOrder::STATUS_PENDING, DistributorOrder::STATUS_PROCESSING])) {
+                        return response()->json(['error' => 'Only pending or processing orders can be rejected.'], 400);
+                    }
+                    $order->update([
+                        'status' => $status,
+                        'cancellation_reason' => $request->cancellation_reason ?? 'Rejected via API'
+                    ]);
+                    $this->deleteOrderNotifications($order->id, 'distributor_order');
+                    if ($order->distributor && $order->distributor->user) {
+                        $this->notifyUnique($order->distributor->user, new \App\Notifications\OrderActionRequired($order, "Your order #{$order->order_code} has been rejected.", url('/distributor/orders'), 'distributor_order'));
+                    }
                     break;
             }
 
             DB::commit();
-            return response()->json(['message' => 'Action performed successfully', 'order' => $this->formatOrder($order)]);
+            return response()->json([
+                'message' => 'Order status updated successfully',
+                'order' => $this->formatOrder($order->refresh()->load('items.product'))
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => 'Action failed: ' . $e->getMessage()], 500);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
@@ -377,7 +427,18 @@ class DistributorOrderApiController extends Controller
                     'quantity' => $item->quantity,
                     'unit' => $item->unit,
                     'price' => $item->price,
-                    'subtotal' => $item->subtotal
+                    'subtotal' => $item->subtotal,
+                    'batches' => $item->batches->map(function ($b) {
+                        return [
+                            'batch_no' => $b->batch_no,
+                            'expiry_date' => $b->expiry_date,
+                            'quantity' => $b->quantity,
+                            'mrp' => $b->mrp,
+                            'ptr' => $b->ptr,
+                            'pts' => $b->pts,
+                            'net_amount' => $b->net_amount
+                        ];
+                    })
                 ];
             })
         ];

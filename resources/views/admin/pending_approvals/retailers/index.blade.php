@@ -54,6 +54,78 @@
         .full-content.d-none {
             display: none;
         }
+
+        /* Invoice-style Item List */
+        .invoice-list {
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 10px;
+        }
+
+        .invoice-list-header {
+            display: flex;
+            background: #cbd5e1;
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 0.65rem;
+            color: #475569;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .invoice-list-row {
+            display: flex;
+            background: #fff;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            align-items: center;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+
+        .invoice-list-row:hover {
+            border-color: #3182ce;
+            transform: translateY(-1px);
+        }
+
+        .invoice-list-footer {
+            display: flex;
+            justify-content: flex-end;
+            padding: 12px 20px;
+            font-weight: bold;
+            color: #1e293b;
+            background: #fff;
+            border-radius: 8px;
+            margin-top: 4px;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* AI Scan Specific Flex Column Layout */
+        .ai-col-product {
+            flex: 2.5;
+        }
+
+        .ai-col-batch {
+            flex: 1.5;
+        }
+
+        .ai-col-expiry {
+            flex: 1.5;
+        }
+
+        .ai-col-qty {
+            flex: 1;
+            text-align: center;
+        }
+
+        .ai-col-value {
+            flex: 1.2;
+            text-align: right;
+        }
     </style>
     <div class="container-fluid">
         <div class="card shadow-sm border-0 rounded-3">
@@ -77,6 +149,7 @@
                                 <option value="accepted">Accepted</option>
                                 <option value="delivered">Delivered</option>
                                 <option value="cancelled">Cancelled</option>
+                                <option value="rejected">Rejected</option>
                             </select>
                         </div>
                         <div class="d-flex align-items-center">
@@ -210,27 +283,56 @@
 
     {{-- Approve Retailer Order Modal (Simple) --}}
     <div class="modal fade" id="approveRetailerOrderModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Approve Retailer Order</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title text-white"><i class="fa fa-check-circle me-2"></i> Approve Retailer Order</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <form id="approveRetailerOrderForm" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" id="approve_retailer_order_id" name="order_id">
                     <div class="modal-body">
+                        <div class="row mb-3 pb-3 border-bottom">
+                            <div class="col-md-6">
+                                <p class="mb-1 text-muted small text-uppercase fw-bold">Order Information</p>
+                                <div class="fw-bold text-dark" id="retailer_approve_order_code_display">--</div>
+                                <div class="small text-muted" id="retailer_approve_order_date_display">--</div>
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <p class="mb-1 text-muted small text-uppercase fw-bold">Retailer</p>
+                                <div class="fw-bold text-primary" id="retailer_approve_retailer_display">--</div>
+                            </div>
+                        </div>
+
+                        <h6 class="fw-bold mb-3"><i class="fa fa-list me-2"></i> Order Items</h6>
+                        <div class="invoice-list mb-3">
+                            <div class="invoice-list-header">
+                                <div style="flex: 2;">Product Name</div>
+                                <div style="flex: 1;" class="text-center">Quantity</div>
+                                <div style="flex: 1;" class="text-end">Value (PTR)</div>
+                            </div>
+                            <div id="retailer_approve_items_list">
+                                <!-- Items will be populated here -->
+                            </div>
+                            <div class="invoice-list-footer">
+                                <div class="me-3">Total Amount:</div>
+                                <div class="text-primary fs-5" id="retailer_approve_total_display">₹0</div>
+                            </div>
+                        </div>
+
                         <p class="mb-3" id="approveModalText">Are you sure you want to approve this order? Please upload the
                             finalized invoice.</p>
+
                         <div class="mb-3" id="invoiceUploadGroup">
-                            <label class="form-label">Upload Invoice (PDF, JPG, PNG) <span
+                            <label class="form-label fw-bold">Upload Invoice (PDF, JPG, PNG) <span
                                     class="text-danger">*</span></label>
                             <input type="file" name="invoice" class="form-control" accept=".pdf,.jpg,.jpeg,.png" required>
                         </div>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer bg-light">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success">Approve Order</button>
+                        <button type="submit" class="btn btn-success px-4">Confirm Approval</button>
                     </div>
                 </form>
             </div>
@@ -332,40 +434,33 @@
 
                                 </div> <!-- Close success state here -->
 
-                                <div class="table-responsive mt-3 d-none" id="batch_allocation_table_container">
-                                    <table class="table table-bordered table-sm align-middle mb-0" id="verification_table">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th style="width: 25%;">Product</th>
-                                                <th style="width: 15%;">Batch</th>
-                                                <th style="width: 12%;">Expiry</th>
-                                                <th style="width: 10%;" class="text-center">Qty</th>
-                                                <th style="width: 12%;" class="text-end pe-3">Taxable</th>
-                                                <th style="width: 12%;" class="text-end pe-3">GST</th>
-                                                <th style="width: 14%;" class="text-end pe-3">Total</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="verification_table_body">
-                                            <!-- AI Verification Rows -->
-                                        </tbody>
-                                        <tfoot id="verification_table_footer" class="table-light d-none">
-                                            <tr>
-                                                <td colspan="4" class="text-end fw-bold py-1 border-0">Calculated Net Total:
-                                                </td>
-                                                <td colspan="3" class="text-end pe-3 fw-bold text-muted py-1 border-0"
-                                                    id="v_total_net">₹0.00</td>
-                                            </tr>
-                                            <tr class="table-success">
-                                                <td colspan="4" class="text-end fw-bold py-2">Invoiced Total (AI Scan):</td>
-                                                <td colspan="3" class="text-end pe-3 fw-bold text-success fs-5 py-2"
-                                                    id="v_total_meta">₹0.00</td>
-                                            </tr>
-                                        </tfoot>
-                                    </table>
-
-                                    <!-- Hidden Inputs for Submission -->
-                                    <div id="batch_entry_body" class="d-none"></div>
+                                <div class="invoice-list mt-3 d-none" id="batch_allocation_table_container">
+                                    <div class="invoice-list-header">
+                                        <div style="flex: 2.5;">Product</div>
+                                        <div style="flex: 1.5;">Batch</div>
+                                        <div style="flex: 1.5;">Expiry</div>
+                                        <div style="flex: 1;" class="text-center">Qty</div>
+                                        <div style="flex: 1.2;" class="text-end">Taxable</div>
+                                        <div style="flex: 1;" class="text-end">GST</div>
+                                        <div style="flex: 1.3;" class="text-end">Total</div>
+                                    </div>
+                                    <div id="verification_table_body">
+                                        <!-- AI Verification Rows -->
+                                    </div>
+                                    <div id="verification_table_footer" class="invoice-list-footer d-block d-none">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span class="text-muted small">Calculated Net Total:</span>
+                                            <span class="fw-bold" id="v_total_net">₹0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between pt-2 border-top">
+                                            <span class="text-dark fw-bold">Invoiced Total (AI Scan):</span>
+                                            <span class="text-success fs-5 fw-bold" id="v_total_meta">₹0.00</span>
+                                        </div>
+                                    </div>
                                 </div>
+
+                                <!-- Hidden Inputs for Submission -->
+                                <div id="batch_entry_body" class="d-none"></div>
                             </div>
                         </div>
                     </div>
@@ -407,9 +502,34 @@
         </div>
     </div>
 
+    {{-- Reject Retailer Order Modal --}}
+    <div class="modal fade" id="rejectRetailerOrderModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title text-white">Reject Retailer Order</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="rejectRetailerOrderForm">
+                    @csrf
+                    <div class="modal-body">
+                        <input type="hidden" id="reject_retailer_order_id" name="order_id">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Reason for Rejection</label>
+                            <textarea class="form-control" name="rejection_reason" rows="3" required
+                                placeholder="Enter rejection reason..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Confirm Rejection</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 @endsection
-
-
 
 @push('styles')
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
@@ -521,15 +641,16 @@
 
                         if (statusRaw === 'pending') bgClass = 'bg-warning text-dark';
                         else if (statusRaw === 'processing') {
-                            bgClass = 'bg-info text-white';
+                            bgClass = 'bg-primary text-white';
                             displayStatus = 'Processing';
                         }
                         else if (statusRaw === 'accepted') {
-                            bgClass = 'bg-primary text-white';
+                            bgClass = 'bg-info text-white';
                             displayStatus = 'Accepted';
                         }
                         else if (statusRaw === 'delivered') bgClass = 'bg-success text-white';
                         else if (statusRaw === 'cancelled') bgClass = 'bg-danger text-white';
+                        else if (statusRaw === 'rejected') bgClass = 'bg-danger text-white';
 
                         return `<span class="badge ${bgClass}">${displayStatus}</span>`;
                     }
@@ -566,10 +687,10 @@
                             let ext = row.invoice_url.split('.').pop().toLowerCase();
                             let icon = ext === 'pdf' ? 'fa-file-pdf-o' : 'fa-file-image-o';
                             let btnsHtml = `
-                                                                                                                                                                                                                                                                                                                                            <div class="d-flex align-items-center gap-1 p-2">
-                                                                                                                                                                                                                                                                                                                                                <a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-success" title="View Invoice">
-                                                                                                                                                                                                                                                                                                                                                    <i class="fa ${icon}"></i> &nbsp;View
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         </a>`;
+                                                                                                                                                                                                                                                                                                                                                                                                                <div class="d-flex align-items-center gap-1 p-2">
+                                                                                                                                                                                                                                                                                                                                                                                                                    <a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-success" title="View Invoice">
+                                                                                                                                                                                                                                                                                                                                                                                                                        <i class="fa ${icon}"></i> &nbsp;View
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </a>`;
                             btnsHtml += `</div>`;
                             return btnsHtml;
                         }
@@ -599,11 +720,12 @@
                         if ((isAdmin || isSalesManager) && (statusRaw === 'pending' || statusRaw === 'processing')) canApprove = true;
 
                         if (canApprove) {
-                            if ((isDistributor || isAdmin || isSalesManager) && (statusRaw === 'processing' || statusRaw === 'pending')) {
+                            if (isDistributor && statusRaw === 'processing') {
                                 btns += `<button class="btn btn-success btn-sm distributor-approve-btn" data-row="${rowData}" title="Approve & Allocate Batches"><i class="fa fa-check-circle"></i></button>`;
                             } else {
-                                btns += `<button class="btn btn-success btn-sm approve-retailer-btn" data-id="${row.id}" title="Approve"><i class="fa fa-check"></i></button>`;
+                                btns += `<button class="btn btn-success btn-sm approve-retailer-btn" data-id="${row.id}" data-row="${rowData}" title="Approve"><i class="fa fa-check"></i></button>`;
                             }
+                            btns += `<button class="btn btn-danger btn-sm reject-retailer-btn" data-id="${row.id}" title="Reject"><i class="fa fa-times-circle"></i></button>`;
                         }
 
                         btns += `<button class="btn btn-info btn-sm view-details-btn" data-row="${rowData}" title="View Details"><i class="fa fa-eye"></i></button>`;
@@ -625,6 +747,148 @@
 
             $('#status_filter').change(function () {
                 table.ajax.reload();
+            });
+            // Batch Form Validation and Submission
+            $(document).on('submit', '#distributorApproveForm', function (e) {
+                e.preventDefault();
+                let isValid = true;
+
+                // Validate each product row
+                $('.product-row').each(function () {
+                    let orderItemId = $(this).data('item-id');
+                    let ordered = parseInt($(this).data('ordered-qty'));
+
+                    let hContainer = $(`#batches_for_${orderItemId}`);
+                    let allocated = parseInt(hContainer.find('.hidden-qty-val').val() || 0);
+
+                    let vRow = $(`#v_row_${orderItemId}`);
+
+                    if (allocated !== ordered) {
+                        isValid = false;
+                        vRow.addClass('bg-danger-subtle border-danger');
+                    } else {
+                        vRow.removeClass('bg-danger-subtle border-danger');
+                    }
+
+                    // Also check if batches and expiry are filled
+                    let batchVal = hContainer.find('.hidden-batch-val').val();
+                    if (!batchVal) {
+                        isValid = false;
+                        vRow.find('.v-batch-display').addClass('text-danger fw-bold').text('Missing');
+                    } else {
+                        vRow.find('.v-batch-display').removeClass('text-danger');
+                    }
+
+                    let expVal = hContainer.find('.hidden-expiry-val').val();
+                    if (!expVal) {
+                        isValid = false;
+                        vRow.find('.v-expiry-display').addClass('text-danger fw-bold').text('Missing');
+                    } else {
+                        vRow.find('.v-expiry-display').removeClass('text-danger');
+                    }
+                });
+
+                if (!isValid) {
+                    showToast('error', 'Please ensure all items have filled out batches, expiries, and quantities matching the ordered amounts.');
+                    return;
+                }
+
+                // Check if invoice is uploaded
+                let fileInput = document.getElementById('scan_retailer_file_input');
+                if (!fileInput.files.length) {
+                    showToast('error', 'Invoice document is strictly required for approval.');
+                    return;
+                }
+
+                let formData = new FormData(this);
+                formData.append('_token', '{{ csrf_token() }}');
+                let orderId = $('#approve_order_id').val();
+                let url = "{{ route('admin.retailer.accept', ':id') }}".replace(':id', orderId);
+
+                let $btn = $('#btnSubmitDistributorApprove');
+                $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Processing...');
+
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (res) {
+                        if (res.success) {
+                            $('#distributorApproveModal').modal('hide');
+                            table.ajax.reload(null, false);
+                            showToast('success', res.success);
+                        } else {
+                            showToast('error', res.error || 'Failed to approve order');
+                        }
+                    },
+                    error: function (xhr) {
+                        showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'An error occurred during approval.');
+                    },
+                    complete: function () {
+                        $btn.prop('disabled', false).text('Approve & Allocate Stock');
+                    }
+                });
+            });
+
+            $(document).on('click', '.confirm-receipt-btn', function () {
+                let id = $(this).data('id');
+                Swal.fire({
+                    title: 'Confirm Order?',
+                    text: "Are you sure you have received this order?",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, I received it',
+                    confirmButtonColor: '#28a745'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        let url = "{{ route('admin.retailer.confirm-receipt', ':id') }}".replace(':id', id);
+                        $.post(url, { _token: '{{ csrf_token() }}' }, function (res) {
+                            if (res.success) {
+                                table.ajax.reload(null, false);
+                                showToast('success', res.success);
+                            } else {
+                                showToast('error', res.error || 'Failed to confirm order');
+                            }
+                        }).fail(function (xhr) {
+                            showToast('error', 'Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Request failed'));
+                        });
+                    }
+                });
+            });
+
+            // Reject Retailer Order handler
+            $(document).on('click', '.reject-retailer-btn', function () {
+                $('#reject_retailer_order_id').val($(this).data('id'));
+                $('#rejectRetailerOrderModal').modal('show');
+            });
+
+            $(document).on('submit', '#rejectRetailerOrderForm', function (e) {
+                e.preventDefault();
+                let $form = $(this);
+                let id = $('#reject_retailer_order_id').val();
+                let $btn = $form.find('button[type="submit"]');
+
+                $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Rejecting...');
+
+                $.ajax({
+                    url: "{{ route('admin.retailer.reject', ':id') }}".replace(':id', id),
+                    type: 'POST',
+                    data: $form.serialize(),
+                    success: function (res) {
+                        $('#rejectRetailerOrderModal').modal('hide');
+                        showToast('success', res.success || 'Order rejected.');
+                        table.ajax.reload(null, false);
+                        $form[0].reset();
+                    },
+                    error: function (xhr) {
+                        showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Rejection failed.');
+                    },
+                    complete: function () {
+                        $btn.prop('disabled', false).text('Confirm Rejection');
+                    }
+                });
             });
             $('#payment_status_filter').change(function () {
                 table.ajax.reload();
@@ -860,11 +1124,11 @@
                 if (row.items && row.items.length) {
                     row.items.forEach(item => {
                         tbody.append(`<tr>
-                                                                                                                                                                                                                                                                                                                                <td>${item.product_name}</td>
-                                                                                                                                                                                                                                                                                                                                <td>${item.quantity}</td>
-                                                                                                                                                                                                                                                                                                                                <td>${item.unit_price}</td>
-                                                                                                                                                                                                                                                                                                                                <td>${item.total_amount}</td>
-                                                                                                                                                                                                                                                                                                                            </tr>`);
+                                                                                                                                                                                                                                                                                                                                                                                                    <td>${item.product_name}</td>
+                                                                                                                                                                                                                                                                                                                                                                                                    <td>${item.quantity}</td>
+                                                                                                                                                                                                                                                                                                                                                                                                    <td>${item.unit_price}</td>
+                                                                                                                                                                                                                                                                                                                                                                                                    <td>${item.total_amount}</td>
+                                                                                                                                                                                                                                                                                                                                                                                                </tr>`);
                     });
                 } else {
                     tbody.html('<tr><td colspan="4" class="text-center">No items</td></tr>');
@@ -875,7 +1139,31 @@
             // Approve Retailer Order (Field Staff / Manager / Distributor)
             $(document).on('click', '.approve-retailer-btn', function () {
                 let id = $(this).data('id');
+                let row = $(this).data('row');
+
                 $('#approve_retailer_order_id').val(id);
+                $('#retailer_approve_order_code_display').text(row.order_code);
+                $('#retailer_approve_order_date_display').text(row.placed_at);
+                $('#retailer_approve_retailer_display').text(row.retailer_name);
+                $('#retailer_approve_total_display').text(row.total_amount);
+
+                let list = $('#retailer_approve_items_list');
+                list.empty();
+
+                if (row.items && row.items.length) {
+                    row.items.forEach(item => {
+                        list.append(`
+                                                        <div class="invoice-list-row">
+                                                            <div style="flex: 2;" class="fw-bold text-dark">${item.product_name}</div>
+                                                            <div style="flex: 1;" class="text-center text-muted small">${item.quantity} ${item.unit || 'Box'}</div>
+                                                            <div style="flex: 1;" class="text-end fw-bold text-success">₹${item.total_amount}</div>
+                                                        </div>
+                                                    `);
+                    });
+                } else {
+                    list.append('<div class="invoice-list-row justify-content-center text-muted">No items found</div>');
+                }
+
                 $('#approveRetailerOrderForm')[0].reset();
 
                 if (isFieldStaff) {
@@ -884,6 +1172,8 @@
                     $('#approveModalText').text('Are you sure you want to approve this order?');
                 } else {
                     $('#invoiceUploadGroup').show();
+                    // Admin might want it optional if they already uploaded? 
+                    // But usually it's mandatory if it's the first approval.
                     $('#invoiceUploadGroup input').prop('required', true);
                     $('#approveModalText').text('Are you sure you want to approve this order? Please upload the finalized invoice.');
                 }
@@ -954,7 +1244,7 @@
                 let itemsProcessed = 0;
 
                 if (!row.items || row.items.length === 0) {
-                    vbody.html('<tr><td colspan="7" class="text-center text-danger">No items found in this order.</td></tr>');
+                    vbody.html('<div class="invoice-list-row justify-content-center text-danger">No items found in this order.</div>');
                     return;
                 }
 
@@ -968,49 +1258,42 @@
 
                     // 1. Hidden Submission Row
                     let rowHtml = `
-                                                                                                                                    <tr data-item-id="${orderItemId}" class="product-row" data-ordered-qty="${orderedQty}">
-                                                                                                                                        <td class="d-none">
-                                                                                                                                            <div class="fw-bold product-name-marker">${item.product_name}</div>
-                                                                                                                                            <input type="number" name="items[${orderItemId}][quantity]" value="${orderedQty}">
-                                                                                                                                            <input type="hidden" name="items[${orderItemId}][product_id]" value="${productId}">
-                                                                                                                                            <input type="hidden" name="items_batches[${orderItemId}][order_item_id]" value="${orderItemId}">
-                                                                                                                                        </td>
-                                                                                                                                        <td class="d-none" id="batches_for_${orderItemId}">
-                                                                                                                                            <input type="text" name="items_batches[${orderItemId}][batches][0][batch_no]" class="hidden-batch-val" required>
-                                                                                                                                            <input type="date" name="items_batches[${orderItemId}][batches][0][expiry_date]" class="hidden-expiry-val" required>
-                                                                                                                                            <input type="number" name="items_batches[${orderItemId}][batches][0][quantity]" class="hidden-qty-val" value="${orderedQty}" required>
-
-                                                                                                                                            <input type="hidden" name="batches[${orderItemId}][0][mrp]" class="hidden-mrp-val">
-                                                                                                                                            <input type="hidden" name="batches[${orderItemId}][0][ptr]" class="hidden-ptr-val">
-                                                                                                                                            <input type="hidden" name="batches[${orderItemId}][0][pts]" class="hidden-pts-val">
-                                                                                                                                            <input type="hidden" name="batches[${orderItemId}][0][taxable_value]" class="hidden-taxable-val">
-                                                                                                                                            <input type="hidden" name="batches[${orderItemId}][0][cgst]" class="hidden-cgst-val">
-                                                                                                                                            <input type="hidden" name="batches[${orderItemId}][0][sgst]" class="hidden-sgst-val">
-                                                                                                                                            <input type="hidden" name="batches[${orderItemId}][0][igst]" class="hidden-igst-val">
-                                                                                                                                            <input type="hidden" name="batches[${orderItemId}][0][net_amount]" class="hidden-net-val">
-                                                                                                                                        </td>
-                                                                                                                                    </tr>
-                                                                                                                                `;
+                                    <div data-item-id="${orderItemId}" class="product-row" data-ordered-qty="${orderedQty}">
+                                        <div class="d-none">
+                                            <div class="fw-bold product-name-marker">${item.product_name}</div>
+                                            <input type="number" name="items[${orderItemId}][quantity]" value="${orderedQty}">
+                                            <input type="hidden" name="items[${orderItemId}][product_id]" value="${productId}">
+                                            <input type="hidden" name="items_batches[${orderItemId}][order_item_id]" value="${orderItemId}">
+                                        </div>
+                                        <div class="d-none" id="batches_for_${orderItemId}">
+                                            <input type="text" name="items_batches[${orderItemId}][batches][0][batch_no]" class="hidden-batch-val" required>
+                                            <input type="date" name="items_batches[${orderItemId}][batches][0][expiry_date]" class="hidden-expiry-val" required>
+                                            <input type="number" name="items_batches[${orderItemId}][batches][0][quantity]" class="hidden-qty-val" value="${orderedQty}" required>
+                                            <input type="hidden" name="batches[${orderItemId}][0][mrp]" class="hidden-mrp-val">
+                                            <input type="hidden" name="batches[${orderItemId}][0][ptr]" class="hidden-ptr-val">
+                                            <input type="hidden" name="batches[${orderItemId}][0][pts]" class="hidden-pts-val">
+                                            <input type="hidden" name="batches[${orderItemId}][0][taxable_value]" class="hidden-taxable-val">
+                                            <input type="hidden" name="batches[${orderItemId}][0][cgst]" class="hidden-cgst-val">
+                                            <input type="hidden" name="batches[${orderItemId}][0][sgst]" class="hidden-sgst-val">
+                                            <input type="hidden" name="batches[${orderItemId}][0][igst]" class="hidden-igst-val">
+                                            <input type="hidden" name="batches[${orderItemId}][0][net_amount]" class="hidden-net-val">
+                                        </div>
+                                    </div>
+                                `;
                     tbody.append(rowHtml);
 
-                    // 2. Visible Verification Row
+                    // 2. Visible Verification Row (Invoiced Style)
                     let vRowHtml = `
-                                                                                                                <tr id="v_row_${orderItemId}">
-                                                                                                                    <td class="ps-3 py-2">
-                                                                                                                        <div class="fw-bold text-dark small">${item.product_name}</div>
-                                                                                                                    </td>
-                                                                                                                    <td class="py-2">
-                                                                                                                        <span class="v-batch-display text-muted small" data-id="${orderItemId}">--</span>
-                                                                                                                    </td>
-                                                                                                                    <td class="py-2">
-                                                                                                                        <span class="v-expiry-display text-muted small" data-id="${orderItemId}">--</span>
-                                                                                                                    </td>
-                                                                                                                    <td class="text-center pe-3 fw-bold text-primary v-qty-display" data-original-unit="${item.unit || ''}">${orderedQty} ${item.unit || ''}</td>
-                                                                                                                    <td class="text-end pe-3 small text-dark fw-bold v-taxable-display">--</td>
-                                                                                                                    <td class="text-end pe-3 small text-muted v-gst-display">--</td>
-                                                                                                                    <td class="text-end pe-3 small text-dark fw-bold v-net-display">--</td>
-                                                                                                                </tr>
-                                                                                                            `;
+                                    <div id="v_row_${orderItemId}" class="invoice-list-row">
+                                        <div class="ai-col-product fw-bold text-dark small">${item.product_name}</div>
+                                        <div class="ai-col-batch v-batch-display text-muted small" data-id="${orderItemId}">--</div>
+                                        <div class="ai-col-expiry v-expiry-display text-muted small" data-id="${orderItemId}">--</div>
+                                        <div class="ai-col-qty fw-bold text-primary v-qty-display" data-original-unit="${item.unit || ''}">${orderedQty} ${item.unit || ''}</div>
+                                        <div class="ai-col-value text-end small text-dark fw-bold v-taxable-display">--</div>
+                                        <div class="ai-col-value text-end small text-muted v-gst-display">--</div>
+                                        <div class="ai-col-value text-end fw-bold v-net-display">--</div>
+                                    </div>
+                                `;
                     vbody.append(vRowHtml);
                 });
             });
@@ -1214,8 +1497,8 @@
                         // Mark missing visually
                         let vRow = $(`#v_row_${orderItemId}`);
                         if (vRow.length) {
-                            vRow.addClass('table-danger');
-                            vRow.find('.v-batch-display').text('Manual Entry Required').addClass('text-danger fw-bold');
+                            vRow.addClass('bg-danger-subtle');
+                            vRow.find('.v-batch-display').text('Missing').addClass('text-danger fw-bold');
                         }
                     }
                 });
@@ -1240,170 +1523,6 @@
 
                 return identifiedCount;
             }
-
-            // Batch Form Validation and Submission
-            $('#distributorApproveForm').submit(function (e) {
-                e.preventDefault();
-                let isValid = true;
-
-                // Validate each product row
-                $('.product-row').each(function () {
-                    let orderItemId = $(this).data('item-id');
-                    let ordered = parseInt($(this).data('ordered-qty'));
-
-                    let hContainer = $(`#batches_for_${orderItemId}`);
-                    let allocated = parseInt(hContainer.find('.hidden-qty-val').val() || 0);
-
-                    let vRow = $(`#v_row_${orderItemId}`);
-
-                    if (allocated !== ordered) {
-                        isValid = false;
-                        vRow.addClass('table-danger');
-                    } else {
-                        vRow.removeClass('table-danger');
-                    }
-
-                    // Also check if batches and expiry are filled
-                    let batchVal = hContainer.find('.hidden-batch-val').val();
-                    if (!batchVal) {
-                        isValid = false;
-                        vRow.find('.v-batch-display').addClass('text-danger fw-bold').text('Missing');
-                    } else {
-                        vRow.find('.v-batch-display').removeClass('text-danger');
-                    }
-
-                    let expVal = hContainer.find('.hidden-expiry-val').val();
-                    if (!expVal) {
-                        isValid = false;
-                        vRow.find('.v-expiry-display').addClass('text-danger fw-bold').text('Missing');
-                    } else {
-                        vRow.find('.v-expiry-display').removeClass('text-danger');
-                    }
-                });
-
-                if (!isValid) {
-                    showToast('error', 'Please ensure all items have filled out batches, expiries, and quantities matching the ordered amounts.');
-                    return;
-                }
-
-                // Check if invoice is uploaded
-                let fileInput = document.getElementById('scan_retailer_file_input');
-                if (!fileInput.files.length) {
-                    showToast('error', 'Invoice document is strictly required for approval.');
-                    return;
-                }
-
-                let formData = new FormData(this);
-                formData.append('_token', '{{ csrf_token() }}');
-                let orderId = $('#approve_order_id').val();
-                let url = "{{ route('admin.retailer.accept', ':id') }}".replace(':id', orderId);
-
-                let $btn = $('#btnSubmitDistributorApprove');
-                $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Processing...');
-
-                $.ajax({
-                    url: url,
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function (res) {
-                        if (res.success) {
-                            $('#distributorApproveModal').modal('hide');
-                            table.ajax.reload(null, false);
-                            showToast('success', res.success);
-                        } else {
-                            showToast('error', res.error || 'Failed to approve order');
-                        }
-                    },
-                    error: function (xhr) {
-                        showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'An error occurred during approval.');
-                    },
-                    complete: function () {
-                        $btn.prop('disabled', false).text('Approve & Allocate Stock');
-                    }
-                });
-            });
-
-            $(document).on('click', '.confirm-receipt-btn', function () {
-                let id = $(this).data('id');
-                Swal.fire({
-                    title: 'Confirm Order?',
-                    text: "Are you sure you have received this order?",
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, I received it',
-                    confirmButtonColor: '#28a745'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        let url = "{{ route('admin.retailer.confirm-receipt', ':id') }}".replace(':id', id);
-                        $.post(url, { _token: '{{ csrf_token() }}' }, function (res) {
-                            if (res.success) {
-                                table.ajax.reload(null, false);
-                                showToast('success', res.success);
-                            } else {
-                                showToast('error', res.error || 'Failed to confirm order');
-                            }
-                        }).fail(function (xhr) {
-                            showToast('error', 'Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Request failed'));
-                        });
-                    }
-                });
-            });
-
-            // Reject Retailer Order
-            $(document).on('click', '.reject-retailer-btn', function () {
-                let id = $(this).data('id');
-                Swal.fire({
-                    title: 'Reject Order?',
-                    text: "Are you sure you want to reject this order?",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, Reject',
-                    confirmButtonColor: '#dc3545'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        let url = "{{ route('admin.retailer.update-status', ':id') }}".replace(':id', id);
-                        $.post(url, { _token: '{{ csrf_token() }}', status: 'cancelled' }, function (res) {
-                            if (res.success) {
-                                table.ajax.reload(null, false);
-                                showToast('success', res.success);
-                            } else {
-                                showToast('error', res.error || 'Failed to reject');
-                            }
-                        }).fail(function (xhr) {
-                            showToast('error', 'Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Request failed'));
-                        });
-                    }
-                });
-            });
-
-            // Approve Cancellation
-            $(document).on('click', '.approve-cancel-btn', function () {
-                let id = $(this).data('id');
-                Swal.fire({
-                    title: 'Approve Cancellation?',
-                    text: "Are you sure you want to cancel this order and restore stock?",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, Approve Cancellation',
-                    confirmButtonColor: '#28a745'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        let url = "{{ route('admin.retailer.approve-cancellation', ':id') }}".replace(':id', id);
-                        $.post(url, { _token: '{{ csrf_token() }}' }, function (res) {
-                            if (res.success) {
-                                table.ajax.reload(null, false);
-                                showToast('success', res.success);
-                            } else {
-                                showToast('error', res.error || 'Failed to approve cancellation');
-                            }
-                        }).fail(function (xhr) {
-                            showToast('error', 'Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Request failed'));
-                        });
-                    }
-                });
-            });
         });
     </script>
 @endpush

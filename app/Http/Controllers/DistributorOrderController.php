@@ -577,53 +577,72 @@ class DistributorOrderController extends Controller
         if (!Auth::user()->hasRole('distributor')) return response()->json(['error' => 'No permission'], 403);
         if ($distributorOrder->distributor_id !== Auth::user()->distributor->id) return response()->json(['error' => 'Not your order'], 403);
 
-        // Immediate cancellation for distributor
+        if ($distributorOrder->status !== DistributorOrder::STATUS_PENDING) {
+            return response()->json(['error' => 'Orders can only be cancelled while in pending status.'], 400);
+        }
+
         $distributorOrder->status = DistributorOrder::STATUS_CANCELLED;
         $distributorOrder->cancellation_reason = $request->cancellation_reason;
         $distributorOrder->save();
 
+        $this->deleteOrderNotifications($distributorOrder->id, 'distributor_order');
+
         return response()->json(['success' => 'Order cancelled successfully!']);
     }
 
-    public function approveCancellation(distributorOrder $distributorOrder)
+    public function rejectOrder(Request $request, DistributorOrder $distributorOrder)
     {
-        if (!Auth::user()->hasPermissionToCategory('distributor_approvals', 'edit') && !Auth::user()->hasRole('salesmanager')) return response()->json(['error' => 'No permission'], 403);
+        $user = Auth::user();
+        if (!$user->hasAnyRole(['admin', 'superadmin', 'salesmanager']) && !$user->hasPermissionToCategory('distributor_approvals', 'edit')) {
+            return response()->json(['error' => 'Unauthorized rejection'], 403);
+        }
 
-        $distributorOrder->status = DistributorOrder::STATUS_CANCELLED;
-        $distributorOrder->save();
+        if (!in_array($distributorOrder->status, [DistributorOrder::STATUS_PENDING, DistributorOrder::STATUS_PROCESSING])) {
+            return response()->json(['error' => 'Only pending or processing orders can be rejected.'], 400);
+        }
 
-        return response()->json(['success' => 'Order cancellation approved successfully!']);
-    }
+        $request->validate(['reason' => 'required|string|min:5']);
 
-    public function confirmReceipt(DistributorOrder $distributorOrder)
-    {
-        if (!Auth::user()->hasRole('distributor')) return response()->json(['error' => 'No permission'], 403);
-        if ($distributorOrder->distributor_id !== Auth::user()->distributor->id) return response()->json(['error' => 'Not your order'], 403);
-        if ($distributorOrder->status !== DistributorOrder::STATUS_ACCEPTED) return response()->json(['error' => 'Order is not approved yet'], 400);
+        $distributorOrder->update([
+            'status' => DistributorOrder::STATUS_REJECTED,
+            'cancellation_reason' => $request->reason
+        ]);
 
-        $distributorOrder->status = DistributorOrder::STATUS_DELIVERED;
-        $distributorOrder->save();
-        $this->addOrderItemsToInventory($distributorOrder);
+        $this->deleteOrderNotifications($distributorOrder->id, 'distributor_order');
 
-        return response()->json(['success' => 'Order received successfully.']);
+        if ($distributorOrder->distributor && $distributorOrder->distributor->user) {
+            $this->notifyUnique($distributorOrder->distributor->user, new OrderActionRequired(
+                $distributorOrder,
+                "Your order #{$distributorOrder->order_code} has been rejected.",
+                route('admin.distributor-orders.index'),
+                'distributor_order'
+            ));
+        }
+
+        return response()->json(['success' => 'Order rejected successfully!']);
     }
 
     public function cancelOrder(Request $request, DistributorOrder $distributorOrder)
     {
+        if (!Auth::user()->hasRole('distributor')) return response()->json(['error' => 'No permission'], 403);
+        if ($distributorOrder->distributor_id !== Auth::user()->distributor->id) return response()->json(['error' => 'Not your order'], 403);
+
+        if ($distributorOrder->status !== DistributorOrder::STATUS_PENDING) {
+            return response()->json(['error' => 'Only pending orders can be directly cancelled.'], 400);
+        }
+
         $request->validate([
             'cancellation_reason' => 'required|string|min:3',
         ]);
 
-        if ($distributorOrder->status === DistributorOrder::STATUS_PENDING) {
-            $distributorOrder->update([
-                'status' => DistributorOrder::STATUS_CANCELLED,
-                'cancellation_reason' => $request->cancellation_reason
-            ]);
+        $distributorOrder->update([
+            'status' => DistributorOrder::STATUS_CANCELLED,
+            'cancellation_reason' => $request->cancellation_reason
+        ]);
 
-            return response()->json(['success' => 'Order cancelled successfully!']);
-        }
+        $this->deleteOrderNotifications($distributorOrder->id, 'distributor_order');
 
-        return response()->json(['error' => 'Only pending orders can be directly cancelled.'], 400);
+        return response()->json(['success' => 'Order cancelled successfully!']);
     }
 
     public function updateStatus(Request $request, distributorOrder $distributorOrder)

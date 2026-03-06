@@ -1,46 +1,125 @@
 @extends('layouts.admin')
 
-<style>
-    /* Compact the table */
-    .dataTables_filter {
-        text-align: right !important;
-    }
-
-    .dataTables_filter input {
-        width: 230px !important;
-        margin-left: 10px !important;
-    }
-
-    .dataTables_length {
-        text-align: left !important;
-    }
-
-    .dataTables_length select {
-        padding: 5px 10px !important;
-        padding-right: 30px !important;
-        display: inline-block !important;
-        width: auto !important;
-    }
-
-    #distributor-approval-table tbody td {
-        font-size: 0.85em;
-    }
-
-    #distributor-approval-table td:last-child {
-        white-space: nowrap !important;
-    }
-
-    .action-buttons {
-        display: inline-flex !important;
-        align-items: center;
-        gap: 4px;
-    }
-
-    .action-buttons .btn {
-        margin: 0 !important;
-    }
-</style>
 @section('page-body')
+    <style>
+        /* Compact the table */
+        .dataTables_filter {
+            text-align: right !important;
+        }
+
+        .dataTables_filter input {
+            width: 230px !important;
+            margin-left: 10px !important;
+        }
+
+        .dataTables_length {
+            text-align: left !important;
+        }
+
+        .dataTables_length select {
+            padding: 5px 10px !important;
+            padding-right: 30px !important;
+            display: inline-block !important;
+            width: auto !important;
+        }
+
+        #distributor-approval-table tbody td {
+            font-size: 0.85em;
+        }
+
+        #distributor-approval-table td:last-child {
+            white-space: nowrap !important;
+        }
+
+        .action-buttons {
+            display: inline-flex !important;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .action-buttons .btn {
+            margin: 0 !important;
+        }
+
+        /* Invoice-style Item List */
+        .invoice-list {
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 10px;
+        }
+
+        .invoice-list-header {
+            display: flex;
+            background: #cbd5e1;
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 0.65rem;
+            color: #475569;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .invoice-list-row {
+            display: flex;
+            background: #fff;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            align-items: center;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+
+        .invoice-list-row:hover {
+            border-color: #3182ce;
+            transform: translateY(-1px);
+        }
+
+        .invoice-list-footer {
+            display: flex;
+            justify-content: flex-end;
+            padding: 10px 15px;
+            font-weight: bold;
+            color: #1e293b;
+            background: #fff;
+            border-radius: 8px;
+            margin-top: 4px;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Column configuration for AI Invoice processing */
+        .ai-col-product {
+            flex: 2.5;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .ai-col-batch {
+            flex: 1.2;
+            text-align: center;
+        }
+
+        .ai-col-expiry {
+            flex: 1;
+            text-align: center;
+        }
+
+        .ai-col-qty {
+            flex: 1;
+            text-align: center;
+        }
+
+        .ai-col-value {
+            flex: 1.2;
+            text-align: right;
+        }
+    </style>
+
     <div class="container-fluid">
         <div class="card shadow-sm border-0 rounded-3">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -63,6 +142,7 @@
                                 <option value="accepted">Accepted</option>
                                 <option value="delivered">Delivered</option>
                                 <option value="cancelled">Cancelled</option>
+                                <option value="rejected">Rejected</option>
                             </select>
                         </div>
                         <div class="d-flex align-items-center">
@@ -114,25 +194,20 @@
                         <div class="col-6"><strong>Distributor:</strong> <span id="view_distributor"></span></div>
                         <div class="col-6"><strong>Status:</strong> <span id="view_status"></span></div>
                     </div>
-                    <h6 class="mt-4">Items</h6>
-                    <div class="table-responsive bg-light p-2 rounded">
-                        <table class="table table-bordered table-sm mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Qty</th>
-                                    <th>Unit Price</th>
-                                    <th>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody id="view_items_body"></tbody>
-                            <tfoot>
-                                <tr>
-                                    <th colspan="3" class="text-end">Grand Total:</th>
-                                    <th id="view_total"></th>
-                                </tr>
-                            </tfoot>
-                        </table>
+                    <h6 class="fw-bold mt-4 mb-3"><i class="fa fa-list me-2"></i> Order Items</h6>
+                    <div class="invoice-list">
+                        <div class="invoice-list-header">
+                            <div style="flex: 2;">Product Name</div>
+                            <div style="flex: 1;" class="text-center">Quantity</div>
+                            <div style="flex: 1;" class="text-end">Total Price</div>
+                        </div>
+                        <div id="view_items_list">
+                            <!-- Items will be populated here -->
+                        </div>
+                        <div class="invoice-list-footer">
+                            <div class="me-3">Grand Total:</div>
+                            <div class="text-primary fs-5" id="view_total">₹0</div>
+                        </div>
                     </div>
                     <div class="mt-3">
                         <strong>Notes:</strong>
@@ -147,25 +222,79 @@
 
         {{-- Approve Order Modal for Sales Managers --}}
         <div class="modal fade" id="approveOrderModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Approve Order</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title text-white"><i class="fa fa-check-circle me-2"></i> Approve Distributor Order
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <form id="approveOrderForm">
                         <div class="modal-body">
                             <input type="hidden" id="approve_order_id" name="order_id">
 
-                            <!-- Invoice Upload Removed for Sales Manager Approval as per request -->
-                            <div class="alert alert-info py-2">
+                            <div class="row mb-3 pb-3 border-bottom">
+                                <div class="col-md-6">
+                                    <p class="mb-1 text-muted small text-uppercase fw-bold">Order Information</p>
+                                    <div class="fw-bold text-dark" id="approve_order_code_display">--</div>
+                                    <div class="small text-muted" id="approve_order_date_display">--</div>
+                                </div>
+                                <div class="col-md-6 text-md-end">
+                                    <p class="mb-1 text-muted small text-uppercase fw-bold">Distributor</p>
+                                    <div class="fw-bold text-primary" id="approve_distributor_display">--</div>
+                                </div>
+                            </div>
+
+                            <h6 class="fw-bold mb-3"><i class="fa fa-list me-2"></i> Order Items</h6>
+                            <div class="invoice-list mb-3">
+                                <div class="invoice-list-header">
+                                    <div style="flex: 2;">Product Name</div>
+                                    <div style="flex: 1;" class="text-center">Quantity</div>
+                                    <div style="flex: 1;" class="text-end">Value (PTS)</div>
+                                </div>
+                                <div id="approve_items_list">
+                                    <!-- Items will be populated here -->
+                                </div>
+                                <div class="invoice-list-footer">
+                                    <div class="me-3">Total Value:</div>
+                                    <div class="text-primary fs-5" id="approve_total_display">₹0</div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info py-2 mb-0">
                                 <small><i class="fa fa-info-circle"></i> Approving this order moves it to the Admin for
                                     processing and invoice generation.</small>
                             </div>
                         </div>
+                        <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success px-4">Confirm Approval</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {{-- Reject Order Modal --}}
+        <div class="modal fade" id="rejectOrderModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title text-white">Reject Order</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="rejectOrderForm">
+                        <div class="modal-body">
+                            <input type="hidden" id="reject_order_id" name="order_id">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Reason for Rejection</label>
+                                <textarea class="form-control" name="reason" rows="3" required
+                                    placeholder="Enter rejection reason..."></textarea>
+                            </div>
+                        </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-success">Approve & Process</button>
+                            <button type="submit" class="btn btn-danger">Confirm Rejection</button>
                         </div>
                     </form>
                 </div>
@@ -284,105 +413,80 @@
 
                                     <h6 class="fw-bold text-uppercase small text-muted mb-3"><i
                                             class="fa fa-search me-1"></i> Verify Extracted Details</h6>
-                                    <div class="table-responsive rounded border shadow-sm mb-3">
-                                        <table class="table table-hover align-middle mb-0">
-                                            <thead class="bg-light sticky-top">
-                                                <tr class="small text-uppercase fw-bold text-nowrap">
-                                                    <th class="ps-3 py-1">Product</th>
-                                                    <th class="py-1">Batch</th>
-                                                    <th class="py-1">Exp</th>
-                                                    <th class="py-1 text-center pe-3">Qty</th>
-                                                    <th class="py-1 text-end pe-3">Taxable</th>
-                                                    <th class="py-1 text-end pe-3">CGST</th>
-                                                    <th class="py-1 text-end pe-3">SGST</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="verification_table_body">
-                                                <!-- Dynamic Rows after scan -->
-                                            </tbody>
-                                            <tfoot id="verification_table_footer" class="bg-light border-top d-none">
-                                                <tr>
-                                                    <td colspan="6" class="text-end fw-bold text-muted small py-1">Total
-                                                        Taxable:</td>
-                                                    <td class="text-end fw-bold text-dark py-1 pe-3" id="tfoot_taxable">--
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td colspan="6" class="text-end fw-bold text-muted small py-1 border-0">
-                                                        Total CGST:</td>
-                                                    <td class="text-end fw-bold text-dark py-1 pe-3 border-0"
-                                                        id="tfoot_cgst">--
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td colspan="6" class="text-end fw-bold text-muted small py-1 border-0">
-                                                        Total SGST:</td>
-                                                    <td class="text-end fw-bold text-dark py-1 pe-3 border-0"
-                                                        id="tfoot_sgst">--
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td colspan="6" class="text-end fw-bold text-muted small py-1 border-0">
-                                                        Total IGST:</td>
-                                                    <td class="text-end fw-bold text-dark py-1 pe-3 border-0"
-                                                        id="tfoot_igst">--
-                                                    </td>
-                                                </tr>
-                                                <tr class="table-active">
-                                                    <td colspan="6" class="text-end fw-bold text-dark py-2">Net Invoice
-                                                        Amount:</td>
-                                                    <td class="text-end fw-bold text-success py-2 pe-3" id="tfoot_net"
-                                                        style="font-size: 1.1rem;">--</td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
-                                    <div class="alert alert-info py-2 small mb-0">
-                                        <i class="fa fa-info-circle me-1"></i> You can review and edit extracted details
-                                        above.
-                                    </div>
-                                </div>
-
-                                <!-- Automation Error State (Mismatched Invoice) -->
-                                <div id="automation_error_state" class="d-none">
-                                    <div
-                                        class="text-center py-5 bg-soft-danger rounded-3 border-start border-4 border-danger">
-                                        <div class="mb-3">
-                                            <i class="fa fa-exclamation-triangle fa-4x text-danger opacity-75"></i>
+                                    <div class="invoice-list mb-3">
+                                        <div class="invoice-list-header bg-dark text-white border-0">
+                                            <div class="ai-col-product ps-2 text-white">Product</div>
+                                            <div class="ai-col-batch text-white">Batch</div>
+                                            <div class="ai-col-expiry text-white">Expiry</div>
+                                            <div class="ai-col-qty text-white text-center">Qty</div>
+                                            <div class="ai-col-value text-white text-end pe-2">Taxable</div>
+                                            <div class="ai-col-value text-white text-end pe-2">CGST</div>
+                                            <div class="ai-col-value text-white text-end pe-2">SGST</div>
                                         </div>
-                                        <h5 class="fw-bold text-danger">Mismatched Invoice!</h5>
-                                        <p class="text-muted small px-4">
-                                            The AI could not find any products belonging to this order in the document.<br>
-                                            <strong>Please ensure you uploaded the correct invoice.</strong>
-                                        </p>
-                                        <button type="button" class="btn btn-sm btn-outline-danger mt-2"
-                                            onclick="$('#scan_file_input').click()">
-                                            <i class="fa fa-refresh me-1"></i> Try Another File
-                                        </button>
+                                        <div id="verification_table_body">
+                                            <!-- AI data rows will be injected here -->
+                                        </div>
+                                        <div id="verification_table_footer" class="invoice-list-footer bg-light d-none"
+                                            style="font-size: 0.75rem;">
+                                            <div class="d-flex w-100 justify-content-end align-items-center gap-3">
+                                                <div class="text-muted">Extracted Totals:</div>
+                                                <div>Txl: <span class="fw-bold" id="tfoot_taxable">0</span></div>
+                                                <div>CGST: <span class="fw-bold" id="tfoot_cgst">0</span></div>
+                                                <div>SGST: <span class="fw-bold" id="tfoot_sgst">0</span></div>
+                                                <div>IGST: <span class="fw-bold" id="tfoot_igst">0</span></div>
+                                                <div class="ms-2 border-start ps-3 py-1">
+                                                    <div class="small text-muted mb-0">Invoice Net</div>
+                                                    <div class="fs-6 fw-bold text-primary" id="tfoot_net">₹0.00</div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-
-                                <!-- Hidden Table for Form Submission (Maintains functionality without cluttering UI) -->
-                                <div id="hidden_batch_inputs" class="d-none">
-                                    <table class="table" id="batch_entry_table">
-                                        <tbody id="batch_entry_body">
-                                            <!-- Dynamic Rows populated by OCR logic -->
-                                        </tbody>
-                                    </table>
+                                <div class="alert alert-info py-2 small mb-0">
+                                    <i class="fa fa-info-circle me-1"></i> You can review and edit extracted details
+                                    above.
                                 </div>
+                            </div>
+
+                            <!-- Automation Error State (Mismatched Invoice) -->
+                            <div id="automation_error_state" class="d-none">
+                                <div class="text-center py-5 bg-soft-danger rounded-3 border-start border-4 border-danger">
+                                    <div class="mb-3">
+                                        <i class="fa fa-exclamation-triangle fa-4x text-danger opacity-75"></i>
+                                    </div>
+                                    <h5 class="fw-bold text-danger">Mismatched Invoice!</h5>
+                                    <p class="text-muted small px-4">
+                                        The AI could not find any products belonging to this order in the document.<br>
+                                        <strong>Please ensure you uploaded the correct invoice.</strong>
+                                    </p>
+                                    <button type="button" class="btn btn-sm btn-outline-danger mt-2"
+                                        onclick="$('#scan_file_input').click()">
+                                        <i class="fa fa-refresh me-1"></i> Try Another File
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Hidden Table for Form Submission (Maintains functionality without cluttering UI) -->
+                            <div id="hidden_batch_inputs" class="d-none">
+                                <table class="table" id="batch_entry_table">
+                                    <tbody id="batch_entry_body">
+                                        <!-- Dynamic Rows populated by OCR logic -->
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer bg-light border-top-0 px-4 py-3">
-                        <button type="button" class="btn btn-link link-secondary fw-bold text-decoration-none"
-                            data-bs-dismiss="modal">Cancel Approval</button>
-                        <button type="submit" id="btn_approve_order" class="btn btn-primary px-4 py-2 fw-bold shadow">
-                            <i class="fa fa-check-circle me-1"></i> Confirm & Approve Order
-                        </button>
-                    </div>
-                </form>
             </div>
+            <div class="modal-footer bg-light border-top-0 px-4 py-3">
+                <button type="button" class="btn btn-link link-secondary fw-bold text-decoration-none"
+                    data-bs-dismiss="modal">Cancel Approval</button>
+                <button type="submit" id="btn_approve_order" class="btn btn-primary px-4 py-2 fw-bold shadow">
+                    <i class="fa fa-check-circle me-1"></i> Confirm & Approve Order
+                </button>
+            </div>
+            </form>
         </div>
+    </div>
     </div>
 
     {{-- Hidden file input for AI Scanning --}}
@@ -589,13 +693,14 @@
 
                             if (statusRaw.includes('pending')) bgClass = 'bg-warning text-dark';
                             else if (statusRaw === 'processing') {
-                                bgClass = 'bg-info';
+                                bgClass = 'bg-primary';
                                 displayStatus = 'Processing';
                             } else if (statusRaw === 'accepted') {
-                                bgClass = 'bg-primary';
+                                bgClass = 'bg-info';
                                 displayStatus = 'Accepted';
                             } else if (statusRaw.includes('delivered')) bgClass = 'bg-success';
                             else if (statusRaw.includes('cancelled')) bgClass = 'bg-danger';
+                            else if (statusRaw.includes('rejected')) bgClass = 'bg-danger';
 
                             return `<span class="badge ${bgClass}" style="font-size: 0.85rem;">${displayStatus}</span>`;
                         }
@@ -657,12 +762,14 @@
 
                             // Sales Manager Actions
                             if (isSalesManager && row.status.toLowerCase().includes('pending')) {
-                                btns += `<button class="btn btn-success btn-sm approve-order-btn" data-id="${row.id}" title="Approve"><i class="fa fa-check"></i></button>`;
+                                btns += `<button class="btn btn-success btn-sm approve-order-btn" data-id="${row.id}" data-row="${rowData}" title="Approve"><i class="fa fa-check"></i></button>`;
+                                btns += `<button class="btn btn-danger btn-sm reject-order-btn" data-id="${row.id}" title="Reject"><i class="fa fa-times"></i></button>`;
                             }
 
                             // Admin Actions
                             if (isAdmin && (row.raw_status === 'processing' || (row.status && row.status.toLowerCase().includes('processing')))) {
                                 btns += `<button class="btn btn-success btn-sm accept-admin-btn" data-id="${row.id}" title="Process Order"><i class="fa fa-check"></i></button>`;
+                                btns += `<button class="btn btn-danger btn-sm reject-order-btn" data-id="${row.id}" title="Reject"><i class="fa fa-times"></i></button>`;
                             }
 
                             btns += `</div>`;
@@ -677,17 +784,24 @@
 
             // Status Update Logic
 
-            // Approve Form Submit
-            $('#approveOrderForm').submit(function (e) {
+
+            // --- Event Handlers ---
+
+            // Reject Form Submit
+            $(document).on('click', '.reject-order-btn', function () {
+                $('#reject_order_id').val($(this).data('id'));
+                $('#rejectOrderModal').modal('show');
+            });
+
+            $('#rejectOrderForm').submit(function (e) {
                 e.preventDefault();
                 let formData = new FormData(this);
                 formData.append('_token', '{{ csrf_token() }}');
-                let id = $('#approve_order_id').val();
-                let url = "{{ route('admin.distributor-orders.approve', ':id') }}".replace(':id', id);
+                let id = $('#reject_order_id').val();
+                let url = "{{ route('admin.distributor-orders.reject', ':id') }}".replace(':id', id);
 
                 let $btn = $(this).find('button[type="submit"]');
-                let oldText = $btn.text();
-                $btn.text('Processing...').prop('disabled', true);
+                $btn.prop('disabled', true).text('Rejecting...');
 
                 $.ajax({
                     url: url,
@@ -696,16 +810,16 @@
                     processData: false,
                     contentType: false,
                     success: function (res) {
-                        $('#approveOrderModal').modal('hide');
+                        $('#rejectOrderModal').modal('hide');
                         table.ajax.reload(null, false);
                         showToast('success', res.success);
-                        $('#approveOrderForm')[0].reset();
+                        $('#rejectOrderForm')[0].reset();
                     },
                     error: function (xhr) {
-                        showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Failed');
+                        showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Failed to reject');
                     },
                     complete: function () {
-                        $btn.text(oldText).prop('disabled', false);
+                        $btn.prop('disabled', false).text('Confirm Rejection');
                     }
                 });
             });
@@ -800,7 +914,8 @@
                 $('#view_status').text(row.status);
                 $('#view_total').text(row.total_amount);
                 $('#view_notes').text(row.delivery_notes || row.notes || 'None');
-                let tbody = $('#view_items_body'); tbody.empty();
+                let list = $('#view_items_list');
+                list.empty();
                 if (row.items && row.items.length) {
                     row.items.forEach(item => {
                         let batchHtml = '';
@@ -811,17 +926,49 @@
                             });
                             batchHtml += '</div>';
                         }
-                        tbody.append(`<tr><td>${item.product_name}${batchHtml}</td><td>${item.quantity} ${item.unit || ''}</td><td>${item.unit_price}</td><td>${item.total_amount}</td></tr>`);
+                        list.append(`
+                                                    <div class="invoice-list-row">
+                                                        <div style="flex: 2;">
+                                                            <div class="fw-bold text-dark">${item.product_name}</div>
+                                                            ${batchHtml}
+                                                        </div>
+                                                        <div style="flex: 1;" class="text-center">${item.quantity} ${item.unit || ''}</div>
+                                                        <div style="flex: 1;" class="text-end fw-bold text-primary">₹${item.total_amount}</div>
+                                                    </div>
+                                                `);
                     });
-                } else { tbody.html('<tr><td colspan="4" class="text-center">No items</td></tr>'); }
-                $('#view_total').text(row.total_amount); // Grand total again
+                } else { list.append('<div class="invoice-list-row justify-content-center text-muted">No items</div>'); }
                 $('#viewOrderModal').modal('show');
             });
 
             // Sales Manager Approve Click
             $(document).on('click', '.approve-order-btn', function () {
                 let id = $(this).data('id');
+                let row = $(this).data('row');
+
                 $('#approve_order_id').val(id);
+                $('#approve_order_code_display').text(row.order_code);
+                $('#approve_order_date_display').text(row.placed_at);
+                $('#approve_distributor_display').text(row.distributor_name);
+                $('#approve_total_display').text(row.total_amount);
+
+                let list = $('#approve_items_list');
+                list.empty();
+
+                if (row.items && row.items.length) {
+                    row.items.forEach(item => {
+                        list.append(`
+                                                            <div class="invoice-list-row">
+                                                                <div style="flex: 2;" class="fw-bold text-dark">${item.product_name}</div>
+                                                                <div style="flex: 1;" class="text-center text-muted small">${item.quantity} ${item.unit || 'Box'}</div>
+                                                                <div style="flex: 1;" class="text-end fw-bold text-primary">₹${item.total_amount}</div>
+                                                            </div>
+                                                        `);
+                    });
+                } else {
+                    list.append('<div class="invoice-list-row justify-content-center text-muted">No items found</div>');
+                }
+
                 $('#approveOrderForm')[0].reset();
                 $('#approveOrderModal').modal('show');
             });
@@ -859,47 +1006,45 @@
                 if (row && row.items) {
                     row.items.forEach(item => {
                         let rowHtml = `
-                                                                                                                                                                                                                <tr data-item-id="${item.order_item_id}">
-                                                                                                                                                                                                                    <td class="d-none">
-                                                                                                                                                                                                                        <div class="fw-bold product-name-marker">${item.product_name}</div>
-                                                                                                                                                                                                                        <input type="number" name="batches[${item.order_item_id}][0][quantity]" value="${item.quantity}">
-                                                                                                                                                                                                                    </td>
-                                                                                                                                                                                                                    <td class="d-none" id="batches_for_${item.order_item_id}">
-                                                                                                                                                                                                                        <input type="text" name="batches[${item.order_item_id}][0][batch_no]" class="hidden-batch-val" required>
-                                                                                                                                                                                                                        <input type="date" name="batches[${item.order_item_id}][0][expiry_date]" class="hidden-expiry-val" required>
+                                        <div data-item-id="${item.order_item_id}">
+                                            <div class="d-none">
+                                                <div class="fw-bold product-name-marker">${item.product_name}</div>
+                                                <input type="number" name="batches[${item.order_item_id}][0][quantity]" value="${item.quantity}">
+                                            </div>
+                                            <div class="d-none" id="batches_for_${item.order_item_id}">
+                                                <input type="text" name="batches[${item.order_item_id}][0][batch_no]" class="hidden-batch-val" required>
+                                                <input type="date" name="batches[${item.order_item_id}][0][expiry_date]" class="hidden-expiry-val" required>
 
-                                                                                                                                                                                                                        <input type="hidden" name="batches[${item.order_item_id}][0][mrp]" class="hidden-mrp-val">
-                                                                                                                                                                                                                        <input type="hidden" name="batches[${item.order_item_id}][0][ptr]" class="hidden-ptr-val">
-                                                                                                                                                                                                                        <input type="hidden" name="batches[${item.order_item_id}][0][pts]" class="hidden-pts-val">
-                                                                                                                                                                                                                        <input type="hidden" name="batches[${item.order_item_id}][0][taxable_value]" class="hidden-taxable-val">
-                                                                                                                                                                                                                        <input type="hidden" name="batches[${item.order_item_id}][0][cgst]" class="hidden-cgst-val">
-                                                                                                                                                                                                                        <input type="hidden" name="batches[${item.order_item_id}][0][sgst]" class="hidden-sgst-val">
-                                                                                                                                                                                                                        <input type="hidden" name="batches[${item.order_item_id}][0][igst]" class="hidden-igst-val">
-                                                                                                                                                                                                                        <input type="hidden" name="batches[${item.order_item_id}][0][net_amount]" class="hidden-net-val">
-                                                                                                                                                                                                                    </td>
-                                                                                                                                                                                                                </tr>
-                                                                                                                                                                                                            `;
+                                                <input type="hidden" name="batches[${item.order_item_id}][0][mrp]" class="hidden-mrp-val">
+                                                <input type="hidden" name="batches[${item.order_item_id}][0][ptr]" class="hidden-ptr-val">
+                                                <input type="hidden" name="batches[${item.order_item_id}][0][pts]" class="hidden-pts-val">
+                                                <input type="hidden" name="batches[${item.order_item_id}][0][taxable_value]" class="hidden-taxable-val">
+                                                <input type="hidden" name="batches[${item.order_item_id}][0][cgst]" class="hidden-cgst-val">
+                                                <input type="hidden" name="batches[${item.order_item_id}][0][sgst]" class="hidden-sgst-val">
+                                                <input type="hidden" name="batches[${item.order_item_id}][0][igst]" class="hidden-igst-val">
+                                                <input type="hidden" name="batches[${item.order_item_id}][0][net_amount]" class="hidden-net-val">
+                                            </div>
+                                        </div>
+                                    `;
                         tbody.append(rowHtml);
 
                         let vRowHtml = `
-                                                                                                                                                                                                                <tr id="v_row_${item.order_item_id}">
-                                                                                                                                                                                                                    <td class="ps-3 py-2">
-                                                                                                                                                                                                                        <div class="fw-bold text-dark small">${item.product_name}</div>
-                                                                                                                                                                                                                    </td>
-                                                                                                                                                                                                                    <td class="py-1">
-                                                                                                                                                                                                                        <input type="text" class="form-control form-control-sm v-batch-input border-0 bg-light" 
-                                                                                                                                                                                                                               data-id="${item.order_item_id}" placeholder="Wait for AI...">
-                                                                                                                                                                                                                    </td>
-                                                                                                                                                                                                                    <td class="py-1">
-                                                                                                                                                                                                                        <input type="text" class="form-control form-control-sm v-expiry-input border-0 bg-light" 
-                                                                                                                                                                                                                               data-id="${item.order_item_id}" placeholder="MM/YY">
-                                                                                                                                                                                                                    </td>
-                                                                                                                                                                                                                    <td class="text-center pe-3 fw-bold text-primary v-qty-display" data-original-unit="${item.unit || ''}">${item.quantity} ${item.unit || ''}</td>
-                                                                                                                                                                                                                    <td class="text-end pe-3 small text-dark fw-bold v-taxable-display">--</td>
-                                                                                                                                                                                                                    <td class="text-end pe-3 small text-muted v-cgst-display">--</td>
-                                                                                                                                                                                                                    <td class="text-end pe-3 small text-muted v-sgst-display">--</td>
-                                                                                                                                                                                                                </tr>
-                                                                                                                                                                                                            `;
+                                        <div id="v_row_${item.order_item_id}" class="invoice-list-row p-2">
+                                             <div class="ai-col-product fw-bold text-dark small ps-2">${item.product_name}</div>
+                                             <div class="ai-col-batch">
+                                                 <input type="text" class="form-control form-control-sm v-batch-input border-0 bg-light p-1" 
+                                                        data-id="${item.order_item_id}" placeholder="Wait AI...">
+                                             </div>
+                                             <div class="ai-col-expiry">
+                                                 <input type="text" class="form-control form-control-sm v-expiry-input border-0 bg-light p-1" 
+                                                        data-id="${item.order_item_id}" placeholder="MM/YY">
+                                             </div>
+                                             <div class="ai-col-qty fw-bold text-primary v-qty-display" data-original-unit="${item.unit || ''}">${item.quantity} ${item.unit || ''}</div>
+                                             <div class="ai-col-value fw-bold text-dark v-taxable-display">--</div>
+                                             <div class="ai-col-value text-muted v-cgst-display">--</div>
+                                             <div class="ai-col-value text-muted v-sgst-display pe-2">--</div>
+                                        </div>
+                                    `;
                         vbody.append(vRowHtml);
                     });
                 }
