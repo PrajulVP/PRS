@@ -58,10 +58,11 @@ class DistributorDashboardApiController extends Controller
         $distributorOrderQuery = DistributorOrder::where('distributor_id', $distributorId);
         $distributorOrderStats = [
             'total' => (clone $distributorOrderQuery)->count(),
-            'pending' => (clone $distributorOrderQuery)->where('status', 'pending')->count(),
-            'approved' => (clone $distributorOrderQuery)->where('status', 'approved')->count(),
-            'delivered' => (clone $distributorOrderQuery)->where('status', 'delivered')->count(),
-            'cancelled' => (clone $distributorOrderQuery)->where('status', 'cancelled')->count(),
+            'pending' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_PENDING)->count(),
+            'processing' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_PROCESSING)->count(),
+            'accepted' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_ACCEPTED)->count(),
+            'delivered' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_DELIVERED)->count(),
+            'cancelled' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_CANCELLED)->count(),
         ];
 
         // 4. Recent Retailer Orders
@@ -140,6 +141,33 @@ class DistributorDashboardApiController extends Controller
 
     /**
      * @OA\Get(
+     *     path="/api/distributor/dashboard/actionable-orders-count",
+     *     summary="Get the total count of retailer orders awaiting distributor approval",
+     *     tags={"Distributor Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Total count of actionable orders",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="count", type="integer")
+     *         )
+     *     )
+     * )
+     */
+    public function getActionableOrdersCount()
+    {
+        $distributorId = $this->getDistributorId();
+        if ($distributorId instanceof \Illuminate\Http\JsonResponse) return $distributorId;
+
+        $count = RetailerOrder::where('distributor_id', $distributorId)
+            ->where('status', RetailerOrder::STATUS_PROCESSING)
+            ->count();
+
+        return response()->json(['count' => $count]);
+    }
+
+    /**
+     * @OA\Get(
      *     path="/api/distributor/dashboard/top-products",
      *     summary="Get top products for this distributor",
      *     tags={"Distributor Dashboard"},
@@ -189,10 +217,11 @@ class DistributorDashboardApiController extends Controller
         $query = RetailerOrder::where('distributor_id', $distributorId);
         return [
             'total' => (clone $query)->count(),
-            'pending' => (clone $query)->where('status', 'pending')->count(),
-            'approved' => (clone $query)->whereIn('status', ['approved', 'approved_by_distributor', 'approved_by_admin'])->count(),
-            'delivered' => (clone $query)->where('status', 'delivered')->count(),
-            'cancelled' => (clone $query)->where('status', 'cancelled')->count(),
+            'pending' => (clone $query)->where('status', RetailerOrder::STATUS_PENDING)->count(),
+            'processing' => (clone $query)->where('status', RetailerOrder::STATUS_PROCESSING)->count(),
+            'accepted' => (clone $query)->where('status', RetailerOrder::STATUS_ACCEPTED)->count(),
+            'delivered' => (clone $query)->where('status', RetailerOrder::STATUS_DELIVERED)->count(),
+            'cancelled' => (clone $query)->where('status', RetailerOrder::STATUS_CANCELLED)->count(),
         ];
     }
 

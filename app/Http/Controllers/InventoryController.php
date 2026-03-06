@@ -16,10 +16,12 @@ class InventoryController extends Controller
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
-            if (\Illuminate\Support\Facades\Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager', 'distributor'])) {
+            /** @var \App\Models\User $user */
+            $user = \Illuminate\Support\Facades\Auth::user();
+            if ($user->hasAnyRole(['admin', 'superadmin', 'salesmanager', 'distributor'])) {
                 return $next($request);
             }
-            if (!\Illuminate\Support\Facades\Auth::user()->hasPermissionToCategory('inventories', 'view')) {
+            if (!$user->hasPermissionToCategory('inventories', 'view')) {
                 abort(403, 'Unauthorized action. You do not have permission to view inventory.');
             }
             return $next($request);
@@ -72,8 +74,10 @@ class InventoryController extends Controller
             try {
                 $query = Inventory::with(['product', 'distributor.user']);
 
-                if (Auth::user()->hasRole('distributor')) {
-                    $distributor = Auth::user()->distributor;
+                /** @var \App\Models\User $authUser */
+                $authUser = Auth::user();
+                if ($authUser->hasRole('distributor')) {
+                    $distributor = $authUser->distributor;
                     if ($distributor) {
                         $query->where('distributor_id', $distributor->id);
                     } else {
@@ -142,7 +146,13 @@ class InventoryController extends Controller
                         'stock' => (int) $i->stock,
                         'image' => $i->product && $i->product->image ? asset('storage/' . $i->product->image) : asset('admin/assets/images/dashboard/product-1.png'), // Placeholder
                         'batch_no' => $i->batch_no ?? '-',
-                        'expiry_date' => $i->expiry_date ? \Carbon\Carbon::parse($i->expiry_date)->format('d-m-Y') : '-',
+                        'expiry_date' => $i->expiry_date ? (function ($date) {
+                            $parsed = \Carbon\Carbon::parse($date);
+                            if ($parsed->copy()->endOfMonth()->isSameDay($parsed)) {
+                                return $parsed->format('m-Y');
+                            }
+                            return $parsed->format('d-m-Y');
+                        })($i->expiry_date) : '-',
                         'product_details' => $i->product ? [
                             'generic_name' => $i->product->generic_name,
                             'pack' => $i->product->pack,
@@ -172,7 +182,9 @@ class InventoryController extends Controller
         // Non-AJAX view: pass products to populate the create form
         $products = Product::select('id', 'product_name', 'product_code', 'box_size', 'carton_size')->orderBy('product_name')->get();
         $distributors = [];
-        if (Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
+        /** @var \App\Models\User $authUserFiltered */
+        $authUserFiltered = Auth::user();
+        if ($authUserFiltered->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
             $distributors = Distributor::with('user')->get();
         }
 
@@ -201,9 +213,11 @@ class InventoryController extends Controller
         // This likely means we should auto-fill it with product_code or remove it if not needed.
         // Let's use product_code for now to satisfy unique constraint if that's the intention.
 
+        /** @var \App\Models\User $authUserStore */
+        $authUserStore = Auth::user();
         $distributorId = null;
-        if (Auth::user()->hasRole('distributor')) {
-            $distributorId = Auth::user()->distributor->id;
+        if ($authUserStore->hasRole('distributor')) {
+            $distributorId = $authUserStore->distributor->id;
         } else {
             $request->validate(['distributor_id' => 'required|exists:distributors,id']);
             $distributorId = $request->distributor_id;

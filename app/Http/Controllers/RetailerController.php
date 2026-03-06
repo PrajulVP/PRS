@@ -139,7 +139,7 @@ class RetailerController extends Controller
                 $salesManagerUser->notify(new \App\Notifications\UserApprovalRequired(
                     $user,
                     "New Retailer {$user->name} has been added to your team and requires review/activation.",
-                    url('/retailers')
+                    route('admin.retailers.index')
                 ));
             }
         }

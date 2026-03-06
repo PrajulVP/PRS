@@ -70,7 +70,7 @@ class SalesManagerController extends Controller
             $superAdmin->notify(new \App\Notifications\UserApprovalRequired(
                 $user,
                 "New Sales Manager {$user->name} has been added and requires activation.",
-                url('/sales-managers')
+                route('admin.sales-managers.index')
             ));
         }
 

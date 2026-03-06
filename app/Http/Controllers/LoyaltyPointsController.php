@@ -27,7 +27,7 @@ class LoyaltyPointsController extends Controller
 
             // Get history of points earned (show all finalized orders)
             $orders = $retailer->retailerOrders()
-                ->whereIn('status', ['accepted_by_distributor', 'delivered'])
+                ->whereIn('status', ['accepted', 'delivered'])
                 ->orderBy('updated_at', 'desc')
                 ->get();
 
@@ -53,7 +53,7 @@ class LoyaltyPointsController extends Controller
 
                 $orders = $retailer->retailerOrders()
                     ->with('items.product')
-                    ->whereIn('status', ['accepted_by_distributor', 'delivered'])
+                    ->whereIn('status', ['accepted', 'delivered'])
                     ->orderBy('updated_at', 'desc');
 
                 return DataTables::of($orders)

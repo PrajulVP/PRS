@@ -23,8 +23,6 @@ class Product extends Model
         'pts',
         'taxable_value',
         'gst',
-        'offer',
-        'discount',
         'net_amount',
         'loyalty_point_percentage',
     ];
@@ -35,8 +33,6 @@ class Product extends Model
         'pts' => 'decimal:2',
         'taxable_value' => 'decimal:2',
         'gst' => 'decimal:2',
-        'offer' => 'decimal:2',
-        'discount' => 'decimal:2',
         'net_amount' => 'decimal:2',
         'loyalty_point_percentage' => 'decimal:2',
     ];

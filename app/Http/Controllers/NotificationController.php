@@ -23,14 +23,14 @@ class NotificationController extends Controller
                     if ($order) {
                         $orderExists = true;
                         if (str_contains(strtolower($msg), 'assigned to you') && $order->status !== 'pending') $needsAction = false;
-                        elseif (str_contains(strtolower($msg), 'ready for your approval') && $order->status !== 'accepted_by_fieldstaff') $needsAction = false;
-                        elseif (str_contains(strtolower($msg), 'confirm order upon delivery') && in_array($order->status, ['delivered', 'confirmed'])) $needsAction = false;
+                        elseif (str_contains(strtolower($msg), 'ready for your approval') && $order->status !== 'processing') $needsAction = false;
+                        elseif (str_contains(strtolower($msg), 'confirm order upon delivery') && $order->status === 'delivered') $needsAction = false;
                     }
                 } elseif (str_starts_with($code, 'DO-')) {
                     $order = \App\Models\DistributorOrder::where('order_code', $code)->first();
                     if ($order) {
                         $orderExists = true;
-                        if (str_contains(strtolower($msg), 'ready for your approval') && !in_array($order->status, ['pending', 'accepted_by_sales_manager'])) $needsAction = false;
+                        if (str_contains(strtolower($msg), 'ready for your approval') && !in_array($order->status, ['pending', 'processing'])) $needsAction = false;
                     }
                 }
 
@@ -64,14 +64,14 @@ class NotificationController extends Controller
             $order = \App\Models\RetailerOrder::where('order_code', $code)->first();
             if ($order) {
                 if (str_contains(strtolower($msg), 'assigned to you') && $order->status !== 'pending') return false;
-                if (str_contains(strtolower($msg), 'ready for your approval') && $order->status !== 'accepted_by_fieldstaff') return false;
-                if (str_contains(strtolower($msg), 'confirm order upon delivery') && in_array($order->status, ['delivered', 'confirmed'])) return false;
+                if (str_contains(strtolower($msg), 'ready for your approval') && $order->status !== 'processing') return false;
+                if (str_contains(strtolower($msg), 'confirm order upon delivery') && $order->status === 'delivered') return false;
                 return true;
             }
         } elseif (str_starts_with($code, 'DO-')) {
             $order = \App\Models\DistributorOrder::where('order_code', $code)->first();
             if ($order) {
-                if (str_contains(strtolower($msg), 'ready for your approval') && !in_array($order->status, ['pending', 'accepted_by_sales_manager'])) return false;
+                if (str_contains(strtolower($msg), 'ready for your approval') && !in_array($order->status, ['pending', 'processing'])) return false;
                 return true;
             }
         }

@@ -22,13 +22,6 @@
       0 => 'L5Swagger\\L5SwaggerServiceProvider',
     ),
   ),
-  'google-gemini-php/laravel' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'Gemini\\Laravel\\ServiceProvider',
-    ),
-  ),
   'laravel/pail' => 
   array (
     'providers' => 

@@ -199,7 +199,7 @@ class RetailerOrderManagementController extends Controller
 
                 // Notify Field Staff
                 if ($order->fieldStaff && $order->fieldStaff->user) {
-                    $order->fieldStaff->user->notify(new OrderActionRequired($order, "New order #{$order->order_code} assigned to you. Action required: Approve or Reject.", url('/approvals/retailers')));
+                    $order->fieldStaff->user->notify(new OrderActionRequired($order, "New order #{$order->order_code} assigned to you. Action required: Process or Cancel.", route('admin.approvals.retailer')));
                 }
             }
 
@@ -356,7 +356,13 @@ class RetailerOrderManagementController extends Controller
                                     return [
                                         'id' => $b->id,
                                         'batch_no' => $b->batch_no,
-                                        'expiry_date' => $b->expiry_date,
+                                        'expiry_date' => $b->expiry_date ? (function ($date) {
+                                            $parsed = \Carbon\Carbon::parse($date);
+                                            if ($parsed->copy()->endOfMonth()->isSameDay($parsed)) {
+                                                return $parsed->format('m/Y');
+                                            }
+                                            return $parsed->format('d/m/Y');
+                                        })($b->expiry_date) : '-',
                                         'quantity' => $b->quantity
                                     ];
                                 })
@@ -417,12 +423,12 @@ class RetailerOrderManagementController extends Controller
             return response()->json(['error' => 'Unauthorized action.'], 403);
         }
 
-        if (!in_array($retailerOrder->status, ['pending', 'accepted_by_fieldstaff'])) {
-            return response()->json(['error' => 'This order cannot be rejected in its current state.'], 400);
+        if (!in_array($retailerOrder->status, ['pending', 'processing'])) {
+            return response()->json(['error' => 'This order cannot be cancelled in its current state.'], 400);
         }
 
         $retailerOrder->update([
-            'status' => 'rejected_by_distributor',
+            'status' => 'cancelled',
             'cancellation_reason' => $request->rejection_reason
         ]);
 
@@ -433,8 +439,8 @@ class RetailerOrderManagementController extends Controller
         if ($retailerOrder->retailer && $retailerOrder->retailer->user) {
             $retailerOrder->retailer->user->notify(new OrderActionRequired(
                 $retailerOrder,
-                "Your order #{$retailerOrder->order_code} has been rejected by the Distributor. Reason: {$request->rejection_reason}",
-                url('/retailer-orders'),
+                "Your order #{$retailerOrder->order_code} has been cancelled. Reason: {$request->rejection_reason}",
+                route('retailer.orders.index'),
                 'retailer_order'
             ));
         }
@@ -443,13 +449,13 @@ class RetailerOrderManagementController extends Controller
         if ($retailerOrder->fieldStaff && $retailerOrder->fieldStaff->user) {
             $retailerOrder->fieldStaff->user->notify(new OrderActionRequired(
                 $retailerOrder,
-                "Order #{$retailerOrder->order_code} has been rejected by the Distributor.",
-                url('/approvals/retailers'),
+                "Order #{$retailerOrder->order_code} has been cancelled.",
+                route('admin.approvals.retailer'),
                 'retailer_order'
             ));
         }
 
-        return response()->json(['success' => 'Order rejected successfully!']);
+        return response()->json(['success' => 'Order cancelled successfully!']);
     }
 
     public function acceptOrder(Request $request, RetailerOrder $retailerOrder)
@@ -494,12 +500,12 @@ class RetailerOrderManagementController extends Controller
                 $retailerOrder->fieldstaff_id = $fieldStaff->id;
             }
 
-            $retailerOrder->status = 'accepted_by_fieldstaff';
+            $retailerOrder->status = 'processing';
             $retailerOrder->save();
 
             // Notify Distributor
             if ($retailerOrder->distributor && $retailerOrder->distributor->user) {
-                $this->notifyUnique($retailerOrder->distributor->user, new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} has been accepted by Field Staff and is ready for your approval.", url('/approvals/retailers'), 'retailer_order'));
+                $this->notifyUnique($retailerOrder->distributor->user, new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} has been processed and is ready for your approval.", route('admin.approvals.retailer'), 'retailer_order'));
             }
 
             return response()->json(['success' => 'Order accepted by Field Staff!']);
@@ -515,8 +521,8 @@ class RetailerOrderManagementController extends Controller
             if ($retailerOrder->distributor_id != $distributor->id) {
                 return response()->json(['error' => 'This order is not for your distributorship.'], 403);
             }
-            if ($status !== 'accepted_by_fieldstaff') {
-                return response()->json(['error' => 'Order must be accepted by Field Staff first.'], 400);
+            if ($status !== 'processing') {
+                return response()->json(['error' => 'Order must be processed by Field Staff first.'], 400);
             }
 
             try {
@@ -619,7 +625,7 @@ class RetailerOrderManagementController extends Controller
                     }
                 }
 
-                $updateData = ['status' => 'accepted_by_distributor'];
+                $updateData = ['status' => 'accepted'];
                 if ($request->filled('payment_status') && in_array($request->payment_status, ['pending', 'paid'])) {
                     $updateData['payment_status'] = $request->payment_status;
                 }
@@ -638,11 +644,13 @@ class RetailerOrderManagementController extends Controller
                 $filename = 'invoice_' . $retailerOrder->id . '_' . time() . '.' . $file->getClientOriginalExtension();
                 $path = $file->storeAs('retailer_invoices', $filename, 'public');
                 $retailerOrder->update(['invoice_path' => $path]);
+            } else {
+                return response()->json(['error' => 'Invoice upload is strictly required for approval.'], 422);
             }
 
             // Notify Retailer
             if ($retailerOrder->retailer && $retailerOrder->retailer->user) {
-                $retailerOrder->retailer->user->notify(new OrderActionRequired($retailerOrder, "Your order #{$retailerOrder->order_code} has been approved by the Distributor. Please confirm order upon delivery.", url('/retailer-orders'), 'retailer_order'));
+                $retailerOrder->retailer->user->notify(new OrderActionRequired($retailerOrder, "Your order #{$retailerOrder->order_code} has been accepted. Please confirm your order.", url('/retailer/orders'), 'retailer_order'));
             }
 
             // Award Loyalty Points on Distributor Acceptance
@@ -682,30 +690,32 @@ class RetailerOrderManagementController extends Controller
                 }
             }
 
-            return response()->json(['success' => 'Order approved by Distributor!', 'new_points' => $retailerOrder->retailer->loyalty_points ?? 0]);
+            return response()->json(['success' => 'Order accepted by Distributor!', 'new_points' => $retailerOrder->retailer->loyalty_points ?? 0]);
         }
 
         if ($user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
             if ($status === 'pending') {
-                $retailerOrder->update(['status' => 'accepted_by_fieldstaff']);
+                $retailerOrder->update(['status' => 'processing']);
                 // Notify Distributor
                 if ($retailerOrder->distributor && $retailerOrder->distributor->user) {
-                    $this->notifyUnique($retailerOrder->distributor->user, new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} is ready for your approval (Field Staff stage bypassed by Admin).", url('/approvals/retailers'), 'retailer_order'));
+                    $this->notifyUnique($retailerOrder->distributor->user, new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} is ready for your approval.", route('admin.approvals.retailer'), 'retailer_order'));
                 }
                 return response()->json(['success' => 'Order accepted (Field Staff stage bypassed by Admin)!']);
-            } elseif ($status === 'accepted_by_fieldstaff') {
-                $retailerOrder->update(['status' => 'accepted_by_distributor']);
+            } elseif ($status === 'processing') {
+                $retailerOrder->update(['status' => 'accepted']);
 
                 if ($request->hasFile('invoice')) {
                     $file = $request->file('invoice');
                     $filename = 'invoice_' . $retailerOrder->id . '_' . time() . '.' . $file->getClientOriginalExtension();
                     $path = $file->storeAs('retailer_invoices', $filename, 'public');
                     $retailerOrder->update(['invoice_path' => $path]);
+                } else {
+                    return response()->json(['error' => 'Invoice upload is required for final approval.'], 422);
                 }
 
                 // Notify Retailer
                 if ($retailerOrder->retailer && $retailerOrder->retailer->user) {
-                    $this->notifyUnique($retailerOrder->retailer->user, new OrderActionRequired($retailerOrder, "Your order #{$retailerOrder->order_code} has been approved. Please confirm order upon delivery.", url('/retailer-orders'), 'retailer_order'));
+                    $this->notifyUnique($retailerOrder->retailer->user, new OrderActionRequired($retailerOrder, "Your order #{$retailerOrder->order_code} has been accepted. Please confirm your order.", url('/retailer/orders'), 'retailer_order'));
                 }
 
                 // Award Loyalty Points (Admin Override)
@@ -749,7 +759,7 @@ class RetailerOrderManagementController extends Controller
                         Log::info("Retailer ID {$retailer->id} points updated. Old: {$oldPoints}, New: {$retailer->loyalty_points}");
                     }
                 }
-                return response()->json(['success' => 'Order approved (Distributor stage)!', 'new_points' => $retailerOrder->retailer->loyalty_points ?? 0]);
+                return response()->json(['success' => 'Order accepted (Distributor stage)!', 'new_points' => $retailerOrder->retailer->loyalty_points ?? 0]);
             } else {
                 return response()->json(['error' => 'Order is in a state that cannot be accepted/approved further.'], 400);
             }
@@ -773,7 +783,7 @@ class RetailerOrderManagementController extends Controller
 
         $retailerOrder->update([
             'fieldstaff_id' => $request->fieldstaff_id,
-            'status' => 'assigned_to_fieldstaff' // or 'out_for_delivery' if immediate? Logic usually step by step
+            'status' => 'pending' // Stay pending until FS accepts
         ]);
 
         return response()->json(['success' => 'Field staff assigned successfully!']);
@@ -889,19 +899,19 @@ class RetailerOrderManagementController extends Controller
         // Only a distributor owning the order can request cancellation
         if (!Auth::user()->hasRole('distributor')) return response()->json(['error' => 'No permission'], 403);
         if ($retailerOrder->distributor_id !== Auth::user()->distributor->id) return response()->json(['error' => 'Not your order'], 403);
-        if ($retailerOrder->status !== 'accepted_by_distributor') return response()->json(['error' => 'Invalid status'], 400);
+        if ($retailerOrder->status !== 'accepted') return response()->json(['error' => 'Invalid status'], 400);
 
-        $retailerOrder->status = 'cancellation_requested';
+        $retailerOrder->status = 'cancelled';
         $retailerOrder->cancellation_reason = $request->cancellation_reason;
         $retailerOrder->save();
 
-        return response()->json(['success' => 'Cancellation request submitted successfully!']);
+        return response()->json(['success' => 'Order cancelled successfully!']);
     }
 
     public function approveCancellation(RetailerOrder $retailerOrder)
     {
         if (!Auth::user()->hasRole('salesmanager')) return response()->json(['error' => 'No permission'], 403);
-        if ($retailerOrder->status !== 'cancellation_requested') return response()->json(['error' => 'Invalid status'], 400);
+        if ($retailerOrder->status !== 'cancelled') return response()->json(['error' => 'Invalid status'], 400);
 
         $retailerOrder->status = 'cancelled';
         $retailerOrder->save();
@@ -967,6 +977,7 @@ class RetailerOrderManagementController extends Controller
                 }
             }
             $retailerOrder->items()->delete();
+            $this->deleteOrderNotifications($retailerOrder->id, 'retailer_order');
             $retailerOrder->delete();
 
             if ($request->ajax()) {
@@ -1100,8 +1111,8 @@ class RetailerOrderManagementController extends Controller
             return response()->json(['error' => 'Permission denied. Only the retailer can confirm order.'], 403);
         }
 
-        if ($retailerOrder->status !== 'accepted_by_distributor') {
-            return response()->json(['error' => 'Order must be approved by Distributor before confirmation.'], 400);
+        if ($retailerOrder->status !== 'accepted') {
+            return response()->json(['error' => 'Order must be accepted by Distributor before confirmation.'], 400);
         }
 
         try {
@@ -1116,7 +1127,7 @@ class RetailerOrderManagementController extends Controller
 
             // Optional: Notify Field Staff / Distributor that order is closed
             if ($retailerOrder->fieldStaff && $retailerOrder->fieldStaff->user) {
-                $retailerOrder->fieldStaff->user->notify(new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} has been successfully delivered and confirmed by the retailer.", url('/retailer-orders')));
+                $retailerOrder->fieldStaff->user->notify(new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} has been successfully delivered and confirmed by the retailer.", route('fieldstaff.orders.index')));
             }
 
             DB::commit();

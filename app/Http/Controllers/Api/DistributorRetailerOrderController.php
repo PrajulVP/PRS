@@ -15,7 +15,7 @@ class DistributorRetailerOrderController extends Controller
      *     tags={"Distributor Retailer Orders"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="retailer_id", in="query", required=false, description="Filter by retailer ID", @OA\Schema(type="integer")),
-     *     @OA\Parameter(name="status", in="query", required=false, description="Filter by order status (pending, accepted_by_fieldstaff, accepted_by_distributor, delivered, etc.)", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="status", in="query", required=false, description="Filter by order status (pending, processing, accepted, delivered, cancelled)", @OA\Schema(type="string")),
      *     @OA\Parameter(name="payment_status", in="query", required=false, description="Filter by payment status: paid or pending (unpaid)", @OA\Schema(type="string", enum={"paid","pending"})),
      *     @OA\Parameter(name="per_page", in="query", required=false, description="Results per page (default 15)", @OA\Schema(type="integer")),
      *     @OA\Response(

@@ -64,32 +64,23 @@
     new WOW().init();
 
     // Global Toast Function
+    // Global Toast Function (Premium SweetAlert2 Toast)
     function showToast(type, message) {
-        const toastContainer = document.getElementById('toastContainer');
-        const bgClass = type === 'success' ? 'bg-success' : (type === 'error' ? 'bg-danger' : 'bg-primary');
-        const toastHtml = `
-            <div class="toast align-items-center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        ${message}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-            </div>
-        `;
-
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = toastHtml;
-        const toastEl = tempDiv.firstElementChild;
-        toastContainer.appendChild(toastEl);
-
-        const toast = new bootstrap.Toast(toastEl, {
-            delay: 3000
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.onmouseenter = Swal.stopTimer;
+                toast.onmouseleave = Swal.resumeTimer;
+            }
         });
-        toast.show();
 
-        toastEl.addEventListener('hidden.bs.toast', () => {
-            toastEl.remove();
+        Toast.fire({
+            icon: type, // 'success', 'error', 'warning', 'info', 'question'
+            title: message
         });
     }
 </script>

@@ -412,6 +412,31 @@
             color: #ffffff !important;
         }
 
+        /* Specialized padding for action buttons in tables */
+        .table .btn-sm:not(.confirm-receipt-btn):not(.confirm-btn) {
+            padding: 5px 10px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 6px !important;
+            font-size: 0.78rem !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+
+        .table .btn-sm i {
+            font-size: 0.9rem !important;
+        }
+
+        /* Exempting the confirm button to keep it distinct */
+        .table .btn-sm.confirm-receipt-btn,
+        .table .btn-sm.confirm-btn {
+            padding: 8px 20px !important;
+            border-radius: 12px !important;
+            font-weight: 700 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
         /* Datatable Export Buttons Global Resizing */
         .dt-buttons .btn {
             padding: 4px 10px !important;

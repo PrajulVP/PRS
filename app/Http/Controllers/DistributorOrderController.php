@@ -140,7 +140,13 @@ class DistributorOrderController extends Controller
                                     return [
                                         'id' => $b->id,
                                         'batch_no' => $b->batch_no,
-                                        'expiry_date' => $b->expiry_date,
+                                        'expiry_date' => $b->expiry_date ? (function ($date) {
+                                            $parsed = \Carbon\Carbon::parse($date);
+                                            if ($parsed->copy()->endOfMonth()->isSameDay($parsed)) {
+                                                return $parsed->format('m/Y');
+                                            }
+                                            return $parsed->format('d/m/Y');
+                                        })($b->expiry_date) : '-',
                                         'quantity' => $b->quantity
                                     ];
                                 })
@@ -283,7 +289,7 @@ class DistributorOrderController extends Controller
                 $this->notifyUnique($order->salesManager->user, new \App\Notifications\OrderActionRequired(
                     $order,
                     "New Distributor Order #{$order->order_code} is ready for your approval.",
-                    url('/approvals/distributors'),
+                    route('admin.approvals.distributor'),
                     'distributor_order'
                 ));
             }
@@ -404,7 +410,7 @@ class DistributorOrderController extends Controller
         if (!$user->hasPermissionToCategory('distributor_approvals', 'edit') && !$user->hasRole('salesmanager')) return response()->json(['error' => 'No permission'], 403);
         if ($distributorOrder->status !== DistributorOrder::STATUS_PENDING) return response()->json(['error' => 'Not pending'], 400);
 
-        $distributorOrder->status = DistributorOrder::STATUS_ACCEPTED_BY_SALES_MANAGER;
+        $distributorOrder->status = DistributorOrder::STATUS_PROCESSING;
         $distributorOrder->sales_manager_id = Auth::user()->salesManager->id;
         $distributorOrder->save();
 
@@ -413,8 +419,8 @@ class DistributorOrderController extends Controller
         foreach ($admins as $admin) {
             $this->notifyUnique($admin, new \App\Notifications\OrderActionRequired(
                 $distributorOrder,
-                "Distributor Order #{$distributorOrder->order_code} has been accepted by Sales Manager and is ready for your approval.",
-                url('/approvals/distributors'),
+                "Distributor Order #{$distributorOrder->order_code} has been processed and is ready for your approval.",
+                route('admin.approvals.distributor'),
                 'distributor_order'
             ));
         }
@@ -432,12 +438,20 @@ class DistributorOrderController extends Controller
 
         $request->validate([
             'payment_status' => 'required|in:pending,paid,failed',
-            'invoice' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'invoice' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
             'batches' => 'required|array',
             'batches.*' => 'required|array|min:1',
             'batches.*.*.batch_no' => 'required|string|max:255',
             'batches.*.*.expiry_date' => 'required|date',
             'batches.*.*.quantity' => 'required|integer|min:1',
+            'batches.*.*.mrp' => 'nullable|numeric|min:0',
+            'batches.*.*.ptr' => 'nullable|numeric|min:0',
+            'batches.*.*.pts' => 'nullable|numeric|min:0',
+            'batches.*.*.taxable_value' => 'nullable|numeric|min:0',
+            'batches.*.*.cgst' => 'nullable|numeric|min:0',
+            'batches.*.*.sgst' => 'nullable|numeric|min:0',
+            'batches.*.*.igst' => 'nullable|numeric|min:0',
+            'batches.*.*.net_amount' => 'nullable|numeric|min:0',
         ]);
 
         DB::beginTransaction();
@@ -473,7 +487,7 @@ class DistributorOrderController extends Controller
             }
 
             $distributorOrder->update([
-                'status' => DistributorOrder::STATUS_APPROVED,
+                'status' => DistributorOrder::STATUS_ACCEPTED,
                 'payment_status' => $request->payment_status,
                 'invoice_path' => $invoicePath
             ]);
@@ -491,6 +505,14 @@ class DistributorOrderController extends Controller
                         'batch_no' => $batchData['batch_no'],
                         'expiry_date' => $batchData['expiry_date'],
                         'quantity' => $batchData['quantity'],
+                        'mrp' => $batchData['mrp'] ?? null,
+                        'ptr' => $batchData['ptr'] ?? null,
+                        'pts' => $batchData['pts'] ?? null,
+                        'taxable_value' => $batchData['taxable_value'] ?? null,
+                        'cgst' => $batchData['cgst'] ?? null,
+                        'sgst' => $batchData['sgst'] ?? null,
+                        'igst' => $batchData['igst'] ?? null,
+                        'net_amount' => $batchData['net_amount'] ?? null,
                     ]);
                 }
             }
@@ -529,12 +551,15 @@ class DistributorOrderController extends Controller
 
             DB::commit();
 
+            // Clear existing notifications for this order
+            $this->clearOrderNotifications($distributorOrder->id, 'distributor_order');
+
             // Notify Distributor
             if ($distributorOrder->distributor && $distributorOrder->distributor->user) {
                 $this->notifyUnique($distributorOrder->distributor->user, new OrderActionRequired(
                     $distributorOrder,
-                    "Your order #{$distributorOrder->order_code} has been approved. Please confirm receipt upon delivery.",
-                    url('/distributor-orders'),
+                    "Your order #{$distributorOrder->order_code} has been accepted. Please confirm receipt upon delivery.",
+                    route('admin.distributor-orders.index'),
                     'distributor_order'
                 ));
             }
@@ -551,37 +576,36 @@ class DistributorOrderController extends Controller
         $request->validate(['cancellation_reason' => 'required|string|min:5']);
         if (!Auth::user()->hasRole('distributor')) return response()->json(['error' => 'No permission'], 403);
         if ($distributorOrder->distributor_id !== Auth::user()->distributor->id) return response()->json(['error' => 'Not your order'], 403);
-        if ($distributorOrder->status !== DistributorOrder::STATUS_ACCEPTED_BY_SALES_MANAGER) return response()->json(['error' => 'Invalid status'], 400);
 
-        $distributorOrder->status = DistributorOrder::STATUS_CANCELLATION_REQUESTED;
+        // Immediate cancellation for distributor
+        $distributorOrder->status = DistributorOrder::STATUS_CANCELLED;
         $distributorOrder->cancellation_reason = $request->cancellation_reason;
         $distributorOrder->save();
 
-        return response()->json(['success' => 'Cancellation request submitted successfully!']);
+        return response()->json(['success' => 'Order cancelled successfully!']);
     }
 
     public function approveCancellation(distributorOrder $distributorOrder)
     {
         if (!Auth::user()->hasPermissionToCategory('distributor_approvals', 'edit') && !Auth::user()->hasRole('salesmanager')) return response()->json(['error' => 'No permission'], 403);
-        if ($distributorOrder->status !== DistributorOrder::STATUS_CANCELLATION_REQUESTED) return response()->json(['error' => 'Invalid status'], 400);
 
         $distributorOrder->status = DistributorOrder::STATUS_CANCELLED;
         $distributorOrder->save();
 
-        return response()->json(['success' => 'Order cancellation approved successfully! Stock restored.']);
+        return response()->json(['success' => 'Order cancellation approved successfully!']);
     }
 
     public function confirmReceipt(DistributorOrder $distributorOrder)
     {
         if (!Auth::user()->hasRole('distributor')) return response()->json(['error' => 'No permission'], 403);
         if ($distributorOrder->distributor_id !== Auth::user()->distributor->id) return response()->json(['error' => 'Not your order'], 403);
-        if ($distributorOrder->status !== DistributorOrder::STATUS_APPROVED) return response()->json(['error' => 'Order is not approved yet'], 400);
+        if ($distributorOrder->status !== DistributorOrder::STATUS_ACCEPTED) return response()->json(['error' => 'Order is not approved yet'], 400);
 
         $distributorOrder->status = DistributorOrder::STATUS_DELIVERED;
         $distributorOrder->save();
         $this->addOrderItemsToInventory($distributorOrder);
 
-        return response()->json(['success' => 'Order recieved successfully.']);
+        return response()->json(['success' => 'Order received successfully.']);
     }
 
     public function cancelOrder(Request $request, DistributorOrder $distributorOrder)
@@ -605,7 +629,7 @@ class DistributorOrderController extends Controller
     public function updateStatus(Request $request, distributorOrder $distributorOrder)
     {
         $request->validate([
-            'status' => 'required|in:pending,hold,accepted_by_sales_manager,approved,rejected,cancelled,delivered',
+            'status' => 'required|in:pending,processing,accepted,cancelled,delivered',
         ]);
 
         // Permission check
@@ -619,7 +643,7 @@ class DistributorOrderController extends Controller
         $distributorOrder->status = $newStatus;
 
         // Handle side effects
-        if ($newStatus === 'accepted_by_sales_manager') {
+        if ($newStatus === 'processing') {
             if (Auth::user()->hasRole('salesmanager')) {
                 $distributorOrder->sales_manager_id = Auth::user()->salesManager->id;
             }
@@ -696,6 +720,7 @@ class DistributorOrderController extends Controller
         }
 
         $distributorOrder->items()->delete(); // Delete items first
+        $this->deleteOrderNotifications($distributorOrder->id, 'distributor_order');
         $distributorOrder->delete();
 
         return response()->json(['success' => 'Order deleted successfully! Stock restored.']);
@@ -703,7 +728,7 @@ class DistributorOrderController extends Controller
 
     public function approveOrder(Request $request, DistributorOrder $distributorOrder)
     {
-        // Invoice validation (still optional) and no payment status here
+        // Invoice validation is now mandatory
         $request->validate([
             'invoice' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
@@ -712,25 +737,28 @@ class DistributorOrderController extends Controller
             return response()->json(['error' => 'Only Sales Managers can approve orders.'], 403);
         }
 
-        // Upload Invoice (Optional)
-        $path = $distributorOrder->invoice_path;
+        // Upload Invoice (Mandatory)
+        $path = null;
         if ($request->hasFile('invoice')) {
             $path = $request->file('invoice')->store('invoices/distributors', 'public');
         }
 
         $distributorOrder->update([
-            'status' => DistributorOrder::STATUS_ACCEPTED_BY_SALES_MANAGER,
+            'status' => DistributorOrder::STATUS_PROCESSING,
             'sales_manager_id' => Auth::user()->salesManager->id,
             'invoice_path' => $path,
         ]);
+
+        // Clear existing notifications for this order
+        $this->clearOrderNotifications($distributorOrder->id, 'distributor_order');
 
         // Notify Admins
         $admins = \App\Models\User::role(['admin', 'superadmin'])->get();
         foreach ($admins as $admin) {
             $this->notifyUnique($admin, new OrderActionRequired(
                 $distributorOrder,
-                "Distributor Order #{$distributorOrder->order_code} has been accepted by Sales Manager and is ready for your approval.",
-                url('/approvals/distributors'),
+                "Distributor Order #{$distributorOrder->order_code} has been processed and is ready for your approval.",
+                route('admin.approvals.distributor'),
                 'distributor_order'
             ));
         }
@@ -788,6 +816,17 @@ class DistributorOrderController extends Controller
                 $inventory->product_name = $product->product_name;
 
                 $inventory->stock += $totalStrips;
+
+                // Copy financial records from the confirmed order batch to the distributor's inventory
+                $inventory->mrp = $batch->mrp;
+                $inventory->ptr = $batch->ptr;
+                $inventory->pts = $batch->pts;
+                $inventory->taxable_value = $batch->taxable_value;
+                $inventory->cgst = $batch->cgst;
+                $inventory->sgst = $batch->sgst;
+                $inventory->igst = $batch->igst;
+                $inventory->net_amount = $batch->net_amount;
+
                 $inventory->save();
             }
         }

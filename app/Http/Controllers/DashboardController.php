@@ -110,7 +110,7 @@ class DashboardController extends Controller
                     ->join('retailer_orders', 'retailer_order_items.retailer_order_id', '=', 'retailer_orders.id')
                     ->join('products', 'retailer_order_items.product_id', '=', 'products.id')
                     ->where('retailer_orders.distributor_id', $distributor->id)
-                    ->select('products.product_name', DB::raw('SUM(retailer_order_items.quantity) as total_quantity_ordered'), DB::raw('SUM(retailer_order_items.total) as total_revenue'))
+                    ->select('products.product_name', DB::raw('SUM(retailer_order_items.quantity) as total_quantity_ordered'), DB::raw('SUM(retailer_order_items.total_amount) as total_revenue'))
                     ->groupBy('products.id', 'products.product_name')
                     ->orderByDesc('total_quantity_ordered')
                     ->take(5)
@@ -168,7 +168,8 @@ class DashboardController extends Controller
         $retailerOrderStats = [
             'total' => $retailerOrderQuery->clone()->count(),
             'pending' => $retailerOrderQuery->clone()->where('status', 'pending')->count(),
-            'approved' => $retailerOrderQuery->clone()->whereIn('status', ['approved', 'approved_by_distributor', 'approved_by_admin'])->count(),
+            'processing' => $retailerOrderQuery->clone()->where('status', 'processing')->count(),
+            'accepted' => $retailerOrderQuery->clone()->where('status', 'accepted')->count(),
             'delivered' => $retailerOrderQuery->clone()->where('status', 'delivered')->count(),
             'cancelled' => $retailerOrderQuery->clone()->where('status', 'cancelled')->count(),
         ];
@@ -177,7 +178,8 @@ class DashboardController extends Controller
         $distributorOrderStats = [
             'total' => $distributorOrderQuery->clone()->count(),
             'pending' => $distributorOrderQuery->clone()->where('status', 'pending')->count(),
-            'approved' => $distributorOrderQuery->clone()->where('status', 'approved')->count(),
+            'processing' => $distributorOrderQuery->clone()->where('status', 'processing')->count(),
+            'accepted' => $distributorOrderQuery->clone()->where('status', 'accepted')->count(),
             'delivered' => $distributorOrderQuery->clone()->where('status', 'delivered')->count(),
             'cancelled' => $distributorOrderQuery->clone()->where('status', 'cancelled')->count(),
         ];

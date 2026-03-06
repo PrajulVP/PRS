@@ -12,12 +12,10 @@ class DistributorOrder extends Model
     protected $table = 'distributor_orders';
 
     const STATUS_PENDING = 'pending';
-    const STATUS_ACCEPTED_BY_SALES_MANAGER = 'accepted_by_sales_manager';
-    const STATUS_DELIVERED = 'delivered'; // Admin accepted
-    const STATUS_APPROVED = 'approved'; // Admin approved
+    const STATUS_PROCESSING = 'processing';
+    const STATUS_ACCEPTED = 'accepted';
+    const STATUS_DELIVERED = 'delivered';
     const STATUS_CANCELLED = 'cancelled';
-    const STATUS_REJECTED = 'rejected';
-    const STATUS_CANCELLATION_REQUESTED = 'cancellation_requested';
 
     protected $fillable = [
         'order_code',
