@@ -542,7 +542,72 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Order placed successfully"
+                        "description": "Order placed successfully (Status: pending)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Order placed successfully"
+                                        },
+                                        "order": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "order_code": {
+                                                    "type": "string"
+                                                },
+                                                "distributor": {
+                                                    "type": "string"
+                                                },
+                                                "total_amount": {
+                                                    "description": "Total Value (PTS) - GST calculated on invoice",
+                                                    "type": "string"
+                                                },
+                                                "total_items": {
+                                                    "type": "integer"
+                                                },
+                                                "total_quantity": {
+                                                    "type": "integer"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "pending"
+                                                },
+                                                "placed_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "items": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "product_name": {
+                                                                "type": "string"
+                                                            },
+                                                            "quantity": {
+                                                                "type": "integer"
+                                                            },
+                                                            "price": {
+                                                                "type": "string"
+                                                            },
+                                                            "subtotal": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -571,7 +636,56 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Order details"
+                        "description": "Order details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "order_code": {
+                                            "type": "string"
+                                        },
+                                        "distributor": {
+                                            "type": "string"
+                                        },
+                                        "total_amount": {
+                                            "type": "string"
+                                        },
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "product_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "quantity": {
+                                                        "type": "integer"
+                                                    },
+                                                    "batches": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "batch_no": {
+                                                                    "type": "string"
+                                                                },
+                                                                "expiry_date": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "404": {
                         "description": "Order not found"
@@ -589,8 +703,8 @@
                 "tags": [
                     "Distributor Orders"
                 ],
-                "summary": "Update order status (Unified Action Endpoint)",
-                "description": "Handles Manager Acceptance, Admin Approval, Receipt Confirmation, and Cancellations.",
+                "summary": "Update order status (Unified Status Endpoint)",
+                "description": "Directly update order status. Handles logic for processing, accepted (admin), delivered (receipt), rejected, and cancelled.",
                 "operationId": "5a5f2c826dba20f3d22f173698afb966",
                 "parameters": [
                     {
@@ -605,35 +719,20 @@
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "multipart/form-data": {
+                        "application/json": {
                             "schema": {
                                 "properties": {
-                                    "action": {
+                                    "status": {
                                         "type": "string",
                                         "enum": [
-                                            "accept_manager",
-                                            "approve_admin",
-                                            "confirm_receipt",
-                                            "request_cancellation",
-                                            "approve_cancellation"
+                                            "processing",
+                                            "accepted",
+                                            "delivered",
+                                            "cancelled",
+                                            "rejected"
                                         ]
-                                    },
-                                    "payment_status": {
-                                        "description": "Required for approve_admin",
-                                        "type": "string",
-                                        "enum": [
-                                            "pending",
-                                            "paid",
-                                            "failed"
-                                        ]
-                                    },
-                                    "invoice": {
-                                        "description": "Optional for approve_admin",
-                                        "type": "string",
-                                        "format": "binary"
                                     },
                                     "cancellation_reason": {
-                                        "description": "Required for request_cancellation",
                                         "type": "string"
                                     }
                                 },
@@ -824,7 +923,10 @@
                                                     "status": {
                                                         "type": "string"
                                                     },
-                                                    "payment_status": {
+                                                    "items_count": {
+                                                        "type": "integer"
+                                                    },
+                                                    "payment_method": {
                                                         "type": "string"
                                                     },
                                                     "placed_at": {
@@ -866,7 +968,8 @@
                 "tags": [
                     "Distributor Retailer Orders"
                 ],
-                "summary": "Get a single retailer order detail (must belong to authenticated distributor)",
+                "summary": "Get a single retailer order detail with Web-parity details",
+                "description": "Includes item details, tax breakdown, retailer info, and available batches for approval selection.",
                 "operationId": "b94fdcac50fc87653afaca73c8137929",
                 "parameters": [
                     {
@@ -881,13 +984,120 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Order detail with items"
-                    },
-                    "403": {
-                        "description": "Not a distributor"
+                        "description": "Detailed order info"
                     },
                     "404": {
-                        "description": "Order not found or not yours"
+                        "description": "Order not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/distributor/retailer-orders/{id}/accept": {
+            "post": {
+                "tags": [
+                    "Distributor Retailer Orders"
+                ],
+                "summary": "Accept/Approve a retailer order with invoice and batch allocation",
+                "operationId": "3a65682528a7c16c7da9ba209ca46a3c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Retailer Order ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "invoice": {
+                                        "description": "Invoice file (mandatory)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "payment_status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "paid"
+                                        ]
+                                    },
+                                    "items_batches": {
+                                        "description": "JSON string: [{order_item_id: int, batches: [{inventory_id: int, quantity: decimal}]}]",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Order accepted successfully"
+                    },
+                    "422": {
+                        "description": "Validation or stock error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/distributor/retailer-orders/{id}/reject": {
+            "post": {
+                "tags": [
+                    "Distributor Retailer Orders"
+                ],
+                "summary": "Reject a retailer order",
+                "operationId": "11ca4a2b95292229a1324fc03dc08926",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Retailer Order ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "minLength": 5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Order rejected successfully"
+                    },
+                    "403": {
+                        "description": "Unauthorized"
                     }
                 },
                 "security": [
@@ -1187,6 +1397,60 @@
                         "bearerAuth": []
                     }
                 ]
+            },
+            "post": {
+                "tags": [
+                    "Retailer Orders"
+                ],
+                "summary": "Place a new retailer order",
+                "operationId": "403e0546298da0f2f242555703901986",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "product_id": {
+                                                    "type": "integer"
+                                                },
+                                                "quantity": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "delivery_notes": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Order placed successfully"
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/retailer-orders/{id}/products": {
@@ -1261,6 +1525,64 @@
                     },
                     "404": {
                         "description": "Order not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/retailer-orders/{id}/update-status": {
+            "post": {
+                "tags": [
+                    "Retailer Orders"
+                ],
+                "summary": "Update order status (e.g. confirm delivery or cancel)",
+                "operationId": "b25309fe7a37c2b804685a62f6325fcb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "delivered",
+                                            "cancelled"
+                                        ]
+                                    },
+                                    "cancellation_reason": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Status updated successfully"
+                    },
+                    "400": {
+                        "description": "Invalid status or order state"
+                    },
+                    "403": {
+                        "description": "Unauthorized"
                     }
                 },
                 "security": [

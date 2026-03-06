@@ -16,6 +16,7 @@ class DistributorOrder extends Model
     const STATUS_ACCEPTED = 'accepted';
     const STATUS_DELIVERED = 'delivered';
     const STATUS_CANCELLED = 'cancelled';
+    const STATUS_REJECTED = 'rejected';
 
     protected $fillable = [
         'order_code',
@@ -44,7 +45,7 @@ class DistributorOrder extends Model
         static::creating(function ($order) {
             do {
                 $orderCode = 'DO-' . Str::upper(Str::random(6)); // Example: DO-A1B2C3
-            } while (DistributorOrder::where('order_code', $orderCode)->exists());
+            } while (DistributorOrder::where('ord   er_code', $orderCode)->exists());
             $order->order_code = $orderCode;
             $order->status = self::STATUS_PENDING; // Ensure default status
         });

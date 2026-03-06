@@ -5,9 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\RetailerOrder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Traits\HandlesNotifications;
 
 class DistributorRetailerOrderController extends Controller
 {
+    use HandlesNotifications;
     /**
      * @OA\Get(
      *     path="/api/distributor/retailer-orders",
@@ -30,7 +34,8 @@ class DistributorRetailerOrderController extends Controller
      *                 @OA\Property(property="retailer_shop", type="string"),
      *                 @OA\Property(property="total_amount", type="string"),
      *                 @OA\Property(property="status", type="string"),
-     *                 @OA\Property(property="payment_status", type="string"),
+     *                 @OA\Property(property="items_count", type="integer"),
+     *                 @OA\Property(property="payment_method", type="string"),
      *                 @OA\Property(property="placed_at", type="string", format="date-time")
      *             )),
      *             @OA\Property(property="total", type="integer"),
@@ -126,58 +131,374 @@ class DistributorRetailerOrderController extends Controller
     /**
      * @OA\Get(
      *     path="/api/distributor/retailer-orders/{id}",
-     *     summary="Get a single retailer order detail (must belong to authenticated distributor)",
+     *     summary="Get a single retailer order detail with Web-parity details",
+     *     description="Includes item details, tax breakdown, retailer info, and available batches for approval selection.",
      *     tags={"Distributor Retailer Orders"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, description="Retailer Order ID", @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="Order detail with items"),
-     *     @OA\Response(response=403, description="Not a distributor"),
-     *     @OA\Response(response=404, description="Order not found or not yours")
+     *     @OA\Response(response=200, description="Detailed order info"),
+     *     @OA\Response(response=404, description="Order not found")
      * )
      */
     public function show($id)
     {
         $user = auth('api')->user();
-
         if (!$user || !$user->distributor) {
             return response()->json(['message' => 'Authenticated user is not a distributor.'], 403);
         }
 
-        $order = RetailerOrder::with(['retailer.user', 'fieldStaff.user', 'items.product'])
+        $order = RetailerOrder::with(['retailer.user', 'fieldStaff.user', 'items.product', 'items.batches'])
             ->where('id', $id)
             ->where('distributor_id', $user->distributor->id)
-            ->first();
+            ->firstOrFail();
 
-        if (!$order) {
-            return response()->json(['message' => 'Order not found or does not belong to you.'], 404);
-        }
+        $distributor = $user->distributor;
+
+        // Calculate Tax Details (Parity with web invoice)
+        $cgstRate = 9; // Default as per web
+        $sgstRate = 9;
+        $divisor = 1 + (($cgstRate + $sgstRate) / 100);
+        $taxableAmount = $order->total_amount / $divisor;
+        $cgstAmount = $taxableAmount * ($cgstRate / 100);
+        $sgstAmount = $taxableAmount * ($sgstRate / 100);
 
         return response()->json([
             'id'             => $order->id,
             'order_code'     => $order->order_code,
-            'retailer_id'    => $order->retailer_id,
-            'retailer_name'  => $order->retailer?->user?->name ?? 'N/A',
-            'retailer_shop'  => $order->retailer?->shop_name ?? 'N/A',
-            'field_staff'    => $order->fieldStaff?->user?->name ?? 'N/A',
-            'total_amount'   => number_format($order->total_amount, 2),
-            'total_items'    => $order->total_items,
-            'total_quantity' => $order->total_quantity,
             'status'         => $order->status,
             'payment_status' => $order->payment_status ?? 'pending',
+
+            'retailer' => [
+                'id' => $order->retailer_id,
+                'name' => $order->retailer?->user?->name ?? 'N/A',
+                'description' => $order->retailer?->shop_name ?? 'N/A',
+                'address' => $order->retailer?->address ?? $order->retailer?->shop_address ?? 'N/A',
+                'gst' => $order->retailer?->gst ?? 'N/A',
+                'drug_license_no' => $order->retailer?->drug_license_no ?? 'N/A',
+                'phone' => $order->retailer?->contact_no ?? $order->retailer?->phone ?? 'N/A',
+            ],
+
+            'summary' => [
+                'total_items' => $order->total_items,
+                'total_quantity' => $order->total_quantity,
+                'taxable_amount' => number_format($taxableAmount, 2, '.', ''),
+                'cgst' => number_format($cgstAmount, 2, '.', ''),
+                'sgst' => number_format($sgstAmount, 2, '.', ''),
+                'total_amount' => number_format($order->total_amount, 2, '.', ''),
+                'loyalty_points' => (float)($order->loyalty_points_earned ?? 0),
+            ],
+
+            'items' => $order->items->map(function ($item) use ($distributor, $order) {
+                $itemData = [
+                    'id'               => $item->id,
+                    'product_id'       => $item->product_id,
+                    'product_name'     => $item->product?->product_name ?? 'N/A',
+                    'quantity'         => $item->quantity,
+                    'unit'             => $item->unit,
+                    'unit_price'       => $item->unit_price,
+                    'total_amount'     => $item->total_amount,
+                    'allocated_batches' => $item->batches->map(function ($b) {
+                        return [
+                            'batch_no' => $b->batch_no,
+                            'expiry_date' => $b->expiry_date ? (function ($date) {
+                                $parsed = \Carbon\Carbon::parse($date);
+                                if ($parsed->copy()->endOfMonth()->isSameDay($parsed)) {
+                                    return $parsed->format('m/Y');
+                                }
+                                return $parsed->format('d/m/Y');
+                            })($b->expiry_date) : '-',
+                            'quantity' => $b->quantity
+                        ];
+                    }),
+                ];
+
+                // If pending/processing, include available batches for selection
+                if (in_array($order->status, ['pending', 'processing'])) {
+                    $itemData['available_batches'] = \App\Models\Inventory::where('distributor_id', $distributor->id)
+                        ->where('product_id', $item->product_id)
+                        ->where('stock', '>', 0)
+                        ->orderBy('expiry_date', 'asc')
+                        ->get()
+                        ->map(function ($inv) {
+                            return [
+                                'inventory_id' => $inv->id,
+                                'batch_no' => $inv->batch_no,
+                                'expiry_date' => $inv->expiry_date ? (function ($date) {
+                                    $parsed = \Carbon\Carbon::parse($date);
+                                    if ($parsed->copy()->endOfMonth()->isSameDay($parsed)) {
+                                        return $parsed->format('m/Y');
+                                    }
+                                    return $parsed->format('d/m/Y');
+                                })($inv->expiry_date) : '-',
+                                'stock' => $inv->stock, // Note: This is in strips/base unit
+                            ];
+                        });
+                } else {
+                    $itemData['available_batches'] = [];
+                }
+
+                return $itemData;
+            }),
+
             'invoice_url'    => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
             'placed_at'      => $order->placed_at?->format('Y-m-d H:i:s'),
-            'delivered_at'   => $order->delivered_at?->format('Y-m-d H:i:s'),
             'notes'          => $order->notes,
-            'delivery_notes' => $order->delivery_notes,
-            'items'          => $order->items->map(function ($item) {
-                return [
-                    'product_id'   => $item->product_id,
-                    'product_name' => $item->product?->product_name ?? 'N/A',
-                    'quantity'     => $item->quantity,
-                    'unit_price'   => $item->unit_price,
-                    'total_amount' => $item->total_amount,
-                ];
-            }),
         ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/distributor/retailer-orders/{id}/accept",
+     *     summary="Accept/Approve a retailer order with invoice and batch allocation",
+     *     tags={"Distributor Retailer Orders"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, description="Retailer Order ID", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(property="invoice", type="string", format="binary", description="Invoice file (mandatory)"),
+     *                 @OA\Property(property="payment_status", type="string", enum={"pending","paid"}),
+     *                 @OA\Property(
+     *                     property="items_batches",
+     *                     type="string",
+     *                     description="JSON string: [{order_item_id: int, batches: [{inventory_id: int, quantity: decimal}]}]"
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Order accepted successfully"),
+     *     @OA\Response(response=422, description="Validation or stock error")
+     * )
+     */
+    public function acceptOrder(Request $request, $id)
+    {
+        $user = auth('api')->user();
+        if (!$user || !$user->distributor) {
+            return response()->json(['message' => 'Authenticated user is not a distributor.'], 403);
+        }
+
+        $retailerOrder = RetailerOrder::where('id', $id)
+            ->where('distributor_id', $user->distributor->id)
+            ->firstOrFail();
+
+        if ($retailerOrder->status !== 'processing') {
+            return response()->json(['error' => 'Order must be in processing status to be approved.'], 400);
+        }
+
+        $request->validate([
+            'invoice' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'payment_status' => 'nullable|string|in:pending,paid',
+        ]);
+
+        $distributor = $user->distributor;
+
+        DB::beginTransaction();
+        try {
+            // 1. Batch Allocation Logic
+            if ($request->filled('items_batches')) {
+                $itemsBatches = is_string($request->items_batches) ? json_decode($request->items_batches, true) : $request->items_batches;
+
+                foreach ($itemsBatches as $allocation) {
+                    $orderItem = $retailerOrder->items()->findOrFail($allocation['order_item_id']);
+                    $product = $orderItem->product;
+
+                    $multiplier = 1;
+                    if ($orderItem->unit === 'Box') {
+                        $multiplier = (int)($product->box_size ?? 1);
+                    } elseif ($orderItem->unit === 'Carton') {
+                        $multiplier = (int)($product->box_size ?? 1) * (int)($product->carton_size ?? 1);
+                    }
+
+                    $totalAllocated = 0;
+                    foreach ($allocation['batches'] as $batchData) {
+                        $inventory = \App\Models\Inventory::where('distributor_id', $distributor->id)
+                            ->where('product_id', $product->id)
+                            ->findOrFail($batchData['inventory_id']);
+
+                        $deductQty = $batchData['quantity'] * $multiplier;
+
+                        if ($inventory->stock < $deductQty) {
+                            throw new \Exception("Insufficient stock in batch {$inventory->batch_no} for product {$product->product_name}");
+                        }
+
+                        DB::table('inventories')->where('id', $inventory->id)->decrement('stock', $deductQty);
+
+                        \App\Models\RetailerOrderItemBatch::create([
+                            'retailer_order_item_id' => $orderItem->id,
+                            'batch_no' => $inventory->batch_no,
+                            'expiry_date' => $inventory->expiry_date,
+                            'quantity' => $batchData['quantity'],
+                        ]);
+
+                        $totalAllocated += $batchData['quantity'];
+                    }
+
+                    if (abs($totalAllocated - $orderItem->quantity) > 0.001) {
+                        throw new \Exception("Total allocated quantity ({$totalAllocated}) does not match ordered quantity ({$orderItem->quantity}) for {$product->product_name}");
+                    }
+                }
+            } else {
+                // Fallback to FEFO
+                foreach ($retailerOrder->items as $orderItem) {
+                    $product = $orderItem->product;
+                    $multiplier = 1;
+                    if ($orderItem->unit === 'Box') {
+                        $multiplier = (int)($product->box_size ?? 1);
+                    } elseif ($orderItem->unit === 'Carton') {
+                        $multiplier = (int)($product->box_size ?? 1) * (int)($product->carton_size ?? 1);
+                    }
+
+                    $neededStrips = $orderItem->quantity * $multiplier;
+                    $inventories = \App\Models\Inventory::where('distributor_id', $distributor->id)
+                        ->where('product_id', $product->id)
+                        ->where('stock', '>', 0)
+                        ->orderBy('expiry_date', 'asc')
+                        ->get();
+
+                    if ($inventories->sum('stock') < $neededStrips) {
+                        throw new \Exception("Insufficient total stock for product: {$product->product_name}");
+                    }
+
+                    $remainingStrips = $neededStrips;
+                    foreach ($inventories as $inv) {
+                        if ($remainingStrips <= 0) break;
+                        $takeStrips = min($inv->stock, $remainingStrips);
+                        DB::table('inventories')->where('id', $inv->id)->decrement('stock', $takeStrips);
+
+                        \App\Models\RetailerOrderItemBatch::create([
+                            'retailer_order_item_id' => $orderItem->id,
+                            'batch_no' => $inv->batch_no,
+                            'expiry_date' => $inv->expiry_date,
+                            'quantity' => $takeStrips / $multiplier,
+                        ]);
+
+                        $remainingStrips -= $takeStrips;
+                    }
+                }
+            }
+
+            // 2. Invoice Upload
+            $file = $request->file('invoice');
+            $filename = 'invoice_' . $retailerOrder->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('retailer_invoices', $filename, 'public');
+
+            // 3. Update Order
+            $updateData = [
+                'status' => 'accepted',
+                'invoice_path' => $path,
+            ];
+            if ($request->filled('payment_status')) {
+                $updateData['payment_status'] = $request->payment_status;
+            }
+            $retailerOrder->update($updateData);
+
+            // 4. Loyalty Points Calculation
+            $totalPoints = 0;
+            foreach ($retailerOrder->items as $item) {
+                if ($item->product) {
+                    $ptr = (float) ($item->product->ptr ?? $item->product->mrp ?? 0);
+                    $percentage = (float) $item->product->loyalty_point_percentage;
+                    if ($percentage > 0 && $ptr > 0) {
+                        $totalPoints += ($item->quantity * $ptr) * ($percentage / 100);
+                    }
+                }
+            }
+            if ($totalPoints > 0) {
+                $retailerOrder->update(['loyalty_points_earned' => $totalPoints]);
+                $retailer = $retailerOrder->retailer;
+                if ($retailer) {
+                    $retailer->increment('loyalty_points', $totalPoints);
+                }
+            }
+
+            // 5. Notifications
+            $this->clearOrderNotifications($retailerOrder->id, 'retailer_order');
+            if ($retailerOrder->retailer && $retailerOrder->retailer->user) {
+                $this->notifyUnique(
+                    $retailerOrder->retailer->user,
+                    new \App\Notifications\OrderActionRequired(
+                        $retailerOrder,
+                        "Your order #{$retailerOrder->order_code} has been accepted. Please confirm your order.",
+                        url('/retailer/orders'),
+                        'retailer_order'
+                    )
+                );
+            }
+
+            DB::commit();
+            return response()->json([
+                'success' => 'Order accepted by Distributor!',
+                'loyalty_points_earned' => $totalPoints,
+                'retailer_total_points' => $retailerOrder->retailer->loyalty_points ?? 0
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('API Retailer Order Approval failed: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/distributor/retailer-orders/{id}/reject",
+     *     summary="Reject a retailer order",
+     *     tags={"Distributor Retailer Orders"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, description="Retailer Order ID", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="reason", type="string", minLength=5)
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Order rejected successfully"),
+     *     @OA\Response(response=403, description="Unauthorized")
+     * )
+     */
+    public function rejectOrder(Request $request, $id)
+    {
+        $user = auth('api')->user();
+        if (!$user || !$user->distributor) {
+            return response()->json(['message' => 'Authenticated user is not a distributor.'], 403);
+        }
+
+        $retailerOrder = RetailerOrder::where('id', $id)
+            ->where('distributor_id', $user->distributor->id)
+            ->firstOrFail();
+
+        if (!in_array($retailerOrder->status, ['pending', 'processing'])) {
+            return response()->json(['error' => 'Only pending or processing orders can be rejected.'], 400);
+        }
+
+        $request->validate(['reason' => 'required|string|min:5']);
+
+        $retailerOrder->update([
+            'status' => 'rejected',
+            'cancellation_reason' => $request->reason
+        ]);
+
+        $this->clearOrderNotifications($retailerOrder->id, 'retailer_order');
+        if ($retailerOrder->retailer && $retailerOrder->retailer->user) {
+            $this->notifyUnique(
+                $retailerOrder->retailer->user,
+                new \App\Notifications\OrderActionRequired(
+                    $retailerOrder,
+                    "Your order #{$retailerOrder->order_code} has been rejected by the distributor.",
+                    url('/retailer/orders'),
+                    'retailer_order'
+                )
+            );
+        }
+
+        return response()->json(['success' => 'Order rejected successfully.']);
+    }
+
+    private function clearOrderNotifications($orderId, $type)
+    {
+        if (method_exists($this, 'deleteOrderNotifications')) {
+            $this->deleteOrderNotifications($orderId, $type);
+        }
     }
 }

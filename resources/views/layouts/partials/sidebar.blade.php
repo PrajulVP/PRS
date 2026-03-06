@@ -36,6 +36,17 @@
             </svg><span>Dashboard</span></a>
         </li>
 
+        @if (Auth::user()->hasPermissionToCategory('loyalty_points', 'view') || Auth::user()->hasRole('retailer'))
+        <li class="sidebar-list"><a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.loyalty-points.index') }}">
+            <svg class="stroke-icon">
+              <use href="{{ $iconSprite }}#stroke-bookmark"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{{ $iconSprite }}#fill-bookmark"></use>
+            </svg><span>Loyalty Points</span></a>
+        </li>
+        @endif
+
         @php
         $hasOrderPerms = Auth::user()->hasPermissionToCategory('retailer_orders', 'view') ||
         Auth::user()->hasPermissionToCategory('distributor_orders', 'view') ||
@@ -107,12 +118,12 @@
             </svg>
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-form"></use>
-            </svg><span>Orders</span>
+            </svg><span>View Orders</span>
           </a>
           <ul class="sidebar-submenu">
             {{-- Field Staff Role --}}
             @if (Auth::user()->hasRole('fieldstaff'))
-            <li style="position: relative;"><a href="{{ route('fieldstaff.orders.index') }}">Orders</a></li>
+            <li style="position: relative;"><a href="{{ route('fieldstaff.orders.index') }}">Order</a></li>
             @endif
 
             {{-- Admin / Sales Manager / SuperAdmin --}}
@@ -128,9 +139,15 @@
         </li>
         @endif
 
+        {{-- Order Approvals Dropdown --}}
         @if (Auth::user()->hasPermissionToCategory('retailer_approvals', 'view') || 
              Auth::user()->hasPermissionToCategory('distributor_approvals', 'view') || 
              $hasApprovalRoles)
+        <li class="sidebar-main-title">
+          <div>
+            <h6 class="lan-15">Approvals</h6>
+          </div>
+        </li>
         <li class="sidebar-list" style="position: relative;">
           @php $totalApprovals = $actionCounts['retailer_approvals'] + $actionCounts['distributor_approvals']; @endphp
           <a class="sidebar-link sidebar-title" id="approvals" href="#approvals">
@@ -139,7 +156,7 @@
             </svg>
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-user"></use>
-            </svg><span>Order Approvals</span>
+            </svg><span>Order Approval</span>
           </a>
           <ul class="sidebar-submenu">
              @if(Auth::user()->hasPermissionToCategory('retailer_approvals', 'view') || $hasApprovalRoles)
@@ -152,16 +169,7 @@
         </li>
         @endif
         
-        @if (Auth::user()->hasPermissionToCategory('loyalty_points', 'view') || Auth::user()->hasRole('retailer'))
-        <li class="sidebar-list"><a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.loyalty-points.index') }}">
-            <svg class="stroke-icon">
-              <use href="{{ $iconSprite }}#stroke-task"></use>
-            </svg>
-            <svg class="fill-icon">
-              <use href="{{ $iconSprite }}#fill-task"></use>
-            </svg><span>Loyalty Points</span></a>
-        </li>
-        @endif
+
 
         @if (Auth::user()->hasAnyRole(['admin', 'superadmin']) || Auth::user()->hasPermissionToCategory('products', 'view'))
         <li class="sidebar-main-title">
@@ -402,12 +410,12 @@
 
   /* Decrease the line height and spacing of modules inside the navbar */
   .sidebar-wrapper .sidebar-list {
-    margin-bottom: 4px !important;
+    margin-bottom: 8px !important; /* Increased slightly */
   }
   
   .sidebar-wrapper .sidebar-main .sidebar-links .sidebar-list .sidebar-link {
-    padding-top: 8px !important;
-    padding-bottom: 8px !important;
+    padding-top: 10px !important; /* Increased slightly */
+    padding-bottom: 10px !important; /* Increased slightly */
     display: flex !important;
     align-items: center !important;
   }
@@ -415,19 +423,19 @@
   .sidebar-wrapper .sidebar-main .sidebar-links .sidebar-list .sidebar-link svg {
     margin: 0 12px 0 0 !important;
     position: relative !important;
-    top: 3px !important; /* Push icon firmly down to optical center */
+    top: 2px !important; /* Optical adjustment */
   }
 
   .sidebar-wrapper .sidebar-main .sidebar-links .sidebar-list .sidebar-link span {
     margin: 0 !important;
     position: relative !important;
     top: 0px !important;
-    line-height: normal !important;
+    line-height: 1.2 !important; /* slight increase */
   }
 
   .sidebar-wrapper .sidebar-main-title {
-    padding-top: 8px !important;
-    padding-bottom: 4px !important;
+    padding-top: 12px !important;
+    padding-bottom: 8px !important;
   }
 
   /* Pulse Animation for Notification Badges */

@@ -141,6 +141,8 @@ Route::middleware(['auth'])->group(function () {
             ->name('distributor-orders.upload-invoice');
         Route::post('distributor-orders/{distributor_order}/approve', [DistributorOrderController::class, 'approveOrder'])
             ->name('distributor-orders.approve');
+        Route::post('distributor-orders/{distributor_order}/reject', [DistributorOrderController::class, 'rejectOrder'])
+            ->name('distributor-orders.reject');
         Route::post('distributor-orders/{distributor_order}/remove-invoice', [DistributorOrderController::class, 'removeInvoice'])
             ->name('distributor-orders.remove-invoice');
 
