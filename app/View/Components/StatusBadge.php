@@ -20,14 +20,11 @@ class StatusBadge extends Component
             case 'pending':
                 $badgeClass = 'badge-warning';
                 break;
-            case 'assigned_to_distributor':
+            case 'processing':
                 $badgeClass = 'badge-info';
                 break;
-            case 'assigned_to_fieldstaff':
-                $badgeClass = 'badge-info';
-                break;
-            case 'out_for_delivery':
-                $badgeClass = 'badge-secondary';
+            case 'accepted':
+                $badgeClass = 'badge-primary';
                 break;
             case 'delivered':
                 $badgeClass = 'badge-success';

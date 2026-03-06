@@ -44,6 +44,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('total-orders-over-time', [\App\Http\Controllers\Api\DistributorDashboardApiController::class, 'getTotalOrdersOverTime']);
         Route::get('orders-by-retailer', [\App\Http\Controllers\Api\DistributorDashboardApiController::class, 'getOrdersByRetailer']);
         Route::get('top-products', [\App\Http\Controllers\Api\DistributorDashboardApiController::class, 'getTopProducts']);
+        Route::get('actionable-orders-count', [\App\Http\Controllers\Api\DistributorDashboardApiController::class, 'getActionableOrdersCount']);
     });
 
     // Sales Manager Dashboard

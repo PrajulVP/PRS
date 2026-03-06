@@ -2,7 +2,7 @@
 
 @section('page-body')
     <div class="container-fluid">
-        <form id="createOrderForm" method="POST" action="{{ route('admin.retailer-orders.store') }}">
+        <form id="createOrderForm" method="POST" action="{{ route('admin.retailer.store') }}">
             @csrf
             <input type="hidden" name="status" value="pending">
 
@@ -109,8 +109,9 @@
                                                 id="previewGeneric">Generic Name</p>
                                         </div>
                                         <div class="text-end">
-                                            <span class="text-muted fw-bold small text-uppercase d-block mb-1">PTR (Per
-                                                Strip)</span>
+                                            <span class="text-muted fw-bold small text-uppercase d-block mb-1"
+                                                id="ptrLabel">PTR (Per
+                                                Unit)</span>
                                             <span class="h3 fw-bold text-success mb-0 font-outfit">₹<span
                                                     id="previewMrp">0.00</span></span>
                                         </div>
@@ -121,8 +122,8 @@
                                             <div
                                                 class="p-2 border bg-light-soft text-center dark-bg-dark border-light-dark rounded-3">
                                                 <small class="text-muted d-block fw-bold text-uppercase"
-                                                    style="font-size: 0.6rem;">GST</small>
-                                                <span id="previewGst" class="fw-bold text-dark small mb-0">-</span>
+                                                    style="font-size: 0.6rem;">Offer / Disc %</small>
+                                                <span id="previewOfferDisc" class="fw-bold text-dark small mb-0">-</span>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
@@ -170,7 +171,8 @@
                                                 class="text-uppercase small fw-bold text-muted py-3 text-center sharp-th">
                                                 Qty Builder</th>
                                             <th class="text-uppercase small fw-bold text-muted py-3 sharp-th">PTR</th>
-                                            <th class="text-uppercase small fw-bold text-muted py-3 sharp-th">Sub-Total</th>
+                                            <th class="text-uppercase small fw-bold text-muted py-3 sharp-th">Unit Price
+                                            </th>
                                             <th width="80"
                                                 class="text-center text-uppercase small fw-bold text-muted py-3 sharp-th">
                                                 Action</th>
@@ -205,10 +207,11 @@
                                 <div
                                     class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-light-dark">
                                     <div>
-                                        <span class="text-dark fw-bold d-block h5 mb-0 label-font">Net Amount</span>
-                                        <small class="text-muted">Incl. all items & taxes</small>
+                                        <span class="text-dark fw-bold d-block h5 mb-0 label-font">Total Value (PTR)</span>
+                                        <small class="text-muted"><i class="fa fa-info-circle text-warning"></i> GST & other
+                                            charges will be calculated on the invoice</small>
                                     </div>
-                                    <span id="grandTotal" class="h2 fw-bold text-primary mb-0 font-outfit">₹0.00</span>
+                                    <span id="grandTotal" class="h3 fw-bold text-primary mb-0 font-outfit">₹0.00</span>
                                 </div>
 
                                 <button type="submit"
@@ -408,17 +411,40 @@
                 $('#distributorSelect').empty().append('<option value="">Loading...</option>');
 
                 $.ajax({
-                    url: "{{ route('admin.retailer-orders.product-details', ':id') }}".replace(':id', prodId),
+                    url: "{{ route('admin.retailer.product-details', ':id') }}".replace(':id', prodId),
                     type: 'GET',
                     data: { retailer_id: retailerId },
                     success: function (res) {
                         let p = res.product;
+
+                        let pPack = p.pack ? p.pack.toLowerCase() : '';
+                        let pName = p.product_name ? p.product_name.toLowerCase() : '';
+                        let isCount = (parseInt(p.box_size) === 1 && parseInt(p.carton_size) === 1) ||
+                            pPack.includes('nos') || pPack.includes('count') ||
+                            pPack.includes('pair') || pPack.includes('bottle') ||
+                            pPack.includes('ml') || pPack.includes('gm') || pPack.includes('syp') ||
+                            pName.includes('syp') || pName.includes('syrup') || pName.includes('drop') || pName.includes('ointment');
+                        p.is_count = isCount;
                         currentProductDetails = p;
+
+                        let $unitSelect = $('#unitSelect');
+                        $unitSelect.empty();
+                        if (isCount) {
+                            $unitSelect.append('<option value="Nos">Nos</option>');
+                            $('#ptrLabel').text("PTR (Per Nos)");
+                        } else {
+                            $unitSelect.append('<option value="Strips">Strips</option>');
+                            $unitSelect.append('<option value="Box">Box</option>');
+                            $unitSelect.append('<option value="Carton">Carton</option>');
+                            $('#ptrLabel').text("PTR (Per Strip)");
+                        }
+
                         $('#previewName').text(p.product_name);
                         $('#previewMrp').text(parseFloat(p.ptr || 0).toFixed(2));
                         $('#previewGeneric').text(p.generic_name || 'Generic Name N/A');
                         $('#previewCode').text('Product Code: ' + (p.product_code || '---'));
-                        $('#previewGst').text(p.gst ? p.gst + '%' : '0%');
+                        let offerDiscText = (parseFloat(p.offer || 0) + '% / ' + parseFloat(p.discount || 0) + '%');
+                        $('#previewOfferDisc').text(offerDiscText);
                         $('#previewHsn').text(p.hsn_code || '---');
                         $('#previewBox').text((p.box_size || '1') + ' x ' + (p.carton_size || '1'));
 
@@ -461,11 +487,11 @@
                     addedItems[key] = {
                         id: prodId, distId: distId, distName: distName,
                         name: currentProductDetails.product_name,
-                        pack: currentProductDetails.pack || '-',
                         price: parseFloat(currentProductDetails.ptr),
                         qty: qty, unit: unit, multiplier: mul,
                         box_size: currentProductDetails.box_size,
-                        carton_size: currentProductDetails.carton_size
+                        carton_size: currentProductDetails.carton_size,
+                        is_count: currentProductDetails.is_count
                     };
                 }
                 renderTable(key);
@@ -488,35 +514,37 @@
                     let rowClass = (key === lastAddedKey) ? 'new-row' : '';
 
                     tbody.append(`
-                                            <tr class="${rowClass}">
-                                                <td class="ps-4 text-muted fw-bold small">${index++}</td>
-                                                <td>
-                                                    <div class="fw-bold text-dark font-outfit">${item.name}</div>
-                                                    <div class="small text-muted text-uppercase" style="font-size: 0.65rem;">System Verified</div>
-                                                    <input type="hidden" name="items[${key}][product_id]" value="${item.id}">
-                                                    <input type="hidden" name="items[${key}][distributor_id]" value="${item.distId}">
-                                                </td>
-                                                <td class="small fw-medium text-muted">${item.distName}</td>
-                                                <td class="text-center">
-                                                    <div class="input-group input-group-sm mx-auto" style="max-width: 150px;">
-                                                        <input type="number" class="form-control qty-change font-outfit" data-key="${key}" value="${item.qty}" name="items[${key}][quantity]" min="1" style="border-radius: 4px 0 0 4px;">
-                                                        <select class="form-select unit-change font-outfit bg-light-soft" data-key="${key}" name="items[${key}][unit]" style="border-radius: 0 4px 4px 0;">
-                                                            <option value="Strips" ${item.unit === 'Strips' ? 'selected' : ''}>Strips</option>
-                                                            <option value="Box" ${item.unit === 'Box' ? 'selected' : ''}>Box</option>
-                                                            <option value="Carton" ${item.unit === 'Carton' ? 'selected' : ''}>Carton</option>
-                                                        </select>
-                                                    </div>
-                                                </td>
-                                                <td class="fw-medium">₹${item.price.toFixed(2)}</td>
-                                                <td class="fw-bold text-primary font-outfit">₹${lineTotal.toFixed(2)}</td>
-                                                <td class="text-center">
-                                                    <button type="button" class="btn btn-danger btn-sm remove-btn mx-auto" 
-                                                        data-key="${key}" style="width: 50px; height: 32px;">
-                                                        X <i class="fa fa-trash-alt" style="font-size: 11px;"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        `);
+                                                                        <tr class="${rowClass}">
+                                                                            <td class="ps-4 text-muted fw-bold small">${index++}</td>
+                                                                            <td>
+                                                                                <div class="fw-bold text-dark font-outfit">${item.name}</div>
+                                                                                <div class="small text-muted text-uppercase" style="font-size: 0.65rem;">System Verified</div>
+                                                                                <input type="hidden" name="items[${key}][product_id]" value="${item.id}">
+                                                                                <input type="hidden" name="items[${key}][distributor_id]" value="${item.distId}">
+                                                                            </td>
+                                                                            <td class="small fw-medium text-muted">${item.distName}</td>
+                                                                            <td class="text-center">
+                                                                                <div class="input-group input-group-sm mx-auto" style="max-width: 150px;">
+                                                                                    <input type="number" class="form-control qty-change font-outfit" data-key="${key}" value="${item.qty}" name="items[${key}][quantity]" min="1" style="border-radius: 4px 0 0 4px;">
+                                                                                        <select class="form-select unit-change font-outfit bg-light-soft" data-key="${key}" name="items[${key}][unit]" style="border-radius: 0 4px 4px 0;">
+                                                                                            ${item.is_count ? `<option value="Nos" selected>Nos</option>` : `
+                                                                                            <option value="Carton" ${item.unit === 'Carton' ? 'selected' : ''}>Carton</option>
+                                                                                            <option value="Box" ${item.unit === 'Box' ? 'selected' : ''}>Box</option>
+                                                                                            <option value="Strips" ${item.unit === 'Strips' ? 'selected' : ''}>Strips</option>
+                                                                                            `}
+                                                                                        </select>
+                                                                                    </div>
+                                                                                </td>
+                                                                            <td class="fw-medium">₹${item.price.toFixed(2)}</td>
+                                                                            <td class="fw-bold text-primary font-outfit">₹${lineTotal.toFixed(2)}</td>
+                                                                            <td class="text-center">
+                                                                                <button type="button" class="btn btn-danger btn-sm remove-btn mx-auto" 
+                                                                                    data-key="${key}" style="width: 50px; height: 32px;">
+                                                                                    X <i class="fa fa-trash-alt" style="font-size: 11px;"></i>
+                                                                                </button>
+                                                                            </td>
+                                                                        </tr>
+                                                                    `);
                 });
 
                 if (!hasItems) tbody.append($('#emptyRow').clone().show());
@@ -557,7 +585,7 @@
                     success: function (res) {
                         if (res.success) {
                             showToast('success', 'Retail Order Placed');
-                            window.location.href = "{{ route('admin.retailer-orders.index') }}";
+                            window.location.href = "{{ route('admin.retailer.index') }}";
                         } else {
                             showToast('error', 'Update Failed');
                             btn.prop('disabled', false).html('<i class="fa fa-check-circle me-2"></i> CONFIRM ORDER');

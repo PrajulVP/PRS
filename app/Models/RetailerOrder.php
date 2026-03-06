@@ -14,6 +14,12 @@ class RetailerOrder extends Model
 
     protected $table = 'retailer_orders';
 
+    const STATUS_PENDING = 'pending';
+    const STATUS_PROCESSING = 'processing';
+    const STATUS_ACCEPTED = 'accepted';
+    const STATUS_DELIVERED = 'delivered';
+    const STATUS_CANCELLED = 'cancelled';
+
     protected $fillable = [
         'order_code',
         'distributor_id',

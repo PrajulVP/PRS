@@ -138,7 +138,7 @@ class FieldStaffController extends Controller
             $admin->notify(new \App\Notifications\UserApprovalRequired(
                 $user,
                 "New Field Staff {$user->name} has been added and requires activation.",
-                url('/field-staffs')
+                route('admin.field-staffs.index')
             ));
         }
 

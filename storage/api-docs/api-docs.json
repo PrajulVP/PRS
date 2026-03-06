@@ -387,6 +387,37 @@
                 ]
             }
         },
+        "/api/distributor/dashboard/actionable-orders-count": {
+            "get": {
+                "tags": [
+                    "Distributor Dashboard"
+                ],
+                "summary": "Get the total count of retailer orders awaiting distributor approval",
+                "operationId": "0e1046edd8bd95e7bb18b155439a1785",
+                "responses": {
+                    "200": {
+                        "description": "Total count of actionable orders",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "count": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/distributor/dashboard/top-products": {
             "get": {
                 "tags": [
@@ -678,6 +709,9 @@
                                                     },
                                                     "top_product": {
                                                         "type": "string"
+                                                    },
+                                                    "orders_needing_action": {
+                                                        "type": "integer"
                                                     }
                                                 },
                                                 "type": "object"
@@ -729,7 +763,7 @@
                     {
                         "name": "status",
                         "in": "query",
-                        "description": "Filter by order status (pending, accepted_by_fieldstaff, accepted_by_distributor, delivered, etc.)",
+                        "description": "Filter by order status (pending, processing, accepted, delivered, cancelled)",
                         "required": false,
                         "schema": {
                             "type": "string"

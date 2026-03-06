@@ -159,11 +159,11 @@ class User extends Authenticatable implements JWTSubject
             $query = \App\Models\RetailerOrder::query();
 
             if ($this->hasRole('fieldstaff') && $this->fieldStaff) {
-                $query->where('fieldstaff_id', $this->fieldStaff->id)->where('status', 'pending');
+                $query->where('fieldstaff_id', $this->fieldStaff->id)->where('status', RetailerOrder::STATUS_PENDING);
             } elseif ($this->hasRole('distributor') && $this->distributor) {
-                $query->where('distributor_id', $this->distributor->id)->where('status', 'accepted_by_fieldstaff');
+                $query->where('distributor_id', $this->distributor->id)->where('status', RetailerOrder::STATUS_PROCESSING);
             } elseif ($this->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
-                $query->whereIn('status', ['pending', 'accepted_by_fieldstaff']);
+                $query->whereIn('status', [RetailerOrder::STATUS_PENDING, RetailerOrder::STATUS_PROCESSING]);
             } else {
                 $query->whereRaw('1=0');
             }
@@ -174,9 +174,9 @@ class User extends Authenticatable implements JWTSubject
         if ($this->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
             $query = \App\Models\DistributorOrder::query();
             if ($this->hasRole('salesmanager')) {
-                $query->where('status', 'pending');
+                $query->where('status', DistributorOrder::STATUS_PENDING);
             } else {
-                $query->whereIn('status', ['pending', 'accepted_by_sales_manager']);
+                $query->whereIn('status', [DistributorOrder::STATUS_PENDING, DistributorOrder::STATUS_PROCESSING]);
             }
             $counts['distributor_approvals'] = $query->count();
         }
@@ -184,7 +184,7 @@ class User extends Authenticatable implements JWTSubject
         // 3. Retailer Orders (Orders to confirm receipt)
         if ($this->hasRole('retailer') && $this->retailer) {
             $counts['retailer_orders'] = \App\Models\RetailerOrder::where('retailer_id', $this->retailer->id)
-                ->where('status', 'accepted_by_distributor')
+                ->where('status', RetailerOrder::STATUS_ACCEPTED)
                 ->count();
         }
 

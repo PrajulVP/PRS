@@ -37,9 +37,7 @@
     }
 
     .action-buttons .btn {
-        padding: 6px 10px !important;
-        font-size: 0.75rem !important;
-        line-height: 1 !important;
+        margin: 0 !important;
     }
 </style>
 @section('page-body')
@@ -61,9 +59,10 @@
                             <select id="status_filter" class="form-select form-select-sm" style="width: 150px;">
                                 <option value="">All Statuses</option>
                                 <option value="pending">Pending</option>
-                                <option value="accepted_by_sales_manager">Approved by Manager</option>
+                                <option value="processing">Processing</option>
+                                <option value="accepted">Accepted</option>
                                 <option value="delivered">Delivered</option>
-                                <option value="rejected">Rejected</option>
+                                <option value="cancelled">Cancelled</option>
                             </select>
                         </div>
                         <div class="d-flex align-items-center">
@@ -181,10 +180,11 @@
 
     {{-- Process Order Modal for Admins --}}
     <div class="modal fade" id="processOrderModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 1000px;">
             <div class="modal-content shadow-lg border-0 overflow-hidden">
                 <div class="modal-header bg-primary text-white py-3">
-                    <h5 class="modal-title fw-bold"><i class="fa fa-file-invoice-dollar me-2"></i> Professional Order
+                    <h5 class="modal-title fw-bold text-white"><i class="fa fa-file-invoice-dollar me-2"></i> Professional
+                        Order
                         Approval & Batch Entry</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -194,7 +194,7 @@
 
                         <div class="row g-0">
                             <!-- Left Sidebar: Configuration & Scanning -->
-                            <div class="col-md-4 bg-light p-4">
+                            <div class="col-md-3 bg-light p-4">
                                 <div class="mb-4">
                                     <label class="form-label fw-bold text-uppercase small text-muted">1. Payment
                                         Setup</label>
@@ -210,34 +210,33 @@
                                     <label class="form-label fw-bold text-uppercase small text-muted">2. Smart Invoice
                                         Processing</label>
                                     <div class="ocr-dropzone p-4 text-center border-2 border-dashed rounded-3 bg-white shadow-sm"
-                                        id="ocr_dropzone" style="cursor: pointer; transition: 0.3s;">
+                                        id="ocr_dropzone" style="cursor: pointer; transition: 0.3s; position: relative;">
                                         <div id="ocr_idle_state">
                                             <i class="fa fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
-                                            <h6 class="fw-bold">Upload Warehouse Invoice</h6>
-                                            <p class="text-muted small mb-0">Drag & drop or click to scan (PDF/Image)</p>
+                                            <h6 class="fw-bold">Upload Invoice</h6>
+                                            <p class="text-muted small mb-0">Drag & drop or click</p>
                                         </div>
-                                        <div id="ocr_processing_state" class="d-none">
-                                            <div class="spinner-border text-primary mb-3" role="status"></div>
-                                            <h6 class="fw-bold" id="ocr_status_text">Reading Invoice...</h6>
-                                            <div class="progress mt-2" style="height: 10px;">
-                                                <div class="progress-bar progress-bar-striped progress-bar-animated"
-                                                    id="ocr_progress_bar" role="progressbar" style="width: 0%"></div>
-                                            </div>
+                                        <div id="ocr_processing_overlay"
+                                            class="position-absolute top-50 start-50 translate-middle w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-white rounded-3 d-none"
+                                            style="z-index: 2; opacity: 0.9;">
+                                            <div class="spinner-border text-primary mb-2" role="status"></div>
+                                            <h6 class="fw-bold mb-0 small">Processing...</h6>
                                         </div>
                                     </div>
                                     <input type="file" class="d-none" id="scan_file_input" accept=".pdf,.jpg,.jpeg,.png">
-                                    <div class="form-text mt-2"><i class="fa fa-info-circle text-info"></i> Batch &
-                                        Expiries will be auto-extracted locally.</div>
+                                    {{-- <div class="form-text mt-2"><i class="fa fa-info-circle text-info"></i> Batch &
+                                        Expiries will be auto-extracted locally. The invoice document is required.</div>
+                                    --}}
                                 </div>
 
                                 <div class="alert alert-soft-warning border-0 small shadow-sm">
-                                    <i class="fa fa-shield-alt me-1"></i> Data is processed locally in your browser for
+                                    <i class="fa fa-shield-alt me-1"></i>Data is processed locally in your browser for
                                     maximum privacy.
                                 </div>
                             </div>
 
                             <!-- Right Content: Automation Summary (Simplified) -->
-                            <div class="col-md-8 p-4 bg-white">
+                            <div class="col-md-9 p-4 bg-white">
                                 <div id="automation_idle_state" class="text-center py-5">
                                     <div class="mb-3">
                                         <i class="fa fa-robot fa-4x text-light"></i>
@@ -246,81 +245,96 @@
                                     <p class="text-muted small">Upload an invoice to automatically process batch details.
                                     </p>
                                 </div>
+                                <div id="ocr_processing_state" class="d-none text-center py-5">
+                                    <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;"
+                                        role="status"></div>
+                                    <h5 class="fw-bold text-primary" id="ocr_status_text">Reading Invoice via AI...</h5>
+                                    <p class="text-muted small">Extracting line items, taxes, and batches. Please wait.</p>
+                                    <div class="progress mt-3 mx-auto" style="height: 10px; max-width: 400px;">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                                            id="ocr_progress_bar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
 
                                 <div id="automation_success_state" class="d-none">
-                                    <div
-                                        class="d-flex align-items-center mb-3 p-3 bg-soft-success rounded-3 border-start border-4 border-success">
-                                        <i class="fa fa-check-circle fa-2x text-success me-3"></i>
-                                        <div>
-                                            <h6 class="fw-bold mb-0 text-success">AI Processed Successfully!</h6>
-                                            <p class="small text-muted mb-0" id="processed_summary_text">0 items identified
-                                                and auto-filled.</p>
-                                        </div>
-                                    </div>
-
                                     <!-- Extracted Metadata Section -->
                                     <h6 class="fw-bold text-uppercase small text-muted mb-2"><i
-                                            class="fa fa-file-invoice me-1"></i> Match Invoice Details</h6>
+                                            class="fa fa-file-invoice me-1"></i> Invoice Details</h6>
 
                                     <div class="row g-2 mb-3" id="extracted_metadata_section" style="display: none;">
-                                        <!-- Expected (System) Data -->
-                                        <div class="col-md-6 border-end pe-3">
-                                            <div class="badge bg-primary mb-2 w-100 text-start py-2">Expected (From System)
+                                        <div class="col-12">
+                                            <div class="bg-light p-3 rounded-3 border">
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-2 mb-md-0">
+                                                        <div class="text-muted small">GSTIN (Extracted)</div>
+                                                        <div class="fw-bold text-dark" id="extract_gstin">--</div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-2 mb-md-0">
+                                                        <div class="text-muted small">Drug License No.</div>
+                                                        <div class="fw-bold text-dark" id="extract_dl">--</div>
+                                                    </div>
+                                                    <div class="col-md-6 mt-md-2">
+                                                        <div class="text-muted small">Invoice Date</div>
+                                                        <div class="fw-bold text-dark" id="extract_date">--</div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <table class="table table-sm table-borderless small mb-0">
-                                                <tr>
-                                                    <td class="text-muted" width="40%">Order ID</td>
-                                                    <td class="fw-bold" id="expected_order_id">--</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-muted">Placed Date</td>
-                                                    <td class="fw-bold" id="expected_date">--</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-muted">GSTIN</td>
-                                                    <td class="fw-bold text-wrap" id="expected_gstin"
-                                                        style="font-size: 0.8rem;">--</td>
-                                                </tr>
-                                            </table>
-                                        </div>
-
-                                        <!-- Extracted (AI) Data -->
-                                        <div class="col-md-6 ps-3">
-                                            <div class="badge bg-success mb-2 w-100 text-start py-2">Extracted (From
-                                                Invoice)</div>
-                                            <table class="table table-sm table-borderless small mb-0">
-                                                <tr>
-                                                    <td class="text-muted" width="40%">Found ID</td>
-                                                    <td class="fw-bold text-success" id="extract_order_id">--</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-muted">Found Date</td>
-                                                    <td class="fw-bold text-success" id="extract_date">--</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-muted">Found GSTIN</td>
-                                                    <td class="fw-bold text-primary text-wrap" id="extract_gstin"
-                                                        style="font-size: 0.8rem;">--</td>
-                                                </tr>
-                                            </table>
                                         </div>
                                     </div>
 
                                     <h6 class="fw-bold text-uppercase small text-muted mb-3"><i
                                             class="fa fa-search me-1"></i> Verify Extracted Details</h6>
-                                    <div class="table-responsive rounded border shadow-sm mb-3" style="max-height: 400px;">
+                                    <div class="table-responsive rounded border shadow-sm mb-3">
                                         <table class="table table-hover align-middle mb-0">
                                             <thead class="bg-light sticky-top">
-                                                <tr class="small text-uppercase fw-bold">
+                                                <tr class="small text-uppercase fw-bold text-nowrap">
                                                     <th class="ps-3 py-1">Product</th>
                                                     <th class="py-1">Batch</th>
                                                     <th class="py-1">Exp</th>
                                                     <th class="py-1 text-center pe-3">Qty</th>
+                                                    <th class="py-1 text-end pe-3">Taxable</th>
+                                                    <th class="py-1 text-end pe-3">CGST</th>
+                                                    <th class="py-1 text-end pe-3">SGST</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="verification_table_body">
                                                 <!-- Dynamic Rows after scan -->
                                             </tbody>
+                                            <tfoot id="verification_table_footer" class="bg-light border-top d-none">
+                                                <tr>
+                                                    <td colspan="6" class="text-end fw-bold text-muted small py-1">Total
+                                                        Taxable:</td>
+                                                    <td class="text-end fw-bold text-dark py-1 pe-3" id="tfoot_taxable">--
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="6" class="text-end fw-bold text-muted small py-1 border-0">
+                                                        Total CGST:</td>
+                                                    <td class="text-end fw-bold text-dark py-1 pe-3 border-0"
+                                                        id="tfoot_cgst">--
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="6" class="text-end fw-bold text-muted small py-1 border-0">
+                                                        Total SGST:</td>
+                                                    <td class="text-end fw-bold text-dark py-1 pe-3 border-0"
+                                                        id="tfoot_sgst">--
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="6" class="text-end fw-bold text-muted small py-1 border-0">
+                                                        Total IGST:</td>
+                                                    <td class="text-end fw-bold text-dark py-1 pe-3 border-0"
+                                                        id="tfoot_igst">--
+                                                    </td>
+                                                </tr>
+                                                <tr class="table-active">
+                                                    <td colspan="6" class="text-end fw-bold text-dark py-2">Net Invoice
+                                                        Amount:</td>
+                                                    <td class="text-end fw-bold text-success py-2 pe-3" id="tfoot_net"
+                                                        style="font-size: 1.1rem;">--</td>
+                                                </tr>
+                                            </tfoot>
                                         </table>
                                     </div>
                                     <div class="alert alert-info py-2 small mb-0">
@@ -553,7 +567,7 @@
                     });
                 },
                 ajax: {
-                    url: window.location.href,
+                    url: "{{ route('admin.approvals.distributor') }}",
                     data: function (d) {
                         d.status = $('#status_filter').val();
                         d.payment_status = $('#payment_status_filter').val();
@@ -574,12 +588,14 @@
                             let displayStatus = row.status;
 
                             if (statusRaw.includes('pending')) bgClass = 'bg-warning text-dark';
-                            else if (statusRaw.includes('accepted')) {
+                            else if (statusRaw === 'processing') {
+                                bgClass = 'bg-info';
+                                displayStatus = 'Processing';
+                            } else if (statusRaw === 'accepted') {
                                 bgClass = 'bg-primary';
-                                displayStatus = 'Accepted By Manager';
-                            } else if (statusRaw.includes('rejected')) bgClass = 'bg-danger';
-                            else if (statusRaw.includes('delivered')) bgClass = 'bg-success';
-                            else if (statusRaw.includes('cancelled')) bgClass = 'bg-dark';
+                                displayStatus = 'Accepted';
+                            } else if (statusRaw.includes('delivered')) bgClass = 'bg-success';
+                            else if (statusRaw.includes('cancelled')) bgClass = 'bg-danger';
 
                             return `<span class="badge ${bgClass}" style="font-size: 0.85rem;">${displayStatus}</span>`;
                         }
@@ -613,24 +629,17 @@
                                 let ext = row.invoice_url.split('.').pop().toLowerCase();
                                 let icon = ext === 'pdf' ? 'fa-file-pdf-o' : 'fa-file-image-o';
                                 let html = `<div class="d-flex align-items-center gap-2">`;
-                                html += `<a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-info text-white" style="width: 40px; padding: 6px 0; text-align: center;" title="View"><i class="fa ${icon}"></i></a>`;
-                                html += `<button class="btn btn-sm btn-warning upload-invoice-btn" style="width: 40px; padding: 6px 0;" data-id="${row.id}" title="Re-upload"><i class="fa fa-refresh"></i></button>`;
-                                html += `<button class="btn btn-sm btn-danger remove-invoice-btn" style="width: 40px; padding: 6px 0;" data-id="${row.id}" title="Remove"><i class="fa fa-trash"></i></button>`;
+                                html += `<a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-info text-white" title="View Invoice"><i class="fa ${icon}"></i> View</a>`;
                                 html += `</div>`;
                                 return html;
                             }
 
-                            let canUpload = false;
                             let statusCheck = row.raw_status || (row.status ? row.status.toLowerCase().replace(/ /g, '_') : '');
 
                             if (statusCheck === 'delivered' || statusCheck.includes('delivered') || statusCheck.includes('approved') || statusCheck.includes('accepted')) {
-                                canUpload = true;
+                                return `<span class="text-muted small">No Invoice</span>`;
                             }
-
-                            if (canUpload) {
-                                return `<button class="btn btn-sm btn-primary upload-invoice-btn" data-id="${row.id}" title="Upload Invoice"><i class="fa fa-upload"></i> Upload</button>`;
-                            }
-                            return '<span class="text-muted small">Wait for Approval</span>';
+                            return `<span class="text-muted small">Pending Approval</span>`;
                         }
                     },
                     {
@@ -644,19 +653,16 @@
                             // View Details
                             btns += `<button class="btn btn-info btn-sm view-details-btn" data-row="${rowData}" title="View Details"><i class="fa fa-eye"></i></button>`;
                             // System Invoice
-                            btns += `<a href="${invoiceUrl}" target="_blank" class="btn btn-dark btn-sm" style="padding: 8px 12px !important;" title="System Invoice"><i class="fa fa-print"></i></a>`;
+                            btns += `<a href="${invoiceUrl}" target="_blank" class="btn btn-dark btn-sm" title="System Invoice"><i class="fa fa-print"></i></a>`;
 
                             // Sales Manager Actions
                             if (isSalesManager && row.status.toLowerCase().includes('pending')) {
                                 btns += `<button class="btn btn-success btn-sm approve-order-btn" data-id="${row.id}" title="Approve"><i class="fa fa-check"></i></button>`;
-                                btns += `<button class="btn btn-danger btn-sm reject-order-btn" data-id="${row.id}" title="Reject"><i class="fa fa-times"></i></button>`;
                             }
 
                             // Admin Actions
-                            // Console log for debugging
-                            if (isAdmin && (row.raw_status === 'accepted_by_sales_manager' || (row.status && row.status.toLowerCase().replace(/ /g, '_').includes('accepted')))) {
+                            if (isAdmin && (row.raw_status === 'processing' || (row.status && row.status.toLowerCase().includes('processing')))) {
                                 btns += `<button class="btn btn-success btn-sm accept-admin-btn" data-id="${row.id}" title="Process Order"><i class="fa fa-check"></i></button>`;
-                                btns += `<button class="btn btn-danger btn-sm reject-order-btn" data-id="${row.id}" title="Reject"><i class="fa fa-times"></i></button>`;
                             }
 
                             btns += `</div>`;
@@ -670,33 +676,6 @@
             $('#payment_status_filter').change(function () { table.ajax.reload(); });
 
             // Status Update Logic
-            // Reject Order Logic
-            $(document).on('click', '.reject-order-btn', function () {
-                let id = $(this).data('id');
-                Swal.fire({
-                    title: 'Reject Order?',
-                    text: "Please provide a reason for rejection:",
-                    input: 'text',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Reject',
-                    confirmButtonColor: '#d33',
-                    preConfirm: (reason) => {
-                        if (!reason) Swal.showValidationMessage('Reason is required');
-                        return reason;
-                    }
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        let url = "{{ route('admin.distributor-orders.update-status', ':id') }}".replace(':id', id);
-                        $.post(url, { _token: '{{ csrf_token() }}', status: 'rejected', reason: result.value }, function (res) {
-                            if (res.success) {
-                                table.ajax.reload(null, false);
-                                showToast('success', 'Order rejected successfully');
-                            } else showToast('error', res.error || 'Failed');
-                        }).fail(() => showToast('error', 'Request failed'));
-                    }
-                });
-            });
 
             // Approve Form Submit
             $('#approveOrderForm').submit(function (e) {
@@ -870,6 +849,7 @@
                 $('#expected_order_id').text(row.order_code || '--');
                 $('#expected_date').text(row.placed_at ? row.placed_at.split(' ')[0] : '--');
                 $('#expected_gstin').text(row.distributor_gst || '--');
+                $('#verification_table_footer').addClass('d-none');
 
                 let tbody = $('#batch_entry_body');
                 let vbody = $('#verification_table_body');
@@ -879,41 +859,77 @@
                 if (row && row.items) {
                     row.items.forEach(item => {
                         let rowHtml = `
-                                                                                                        <tr data-item-id="${item.order_item_id}">
-                                                                                                            <td class="d-none">
-                                                                                                                <div class="fw-bold product-name-marker">${item.product_name}</div>
-                                                                                                                <input type="number" name="batches[${item.order_item_id}][0][quantity]" value="${item.quantity}">
-                                                                                                            </td>
-                                                                                                            <td class="d-none" id="batches_for_${item.order_item_id}">
-                                                                                                                <input type="text" name="batches[${item.order_item_id}][0][batch_no]" class="hidden-batch-val" required>
-                                                                                                                <input type="date" name="batches[${item.order_item_id}][0][expiry_date]" class="hidden-expiry-val" required>
-                                                                                                            </td>
-                                                                                                        </tr>
-                                                                                                    `;
+                                                                                                                                                                                                                <tr data-item-id="${item.order_item_id}">
+                                                                                                                                                                                                                    <td class="d-none">
+                                                                                                                                                                                                                        <div class="fw-bold product-name-marker">${item.product_name}</div>
+                                                                                                                                                                                                                        <input type="number" name="batches[${item.order_item_id}][0][quantity]" value="${item.quantity}">
+                                                                                                                                                                                                                    </td>
+                                                                                                                                                                                                                    <td class="d-none" id="batches_for_${item.order_item_id}">
+                                                                                                                                                                                                                        <input type="text" name="batches[${item.order_item_id}][0][batch_no]" class="hidden-batch-val" required>
+                                                                                                                                                                                                                        <input type="date" name="batches[${item.order_item_id}][0][expiry_date]" class="hidden-expiry-val" required>
+
+                                                                                                                                                                                                                        <input type="hidden" name="batches[${item.order_item_id}][0][mrp]" class="hidden-mrp-val">
+                                                                                                                                                                                                                        <input type="hidden" name="batches[${item.order_item_id}][0][ptr]" class="hidden-ptr-val">
+                                                                                                                                                                                                                        <input type="hidden" name="batches[${item.order_item_id}][0][pts]" class="hidden-pts-val">
+                                                                                                                                                                                                                        <input type="hidden" name="batches[${item.order_item_id}][0][taxable_value]" class="hidden-taxable-val">
+                                                                                                                                                                                                                        <input type="hidden" name="batches[${item.order_item_id}][0][cgst]" class="hidden-cgst-val">
+                                                                                                                                                                                                                        <input type="hidden" name="batches[${item.order_item_id}][0][sgst]" class="hidden-sgst-val">
+                                                                                                                                                                                                                        <input type="hidden" name="batches[${item.order_item_id}][0][igst]" class="hidden-igst-val">
+                                                                                                                                                                                                                        <input type="hidden" name="batches[${item.order_item_id}][0][net_amount]" class="hidden-net-val">
+                                                                                                                                                                                                                    </td>
+                                                                                                                                                                                                                </tr>
+                                                                                                                                                                                                            `;
                         tbody.append(rowHtml);
 
                         let vRowHtml = `
-                                                                                                        <tr id="v_row_${item.order_item_id}">
-                                                                                                            <td class="ps-3 py-2">
-                                                                                                                <div class="fw-bold text-dark small">${item.product_name}</div>
-                                                                                                            </td>
-                                                                                                            <td class="py-1">
-                                                                                                                <input type="text" class="form-control form-control-sm v-batch-input border-0 bg-light" 
-                                                                                                                       data-id="${item.order_item_id}" placeholder="Wait for AI...">
-                                                                                                            </td>
-                                                                                                            <td class="py-1">
-                                                                                                                <input type="date" class="form-control form-control-sm v-expiry-input border-0 bg-light" 
-                                                                                                                       data-id="${item.order_item_id}">
-                                                                                                            </td>
-                                                                                                            <td class="text-center pe-3 fw-bold text-primary">${item.quantity} ${item.unit || ''}</td>
-                                                                                                        </tr>
-                                                                                                    `;
+                                                                                                                                                                                                                <tr id="v_row_${item.order_item_id}">
+                                                                                                                                                                                                                    <td class="ps-3 py-2">
+                                                                                                                                                                                                                        <div class="fw-bold text-dark small">${item.product_name}</div>
+                                                                                                                                                                                                                    </td>
+                                                                                                                                                                                                                    <td class="py-1">
+                                                                                                                                                                                                                        <input type="text" class="form-control form-control-sm v-batch-input border-0 bg-light" 
+                                                                                                                                                                                                                               data-id="${item.order_item_id}" placeholder="Wait for AI...">
+                                                                                                                                                                                                                    </td>
+                                                                                                                                                                                                                    <td class="py-1">
+                                                                                                                                                                                                                        <input type="text" class="form-control form-control-sm v-expiry-input border-0 bg-light" 
+                                                                                                                                                                                                                               data-id="${item.order_item_id}" placeholder="MM/YY">
+                                                                                                                                                                                                                    </td>
+                                                                                                                                                                                                                    <td class="text-center pe-3 fw-bold text-primary v-qty-display" data-original-unit="${item.unit || ''}">${item.quantity} ${item.unit || ''}</td>
+                                                                                                                                                                                                                    <td class="text-end pe-3 small text-dark fw-bold v-taxable-display">--</td>
+                                                                                                                                                                                                                    <td class="text-end pe-3 small text-muted v-cgst-display">--</td>
+                                                                                                                                                                                                                    <td class="text-end pe-3 small text-muted v-sgst-display">--</td>
+                                                                                                                                                                                                                </tr>
+                                                                                                                                                                                                            `;
                         vbody.append(vRowHtml);
                     });
                 }
 
                 $('#processOrderModal').modal('show');
             });
+
+            function parseExpiryToDate(expStr) {
+                if (!expStr) return '';
+                expStr = expStr.trim();
+                if (/^\d{4}-\d{2}-\d{2}$/.test(expStr)) return expStr;
+
+                let match = expStr.match(/\b(\d{1,2})[\/\-\.](\d{2,4})\b/);
+                if (!match) {
+                    let d = new Date(expStr);
+                    if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+                    return '';
+                }
+
+                let month = parseInt(match[1]);
+                if (month < 1 || month > 12) return '';
+
+                let year = match[2];
+                if (year.length === 2) {
+                    year = '20' + year;
+                }
+
+                let lastDay = new Date(year, month, 0).getDate();
+                return `${year}-${month.toString().padStart(2, '0')}-${lastDay.toString().padStart(2, '0')}`;
+            }
 
             // Sync Verification Edits to Hidden Inputs
             $(document).on('input', '.v-batch-input', function () {
@@ -922,7 +938,9 @@
             });
             $(document).on('change', '.v-expiry-input', function () {
                 const id = $(this).data('id');
-                $(`#batches_for_${id} .hidden-expiry-val`).val($(this).val());
+                let displayVal = $(this).val();
+                let parsedDate = parseExpiryToDate(displayVal);
+                $(`#batches_for_${id} .hidden-expiry-val`).val(parsedDate || displayVal);
             });
 
             // OCR Dropzone Click
@@ -936,124 +954,81 @@
                 if (!file) return;
 
                 // Switch UI to processing
-                $('#ocr_idle_state').addClass('d-none');
+                // $('#ocr_idle_state').addClass('d-none'); // Keep it visible
+                $('#ocr_processing_overlay').removeClass('d-none');
                 $('#ocr_processing_state').removeClass('d-none');
-                $('#automation_idle_state').removeClass('d-none');
+                $('#automation_idle_state').addClass('d-none');
                 $('#automation_success_state').addClass('d-none');
                 $('#automation_error_state').addClass('d-none');
 
-                $('#ocr_progress_bar').css('width', '0%');
-                $('#ocr_status_text').text('Preparing file...');
+                $('#ocr_progress_bar').css('width', '50%');
+                $('#ocr_status_text').text('AI is analyzing your invoice...');
 
-                try {
-                    let imageSource;
-                    const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+                let formData = new FormData();
+                formData.append('invoice', file);
+                formData.append('_token', '{{ csrf_token() }}');
 
-                    if (isPDF) {
-                        // Convert PDF first page to canvas image
-                        $('#ocr_status_text').text('Converting PDF to image...');
-                        const arrayBuffer = await file.arrayBuffer();
-                        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                        const page = await pdf.getPage(1);
-                        const scale = 2.0; // High resolution for better OCR
-                        const viewport = page.getViewport({ scale: scale });
+                $.ajax({
+                    url: "{{ route('ocr.process') }}",
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (res) {
+                        $('#ocr_progress_bar').css('width', '100%');
+                        setTimeout(() => {
+                            $('#ocr_processing_overlay').addClass('d-none');
+                            $('#ocr_processing_state').addClass('d-none');
+                            // No need to remove d-none from ocr_idle_state as it was never added
+                        }, 500);
 
-                        const canvas = document.createElement('canvas');
-                        canvas.width = viewport.width;
-                        canvas.height = viewport.height;
-                        const ctx = canvas.getContext('2d');
+                        if (res.success && res.data) {
+                            let identifiedCount = parseAndFillOCRResponse(res.data);
 
-                        await page.render({ canvasContext: ctx, viewport: viewport }).promise;
-                        imageSource = canvas.toDataURL('image/png');
-                    } else {
-                        // Convert image file to data URL for reliable reading
-                        imageSource = await new Promise((resolve, reject) => {
-                            const reader = new FileReader();
-                            reader.onload = () => resolve(reader.result);
-                            reader.onerror = () => reject(new Error('Failed to read image file'));
-                            reader.readAsDataURL(file);
-                        });
-                    }
-
-                    $('#ocr_status_text').text('Initializing OCR Engine...');
-
-                    const worker = await Tesseract.createWorker('eng', 1, {
-                        logger: m => {
-                            if (m.status === 'recognizing text') {
-                                let progress = Math.round(m.progress * 100);
-                                $('#ocr_progress_bar').css('width', progress + '%');
-                                $('#ocr_status_text').text(`AI Scanning: ${progress}%`);
+                            if (identifiedCount > 0) {
+                                $('#automation_idle_state').addClass('d-none');
+                                $('#automation_error_state').addClass('d-none');
+                                $('#automation_success_state').removeClass('d-none');
+                                $('#extracted_metadata_section').show();
+                                $('#processed_summary_text').text(`${identifiedCount} items auto-filled from Invoice.`);
+                                $('#btn_approve_order').prop('disabled', false);
+                            } else {
+                                $('#automation_idle_state').addClass('d-none');
+                                $('#automation_success_state').addClass('d-none');
+                                $('#automation_error_state').removeClass('d-none');
+                                $('#extracted_metadata_section').hide();
+                                $('#btn_approve_order').prop('disabled', true);
+                                showToast('warning', 'Mismatched Invoice: No products identified.');
                             }
+                        } else {
+                            showToast('error', 'OCR Failed: Invalid response from server.');
                         }
-                    });
-
-                    const { data: { text } } = await worker.recognize(imageSource);
-                    await worker.terminate();
-
-                    console.log('OCR Extracted Text:', text);
-                    const identifiedCount = parseAndFillOCR(text);
-
-                    // Switch to appropriate state
-                    $('#ocr_idle_state').removeClass('d-none');
-                    $('#ocr_processing_state').addClass('d-none');
-
-                    if (identifiedCount > 0) {
-                        $('#automation_idle_state').addClass('d-none');
-                        $('#automation_error_state').addClass('d-none');
-                        $('#automation_success_state').removeClass('d-none');
-                        $('#extracted_metadata_section').show(); // Show Metadata
-                        $('#processed_summary_text').text(`${identifiedCount} items identified and auto-filled.`);
-                        $('#btn_approve_order').prop('disabled', false);
-                        // showToast('success', 'Invoice scanned! Batch details auto-populated.');
-                    } else {
-                        $('#automation_idle_state').addClass('d-none');
-                        $('#automation_success_state').addClass('d-none');
-                        $('#automation_error_state').removeClass('d-none');
-                        $('#extracted_metadata_section').hide(); // Hide if error
-                        $('#btn_approve_order').prop('disabled', true);
-                        showToast('warning', 'Mismatched Invoice: No products identified.');
+                    },
+                    error: function (xhr) {
+                        console.error('OCR Error:', xhr);
+                        let errMsg = xhr.responseJSON ? xhr.responseJSON.message : 'Unknown error during OCR processing';
+                        showToast('error', 'OCR Failed: ' + errMsg);
+                        $('#ocr_processing_overlay').addClass('d-none');
+                        $('#ocr_processing_state').addClass('d-none');
+                        $('#ocr_progress_bar').css('width', '0%');
+                        $('#ocr_status_text').text('');
                     }
-                } catch (error) {
-                    console.error('OCR Error:', error);
-                    let errMsg = (error && error.message) ? error.message : (typeof error === 'string' ? error : 'Unknown error during OCR processing');
-                    showToast('error', 'OCR Failed: ' + errMsg);
-                    $('#ocr_idle_state').removeClass('d-none');
-                    $('#ocr_processing_state').addClass('d-none');
-                }
+                });
             });
 
-            function parseAndFillOCR(text) {
-                const lines = text.split('\n');
+            function parseAndFillOCRResponse(data) {
                 let identifiedCount = 0;
 
                 // Extract Overall Metadata
-                let orderId = '--';
-                let invoiceDate = '--';
-                let gstin = '--';
+                $('#extract_date').text(data.invoice_metadata ? data.invoice_metadata.date : '--');
+                $('#extract_gstin').text(data.invoice_metadata ? data.invoice_metadata.gstin : '--');
+                $('#extract_dl').text(data.invoice_metadata && data.invoice_metadata.drug_license ? data.invoice_metadata.drug_license : '--');
 
-                const metaDateRegex = /(?:date|dt|dated)[\s:]*(\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}|\d{2,4}[-/.]\d{1,2}[-/.]\d{1,2})/i;
-                const metaOrderRegex = /(?:order\s*id|order\s*code|order\s*no|po\s*no|inv\s*no|invoice\s*no)[\s:]*([A-Za-z0-9-/]+)/i;
-                const metaGstinRegex = /(?:gstin|gst\s*no|gst)[\s:]*([0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z0-9A-Z]{1}[0-9A-Z]{1})/i;
-
-                for (let i = 0; i < Math.min(30, lines.length); i++) { // Check first 30 lines for headers
-                    const lineText = lines[i].trim();
-                    if (orderId === '--') {
-                        const oMatch = lineText.match(metaOrderRegex);
-                        if (oMatch) orderId = oMatch[1];
-                    }
-                    if (invoiceDate === '--') {
-                        const dMatch = lineText.match(metaDateRegex);
-                        if (dMatch) invoiceDate = dMatch[1].replace(/[./]/g, '-');
-                    }
-                    if (gstin === '--') {
-                        const gMatch = lineText.match(metaGstinRegex);
-                        if (gMatch) gstin = gMatch[1];
-                    }
-                }
-
-                $('#extract_order_id').text(orderId);
-                $('#extract_date').text(invoiceDate);
-                $('#extract_gstin').text(gstin);
+                let totalTaxable = 0;
+                let totalCgst = 0;
+                let totalSgst = 0;
+                let totalIgst = 0;
+                let totalNet = 0;
 
                 const items = [];
                 $('#batch_entry_body tr').each(function () {
@@ -1063,80 +1038,100 @@
                     });
                 });
 
+                let missingProducts = [];
+                let invoiceProducts = data.line_items || [];
+
                 items.forEach(item => {
-                    let productLineIndex = -1;
-                    lines.forEach((line, idx) => {
-                        if (line.toLowerCase().includes(item.name.substring(0, 5))) {
-                            productLineIndex = idx;
+                    // Try to find the item in the JSON response
+                    let matchedInvoiceItem = invoiceProducts.find(p => p.description && p.description.toLowerCase().includes(item.name.substring(0, 5)));
+
+                    if (matchedInvoiceItem) {
+                        identifiedCount++;
+                        if (matchedInvoiceItem.batch) {
+                            $(`#v_row_${item.id} .v-batch-input`).val(matchedInvoiceItem.batch);
+                            $(`#batches_for_${item.id} .hidden-batch-val`).val(matchedInvoiceItem.batch);
                         }
-                    });
+                        if (matchedInvoiceItem.expiry) {
+                            let rawExpiry = matchedInvoiceItem.expiry;
+                            let parsedExp = parseExpiryToDate(rawExpiry);
 
-                    if (productLineIndex !== -1) {
-                        let foundBatch = '';
-                        let foundExpiry = '';
+                            // Extract just the MM/YY if there's noise (e.g., "61 1/31" -> "1/31")
+                            let cleanDisplay = rawExpiry;
+                            let match = rawExpiry.match(/\b(\d{1,2}[\/\-\.]\d{2,4})\b/);
+                            if (match) cleanDisplay = match[1];
 
-                        // Primary check: explicitly labeled batches
-                        const batchRegex = /(?:batch|b\.?no\.?|lot|bno|btch)\s*[:=-]?\s*([A-Za-z0-9-]+)/i;
-                        // Secondary check: standalone uppercase alphanumeric (often used for batches without labels, like CP2026X)
-                        const fallbackBatchRegex = /^[A-Z0-9-]{4,15}$/;
-                        const dateRegex = /(\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})|(\d{1,2}[-/.]\d{2,4})/;
+                            $(`#v_row_${item.id} .v-expiry-input`).val(cleanDisplay);
+                            $(`#batches_for_${item.id} .hidden-expiry-val`).val(parsedExp || cleanDisplay);
+                        }
+                        // Extracting quantities 
+                        let billedQty = parseInt(matchedInvoiceItem.qty) || 0;
+                        let freeQty = parseInt(matchedInvoiceItem.free) || 0;
 
-                        for (let i = productLineIndex; i < Math.min(productLineIndex + 5, lines.length); i++) {
-                            const lineText = lines[i].trim();
-
-                            // Try primary batch regex
-                            const bMatch = lineText.match(batchRegex);
-                            if (bMatch && !foundBatch) {
-                                foundBatch = bMatch[1];
-                            }
-
-                            // Try date regex
-                            const dMatch = lineText.match(dateRegex);
-                            if (dMatch && !foundExpiry) {
-                                let dateStr = dMatch[0].replace(/[./]/g, '-');
-                                let parts = dateStr.split('-');
-                                if (parts.length === 2) {
-                                    // Treat as MM-YYYY or MM-YY, pad with 01 for day
-                                    parts = ['01', parts[0], parts[1]];
-                                }
-                                if (parts.length === 3) {
-                                    if (parts[2].length === 2) parts[2] = '20' + parts[2];
-                                    parts[0] = parts[0].padStart(2, '0');
-                                    parts[1] = parts[1].padStart(2, '0');
-                                    if (parts[2].length === 4) {
-                                        foundExpiry = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                                    }
-                                }
-                            }
-
-                            // If standard batch not found, look at tokens in the line for a generic fallback batch
-                            // Invoices like "CP2026X 12/2028 10 8.63"
-                            if (!foundBatch) {
-                                const tokens = lineText.split(/\s+/);
-                                for (let token of tokens) {
-                                    // Skip tokens that look like dates or simple numbers/prices
-                                    if (!token.match(dateRegex) && !token.match(/^\d+(\.\d+)?$/) && token.match(fallbackBatchRegex)) {
-                                        foundBatch = token;
-                                        break;
-                                    }
-                                }
-                            }
+                        if (billedQty > 0) {
+                            $(`input[name="batches[${item.id}][0][quantity]"]`).val(billedQty);
+                            let unitStr = $(`#v_row_${item.id} .v-qty-display`).data('original-unit') || '';
+                            let displayHtml = `${billedQty} ${unitStr}`;
+                            if (freeQty > 0) displayHtml += ` <small class="text-success ms-1">(+${freeQty} Free)</small>`;
+                            $(`#v_row_${item.id} .v-qty-display`).html(displayHtml);
                         }
 
-                        if (foundBatch || foundExpiry) {
-                            identifiedCount++;
-                            if (foundBatch) {
-                                let bVal = foundBatch.toUpperCase();
-                                $(`#v_row_${item.id} .v-batch-input`).val(bVal);
-                                $(`#batches_for_${item.id} .hidden-batch-val`).val(bVal);
-                            }
-                            if (foundExpiry) {
-                                $(`#v_row_${item.id} .v-expiry-input`).val(foundExpiry);
-                                $(`#batches_for_${item.id} .hidden-expiry-val`).val(foundExpiry);
-                            }
-                        }
+                        // Extracting pricing & tax details
+                        $(`#batches_for_${item.id} .hidden-mrp-val`).val(matchedInvoiceItem.mrp || 0);
+                        $(`#batches_for_${item.id} .hidden-ptr-val`).val(matchedInvoiceItem.ptr || 0);
+                        $(`#batches_for_${item.id} .hidden-pts-val`).val(matchedInvoiceItem.pts || 0);
+                        $(`#batches_for_${item.id} .hidden-taxable-val`).val(matchedInvoiceItem.taxable_amt || 0);
+                        $(`#batches_for_${item.id} .hidden-cgst-val`).val(matchedInvoiceItem.cgst || 0);
+                        $(`#batches_for_${item.id} .hidden-sgst-val`).val(matchedInvoiceItem.sgst || 0);
+                        $(`#batches_for_${item.id} .hidden-igst-val`).val(matchedInvoiceItem.igst || 0);
+
+                        let itemTaxable = parseFloat(matchedInvoiceItem.taxable_amt || 0);
+                        let itemCgst = parseFloat(matchedInvoiceItem.cgst || 0);
+                        let itemSgst = parseFloat(matchedInvoiceItem.sgst || 0);
+                        let itemIgst = parseFloat(matchedInvoiceItem.igst || 0);
+
+                        $(`#v_row_${item.id} .v-taxable-display`).text(itemTaxable > 0 ? itemTaxable.toFixed(2) : '--');
+                        $(`#v_row_${item.id} .v-cgst-display`).text(itemCgst > 0 ? itemCgst.toFixed(2) : '--');
+                        $(`#v_row_${item.id} .v-sgst-display`).text(itemSgst > 0 ? itemSgst.toFixed(2) : '--');
+
+                        let netAmt = itemTaxable + itemCgst + itemSgst + itemIgst;
+                        $(`#batches_for_${item.id} .hidden-net-val`).val(netAmt.toFixed(2));
+
+                        totalTaxable += itemTaxable;
+                        totalCgst += itemCgst;
+                        totalSgst += itemSgst;
+                        totalIgst += itemIgst;
+                        totalNet += netAmt;
+                    } else {
+                        missingProducts.push(item.name);
                     }
                 });
+
+                if (identifiedCount > 0) {
+                    $('#tfoot_taxable').text(totalTaxable.toFixed(2));
+                    $('#tfoot_cgst').text(totalCgst.toFixed(2));
+                    $('#tfoot_sgst').text(totalSgst.toFixed(2));
+                    $('#tfoot_igst').text(totalIgst.toFixed(2));
+                    // If OCR provided an exact total, prefer that, else sum of parts
+                    let ocrTotalStr = data.invoice_metadata ? data.invoice_metadata.total_amount : '';
+                    let ocrTotal = parseFloat(ocrTotalStr);
+                    if (!isNaN(ocrTotal) && ocrTotal > 0) {
+                        $('#tfoot_net').text(ocrTotal.toFixed(2));
+                    } else {
+                        $('#tfoot_net').text(totalNet.toFixed(2));
+                    }
+                    $('#verification_table_footer').removeClass('d-none');
+                }
+
+                if (missingProducts.length > 0) {
+                    let missingList = missingProducts.map(p => `<li>${p.charAt(0).toUpperCase() + p.slice(1)}</li>`).join('');
+                    Swal.fire({
+                        title: 'Missing Products!',
+                        html: `<p>The AI could not find the following ordered products in the invoice:</p><ul class="text-start text-danger">${missingList}</ul><p>Please review the invoice manually.</p>`,
+                        icon: 'warning',
+                        confirmButtonText: 'I understand'
+                    });
+                }
+
                 return identifiedCount;
             }
 
@@ -1146,11 +1141,14 @@
                 let formData = new FormData(this);
                 formData.append('_token', '{{ csrf_token() }}');
 
-                // Append the scanned invoice file if it exists
+                // Append the scanned invoice file if it exists, otherwise block submission
                 let scanFileInput = document.getElementById('scan_file_input');
-                if (scanFileInput.files && scanFileInput.files.length > 0) {
-                    formData.append('invoice', scanFileInput.files[0]);
+                if (!scanFileInput.files || scanFileInput.files.length === 0) {
+                    showToast('error', 'Invoice document is strictly required for approval.');
+                    return;
                 }
+
+                formData.append('invoice', scanFileInput.files[0]);
 
                 let id = $('#process_order_id').val();
                 let url = "{{ route('admin.distributor-orders.accept-by-admin', ':id') }}".replace(':id', id);

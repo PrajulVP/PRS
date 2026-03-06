@@ -58,7 +58,48 @@
         </li>
         @endif
 
-        @if ($hasOrderPerms)
+        {{-- Retailer Orders (Standalone Link) --}}
+        @if (Auth::user()->hasRole('retailer'))
+        <li class="sidebar-list">
+          <a class="sidebar-link sidebar-title link-nav" href="{{ route('retailer.orders.index') }}">
+            <svg class="stroke-icon">
+              <use href="{{ $iconSprite }}#stroke-form"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{{ $iconSprite }}#fill-form"></use>
+            </svg><span>My Orders</span>
+          </a>
+        </li>
+        @endif
+
+        {{-- Distributor Orders (Standalone Links) --}}
+        @if (Auth::user()->hasRole('distributor'))
+        <li class="sidebar-list">
+          <a class="sidebar-link sidebar-title link-nav" href="{{ route('distributor.orders.index') }}">
+            <svg class="stroke-icon">
+              <use href="{{ $iconSprite }}#stroke-ecommerce"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{{ $iconSprite }}#fill-ecommerce"></use>
+            </svg><span>Retailer Orders</span>
+          </a>
+        </li>
+        @if (Auth::user()->hasPermissionToCategory('distributor_orders', 'view'))
+        <li class="sidebar-list">
+          <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.distributor-orders.index') }}">
+            <svg class="stroke-icon">
+              <use href="{{ $iconSprite }}#stroke-form"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{{ $iconSprite }}#fill-form"></use>
+            </svg><span>My Placed Orders</span>
+          </a>
+        </li>
+        @endif
+        @endif
+
+        {{-- Common Orders Dropdown for Admin/Staff --}}
+        @if(Auth::user()->hasRole('superadmin') || Auth::user()->hasRole('admin') || Auth::user()->hasRole('salesmanager') || Auth::user()->hasRole('fieldstaff'))
         <li class="sidebar-list" style="position: relative;">
           <a class="sidebar-link sidebar-title" id="orders" href="#orders">
             <svg class="stroke-icon">
@@ -69,20 +110,6 @@
             </svg><span>Orders</span>
           </a>
           <ul class="sidebar-submenu">
-            {{-- Retailer Role --}}
-            @if (Auth::user()->hasRole('retailer'))
-              <li style="position: relative;"><a href="{{ route('retailer.orders.index') }}">My Orders</a></li>
-            @endif
-
-            {{-- Distributor Role --}}
-            @if (Auth::user()->hasRole('distributor'))
-            <li style="position: relative;"><a href="{{ route('distributor.orders.index') }}">Received Orders</a></li>
-
-            @if (Auth::user()->hasPermissionToCategory('distributor_orders', 'view'))
-            <li><a href="{{ route('admin.distributor-orders.index') }}">My Orders</a></li>
-            @endif
-            @endif
-
             {{-- Field Staff Role --}}
             @if (Auth::user()->hasRole('fieldstaff'))
             <li style="position: relative;"><a href="{{ route('fieldstaff.orders.index') }}">Orders</a></li>
@@ -91,7 +118,7 @@
             {{-- Admin / Sales Manager / SuperAdmin --}}
             @if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('superadmin') || Auth::user()->hasRole('salesmanager'))
             @if (Auth::user()->hasPermissionToCategory('retailer_orders', 'view'))
-            <li><a href="{{ route('admin.retailer-orders.index') }}">Retailer Orders</a></li>
+            <li><a href="{{ route('admin.retailer.index') }}">Retailer Orders</a></li>
             @endif
             @if (Auth::user()->hasPermissionToCategory('distributor_orders', 'view'))
             <li><a href="{{ route('admin.distributor-orders.index') }}">Distributor Orders</a></li>
@@ -116,10 +143,10 @@
           </a>
           <ul class="sidebar-submenu">
              @if(Auth::user()->hasPermissionToCategory('retailer_approvals', 'view') || $hasApprovalRoles)
-             <li style="position: relative;"><a href="{{ route('approvals.retailer') }}">Retailers</a></li>
+             <li style="position: relative;"><a href="{{ route('admin.approvals.retailer') }}">Retailers</a></li>
             @endif
              @if(Auth::user()->hasPermissionToCategory('distributor_approvals', 'view') || $hasApprovalRoles)
-             <li style="position: relative;"><a href="{{ route('approvals.distributor') }}">Distributors</a></li>
+             <li style="position: relative;"><a href="{{ route('admin.approvals.distributor') }}">Distributors</a></li>
             @endif
           </ul>
         </li>
@@ -156,7 +183,7 @@
         @if(!Auth::user()->hasAnyRole(['admin', 'superadmin']))
         <li class="sidebar-main-title">
           <div>
-            <h6 class="lan-15">Inventory</h6>
+            <h6 class="lan-15">Stock</h6>
           </div>
         </li>
         @endif
@@ -166,7 +193,7 @@
             </svg>
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-form"></use>
-            </svg><span>Inventory</span></a>
+            </svg><span>Stock</span></a>
         </li>
         @endif
 

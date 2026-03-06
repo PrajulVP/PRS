@@ -271,7 +271,7 @@ class DistributorOrderApiController extends Controller
         $request->validate([
             'action' => 'required|in:accept_manager,approve_admin,confirm_receipt,request_cancellation,approve_cancellation',
             'payment_status' => 'required_if:action,approve_admin|in:pending,paid,failed',
-            'invoice' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'invoice' => 'required_if:action,approve_admin|file|mimes:pdf,jpg,jpeg,png|max:5120',
             'cancellation_reason' => 'required_if:action,request_cancellation|string|min:5'
         ]);
 
@@ -290,7 +290,7 @@ class DistributorOrderApiController extends Controller
                     if ($order->status !== DistributorOrder::STATUS_PENDING) {
                         return response()->json(['error' => 'Only pending orders can be accepted'], 400);
                     }
-                    $order->update(['status' => DistributorOrder::STATUS_ACCEPTED_BY_SALES_MANAGER]);
+                    $order->update(['status' => DistributorOrder::STATUS_PROCESSING]);
                     break;
 
                 case 'approve_admin':
@@ -303,7 +303,7 @@ class DistributorOrderApiController extends Controller
                         $invoicePath = $request->file('invoice')->store('invoices/distributors', 'public');
                     }
                     $order->update([
-                        'status' => DistributorOrder::STATUS_APPROVED,
+                        'status' => DistributorOrder::STATUS_ACCEPTED,
                         'payment_status' => $request->payment_status,
                         'invoice_path' => $invoicePath
                     ]);
@@ -313,7 +313,7 @@ class DistributorOrderApiController extends Controller
                     if (!$user->hasRole('distributor') || $order->distributor_id !== $user->distributor->id) {
                         return response()->json(['error' => 'Unauthorized'], 403);
                     }
-                    if ($order->status !== DistributorOrder::STATUS_APPROVED) {
+                    if ($order->status !== DistributorOrder::STATUS_ACCEPTED) {
                         return response()->json(['error' => 'Only approved orders can be confirmed'], 400);
                     }
                     $order->update(['status' => DistributorOrder::STATUS_DELIVERED]);
@@ -324,11 +324,11 @@ class DistributorOrderApiController extends Controller
                     if (!$user->hasRole('distributor') || $order->distributor_id !== $user->distributor->id) {
                         return response()->json(['error' => 'Unauthorized'], 403);
                     }
-                    if ($order->status !== DistributorOrder::STATUS_ACCEPTED_BY_SALES_MANAGER) {
+                    if ($order->status !== DistributorOrder::STATUS_PROCESSING) {
                         return response()->json(['error' => 'Invalid status for cancellation request'], 400);
                     }
                     $order->update([
-                        'status' => DistributorOrder::STATUS_CANCELLATION_REQUESTED,
+                        'status' => DistributorOrder::STATUS_CANCELLED,
                         'cancellation_reason' => $request->cancellation_reason
                     ]);
                     break;
@@ -337,7 +337,7 @@ class DistributorOrderApiController extends Controller
                     if (!$user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
                         return response()->json(['error' => 'Unauthorized'], 403);
                     }
-                    if ($order->status !== DistributorOrder::STATUS_CANCELLATION_REQUESTED) {
+                    if ($order->status !== DistributorOrder::STATUS_CANCELLED) {
                         return response()->json(['error' => 'No cancellation request found'], 400);
                     }
                     $order->update(['status' => DistributorOrder::STATUS_CANCELLED]);

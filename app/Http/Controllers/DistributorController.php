@@ -73,7 +73,7 @@ class DistributorController extends Controller
             $superAdmin->notify(new \App\Notifications\UserApprovalRequired(
                 $user,
                 "New Distributor {$user->name} has been added and requires approval/activation.",
-                url('/distributors')
+                route('admin.distributors.index')
             ));
         }
 

@@ -32,7 +32,7 @@ class RetailerOrderFactory extends Factory
             'quantity' => $this->faker->numberBetween(1, 100),
             'unit_price' => $this->faker->randomFloat(2, 10, 1000),
             'total_amount' => $this->faker->randomFloat(2, 100, 5000),
-            'status' => $this->faker->randomElement(['pending', 'accepted_by_distributor', 'assigned_to_fieldstaff', 'delivered', 'rejected']),
+            'status' => $this->faker->randomElement([RetailerOrder::STATUS_PENDING, RetailerOrder::STATUS_PROCESSING, RetailerOrder::STATUS_ACCEPTED, RetailerOrder::STATUS_DELIVERED, RetailerOrder::STATUS_CANCELLED]),
             'placed_at' => $this->faker->dateTimeBetween('-1 month', 'now'),
             'notes' => $this->faker->sentence,
             'field_staff_id' => null, // Will be assigned later in tests
@@ -59,11 +59,11 @@ class RetailerOrderFactory extends Factory
      *
      * @return \Illuminate\Database\Eloquent\Factories\Factory
      */
-    public function acceptedByDistributor()
+    public function accepted()
     {
         return $this->state(function (array $attributes) {
             return [
-                'status' => RetailerOrder::STATUS_ACCEPTED_BY_DISTRIBUTOR,
+                'status' => RetailerOrder::STATUS_ACCEPTED,
             ];
         });
     }
@@ -73,11 +73,11 @@ class RetailerOrderFactory extends Factory
      *
      * @return \Illuminate\Database\Eloquent\Factories\Factory
      */
-    public function assignedToFieldStaff()
+    public function processing()
     {
         return $this->state(function (array $attributes) {
             return [
-                'status' => RetailerOrder::STATUS_ASSIGNED_TO_FIELDSTAFF,
+                'status' => RetailerOrder::STATUS_PROCESSING,
             ];
         });
     }

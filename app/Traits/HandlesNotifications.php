@@ -8,10 +8,6 @@ trait HandlesNotifications
 {
     /**
      * Mark unread order-related notifications as read for specific order and type.
-     *
-     * @param int|string $orderId
-     * @param string $orderType
-     * @return void
      */
     protected function clearOrderNotifications($orderId, $orderType)
     {
@@ -19,7 +15,18 @@ trait HandlesNotifications
             ->whereNull('read_at')
             ->where('data->order_id', $orderId)
             ->where('data->order_type', $orderType)
-            ->update(['read_at' => now()]);
+            ->delete();
+    }
+
+    /**
+     * Delete ALL notifications (read or unread) for a specific order.
+     */
+    protected function deleteOrderNotifications($orderId, $orderType)
+    {
+        DB::table('notifications')
+            ->where('data->order_id', $orderId)
+            ->where('data->order_type', $orderType)
+            ->delete();
     }
 
     /**
@@ -28,7 +35,7 @@ trait HandlesNotifications
     protected function hasUnreadNotification($user, $orderId, $orderType, $message = null)
     {
         $query = $user->unreadNotifications()
-            ->where('data->order_id', $orderId)
+            ->where('data->order_id', (int)$orderId)
             ->where('data->order_type', $orderType);
 
         if ($message) {
@@ -39,20 +46,27 @@ trait HandlesNotifications
     }
 
     /**
-     * Send notification only if a similar unread one doesn't exist.
+     * Send notification and delete ANY previous unread notifications for this order.
+     * This ensures the user only sees the LATEST action required for the order.
      */
     protected function notifyUnique($user, $notification)
     {
-        // We need to extract data from the notification instance to check
+        // Extract data for duplicate check
         $data = $notification->toArray($user);
         $orderId = $data['order_id'] ?? null;
         $orderType = $data['order_type'] ?? null;
         $message = $data['message'] ?? null;
 
         if ($orderId && $orderType) {
-            if ($this->hasUnreadNotification($user, $orderId, $orderType, $message)) {
-                return; // Duplicate unread notification already exists
-            }
+            // User requested that earlier notifications of the same order should disappear
+            // So we delete existing unread notifications for this order before sending the new one
+            DB::table('notifications')
+                ->where('notifiable_id', $user->id)
+                ->where('notifiable_type', get_class($user))
+                ->whereNull('read_at')
+                ->where('data->order_id', (int)$orderId)
+                ->where('data->order_type', $orderType)
+                ->delete();
         }
 
         $user->notify($notification);

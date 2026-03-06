@@ -11,8 +11,7 @@
     }
 
     .action-buttons .btn {
-        padding: 6px 12px !important;
-        font-size: 0.875rem !important;
+        margin: 0 !important;
     }
 
     /* Modal sizing and table compacting */
@@ -52,7 +51,7 @@
             <div class="col-sm-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5><i class="fa fa-boxes me-2"></i>Inventory</h5>
+                        <h5><i class="fa fa-boxes me-2"></i>Stock</h5>
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                             data-bs-target="#createInventoryModal">
                             <i class="fa fa-plus me-1"></i>Add Product
@@ -123,7 +122,8 @@
                                 @foreach($products as $p)
                                     <option value="{{ $p->id }}" data-code="{{ $p->product_code }}"
                                         data-strip-size="{{ $p->strip_size ?? 0 }}" data-box-size="{{ $p->box_size ?? 0 }}"
-                                        data-carton-size="{{ $p->carton_size ?? 0 }}">
+                                        data-carton-size="{{ $p->carton_size ?? 0 }}"
+                                        data-pack="{{ strtolower($p->pack ?? '') }}">
                                         {{ $p->product_name }} ({{ $p->product_code }})
                                     </option>
                                 @endforeach
@@ -182,11 +182,35 @@
                                             var bSize = selected.getAttribute('data-box-size');
                                             var cSize = selected.getAttribute('data-carton-size');
 
+                                            var pPack = selected.getAttribute('data-pack') || '';
+                                            var pName = (selected.text || '').toLowerCase();
+                                            var isCount = (parseInt(bSize) === 1 && parseInt(cSize) === 1) ||
+                                                pPack.includes('nos') || pPack.includes('count') ||
+                                                pPack.includes('pair') || pPack.includes('bottle') ||
+                                                pPack.includes('ml') || pPack.includes('gm') || pPack.includes('syp') ||
+                                                pName.includes('syp') || pName.includes('syrup') || pName.includes('drop') || pName.includes('ointment');
+
+                                            var unitSelect = calcUnit;
+                                            var totalLabel = document.getElementById('create_stock_label');
+
+                                            // Rebuild unit options based on pack type
+                                            unitSelect.innerHTML = '';
+                                            if (isCount) {
+                                                unitSelect.innerHTML += '<option value="strip">Nos</option>';
+                                                totalLabel.innerText = "Converted Total (Nos)";
+                                                packInfo.innerHTML = `Packaging: <b>${bSize} Nos/Box</b> | <b>${cSize} Box/Ctn</b>`;
+                                            } else {
+                                                unitSelect.innerHTML += '<option value="strip">Strips</option>';
+                                                totalLabel.innerText = "Converted Total (Strips)";
+                                                packInfo.innerHTML = `Packaging: <b>${bSize} Str/Box</b> | <b>${cSize} Box/Ctn</b>`;
+                                            }
+                                            unitSelect.innerHTML += '<option value="box">Boxes</option>';
+                                            unitSelect.innerHTML += '<option value="carton">Cartons</option>';
+
                                             if (code && (!code.value || code.value.trim() === '')) {
                                                 code.value = prodCode || '';
                                             }
 
-                                            packInfo.innerHTML = `Packaging: <b>${bSize} Str/Box</b> | <b>${cSize} Box/Ctn</b>`;
                                             calculateCreateTotal();
                                         } else {
                                             packInfo.innerText = "Select a product to see packaging rules";
@@ -226,7 +250,8 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="create_stock" class="form-label fw-bold text-muted small">Converted Total
+                            <label for="create_stock" id="create_stock_label"
+                                class="form-label fw-bold text-muted small">Converted Total
                                 (Strips)</label>
                             <input type="number" name="stock" id="create_stock" class="form-control bg-light" value="0"
                                 readonly required>
@@ -248,7 +273,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Edit Inventory</h5>
+                    <h5 class="modal-title">Edit Stock</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form id="editInventoryForm" method="POST">
@@ -300,7 +325,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Update Inventory</button>
+                        <button type="submit" class="btn btn-primary">Update Stock</button>
                     </div>
                 </form>
             </div>
@@ -368,7 +393,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <p class="mb-3">Are you sure you want to remove this item from your inventory?</p>
+                    <p class="mb-3">Are you sure you want to remove this item from your stock?</p>
                     <div class="text-muted small">
                         <i class="fa fa-info-circle me-1"></i> The product definition will <strong>NOT</strong> be deleted.
                     </div>
@@ -502,14 +527,14 @@
                     render: function (data, type, row) {
                         let detailJson = JSON.stringify(row.product_details).replace(/"/g, '&quot;');
                         return `
-                                                <div class="d-flex align-items-center">
-                                                    <a href="javascript:void(0)" class="text-primary fw-bold product-detail-link" 
-                                                       data-name="${data}" \
-                                                       data-details='${detailJson}'>
-                                                       ${data}
-                                                    </a>
-                                                </div>
-                                            `;
+                                                                <div class="d-flex align-items-center">
+                                                                    <a href="javascript:void(0)" class="text-primary fw-bold product-detail-link" 
+                                                                       data-name="${data}" \
+                                                                       data-details='${detailJson}'>
+                                                                       ${data}
+                                                                    </a>
+                                                                </div>
+                                                            `;
                     }
                 },
                     @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
@@ -557,14 +582,23 @@
                         let boxes = Math.floor(remaining / boxSize);
                         let strips = remaining % boxSize;
 
+                        let pPack = row.product_details.pack ? row.product_details.pack.toLowerCase() : '';
+                        let pName = row.product_name ? row.product_name.toLowerCase() : '';
+                        let isCount = (parseInt(boxSize) === 1 && parseInt(cartonSize) === 1) ||
+                            pPack.includes('nos') || pPack.includes('count') ||
+                            pPack.includes('pair') || pPack.includes('bottle') ||
+                            pPack.includes('ml') || pPack.includes('gm') || pPack.includes('syp') ||
+                            pName.includes('syp') || pName.includes('syrup') || pName.includes('drop') || pName.includes('ointment');
+                        let baseStr = isCount ? 'Nos' : 'Str';
+
                         let html = '';
                         if (cartonSize > 0 && cartons > 0) html += `<span class="badge bg-primary me-1">${cartons} Ctn</span>`;
                         if (boxes > 0) html += `<span class="badge bg-info text-white me-1">${boxes} Box</span>`;
-                        if (strips > 0 || (cartons === 0 && boxes === 0)) html += `<span class="badge bg-secondary me-1">${strips} Str</span>`;
+                        if (strips > 0 || (cartons === 0 && boxes === 0)) html += `<span class="badge bg-secondary me-1">${strips} ${baseStr}</span>`;
 
                         html += `<div class="mt-1 small text-muted" style="font-size: 0.7rem;">
-                                                        (${boxSize} Str/Box | ${cartonSize || 0} Box/Ctn)
-                                                     </div>`;
+                                                                        (${boxSize} ${baseStr}/Box | ${cartonSize || 0} Box/Ctn)
+                                                                     </div>`;
 
                         return html || '0';
                     }
@@ -579,18 +613,18 @@
                         let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
 
                         return `
-                                    <div class="action-buttons">
-                                        <button type="button" class="btn btn-sm btn-info edit-btn" data-inventory='${rowData}' title="Edit Inventory"><i class="fa fa-edit"></i></button>
-                                        <button type="button" class="btn btn-sm btn-success stock-btn" data-id="${id}" data-op="add" data-name="${row.product_name}" data-box-size="${row.product_details?.box_size || 0}" data-carton-size="${row.product_details?.carton_size || 0}" title="Add Stock"><i class="fa fa-plus"></i></button>
-                                        <button type="button" class="btn btn-sm btn-warning stock-btn" data-id="${id}" data-op="subtract" data-name="${row.product_name}" data-box-size="${row.product_details?.box_size || 0}" data-carton-size="${row.product_details?.carton_size || 0}" title="Reduce Stock"><i class="fa fa-minus"></i></button>
+                                                    <div class="action-buttons">
+                                                        <button type="button" class="btn btn-sm btn-info edit-btn" data-inventory='${rowData}' title="Edit Stock"><i class="fa fa-edit"></i></button>
+                                                        <button type="button" class="btn btn-sm btn-success stock-btn" data-id="${id}" data-op="add" data-name="${row.product_name}" data-box-size="${row.product_details?.box_size || 0}" data-carton-size="${row.product_details?.carton_size || 0}" title="Add Stock"><i class="fa fa-plus"></i></button>
+                                                        <button type="button" class="btn btn-sm btn-warning stock-btn" data-id="${id}" data-op="subtract" data-name="${row.product_name}" data-box-size="${row.product_details?.box_size || 0}" data-carton-size="${row.product_details?.carton_size || 0}" title="Reduce Stock"><i class="fa fa-minus"></i></button>
 
-                                        <form id="delete-form-${id}" action="${deleteUrl}" method="POST" style="display:inline;">
-                                            <input type="hidden" name="_token" value="${csrf}">
-                                            <input type="hidden" name="_method" value="DELETE">
-                                            <button type="button" class="btn btn-sm btn-danger delete-btn" data-id="${id}" title="Remove from Inventory"><i class="fa fa-trash"></i></button>
-                                        </form>
-                                    </div>
-                                    `;
+                                                        <form id="delete-form-${id}" action="${deleteUrl}" method="POST" style="display:inline;">
+                                                            <input type="hidden" name="_token" value="${csrf}">
+                                                            <input type="hidden" name="_method" value="DELETE">
+                                                            <button type="button" class="btn btn-sm btn-danger delete-btn" data-id="${id}" title="Remove from Stock"><i class="fa fa-trash"></i></button>
+                                                        </form>
+                                                    </div>
+                                                    `;
                     }
                 }
                 ]

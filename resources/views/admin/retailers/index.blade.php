@@ -312,8 +312,8 @@
                                 style="width:85px;height:85px;object-fit:cover;display:none;border:3px solid #fff;">
                             <div id="ret_avatar_initials"
                                 style="width:85px;height:85px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-                                                                            font-size:1.9rem;font-weight:700;color:#fff;
-                                                                            background:linear-gradient(135deg,#1e3a5f,#2e6da4);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+                                                                                    font-size:1.9rem;font-weight:700;color:#fff;
+                                                                                    background:linear-gradient(135deg,#1e3a5f,#2e6da4);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
                             </div>
                         </div>
                         <div>
@@ -510,14 +510,14 @@
                         let activateBtn = '';
 
                         return `
-                                                                <div class="action-buttons">
-                                                                    ${activateBtn}
-                                                                    ${isDistributor ? `<a href="{{ route('admin.retailer-orders.index') }}?retailer_id=${id}" class="btn btn-sm btn-warning" title="View Orders"><i class="fa fa-shopping-cart"></i></a>` : ''}
-                                                                    <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>
-                                                                    ${canEdit ? `<button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>` : ''}
-                                                                    ${canDelete ? `<button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>` : ''}
-                                                                </div>
-                                                            `;
+                                                                        <div class="action-buttons">
+                                                                            ${activateBtn}
+                                                                            ${isDistributor ? `<a href="{{ route('admin.retailer.index') }}?retailer_id=${id}" class="btn btn-sm btn-warning" title="View Orders"><i class="fa fa-shopping-cart"></i></a>` : ''}
+                                                                            <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>
+                                                                            ${canEdit ? `<button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>` : ''}
+                                                                            ${canDelete ? `<button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>` : ''}
+                                                                        </div>
+                                                                    `;
                     }
                 }
                 ],
@@ -604,7 +604,7 @@
                 var data = $(this).data('row');
                 let districtName = data.district ? data.district.name : 'N/A';
                 let areaName = data.area ? data.area.name : 'N/A';
-                let profileImg = data.user && data.user.profile_image ? '/storage/' + data.user.profile_image : null;
+                let profileImg = data.user && data.user.profile_pic ? '/storage/' + data.user.profile_pic : null;
 
                 // Avatar
                 if (profileImg) {

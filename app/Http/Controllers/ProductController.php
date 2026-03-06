@@ -104,11 +104,6 @@ class ProductController extends Controller
                     'mrp' => number_format((float)$product->mrp, 2),
                     'ptr' => number_format((float)$product->ptr, 2),
                     'pts' => number_format((float)$product->pts, 2),
-                    'net_amount' => number_format((float)$product->net_amount, 2),
-                    'taxable_value' => $product->taxable_value,
-                    'gst' => $product->gst,
-                    'offer' => $product->offer,
-                    'discount' => $product->discount,
                     'loyalty_point_percentage' => $product->loyalty_point_percentage,
                     'actions' => null, // Actions column will be rendered by DataTables
                 ];
@@ -139,7 +134,7 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'product_code' => 'required|string|unique:products|max:255',
+            'product_code' => 'required|string|max:255',
             'product_name' => 'required|string|max:255',
             'generic_name' => 'nullable|string|max:255',
             'strip_size' => 'nullable|string|max:255',
@@ -149,16 +144,10 @@ class ProductController extends Controller
             'mrp' => 'required|numeric|min:0',
             'ptr' => 'required|numeric|min:0',
             'pts' => 'required|numeric|min:0',
-            'taxable_value' => 'required|numeric|min:0',
-            'gst' => 'required|numeric|min:0',
-            'offer' => 'nullable|numeric|min:0',
-            'discount' => 'nullable|numeric|min:0',
-            'net_amount' => 'nullable|numeric|min:0',
             'loyalty_point_percentage' => 'nullable|numeric|min:0',
         ]);
 
         $data = $request->all();
-        $data['net_amount'] = $data['taxable_value'] + ($data['taxable_value'] * $data['gst'] / 100);
 
         Product::create($data);
 
@@ -187,7 +176,7 @@ class ProductController extends Controller
     public function update(Request $request, Product $product)
     {
         $request->validate([
-            'product_code' => 'required|string|max:255|unique:products,product_code,' . $product->id,
+            'product_code' => 'required|string|max:255',
             'product_name' => 'required|string|max:255',
             'generic_name' => 'nullable|string|max:255',
             'strip_size' => 'nullable|string|max:255',
@@ -197,16 +186,10 @@ class ProductController extends Controller
             'mrp' => 'required|numeric|min:0',
             'ptr' => 'required|numeric|min:0',
             'pts' => 'required|numeric|min:0',
-            'taxable_value' => 'required|numeric|min:0',
-            'gst' => 'required|numeric|min:0',
-            'offer' => 'nullable|numeric|min:0',
-            'discount' => 'nullable|numeric|min:0',
-            'net_amount' => 'nullable|numeric|min:0',
             'loyalty_point_percentage' => 'nullable|numeric|min:0',
         ]);
 
         $data = $request->all();
-        $data['net_amount'] = $data['taxable_value'] + ($data['taxable_value'] * $data['gst'] / 100);
 
         $product->update($data);
 
@@ -233,18 +216,13 @@ class ProductController extends Controller
             'product_code',
             'product_name',
             'generic_name',
+            'hsn_code',
             'strip_size',
             'box_size',
             'carton_size',
-            'hsn_code',
             'mrp',
             'ptr',
             'pts',
-            'taxable_value',
-            'gst',
-            'offer',
-            'discount',
-            'net_amount',
             'loyalty_point_percentage'
         ];
 
@@ -272,8 +250,8 @@ class ProductController extends Controller
         if (($handle = fopen($file->getRealPath(), "r")) !== FALSE) {
             $header = fgetcsv($handle, 0, ","); // length 0 for no limit
 
-            if (!$header || count($header) < 16) {
-                return redirect()->route('products.index')->with('error', 'Invalid CSV format or missing columns. Expected at least 16 columns, found ' . (is_array($header) ? count($header) : 0));
+            if (!$header || count($header) < 11) {
+                return redirect()->route('products.index')->with('error', 'Invalid CSV format or missing columns. Expected at least 11 columns, found ' . (is_array($header) ? count($header) : 0));
             }
 
             // Trim headers and remove BOM
@@ -299,9 +277,11 @@ class ProductController extends Controller
                 try {
                     // Create or Update
                     Product::updateOrCreate(
-                        ['product_code' => $productData['product_code']],
                         [
-                            'product_name' => $productData['product_name'],
+                            'product_code' => $productData['product_code'],
+                            'product_name' => $productData['product_name']
+                        ],
+                        [
                             'generic_name' => $productData['generic_name'] ?? null,
                             'strip_size' => $productData['strip_size'] ?: null,
                             'box_size' => $productData['box_size'] ?: null,
@@ -310,11 +290,6 @@ class ProductController extends Controller
                             'mrp' => (float)($productData['mrp'] ?? 0),
                             'ptr' => (float)($productData['ptr'] ?? 0),
                             'pts' => (float)($productData['pts'] ?? 0),
-                            'taxable_value' => $taxable = (float)($productData['taxable_value'] ?? 0),
-                            'gst' => $gst = (float)($productData['gst'] ?? 0),
-                            'offer' => (float)($productData['offer'] ?? 0),
-                            'discount' => (float)($productData['discount'] ?? 0),
-                            'net_amount' => (float)($productData['net_amount'] ?: ($taxable + ($taxable * $gst / 100))),
                             'loyalty_point_percentage' => (float)($productData['loyalty_point_percentage'] ?? 0),
                         ]
                     );

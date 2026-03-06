@@ -76,8 +76,6 @@
                                         <th>MRP</th>
                                         <th>PTR</th>
                                         <th>PTS</th>
-                                        <th>Net Amount</th>
-                                        <th>gst</th>
                                         <th>Loyalty %</th>
                                         <th>Actions</th>
                                     </tr>
@@ -116,9 +114,13 @@
                                 <input type="text" name="product_name" id="create_product_name" class="form-control"
                                     required>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label for="create_generic_name" class="form-label fw-medium">Generic Name</label>
                                 <input type="text" name="generic_name" id="create_generic_name" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="create_hsn_code" class="form-label fw-medium">HSN Code</label>
+                                <input type="text" name="hsn_code" id="create_hsn_code" class="form-control">
                             </div>
                         </div>
 
@@ -142,10 +144,6 @@
                                         <input type="number" name="carton_size" id="create_carton_size" class="form-control"
                                             placeholder="Boxes per carton">
                                     </div>
-                                    <div class="col-md-6">
-                                        <label for="create_hsn_code" class="form-label fw-medium">HSN Code</label>
-                                        <input type="text" name="hsn_code" id="create_hsn_code" class="form-control">
-                                    </div>
                                 </div>
                             </div>
 
@@ -168,41 +166,11 @@
                                         <input type="number" step="0.01" name="pts" id="create_pts" class="form-control"
                                             required>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label for="create_taxable_value" class="form-label fw-medium">Taxable Value</label>
-                                        <input type="number" step="0.01" name="taxable_value" id="create_taxable_value"
-                                            class="form-control" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="create_gst" class="form-label fw-medium">GST (%)</label>
-                                        <input type="number" step="0.01" name="gst" id="create_gst" class="form-control"
-                                            required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="create_offer" class="form-label fw-medium">Offer</label>
-                                        <input type="number" step="0.01" name="offer" id="create_offer"
-                                            class="form-control">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="create_discount" class="form-label fw-medium">Discount</label>
-                                        <input type="number" step="0.01" name="discount" id="create_discount"
-                                            class="form-control" placeholder="0.00">
-                                    </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-12">
                                         <label for="create_loyalty_point_percentage" class="form-label fw-medium">Loyalty
                                             %</label>
                                         <input type="number" step="0.01" name="loyalty_point_percentage"
                                             id="create_loyalty_point_percentage" class="form-control" placeholder="0.00">
-                                    </div>
-                                    <div class="col-md-12">
-                                        <div class="alert alert-light border text-center mt-3 mb-0">
-                                            <label for="create_net_amount"
-                                                class="form-label text-muted small text-uppercase fw-bold mb-0">Net
-                                                Amount</label>
-                                            <input type="number" step="0.01" name="net_amount" id="create_net_amount"
-                                                class="form-control form-control-lg fw-bold text-primary text-center border-0 bg-transparent"
-                                                readonly placeholder="0.00">
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -240,9 +208,13 @@
                                 <label for="edit_product_name" class="form-label fw-medium">Product Name</label>
                                 <input type="text" name="product_name" id="edit_product_name" class="form-control" required>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label for="edit_generic_name" class="form-label fw-medium">Generic Name</label>
                                 <input type="text" name="generic_name" id="edit_generic_name" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="edit_hsn_code" class="form-label fw-medium">HSN Code</label>
+                                <input type="text" name="hsn_code" id="edit_hsn_code" class="form-control">
                             </div>
                         </div>
 
@@ -266,10 +238,6 @@
                                         <input type="number" name="carton_size" id="edit_carton_size" class="form-control"
                                             placeholder="Boxes per carton">
                                     </div>
-                                    <div class="col-md-6">
-                                        <label for="edit_hsn_code" class="form-label fw-medium">HSN Code</label>
-                                        <input type="text" name="hsn_code" id="edit_hsn_code" class="form-control">
-                                    </div>
                                 </div>
                             </div>
 
@@ -292,40 +260,11 @@
                                         <input type="number" step="0.01" name="pts" id="edit_pts" class="form-control"
                                             required>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label for="edit_taxable_value" class="form-label fw-medium">Taxable Value</label>
-                                        <input type="number" step="0.01" name="taxable_value" id="edit_taxable_value"
-                                            class="form-control" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="edit_gst" class="form-label fw-medium">GST (%)</label>
-                                        <input type="number" step="0.01" name="gst" id="edit_gst" class="form-control"
-                                            required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="edit_offer" class="form-label fw-medium">Offer</label>
-                                        <input type="number" step="0.01" name="offer" id="edit_offer" class="form-control">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="edit_discount" class="form-label fw-medium">Discount</label>
-                                        <input type="number" step="0.01" name="discount" id="edit_discount"
-                                            class="form-control" placeholder="0.00">
-                                    </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-12">
                                         <label for="edit_loyalty_point_percentage" class="form-label fw-medium">Loyalty
                                             %</label>
                                         <input type="number" step="0.01" name="loyalty_point_percentage"
                                             id="edit_loyalty_point_percentage" class="form-control" placeholder="0.00">
-                                    </div>
-                                    <div class="col-md-12">
-                                        <div class="alert alert-light border text-center mt-3 mb-0">
-                                            <label for="edit_net_amount"
-                                                class="form-label text-muted small text-uppercase fw-bold mb-0">Net
-                                                Amount</label>
-                                            <input type="number" step="0.01" name="net_amount" id="edit_net_amount"
-                                                class="form-control form-control-lg fw-bold text-primary text-center border-0 bg-transparent"
-                                                readonly placeholder="0.00">
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -457,14 +396,6 @@
                     name: 'pts'
                 },
                 {
-                    data: 'net_amount',
-                    name: 'net_amount'
-                },
-                {
-                    data: 'gst',
-                    name: 'gst'
-                },
-                {
                     data: 'loyalty_point_percentage',
                     name: 'loyalty_point_percentage'
                 },
@@ -480,16 +411,16 @@
                         let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
 
                         return `
-                                                                        <div class="action-buttons">
-                                                                            <button type="button" class="btn btn-sm btn-primary view-btn" data-product='${rowData}'><i class="fa fa-eye"></i></button>
-                                                                            <button type="button" class="btn btn-sm btn-primary edit-btn" data-product='${rowData}'><i class="fa fa-edit"></i></button>
-                                                                            <form action="${deleteUrl}" method="POST" onsubmit="return confirm('Are you sure?')">
-                                                                                <input type="hidden" name="_token" value="${csrf}">
-                                                                                <input type="hidden" name="_method" value="DELETE">
-                                                                                <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
-                                                                            </form>
-                                                                        </div>
-                                                                    `;
+                                                                                    <div class="action-buttons">
+                                                                                        <button type="button" class="btn btn-sm btn-primary view-btn" data-product='${rowData}'><i class="fa fa-eye"></i></button>
+                                                                                        <button type="button" class="btn btn-sm btn-primary edit-btn" data-product='${rowData}'><i class="fa fa-edit"></i></button>
+                                                                                        <form action="${deleteUrl}" method="POST" onsubmit="return confirm('Are you sure?')">
+                                                                                            <input type="hidden" name="_token" value="${csrf}">
+                                                                                            <input type="hidden" name="_method" value="DELETE">
+                                                                                            <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
+                                                                                        </form>
+                                                                                    </div>
+                                                                                `;
                     }
                 }
                 ],
@@ -558,12 +489,8 @@
                 $('#edit_mrp').val(removeCommas(product.mrp));
                 $('#edit_ptr').val(removeCommas(product.ptr));
                 $('#edit_pts').val(removeCommas(product.pts));
-                $('#edit_taxable_value').val(product.taxable_value);
-                $('#edit_gst').val(product.gst);
-                $('#edit_offer').val(product.offer);
-                $('#edit_discount').val(product.discount);
+                // Offer and discount fields removed
                 $('#edit_loyalty_point_percentage').val(product.loyalty_point_percentage);
-                $('#edit_net_amount').val(removeCommas(product.net_amount));
 
                 // Update form action
                 let updateUrl = "{{ route('products.update', ':id') }}".replace(':id', product.id);
@@ -578,92 +505,62 @@
                 var product = $(this).data('product');
 
                 let html = `
-                                                                <div class="row g-3">
-                                                                    <div class="col-md-12 mb-3">
-                                                                        <div class="p-4 bg-light rounded text-center">
-                                                                            <h3 class="fw-bold text-primary mb-1">${product.product_name}</h3>
-                                                                            <div class="text-secondary">${product.product_code} <span class="mx-2">|</span> ${product.generic_name || 'Generic N/A'}</div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
+                                                                            <div class="row g-3">
+                                                                                <div class="col-md-12 mb-3">
+                                                                                    <div class="p-4 bg-light rounded text-center">
+                                                                                        <h3 class="fw-bold text-primary mb-1">${product.product_name}</h3>
+                                                                                        <div class="text-secondary">${product.product_code} <span class="mx-2">|</span> ${product.generic_name || 'Generic N/A'}</div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
 
-                                                                <div class="row g-4">
-                                                                    <!-- Left Column: Stock & Packaging -->
-                                                                    <div class="col-md-6 border-end">
-                                                                        <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Stock & Packaging</h6>
-                                                                        <dl class="row mb-0">
-                                                                            <dt class="col-sm-4 text-muted small text-uppercase">Tablet/Strip</dt>
-                                                                            <dd class="col-sm-8 fw-medium">${product.strip_size || '-'}</dd>
+                                                                            <div class="row g-4">
+                                                                                <!-- Left Column: Stock & Packaging -->
+                                                                                <div class="col-md-6 border-end">
+                                                                                    <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Stock & Packaging</h6>
+                                                                                    <dl class="row mb-0">
+                                                                                        <dt class="col-sm-4 text-muted small text-uppercase">Tablet/Strip</dt>
+                                                                                        <dd class="col-sm-8 fw-medium">${product.strip_size || '-'}</dd>
 
-                                                                            <dt class="col-sm-4 text-muted small text-uppercase">Strip / Box</dt>
-                                                                            <dd class="col-sm-8 fw-medium">${product.box_size || '-'}</dd>
+                                                                                        <dt class="col-sm-4 text-muted small text-uppercase">Strip / Box</dt>
+                                                                                        <dd class="col-sm-8 fw-medium">${product.box_size || '-'}</dd>
 
-                                                                            <dt class="col-sm-4 text-muted small text-uppercase">Box / Carton</dt>
-                                                                            <dd class="col-sm-8 fw-medium">${product.carton_size || '-'}</dd>
+                                                                                        <dt class="col-sm-4 text-muted small text-uppercase">Box / Carton</dt>
+                                                                                        <dd class="col-sm-8 fw-medium">${product.carton_size || '-'}</dd>
 
-                                                                            <dt class="col-sm-4 text-muted small text-uppercase">HSN</dt>
-                                                                            <dd class="col-sm-8 fw-medium">${product.hsn_code || '-'}</dd>
-                                                                        </dl>
-                                                                    </div>
+                                                                                        <dt class="col-sm-4 text-muted small text-uppercase">HSN</dt>
+                                                                                        <dd class="col-sm-8 fw-medium">${product.hsn_code || '-'}</dd>
+                                                                                    </dl>
+                                                                                </div>
 
-                                                                    <!-- Right Column: Pricing -->
-                                                                    <div class="col-md-6">
-                                                                        <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Pricing Details</h6>
-                                                                        <dl class="row mb-0">
-                                                                            <dt class="col-sm-4 text-muted small text-uppercase">MRP</dt>
-                                                                            <dd class="col-sm-8 fw-medium">₹${parseFloat(product.mrp).toFixed(2)}</dd>
+                                                                                <!-- Right Column: Pricing -->
+                                                                                <div class="col-md-6">
+                                                                                    <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Pricing Details</h6>
+                                                                                    <dl class="row mb-0">
+                                                                                        <dt class="col-sm-4 text-muted small text-uppercase">MRP</dt>
+                                                                                        <dd class="col-sm-8 fw-medium">₹${parseFloat(product.mrp).toFixed(2)}</dd>
 
-                                                                            <dt class="col-sm-4 text-muted small text-uppercase">PTR</dt>
-                                                                            <dd class="col-sm-8 fw-medium">₹${parseFloat(product.ptr).toFixed(2)}</dd>
+                                                                                        <dt class="col-sm-4 text-muted small text-uppercase">PTR</dt>
+                                                                                        <dd class="col-sm-8 fw-medium">₹${parseFloat(product.ptr).toFixed(2)}</dd>
 
-                                                                            <dt class="col-sm-4 text-muted small text-uppercase">PTS</dt>
-                                                                            <dd class="col-sm-8 fw-medium">₹${parseFloat(product.pts).toFixed(2)}</dd>                                      
-
-                                                                            <dt class="col-sm-4 text-muted small text-uppercase">Taxable</dt>
-                                                                            <dd class="col-sm-8 fw-medium">₹${parseFloat(product.taxable_value).toFixed(2)}</dd>
-
-                                                                            <dt class="col-sm-4 text-muted small text-uppercase">GST</dt>
-                                                                            <dd class="col-sm-8 fw-medium">${parseFloat(product.gst).toFixed(2)}%</dd>
-
-                                                                            <dt class="col-sm-4 text-muted small text-uppercase">Offer / Disc</dt>
-                                                                            <dd class="col-sm-8 fw-medium text-success">
-                                                                                ${parseFloat(product.offer || 0).toFixed(2)} / ${parseFloat(product.discount || 0).toFixed(2)}
-                                                                            </dd>
-
-                                                                            <dt class="col-sm-4 text-muted small text-uppercase">Loyalty %</dt>
-                                                                            <dd class="col-sm-8 fw-medium text-info">
-                                                                                ${parseFloat(product.loyalty_point_percentage || 0).toFixed(2)}%
-                                                                            </dd>
-                                                                        </dl>
-
-                                                                        <div class="alert alert-light border text-center mt-3">
-                                                                            <small class="text-muted text-uppercase fw-bold d-block">Net Amount</small>
-                                                                            <span class="h4 fw-bold text-primary">₹${parseFloat(product.net_amount).toFixed(2)}</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            `;
+                                                                                        <dt class="col-sm-4 text-muted small text-uppercase">PTS</dt>
+                                                                                        <dd class="col-sm-8 fw-medium">₹${parseFloat(product.pts).toFixed(2)}</dd>                                      
+                                                                                        <!-- Offer and discount removed -->
+                                                                                        <dt class="col-sm-4 text-muted small text-uppercase">Loyalty %</dt>
+                                                                                        <dd class="col-sm-8 fw-medium text-info">
+                                                                                            ${parseFloat(product.loyalty_point_percentage || 0).toFixed(2)}%
+                                                                                        </dd>
+                                                                                    </dl>
+                                                                                </div>
+                                                                            </div>
+                                                                        `;
                 // Note: We need to change the modal body structure slightly in the blade file to accommodate this if it expects a table structure.
                 // The current blade has <tbody id="showProductTableBody"> inside a <table>. We should check if we need to replace the table with a div.
                 $('#showProductTableBody').html(html);
                 $('#showProductModal').modal('show');
             });
 
-            // Auto-calculation for Net Amount
-            function calculateNetAmount(taxableId, gstId, netId) {
-                let taxable = parseFloat($(taxableId).val()) || 0;
-                let gst = parseFloat($(gstId).val()) || 0;
-                let netAmount = taxable + (taxable * gst / 100);
-                $(netId).val(netAmount.toFixed(2));
-            }
-
-            $(document).on('input', '#create_taxable_value, #create_gst', function () {
-                calculateNetAmount('#create_taxable_value', '#create_gst', '#create_net_amount');
-            });
-
-            $(document).on('input', '#edit_taxable_value, #edit_gst', function () {
-                calculateNetAmount('#edit_taxable_value', '#edit_gst', '#edit_net_amount');
-            });
+            // Auto-calculation logic removed since tax info isn't on product level anymore.
         });
     </script>
 

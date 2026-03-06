@@ -31,7 +31,8 @@ class DistributorRetailerApiController extends Controller
      *                 @OA\Property(property="address", type="string"),
      *                 @OA\Property(property="total_orders", type="integer"),
      *                 @OA\Property(property="total_revenue", type="string"),
-     *                 @OA\Property(property="top_product", type="string")
+     *                 @OA\Property(property="top_product", type="string"),
+     *                 @OA\Property(property="orders_needing_action", type="integer")
      *             )),
      *             @OA\Property(property="total", type="integer"),
      *             @OA\Property(property="current_page", type="integer"),
@@ -82,17 +83,24 @@ class DistributorRetailerApiController extends Controller
                 ->orderByDesc('total_qty')
                 ->first();
 
+            // Count orders needing action (status = 'processing')
+            $ordersNeedingAction = RetailerOrder::where('retailer_id', $retailer->id)
+                ->where('distributor_id', $distributorId)
+                ->where('status', RetailerOrder::STATUS_PROCESSING)
+                ->count();
+
             return [
-                'id'            => $retailer->id,
-                'name'          => $retailer->user?->name ?? 'N/A',
-                'shop_name'     => $retailer->shop_name ?? 'N/A',
-                'email'         => $retailer->user?->email ?? 'N/A',
-                'phone'         => $retailer->user?->phone ?? 'N/A',
-                'address'       => $retailer->address ?? 'N/A',
+                'id'                    => $retailer->id,
+                'name'                  => $retailer->user?->name ?? 'N/A',
+                'shop_name'             => $retailer->shop_name ?? 'N/A',
+                'email'                 => $retailer->user?->email ?? 'N/A',
+                'phone'                 => $retailer->user?->phone ?? 'N/A',
+                'address'               => $retailer->address ?? 'N/A',
                 // Additional stats optionally appended
-                'total_orders'  => $stats->total_orders ?? 0,
-                'total_revenue' => number_format($stats->total_revenue ?? 0, 2),
-                'top_product'   => $topProduct ? $topProduct->product_name : 'No orders yet',
+                'total_orders'          => $stats->total_orders ?? 0,
+                'total_revenue'         => number_format($stats->total_revenue ?? 0, 2),
+                'top_product'           => $topProduct ? $topProduct->product_name : 'No orders yet',
+                'orders_needing_action' => $ordersNeedingAction,
             ];
         });
 
