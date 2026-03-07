@@ -59,5 +59,17 @@ Route::middleware('auth:api')->group(function () {
         Route::get('retailers', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getRetailers']);
         Route::get('retailers/{id}/loyalty-points', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getRetailerLoyaltyDetails']);
         Route::post('retailers/{id}/approve', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'approveRetailer']);
+
+        // Manage Retailer Orders
+        Route::get('retailer-orders', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getRetailerOrders']);
+        Route::post('retailer-orders/{id}/update-status', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'updateRetailerOrderStatus']);
+    });
+
+    // Field Staff Dashboard & Orders
+    Route::prefix('field-staff')->group(function () {
+        Route::get('dashboard', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'index']);
+        Route::get('retailer-orders', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'index']);
+        Route::get('retailer-orders/{id}', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'show']);
+        Route::post('retailer-orders/{id}/update-status', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'updateStatus']);
     });
 });

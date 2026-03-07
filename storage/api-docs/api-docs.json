@@ -1107,6 +1107,140 @@
                 ]
             }
         },
+        "/api/field-staff/dashboard": {
+            "get": {
+                "tags": [
+                    "Field Staff Dashboard"
+                ],
+                "summary": "Get Field Staff dashboard summary data",
+                "operationId": "501f1fef7b1dcf9a37a3b3aef3b0c154",
+                "responses": {
+                    "200": {
+                        "description": "Dashboard data for the logged-in Field Staff"
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/field-staff/retailer-orders": {
+            "get": {
+                "tags": [
+                    "Field Staff Retailer Orders"
+                ],
+                "summary": "List retailer orders assigned to the logged-in field staff",
+                "operationId": "d4300b1d349722a5ccc18c4847ebf19f",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of assigned retailer orders"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/field-staff/retailer-orders/{id}": {
+            "get": {
+                "tags": [
+                    "Field Staff Retailer Orders"
+                ],
+                "summary": "Get a single retailer order detail",
+                "operationId": "e6443e590080fabe35ea971a3dae3f13",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Order Details"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/field-staff/retailer-orders/{id}/update-status": {
+            "post": {
+                "tags": [
+                    "Field Staff Retailer Orders"
+                ],
+                "summary": "Accept, reject, or cancel a retailer order",
+                "description": "Field Staff can accept (moves to processing), reject, or cancel (if they placed it).",
+                "operationId": "4fe4bb96ee7c84cf9d9a1eba44b4f7a0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "processing",
+                                            "rejected",
+                                            "cancelled"
+                                        ]
+                                    },
+                                    "cancellation_reason": {
+                                        "description": "Required if status is cancelled",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Order status updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/distributor/inventory": {
             "get": {
                 "tags": [
@@ -1750,6 +1884,96 @@
                     }
                 ]
             }
+        },
+        "/api/sales-manager/retailer-orders": {
+            "get": {
+                "tags": [
+                    "Sales Manager Dashboard"
+                ],
+                "summary": "List all retailer orders under this Sales Manager",
+                "operationId": "6ec61769605dd12574e08adde5618fa6",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "processing",
+                                "accepted",
+                                "delivered",
+                                "cancelled",
+                                "rejected"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of retailer orders"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/sales-manager/retailer-orders/{id}/update-status": {
+            "post": {
+                "tags": [
+                    "Sales Manager Dashboard"
+                ],
+                "summary": "Accept or reject a pending retailer order",
+                "description": "Sales managers can accept a pending order (moves to processing) or reject it.",
+                "operationId": "21827c29f262d47f6d26b543c7145883",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "processing",
+                                            "rejected"
+                                        ]
+                                    },
+                                    "cancellation_reason": {
+                                        "description": "Required if status is rejected",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Order status updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -1785,6 +2009,14 @@
         {
             "name": "Distributor Retailer Orders",
             "description": "Distributor Retailer Orders"
+        },
+        {
+            "name": "Field Staff Dashboard",
+            "description": "Field Staff Dashboard"
+        },
+        {
+            "name": "Field Staff Retailer Orders",
+            "description": "Field Staff Retailer Orders"
         },
         {
             "name": "Inventory",

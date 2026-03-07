@@ -250,4 +250,119 @@ class SalesManagerDashboardApiController extends Controller
             })
         ]);
     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/sales-manager/retailer-orders",
+     *     summary="List all retailer orders under this Sales Manager",
+     *     tags={"Sales Manager Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="status", in="query", required=false, @OA\Schema(type="string", enum={"pending","processing","accepted","delivered","cancelled","rejected"})),
+     *     @OA\Response(response=200, description="List of retailer orders")
+     * )
+     */
+    public function getRetailerOrders(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
+
+        $salesManager = $user->salesManager;
+        $fieldStaffIds = $salesManager->fieldStaffs->pluck('id');
+
+        $query = RetailerOrder::with(['retailer.user', 'fieldStaff.user', 'items.product', 'distributor.user'])
+            ->whereHas('retailer', function ($q) use ($fieldStaffIds) {
+                $q->whereIn('field_staff_id', $fieldStaffIds);
+            })->orWhereIn('fieldstaff_id', $fieldStaffIds);
+
+        if ($request->has('status') && !empty($request->status)) {
+            $query->where('status', $request->status);
+        }
+
+        $orders = $query->latest()->get();
+
+        return response()->json($orders->map(function ($order) {
+            return [
+                'id' => $order->id,
+                'order_code' => $order->order_code,
+                'retailer_name' => $order->retailer->user->name ?? 'N/A',
+                'field_staff_name' => $order->fieldStaff->user->name ?? 'N/A',
+                'total_amount' => $order->total_amount,
+                'status' => $order->status,
+                'placed_at' => $order->placed_at,
+                'items' => $order->items->map(function ($item) {
+                    return [
+                        'product_name' => $item->product->product_name ?? 'N/A',
+                        'quantity' => $item->quantity,
+                        'price' => $item->price,
+                        'subtotal' => $item->subtotal
+                    ];
+                })
+            ];
+        }));
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/sales-manager/retailer-orders/{id}/update-status",
+     *     summary="Accept or reject a pending retailer order",
+     *     description="Sales managers can accept a pending order (moves to processing) or reject it.",
+     *     tags={"Sales Manager Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", enum={"processing", "rejected"}),
+     *             @OA\Property(property="cancellation_reason", type="string", description="Required if status is rejected")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Order status updated")
+     * )
+     */
+    public function updateRetailerOrderStatus(Request $request, $id)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
+
+        $request->validate([
+            'status' => 'required|in:processing,rejected',
+            'cancellation_reason' => 'required_if:status,rejected|string|nullable'
+        ]);
+
+        $salesManager = $user->salesManager;
+        $fieldStaffIds = $salesManager->fieldStaffs->pluck('id');
+
+        $order = RetailerOrder::where(function ($q) use ($fieldStaffIds) {
+            $q->whereHas('retailer', function ($sq) use ($fieldStaffIds) {
+                $sq->whereIn('field_staff_id', $fieldStaffIds);
+            })->orWhereIn('fieldstaff_id', $fieldStaffIds);
+        })->findOrFail($id);
+
+        if ($order->status !== RetailerOrder::STATUS_PENDING) {
+            return response()->json(['error' => 'Only pending orders can be updated by the Sales Manager.'], 400);
+        }
+
+        $order->status = $request->status;
+        if ($request->status === RetailerOrder::STATUS_REJECTED) {
+            $order->cancellation_reason = $request->cancellation_reason;
+        }
+        $order->save();
+
+        // If moved to processing, notify Admin
+        if ($order->status === RetailerOrder::STATUS_PROCESSING) {
+            if (method_exists($this, 'deleteOrderNotifications')) {
+                $this->deleteOrderNotifications($order->id, 'retailer_order');
+            }
+            $admins = \App\Models\User::role(['admin', 'superadmin'])->get();
+            foreach ($admins as $admin) {
+                if (method_exists($this, 'notifyUnique')) {
+                    $this->notifyUnique($admin, new \App\Notifications\OrderActionRequired($order, "Retailer Order #{$order->order_code} has been processed and is ready for your approval.", url('/approvals/retailers'), 'retailer_order'));
+                }
+            }
+        }
+
+        return response()->json(['message' => 'Order status updated to ' . $order->status . '.']);
+    }
 }

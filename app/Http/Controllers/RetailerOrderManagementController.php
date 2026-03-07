@@ -244,6 +244,19 @@ class RetailerOrderManagementController extends Controller
                                 });
                         });
                     }
+                } elseif ($user->hasRole('salesmanager')) {
+                    $salesManager = $user->salesManager;
+                    if ($salesManager) {
+                        $query->where(function ($q) use ($salesManager) {
+                            $q->whereHas('retailer', function ($subQ) use ($salesManager) {
+                                $subQ->whereHas('fieldStaff', function ($fsQ) use ($salesManager) {
+                                    $fsQ->where('sales_manager_id', $salesManager->id);
+                                });
+                            })->orWhereHas('fieldStaff', function ($fsQ) use ($salesManager) {
+                                $fsQ->where('sales_manager_id', $salesManager->id);
+                            });
+                        });
+                    }
                 } elseif ($user->hasRole('retailer')) {
                     $retailer = $user->retailer;
                     if ($retailer) {
