@@ -104,6 +104,19 @@ class PendingApprovalController extends Controller
                     });
                 }
 
+                if ($user->hasRole('salesmanager') && $user->salesManager) {
+                    $salesManagerId = $user->salesManager->id;
+                    $query->where(function ($q) use ($salesManagerId) {
+                        $q->whereHas('retailer', function ($subQ) use ($salesManagerId) {
+                            $subQ->whereHas('fieldStaff', function ($fsQ) use ($salesManagerId) {
+                                $fsQ->where('sales_manager_id', $salesManagerId);
+                            });
+                        })->orWhereHas('fieldStaff', function ($fsQ) use ($salesManagerId) {
+                            $fsQ->where('sales_manager_id', $salesManagerId);
+                        });
+                    });
+                }
+
                 if ($request->input('status')) {
                     $query->where('status', $request->input('status'));
                 }
