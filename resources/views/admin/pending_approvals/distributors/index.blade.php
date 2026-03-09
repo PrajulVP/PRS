@@ -181,9 +181,9 @@
     <div class="modal fade" id="viewOrderModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Order Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header bg-primary py-3">
+                    <h5 class="modal-title fw-bold text-white">Order Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row mb-3">
@@ -219,103 +219,101 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        {{-- Approve Order Modal for Sales Managers --}}
-        <div class="modal fade" id="approveOrderModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header bg-success text-white">
-                        <h5 class="modal-title text-white"><i class="fa fa-check-circle me-2"></i> Approve Distributor Order
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <form id="approveOrderForm">
-                        <div class="modal-body">
-                            <input type="hidden" id="approve_order_id" name="order_id">
-
-                            <div class="row mb-3 pb-3 border-bottom">
-                                <div class="col-md-6">
-                                    <p class="mb-1 text-muted small text-uppercase fw-bold">Order Information</p>
-                                    <div class="fw-bold text-dark" id="approve_order_code_display">--</div>
-                                    <div class="small text-muted" id="approve_order_date_display">--</div>
-                                </div>
-                                <div class="col-md-6 text-md-end">
-                                    <p class="mb-1 text-muted small text-uppercase fw-bold">Distributor</p>
-                                    <div class="fw-bold text-primary" id="approve_distributor_display">--</div>
-                                </div>
-                            </div>
-
-                            <h6 class="fw-bold mb-3"><i class="fa fa-list me-2"></i> Order Items</h6>
-                            <div class="invoice-list mb-3">
-                                <div class="invoice-list-header">
-                                    <div style="flex: 2;">Product Name</div>
-                                    <div style="flex: 1;" class="text-center">Quantity</div>
-                                    <div style="flex: 1;" class="text-end">Value (PTS)</div>
-                                </div>
-                                <div id="approve_items_list">
-                                    <!-- Items will be populated here -->
-                                </div>
-                                <div class="invoice-list-footer">
-                                    <div class="me-3">Total Value:</div>
-                                    <div class="text-primary fs-5" id="approve_total_display">₹0</div>
-                                </div>
-                            </div>
-
-                            <div class="alert alert-info py-2 mb-0">
-                                <small><i class="fa fa-info-circle"></i> Approving this order moves it to the Admin for
-                                    processing and invoice generation.</small>
-                            </div>
-                        </div>
-                        <div class="modal-footer bg-light">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-success px-4">Confirm Approval</button>
-                        </div>
-                    </form>
+    {{-- Approve Order Modal for Sales Managers --}}
+    <div class="modal fade" id="approveOrderModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary py-3">
+                    <h5 class="modal-title fw-bold" style="color: white !important;"><i class="fa fa-check-circle me-2"
+                            style="color: white !important;"></i> Approve Order
+                    </h5>
+                    <button type="button" class="btn-close" style="filter: brightness(0) invert(1) !important; opacity: 1;"
+                        data-bs-dismiss="modal"></button>
                 </div>
+                <form id="approveOrderForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="approve_order_id" name="order_id">
+
+                        <div class="row mb-3 pb-3 border-bottom">
+                            <div class="col-md-6">
+                                <p class="mb-1 text-muted small text-uppercase fw-bold">Order Information</p>
+                                <div class="fw-bold text-dark" id="approve_order_code_display">--</div>
+                                <div class="small text-muted" id="approve_order_date_display">--</div>
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <p class="mb-1 text-muted small text-uppercase fw-bold">Distributor</p>
+                                <div class="fw-bold text-primary" id="approve_distributor_display">--</div>
+                            </div>
+                        </div>
+
+                        <h6 class="fw-bold mb-3"><i class="fa fa-list me-2"></i> Order Items</h6>
+                        <div class="invoice-list mb-3">
+                            <div class="invoice-list-header">
+                                <div style="flex: 2;">Product Name</div>
+                                <div style="flex: 1;" class="text-center">Quantity</div>
+                                <div style="flex: 1;" class="text-end">Value (PTS)</div>
+                            </div>
+                            <div id="approve_items_list">
+                                <!-- Items will be populated here -->
+                            </div>
+                            <div class="invoice-list-footer">
+                                <div class="me-3">Total Value:</div>
+                                <div class="text-primary fs-5" id="approve_total_display">₹0</div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info py-2 mb-0">
+                            <small><i class="fa fa-info-circle"></i> Approving this order moves it to the Admin for
+                                processing and invoice generation.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary px-4">Confirm Approval</button>
+                    </div>
+                </form>
             </div>
         </div>
+    </div>
 
-        {{-- Reject Order Modal --}}
-        <div class="modal fade" id="rejectOrderModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header bg-danger text-white">
-                        <h5 class="modal-title text-white">Reject Order</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <form id="rejectOrderForm">
-                        <div class="modal-body">
-                            <input type="hidden" id="reject_order_id" name="order_id">
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Reason for Rejection</label>
-                                <textarea class="form-control" name="reason" rows="3" required
-                                    placeholder="Enter rejection reason..."></textarea>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-danger">Confirm Rejection</button>
-                        </div>
-                    </form>
+    {{-- Reject Order Modal --}}
+    <div class="modal fade" id="rejectOrderModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger py-3">
+                    <h5 class="modal-title fw-bold text-white">Reject Order</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
+                <form id="rejectOrderForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="reject_order_id" name="order_id">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Reason for Rejection</label>
+                            <textarea class="form-control" name="reason" rows="3" required
+                                placeholder="Enter rejection reason..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Confirm Rejection</button>
+                    </div>
+                </form>
             </div>
         </div>
-
-    </div>
-    </div>
-    </div>
-
     </div>
 
     {{-- Process Order Modal for Admins --}}
     <div class="modal fade" id="processOrderModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 1000px;">
             <div class="modal-content shadow-lg border-0 overflow-hidden">
-                <div class="modal-header bg-primary text-white py-3">
-                    <h5 class="modal-title fw-bold text-white"><i class="fa fa-file-invoice-dollar me-2"></i> Professional
-                        Order
-                        Approval & Batch Entry</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <div class="modal-header py-3 bg-primary">
+                    <h5 class="modal-title fw-bold" style="color: white !important;"><i
+                            class="fa fa-file-invoice-dollar me-2" style="color: white !important;"></i>
+                        Professional Order Approval & Batch Entry</h5>
+                    <button type="button" class="btn-close" style="filter: brightness(0) invert(1) !important; opacity: 1;"
+                        data-bs-dismiss="modal"></button>
                 </div>
                 <form id="processOrderForm">
                     <div class="modal-body p-0">
@@ -370,7 +368,7 @@
                                     <div class="mb-3">
                                         <i class="fa fa-robot fa-4x text-light"></i>
                                     </div>
-                                    <h5 class="text-muted">Waiting for AI Scan...</h5>
+                                    <h5 class="text-muted">Waiting for Invoice Scan...</h5>
                                     <p class="text-muted small">Upload an invoice to automatically process batch details.
                                     </p>
                                 </div>
@@ -476,17 +474,16 @@
                             </div>
                         </div>
                     </div>
+                    <div class="modal-footer bg-light border-top-0 px-4 py-3">
+                        <button type="button" class="btn btn-link link-secondary fw-bold text-decoration-none"
+                            data-bs-dismiss="modal">Cancel Approval</button>
+                        <button type="submit" id="btn_approve_order" class="btn btn-primary px-4 py-2 fw-bold shadow">
+                            <i class="fa fa-check-circle me-1"></i> Confirm & Approve Order
+                        </button>
+                    </div>
+                </form>
             </div>
-            <div class="modal-footer bg-light border-top-0 px-4 py-3">
-                <button type="button" class="btn btn-link link-secondary fw-bold text-decoration-none"
-                    data-bs-dismiss="modal">Cancel Approval</button>
-                <button type="submit" id="btn_approve_order" class="btn btn-primary px-4 py-2 fw-bold shadow">
-                    <i class="fa fa-check-circle me-1"></i> Confirm & Approve Order
-                </button>
-            </div>
-            </form>
         </div>
-    </div>
     </div>
 
     {{-- Hidden file input for AI Scanning --}}
@@ -499,9 +496,10 @@
     <div class="modal fade" id="removeInvoiceConfirmModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirm Invoice Removal</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-header bg-danger py-3">
+                    <h5 class="modal-title fw-bold text-white">Confirm Invoice Removal</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <p class="mb-0">Are you sure you want to remove this invoice? This action cannot be undone.</p>
@@ -518,9 +516,9 @@
     <div class="modal fade" id="paymentStatusModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-sm">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Payment Status</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header bg-primary py-3">
+                    <h5 class="modal-title fw-bold text-white">Payment Status</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <form id="paymentStatusForm">
                     <div class="modal-body">
@@ -608,7 +606,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
         // Set PDF.js worker
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.j            s';
         const isAdmin = @json(Auth::user()->hasRole('admin') || Auth::user()->hasRole('superadmin'));
         const isSalesManager = @json(Auth::user()->hasRole('salesmanager'));
 
@@ -927,15 +925,15 @@
                             batchHtml += '</div>';
                         }
                         list.append(`
-                                                    <div class="invoice-list-row">
-                                                        <div style="flex: 2;">
-                                                            <div class="fw-bold text-dark">${item.product_name}</div>
-                                                            ${batchHtml}
-                                                        </div>
-                                                        <div style="flex: 1;" class="text-center">${item.quantity} ${item.unit || ''}</div>
-                                                        <div style="flex: 1;" class="text-end fw-bold text-primary">₹${item.total_amount}</div>
-                                                    </div>
-                                                `);
+                                                                                        <div class="invoice-list-row">
+                                                                                            <div style="flex: 2;">
+                                                                                                <div class="fw-bold text-dark">${item.product_name}</div>
+                                                                                                ${batchHtml}
+                                                                                            </div>
+                                                                                            <div style="flex: 1;" class="text-center">${item.quantity} ${item.unit || ''}</div>
+                                                                                            <div style="flex: 1;" class="text-end fw-bold text-primary">₹${item.total_amount}</div>
+                                                                                        </div>
+                                                                                    `);
                     });
                 } else { list.append('<div class="invoice-list-row justify-content-center text-muted">No items</div>'); }
                 $('#viewOrderModal').modal('show');
@@ -958,12 +956,12 @@
                 if (row.items && row.items.length) {
                     row.items.forEach(item => {
                         list.append(`
-                                                            <div class="invoice-list-row">
-                                                                <div style="flex: 2;" class="fw-bold text-dark">${item.product_name}</div>
-                                                                <div style="flex: 1;" class="text-center text-muted small">${item.quantity} ${item.unit || 'Box'}</div>
-                                                                <div style="flex: 1;" class="text-end fw-bold text-primary">₹${item.total_amount}</div>
-                                                            </div>
-                                                        `);
+                                                                                                <div class="invoice-list-row">
+                                                                                                    <div style="flex: 2;" class="fw-bold text-dark">${item.product_name}</div>
+                                                                                                    <div style="flex: 1;" class="text-center text-muted small">${item.quantity} ${item.unit || 'Box'}</div>
+                                                                                                    <div style="flex: 1;" class="text-end fw-bold text-primary">₹${item.total_amount}</div>
+                                                                                                </div>
+                                                                                            `);
                     });
                 } else {
                     list.append('<div class="invoice-list-row justify-content-center text-muted">No items found</div>');
@@ -971,6 +969,38 @@
 
                 $('#approveOrderForm')[0].reset();
                 $('#approveOrderModal').modal('show');
+            });
+
+            // Sales Manager Approve Form Submit
+            $('#approveOrderForm').submit(function (e) {
+                e.preventDefault();
+                let formData = new FormData(this);
+                formData.append('_token', '{{ csrf_token() }}');
+                let id = $('#approve_order_id').val();
+                let url = "{{ route('admin.distributor-orders.accept-by-sales-manager', ':id') }}".replace(':id', id);
+
+                let $btn = $(this).find('button[type="submit"]');
+                let oldText = $btn.text();
+                $btn.prop('disabled', true).text('Approving...');
+
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (res) {
+                        $('#approveOrderModal').modal('hide');
+                        table.ajax.reload(null, false);
+                        showToast('success', res.success || 'Order approved successfully');
+                    },
+                    error: function (xhr) {
+                        showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Failed to approve order');
+                    },
+                    complete: function () {
+                        $btn.prop('disabled', false).text(oldText);
+                    }
+                });
             });
 
             // Admin Process/Accept Click
@@ -1006,45 +1036,45 @@
                 if (row && row.items) {
                     row.items.forEach(item => {
                         let rowHtml = `
-                                        <div data-item-id="${item.order_item_id}">
-                                            <div class="d-none">
-                                                <div class="fw-bold product-name-marker">${item.product_name}</div>
-                                                <input type="number" name="batches[${item.order_item_id}][0][quantity]" value="${item.quantity}">
-                                            </div>
-                                            <div class="d-none" id="batches_for_${item.order_item_id}">
-                                                <input type="text" name="batches[${item.order_item_id}][0][batch_no]" class="hidden-batch-val" required>
-                                                <input type="date" name="batches[${item.order_item_id}][0][expiry_date]" class="hidden-expiry-val" required>
+                                                                            <div data-item-id="${item.order_item_id}">
+                                                                                <div class="d-none">
+                                                                                    <div class="fw-bold product-name-marker">${item.product_name}</div>
+                                                                                    <input type="number" name="batches[${item.order_item_id}][0][quantity]" value="${item.quantity}">
+                                                                                </div>
+                                                                                <div class="d-none" id="batches_for_${item.order_item_id}">
+                                                                                    <input type="text" name="batches[${item.order_item_id}][0][batch_no]" class="hidden-batch-val" required>
+                                                                                    <input type="date" name="batches[${item.order_item_id}][0][expiry_date]" class="hidden-expiry-val" required>
 
-                                                <input type="hidden" name="batches[${item.order_item_id}][0][mrp]" class="hidden-mrp-val">
-                                                <input type="hidden" name="batches[${item.order_item_id}][0][ptr]" class="hidden-ptr-val">
-                                                <input type="hidden" name="batches[${item.order_item_id}][0][pts]" class="hidden-pts-val">
-                                                <input type="hidden" name="batches[${item.order_item_id}][0][taxable_value]" class="hidden-taxable-val">
-                                                <input type="hidden" name="batches[${item.order_item_id}][0][cgst]" class="hidden-cgst-val">
-                                                <input type="hidden" name="batches[${item.order_item_id}][0][sgst]" class="hidden-sgst-val">
-                                                <input type="hidden" name="batches[${item.order_item_id}][0][igst]" class="hidden-igst-val">
-                                                <input type="hidden" name="batches[${item.order_item_id}][0][net_amount]" class="hidden-net-val">
-                                            </div>
-                                        </div>
-                                    `;
+                                                                                    <input type="hidden" name="batches[${item.order_item_id}][0][mrp]" class="hidden-mrp-val">
+                                                                                    <input type="hidden" name="batches[${item.order_item_id}][0][ptr]" class="hidden-ptr-val">
+                                                                                    <input type="hidden" name="batches[${item.order_item_id}][0][pts]" class="hidden-pts-val">
+                                                                                    <input type="hidden" name="batches[${item.order_item_id}][0][taxable_value]" class="hidden-taxable-val">
+                                                                                    <input type="hidden" name="batches[${item.order_item_id}][0][cgst]" class="hidden-cgst-val">
+                                                                                    <input type="hidden" name="batches[${item.order_item_id}][0][sgst]" class="hidden-sgst-val">
+                                                                                    <input type="hidden" name="batches[${item.order_item_id}][0][igst]" class="hidden-igst-val">
+                                                                                    <input type="hidden" name="batches[${item.order_item_id}][0][net_amount]" class="hidden-net-val">
+                                                                                </div>
+                                                                            </div>
+                                                                        `;
                         tbody.append(rowHtml);
 
                         let vRowHtml = `
-                                        <div id="v_row_${item.order_item_id}" class="invoice-list-row p-2">
-                                             <div class="ai-col-product fw-bold text-dark small ps-2">${item.product_name}</div>
-                                             <div class="ai-col-batch">
-                                                 <input type="text" class="form-control form-control-sm v-batch-input border-0 bg-light p-1" 
-                                                        data-id="${item.order_item_id}" placeholder="Wait AI...">
-                                             </div>
-                                             <div class="ai-col-expiry">
-                                                 <input type="text" class="form-control form-control-sm v-expiry-input border-0 bg-light p-1" 
-                                                        data-id="${item.order_item_id}" placeholder="MM/YY">
-                                             </div>
-                                             <div class="ai-col-qty fw-bold text-primary v-qty-display" data-original-unit="${item.unit || ''}">${item.quantity} ${item.unit || ''}</div>
-                                             <div class="ai-col-value fw-bold text-dark v-taxable-display">--</div>
-                                             <div class="ai-col-value text-muted v-cgst-display">--</div>
-                                             <div class="ai-col-value text-muted v-sgst-display pe-2">--</div>
-                                        </div>
-                                    `;
+                                                                            <div id="v_row_${item.order_item_id}" class="invoice-list-row p-2">
+                                                                                 <div class="ai-col-product fw-bold text-dark small ps-2">${item.product_name}</div>
+                                                                                 <div class="ai-col-batch">
+                                                                                     <input type="text" class="form-control form-control-sm v-batch-input border-0 bg-light p-1" 
+                                                                                            data-id="${item.order_item_id}" placeholder="Wait AI...">
+                                                                                 </div>
+                                                                                 <div class="ai-col-expiry">
+                                                                                     <input type="text" class="form-control form-control-sm v-expiry-input border-0 bg-light p-1" 
+                                                                                            data-id="${item.order_item_id}" placeholder="MM/YY">
+                                                                                 </div>
+                                                                                 <div class="ai-col-qty fw-bold text-primary v-qty-display" data-original-unit="${item.unit || ''}">${item.quantity} ${item.unit || ''}</div>
+                                                                                 <div class="ai-col-value fw-bold text-dark v-taxable-display">--</div>
+                                                                                 <div class="ai-col-value text-muted v-cgst-display">--</div>
+                                                                                 <div class="ai-col-value text-muted v-sgst-display pe-2">--</div>
+                                                                            </div>
+                                                                        `;
                         vbody.append(vRowHtml);
                     });
                 }
