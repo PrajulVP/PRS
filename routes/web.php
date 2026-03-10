@@ -190,3 +190,10 @@ Route::prefix('system')->name('system.')->group(function () {
     Route::get('migrate-fresh-seed', [SystemController::class, 'migrateFreshSeed'])->name('migrate.fresh.seed');
     Route::get('optimize', [SystemController::class, 'optimize'])->name('optimize');
 });
+
+Route::get('/check-ocr-log', function() {
+    $path = storage_path('logs/laravel.log');
+    if (!file_exists($path)) return "Log file not found.";
+    $lines = file($path);
+    return "<pre>" . implode("", array_slice($lines, -50)) . "</pre>";
+});

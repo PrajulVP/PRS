@@ -17,7 +17,10 @@ class OcrService
      */
     public function processInvoice(UploadedFile $file, string $type = 'admin')
     {
-        $apiUrl = "http://192.168.1.10:5000/{$type}";
+        $baseUrl = config('services.ocr.url', 'http://192.168.1.10:5000');
+        $apiUrl = rtrim($baseUrl, '/') . "/{$type}";
+
+        Log::info("OCR Processing: Calling URL: " . $apiUrl);
 
         try {
             $response = Http::timeout(60)
@@ -32,10 +35,10 @@ class OcrService
                 return $response->json();
             }
 
-            Log::error('OCR API Error: ' . $response->body());
+            Log::error("OCR API Error at {$apiUrl}: HTTP Status {$response->status()}, Body: " . $response->body());
             return null;
         } catch (\Exception $e) {
-            Log::error('OCR API Connection Failed: ' . $e->getMessage());
+            Log::error("OCR API Connection Failed at {$apiUrl}: " . $e->getMessage());
             return null;
         }
     }

@@ -43,4 +43,8 @@ return [
         'key' => env('GEMINI_API_KEY'),
     ],
 
+    'ocr' => [
+        'url' => env('OCR_API_URL', 'http://192.168.1.10:5000'),
+    ],
+
 ];
