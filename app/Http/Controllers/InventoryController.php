@@ -146,7 +146,7 @@ class InventoryController extends Controller
                         'distributor_id' => $i->distributor_id,
                         'distributor_name' => $i->distributor?->user?->name ?? 'N/A',
                         'stock' => (int) $i->stock,
-                        'image' => $i->product && $i->product->image ? asset('storage/' . $i->product->image) : asset('admin/assets/images/dashboard/product-1.png'), // Placeholder
+                        'image' => $i->product && $i->product->image ? \Illuminate\Support\Facades\Storage::disk('public')->url($i->product->image) : asset('admin/assets/images/dashboard/product-1.png'), // Placeholder
                         'batch_no' => $i->batch_no ?? '-',
                         'expiry_date' => $i->expiry_date ? (function ($date) {
                             $parsed = \Carbon\Carbon::parse($date);
