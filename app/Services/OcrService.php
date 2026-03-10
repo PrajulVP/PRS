@@ -17,7 +17,8 @@ class OcrService
      */
     public function processInvoice(UploadedFile $file, string $type = 'admin')
     {
-        $apiUrl = "http://192.168.1.10:5000/{$type}";
+        $basePath = env('OCR_API_URL', 'http://13.204.159.20:5050');
+        $apiUrl = rtrim($basePath, '/') . "/{$type}";
 
         try {
             $response = Http::timeout(60)
