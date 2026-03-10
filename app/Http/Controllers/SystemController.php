@@ -91,4 +91,34 @@ class SystemController extends Controller
             ], 500);
         }
     }
+
+    public function getOcrLogs()
+    {
+        try {
+            $logFile = storage_path('logs/laravel.log');
+            if (!file_exists($logFile)) {
+                return response()->json(['message' => 'Log file not found.'], 404);
+            }
+
+            // Read the last 1MB of the log file for performance
+            $size = filesize($logFile);
+            $handle = fopen($logFile, 'r');
+            $readSize = min($size, 1024 * 1024); // 1MB
+            fseek($handle, -$readSize, SEEK_END);
+            $content = fread($handle, $readSize);
+            fclose($handle);
+
+            $lines = explode("\n", $content);
+            $ocrLogs = array_filter($lines, function ($line) {
+                return str_contains($line, 'OCR API');
+            });
+
+            return response()->json([
+                'status' => 'success',
+                'logs' => array_values(array_slice($ocrLogs, -50)) // Return last 50 OCR entries
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
 }
