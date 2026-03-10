@@ -312,6 +312,7 @@ class DistributorRetailerOrderController extends Controller
                     }
 
                     $totalAllocated = 0;
+                    $orderItem->batches()->delete(); // Clear existing batches to prevent duplicates due to MyISAM lacking rollback
                     foreach ($allocation['batches'] as $batchData) {
                         $inventory = \App\Models\Inventory::where('distributor_id', $distributor->id)
                             ->where('product_id', $product->id)
@@ -320,7 +321,7 @@ class DistributorRetailerOrderController extends Controller
                         $deductQty = $batchData['quantity'] * $multiplier;
 
                         if ($inventory->stock < $deductQty) {
-                            throw new \Exception("Insufficient stock in batch {$inventory->batch_no} for product {$product->product_name}");
+                            throw new \Exception("Not enough stock in batch {$inventory->batch_no} for product {$product->product_name}");
                         }
 
                         DB::table('inventories')->where('id', $inventory->id)->decrement('stock', $deductQty);
@@ -335,14 +336,15 @@ class DistributorRetailerOrderController extends Controller
                         $totalAllocated += $batchData['quantity'];
                     }
 
-                    if (abs($totalAllocated - $orderItem->quantity) > 0.001) {
-                        throw new \Exception("Total allocated quantity ({$totalAllocated}) does not match ordered quantity ({$orderItem->quantity}) for {$product->product_name}");
+                    if ($totalAllocated < $orderItem->quantity) {
+                        throw new \Exception("Total allocated quantity ({$totalAllocated}) is less than ordered quantity ({$orderItem->quantity}) for {$product->product_name}");
                     }
                 }
             } else {
                 // Fallback to FEFO
                 foreach ($retailerOrder->items as $orderItem) {
                     $product = $orderItem->product;
+                    $orderItem->batches()->delete(); // Clear existing batches to prevent duplicates due to MyISAM lacking rollback
                     $multiplier = 1;
                     if ($orderItem->unit === 'Box') {
                         $multiplier = (int)($product->box_size ?? 1);

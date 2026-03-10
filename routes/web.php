@@ -173,7 +173,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::prefix('retailer')->name('retailer.')->group(function () {
-        Route::get('/orders', [RetailerOrderController::class, 'retailerIndex'])->name('orders.index');
+        Route::get('/orders', [RetailerOrderManagementController::class, 'index'])->name('orders.index');
         Route::post('/orders', [RetailerOrderController::class, 'store'])->name('orders.store');
         Route::post('/orders/{retailerOrder}/confirm-delivery', [RetailerOrderController::class, 'confirmDelivery'])->name('orders.confirmDelivery');
     });

@@ -40,6 +40,7 @@
                                             <option value="Carton">Carton</option>
                                             <option value="Box">Box</option>
                                             <option value="Strips">Strips</option>
+                                            <option value="Nos">Nos</option>
                                         </select>
                                     </div>
                                 </div>
@@ -381,6 +382,7 @@
                             $unitSelect.append('<option value="Strips">Strips</option>');
                             $unitSelect.append('<option value="Box">Box</option>');
                             $unitSelect.append('<option value="Carton">Carton</option>');
+                            $unitSelect.append('<option value="Nos">Nos</option>'); // Added manual override
                             $('#ptsLabel').text("PTS (Per Strip)");
                         }
 
@@ -449,35 +451,36 @@
                     let rowClass = (key === lastAddedKey) ? 'new-row' : '';
 
                     tbody.append(`
-                                                                        <tr class="${rowClass}">
-                                                                            <td class="ps-4 text-muted fw-bold small">${index++}</td>
-                                                                            <td>
-                                                                                <div class="fw-bold text-dark font-outfit">${item.name}</div>
-                                                                                <div class="small text-muted text-uppercase" style="font-size: 0.65rem;">System Verified</div>
-                                                                                <input type="hidden" name="items[${key}][product_id]" value="${item.id}">
-                                                                            </td>
-                                                                            <td class="text-center">
-                                                                                <div class="input-group input-group-sm mx-auto" style="max-width: 160px;">
-                                                                                    <input type="number" class="form-control qty-change font-outfit" data-key="${key}" value="${item.qty}" name="items[${key}][quantity]" min="1" style="border-radius: 4px 0 0 4px;">
-                                                                                    <select class="form-select unit-change font-outfit bg-light-soft" data-key="${key}" name="items[${key}][unit]" style="border-radius: 0 4px 4px 0;">
-                                                                                        ${item.is_count ? `<option value="Nos" selected>Nos</option>` : `
-                                                                                        <option value="Carton" ${item.unit === 'Carton' ? 'selected' : ''}>Carton</option>
-                                                                                        <option value="Box" ${item.unit === 'Box' ? 'selected' : ''}>Box</option>
-                                                                                        <option value="Strips" ${item.unit === 'Strips' ? 'selected' : ''}>Strips</option>
-                                                                                        `}
-                                                                                    </select>
-                                                                                </div>
-                                                                            </td>
-                                                                            <td class="fw-medium">₹${item.price.toFixed(2)}</td>
-                                                                            <td class="fw-bold text-primary">₹${lineTotal.toFixed(2)}</td>
-                                                                            <td class="text-center">
-                                                                                <button type="button" class="btn btn-danger btn-sm remove-btn mx-auto" 
-                                                                                    data-key="${key}" style="width: 38px; height: 32px;">X
-                                                                                    <i class="fa fa-trash-alt" style="font-size: 13px;"></i>
-                                                                                </button>
-                                                                            </td>
-                                                                        </tr>
-                                                                    `);
+                                                                            <tr class="${rowClass}">
+                                                                                <td class="ps-4 text-muted fw-bold small">${index++}</td>
+                                                                                <td>
+                                                                                    <div class="fw-bold text-dark font-outfit">${item.name}</div>
+                                                                                    <div class="small text-muted text-uppercase" style="font-size: 0.65rem;">System Verified</div>
+                                                                                    <input type="hidden" name="items[${key}][product_id]" value="${item.id}">
+                                                                                </td>
+                                                                                <td class="text-center">
+                                                                                    <div class="input-group input-group-sm mx-auto" style="max-width: 160px;">
+                                                                                        <input type="number" class="form-control qty-change font-outfit" data-key="${key}" value="${item.qty}" name="items[${key}][quantity]" min="1" style="border-radius: 4px 0 0 4px;">
+                                                                                        <select class="form-select unit-change font-outfit bg-light-soft" data-key="${key}" name="items[${key}][unit]" style="border-radius: 0 4px 4px 0;">
+                                                                                            ${item.is_count ? `<option value="Nos" selected>Nos</option>` : `
+                                                                                            <option value="Carton" ${item.unit === 'Carton' ? 'selected' : ''}>Carton</option>
+                                                                                            <option value="Box" ${item.unit === 'Box' ? 'selected' : ''}>Box</option>
+                                                                                            <option value="Strips" ${item.unit === 'Strips' ? 'selected' : ''}>Strips</option>
+                                                                                            <option value="Nos" ${item.unit === 'Nos' ? 'selected' : ''}>Nos</option>
+                                                                                            `}
+                                                                                        </select>
+                                                                                    </div>
+                                                                                </td>
+                                                                                <td class="fw-medium">₹${item.price.toFixed(2)}</td>
+                                                                                <td class="fw-bold text-primary">₹${lineTotal.toFixed(2)}</td>
+                                                                                <td class="text-center">
+                                                                                    <button type="button" class="btn btn-danger btn-sm remove-btn mx-auto" 
+                                                                                        data-key="${key}" style="width: 38px; height: 32px;">X
+                                                                                        <i class="fa fa-trash-alt" style="font-size: 13px;"></i>
+                                                                                    </button>
+                                                                                </td>
+                                                                            </tr>
+                                                                        `);
                 });
 
                 if (!hasItems) {

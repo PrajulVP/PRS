@@ -218,11 +218,10 @@ class RetailerOrderManagementController extends Controller
         if ($request->ajax()) {
             try {
                 // Determine query based on role
-                $query = RetailerOrder::with(['retailer.user', 'fieldStaff.user', 'items.product', 'distributor.user'])
-                    ->select('retailer_orders.*')
-                    ->distinct();
+                $query = RetailerOrder::with(['retailer.user', 'fieldStaff.user', 'items.product', 'distributor.user']);
                 /** @var \App\Models\User $user */
                 $user = Auth::user();
+                Log::info("RetailerOrderManagementController@index: User ID " . $user->id . " Role " . ($user->hasRole('retailer') ? 'retailer' : 'other'));
 
                 if ($user->hasRole('distributor')) {
                     $distributor = Auth::user()->distributor;
@@ -235,14 +234,14 @@ class RetailerOrderManagementController extends Controller
                 } elseif ($user->hasRole('fieldstaff')) {
                     $fieldStaff = $user->fieldStaff;
                     if ($fieldStaff) {
-                        // Show orders assigned to this field staff directly
-                        // OR orders from retailers managed by this field staff
                         $query->where(function ($q) use ($fieldStaff) {
                             $q->where('fieldstaff_id', $fieldStaff->id)
                                 ->orWhereHas('retailer', function ($subQ) use ($fieldStaff) {
                                     $subQ->where('field_staff_id', $fieldStaff->id);
                                 });
                         });
+                    } else {
+                        return response()->json(['draw' => intval($request->input('draw')), 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => []]);
                     }
                 } elseif ($user->hasRole('salesmanager')) {
                     $salesManager = $user->salesManager;
@@ -337,7 +336,7 @@ class RetailerOrderManagementController extends Controller
                     $productSummary = $order->items->map(function ($item) {
                         $pName = $item->product ? $item->product->product_name : 'Unknown Product';
                         return $pName . ' (' . $item->quantity . ')';
-                    })->implode(', ');
+                    })->implode('<br>');
 
                     return [
                         'id' => $order->id,
@@ -406,6 +405,16 @@ class RetailerOrderManagementController extends Controller
             }
         }
 
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $distributorProducts = collect();
+        if ($user->hasRole('retailer')) {
+            $retailer = $user->retailer;
+            if ($retailer && $retailer->distributor) {
+                $distributorProducts = $retailer->distributor->products;
+            }
+        }
+
         $fieldstaffs = FieldStaff::with('user')->get()->map(function ($fs) {
             return ['id' => $fs->id, 'name' => $fs->user->name];
         });
@@ -414,7 +423,7 @@ class RetailerOrderManagementController extends Controller
         $products = Product::all();
         $distributors = Distributor::with('user')->get();
 
-        return view('admin.orders.retailers.index', compact('fieldstaffs', 'retailers', 'products', 'distributors'));
+        return view('admin.orders.retailers.index', compact('fieldstaffs', 'retailers', 'products', 'distributors', 'distributorProducts'));
     }
 
     // Manager/Admin/Superadmin/FieldStaff/Distributor: Accept Order
@@ -556,13 +565,26 @@ class RetailerOrderManagementController extends Controller
                         } elseif ($orderItem->unit === 'Carton') {
                             $multiplier = (int)($product->box_size ?? 1) * (int)($product->carton_size ?? 1);
                         }
-
                         $totalAllocated = 0;
+                        if ($orderItem->batches) {
+                            $orderItem->batches()->delete(); // Clear existing batches
+                        }
                         foreach ($allocation['batches'] as $batchData) {
-                            $invId = str_replace(['"', "'"], '', $batchData['inventory_id']);
-                            $inventory = \App\Models\Inventory::where('distributor_id', $distributor->id)
-                                ->where('product_id', $product->id)
-                                ->findOrFail($invId);
+                            $invId = isset($batchData['inventory_id']) ? str_replace(['"', "'"], '', $batchData['inventory_id']) : null;
+
+                            $invQuery = \App\Models\Inventory::where('distributor_id', $distributor->id)
+                                ->where('product_id', $product->id);
+
+                            if ($invId) {
+                                $inventory = $invQuery->findOrFail($invId);
+                            } elseif (isset($batchData['batch_no'])) {
+                                $inventory = $invQuery->where('batch_no', $batchData['batch_no'])->first();
+                                if (!$inventory) {
+                                    throw new \Exception("Could not find batch '{$batchData['batch_no']}' in your inventory for {$product->product_name}. Please ensure the batch number matches exactly.");
+                                }
+                            } else {
+                                throw new \Exception("Inventory ID or Batch Number is required for allocation of {$product->product_name}");
+                            }
 
                             $deductQty = $batchData['quantity'] * $multiplier;
 
@@ -588,8 +610,8 @@ class RetailerOrderManagementController extends Controller
                             $totalAllocated += $batchData['quantity'];
                         }
 
-                        if ($totalAllocated != $orderItem->quantity) {
-                            throw new \Exception("Total allocated quantity ({$totalAllocated}) does not match ordered quantity ({$orderItem->quantity}) for {$product->product_name}");
+                        if ($totalAllocated < $orderItem->quantity) {
+                            throw new \Exception("Total allocated quantity ({$totalAllocated}) is less than ordered quantity ({$orderItem->quantity}) for {$product->product_name}");
                         }
                     }
                 } else {
@@ -643,6 +665,16 @@ class RetailerOrderManagementController extends Controller
                 if ($request->filled('payment_status') && in_array($request->payment_status, ['pending', 'paid'])) {
                     $updateData['payment_status'] = $request->payment_status;
                 }
+
+                if ($request->hasFile('invoice')) {
+                    $file = $request->file('invoice');
+                    $filename = 'invoice_' . $retailerOrder->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+                    $path = $file->storeAs('retailer_invoices', $filename, 'public');
+                    $updateData['invoice_path'] = $path;
+                } else {
+                    throw new \Exception('Invoice upload is strictly required for approval.');
+                }
+
                 $this->clearOrderNotifications($retailerOrder->id, 'retailer_order');
                 $retailerOrder->update($updateData);
 
@@ -652,19 +684,9 @@ class RetailerOrderManagementController extends Controller
                 return response()->json(['error' => $e->getMessage()], 422);
             }
 
-
-            if ($request->hasFile('invoice')) {
-                $file = $request->file('invoice');
-                $filename = 'invoice_' . $retailerOrder->id . '_' . time() . '.' . $file->getClientOriginalExtension();
-                $path = $file->storeAs('retailer_invoices', $filename, 'public');
-                $retailerOrder->update(['invoice_path' => $path]);
-            } else {
-                return response()->json(['error' => 'Invoice upload is strictly required for approval.'], 422);
-            }
-
             // Notify Retailer
             if ($retailerOrder->retailer && $retailerOrder->retailer->user) {
-                $retailerOrder->retailer->user->notify(new OrderActionRequired($retailerOrder, "Your order #{$retailerOrder->order_code} has been accepted. Please confirm your order.", url('/retailer/orders'), 'retailer_order'));
+                $this->notifyUnique($retailerOrder->retailer->user, new OrderActionRequired($retailerOrder, "Your order #{$retailerOrder->order_code} has been accepted. Please confirm your order.", url('/retailer/orders'), 'retailer_order'));
             }
 
             // Award Loyalty Points on Distributor Acceptance
@@ -716,13 +738,16 @@ class RetailerOrderManagementController extends Controller
                 }
                 return response()->json(['success' => 'Order accepted (Field Staff stage bypassed by Admin)!']);
             } elseif ($status === 'processing') {
-                $retailerOrder->update(['status' => 'accepted']);
-
                 if ($request->hasFile('invoice')) {
                     $file = $request->file('invoice');
                     $filename = 'invoice_' . $retailerOrder->id . '_' . time() . '.' . $file->getClientOriginalExtension();
                     $path = $file->storeAs('retailer_invoices', $filename, 'public');
-                    $retailerOrder->update(['invoice_path' => $path]);
+
+                    // Finalize status only if invoice is present
+                    $retailerOrder->update([
+                        'status' => 'accepted',
+                        'invoice_path' => $path
+                    ]);
                 } else {
                     return response()->json(['error' => 'Invoice upload is required for final approval.'], 422);
                 }

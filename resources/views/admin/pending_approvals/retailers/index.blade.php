@@ -126,6 +126,126 @@
             flex: 1.2;
             text-align: right;
         }
+
+        /* Enhanced Dropzone */
+        .premium-dropzone {
+            border: 2px dashed #3182ce;
+            border-radius: 12px;
+            background: #f8fafc;
+            padding: 40px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .premium-dropzone:hover {
+            background: #eff6ff;
+            border-color: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+        }
+
+        .premium-dropzone i {
+            font-size: 3rem;
+            color: #3182ce;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .premium-dropzone.has-file {
+            border-style: solid;
+            background: #f0fdf4;
+            border-color: #22c55e;
+        }
+
+        .premium-dropzone.has-file i {
+            color: #22c55e;
+        }
+
+        /* Order Summary Card */
+        .order-summary-header {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px 12px 0 0;
+            position: relative;
+        }
+
+        .retailer-detail-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            margin-bottom: 4px;
+        }
+
+        .retailer-detail-item i {
+            width: 16px;
+            text-align: center;
+            color: #94a3b8;
+        }
+
+        /* Payment Card */
+        .payment-status-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .payment-status-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-badge-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .status-radio-option {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .status-radio-option input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .status-radio-box {
+            display: block;
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: #f1f5f9;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .status-radio-option input:checked+.status-radio-box {
+            background: #dcfce7;
+            color: #15803d;
+            border-color: #22c55e;
+            box-shadow: 0 2px 4px rgba(34, 197, 94, 0.1);
+        }
+
+        .status-radio-option input[value="pending"]:checked+.status-radio-box {
+            background: #fef9c3;
+            color: #854d0e;
+            border-color: #eab308;
+        }
     </style>
     <div class="container-fluid">
         <div class="card shadow-sm border-0 rounded-3">
@@ -186,50 +306,94 @@
         </div>
     </div>
 
-    {{-- View Details Modal --}}
+    {{-- Improved View Details Modal --}}
     <div class="modal fade" id="viewOrderModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Order Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-content border-0 shadow-lg overflow-hidden">
+                <div class="modal-header border-0 p-0">
+                    <div class="w-100 p-4"
+                        style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white;">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-primary px-3 py-2">ORDER DETAILS</span>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <h3 class="mb-1 fw-bold" id="view_order_code">--</h3>
+                        <div class="d-flex gap-3 small text-white-50">
+                            <span><i class="fa fa-calendar me-1"></i> <span id="view_placed_at">--</span></span>
+                            <span id="view_status"></span>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-6"><strong>Order Code:</strong> <span id="view_order_code"></span></div>
-                        <div class="col-6"><strong>Placed At:</strong> <span id="view_placed_at"></span></div>
+                <div class="modal-body p-4 bg-light">
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-7">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase text-muted fw-bold mb-3"
+                                        style="font-size: 0.75rem; letter-spacing: 1px;">Retailer Information</h6>
+                                    <h5 class="fw-bold mb-2 text-dark" id="view_retailer_name">--</h5>
+                                    <div class="d-flex flex-column gap-2">
+                                        <div class="d-flex align-items-center text-muted small">
+                                            <i class="fa fa-phone me-2 text-primary" style="width: 15px;"></i>
+                                            <span id="view_retailer_phone">--</span>
+                                        </div>
+                                        <div class="d-flex align-items-start text-muted small">
+                                            <i class="fa fa-map-marker-alt me-2 text-primary mt-1" style="width: 15px;"></i>
+                                            <span id="view_retailer_address">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase text-muted fw-bold mb-3"
+                                        style="font-size: 0.75rem; letter-spacing: 1px;">Distributor Information</h6>
+                                    <h5 class="fw-bold mb-2 text-dark" id="view_distributor_name">--</h5>
+                                    <div class="d-flex align-items-center text-muted small">
+                                        <i class="fa fa-phone me-2 text-success" style="width: 15px;"></i>
+                                        <span id="view_distributor_phone">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-6"><strong>Retailer:</strong> <span id="view_retailer"></span></div>
-                        <div class="col-6"><strong>Status:</strong> <span id="view_status"></span></div>
+
+                    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+                        <div class="card-header bg-white py-3 border-0">
+                            <h6 class="mb-0 fw-bold"><i class="fa fa-box-open text-primary me-2"></i>Order Items</h6>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="border-0 small text-muted text-uppercase fw-bold py-3 ps-4">Product</th>
+                                        <th class="border-0 small text-muted text-uppercase fw-bold py-3">Batch/Exp</th>
+                                        <th class="border-0 small text-muted text-uppercase fw-bold py-3 text-center">Qty
+                                        </th>
+                                        <th class="border-0 small text-muted text-uppercase fw-bold py-3 text-end">Price
+                                        </th>
+                                        <th class="border-0 small text-muted text-uppercase fw-bold py-3 text-end pe-4">
+                                            Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="view_items_body">
+                                    <!-- Items added via JS -->
+                                </tbody>
+                                <tfoot class="bg-light">
+                                    <tr>
+                                        <td colspan="4" class="text-end fw-bold py-3">Grand Total:</td>
+                                        <td class="text-end fw-bold text-primary fs-5 py-3 pe-4" id="view_grand_total">₹0.00
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
                     </div>
-                    <h6 class="mt-4">Items</h6>
-                    <div class="table-responsive bg-light p-2 rounded">
-                        <table class="table table-bordered table-sm mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Qty</th>
-                                    <th>Unit Price</th>
-                                    <th>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody id="view_items_body"></tbody>
-                            <tfoot>
-                                <tr>
-                                    <th colspan="3" class="text-end">Grand Total:</th>
-                                    <th id="view_total"></th>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                    {{-- <div class="mt-3">
-                        <strong>Delivery Notes:</strong>
-                        <p id="view_notes" class="text-muted small"></p>
-                    </div> --}}
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <div class="modal-footer bg-white border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-secondary px-4 py-2" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -285,54 +449,102 @@
     <div class="modal fade" id="approveRetailerOrderModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header bg-success text-white">
+                {{-- <div class="modal-header bg-success text-white">
                     <h5 class="modal-title text-white"><i class="fa fa-check-circle me-2"></i> Approve Retailer Order</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
+                </div> --}}
                 <form id="approveRetailerOrderForm" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" id="approve_retailer_order_id" name="order_id">
-                    <div class="modal-body">
-                        <div class="row mb-3 pb-3 border-bottom">
-                            <div class="col-md-6">
-                                <p class="mb-1 text-muted small text-uppercase fw-bold">Order Information</p>
-                                <div class="fw-bold text-dark" id="retailer_approve_order_code_display">--</div>
-                                <div class="small text-muted" id="retailer_approve_order_date_display">--</div>
-                            </div>
-                            <div class="col-md-6 text-md-end">
-                                <p class="mb-1 text-muted small text-uppercase fw-bold">Retailer</p>
-                                <div class="fw-bold text-primary" id="retailer_approve_retailer_display">--</div>
+                    <div class="modal-body p-0">
+                        <!-- Order Summary Header -->
+                        <div class="order-summary-header">
+                            <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3"
+                                data-bs-dismiss="modal" aria-label="Close"></button>
+                            <div class="row align-items-center">
+                                <div class="col-sm-7">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-primary me-2">ORDER</span>
+                                        <h4 class="mb-0 fw-bold text-white" id="retailer_approve_order_code_display">--</h4>
+                                    </div>
+                                    <div class="retailer-detail-item">
+                                        <i class="fa fa-calendar"></i>
+                                        <span id="retailer_approve_order_date_display">--</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-5 text-sm-end">
+                                    <div class="text-white-50 small text-uppercase fw-bold mb-1">Retailer Details</div>
+                                    <h5 class="fw-bold text-white mb-1" id="retailer_approve_retailer_display">--</h5>
+                                    <div class="retailer-detail-item justify-content-sm-end">
+                                        <i class="fa fa-phone"></i>
+                                        <span id="retailer_approve_phone_display">--</span>
+                                    </div>
+                                    <div class="retailer-detail-item justify-content-sm-end d-none"
+                                        id="retailer_approve_gstin_container">
+                                        <i class="fa fa-id-card"></i>
+                                        <span>GST: </span><span id="retailer_approve_gstin_display">--</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <h6 class="fw-bold mb-3"><i class="fa fa-list me-2"></i> Order Items</h6>
-                        <div class="invoice-list mb-3">
-                            <div class="invoice-list-header">
-                                <div style="flex: 2;">Product Name</div>
-                                <div style="flex: 1;" class="text-center">Quantity</div>
-                                <div style="flex: 1;" class="text-end">Value (PTR)</div>
+                        <div class="p-4">
+                            <h6 class="fw-bold mb-3 d-flex align-items-center">
+                                <span class="bg-light p-2 rounded me-2"><i
+                                        class="fa fa-shopping-basket text-primary"></i></span>
+                                Order Items Summary
+                            </h6>
+                            <div class="invoice-list mb-4">
+                                <div class="invoice-list-header">
+                                    <div style="flex: 2;">Product Name</div>
+                                    <div style="flex: 1;" class="text-center">Quantity</div>
+                                    <div style="flex: 1;" class="text-end">Value (PTR)</div>
+                                </div>
+                                <div id="retailer_approve_items_list">
+                                    <!-- Items will be populated here -->
+                                </div>
+                                <div class="invoice-list-footer border-0 shadow-sm bg-light">
+                                    <div class="me-3 text-muted">Estimated Total Amount:</div>
+                                    <div class="text-primary fw-bold fs-4" id="retailer_approve_total_display">₹0</div>
+                                </div>
                             </div>
-                            <div id="retailer_approve_items_list">
-                                <!-- Items will be populated here -->
-                            </div>
-                            <div class="invoice-list-footer">
-                                <div class="me-3">Total Amount:</div>
-                                <div class="text-primary fs-5" id="retailer_approve_total_display">₹0</div>
-                            </div>
-                        </div>
 
-                        <p class="mb-3" id="approveModalText">Are you sure you want to approve this order? Please upload the
-                            finalized invoice.</p>
+                            <div id="invoiceUploadGroup">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="fw-bold mb-0 d-flex align-items-center">
+                                        <span class="bg-light p-2 rounded me-2"><i
+                                                class="fa fa-file-invoice text-success"></i></span>
+                                        Finalized Invoice Document
+                                    </h6>
+                                    <span class="badge bg-soft-danger text-danger">MANDATORY</span>
+                                </div>
 
-                        <div class="mb-3" id="invoiceUploadGroup">
-                            <label class="form-label fw-bold">Upload Invoice (PDF, JPG, PNG) <span
-                                    class="text-danger">*</span></label>
-                            <input type="file" name="invoice" class="form-control" accept=".pdf,.jpg,.jpeg,.png" required>
+                                <div class="premium-dropzone" id="retailer_invoice_dropzone">
+                                    <i class="fa fa-cloud-upload-alt"></i>
+                                    <h5 class="fw-bold mb-1" id="dropzone_title">Click or Drag & Drop to Upload Invoice</h5>
+                                    <p class="text-muted small mb-0" id="dropzone_subtitle">Supported formats: PDF, JPG, PNG
+                                        (Max 5MB)</p>
+                                    <div id="file_preview_name" class="mt-2 fw-bold text-success d-none"></div>
+                                </div>
+
+                                <input type="file" name="invoice" id="retailer_invoice_file_input" class="d-none"
+                                    accept=".pdf,.jpg,.jpeg,.png">
+
+                                <div class="alert alert-info mt-3 py-2 px-3 border-0 small">
+                                    <i class="fa fa-info-circle me-2"></i>
+                                    Approval requires the official invoice generated from your local billing software.
+                                </div>
+                            </div>
+
+                            {{-- <div id="approveModalTextContainer" class="text-center mt-3 d-none">
+                                <p class="mb-0 text-muted" id="approveModalText">Ready to confirm approval for this order?
+                                </p>
+                            </div> --}}
                         </div>
                     </div>
                     <div class="modal-footer bg-light">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success px-4">Confirm Approval</button>
+                        <button type="submit" class="btn btn-success px-4">Approve</button>
                     </div>
                 </form>
             </div>
@@ -343,68 +555,85 @@
     <div class="modal fade" id="distributorApproveModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content shadow-lg border-0 overflow-hidden">
-                <div class="modal-header bg-primary text-white py-3">
-                    <h5 class="modal-title fw-bold"><i class="fa fa-file-invoice-dollar me-2"></i> Approve Retailer Order &
-                        Allocate Batches</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
                 <form id="distributorApproveForm">
                     <div class="modal-body p-0">
-                        <input type="hidden" id="approve_order_id" name="order_id">
-
-                        <div class="row g-0">
-                            <!-- Left Sidebar: Configuration & Scanning -->
-                            <div class="col-md-4 bg-light p-4">
-                                <div class="mb-4">
-                                    <label class="form-label fw-bold text-uppercase small text-muted">1. Payment
-                                        Setup</label>
-                                    <div class="p-3 bg-white rounded shadow-sm">
-                                        <select class="form-select border-0 fs-6 fw-bold" name="payment_status" required>
-                                            <option value="pending">⏳ Pending Payment</option>
-                                            <option value="paid">✅ Already Paid</option>
-                                        </select>
+                        <!-- Order Summary Header -->
+                        <div class="order-summary-header"
+                            style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+                            <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3"
+                                data-bs-dismiss="modal" aria-label="Close"></button>
+                            <div class="row align-items-center">
+                                <div class="col-sm-7">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-success me-2">BATCH ALLOCATION</span>
+                                        <h4 class="mb-0 fw-bold text-white" id="dist_approve_order_code_display">--</h4>
+                                    </div>
+                                    <div class="retailer-detail-item">
+                                        <i class="fa fa-calendar"></i>
+                                        <span id="dist_approve_order_date_display">--</span>
                                     </div>
                                 </div>
-
-                                <div class="mb-4">
-                                    <label class="form-label fw-bold text-uppercase small text-muted">2. Smart Invoice
-                                        Processing</label>
-                                    <div class="ocr-dropzone p-4 text-center border-2 border-dashed rounded-3 bg-white shadow-sm"
-                                        id="ocr_dropzone" style="cursor: pointer; transition: 0.3s; position: relative;">
-                                        <div id="ocr_idle_state">
-                                            <i class="fa fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
-                                            <h6 class="fw-bold">Upload Store Invoice</h6>
-                                            <p class="text-muted small mb-0">Drag & drop or click to scan (PDF/Image)</p>
-                                        </div>
-                                        <div id="ocr_processing_state"
-                                            class="position-absolute top-50 start-50 translate-middle w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-white rounded-3 d-none"
-                                            style="z-index: 2; opacity: 0.9;">
-                                            <div class="spinner-border text-primary mb-2" role="status"></div>
-                                            <h6 class="fw-bold mb-0 small" id="ocr_status_text">Processing...</h6>
-                                        </div>
+                                <div class="col-sm-5 text-sm-end">
+                                    <div class="text-white-50 small text-uppercase fw-bold mb-1">Retailer / Site</div>
+                                    <h5 class="fw-bold text-white mb-1" id="dist_approve_retailer_display">--</h5>
+                                    <div class="retailer-detail-item justify-content-sm-end">
+                                        <i class="fa fa-map-marker-alt"></i>
+                                        <span id="dist_approve_location_display">--</span>
                                     </div>
-                                    <input type="file" class="d-none" name="invoice" id="scan_retailer_file_input"
-                                        accept=".pdf,.jpg,.jpeg,.png">
-                                    <div class="form-text mt-2"><i class="fa fa-info-circle text-info"></i> Batch & Expiries
-                                        will be auto-extracted locally. The invoice document is required.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-white">
+                            <input type="hidden" id="approve_order_id" name="order_id">
+
+                            <!-- Payment Configuration Section -->
+                            <div class="payment-status-card mb-4">
+                                <div>
+                                    <h6 class="mb-1 fw-bold text-dark d-flex align-items-center">
+                                        <i class="fa fa-money-check-alt text-primary me-2"></i>
+                                        Settlement & Payment Status
+                                    </h6>
+                                    <div class="text-muted small">Update the current payment state for this order.</div>
+                                </div>
+                                <div class="status-badge-group">
+                                    <label class="status-radio-option">
+                                        <input type="radio" name="payment_status" value="pending" checked>
+                                        <span class="status-radio-box">PENDING</span>
+                                    </label>
+                                    <label class="status-radio-option">
+                                        <input type="radio" name="payment_status" value="paid">
+                                        <span class="status-radio-box">PAID</span>
+                                    </label>
                                 </div>
                             </div>
 
-                            <!-- Right Content: Automation Summary & Batch Allocation -->
-                            <div class="col-md-8 p-4 bg-white">
-                                <div id="automation_idle_state" class="text-center py-5">
-                                    <div class="mb-3">
-                                        <i class="fa fa-robot fa-4x text-light"></i>
-                                    </div>
-                                    <h5 class="text-muted">Waiting for AI Scan...</h5>
-                                    <p class="text-muted small">Upload an invoice to automatically process batch details.
-                                    </p>
+                            <!-- Smart Invoice Processing Section -->
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="fw-bold mb-0 d-flex align-items-center">
+                                        <span class="bg-primary-subtle p-2 rounded me-2"><i
+                                                class="fa fa-robot text-primary"></i></span>
+                                        Smart Invoice Processing
+                                    </h6>
+                                    <span class="badge bg-soft-info text-info rounded-pill px-3">AI POWERED</span>
+                                </div>
 
-                                    <div id="results_loading_spinner" class="mt-4 d-none">
+                                <div id="automation_idle_state">
+                                    <div class="premium-dropzone" id="ocr_dropzone">
+                                        <i class="fa fa-file-invoice-dollar"></i>
+                                        <h5 class="fw-bold mb-1">Upload Invoice to Process</h5>
+                                        <p class="text-muted small mb-0">Drag & drop or click to scan (AI will extract
+                                            batches & expiries)</p>
+                                    </div>
+                                    <input type="file" class="d-none" name="invoice" id="scan_retailer_file_input"
+                                        accept=".pdf,.jpg,.jpeg,.png">
+
+                                    <div id="results_loading_spinner" class="text-center mt-4 d-none">
                                         <div class="spinner-border text-primary mb-3" role="status"
-                                            style="width: 3rem; height: 3rem;"></div>
-                                        <h5 class="fw-bold text-primary">AI is analyzing your invoice...</h5>
-                                        <p class="text-muted">Extracting products, batches, and expiries.</p>
+                                            style="width: 2.5rem; height: 2.5rem;"></div>
+                                        <h5 class="fw-bold text-dark">AI is scanning your invoice...</h5>
+                                        <p class="text-muted small">This may take a few seconds.</p>
                                     </div>
                                 </div>
 
@@ -434,8 +663,22 @@
 
                                 </div> <!-- Close success state here -->
 
-                                <div class="invoice-list mt-3 d-none" id="batch_allocation_table_container">
-                                    <div class="invoice-list-header">
+                                <div id="automation_error_state" class="d-none">
+                                    <div
+                                        class="text-center py-5 bg-soft-danger rounded-3 border-start border-4 border-danger">
+                                        <i class="fa fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                                        <h5 class="fw-bold text-danger">Mismatched Invoice!</h5>
+                                        <p class="text-muted small">AI could not find matching products in this document.
+                                        </p>
+                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                            onclick="$('#scan_retailer_file_input').val('').click()">Try Another
+                                            File</button>
+                                    </div>
+                                </div>
+
+                                <div class="invoice-list mt-3 d-none border rounded-3 overflow-hidden shadow-sm"
+                                    id="batch_allocation_table_container">
+                                    <div class="invoice-list-header px-3" style="background: #f8fafc;">
                                         <div style="flex: 2.5;">Product</div>
                                         <div style="flex: 1.5;">Batch</div>
                                         <div style="flex: 1.5;">Expiry</div>
@@ -444,23 +687,27 @@
                                         <div style="flex: 1;" class="text-end">GST</div>
                                         <div style="flex: 1.3;" class="text-end">Total</div>
                                     </div>
-                                    <div id="verification_table_body">
+                                    <div id="verification_table_body" class="px-3">
                                         <!-- AI Verification Rows -->
                                     </div>
-                                    <div id="verification_table_footer" class="invoice-list-footer d-block d-none">
+                                    <div id="verification_table_footer"
+                                        class="invoice-list-footer d-block d-none bg-light p-3">
                                         <div class="d-flex justify-content-between mb-1">
                                             <span class="text-muted small">Calculated Net Total:</span>
                                             <span class="fw-bold" id="v_total_net">₹0.00</span>
                                         </div>
                                         <div class="d-flex justify-content-between pt-2 border-top">
                                             <span class="text-dark fw-bold">Invoiced Total (AI Scan):</span>
-                                            <span class="text-success fs-5 fw-bold" id="v_total_meta">₹0.00</span>
+                                            <span class="text-primary fs-5 fw-bold" id="v_total_meta">₹0.00</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Hidden Inputs for Submission -->
-                                <div id="batch_entry_body" class="d-none"></div>
+                                <!-- Hidden inputs for Form Submission -->
+                                <div id="hidden_batch_inputs" class="d-none">
+                                    <div id="batch_entry_body"></div>
+                                </div>
+
                             </div>
                         </div>
                     </div>
@@ -546,6 +793,18 @@
             const isAdmin = {{ Auth::user()->hasAnyRole(['admin', 'superadmin']) ? 'true' : 'false' }};
 
             var table = $('#retailer-approval-table').DataTable({
+                order: [
+                    [5, 'desc']
+                ],
+                drawCallback: function (settings) {
+                    var api = this.api();
+                    api.column(0, {
+                        search: 'applied',
+                        order: 'applied'
+                    }).nodes().each(function (cell, i) {
+                        cell.innerHTML = i + 1 + settings._iDisplayStart;
+                    });
+                },
                 dom: "<'row mb-3'<'col-sm-12'B>>" + // Buttons on top
                     "<'row mb-3 d-flex align-items-center'<'col-md-6'l><'col-md-6'f>>" + // 'l' (length) on left, 'f' (filter/search) on right
                     "<'row '<'col-sm-12'tr>>" +
@@ -597,9 +856,9 @@
                 },
                 columns: [{
                     data: null,
-                    render: function (data, type, row, meta) {
-                        return meta.row + 1;
-                    }
+                    defaultContent: '',
+                    orderable: false,
+                    searchable: false
                 },
                 {
                     data: 'order_code',
@@ -687,10 +946,10 @@
                             let ext = row.invoice_url.split('.').pop().toLowerCase();
                             let icon = ext === 'pdf' ? 'fa-file-pdf-o' : 'fa-file-image-o';
                             let btnsHtml = `
-                                                                                                                                                                                                                                                                                                                                                                                                                <div class="d-flex align-items-center gap-1 p-2">
-                                                                                                                                                                                                                                                                                                                                                                                                                    <a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-success" title="View Invoice">
-                                                                                                                                                                                                                                                                                                                                                                                                                        <i class="fa ${icon}"></i> &nbsp;View
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </a>`;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <div class="d-flex align-items-center gap-1 p-2">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-success" title="View Invoice">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="fa ${icon}"></i> &nbsp;View
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       </a>`;
                             btnsHtml += `</div>`;
                             return btnsHtml;
                         }
@@ -748,29 +1007,27 @@
             $('#status_filter').change(function () {
                 table.ajax.reload();
             });
-            // Batch Form Validation and Submission
+            // Consolidated Batch Form Validation and Submission
             $(document).on('submit', '#distributorApproveForm', function (e) {
                 e.preventDefault();
+                let $form = $(this);
                 let isValid = true;
 
                 // Validate each product row
                 $('.product-row').each(function () {
                     let orderItemId = $(this).data('item-id');
                     let ordered = parseInt($(this).data('ordered-qty'));
-
                     let hContainer = $(`#batches_for_${orderItemId}`);
                     let allocated = parseInt(hContainer.find('.hidden-qty-val').val() || 0);
-
                     let vRow = $(`#v_row_${orderItemId}`);
 
-                    if (allocated !== ordered) {
+                    if (allocated < ordered) {
                         isValid = false;
                         vRow.addClass('bg-danger-subtle border-danger');
                     } else {
                         vRow.removeClass('bg-danger-subtle border-danger');
                     }
 
-                    // Also check if batches and expiry are filled
                     let batchVal = hContainer.find('.hidden-batch-val').val();
                     if (!batchVal) {
                         isValid = false;
@@ -794,19 +1051,22 @@
                 }
 
                 // Check if invoice is uploaded
-                let fileInput = document.getElementById('scan_retailer_file_input');
-                if (!fileInput.files.length) {
+                let scanFileInput = document.getElementById('scan_retailer_file_input');
+                if (!scanFileInput.files || scanFileInput.files.length === 0) {
                     showToast('error', 'Invoice document is strictly required for approval.');
                     return;
                 }
 
                 let formData = new FormData(this);
                 formData.append('_token', '{{ csrf_token() }}');
+                formData.append('invoice', scanFileInput.files[0]);
+
                 let orderId = $('#approve_order_id').val();
                 let url = "{{ route('admin.retailer.accept', ':id') }}".replace(':id', orderId);
 
-                let $btn = $('#btnSubmitDistributorApprove');
-                $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Processing...');
+                let $btn = $form.find('button[type="submit"]');
+                let oldHtml = $btn.html();
+                $btn.html('<i class="fa fa-spinner fa-spin"></i> Processing...').prop('disabled', true);
 
                 $.ajax({
                     url: url,
@@ -819,15 +1079,23 @@
                             $('#distributorApproveModal').modal('hide');
                             table.ajax.reload(null, false);
                             showToast('success', res.success);
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Order Approved!',
+                                text: 'Stock has been allocated and status updated successfully.',
+                                timer: 2500,
+                                showConfirmButton: false
+                            });
                         } else {
                             showToast('error', res.error || 'Failed to approve order');
                         }
                     },
                     error: function (xhr) {
-                        showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'An error occurred during approval.');
+                        let errMsg = xhr.responseJSON ? xhr.responseJSON.error || xhr.responseJSON.message : 'An error occurred during approval.';
+                        showToast('error', errMsg);
                     },
                     complete: function () {
-                        $btn.prop('disabled', false).text('Approve & Allocate Stock');
+                        $btn.html(oldHtml).prop('disabled', false);
                     }
                 });
             });
@@ -1075,6 +1343,52 @@
                 $(this).val('');
             });
 
+            // Dropzone & File Input Logic for Retailer Approval
+            $(document).on('click', '#retailer_invoice_dropzone', function () {
+                $('#retailer_invoice_file_input').click();
+            });
+
+            $(document).on('change', '#retailer_invoice_file_input', function () {
+                let file = this.files[0];
+                if (file) {
+                    $('#file_preview_name').text('Selected: ' + file.name).removeClass('d-none');
+                    $('#retailer_invoice_dropzone').addClass('has-file');
+                    $('#dropzone_title').text('File Selected');
+                    $('#dropzone_subtitle').text('Click or drag to replace: ' + file.name);
+                } else {
+                    $('#file_preview_name').addClass('d-none');
+                    $('#retailer_invoice_dropzone').removeClass('has-file');
+                    $('#dropzone_title').text('Click or Drag & Drop to Upload Invoice');
+                    $('#dropzone_subtitle').text('Supported formats: PDF, JPG, PNG (Max 5MB)');
+                }
+            });
+
+            // Handle Drag & Drop
+            const dropzone = document.getElementById('retailer_invoice_dropzone');
+            if (dropzone) {
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    dropzone.addEventListener(eventName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }, false);
+                });
+
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dropzone.addEventListener(eventName, () => dropzone.classList.add('bg-primary-subtle'), false);
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dropzone.addEventListener(eventName, () => dropzone.classList.remove('bg-primary-subtle'), false);
+                });
+
+                dropzone.addEventListener('drop', (e) => {
+                    const dt = e.dataTransfer;
+                    const files = dt.files;
+                    document.getElementById('retailer_invoice_file_input').files = files;
+                    $('#retailer_invoice_file_input').trigger('change');
+                }, false);
+            }
+
             // Remove Invoice Logic
             let removeInvoiceId = null;
             $(document).on('click', '.remove-invoice-btn', function () {
@@ -1108,31 +1422,54 @@
                 });
             });
 
-            // View Modal Logic
+            // Improved View Modal Logic
             $(document).on('click', '.view-details-btn', function () {
                 let row = $(this).data('row');
-                $('#view_order_code').text(row.order_code);
-                $('#view_placed_at').text(row.placed_at);
-                $('#view_retailer').text(row.retailer_name);
-                $('#view_status').text(row.status);
-                $('#view_total').text(row.total_amount);
-                $('#view_notes').text(row.delivery_notes || '-');
 
+                // Header Info
+                $('#view_order_code').text(row.order_code);
+                $('#view_placed_at').text(row.placed_at || '--');
+                $('#view_status').html(`<span class="badge bg-soft-primary text-primary px-3" style="font-size: 0.9rem;">${row.status || 'Pending'}</span>`);
+
+                // Retailer Info
+                $('#view_retailer_name').text(row.retailer_name || '--');
+                $('#view_retailer_phone').text(row.retailer_phone || '--');
+                $('#view_retailer_address').text(row.retailer_address || '--');
+
+                // Distributor Info
+                $('#view_distributor_name').text(row.distributor_name || '--');
+                $('#view_distributor_phone').text(row.distributor_phone || '--');
+
+                // Items Table
                 let tbody = $('#view_items_body');
                 tbody.empty();
 
                 if (row.items && row.items.length) {
                     row.items.forEach(item => {
-                        tbody.append(`<tr>
-                                                                                                                                                                                                                                                                                                                                                                                                    <td>${item.product_name}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                    <td>${item.quantity}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                    <td>${item.unit_price}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                    <td>${item.total_amount}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                </tr>`);
+                        let batchInfo = item.batches && item.batches.length ?
+                            item.batches.map(b => `<div class="small text-muted">B: ${b.batch_no} | E: ${b.expiry_date}</div>`).join('') :
+                            '<span class="text-muted small">Not Allocated</span>';
+
+                        tbody.append(`
+                                        <tr class="align-middle">
+                                            <td class="py-3">
+                                                <div class="fw-bold text-dark">${item.product_name}</div>
+                                                <div class="small text-muted">${item.product_code || ''}</div>
+                                            </td>
+                                            <td>${batchInfo}</td>
+                                            <td class="text-center">${item.quantity} ${item.unit || 'Strips'}</td>
+                                            <td class="text-end">₹${parseFloat(item.unit_price).toFixed(2)}</td>
+                                            <td class="text-end fw-bold text-primary">₹${parseFloat(item.total_amount).toFixed(2)}</td>
+                                        </tr>
+                                    `);
                     });
                 } else {
-                    tbody.html('<tr><td colspan="4" class="text-center">No items</td></tr>');
+                    tbody.html('<tr><td colspan="5" class="text-center py-4 text-muted italic">No items found in this order</td></tr>');
                 }
+
+                $('#view_grand_total').text(`₹${parseFloat(row.total_amount).toFixed(2)}`);
+                $('#view_notes').text(row.delivery_notes || 'No notes provided.');
+
                 $('#viewOrderModal').modal('show');
             });
 
@@ -1144,8 +1481,17 @@
                 $('#approve_retailer_order_id').val(id);
                 $('#retailer_approve_order_code_display').text(row.order_code);
                 $('#retailer_approve_order_date_display').text(row.placed_at);
-                $('#retailer_approve_retailer_display').text(row.retailer_name);
-                $('#retailer_approve_total_display').text(row.total_amount);
+                $('#retailer_approve_retailer_display').text(row.retailer_name || '--');
+                $('#retailer_approve_total_display').text(row.total_amount || '₹0');
+
+                // Populate more retailer details
+                $('#retailer_approve_phone_display').text(row.retailer_phone || '--');
+                if (row.retailer_gstin) {
+                    $('#retailer_approve_gstin_display').text(row.retailer_gstin);
+                    $('#retailer_approve_gstin_container').removeClass('d-none');
+                } else {
+                    $('#retailer_approve_gstin_container').addClass('d-none');
+                }
 
                 let list = $('#retailer_approve_items_list');
                 list.empty();
@@ -1153,29 +1499,34 @@
                 if (row.items && row.items.length) {
                     row.items.forEach(item => {
                         list.append(`
-                                                        <div class="invoice-list-row">
-                                                            <div style="flex: 2;" class="fw-bold text-dark">${item.product_name}</div>
-                                                            <div style="flex: 1;" class="text-center text-muted small">${item.quantity} ${item.unit || 'Box'}</div>
-                                                            <div style="flex: 1;" class="text-end fw-bold text-success">₹${item.total_amount}</div>
-                                                        </div>
-                                                    `);
+                                                                                                                                                                                    <div class="invoice-list-row">
+                                                                                                                                                                                        <div style="flex: 2;" class="fw-bold text-dark">${item.product_name}</div>
+                                                                                                                                                                                        <div style="flex: 1;" class="text-center text-muted small">${item.quantity} ${item.unit || 'Box'}</div>
+                                                                                                                                                                                        <div style="flex: 1;" class="text-end fw-bold text-success">₹${item.total_amount}</div>
+                                                                                                                                                                                    </div>
+                                                                                                                                                                                `);
                     });
                 } else {
                     list.append('<div class="invoice-list-row justify-content-center text-muted">No items found</div>');
                 }
 
+                // Reset dropzone state
+                $('#file_preview_name').addClass('d-none');
+                $('#retailer_invoice_dropzone').removeClass('has-file');
+                $('#dropzone_title').text('Click or Drag & Drop to Upload Invoice');
+                $('#dropzone_subtitle').text('Supported formats: PDF, JPG, PNG (Max 5MB)');
+
                 $('#approveRetailerOrderForm')[0].reset();
 
                 if (isFieldStaff) {
                     $('#invoiceUploadGroup').hide();
-                    $('#invoiceUploadGroup input').prop('required', false);
-                    $('#approveModalText').text('Are you sure you want to approve this order?');
+                    $('#retailer_invoice_file_input').prop('required', false);
+                    $('#approveModalTextContainer').removeClass('d-none');
+                    $('#approveModalText').text('Review the order items above. Are you sure you want to approve this order?');
                 } else {
                     $('#invoiceUploadGroup').show();
-                    // Admin might want it optional if they already uploaded? 
-                    // But usually it's mandatory if it's the first approval.
-                    $('#invoiceUploadGroup input').prop('required', true);
-                    $('#approveModalText').text('Are you sure you want to approve this order? Please upload the finalized invoice.');
+                    $('#retailer_invoice_file_input').prop('required', true);
+                    $('#approveModalTextContainer').addClass('d-none');
                 }
 
                 $('#approveRetailerOrderModal').modal('show');
@@ -1227,12 +1578,23 @@
             $(document).on('click', '.distributor-approve-btn', function () {
                 let row = $(this).data('row');
                 $('#approve_order_id').val(row.id);
+
+                // Populate new premium header fields
+                $('#dist_approve_order_code_display').text(row.order_code || '--');
+                $('#dist_approve_order_date_display').text(row.placed_at || '--');
+                $('#dist_approve_retailer_display').text(row.retailer_name || '--');
+                $('#dist_approve_location_display').text(row.retailer_location || row.retailer_address || '--');
+
+                // Reset payment status to pending
+                $('input[name="payment_status"][value="pending"]').prop('checked', true);
+
                 let tbody = $('#batch_entry_body');
                 let vbody = $('#verification_table_body');
 
                 // Reset UI visibility statuses when modal is opened anew
                 $('#automation_idle_state').show();
                 $('#automation_success_state').hide();
+                $('#automation_error_state').addClass('d-none');
                 $('#ocr_processing_state').hide();
                 $('#ocr_idle_state').show();
                 $('#batch_allocation_table_container').addClass('d-none');
@@ -1258,42 +1620,42 @@
 
                     // 1. Hidden Submission Row
                     let rowHtml = `
-                                    <div data-item-id="${orderItemId}" class="product-row" data-ordered-qty="${orderedQty}">
-                                        <div class="d-none">
-                                            <div class="fw-bold product-name-marker">${item.product_name}</div>
-                                            <input type="number" name="items[${orderItemId}][quantity]" value="${orderedQty}">
-                                            <input type="hidden" name="items[${orderItemId}][product_id]" value="${productId}">
-                                            <input type="hidden" name="items_batches[${orderItemId}][order_item_id]" value="${orderItemId}">
-                                        </div>
-                                        <div class="d-none" id="batches_for_${orderItemId}">
-                                            <input type="text" name="items_batches[${orderItemId}][batches][0][batch_no]" class="hidden-batch-val" required>
-                                            <input type="date" name="items_batches[${orderItemId}][batches][0][expiry_date]" class="hidden-expiry-val" required>
-                                            <input type="number" name="items_batches[${orderItemId}][batches][0][quantity]" class="hidden-qty-val" value="${orderedQty}" required>
-                                            <input type="hidden" name="batches[${orderItemId}][0][mrp]" class="hidden-mrp-val">
-                                            <input type="hidden" name="batches[${orderItemId}][0][ptr]" class="hidden-ptr-val">
-                                            <input type="hidden" name="batches[${orderItemId}][0][pts]" class="hidden-pts-val">
-                                            <input type="hidden" name="batches[${orderItemId}][0][taxable_value]" class="hidden-taxable-val">
-                                            <input type="hidden" name="batches[${orderItemId}][0][cgst]" class="hidden-cgst-val">
-                                            <input type="hidden" name="batches[${orderItemId}][0][sgst]" class="hidden-sgst-val">
-                                            <input type="hidden" name="batches[${orderItemId}][0][igst]" class="hidden-igst-val">
-                                            <input type="hidden" name="batches[${orderItemId}][0][net_amount]" class="hidden-net-val">
-                                        </div>
-                                    </div>
-                                `;
+                                                                                                                                                                <div data-item-id="${orderItemId}" class="product-row" data-ordered-qty="${orderedQty}">
+                                                                                                                                                                    <div class="d-none">
+                                                                                                                                                                        <div class="fw-bold product-name-marker">${item.product_name}</div>
+                                                                                                                                                                        <input type="number" name="items[${orderItemId}][quantity]" value="${orderedQty}">
+                                                                                                                                                                        <input type="hidden" name="items[${orderItemId}][product_id]" value="${productId}">
+                                                                                                                                                                        <input type="hidden" name="items_batches[${orderItemId}][order_item_id]" value="${orderItemId}">
+                                                                                                                                                                    </div>
+                                                                                                                                                                    <div class="d-none" id="batches_for_${orderItemId}">
+                                                                                                                                                                        <input type="text" name="items_batches[${orderItemId}][batches][0][batch_no]" class="hidden-batch-val" required>
+                                                                                                                                                                        <input type="date" name="items_batches[${orderItemId}][batches][0][expiry_date]" class="hidden-expiry-val" required>
+                                                                                                                                                                        <input type="number" name="items_batches[${orderItemId}][batches][0][quantity]" class="hidden-qty-val" value="${orderedQty}" required>
+                                                                                                                                                                        <input type="hidden" name="batches[${orderItemId}][0][mrp]" class="hidden-mrp-val">
+                                                                                                                                                                        <input type="hidden" name="batches[${orderItemId}][0][ptr]" class="hidden-ptr-val">
+                                                                                                                                                                        <input type="hidden" name="batches[${orderItemId}][0][pts]" class="hidden-pts-val">
+                                                                                                                                                                        <input type="hidden" name="batches[${orderItemId}][0][taxable_value]" class="hidden-taxable-val">
+                                                                                                                                                                        <input type="hidden" name="batches[${orderItemId}][0][cgst]" class="hidden-cgst-val">
+                                                                                                                                                                        <input type="hidden" name="batches[${orderItemId}][0][sgst]" class="hidden-sgst-val">
+                                                                                                                                                                        <input type="hidden" name="batches[${orderItemId}][0][igst]" class="hidden-igst-val">
+                                                                                                                                                                        <input type="hidden" name="batches[${orderItemId}][0][net_amount]" class="hidden-net-val">
+                                                                                                                                                                    </div>
+                                                                                                                                                                </div>
+                                                                                                                                                            `;
                     tbody.append(rowHtml);
 
                     // 2. Visible Verification Row (Invoiced Style)
                     let vRowHtml = `
-                                    <div id="v_row_${orderItemId}" class="invoice-list-row">
-                                        <div class="ai-col-product fw-bold text-dark small">${item.product_name}</div>
-                                        <div class="ai-col-batch v-batch-display text-muted small" data-id="${orderItemId}">--</div>
-                                        <div class="ai-col-expiry v-expiry-display text-muted small" data-id="${orderItemId}">--</div>
-                                        <div class="ai-col-qty fw-bold text-primary v-qty-display" data-original-unit="${item.unit || ''}">${orderedQty} ${item.unit || ''}</div>
-                                        <div class="ai-col-value text-end small text-dark fw-bold v-taxable-display">--</div>
-                                        <div class="ai-col-value text-end small text-muted v-gst-display">--</div>
-                                        <div class="ai-col-value text-end fw-bold v-net-display">--</div>
-                                    </div>
-                                `;
+                                                                                                                                                                <div id="v_row_${orderItemId}" class="invoice-list-row">
+                                                                                                                                                                    <div class="ai-col-product fw-bold text-dark small">${item.product_name}</div>
+                                                                                                                                                                    <div class="ai-col-batch v-batch-display text-muted small" data-id="${orderItemId}">--</div>
+                                                                                                                                                                    <div class="ai-col-expiry v-expiry-display text-muted small" data-id="${orderItemId}">--</div>
+                                                                                                                                                                    <div class="ai-col-qty fw-bold text-primary v-qty-display" data-original-unit="${item.unit || ''}">${orderedQty} ${item.unit || ''}</div>
+                                                                                                                                                                    <div class="ai-col-value text-end small text-dark fw-bold v-taxable-display">--</div>
+                                                                                                                                                                    <div class="ai-col-value text-end small text-muted v-gst-display">--</div>
+                                                                                                                                                                    <div class="ai-col-value text-end fw-bold v-net-display">--</div>
+                                                                                                                                                                </div>
+                                                                                                                                                            `;
                     vbody.append(vRowHtml);
                 });
             });
@@ -1303,15 +1665,41 @@
                 $('#scan_retailer_file_input').click();
             });
 
+            // Handle Drag & Drop for OCR
+            const ocrDropzone = document.getElementById('ocr_dropzone');
+            if (ocrDropzone) {
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    ocrDropzone.addEventListener(eventName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }, false);
+                });
+
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    ocrDropzone.addEventListener(eventName, () => ocrDropzone.classList.add('bg-primary-subtle'), false);
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    ocrDropzone.addEventListener(eventName, () => ocrDropzone.classList.remove('bg-primary-subtle'), false);
+                });
+
+                ocrDropzone.addEventListener('drop', (e) => {
+                    const dt = e.dataTransfer;
+                    const files = dt.files;
+                    document.getElementById('scan_retailer_file_input').files = files;
+                    $('#scan_retailer_file_input').trigger('change');
+                }, false);
+            }
+
             // File upload logic for AI Processing
             $(document).on('change', '#scan_retailer_file_input', function () {
                 const file = this.files[0];
                 if (!file) return;
 
-                // $('#ocr_idle_state').hide(); // Keep it visible as per user request
-                // $('#ocr_processing_state').removeClass('d-none'); // Disable overlay as per user request
-                $('#automation_idle_state').find('i, h5, p:not(.text-muted)').hide(); // Hide idle robot/text
-                $('#results_loading_spinner').removeClass('d-none'); // Show loading spinner in results area
+                $('#ocr_dropzone').addClass('d-none'); // Hide the dropzone
+                $('#results_loading_spinner').removeClass('d-none'); // Show loading spinner
+                $('#automation_success_state').hide();
+                $('#automation_error_state').addClass('d-none');
 
                 let formData = new FormData();
                 formData.append('invoice', file);
@@ -1326,9 +1714,8 @@
                     contentType: false,
                     success: function (res) {
                         setTimeout(() => {
-                            // $('#ocr_processing_state').addClass('d-none');
                             $('#results_loading_spinner').addClass('d-none');
-                            $('#automation_idle_state').find('i, h5, p').show(); // Reset idle state
+                            $('#ocr_dropzone').removeClass('d-none'); // Reset dropzone visibility
                         }, 500);
 
                         if (res.success && res.data) {
@@ -1336,11 +1723,14 @@
 
                             if (identifiedCount > 0) {
                                 $('#automation_idle_state').hide();
-                                $('#automation_success_state').show();
+                                $('#results_loading_spinner').addClass('d-none');
+                                $('#automation_success_state').fadeIn();
                                 $('#batch_allocation_table_container').removeClass('d-none'); // Show grid
                                 $('#processed_summary_text').text(`${identifiedCount} products mapped from Invoice.`);
                             } else {
-                                $('#automation_idle_state').show();
+                                $('#automation_idle_state').hide();
+                                $('#results_loading_spinner').addClass('d-none');
+                                $('#automation_error_state').removeClass('d-none').fadeIn();
                                 $('#batch_allocation_table_container').addClass('d-none');
                                 showToast('warning', 'Mismatched Invoice: No products identified.');
                             }
@@ -1354,11 +1744,12 @@
                         console.error('OCR Error:', xhr);
                         // $('#ocr_processing_state').addClass('d-none');
                         $('#results_loading_spinner').addClass('d-none');
-                        $('#automation_idle_state').find('i, h5, p').show();
+                        $('#ocr_dropzone').removeClass('d-none');
                         showToast('error', 'OCR Failed: ' + (xhr.responseJSON ? xhr.responseJSON.message : 'Processing error'));
                     }
                 });
             });
+
 
             function parseExpiryToDate(expStr) {
                 if (!expStr) return '';
@@ -1408,6 +1799,8 @@
                 let invoiceProducts = data.line_items || [];
                 let totalInvoiceNet = 0;
 
+                console.log('Retailer AI Invoice Items:', invoiceProducts);
+
                 // Update Metadata visually
                 if (data.invoice_metadata) {
                     $('#meta_date').text(data.invoice_metadata.date || '--');
@@ -1420,10 +1813,62 @@
                     let productName = container.find('.product-name-marker').text().trim().toLowerCase();
                     let orderedQty = parseInt(container.data('ordered-qty'));
 
-                    // Try to find the item in the JSON response
-                    let matchedInvoiceItem = invoiceProducts.find(p => p.description && p.description.toLowerCase().includes(productName.substring(0, 5)));
+                    // Helper to normalize strings for better matching
+                    const normalize = (str) => {
+                        if (!str) return '';
+                        return str.toLowerCase()
+                            .replace(/\bsyp\b|\bsyrup\b/g, 'syrup')
+                            .replace(/\btab\b|\btablet\b/g, 'tablet')
+                            .replace(/\bcap\b|\bcapsule\b/g, 'capsule')
+                            .replace(/\(\d+\)/g, '') // Remove pack sizes like (10), (5)
+                            .replace(/\([^)]*\)/g, ' ') // Remove anything in parentheses
+                            .replace(/[^a-z0-9\s]/g, ' ') // Replace non-alphanumeric with space
+                            .replace(/\s+/g, ' ')
+                            .trim();
+                    };
 
-                    if (matchedInvoiceItem) {
+                    let normProductName = normalize(productName);
+
+                    // Try to extract a product code (e.g., first part of the name before spaces/hyphens)
+                    let pCodeMatch = container.data('p-code') || productName.split(/[\s\-]/)[0].toLowerCase();
+                    // 1. Try exact or full inclusion match
+                    let matchedIdx = invoiceProducts.findIndex(p => {
+                        if (!p.description) return false;
+                        let normDesc = normalize(p.description);
+                        let normAiCode = p.p_code ? String(p.p_code).toLowerCase() : '';
+
+                        // If p_code matches exactly, it's a very strong indicator
+                        if (pCodeMatch && normAiCode && normAiCode.includes(pCodeMatch)) {
+                            return true;
+                        }
+
+                        return normDesc === normProductName || normDesc.includes(normProductName) || normProductName.includes(normDesc);
+                    });
+
+                    // 2. Fallback to word-based intersection check
+                    if (matchedIdx === -1) {
+                        let productWords = normProductName.split(' ').filter(w => w.length > 2);
+                        matchedIdx = invoiceProducts.findIndex(p => {
+                            if (!p.description) return false;
+                            let normDesc = normalize(p.description);
+                            let matchCount = 0;
+                            productWords.forEach(word => {
+                                if (normDesc.includes(word)) matchCount++;
+                            });
+                            // Match if at least 60% of words found (minimum 1 word if possible)
+                            let threshold = Math.max(1, Math.ceil(productWords.length * 0.6));
+                            return matchCount >= threshold;
+                        });
+                    }
+
+                    // 3. Last fallback to substring match
+                    if (matchedIdx === -1) {
+                        matchedIdx = invoiceProducts.findIndex(p => p.description && p.description.toLowerCase().includes(normProductName.substring(0, 7)));
+                    }
+
+                    if (matchedIdx !== -1) {
+                        let matchedInvoiceItem = invoiceProducts[matchedIdx];
+                        invoiceProducts.splice(matchedIdx, 1); // Remove from pool
                         identifiedCount++;
                         // Helper to parse numeric values safely
                         const safeParse = (val) => {
@@ -1438,7 +1883,7 @@
                         let extMrp = safeParse(matchedInvoiceItem.mrp);
                         let extRate = safeParse(matchedInvoiceItem.rate);
                         let billedQty = safeParse(matchedInvoiceItem.qty);
-                        let freeQty = safeParse(matchedInvoiceItem.free);
+                        let freeQty = safeParse(matchedInvoiceItem.free) || safeParse(matchedInvoiceItem.sch) || safeParse(matchedInvoiceItem.scheme) || safeParse(matchedInvoiceItem.offer);
 
                         let extTaxable = safeParse(matchedInvoiceItem.taxable_amt) || safeParse(matchedInvoiceItem.amount);
                         if (extTaxable === 0 && billedQty > 0 && extRate > 0) {
@@ -1448,7 +1893,13 @@
                         let extCgst = safeParse(matchedInvoiceItem.cgst);
                         let extSgst = safeParse(matchedInvoiceItem.sgst);
                         let extIgst = safeParse(matchedInvoiceItem.igst);
+
+                        // Handle GST percentage calculation if only 'gst' is provided
                         let extGstAmt = safeParse(matchedInvoiceItem.gst_amt);
+                        let gstPercent = safeParse(matchedInvoiceItem.gst);
+                        if (extGstAmt === 0 && gstPercent > 0 && extTaxable > 0) {
+                            extGstAmt = extTaxable * (gstPercent / 100);
+                        }
 
                         // If individual GST components are missing but total GST amt exists
                         let extGst = extCgst + extSgst + extIgst;
@@ -1460,14 +1911,26 @@
                         // 1. Update Visible Row Fields
                         let vRow = $(`#v_row_${orderItemId}`);
                         if (vRow.length) {
+                            // Append Pack Size if available
+                            let packStr = matchedInvoiceItem.pack && matchedInvoiceItem.pack !== 'N/A' && matchedInvoiceItem.pack.trim() !== '' ? ` [${matchedInvoiceItem.pack.trim()}]` : '';
+                            if (packStr) {
+                                let nameEl = vRow.find('.ai-col-product');
+                                nameEl.text(nameEl.text() + packStr);
+                            }
+
                             if (extBatch) {
                                 vRow.find('.v-batch-display').text(extBatch).removeClass('text-muted').addClass('text-success fw-bold');
                             }
                             if (extExpiry) {
                                 vRow.find('.v-expiry-display').text(extExpiry).removeClass('text-muted').addClass('text-success fw-bold');
                             }
+
                             let origUnit = vRow.find('.v-qty-display').data('original-unit') || '';
-                            vRow.find('.v-qty-display').text(`${totalQty} ${origUnit}`);
+                            let displayQty = `${billedQty} ${origUnit}`;
+                            if (freeQty > 0) {
+                                displayQty += ` <span class="text-success small">(+${freeQty} Free)</span>`;
+                            }
+                            vRow.find('.v-qty-display').html(displayQty);
 
                             vRow.find('.v-taxable-display').text(`₹${extTaxable.toFixed(2)}`);
                             vRow.find('.v-gst-display').text(`₹${extGst.toFixed(2)}`);
@@ -1488,6 +1951,12 @@
                             hContainer.find('.hidden-sgst-val').val(extSgst);
                             hContainer.find('.hidden-igst-val').val(extIgst);
                             hContainer.find('.hidden-net-val').val(itemNet);
+
+                            // Propagate quantity update to the main items array visible submission
+                            let itemRow = $(`div.product-row[data-item-id="${orderItemId}"]`);
+                            if (itemRow.length) {
+                                itemRow.find(`input[name="items[${orderItemId}][quantity]"]`).val(totalQty);
+                            }
                         }
 
                         totalInvoiceNet += itemNet;
