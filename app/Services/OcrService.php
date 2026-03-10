@@ -19,6 +19,7 @@ class OcrService
     {
         $basePath = env('OCR_API_URL', 'http://13.204.159.20:5050');
         $apiUrl = rtrim($basePath, '/') . "/{$type}";
+        Log::info('OCR API Request', ['url' => $apiUrl, 'type' => $type]);
 
         try {
             $response = Http::timeout(60)
@@ -30,13 +31,21 @@ class OcrService
                 ->post($apiUrl);
 
             if ($response->successful()) {
-                return $response->json();
+                $data = $response->json();
+                Log::info('OCR API Success Response', ['response' => $data]);
+                return $data;
             }
 
-            Log::error('OCR API Error: ' . $response->body());
+            Log::error('OCR API Error Response', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
             return null;
         } catch (\Exception $e) {
-            Log::error('OCR API Connection Failed: ' . $e->getMessage());
+            Log::error('OCR API Exception', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return null;
         }
     }
