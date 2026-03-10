@@ -811,7 +811,7 @@
                 }
             });
         });
-
+ 
         // Handle Create Field Staff AJAX Submission
         $('#createFieldStaffForm').on('submit', function (e) {
             e.preventDefault();
