@@ -9,6 +9,7 @@ use App\Models\SalesManager;
 use App\Models\FieldStaff;
 use App\Models\Retailer;
 use App\Models\DistributorOrder; // Added this line
+use Illuminate\Support\Facades\Storage;
 
 class PendingApprovalController extends Controller
 {
@@ -191,7 +192,7 @@ class PendingApprovalController extends Controller
                     $res['distributor_id'] = $item->distributor_id;
                     $res['distributor_name'] = $item->distributor->user->name ?? 'N/A';
                     $res['payment_status'] = $item->payment_status ?? 'pending';
-                    $res['invoice_url'] = $item->invoice_path ? asset('storage/' . $item->invoice_path) : null;
+                    $res['invoice_url'] = $item->invoice_path ? Storage::disk('public')->url($item->invoice_path) : null;
                 } elseif ($viewType === 'retailer') {
                     $res['retailer_id'] = $item->retailer_id;
                     $res['distributor_id'] = $item->distributor_id;
@@ -200,7 +201,7 @@ class PendingApprovalController extends Controller
                     $res['retailer_gstin'] = $item->retailer->gst ?? '--';
                     $res['retailer_location'] = $item->retailer->address ?? '--';
                     $res['payment_status'] = $item->payment_status ?? 'pending';
-                    $res['invoice_url'] = $item->invoice_path ? asset('storage/' . $item->invoice_path) : null;
+                    $res['invoice_url'] = $item->invoice_path ? Storage::disk('public')->url($item->invoice_path) : null;
                 }
 
                 return $res;

@@ -1002,7 +1002,8 @@
                 "tags": [
                     "Distributor Retailer Orders"
                 ],
-                "summary": "Accept/Approve a retailer order with invoice and batch allocation",
+                "summary": "Accept/Approve a retailer order",
+                "description": "Accepts the order. If invoice was already uploaded via /upload-invoice, it will use that. Otherwise, a new invoice must be provided.",
                 "operationId": "3a65682528a7c16c7da9ba209ca46a3c",
                 "parameters": [
                     {
@@ -1022,7 +1023,7 @@
                             "schema": {
                                 "properties": {
                                     "invoice": {
-                                        "description": "Invoice file (mandatory)",
+                                        "description": "Invoice file (optional if already uploaded)",
                                         "type": "string",
                                         "format": "binary"
                                     },
@@ -1049,6 +1050,56 @@
                     },
                     "422": {
                         "description": "Validation or stock error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/distributor/retailer-orders/{id}/upload-invoice": {
+            "post": {
+                "tags": [
+                    "Distributor Retailer Orders"
+                ],
+                "summary": "Upload invoice and trigger OCR for auto-approval",
+                "operationId": "015b06bdf0ba5f115d8442556944ee65",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Retailer Order ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "invoice": {
+                                        "description": "Invoice file",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Order accepted automatically if OCR matches"
+                    },
+                    "422": {
+                        "description": "OCR mismatch or validation error"
                     }
                 },
                 "security": [

@@ -8,10 +8,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Traits\HandlesNotifications;
+use App\Services\OcrService;
 
 class DistributorRetailerOrderController extends Controller
 {
     use HandlesNotifications;
+
+    protected $ocrService;
+
+    public function __construct(OcrService $ocrService)
+    {
+        $this->ocrService = $ocrService;
+    }
     /**
      * @OA\Get(
      *     path="/api/distributor/retailer-orders",
@@ -102,7 +110,7 @@ class DistributorRetailerOrderController extends Controller
                 'total_quantity'  => $order->total_quantity,
                 'status'          => $order->status,
                 'payment_status'  => $order->payment_status ?? 'pending',
-                'invoice_url'     => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
+                'invoice_url'     => $order->invoice_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($order->invoice_path) : null,
                 'placed_at'       => $order->placed_at?->format('Y-m-d H:i:s'),
                 'delivered_at'    => $order->delivered_at?->format('Y-m-d H:i:s'),
                 'notes'           => $order->notes,
@@ -240,7 +248,7 @@ class DistributorRetailerOrderController extends Controller
                 return $itemData;
             }),
 
-            'invoice_url'    => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
+            'invoice_url'    => $order->invoice_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($order->invoice_path) : null,
             'placed_at'      => $order->placed_at?->format('Y-m-d H:i:s'),
             'notes'          => $order->notes,
         ]);
@@ -249,7 +257,8 @@ class DistributorRetailerOrderController extends Controller
     /**
      * @OA\Post(
      *     path="/api/distributor/retailer-orders/{id}/accept",
-     *     summary="Accept/Approve a retailer order with invoice and batch allocation",
+     *     summary="Accept/Approve a retailer order",
+     *     description="Accepts the order. If invoice was already uploaded via /upload-invoice, it will use that. Otherwise, a new invoice must be provided.",
      *     tags={"Distributor Retailer Orders"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, description="Retailer Order ID", @OA\Schema(type="integer")),
@@ -258,7 +267,7 @@ class DistributorRetailerOrderController extends Controller
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
      *             @OA\Schema(
-     *                 @OA\Property(property="invoice", type="string", format="binary", description="Invoice file (mandatory)"),
+     *                 @OA\Property(property="invoice", type="string", format="binary", description="Invoice file (optional if already uploaded)"),
      *                 @OA\Property(property="payment_status", type="string", enum={"pending","paid"}),
      *                 @OA\Property(
      *                     property="items_batches",
@@ -288,18 +297,182 @@ class DistributorRetailerOrderController extends Controller
         }
 
         $request->validate([
-            'invoice' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'invoice' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
             'payment_status' => 'nullable|string|in:pending,paid',
         ]);
 
-        $distributor = $user->distributor;
+        if (!$retailerOrder->invoice_path && !$request->hasFile('invoice')) {
+            return response()->json(['error' => 'Invoice file is required because it hasn\'t been uploaded yet.'], 422);
+        }
+
+        $itemsBatches = null;
+        if ($request->filled('items_batches')) {
+            $itemsBatches = is_string($request->items_batches) ? json_decode($request->items_batches, true) : $request->items_batches;
+        }
+
+        $invoicePath = $retailerOrder->invoice_path;
+        if ($request->hasFile('invoice')) {
+            $file = $request->file('invoice');
+            $filename = 'invoice_' . $retailerOrder->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $invoicePath = $file->storeAs('retailer_invoices', $filename, 'public');
+        }
+
+        try {
+            $result = $this->processOrderAcceptance(
+                $retailerOrder,
+                $itemsBatches,
+                $request->payment_status,
+                $invoicePath
+            );
+
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/distributor/retailer-orders/{id}/upload-invoice",
+     *     summary="Upload invoice and trigger OCR for auto-approval",
+     *     tags={"Distributor Retailer Orders"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, description="Retailer Order ID", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(property="invoice", type="string", format="binary", description="Invoice file")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Order accepted automatically if OCR matches"),
+     *     @OA\Response(response=422, description="OCR mismatch or validation error")
+     * )
+     */
+    public function uploadInvoice(Request $request, $id)
+    {
+        $user = auth('api')->user();
+        if (!$user || !$user->distributor) {
+            return response()->json(['message' => 'Authenticated user is not a distributor.'], 403);
+        }
+
+        $retailerOrder = RetailerOrder::with('items.product')
+            ->where('id', $id)
+            ->where('distributor_id', $user->distributor->id)
+            ->firstOrFail();
+
+        if ($retailerOrder->status !== 'processing') {
+            return response()->json(['error' => 'Order must be in processing status to upload invoice.'], 400);
+        }
+
+        $request->validate([
+            'invoice' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ]);
+
+        $file = $request->file('invoice');
+        $filename = 'invoice_' . $retailerOrder->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+        $path = $file->storeAs('retailer_invoices', $filename, 'public');
+
+        // Extract OCR data
+        $ocrData = $this->ocrService->processInvoice($file, 'retailer');
+
+        if (!$ocrData || !isset($ocrData['items'])) {
+            // Save path anyway for manual approval later
+            $retailerOrder->update(['invoice_path' => $path]);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to extract data from the invoice or invalid OCR response.',
+                'invoice_path' => $path,
+                'ocr_raw' => $ocrData
+            ], 422);
+        }
+
+        // Matching Logic
+        $isMatch = true;
+        $mismatches = [];
+        $ocrItems = collect($ocrData['items']);
+
+        $expectedData = [];
+
+        foreach ($retailerOrder->items as $orderItem) {
+            $productName = $orderItem->product->product_name;
+            $expectedQty = $orderItem->quantity;
+
+            $expectedData[] = [
+                'id' => $orderItem->id,
+                'product_name' => $productName,
+                'quantity' => $expectedQty
+            ];
+
+            // Normalize names for comparison (lowercase, trimmed)
+            $normalizedOrderName = strtolower(trim($productName));
+
+            // Find matching item in OCR
+            // This is a naive search, might need fuzzy logic or mapping if names diverge
+            $match = $ocrItems->first(function ($item) use ($normalizedOrderName) {
+                // Assuming OCR item has 'product_name' or 'name' and 'quantity' or 'qty'
+                $name = strtolower(trim($item['product_name'] ?? $item['name'] ?? ''));
+                return str_contains($name, $normalizedOrderName) || str_contains($normalizedOrderName, $name);
+            });
+
+            if (!$match) {
+                $isMatch = false;
+                $mismatches[] = "Product '{$productName}' not found in invoice.";
+            } else {
+                $ocrQty = (float)($match['quantity'] ?? $match['qty'] ?? 0);
+                if ($ocrQty < $expectedQty) {
+                    $isMatch = false;
+                    $mismatches[] = "Quantity mismatch for '{$productName}': Expected {$expectedQty}, found {$ocrQty}.";
+                }
+            }
+        }
+
+        if ($isMatch) {
+            try {
+                // Auto-Approval
+                $result = $this->processOrderAcceptance($retailerOrder, null, 'pending', $path);
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Invoice matched and order accepted automatically!',
+                    'details' => $result
+                ]);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'OCR matched, but auto-acceptance failed: ' . $e->getMessage(),
+                    'ocr_data' => $ocrData['items']
+                ], 422);
+            }
+        }
+
+        // Mismatch: Save path and return error with data for cross-verification
+        $retailerOrder->update(['invoice_path' => $path]);
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Invoice data mismatch. Please cross-verify and approve manually.',
+            'mismatches' => $mismatches,
+            'ocr_data' => $ocrData['items'],
+            'expected_data' => $expectedData,
+            'invoice_path' => $path
+        ], 422);
+    }
+
+    /**
+     * Core logic for accepting a retailer order.
+     * Extracted for reuse in auto-approval and manual approval.
+     */
+    protected function processOrderAcceptance(RetailerOrder $retailerOrder, $itemsBatches = null, $paymentStatus = 'pending', $invoicePath = null)
+    {
+        $distributor = $retailerOrder->distributor;
 
         DB::beginTransaction();
         try {
             // 1. Batch Allocation Logic
-            if ($request->filled('items_batches')) {
-                $itemsBatches = is_string($request->items_batches) ? json_decode($request->items_batches, true) : $request->items_batches;
-
+            if ($itemsBatches) {
                 foreach ($itemsBatches as $allocation) {
                     $orderItem = $retailerOrder->items()->findOrFail($allocation['order_item_id']);
                     $product = $orderItem->product;
@@ -312,7 +485,7 @@ class DistributorRetailerOrderController extends Controller
                     }
 
                     $totalAllocated = 0;
-                    $orderItem->batches()->delete(); // Clear existing batches to prevent duplicates due to MyISAM lacking rollback
+                    $orderItem->batches()->delete();
                     foreach ($allocation['batches'] as $batchData) {
                         $inventory = \App\Models\Inventory::where('distributor_id', $distributor->id)
                             ->where('product_id', $product->id)
@@ -344,7 +517,7 @@ class DistributorRetailerOrderController extends Controller
                 // Fallback to FEFO
                 foreach ($retailerOrder->items as $orderItem) {
                     $product = $orderItem->product;
-                    $orderItem->batches()->delete(); // Clear existing batches to prevent duplicates due to MyISAM lacking rollback
+                    $orderItem->batches()->delete();
                     $multiplier = 1;
                     if ($orderItem->unit === 'Box') {
                         $multiplier = (int)($product->box_size ?? 1);
@@ -381,22 +554,19 @@ class DistributorRetailerOrderController extends Controller
                 }
             }
 
-            // 2. Invoice Upload
-            $file = $request->file('invoice');
-            $filename = 'invoice_' . $retailerOrder->id . '_' . time() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('retailer_invoices', $filename, 'public');
-
-            // 3. Update Order
+            // 2. Update Order
             $updateData = [
                 'status' => 'accepted',
-                'invoice_path' => $path,
             ];
-            if ($request->filled('payment_status')) {
-                $updateData['payment_status'] = $request->payment_status;
+            if ($invoicePath) {
+                $updateData['invoice_path'] = $invoicePath;
+            }
+            if ($paymentStatus) {
+                $updateData['payment_status'] = $paymentStatus;
             }
             $retailerOrder->update($updateData);
 
-            // 4. Loyalty Points Calculation
+            // 3. Loyalty Points Calculation
             $totalPoints = 0;
             foreach ($retailerOrder->items as $item) {
                 if ($item->product) {
@@ -415,7 +585,7 @@ class DistributorRetailerOrderController extends Controller
                 }
             }
 
-            // 5. Notifications
+            // 4. Notifications
             $this->clearOrderNotifications($retailerOrder->id, 'retailer_order');
             if ($retailerOrder->retailer && $retailerOrder->retailer->user) {
                 $this->notifyUnique(
@@ -430,15 +600,15 @@ class DistributorRetailerOrderController extends Controller
             }
 
             DB::commit();
-            return response()->json([
-                'success' => 'Order accepted by Distributor!',
+            return [
+                'success' => 'Order accepted successfully!',
                 'loyalty_points_earned' => $totalPoints,
                 'retailer_total_points' => $retailerOrder->retailer->loyalty_points ?? 0
-            ]);
+            ];
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('API Retailer Order Approval failed: ' . $e->getMessage());
-            return response()->json(['error' => $e->getMessage()], 422);
+            Log::error('Process Retailer Order Approval failed: ' . $e->getMessage());
+            throw $e;
         }
     }
 
