@@ -873,7 +873,7 @@
             let formData = new FormData(this);
             let submitBtn = $(this).find('button[type="submit"]');
             submitBtn.prop('disabled', true).text('Updating...');
-
+//
             $.ajax({
                 url: $(this).attr('action'),
                 type: "POST",
