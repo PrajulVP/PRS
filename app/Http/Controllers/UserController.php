@@ -39,7 +39,7 @@ class UserController extends Controller
                     'status'          => $u->status,
                     'roles_display'   => $u->getRoleNames()->implode(', '),
                     'profile_image_url' => $u->profile_image
-                        ? asset('storage/' . $u->profile_image)
+                        ? \Illuminate\Support\Facades\Storage::disk('public')->url($u->profile_image)
                         : null,
                     'contact_no'      => $u->salesManager?->contact_no ?? $u->distributor?->contact_no ?? $u->retailer?->contact_no ?? $u->fieldStaff?->contact_no ?? '—',
                     'address'         => $u->salesManager?->address ?? $u->retailer?->address ?? $u->fieldStaff?->address ?? $u->distributor?->address ?? '—',
