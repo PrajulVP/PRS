@@ -29,6 +29,7 @@ class PendingApprovalController extends Controller
             elseif ($user->hasRole('admin')) $viewType = 'distributor';
             elseif ($user->hasRole('salesmanager')) $viewType = 'retailer';
             elseif ($user->hasRole('retailer')) $viewType = 'retailer';
+            elseif ($user->hasRole('fieldstaff')) $viewType = 'retailer';
             else $viewType = 'none';
         }
 
@@ -194,7 +195,10 @@ class PendingApprovalController extends Controller
                 } elseif ($viewType === 'retailer') {
                     $res['retailer_id'] = $item->retailer_id;
                     $res['distributor_id'] = $item->distributor_id;
-                    $res['retailer_name'] = $item->retailer->user->name ?? 'N/A';
+                    $res['retailer_name'] = $item->retailer->shop_name ?? ($item->retailer->user->name ?? 'N/A');
+                    $res['retailer_phone'] = $item->retailer->contact_no ?? '--';
+                    $res['retailer_gstin'] = $item->retailer->gst ?? '--';
+                    $res['retailer_location'] = $item->retailer->address ?? '--';
                     $res['payment_status'] = $item->payment_status ?? 'pending';
                     $res['invoice_url'] = $item->invoice_path ? asset('storage/' . $item->invoice_path) : null;
                 }

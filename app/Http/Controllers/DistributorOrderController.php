@@ -461,7 +461,7 @@ class DistributorOrderController extends Controller
                 $stock = \App\Models\Stock::where('product_id', $item->product_id)->first();
                 if ($stock) {
                     if ($stock->quantity < $item->quantity) {
-                        throw new \Exception("Insufficient stock for product: " . $item->product->name);
+                        throw new \Exception("Not enough stock for product: " . $item->product->product_name);
                     }
                     $stock->decrement('quantity', $item->quantity);
                 }
@@ -848,6 +848,44 @@ class DistributorOrderController extends Controller
 
                 $inventory->save();
             }
+        }
+    }
+
+    public function confirmReceipt(DistributorOrder $distributorOrder)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        // Check if user is the distributor for this order or has admin roles
+        $isOrderDistributor = ($user->hasRole('distributor') && $distributorOrder->distributor_id === $user->distributor?->id);
+        $isAdminLike = $user->hasAnyRole(['admin', 'superadmin', 'salesmanager']);
+
+        if (!$isOrderDistributor && !$isAdminLike) {
+            return response()->json(['error' => 'Unauthorized action. Only the assigned distributor or an admin can confirm receipt.'], 403);
+        }
+
+        if ($distributorOrder->status !== 'accepted') {
+            return response()->json(['error' => 'Order must be accepted by Admin before confirmation.'], 400);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $distributorOrder->update([
+                'status' => 'delivered',
+                'delivered_at' => now()
+            ]);
+
+            // Add items to inventory upon delivery
+            $this->addOrderItemsToInventory($distributorOrder);
+
+            DB::commit();
+
+            return response()->json(['success' => 'Order delivery confirmed and items added to inventory!']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error confirming distributor order receipt: ' . $e->getMessage());
+            return response()->json(['error' => 'Error confirming order: ' . $e->getMessage()], 500);
         }
     }
 }

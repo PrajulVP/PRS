@@ -5,444 +5,532 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice #{{ $retailerOrder->order_code }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --accent: #0ea5e9;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-300: #cbd5e1;
+            --slate-400: #94a3b8;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1e293b;
+            --slate-950: #020617;
+        }
 
         body {
-            font-family: 'Inter', sans-serif;
-            color: #334155;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: var(--slate-700);
             font-size: 14px;
-            line-height: 1.6;
+            line-height: 1.5;
             margin: 0;
             padding: 0;
-            background-color: #f8fafc;
+            background-color: var(--slate-50);
             -webkit-font-smoothing: antialiased;
         }
 
-        .invoice-wrapper {
-            max-width: 850px;
+        .invoice-container {
+            max-width: 900px;
             margin: 40px auto;
+            position: relative;
+        }
+
+        .action-bar {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        @media print {
+            .invoice-container {
+                margin: 0;
+                max-width: 100%;
+            }
+
+            .action-bar {
+                display: none !important;
+            }
+
+            body {
+                background: white;
+            }
+
+            .invoice-card {
+                box-shadow: none !important;
+                border: 1px solid var(--slate-200) !important;
+            }
+        }
+
+        .invoice-card {
             background-color: #fff;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            border-radius: 8px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
             overflow: hidden;
+            border: 1px solid var(--slate-100);
         }
 
         .invoice-header {
-            background-color: #0c1427;
-            /* Deep Navy from sidebar */
+            background: linear-gradient(135deg, var(--slate-950) 0%, #1e1b4b 100%);
             color: #fff;
-            padding: 40px;
+            padding: 50px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .invoice-header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 100%;
+            background: linear-gradient(225deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .header-top {
             display: flex;
-            /* works in browser print */
-        }
-
-        .invoice-header table {
-            width: 100%;
-        }
-
-        .invoice-header td {
-            vertical-align: middle;
-        }
-
-        .company-logo {
-            max-width: 180px;
-            height: auto;
-        }
-
-        .invoice-title-wrapper {
-            text-align: right;
-        }
-
-        .invoice-title {
-            font-size: 32px;
-            font-weight: 700;
-            margin: 0 0 10px 0;
-            color: #fff;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .invoice-meta {
-            font-size: 14px;
-            color: #94a3b8;
-        }
-
-        .invoice-meta span {
-            color: #f1f5f9;
-            font-weight: 500;
-        }
-
-        .invoice-body {
-            padding: 40px;
-        }
-
-        .info-section {
-            width: 100%;
+            justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 40px;
         }
 
-        .info-section td {
-            width: 50%;
-            vertical-align: top;
+        .logo-box img {
+            max-width: 160px;
+            height: auto;
         }
 
-        .info-block {
-            background-color: #f8fafc;
-            padding: 20px;
-            border-radius: 6px;
-            border: 1px solid #e2e8f0;
-            height: 100%;
-        }
-
-        .info-title {
-            font-size: 12px;
-            font-weight: 700;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 12px;
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 8px;
-        }
-
-        .info-content {
-            font-size: 14px;
-        }
-
-        .info-content strong {
-            color: #0f172a;
-            font-size: 16px;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .table-items {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 30px;
-        }
-
-        .table-items th {
-            background-color: #f1f5f9;
-            color: #475569;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 12px;
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 2px solid #cbd5e1;
-        }
-
-        .table-items th.center {
-            text-align: center;
-        }
-
-        .table-items th.right {
+        .invoice-id-box {
             text-align: right;
         }
 
-        .table-items td {
-            padding: 15px;
-            border-bottom: 1px solid #e2e8f0;
-            color: #334155;
-            vertical-align: middle;
-        }
-
-        .table-items td.center {
-            text-align: center;
-        }
-
-        .table-items td.right {
-            text-align: right;
-        }
-
-        .product-name {
-            font-weight: 600;
-            color: #0f172a;
-        }
-
-        .batch-info {
-            font-size: 12px;
-            color: #64748b;
-            margin-top: 4px;
-        }
-
-        .batch-badge {
-            background-color: #e2e8f0;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 11px;
-            margin-right: 5px;
-            color: #475569;
-        }
-
-        .totals-section {
-            width: 100%;
-            margin-top: 20px;
-        }
-
-        .totals-section td {
-            vertical-align: top;
-        }
-
-        .totals-table {
-            width: 100%;
-            max-width: 350px;
-            margin-left: auto;
-            border-collapse: collapse;
-        }
-
-        .totals-table td {
-            padding: 10px 15px;
-            color: #475569;
-        }
-
-        .totals-table td:last-child {
-            text-align: right;
-            font-weight: 600;
-            color: #0f172a;
-        }
-
-        .totals-table tr.tax-row td {
-            font-size: 13px;
-            color: #64748b;
-            padding: 5px 15px;
-        }
-
-        .totals-table tr.grand-total td {
-            font-size: 18px;
-            font-weight: 700;
-            color: #0f172a;
-            border-top: 2px solid #cbd5e1;
-            padding-top: 15px;
-            margin-top: 5px;
-        }
-
-        .loyalty-points {
-            background-color: #dcfce7;
-            color: #166534;
-            padding: 10px 15px;
-            border-radius: 6px;
-            font-weight: 600;
-            text-align: center;
-            margin-top: 20px;
-            border: 1px solid #bbf7d0;
-        }
-
-        .invoice-footer {
-            text-align: center;
-            padding: 30px 40px;
-            background-color: #f8fafc;
-            border-top: 1px solid #e2e8f0;
-            color: #64748b;
-            font-size: 13px;
-        }
-
-        .invoice-footer p {
+        .invoice-id-box h1 {
+            font-size: 38px;
+            font-weight: 800;
             margin: 0;
+            letter-spacing: -1px;
+            line-height: 1;
+        }
+
+        .invoice-id-box .ref-code {
+            font-size: 16px;
+            color: var(--slate-400);
+            margin-top: 5px;
             font-weight: 500;
         }
 
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
+        .header-meta {
+            display: flex;
+            gap: 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 25px;
+        }
+
+        .meta-item label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--slate-400);
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+
+        .meta-item value {
+            font-size: 15px;
             font-weight: 600;
+            color: #fff;
+            display: block;
+        }
+
+        .badge-status {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
             text-transform: uppercase;
         }
 
         .status-paid {
-            background-color: #10b981;
-            color: #fff;
+            background: #065f46;
+            color: #34d399;
         }
 
         .status-pending {
-            background-color: #f59e0b;
-            color: #fff;
+            background: #92400e;
+            color: #fbbf24;
         }
 
-        .print-btn {
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            cursor: pointer;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: 600;
-            margin: 20px auto;
+        .invoice-content {
+            padding: 50px;
+        }
+
+        .address-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 50px;
+        }
+
+        .address-card h6 {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--slate-400);
+            margin: 0 0 15px 0;
+            font-weight: 800;
+            border-bottom: 1px solid var(--slate-100);
+            padding-bottom: 8px;
+        }
+
+        .address-card .name {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--slate-950);
+            margin-bottom: 8px;
+        }
+
+        .address-card .details {
+            font-size: 14px;
+            color: var(--slate-600);
+            line-height: 1.6;
+        }
+
+        .details span {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .details .icon-text {
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 8px;
-            transition: background 0.2s;
-            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
         }
 
-        .print-btn:hover {
-            background: #1d4ed8;
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 40px;
         }
 
-        @media print {
-            @page {
-                size: A4;
-                margin: 0;
-            }
+        .items-table th {
+            text-align: left;
+            padding: 15px 20px;
+            background: var(--slate-50);
+            border-bottom: 2px solid var(--slate-200);
+            color: var(--slate-800);
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
-            body {
-                background-color: #fff;
-                margin: 0;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
+        .items-table td {
+            padding: 20px;
+            border-bottom: 1px solid var(--slate-100);
+            vertical-align: top;
+        }
 
-            .invoice-wrapper {
-                box-shadow: none;
-                margin: 0;
-                border: none;
-                border-radius: 0;
-                max-width: 100%;
-            }
+        .product-title {
+            font-weight: 700;
+            color: var(--slate-950);
+            font-size: 15px;
+            margin-bottom: 6px;
+        }
 
-            .print-btn {
-                display: none !important;
-            }
+        .batch-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
 
-            .invoice-body {
-                padding: 30px;
-            }
+        .batch-pill {
+            background: var(--slate-100);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            color: var(--slate-600);
+            border: 1px solid var(--slate-200);
+        }
 
-            .invoice-header {
-                padding: 30px;
-            }
+        .summary-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 40px;
+        }
 
-            .info-block {
-                border: 1px solid #cbd5e1;
-            }
+        .notes-area {
+            flex: 1;
+            padding: 20px;
+            background: #fff9f2;
+            border: 1px dashed #fed7aa;
+            border-radius: 12px;
+            font-size: 13px;
+            color: #9a3412;
+            max-width: 400px;
+        }
+
+        .totals-card {
+            width: 350px;
+            background: var(--slate-50);
+            border-radius: 16px;
+            padding: 25px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .total-row.tax {
+            color: var(--slate-400);
+            font-size: 13px;
+        }
+
+        .total-row.grand {
+            border-top: 2px solid var(--slate-200);
+            padding-top: 15px;
+            margin-top: 15px;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--slate-950);
+        }
+
+        .total-row label {
+            font-weight: 500;
+        }
+
+        .total-row value {
+            font-weight: 700;
+            color: var(--slate-950);
+        }
+
+        .footer {
+            padding: 40px 50px;
+            text-align: center;
+            border-top: 1px solid var(--slate-100);
+            color: var(--slate-400);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .loyalty-banner {
+            background: linear-gradient(90deg, #065f46 0%, #059669 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .loyalty-banner i {
+            font-size: 24px;
+            color: #34d399;
         }
     </style>
 </head>
 
 <body>
-    <button class="print-btn" onclick="window.print()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="6 9 6 2 18 2 18 9"></polyline>
-            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-            <rect x="6" y="14" width="12" height="8"></rect>
-        </svg>
-        Print Invoice
-    </button>
-
-    <div class="invoice-wrapper">
-        <div class="invoice-header">
-            <table border="0" cellpadding="0" cellspacing="0">
-                <tr>
-                    <td style="width: 50%;">
-                        <img src="{{ asset('admin/assets/images/logo/atom-logo-main-white.png') }}" class="company-logo"
-                            alt="PRS Logo">
-                    </td>
-                    <td style="width: 50%;" class="invoice-title-wrapper">
-                        <h1 class="invoice-title">INVOICE</h1>
-                        <div class="invoice-meta">
-                            Order No: <span>#{{ $retailerOrder->order_code }}</span><br>
-                            Date: <span>{{ $retailerOrder->created_at->format('F d, Y') }}</span><br>
-                            Payment Status: <span
-                                class="status-badge {{ strtolower($retailerOrder->payment_status) == 'paid' ? 'status-paid' : 'status-pending' }}">{{ ucfirst($retailerOrder->payment_status) }}</span>
-                        </div>
-                    </td>
-                </tr>
-            </table>
+    <div class="invoice-container">
+        <div class="action-bar">
+            <a href="javascript:history.back()"
+                style="color: var(--slate-400); text-decoration: none; font-weight: 600;">
+                <i class="fa fa-arrow-left me-1"></i> Back
+            </a>
+            <button class="btn-primary" onclick="window.print()">
+                <i class="fa fa-print"></i> Print Invoice
+            </button>
         </div>
 
-        <div class="invoice-body">
-            <table class="info-section" border="0" cellpadding="0" cellspacing="0">
-                <tr>
-                    <td style="padding-right: 15px;">
-                        <div class="info-block">
-                            <div class="info-title">Company Information</div>
-                            <div class="info-content">
-                                <strong>PRS</strong>
-                                1234 Main St<br>
-                                City, State 12345<br>
-                                Email: info@prs.com<br>
-                                Phone: +1 234 567 8900
-                            </div>
-                        </div>
-                    </td>
-                    <td style="padding-left: 15px;">
-                        <div class="info-block">
-                            <div class="info-title">Bill To</div>
-                            <div class="info-content">
-                                <strong>{{ $retailerOrder->retailer->shop_name ?? '' }}</strong>
-                                {{ $retailerOrder->retailer->user->name ?? 'Retailer Name' }}<br>
-                                {{ $retailerOrder->retailer->address ?? ($retailerOrder->retailer->shop_address ?? '') }}
-                                {{ $retailerOrder->retailer->pincode ?? '' }}<br>
-                                Phone:
-                                {{ $retailerOrder->retailer->contact_no ?? ($retailerOrder->retailer->phone ?? 'N/A') }}<br>
-                                {!! $retailerOrder->retailer->user->email ? 'Email: ' . $retailerOrder->retailer->user->email . '<br>' : '' !!}
-                                @if(!empty($retailerOrder->retailer->gst)) GST: {{ $retailerOrder->retailer->gst }}<br>
-                                @endif
-                                @if(!empty($retailerOrder->retailer->drug_license_no)) DL No:
-                                {{ $retailerOrder->retailer->drug_license_no }} @endif
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-            </table>
+        <div class="invoice-card">
+            <div class="invoice-header">
+                <div class="header-top">
+                    <div class="logo-box">
+                        <img src="{{ asset('admin/assets/images/logo/atom-logo-main-white.png') }}" alt="PRS">
+                    </div>
+                    <div class="invoice-id-box">
+                        <h1>INVOICE</h1>
+                        <div class="ref-code">#{{ $retailerOrder->order_code }}</div>
+                    </div>
+                </div>
 
-            <table class="table-items">
-                <thead>
-                    <tr>
-                        <th>Product Description</th>
-                        <th class="center" width="15%">Price</th>
-                        <th class="center" width="15%">Qty</th>
-                        <th class="right" width="20%">Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($retailerOrder->items as $item)
+                <div class="header-meta">
+                    <div class="meta-item">
+                        <label>Issue Date</label>
+                        <value>{{ $retailerOrder->created_at->format('d M, Y') }}</value>
+                    </div>
+                    <div class="meta-item">
+                        <label>Order Status</label>
+                        <value>{{ strtoupper($retailerOrder->status) }}</value>
+                    </div>
+                    <div class="meta-item">
+                        <label>Payment Mode</label>
+                        <value>---</value>
+                    </div>
+                    <div class="meta-item">
+                        <label>Payment Status</label>
+                        <div style="margin-top: 5px;">
+                            <span
+                                class="badge-status {{ strtolower($retailerOrder->payment_status) == 'paid' ? 'status-paid' : 'status-pending' }}">
+                                {{ $retailerOrder->payment_status ?? 'PENDING' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="invoice-content">
+                <div class="address-grid">
+                    <div class="address-card">
+                        <h6>From (Distributor)</h6>
+                        <div class="name">
+                            {{ $retailerOrder->distributor->name ?? ($retailerOrder->distributor->user->name ?? 'Distributor') }}
+                        </div>
+                        <div class="details">
+                            <span>{{ $retailerOrder->distributor->address ?? '' }}</span>
+                            <span>{{ $retailerOrder->distributor->pincode ?? '' }}</span>
+                            <span class="icon-text"><i class="fa fa-phone text-primary" style="font-size: 10px;"></i>
+                                {{ $retailerOrder->distributor->contact_no ?? 'N/A' }}</span>
+                            @if(!empty($retailerOrder->distributor->gst))
+                                <span class="icon-text"><i class="fa fa-file-invoice text-primary"
+                                        style="font-size: 10px;"></i> GST: {{ $retailerOrder->distributor->gst }}</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="address-card">
+                        <h6>Bill To (Retailer)</h6>
+                        <div class="name">{{ $retailerOrder->retailer->shop_name ?? 'Retailer Shop' }}</div>
+                        <div class="details">
+                            <span>{{ $retailerOrder->retailer->user->name ?? 'Retailer Name' }}</span>
+                            <span>{{ $retailerOrder->retailer->address ?? '' }}</span>
+                            <span class="icon-text"><i class="fa fa-phone text-success" style="font-size: 10px;"></i>
+                                {{ $retailerOrder->retailer->contact_no ?? 'N/A' }}</span>
+                            @if(!empty($retailerOrder->retailer->gst))
+                                <span class="icon-text"><i class="fa fa-file-invoice text-success"
+                                        style="font-size: 10px;"></i> GST: {{ $retailerOrder->retailer->gst }}</span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                @if($retailerOrder->status === 'pending' || $retailerOrder->status === 'processing')
+                    <div
+                        style="background: #fff9f2; border: 1px solid #fed7aa; border-radius: 12px; padding: 15px; margin-bottom: 30px; display: flex; gap: 15px; align-items: center;">
+                        <i class="fa fa-info-circle" style="color: #ea580c; font-size: 24px;"></i>
+                        <p style="margin: 0; font-size: 13px; color: #9a3412; font-weight: 500;">
+                            <strong>Pro-forma Notice:</strong> This invoice is based on the initial order. Final quantities,
+                            batches, and taxes will be updated upon physical billing and dispatch.
+                        </p>
+                    </div>
+                @endif
+
+                @if(isset($retailerOrder->loyalty_points_earned) && $retailerOrder->loyalty_points_earned > 0)
+                    <div class="loyalty-banner">
+                        <i class="fa fa-star"></i>
+                        <div>
+                            <div style="font-weight: 800; font-size: 16px;">
+                                +{{ number_format($retailerOrder->loyalty_points_earned) }} Points!</div>
+                            <div style="font-size: 12px; opacity: 0.9;">You've earned loyalty points on this transaction.
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                <table class="items-table">
+                    <thead>
                         <tr>
-                            <td>
-                                <div class="product-name">{{ $item->product->product_name ?? 'Product' }}</div>
-                                @if($item->batches && $item->batches->count() > 0)
-                                    <div class="batch-info">
-                                        @foreach($item->batches as $batch)
-                                            <span class="batch-badge">Batch: {{ $batch->batch_no }}</span> Exp:
-                                            {{ \Carbon\Carbon::parse($batch->expiry_date)->format('m/Y') }} (Qty:
-                                            {{ $batch->quantity }} {{ $item->unit ?? '' }})<br>
-                                        @endforeach
-                                    </div>
-                                @endif
-                            </td>
-                            <td class="center">₹{{ number_format($item->unit_price, 2) }}</td>
-                            <td class="center">{{ $item->quantity }} {{ $item->unit ?? '' }}</td>
-                            <td class="right">₹{{ number_format($item->total_amount, 2) }}</td>
+                            <th>Product Details</th>
+                            <th style="text-align: center;">Price</th>
+                            <th style="text-align: center;">Qty</th>
+                            <th style="text-align: right;">Total</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach($retailerOrder->items as $item)
+                            <tr>
+                                <td>
+                                    <div class="product-title">{{ $item->product->product_name ?? 'Product' }}</div>
+                                    @if($item->batches && $item->batches->count() > 0)
+                                        <div class="batch-pills">
+                                            @foreach($item->batches as $batch)
+                                                <div class="batch-pill">
+                                                    <i class="fa fa-tag me-1"></i> {{ $batch->batch_no }}
+                                                    <span style="opacity: 0.5; margin: 0 5px;">|</span>
+                                                    Exp: {{ \Carbon\Carbon::parse($batch->expiry_date)->format('m/Y') }}
+                                                    <span style="opacity: 0.5; margin: 0 5px;">|</span>
+                                                    Qty: {{ $batch->quantity }}
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <div style="color: var(--slate-400); font-size: 12px; font-style: italic;">No batch
+                                            allocated yet</div>
+                                    @endif
+                                </td>
+                                <td style="text-align: center; vertical-align: middle; font-weight: 600;">
+                                    ₹{{ number_format($item->unit_price, 2) }}</td>
+                                <td style="text-align: center; vertical-align: middle;">
+                                    <span
+                                        style="background: var(--slate-100); padding: 5px 12px; border-radius: 8px; font-weight: 700;">
+                                        {{ $item->quantity }}
+                                    </span>
+                                    <div style="font-size: 11px; color: var(--slate-400); margin-top: 5px;">
+                                        {{ $item->unit ?? 'nos' }}</div>
+                                </td>
+                                <td
+                                    style="text-align: right; vertical-align: middle; font-weight: 800; color: var(--primary);">
+                                    ₹{{ number_format($item->total_amount, 2) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
 
-            <table class="totals-section" border="0" cellpadding="0" cellspacing="0">
-                <tr>
-                    <td style="width: 50%;">
-                        @if(isset($retailerOrder->loyalty_points_earned) && $retailerOrder->loyalty_points_earned > 0)
-                            <div class="loyalty-points">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" style="vertical-align: middle; margin-right: 5px;">
-                                    <polygon
-                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
-                                    </polygon>
-                                </svg>
-                                {{ number_format($retailerOrder->loyalty_points_earned) }} Loyalty Points Earned on this
-                                invoice!
-                            </div>
-                        @endif
-                    </td>
-                    <td style="width: 50%;">
+                <div class="summary-box">
+                    <div class="notes-area">
+                        <div
+                            style="font-weight: 700; text-transform: uppercase; font-size: 10px; margin-bottom: 8px; letter-spacing: 1px;">
+                            Delivery Notes</div>
+                        {{ $retailerOrder->delivery_notes ?: 'No specific delivery instructions provided.' }}
+                    </div>
+
+                    <div class="totals-card">
                         @php
                             $cgstRate = $cgst ?? 9;
                             $sgstRate = $sgst ?? 9;
@@ -452,31 +540,33 @@
                             $cgstAmount = $taxableAmount * ($cgstRate / 100);
                             $sgstAmount = $taxableAmount * ($sgstRate / 100);
                         @endphp
-                        <table class="totals-table">
-                            <tr>
-                                <td>Taxable Amount</td>
-                                <td>₹{{ number_format($taxableAmount, 2) }}</td>
-                            </tr>
-                            <tr class="tax-row">
-                                <td>CGST ({{ $cgstRate }}%)</td>
-                                <td>₹{{ number_format($cgstAmount, 2) }}</td>
-                            </tr>
-                            <tr class="tax-row">
-                                <td>SGST ({{ $sgstRate }}%)</td>
-                                <td>₹{{ number_format($sgstAmount, 2) }}</td>
-                            </tr>
-                            <tr class="grand-total">
-                                <td>Grand Total</td>
-                                <td>₹{{ number_format($retailerOrder->total_amount, 2) }}</td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-            </table>
-        </div>
+                        <div class="total-row">
+                            <label>Taxable Amount</label>
+                            <value>₹{{ number_format($taxableAmount, 2) }}</value>
+                        </div>
+                        <div class="total-row tax">
+                            <label>CGST ({{ $cgstRate }}%)</label>
+                            <value>₹{{ number_format($cgstAmount, 2) }}</value>
+                        </div>
+                        <div class="total-row tax">
+                            <label>SGST ({{ $sgstRate }}%)</label>
+                            <value>₹{{ number_format($sgstAmount, 2) }}</value>
+                        </div>
+                        <div class="total-row grand">
+                            <label>Grand Total</label>
+                            <value>₹{{ number_format($retailerOrder->total_amount, 2) }}</value>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-        <div class="invoice-footer">
-            <p>Thank you for your business. For any inquiries, please contact info@prs.com</p>
+            <div class="footer">
+                <p style="margin-bottom: 5px; font-weight: 700; color: var(--slate-600);">Authorized Signature</p>
+                <div style="width: 200px; border-bottom: 1px solid var(--slate-200); margin: 20px auto 10px;"></div>
+                <p>This is a computer generated invoice and does not require a signature.</p>
+                <p style="font-size: 11px; margin-top: 15px;">PRS Ecosystem &copy; {{ date('Y') }}. All rights reserved.
+                </p>
+            </div>
         </div>
     </div>
 </body>

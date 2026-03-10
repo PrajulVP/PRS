@@ -197,7 +197,7 @@ class SalesManagerDashboardApiController extends Controller
         $salesManager = $user->salesManager;
         $fieldStaffIds = $salesManager->fieldStaffs->pluck('id');
 
-        $retailers = Retailer::with(['user', 'fieldStaff.user', 'district', 'area'])
+        $retailers = Retailer::with(['user', 'district', 'area'])
             ->whereIn('field_staff_id', $fieldStaffIds)
             ->get();
 

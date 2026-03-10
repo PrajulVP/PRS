@@ -167,8 +167,7 @@
                                             required>
                                     </div>
                                     <div class="col-md-12">
-                                        <label for="create_loyalty_point_percentage" class="form-label fw-medium">Loyalty
-                                            %</label>
+                                        <label for="create_loyalty_point_percentage" class="form-label fw-medium">Loyalty %</label>
                                         <input type="number" step="0.01" name="loyalty_point_percentage"
                                             id="create_loyalty_point_percentage" class="form-control" placeholder="0.00">
                                     </div>

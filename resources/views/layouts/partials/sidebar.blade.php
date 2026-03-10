@@ -103,7 +103,7 @@
             </svg>
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-form"></use>
-            </svg><span>My Placed Orders</span>
+            </svg><span>My Orders</span>
           </a>
         </li>
         @endif
@@ -142,6 +142,7 @@
         {{-- Order Approvals Dropdown --}}
         @if (Auth::user()->hasPermissionToCategory('retailer_approvals', 'view') || 
              Auth::user()->hasPermissionToCategory('distributor_approvals', 'view') || 
+             Auth::user()->hasRole('fieldstaff') ||
              $hasApprovalRoles)
         <li class="sidebar-main-title">
           <div>
@@ -159,7 +160,7 @@
             </svg><span>Order Approval</span>
           </a>
           <ul class="sidebar-submenu">
-             @if(Auth::user()->hasPermissionToCategory('retailer_approvals', 'view') || $hasApprovalRoles)
+             @if(Auth::user()->hasPermissionToCategory('retailer_approvals', 'view') || Auth::user()->hasRole('fieldstaff') || $hasApprovalRoles)
              <li style="position: relative;"><a href="{{ route('admin.approvals.retailer') }}">Retailers</a></li>
             @endif
              @if(Auth::user()->hasPermissionToCategory('distributor_approvals', 'view') || $hasApprovalRoles)

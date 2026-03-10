@@ -42,8 +42,8 @@ class InventoryController extends Controller
             $change = $request->quantity;
         } else {
             if ($inventory->stock < $request->quantity) {
-                if ($request->ajax()) return response()->json(['error' => 'Insufficient stock'], 400);
-                return back()->with('error', 'Insufficient stock');
+                if ($request->ajax()) return response()->json(['error' => 'Not enough stock available'], 400);
+                return back()->with('error', 'Not enough stock available');
             }
             $change = -$request->quantity;
         }
@@ -142,6 +142,8 @@ class InventoryController extends Controller
                         'id' => $i->id,
                         'distributor_product_code' => $i->distributor_product_code,
                         'product_name' => $i->product_name,
+                        'product_id' => $i->product_id,
+                        'distributor_id' => $i->distributor_id,
                         'distributor_name' => $i->distributor?->user?->name ?? 'N/A',
                         'stock' => (int) $i->stock,
                         'image' => $i->product && $i->product->image ? asset('storage/' . $i->product->image) : asset('admin/assets/images/dashboard/product-1.png'), // Placeholder
@@ -292,7 +294,14 @@ class InventoryController extends Controller
         $newStock = $request->stock;
         $quantityChange = $newStock - $previousStock;
 
-        $inventory->update($request->only(['distributor_product_code', 'product_name', 'product_id', 'distributor_id', 'stock', 'batch_no', 'expiry_date']));
+        $updateData = $request->only(['distributor_product_code', 'product_name', 'product_id', 'distributor_id', 'stock', 'batch_no', 'expiry_date']);
+
+        // Remove empty strings so we don't accidentally wipe foreign keys if they are structurally omitted from a form
+        $updateData = array_filter($updateData, function ($value) {
+            return $value !== null && $value !== '';
+        });
+
+        $inventory->update($updateData);
 
         if ($quantityChange !== 0) {
             StockHistory::create([
