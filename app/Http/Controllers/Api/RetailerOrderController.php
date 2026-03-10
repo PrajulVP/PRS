@@ -10,6 +10,7 @@ use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Traits\HandlesNotifications;
+use Illuminate\Support\Facades\Storage;
 
 class RetailerOrderController extends Controller
 {
@@ -52,9 +53,28 @@ class RetailerOrderController extends Controller
             return response()->json(['message' => 'User is not a retailer'], 403);
         }
 
-        $orders = RetailerOrder::where('retailer_id', $user->retailer->id)
+        $orders = RetailerOrder::with(['items.product'])
+            ->where('retailer_id', $user->retailer->id)
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($order) {
+                return [
+                    'id'             => $order->id,
+                    'order_code'     => $order->order_code,
+                    'status'         => $order->status,
+                    'payment_status' => $order->payment_status,
+                    'total_amount'   => number_format($order->total_amount, 2),
+                    'total_items'    => $order->total_items,
+                    'total_quantity' => $order->total_quantity,
+                    'notes'          => $order->notes,
+                    'delivery_notes' => $order->delivery_notes,
+                    'invoice_url'    => $order->invoice_path
+                        ? Storage::disk('public')->url($order->invoice_path)
+                        : null,
+                    'placed_at'      => $order->placed_at?->format('Y-m-d H:i:s'),
+                    'delivered_at'   => $order->delivered_at?->format('Y-m-d H:i:s'),
+                ];
+            });
 
         return response()->json($orders);
     }

@@ -37,6 +37,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('distributor/retailer-orders', [\App\Http\Controllers\Api\DistributorRetailerOrderController::class, 'index']);
     Route::get('distributor/retailer-orders/{id}', [\App\Http\Controllers\Api\DistributorRetailerOrderController::class, 'show']);
     Route::post('distributor/retailer-orders/{id}/accept', [\App\Http\Controllers\Api\DistributorRetailerOrderController::class, 'acceptOrder']);
+    Route::post('distributor/retailer-orders/{id}/upload-invoice', [\App\Http\Controllers\Api\DistributorRetailerOrderController::class, 'uploadInvoice']);
     Route::post('distributor/retailer-orders/{id}/reject', [\App\Http\Controllers\Api\DistributorRetailerOrderController::class, 'rejectOrder']);
 
     // Distributor — Retailers List

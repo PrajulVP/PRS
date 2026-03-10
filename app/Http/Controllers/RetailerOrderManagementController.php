@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Notifications\OrderActionRequired;
 use App\Traits\HandlesNotifications;
+use Illuminate\Support\Facades\Storage;
 
 class RetailerOrderManagementController extends Controller
 {
@@ -389,7 +390,7 @@ class RetailerOrderManagementController extends Controller
                         'status' => ucfirst(str_replace('_', ' ', $order->status)),
                         'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d H:i:s') : '-',
                         'payment_status' => $order->payment_status ?? 'pending',
-                        'invoice_url' => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
+                        'invoice_url' => $order->invoice_path ? Storage::disk('public')->url($order->invoice_path) : null,
                     ];
                 });
 
@@ -1092,7 +1093,7 @@ class RetailerOrderManagementController extends Controller
 
             return response()->json([
                 'success' => 'Invoice uploaded successfully!',
-                'invoice_url' => asset('storage/' . $path)
+                'invoice_url' => Storage::disk('public')->url($path)
             ]);
         }
 

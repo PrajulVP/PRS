@@ -12,7 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE `distributor_orders` CHANGE `status` `status` ENUM('pending', 'accepted_by_sales_manager', 'approved', 'delivered', 'cancelled', 'cancellation_requested', 'rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending';");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE `distributor_orders` CHANGE `status` `status` ENUM('pending', 'accepted_by_sales_manager', 'approved', 'delivered', 'cancelled', 'cancellation_requested', 'rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending';");
+        }
     }
 
     /**
@@ -20,6 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE `distributor_orders` CHANGE `status` `status` ENUM('pending', 'accepted_by_sales_manager', 'delivered', 'cancelled', 'cancellation_requested', 'rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending';");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE `distributor_orders` CHANGE `status` `status` ENUM('pending', 'accepted_by_sales_manager', 'delivered', 'cancelled', 'cancellation_requested', 'rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending';");
+        }
     }
 };
