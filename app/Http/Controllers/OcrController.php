@@ -31,7 +31,7 @@ class OcrController extends Controller
         if ($extractedData) {
             return response()->json([
                 'success' => true,
-                'raw_ocr_data' => $extractedData
+                'data' => $extractedData
             ]);
         }
 

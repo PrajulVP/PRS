@@ -378,27 +378,29 @@ class DistributorRetailerOrderController extends Controller
         // Extract OCR data
         $ocrData = $this->ocrService->processInvoice($file, 'retailer');
 
-        if (!$ocrData || !isset($ocrData['items'])) {
+        // Normalize OCR data key (line_items, items, or medicines)
+        $ocrItemsRaw = $ocrData['line_items'] ?? $ocrData['items'] ?? $ocrData['medicines'] ?? null;
+        if (!$ocrData || !$ocrItemsRaw) {
             // Save path anyway for manual approval later
             $retailerOrder->update(['invoice_path' => $path]);
+            Log::warning('OCR Extraction Failed or Empty', ['order_id' => $id, 'raw_data' => $ocrData]);
             return response()->json([
                 'status' => 'error',
                 'message' => 'Failed to extract data from the invoice or invalid OCR response.',
-                'invoice_path' => $path,
-                'raw_ocr_data' => $ocrData
+                'invoice_path' => $path
             ], 422);
         }
 
         // Matching Logic
         $isMatch = true;
         $mismatches = [];
-        $ocrItems = collect($ocrData['items']);
+        $ocrItems = collect($ocrItemsRaw);
 
         $expectedData = [];
 
         foreach ($retailerOrder->items as $orderItem) {
             $productName = $orderItem->product->product_name;
-            $expectedQty = $orderItem->quantity;
+            $expectedQty = (float)$orderItem->quantity;
 
             $expectedData[] = [
                 'id' => $orderItem->id,
@@ -437,8 +439,7 @@ class DistributorRetailerOrderController extends Controller
                 return response()->json([
                     'status' => 'success',
                     'message' => 'Invoice matched and order accepted automatically!',
-                    'details' => $result,
-                    'raw_ocr_data' => $ocrData // Added for network tab debugging
+                    'details' => $result
                 ]);
             } catch (\Exception $e) {
                 return response()->json([
@@ -456,7 +457,7 @@ class DistributorRetailerOrderController extends Controller
             'status' => 'error',
             'message' => 'Invoice data mismatch. Please cross-verify and approve manually.',
             'mismatches' => $mismatches,
-            'ocr_data' => $ocrData['items'],
+            'ocr_data' => $ocrItemsRaw,
             'expected_data' => $expectedData,
             'invoice_path' => $path
         ], 422);
