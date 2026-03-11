@@ -181,6 +181,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
     Route::post('notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
     Route::post('notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
+
+    // Prescription OCR Route
+    Route::post('ocr/extract-prescription', [App\Http\Controllers\PrescriptionController::class, 'extract'])->name('ocr.extract-prescription');
 });
 
 Route::prefix('system')->name('system.')->group(function () {

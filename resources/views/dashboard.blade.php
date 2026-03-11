@@ -128,7 +128,7 @@
                                             <h3 class="mb-0" style="color: #f59e0b">{{ $retailerOrderStats['pending'] }}</h3>
                                         </div>
                                         <div class="align-self-center"><i data-feather="clock"
-                                                style="color: #f59e0b; width:40px; height:40px;"></i></div>
+                                                 style="color: #f59e0b; width:40px; height:40px;"></i></div>
                                     </div>
                                 </div>
                             </div>
@@ -165,6 +165,25 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions for Retailer -->
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <h5 class="section-title mb-0">Quick Actions</h5>
+                        </div>
+                        <div class="col-12 mb-4 d-flex">
+                            <button class="btn btn-outline-primary btn-sm px-4 py-2 mr-3 shadow-sm d-flex align-items-center" 
+                                style="border-radius: 8px; font-weight: 600;"
+                                onclick="window.location.href='{{ route('admin.retailer.create') }}'">
+                                <i data-feather="plus-circle" class="mr-2" style="width: 16px; height: 16px;"></i> Create Order
+                            </button>
+                            <button class="btn btn-primary btn-sm px-4 py-2 shadow-sm d-flex align-items-center" 
+                                style="border-radius: 8px; font-weight: 600; background: var(--med-primary); border-color: var(--med-primary);"
+                                onclick="window.location.href='{{ route('admin.retailer.create', ['action' => 'upload_prescription']) }}'">
+                                <i data-feather="upload-cloud" class="mr-2" style="width: 16px; height: 16px;"></i> Upload Prescription (AI)
+                            </button>
                         </div>
                     </div>
 
