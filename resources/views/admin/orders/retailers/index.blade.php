@@ -127,7 +127,7 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <select name="status" id="edit_status" class="form-select" required>
-                                    @foreach(['pending', 'processing', 'accepted', 'delivered', 'cancelled'] as $st)
+                                    @foreach(['pending', 'processing', 'approved', 'delivered', 'cancelled'] as $st)
                                         <option value="{{ $st }}">{{ ucfirst($st) }}</option>
                                     @endforeach
                                 </select>
@@ -400,7 +400,7 @@
                     data: 'retailer_name',
                     name: 'retailer_name',
                     visible: !{{ Auth::user()->hasRole('retailer') ? 'true' : 'false' }} 
-                                                                                                                                                        },
+                                                                                                                                                            },
                 {
                     data: 'distributor_name',
                     name: 'distributor_name',
@@ -418,11 +418,11 @@
                         if (items.length > 2) {
                             let visible = items.slice(0, 2).join('<br>');
                             return `<div>
-                                                                                                                                                                                                                            <span class="preview-content">${visible}</span>
-                                                                                                                                                                                                                            <span class="full-content d-none">${data}</span>
-                                                                                                                                                                                                                            <br>
-                                                                                                                                                                                                                            <a href="#" class="small text-primary toggle-more-btn" onclick="event.preventDefault(); let p = $(this).parent(); if(p.find('.full-content').hasClass('d-none')){ p.find('.full-content').removeClass('d-none'); p.find('.preview-content').addClass('d-none'); $(this).text('Show Less'); } else { p.find('.full-content').addClass('d-none'); p.find('.preview-content').removeClass('d-none'); $(this).text('Read More'); }">Read More</a>
-                                                                                                                                                                                                                        </div>`;
+                                                                                                                                                                                                                                <span class="preview-content">${visible}</span>
+                                                                                                                                                                                                                                <span class="full-content d-none">${data}</span>
+                                                                                                                                                                                                                                <br>
+                                                                                                                                                                                                                                <a href="#" class="small text-primary toggle-more-btn" onclick="event.preventDefault(); let p = $(this).parent(); if(p.find('.full-content').hasClass('d-none')){ p.find('.full-content').removeClass('d-none'); p.find('.preview-content').addClass('d-none'); $(this).text('Show Less'); } else { p.find('.full-content').addClass('d-none'); p.find('.preview-content').removeClass('d-none'); $(this).text('Read More'); }">Read More</a>
+                                                                                                                                                                                                                            </div>`;
                         }
                         return data;
                     }
@@ -442,7 +442,7 @@
                         let badgeClass = 'bg-secondary';
                         if (status === 'pending') badgeClass = 'bg-warning text-dark';
                         else if (status === 'processing') badgeClass = 'bg-info text-white';
-                        else if (status === 'accepted') badgeClass = 'bg-primary text-white';
+                        else if (status === 'approved') badgeClass = 'bg-primary text-white';
                         else if (status === 'delivered') badgeClass = 'bg-success text-white';
                         else if (status === 'cancelled') badgeClass = 'bg-danger text-white';
 
@@ -493,13 +493,13 @@
                         }
 
                         // Retailer Confirmation
-                        if (st === 'accepted' && isRetailer) {
+                        if (st === 'approved' && isRetailer) {
                             btns += `<button class="btn btn-success btn-sm confirm-receipt-btn" data-id="${row.id}" title="Confirm Receipt">Confirm</button>`;
                         }
 
                         // Fallback for Admin/SalesManager to see confirm button if needed
                         if (isAdmin) {
-                            if (st === 'accepted') {
+                            if (st === 'approved') {
                                 btns += `<button class="btn btn-success btn-sm confirm-receipt-btn" data-id="${row.id}" title="Confirm (Admin override)"><i class="fa fa-handshake-o"></i> Confirm</button>`;
                             }
                         }
@@ -571,24 +571,24 @@
                         });
 
                         tbody.append(`
-                                                                                                                                                                                                        <tr>
-                                                                                                                                                                                                            <td>${item.name}
-                                                                                                                                                                                                                <input type="hidden" name="items[${id}][product_id]" value="${id}">
-                                                                                                                                                                                                                ${item.order_item_id ? `<input type="hidden" name="items[${id}][order_item_id]" value="${item.order_item_id}">` : ''}
-                                                                                                                                                                                                            </td>
-                                                                                                                                                                                                            <td>
-                                                                                                                                                                                                                <select class="form-select form-select-sm unit-select-edit" data-id="${id}" name="items[${id}][unit]" style="width:90px; margin: 0 auto;">
-                                                                                                                                                                                                                    ${options}
-                                                                                                                                                                                                                </select>
-                                                                                                                                                                                                            </td>
-                                                                                                                                                                                                            <td>
-                                                                                                                                                                                                                <input type="number" class="form-control form-control-sm edit-qty" data-id="${id}" value="${qty}" name="items[${id}][quantity]" min="1" style="width:80px; margin: 0 auto;">
-                                                                                                                                                                                                            </td>
-                                                                                                                                                                                                            <td class="text-end">${price.toFixed(2)}<input type="hidden" name="items[${id}][unit_price]" value="${price}"></td>
-                                                                                                                                                                                                            <td class="text-end">${sub.toFixed(2)}</td>
-                                                                                                                                                                                                            <td class="text-center"><button type="button" class="btn btn-danger btn-sm remove-edit" data-id="${id}">X</button></td>
-                                                                                                                                                                                                        </tr>
-                                                                                                                                                                                                        `);
+                                                                                                                                                                                                            <tr>
+                                                                                                                                                                                                                <td>${item.name}
+                                                                                                                                                                                                                    <input type="hidden" name="items[${id}][product_id]" value="${id}">
+                                                                                                                                                                                                                    ${item.order_item_id ? `<input type="hidden" name="items[${id}][order_item_id]" value="${item.order_item_id}">` : ''}
+                                                                                                                                                                                                                </td>
+                                                                                                                                                                                                                <td>
+                                                                                                                                                                                                                    <select class="form-select form-select-sm unit-select-edit" data-id="${id}" name="items[${id}][unit]" style="width:90px; margin: 0 auto;">
+                                                                                                                                                                                                                        ${options}
+                                                                                                                                                                                                                    </select>
+                                                                                                                                                                                                                </td>
+                                                                                                                                                                                                                <td>
+                                                                                                                                                                                                                    <input type="number" class="form-control form-control-sm edit-qty" data-id="${id}" value="${qty}" name="items[${id}][quantity]" min="1" style="width:80px; margin: 0 auto;">
+                                                                                                                                                                                                                </td>
+                                                                                                                                                                                                                <td class="text-end">${price.toFixed(2)}<input type="hidden" name="items[${id}][unit_price]" value="${price}"></td>
+                                                                                                                                                                                                                <td class="text-end">${sub.toFixed(2)}</td>
+                                                                                                                                                                                                                <td class="text-center"><button type="button" class="btn btn-danger btn-sm remove-edit" data-id="${id}">X</button></td>
+                                                                                                                                                                                                            </tr>
+                                                                                                                                                                                                            `);
                     });
                 }
                 $('#edit_grand_total').text(total.toFixed(2));
@@ -845,36 +845,36 @@
                         });
 
                         let itemRow = `
-                                                                                                    <tr class="product-row" data-item-id="${orderItemId}" data-ordered-qty="${orderedQty}">
-                                                                                                        <td>
-                                                                                                            <strong>${item.product_name}</strong>
-                                                                                                            <div class="small text-muted">
-                                                                                                                Pack: ${item.pack || 'N/A'} | 
-                                                                                                                Strip Size: ${item.strip_size || 1} | 
-                                                                                                                Box Size: ${item.box_size || 1} | 
-                                                                                                                Carton Size: ${item.carton_size || 1}
-                                                                                                            </div>
-                                                                                                            <input type="hidden" name="items[${orderItemId}][product_id]" value="${productId}">
-                                                                                                        </td>
-                                                                                                        <td class="text-center font-weight-bold">
-                                                                                                            <span class="fs-5">${orderedQty}</span><br>
-                                                                                                            <span class="badge bg-light text-dark border">${item.unit || 'Strips'}</span>
-                                                                                                        </td>
-                                                                                                        <td>
-                                                                                                            <div class="allocation-container" id="allocation_for_${orderItemId}">
-                                                                                                                <input type="hidden" name="items_batches[${orderItemId}][order_item_id]" value="${orderItemId}">
-                                                                                                                <div class="allocation-item mb-2 d-flex gap-2">
-                                                                                                                    <select name="items_batches[${orderItemId}][batches][0][inventory_id]" class="form-select form-select-sm batch-select" required style="flex: 2;">
-                                                                                                                        ${batchOptions}
-                                                                                                                    </select>
-                                                                                                                    <input type="number" name="items_batches[${orderItemId}][batches][0][quantity]" class="form-control form-control-sm qty-input" value="${orderedQty}" min="1" required style="flex: 1;" placeholder="Qty">
-                                                                                                                    <button type="button" class="btn btn-sm btn-outline-primary add-more-batch" data-item-id="${orderItemId}" data-options='${JSON.stringify(batchOptions).replace(/'/g, "&apos;")}' title="Split into multiple batches"><i class="fa fa-plus"></i></button>
+                                                                                                        <tr class="product-row" data-item-id="${orderItemId}" data-ordered-qty="${orderedQty}">
+                                                                                                            <td>
+                                                                                                                <strong>${item.product_name}</strong>
+                                                                                                                <div class="small text-muted">
+                                                                                                                    Pack: ${item.pack || 'N/A'} | 
+                                                                                                                    Strip Size: ${item.strip_size || 1} | 
+                                                                                                                    Box Size: ${item.box_size || 1} | 
+                                                                                                                    Carton Size: ${item.carton_size || 1}
                                                                                                                 </div>
-                                                                                                            </div>
-                                                                                                            <div class="small text-danger validation-msg" style="display:none;">Total must match ${orderedQty}</div>
-                                                                                                        </td>
-                                                                                                    </tr>
-                                                                                                `;
+                                                                                                                <input type="hidden" name="items[${orderItemId}][product_id]" value="${productId}">
+                                                                                                            </td>
+                                                                                                            <td class="text-center font-weight-bold">
+                                                                                                                <span class="fs-5">${orderedQty}</span><br>
+                                                                                                                <span class="badge bg-light text-dark border">${item.unit || 'Strips'}</span>
+                                                                                                            </td>
+                                                                                                            <td>
+                                                                                                                <div class="allocation-container" id="allocation_for_${orderItemId}">
+                                                                                                                    <input type="hidden" name="items_batches[${orderItemId}][order_item_id]" value="${orderItemId}">
+                                                                                                                    <div class="allocation-item mb-2 d-flex gap-2">
+                                                                                                                        <select name="items_batches[${orderItemId}][batches][0][inventory_id]" class="form-select form-select-sm batch-select" required style="flex: 2;">
+                                                                                                                            ${batchOptions}
+                                                                                                                        </select>
+                                                                                                                        <input type="number" name="items_batches[${orderItemId}][batches][0][quantity]" class="form-control form-control-sm qty-input" value="${orderedQty}" min="1" required style="flex: 1;" placeholder="Qty">
+                                                                                                                        <button type="button" class="btn btn-sm btn-outline-primary add-more-batch" data-item-id="${orderItemId}" data-options='${JSON.stringify(batchOptions).replace(/'/g, "&apos;")}' title="Split into multiple batches"><i class="fa fa-plus"></i></button>
+                                                                                                                    </div>
+                                                                                                                </div>
+                                                                                                                <div class="small text-danger validation-msg" style="display:none;">Total must match ${orderedQty}</div>
+                                                                                                            </td>
+                                                                                                        </tr>
+                                                                                                    `;
 
                         if (itemsProcessed === 0) tbody.empty();
                         tbody.append(itemRow);
@@ -895,14 +895,14 @@
                 let idx = container.find('.allocation-item').length;
 
                 let html = `
-                                                                                            <div class="allocation-item mb-2 d-flex gap-2">
-                                                                                                <select name="items_batches[${itemId}][batches][${idx}][inventory_id]" class="form-select form-select-sm batch-select" required style="flex: 2;">
-                                                                                                    ${options}
-                                                                                                </select>
-                                                                                                <input type="number" name="items_batches[${itemId}][batches][${idx}][quantity]" class="form-control form-control-sm qty-input" value="0" min="1" required style="flex: 1;" placeholder="Qty">
-                                                                                                <button type="button" class="btn btn-sm btn-outline-danger remove-allocation-row"><i class="fa fa-times"></i></button>
-                                                                                            </div>
-                                                                                        `;
+                                                                                                <div class="allocation-item mb-2 d-flex gap-2">
+                                                                                                    <select name="items_batches[${itemId}][batches][${idx}][inventory_id]" class="form-select form-select-sm batch-select" required style="flex: 2;">
+                                                                                                        ${options}
+                                                                                                    </select>
+                                                                                                    <input type="number" name="items_batches[${itemId}][batches][${idx}][quantity]" class="form-control form-control-sm qty-input" value="0" min="1" required style="flex: 1;" placeholder="Qty">
+                                                                                                    <button type="button" class="btn btn-sm btn-outline-danger remove-allocation-row"><i class="fa fa-times"></i></button>
+                                                                                                </div>
+                                                                                            `;
                 container.append(html);
             });
 
@@ -996,7 +996,7 @@
                         }, function (res) {
                             if (res.success) {
                                 table.ajax.reload();
-                                showToast('success', res.success || 'Order accepted successfully.');
+                                showToast('success', res.success || 'Order approved successfully.');
                             } else {
                                 showToast('error', res.error || 'Error accepting order');
                             }
@@ -1042,44 +1042,44 @@
                 $('#modalOrderCode').text('#' + row.order_code);
 
                 let detailsHtml = `
-                                                    <div class="row mb-4">
-                                                        <div class="col-md-6 mb-3 mb-md-0">
-                                                            <div class="card h-100 border-0 shadow-sm">
-                                                                <div class="card-body">
-                                                                    <h6 class="text-uppercase text-muted fw-bold mb-3"><i class="fa fa-shop me-2"></i>Retailer Info</h6>
-                                                                    <h5 class="fw-bold text-dark mb-1">${row.retailer_shop || row.retailer_name}</h5>
-                                                                    ${row.retailer_shop ? `<div class="text-muted small mb-2"><i class="fa fa-user me-2"></i>${row.retailer_name}</div>` : ''}
-                                                                    <div class="d-flex align-items-center mb-1"><i class="fa fa-phone text-muted me-2" style="width: 16px;"></i> <span>${row.retailer_phone || 'N/A'}</span></div>
-                                                                    <div class="d-flex align-items-start"><i class="fa fa-map-marker text-muted me-2 mt-1" style="width: 16px;"></i> <span class="text-wrap">${row.retailer_address || 'N/A'}</span></div>
+                                                        <div class="row mb-4">
+                                                            <div class="col-md-6 mb-3 mb-md-0">
+                                                                <div class="card h-100 border-0 shadow-sm">
+                                                                    <div class="card-body">
+                                                                        <h6 class="text-uppercase text-muted fw-bold mb-3"><i class="fa fa-shop me-2"></i>Retailer Info</h6>
+                                                                        <h5 class="fw-bold text-dark mb-1">${row.retailer_shop || row.retailer_name}</h5>
+                                                                        ${row.retailer_shop ? `<div class="text-muted small mb-2"><i class="fa fa-user me-2"></i>${row.retailer_name}</div>` : ''}
+                                                                        <div class="d-flex align-items-center mb-1"><i class="fa fa-phone text-muted me-2" style="width: 16px;"></i> <span>${row.retailer_phone || 'N/A'}</span></div>
+                                                                        <div class="d-flex align-items-start"><i class="fa fa-map-marker text-muted me-2 mt-1" style="width: 16px;"></i> <span class="text-wrap">${row.retailer_address || 'N/A'}</span></div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <div class="card h-100 border-0 shadow-sm">
+                                                                    <div class="card-body">
+                                                                        <h6 class="text-uppercase text-muted fw-bold mb-3"><i class="fa fa-building me-2"></i>Distributor Info</h6>
+                                                                        <h5 class="fw-bold text-dark mb-2">${row.distributor_name || 'N/A'}</h5>
+                                                                        <div class="d-flex align-items-center mb-1"><i class="fa fa-phone text-muted me-2" style="width: 16px;"></i> <span>${row.distributor_phone || 'N/A'}</span></div>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div class="col-md-6">
-                                                            <div class="card h-100 border-0 shadow-sm">
-                                                                <div class="card-body">
-                                                                    <h6 class="text-uppercase text-muted fw-bold mb-3"><i class="fa fa-building me-2"></i>Distributor Info</h6>
-                                                                    <h5 class="fw-bold text-dark mb-2">${row.distributor_name || 'N/A'}</h5>
-                                                                    <div class="d-flex align-items-center mb-1"><i class="fa fa-phone text-muted me-2" style="width: 16px;"></i> <span>${row.distributor_phone || 'N/A'}</span></div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
 
-                                                    <div class="card border-0 shadow-sm mb-4">
-                                                        <div class="card-body p-0">
-                                                            <div class="table-responsive">
-                                                                <table class="table table-striped table-hover mb-0">
-                                                                    <thead class="bg-light">
-                                                                        <tr>
-                                                                            <th class="py-3 px-4">Product</th>
-                                                                            <th class="py-3 px-4 text-center">Batch/Exp</th>
-                                                                            <th class="py-3 px-4 text-center">Qty</th>
-                                                                            <th class="py-3 px-4 text-end">Price</th>
-                                                                            <th class="py-3 px-4 text-end">Total</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                `;
+                                                        <div class="card border-0 shadow-sm mb-4">
+                                                            <div class="card-body p-0">
+                                                                <div class="table-responsive">
+                                                                    <table class="table table-striped table-hover mb-0">
+                                                                        <thead class="bg-light">
+                                                                            <tr>
+                                                                                <th class="py-3 px-4">Product</th>
+                                                                                <th class="py-3 px-4 text-center">Batch/Exp</th>
+                                                                                <th class="py-3 px-4 text-center">Qty</th>
+                                                                                <th class="py-3 px-4 text-end">Price</th>
+                                                                                <th class="py-3 px-4 text-end">Total</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                    `;
 
                 (row.items || []).forEach(function (i) {
                     let name = i.product_name || i.name || '-';
@@ -1093,52 +1093,52 @@
                     }
 
                     detailsHtml += `
-                                                        <tr>
-                                                            <td class="py-3 px-4">
-                                                                <div class="fw-bold text-dark">${name}</div>
-                                                            </td>
-                                                            <td class="py-3 px-4 text-center">${batchHtml}</td>
-                                                            <td class="py-3 px-4 text-center"><span class="badge bg-soft-primary text-primary px-2 py-1">${qty} ${i.unit || ''}</span></td>
-                                                            <td class="py-3 px-4 text-end">₹${unitPrice.toFixed(2)}</td>
-                                                            <td class="py-3 px-4 text-end fw-bold text-primary">₹${totalAmt.toFixed(2)}</td>
-                                                        </tr>
-                                                    `;
+                                                            <tr>
+                                                                <td class="py-3 px-4">
+                                                                    <div class="fw-bold text-dark">${name}</div>
+                                                                </td>
+                                                                <td class="py-3 px-4 text-center">${batchHtml}</td>
+                                                                <td class="py-3 px-4 text-center"><span class="badge bg-soft-primary text-primary px-2 py-1">${qty} ${i.unit || ''}</span></td>
+                                                                <td class="py-3 px-4 text-end">₹${unitPrice.toFixed(2)}</td>
+                                                                <td class="py-3 px-4 text-end fw-bold text-primary">₹${totalAmt.toFixed(2)}</td>
+                                                            </tr>
+                                                        `;
                 });
 
                 detailsHtml += `
-                                                                    </tbody>
-                                                                    <tfoot class="bg-light">
-                                                                        <tr>
-                                                                            <td colspan="4" class="text-end py-3 px-4 text-uppercase fw-bold text-muted">Grand Total:</td>
-                                                                            <td class="py-3 px-4 text-end fw-bold text-success fs-5">₹${parseFloat(row.total_amount).toFixed(2)}</td>
-                                                                        </tr>
-                                                                    </tfoot>
-                                                                </table>
+                                                                        </tbody>
+                                                                        <tfoot class="bg-light">
+                                                                            <tr>
+                                                                                <td colspan="4" class="text-end py-3 px-4 text-uppercase fw-bold text-muted">Grand Total:</td>
+                                                                                <td class="py-3 px-4 text-end fw-bold text-success fs-5">₹${parseFloat(row.total_amount).toFixed(2)}</td>
+                                                                            </tr>
+                                                                        </tfoot>
+                                                                    </table>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
 
-                                                    <div class="row">
-                                                        <div class="col-md-4 mb-3">
-                                                            <div class="bg-light rounded p-3 h-100">
-                                                                <h6 class="text-muted fw-bold text-uppercase mb-2">Order Status</h6>
-                                                                <p class="mb-0 fs-5"><span class="badge bg-secondary">${row.status}</span></p>
+                                                        <div class="row">
+                                                            <div class="col-md-4 mb-3">
+                                                                <div class="bg-light rounded p-3 h-100">
+                                                                    <h6 class="text-muted fw-bold text-uppercase mb-2">Order Status</h6>
+                                                                    <p class="mb-0 fs-5"><span class="badge bg-secondary">${row.status}</span></p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4 mb-3">
+                                                                <div class="bg-light rounded p-3 h-100">
+                                                                    <h6 class="text-muted fw-bold text-uppercase mb-2">Payment Status</h6>
+                                                                    <p class="mb-0 fs-5"><span class="badge ${row.payment_status === 'paid' ? 'bg-success' : 'bg-warning'}">${(row.payment_status || 'Pending').toUpperCase()}</span></p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4 mb-3">
+                                                                <div class="bg-light rounded p-3 h-100">
+                                                                    <h6 class="text-muted fw-bold text-uppercase mb-2">Order Timeline</h6>
+                                                                    <div class="d-flex align-items-center"><i class="fa fa-calendar-alt text-muted me-2"></i> <strong>${row.placed_at || 'N/A'}</strong></div>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                        <div class="col-md-4 mb-3">
-                                                            <div class="bg-light rounded p-3 h-100">
-                                                                <h6 class="text-muted fw-bold text-uppercase mb-2">Payment Status</h6>
-                                                                <p class="mb-0 fs-5"><span class="badge ${row.payment_status === 'paid' ? 'bg-success' : 'bg-warning'}">${(row.payment_status || 'Pending').toUpperCase()}</span></p>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-4 mb-3">
-                                                            <div class="bg-light rounded p-3 h-100">
-                                                                <h6 class="text-muted fw-bold text-uppercase mb-2">Order Timeline</h6>
-                                                                <div class="d-flex align-items-center"><i class="fa fa-calendar-alt text-muted me-2"></i> <strong>${row.placed_at || 'N/A'}</strong></div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                `;
+                                                    `;
 
                 $('#showOrderContent').html(detailsHtml);
                 $('#showOrderModal').modal('show');

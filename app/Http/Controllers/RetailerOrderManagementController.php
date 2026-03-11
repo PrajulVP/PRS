@@ -662,7 +662,7 @@ class RetailerOrderManagementController extends Controller
                     }
                 }
 
-                $updateData = ['status' => 'accepted'];
+                $updateData = ['status' => 'approved'];
                 if ($request->filled('payment_status') && in_array($request->payment_status, ['pending', 'paid'])) {
                     $updateData['payment_status'] = $request->payment_status;
                 }
@@ -746,7 +746,7 @@ class RetailerOrderManagementController extends Controller
 
                     // Finalize status only if invoice is present
                     $retailerOrder->update([
-                        'status' => 'accepted',
+                        'status' => 'approved',
                         'invoice_path' => $path
                     ]);
                 } else {
@@ -1133,7 +1133,7 @@ class RetailerOrderManagementController extends Controller
             return response()->json(['error' => 'Permission denied. Only the retailer can confirm order.'], 403);
         }
 
-        if ($retailerOrder->status !== 'accepted') {
+        if ($retailerOrder->status !== 'approved') {
             return response()->json(['error' => 'Order must be accepted by Distributor before confirmation.'], 400);
         }
 

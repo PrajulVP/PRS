@@ -60,7 +60,7 @@ class DistributorDashboardApiController extends Controller
             'total' => (clone $distributorOrderQuery)->count(),
             'pending' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_PENDING)->count(),
             'processing' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_PROCESSING)->count(),
-            'accepted' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_ACCEPTED)->count(),
+            'accepted' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_APPROVED)->count(),
             'delivered' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_DELIVERED)->count(),
             'cancelled' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_CANCELLED)->count(),
         ];
@@ -219,7 +219,7 @@ class DistributorDashboardApiController extends Controller
             'total' => (clone $query)->count(),
             'pending' => (clone $query)->where('status', RetailerOrder::STATUS_PENDING)->count(),
             'processing' => (clone $query)->where('status', RetailerOrder::STATUS_PROCESSING)->count(),
-            'accepted' => (clone $query)->where('status', RetailerOrder::STATUS_ACCEPTED)->count(),
+            'accepted' => (clone $query)->where('status', RetailerOrder::STATUS_APPROVED)->count(),
             'delivered' => (clone $query)->where('status', RetailerOrder::STATUS_DELIVERED)->count(),
             'cancelled' => (clone $query)->where('status', RetailerOrder::STATUS_CANCELLED)->count(),
         ];

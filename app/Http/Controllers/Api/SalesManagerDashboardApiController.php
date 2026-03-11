@@ -57,7 +57,7 @@ class SalesManagerDashboardApiController extends Controller
             'total' => (clone $retailerOrderQuery)->count(),
             'pending' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_PENDING)->count(),
             'processing' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_PROCESSING)->count(),
-            'accepted' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_ACCEPTED)->count(),
+            'accepted' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_APPROVED)->count(),
             'delivered' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_DELIVERED)->count(),
             'cancelled' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_CANCELLED)->count(),
         ];
@@ -71,7 +71,7 @@ class SalesManagerDashboardApiController extends Controller
             'total' => (clone $distributorOrderQuery)->count(),
             'pending' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_PENDING)->count(),
             'processing' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_PROCESSING)->count(),
-            'accepted' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_ACCEPTED)->count(),
+            'accepted' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_APPROVED)->count(),
             'delivered' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_DELIVERED)->count(),
             'cancelled' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_CANCELLED)->count(),
         ];
@@ -227,7 +227,7 @@ class SalesManagerDashboardApiController extends Controller
 
         $history = $retailer->retailerOrders()
             ->with('items.product')
-            ->whereIn('status', [RetailerOrder::STATUS_ACCEPTED, RetailerOrder::STATUS_DELIVERED])
+            ->whereIn('status', [RetailerOrder::STATUS_APPROVED, RetailerOrder::STATUS_DELIVERED])
             ->orderBy('updated_at', 'desc')
             ->get();
 

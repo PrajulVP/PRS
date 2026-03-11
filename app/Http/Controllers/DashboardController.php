@@ -169,7 +169,7 @@ class DashboardController extends Controller
             'total' => $retailerOrderQuery->clone()->count(),
             'pending' => $retailerOrderQuery->clone()->where('status', 'pending')->count(),
             'processing' => $retailerOrderQuery->clone()->where('status', 'processing')->count(),
-            'accepted' => $retailerOrderQuery->clone()->where('status', 'accepted')->count(),
+            'approved' => $retailerOrderQuery->clone()->where('status', 'approved')->count(),
             'delivered' => $retailerOrderQuery->clone()->where('status', 'delivered')->count(),
             'cancelled' => $retailerOrderQuery->clone()->where('status', 'cancelled')->count(),
         ];
@@ -179,7 +179,7 @@ class DashboardController extends Controller
             'total' => $distributorOrderQuery->clone()->count(),
             'pending' => $distributorOrderQuery->clone()->where('status', 'pending')->count(),
             'processing' => $distributorOrderQuery->clone()->where('status', 'processing')->count(),
-            'accepted' => $distributorOrderQuery->clone()->where('status', 'accepted')->count(),
+            'approved' => $distributorOrderQuery->clone()->where('status', 'approved')->count(),
             'delivered' => $distributorOrderQuery->clone()->where('status', 'delivered')->count(),
             'cancelled' => $distributorOrderQuery->clone()->where('status', 'cancelled')->count(),
         ];

@@ -23,7 +23,7 @@ class StatusBadge extends Component
             case 'processing':
                 $badgeClass = 'badge-info';
                 break;
-            case 'accepted':
+            case 'approved':
                 $badgeClass = 'badge-primary';
                 break;
             case 'delivered':

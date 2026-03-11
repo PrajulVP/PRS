@@ -331,7 +331,7 @@ class DistributorOrderApiController extends Controller
                     }
                     break;
 
-                case DistributorOrder::STATUS_ACCEPTED:
+                case DistributorOrder::STATUS_APPROVED:
                     if (!$user->hasAnyRole(['admin', 'superadmin']) && !$user->hasPermissionToCategory('distributor_approvals', 'edit')) {
                         return response()->json(['error' => 'Only admins can approve orders'], 403);
                     }
@@ -348,7 +348,7 @@ class DistributorOrderApiController extends Controller
                     if (!$user->hasRole('distributor') || $order->distributor_id !== $user->distributor->id) {
                         return response()->json(['error' => 'Only the ordering distributor can confirm receipt'], 403);
                     }
-                    if ($order->status !== DistributorOrder::STATUS_ACCEPTED) {
+                    if ($order->status !== DistributorOrder::STATUS_APPROVED) {
                         return response()->json(['error' => 'Only accepted orders can be confirmed'], 400);
                     }
                     $order->update([

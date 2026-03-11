@@ -11,6 +11,74 @@
             margin-left: 10px !important;
         }
 
+        /* Segmented Control for Payment Filter */
+        .segmented-control {
+            display: flex;
+            background-color: #e2e8f0;
+            border-radius: 50px;
+            padding: 4px;
+            position: relative;
+            width: 260px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+        }
+
+        .segmented-control input {
+            display: none;
+        }
+
+        .segmented-control label {
+            flex: 1;
+            text-align: center;
+            padding: 6px 0;
+            margin: 0;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+            transition: color 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .segmented-control input:checked+label {
+            color: #0f172a;
+        }
+
+        #pay_paid:checked+label {
+            color: #15803d;
+        }
+
+        #pay_unpaid:checked+label {
+            color: #b45309;
+        }
+
+        .selection-indicator {
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            left: 4px;
+            width: calc(33.333% - 2.66px);
+            background: #ffffff;
+            border-radius: 50px;
+            z-index: 1;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+        }
+
+        #pay_all:checked~.selection-indicator {
+            transform: translateX(0);
+        }
+
+        #pay_paid:checked~.selection-indicator {
+            transform: translateX(100%);
+        }
+
+        #pay_unpaid:checked~.selection-indicator {
+            transform: translateX(200%);
+        }
+
         .dataTables_length {
             text-align: left !important;
         }
@@ -249,36 +317,62 @@
     </style>
     <div class="container-fluid">
         <div class="card shadow-sm border-0 rounded-3">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Retailer Order Approvals</h5>
+            <div class="card-header bg-white border-bottom pb-0">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 text-primary fw-bold">Retailer Order Approvals</h5>
+                </div>
+
+                <ul class="nav nav-tabs border-bottom-0" id="orderStatusTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-all" data-bs-toggle="tab" data-status=""
+                            type="button" role="tab">All</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-pending" data-bs-toggle="tab"
+                            data-status="pending" type="button" role="tab">Pending</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active px-4 fw-bold text-primary border-bottom-0" id="tab-processing"
+                            data-bs-toggle="tab" data-status="processing" type="button" role="tab">Processing</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-approved" data-bs-toggle="tab"
+                            data-status="approved" type="button" role="tab">Approved</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-delivered" data-bs-toggle="tab"
+                            data-status="delivered" type="button" role="tab">Delivered</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-cancelled" data-bs-toggle="tab"
+                            data-status="cancelled" type="button" role="tab">Cancelled</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-rejected" data-bs-toggle="tab"
+                            data-status="rejected" type="button" role="tab">Rejected</button>
+                    </li>
+                </ul>
             </div>
-            <div class="card-body">
+            <div class="card-body pt-4">
                 @if(session('success'))
                 <div class="alert alert-success">{{ session('success') }}</div> @endif
                 @if(session('error'))
                 <div class="alert alert-danger">{{ session('error') }}</div> @endif
 
                 <div id="filter_container" class="d-none">
-                    <div class="d-inline-flex align-items-center gap-3 ms-2">
-                        <div class="d-flex align-items-center">
-                            <label for="status_filter" class="form-label me-2 mb-0 fw-bold">Status:</label>
-                            <select id="status_filter" class="form-select form-select-sm" style="width: 150px;">
-                                <option value="">All Statuses</option>
-                                <option value="pending">Pending</option>
-                                <option value="processing">Processing</option>
-                                <option value="accepted">Accepted</option>
-                                <option value="delivered">Delivered</option>
-                                <option value="cancelled">Cancelled</option>
-                                <option value="rejected">Rejected</option>
-                            </select>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <label for="payment_status_filter" class="form-label me-2 mb-0 fw-bold">Payment:</label>
-                            <select id="payment_status_filter" class="form-select form-select-sm" style="width: 150px;">
-                                <option value="">All Payments</option>
-                                <option value="paid">Paid</option>
-                                <option value="pending">Unpaid</option>
-                            </select>
+                    <div class="d-flex align-items-center mb-0 ms-2">
+                        <span class="text-muted fw-bold me-3 small text-uppercase">Payment:</span>
+                        <div class="segmented-control" id="payment_status_filter_group">
+                            <input type="radio" name="payment_status" id="pay_all" value="" checked>
+                            <label for="pay_all">All</label>
+
+                            <input type="radio" name="payment_status" id="pay_paid" value="paid">
+                            <label for="pay_paid">Paid</label>
+
+                            <input type="radio" name="payment_status" id="pay_unpaid" value="pending">
+                            <label for="pay_unpaid">Unpaid</label>
+
+                            <div class="selection-indicator"></div>
                         </div>
                     </div>
                 </div>
@@ -850,8 +944,8 @@
                 ajax: {
                     url: window.location.href,
                     data: function (d) {
-                        d.status = $('#status_filter').val();
-                        d.payment_status = $('#payment_status_filter').val();
+                        d.status = $('#orderStatusTabs .nav-link.active').attr('data-status');
+                        d.payment_status = $('input[name="payment_status"]:checked').val() || '';
                     }
                 },
                 columns: [{
@@ -903,7 +997,7 @@
                             bgClass = 'bg-primary text-white';
                             displayStatus = 'Processing';
                         }
-                        else if (statusRaw === 'accepted') {
+                        else if (statusRaw === 'approved') {
                             bgClass = 'bg-info text-white';
                             displayStatus = 'Accepted';
                         }
@@ -946,10 +1040,10 @@
                             let ext = row.invoice_url.split('.').pop().toLowerCase();
                             let icon = ext === 'pdf' ? 'fa-file-pdf-o' : 'fa-file-image-o';
                             let btnsHtml = `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <div class="d-flex align-items-center gap-1 p-2">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-success" title="View Invoice">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="fa ${icon}"></i> &nbsp;View
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       </a>`;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <div class="d-flex align-items-center gap-1 p-2">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-success" title="View Invoice">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <i class="fa ${icon}"></i> &nbsp;View
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   </a>`;
                             btnsHtml += `</div>`;
                             return btnsHtml;
                         }
@@ -992,7 +1086,7 @@
                         btns += `<a href="${invoiceUrl}" target="_blank" class="btn btn-dark btn-sm" title="Print Invoice"><i class="fa fa-print"></i></a>`;
 
                         // Retailer Confirmation
-                        if (statusRaw === 'accepted') {
+                        if (statusRaw === 'approved') {
                             if (isRetailer) {
                                 btns += `<button class="btn btn-primary btn-sm confirm-receipt-btn" data-id="${row.id}" title="Confirm Order"> Confirm</button>`;
                             }
@@ -1004,7 +1098,13 @@
                 ]
             });
 
-            $('#status_filter').change(function () {
+            $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+                $('#orderStatusTabs .nav-link').removeClass('text-primary border-bottom-0').addClass('text-muted');
+                $(this).removeClass('text-muted').addClass('text-primary border-bottom-0');
+                table.ajax.reload();
+            });
+
+            $('input[name="payment_status"]').on('change', function () {
                 table.ajax.reload();
             });
             // Consolidated Batch Form Validation and Submission
@@ -1249,7 +1349,7 @@
                         $select.removeClass('bg-warning bg-secondary bg-success bg-danger bg-info text-dark text-white');
                         let newClass = 'bg-secondary text-white';
                         if (newStatus.includes('pending')) newClass = 'bg-warning text-dark';
-                        else if (newStatus.includes('accepted')) newClass = 'bg-info text-white';
+                        else if (newStatus.includes('approved')) newClass = 'bg-info text-white';
                         else if (newStatus.includes('delivered')) newClass = 'bg-success text-white';
                         else if (newStatus.includes('cancelled')) newClass = 'bg-danger text-white';
 
@@ -1451,17 +1551,17 @@
                             '<span class="text-muted small">Not Allocated</span>';
 
                         tbody.append(`
-                                        <tr class="align-middle">
-                                            <td class="py-3">
-                                                <div class="fw-bold text-dark">${item.product_name}</div>
-                                                <div class="small text-muted">${item.product_code || ''}</div>
-                                            </td>
-                                            <td>${batchInfo}</td>
-                                            <td class="text-center">${item.quantity} ${item.unit || 'Strips'}</td>
-                                            <td class="text-end">₹${parseFloat(item.unit_price).toFixed(2)}</td>
-                                            <td class="text-end fw-bold text-primary">₹${parseFloat(item.total_amount).toFixed(2)}</td>
-                                        </tr>
-                                    `);
+                                                    <tr class="align-middle">
+                                                        <td class="py-3">
+                                                            <div class="fw-bold text-dark">${item.product_name}</div>
+                                                            <div class="small text-muted">${item.product_code || ''}</div>
+                                                        </td>
+                                                        <td>${batchInfo}</td>
+                                                        <td class="text-center">${item.quantity} ${item.unit || 'Strips'}</td>
+                                                        <td class="text-end">₹${parseFloat(item.unit_price).toFixed(2)}</td>
+                                                        <td class="text-end fw-bold text-primary">₹${parseFloat(item.total_amount).toFixed(2)}</td>
+                                                    </tr>
+                                                `);
                     });
                 } else {
                     tbody.html('<tr><td colspan="5" class="text-center py-4 text-muted italic">No items found in this order</td></tr>');
@@ -1499,12 +1599,12 @@
                 if (row.items && row.items.length) {
                     row.items.forEach(item => {
                         list.append(`
-                                                                                                                                                                                    <div class="invoice-list-row">
-                                                                                                                                                                                        <div style="flex: 2;" class="fw-bold text-dark">${item.product_name}</div>
-                                                                                                                                                                                        <div style="flex: 1;" class="text-center text-muted small">${item.quantity} ${item.unit || 'Box'}</div>
-                                                                                                                                                                                        <div style="flex: 1;" class="text-end fw-bold text-success">₹${item.total_amount}</div>
-                                                                                                                                                                                    </div>
-                                                                                                                                                                                `);
+                                                                                                                                                                                                <div class="invoice-list-row">
+                                                                                                                                                                                                    <div style="flex: 2;" class="fw-bold text-dark">${item.product_name}</div>
+                                                                                                                                                                                                    <div style="flex: 1;" class="text-center text-muted small">${item.quantity} ${item.unit || 'Box'}</div>
+                                                                                                                                                                                                    <div style="flex: 1;" class="text-end fw-bold text-success">₹${item.total_amount}</div>
+                                                                                                                                                                                                </div>
+                                                                                                                                                                                            `);
                     });
                 } else {
                     list.append('<div class="invoice-list-row justify-content-center text-muted">No items found</div>');
@@ -1620,42 +1720,42 @@
 
                     // 1. Hidden Submission Row
                     let rowHtml = `
-                                                                                                                                                                <div data-item-id="${orderItemId}" class="product-row" data-ordered-qty="${orderedQty}">
-                                                                                                                                                                    <div class="d-none">
-                                                                                                                                                                        <div class="fw-bold product-name-marker">${item.product_name}</div>
-                                                                                                                                                                        <input type="number" name="items[${orderItemId}][quantity]" value="${orderedQty}">
-                                                                                                                                                                        <input type="hidden" name="items[${orderItemId}][product_id]" value="${productId}">
-                                                                                                                                                                        <input type="hidden" name="items_batches[${orderItemId}][order_item_id]" value="${orderItemId}">
-                                                                                                                                                                    </div>
-                                                                                                                                                                    <div class="d-none" id="batches_for_${orderItemId}">
-                                                                                                                                                                        <input type="text" name="items_batches[${orderItemId}][batches][0][batch_no]" class="hidden-batch-val" required>
-                                                                                                                                                                        <input type="date" name="items_batches[${orderItemId}][batches][0][expiry_date]" class="hidden-expiry-val" required>
-                                                                                                                                                                        <input type="number" name="items_batches[${orderItemId}][batches][0][quantity]" class="hidden-qty-val" value="${orderedQty}" required>
-                                                                                                                                                                        <input type="hidden" name="batches[${orderItemId}][0][mrp]" class="hidden-mrp-val">
-                                                                                                                                                                        <input type="hidden" name="batches[${orderItemId}][0][ptr]" class="hidden-ptr-val">
-                                                                                                                                                                        <input type="hidden" name="batches[${orderItemId}][0][pts]" class="hidden-pts-val">
-                                                                                                                                                                        <input type="hidden" name="batches[${orderItemId}][0][taxable_value]" class="hidden-taxable-val">
-                                                                                                                                                                        <input type="hidden" name="batches[${orderItemId}][0][cgst]" class="hidden-cgst-val">
-                                                                                                                                                                        <input type="hidden" name="batches[${orderItemId}][0][sgst]" class="hidden-sgst-val">
-                                                                                                                                                                        <input type="hidden" name="batches[${orderItemId}][0][igst]" class="hidden-igst-val">
-                                                                                                                                                                        <input type="hidden" name="batches[${orderItemId}][0][net_amount]" class="hidden-net-val">
-                                                                                                                                                                    </div>
-                                                                                                                                                                </div>
-                                                                                                                                                            `;
+                                                                                                                                                                            <div data-item-id="${orderItemId}" class="product-row" data-ordered-qty="${orderedQty}">
+                                                                                                                                                                                <div class="d-none">
+                                                                                                                                                                                    <div class="fw-bold product-name-marker">${item.product_name}</div>
+                                                                                                                                                                                    <input type="number" name="items[${orderItemId}][quantity]" value="${orderedQty}">
+                                                                                                                                                                                    <input type="hidden" name="items[${orderItemId}][product_id]" value="${productId}">
+                                                                                                                                                                                    <input type="hidden" name="items_batches[${orderItemId}][order_item_id]" value="${orderItemId}">
+                                                                                                                                                                                </div>
+                                                                                                                                                                                <div class="d-none" id="batches_for_${orderItemId}">
+                                                                                                                                                                                    <input type="text" name="items_batches[${orderItemId}][batches][0][batch_no]" class="hidden-batch-val" required>
+                                                                                                                                                                                    <input type="date" name="items_batches[${orderItemId}][batches][0][expiry_date]" class="hidden-expiry-val" required>
+                                                                                                                                                                                    <input type="number" name="items_batches[${orderItemId}][batches][0][quantity]" class="hidden-qty-val" value="${orderedQty}" required>
+                                                                                                                                                                                    <input type="hidden" name="batches[${orderItemId}][0][mrp]" class="hidden-mrp-val">
+                                                                                                                                                                                    <input type="hidden" name="batches[${orderItemId}][0][ptr]" class="hidden-ptr-val">
+                                                                                                                                                                                    <input type="hidden" name="batches[${orderItemId}][0][pts]" class="hidden-pts-val">
+                                                                                                                                                                                    <input type="hidden" name="batches[${orderItemId}][0][taxable_value]" class="hidden-taxable-val">
+                                                                                                                                                                                    <input type="hidden" name="batches[${orderItemId}][0][cgst]" class="hidden-cgst-val">
+                                                                                                                                                                                    <input type="hidden" name="batches[${orderItemId}][0][sgst]" class="hidden-sgst-val">
+                                                                                                                                                                                    <input type="hidden" name="batches[${orderItemId}][0][igst]" class="hidden-igst-val">
+                                                                                                                                                                                    <input type="hidden" name="batches[${orderItemId}][0][net_amount]" class="hidden-net-val">
+                                                                                                                                                                                </div>
+                                                                                                                                                                            </div>
+                                                                                                                                                                        `;
                     tbody.append(rowHtml);
 
                     // 2. Visible Verification Row (Invoiced Style)
                     let vRowHtml = `
-                                                                                                                                                                <div id="v_row_${orderItemId}" class="invoice-list-row">
-                                                                                                                                                                    <div class="ai-col-product fw-bold text-dark small">${item.product_name}</div>
-                                                                                                                                                                    <div class="ai-col-batch v-batch-display text-muted small" data-id="${orderItemId}">--</div>
-                                                                                                                                                                    <div class="ai-col-expiry v-expiry-display text-muted small" data-id="${orderItemId}">--</div>
-                                                                                                                                                                    <div class="ai-col-qty fw-bold text-primary v-qty-display" data-original-unit="${item.unit || ''}">${orderedQty} ${item.unit || ''}</div>
-                                                                                                                                                                    <div class="ai-col-value text-end small text-dark fw-bold v-taxable-display">--</div>
-                                                                                                                                                                    <div class="ai-col-value text-end small text-muted v-gst-display">--</div>
-                                                                                                                                                                    <div class="ai-col-value text-end fw-bold v-net-display">--</div>
-                                                                                                                                                                </div>
-                                                                                                                                                            `;
+                                                                                                                                                                            <div id="v_row_${orderItemId}" class="invoice-list-row">
+                                                                                                                                                                                <div class="ai-col-product fw-bold text-dark small">${item.product_name}</div>
+                                                                                                                                                                                <div class="ai-col-batch v-batch-display text-muted small" data-id="${orderItemId}">--</div>
+                                                                                                                                                                                <div class="ai-col-expiry v-expiry-display text-muted small" data-id="${orderItemId}">--</div>
+                                                                                                                                                                                <div class="ai-col-qty fw-bold text-primary v-qty-display" data-original-unit="${item.unit || ''}">${orderedQty} ${item.unit || ''}</div>
+                                                                                                                                                                                <div class="ai-col-value text-end small text-dark fw-bold v-taxable-display">--</div>
+                                                                                                                                                                                <div class="ai-col-value text-end small text-muted v-gst-display">--</div>
+                                                                                                                                                                                <div class="ai-col-value text-end fw-bold v-net-display">--</div>
+                                                                                                                                                                            </div>
+                                                                                                                                                                        `;
                     vbody.append(vRowHtml);
                 });
             });
