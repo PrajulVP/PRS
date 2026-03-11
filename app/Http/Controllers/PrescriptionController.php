@@ -44,13 +44,27 @@ class PrescriptionController extends Controller
         $matchedProducts = [];
 
         foreach ($extractedData['medicines'] as $medicine) {
-            $name = $medicine['name'] ?? null;
-            $quantity = $medicine['count'] ?? 1;
+            $name = $medicine['name'] ?? $medicine['product_name'] ?? null;
+            $quantity = $medicine['count'] ?? $medicine['quantity'] ?? 1;
 
-            if (!$name) continue;
+            if (!$name) {
+                Log::warning('OCR medicine missing name', ['medicine' => $medicine]);
+                continue;
+            }
 
             // Search for product with fuzzy matching or exact name match
             $product = Product::where('product_name', 'LIKE', "%{$name}%")->first();
+
+            // Fallback: If "Mox 500" came from OCR, try searching for just "Mox" or parts of it
+            if (!$product) {
+                $parts = explode(' ', $name);
+                if (count($parts) > 0) {
+                    $firstPart = $parts[0];
+                    if (strlen($firstPart) > 2) {
+                        $product = Product::where('product_name', 'LIKE', "%{$firstPart}%")->first();
+                    }
+                }
+            }
 
             if ($product) {
                 // Get available distributors and calculate distance, similar to getProductDetails
@@ -66,13 +80,19 @@ class PrescriptionController extends Controller
                         'unit' => $this->determineDefaultUnit($product),
                         'source' => 'ocr'
                     ];
+                    Log::info('OCR Match Success', ['name' => $name, 'matched' => $product->product_name]);
+                } else {
+                    Log::warning('OCR Match Failed: No Distributor with Stock', ['product' => $product->product_name]);
                 }
+            } else {
+                Log::warning('OCR Match Failed: Product Not Found', ['name' => $name]);
             }
         }
 
         return response()->json([
             'success' => true,
-            'medicines' => $matchedProducts
+            'medicines' => $matchedProducts,
+            'raw_ocr_data' => $extractedData // Added for debugging in network tab
         ]);
     }
 

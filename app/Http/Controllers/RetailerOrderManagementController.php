@@ -206,7 +206,7 @@ class RetailerOrderManagementController extends Controller
 
             \DB::commit();
 
-            return response()->json(['success' => 'Order(s) created successfully!']);
+            return response()->json(['success' => 'Order created.']);
         } catch (\Exception $e) {
             \DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 500);
@@ -479,7 +479,7 @@ class RetailerOrderManagementController extends Controller
             ));
         }
 
-        return response()->json(['success' => 'Order rejected successfully!']);
+        return response()->json(['success' => 'Order rejected.']);
     }
 
     public function acceptOrder(Request $request, RetailerOrder $retailerOrder)
@@ -532,7 +532,7 @@ class RetailerOrderManagementController extends Controller
                 $this->notifyUnique($retailerOrder->distributor->user, new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} has been processed and is ready for your approval.", route('admin.approvals.retailer'), 'retailer_order'));
             }
 
-            return response()->json(['success' => 'Order accepted by Field Staff!']);
+            return response()->json(['success' => 'Order accepted.']);
         }
 
         // 2. Distributor accepting fieldstaff-accepted order
@@ -727,7 +727,7 @@ class RetailerOrderManagementController extends Controller
                 }
             }
 
-            return response()->json(['success' => 'Order accepted by Distributor!', 'new_points' => $retailerOrder->retailer->loyalty_points ?? 0]);
+            return response()->json(['success' => 'Order accepted.']);
         }
 
         if ($user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
@@ -737,7 +737,7 @@ class RetailerOrderManagementController extends Controller
                 if ($retailerOrder->distributor && $retailerOrder->distributor->user) {
                     $this->notifyUnique($retailerOrder->distributor->user, new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} is ready for your approval.", route('admin.approvals.retailer'), 'retailer_order'));
                 }
-                return response()->json(['success' => 'Order accepted (Field Staff stage bypassed by Admin)!']);
+                return response()->json(['success' => 'Order accepted.']);
             } elseif ($status === 'processing') {
                 if ($request->hasFile('invoice')) {
                     $file = $request->file('invoice');

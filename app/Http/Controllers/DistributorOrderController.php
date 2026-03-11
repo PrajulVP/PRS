@@ -300,7 +300,7 @@ class DistributorOrderController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
 
-        return response()->json(['success' => 'Order placed successfully!']);
+        return response()->json(['success' => 'Order placed successfully.']);
     }
 
     public function update(Request $request, distributorOrder $distributorOrder)
@@ -400,7 +400,7 @@ class DistributorOrderController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
 
-        return response()->json(['success' => 'Order updated successfully.']);
+        return response()->json(['success' => 'Order updated.']);
     }
 
     public function acceptBySalesManager(distributorOrder $distributorOrder)
@@ -425,7 +425,7 @@ class DistributorOrderController extends Controller
             ));
         }
 
-        return response()->json(['success' => 'Order accepted successfully!']);
+        return response()->json(['success' => 'Order accepted.']);
     }
 
     public function acceptByAdmin(Request $request, DistributorOrder $distributorOrder)
@@ -564,7 +564,7 @@ class DistributorOrderController extends Controller
                 ));
             }
 
-            return response()->json(['success' => 'Order accepted, payment status updated, and invoice saved.']);
+            return response()->json(['success' => 'Order accepted.']);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 400);
@@ -587,7 +587,7 @@ class DistributorOrderController extends Controller
 
         $this->deleteOrderNotifications($distributorOrder->id, 'distributor_order');
 
-        return response()->json(['success' => 'Order cancelled successfully!']);
+        return response()->json(['success' => 'Order cancelled.']);
     }
 
     public function rejectOrder(Request $request, DistributorOrder $distributorOrder)
@@ -619,7 +619,7 @@ class DistributorOrderController extends Controller
             ));
         }
 
-        return response()->json(['success' => 'Order rejected successfully!']);
+        return response()->json(['success' => 'Order rejected.']);
     }
 
     public function cancelOrder(Request $request, DistributorOrder $distributorOrder)
@@ -674,7 +674,7 @@ class DistributorOrderController extends Controller
             $this->addOrderItemsToInventory($distributorOrder);
         }
 
-        return response()->json(['success' => 'Status updated successfully to ' . ucfirst(str_replace('_', ' ', $newStatus))]);
+        return response()->json(['success' => 'Status updated.']);
     }
 
     public function updatePaymentStatus(Request $request, DistributorOrder $distributorOrder)
@@ -696,7 +696,7 @@ class DistributorOrderController extends Controller
         $distributorOrder->payment_status = $newStatus;
         $distributorOrder->save();
 
-        return response()->json(['success' => 'Payment status updated successfully to ' . ucfirst($newStatus)]);
+        return response()->json(['success' => 'Payment status updated.']);
     }
 
     public function invoice(DistributorOrder $distributorOrder)
@@ -724,7 +724,7 @@ class DistributorOrderController extends Controller
             $distributorOrder->save();
 
             return response()->json([
-                'success' => 'Invoice uploaded successfully!',
+                'success' => 'Invoice uploaded.',
                 'invoice_url' => \Illuminate\Support\Facades\Storage::disk('public')->url($path)
             ]);
         }
@@ -742,7 +742,7 @@ class DistributorOrderController extends Controller
         $this->deleteOrderNotifications($distributorOrder->id, 'distributor_order');
         $distributorOrder->delete();
 
-        return response()->json(['success' => 'Order deleted successfully! Stock restored.']);
+        return response()->json(['success' => 'Order deleted.']);
     }
 
     public function approveOrder(Request $request, DistributorOrder $distributorOrder)
@@ -783,7 +783,7 @@ class DistributorOrderController extends Controller
         }
 
         return response()->json([
-            'success' => 'Order approved successfully!',
+            'success' => 'Order approved.',
             'invoice_url' => $path ? \Illuminate\Support\Facades\Storage::disk('public')->url($path) : null
         ]);
     }
@@ -796,7 +796,7 @@ class DistributorOrderController extends Controller
             }
             $distributorOrder->invoice_path = null;
             $distributorOrder->save();
-            return response()->json(['success' => 'Invoice removed successfully']);
+            return response()->json(['success' => 'Invoice removed.']);
         }
         return response()->json(['error' => 'No invoice to remove'], 400);
     }

@@ -385,7 +385,7 @@ class DistributorRetailerOrderController extends Controller
                 'status' => 'error',
                 'message' => 'Failed to extract data from the invoice or invalid OCR response.',
                 'invoice_path' => $path,
-                'ocr_raw' => $ocrData
+                'raw_ocr_data' => $ocrData
             ], 422);
         }
 
@@ -437,7 +437,8 @@ class DistributorRetailerOrderController extends Controller
                 return response()->json([
                     'status' => 'success',
                     'message' => 'Invoice matched and order accepted automatically!',
-                    'details' => $result
+                    'details' => $result,
+                    'raw_ocr_data' => $ocrData // Added for network tab debugging
                 ]);
             } catch (\Exception $e) {
                 return response()->json([
