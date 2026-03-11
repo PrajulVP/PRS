@@ -243,13 +243,13 @@ class RetailerOrderController extends Controller
 
             DB::commit();
             return response()->json([
-                'message' => 'Order placed successfully',
+                'message' => 'Order placed.',
                 'order' => $order->load('items.product')
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('API Retailer Order creation failed: ' . $e->getMessage());
-            return response()->json(['error' => 'Order placement failed: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Unable to place order.'], 500);
         }
     }
 
@@ -311,7 +311,7 @@ class RetailerOrderController extends Controller
                     $this->notifyUnique($order->fieldStaff->user, new \App\Notifications\OrderActionRequired($order, "Order #{$order->order_code} has been successfully delivered and confirmed by the retailer.", url('/field-staff/orders'), 'retailer_order'));
                 }
 
-                $msg = 'Order delivery confirmed!';
+                $msg = 'Order delivered.';
                 $newPoints = $order->retailer->loyalty_points ?? 0;
             } elseif ($status === RetailerOrder::STATUS_CANCELLED) {
                 if ($order->status !== 'pending') {
@@ -325,7 +325,7 @@ class RetailerOrderController extends Controller
                 if (method_exists($this, 'deleteOrderNotifications')) {
                     $this->deleteOrderNotifications($order->id, 'retailer_order');
                 }
-                $msg = 'Order cancelled successfully!';
+                $msg = 'Order cancelled.';
                 $newPoints = null;
             }
 
@@ -339,7 +339,7 @@ class RetailerOrderController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('API Retailer Order update status failed: ' . $e->getMessage());
-            return response()->json(['error' => 'Status update failed: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Unable to update status.'], 500);
         }
     }
 }

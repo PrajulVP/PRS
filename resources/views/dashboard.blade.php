@@ -53,13 +53,32 @@
                     }
 
                     .retailer-hero {
-                        background: var(--med-bg-card);
-                        background: linear-gradient(to right, var(--med-bg-card), rgba(0, 103, 171, 0.05));
-                        border-radius: 15px;
-                        padding: 30px;
-                        box-shadow: var(--med-shadow-soft);
-                        margin-bottom: 30px;
-                        border-left: 5px solid var(--med-accent);
+                        background: linear-gradient(135deg, var(--med-bg-card) 0%, rgba(0, 73, 122, 0.05) 100%);
+                        border-radius: 20px;
+                        padding: 40px;
+                        box-shadow: 0 10px 30px -10px rgba(0, 73, 122, 0.1);
+                        margin-bottom: 35px;
+                        border: 1px solid var(--med-border);
+                        position: relative;
+                        overflow: hidden;
+                    }
+
+                    .retailer-hero::before {
+                        content: '';
+                        position: absolute;
+                        top: -20px;
+                        right: -20px;
+                        width: 150px;
+                        height: 150px;
+                        background: radial-gradient(circle, var(--med-primary) 0%, transparent 70%);
+                        opacity: 0.05;
+                        border-radius: 50%;
+                    }
+
+                    .retailer-hero h2 {
+                        font-weight: 800;
+                        letter-spacing: -0.5px;
+                        margin-bottom: 10px;
                     }
 
                     .section-title {
@@ -168,21 +187,27 @@
                         </div>
                     </div>
 
-                    <!-- Quick Actions for Retailer -->
                     <div class="row">
                         <div class="col-12 mb-3">
-                            <h5 class="section-title mb-0">Quick Actions</h5>
+                            <h5 class="section-title mb-0" style="border-bottom: none; font-size: 1.1rem; letter-spacing: 0.5px; text-transform: uppercase;">Quick Actions</h5>
                         </div>
-                        <div class="col-12 mb-4 d-flex">
-                            <button class="btn btn-outline-primary btn-sm px-4 py-2 mr-3 shadow-sm d-flex align-items-center" 
-                                style="border-radius: 8px; font-weight: 600;"
+                        <div class="col-12 mb-5 d-flex gap-3">
+                            <button class="btn btn-outline-primary shadow-sm d-flex align-items-center justify-content-center py-3 px-4" 
+                                style="border-radius: 15px; font-weight: 700; border-width: 2px; min-width: 200px; transition: all 0.3s ease;"
                                 onclick="window.location.href='{{ route('admin.retailer.create') }}'">
-                                <i data-feather="plus-circle" class="mr-2" style="width: 16px; height: 16px;"></i> Create Order
+                                <div class="bg-primary bg-opacity-10 p-2 rounded-3 me-3">
+                                    <i data-feather="plus-circle" style="width: 20px; height: 20px;"></i>
+                                </div>
+                                <span class="fs-6">Create Order</span>
                             </button>
-                            <button class="btn btn-primary btn-sm px-4 py-2 shadow-sm d-flex align-items-center" 
-                                style="border-radius: 8px; font-weight: 600; background: var(--med-primary); border-color: var(--med-primary);"
+                            
+                            <button class="btn btn-primary shadow d-flex align-items-center justify-content-center py-3 px-4" 
+                                style="border-radius: 15px; font-weight: 700; background: linear-gradient(135deg, var(--med-primary) 0%, var(--med-accent) 100%); border: none; min-width: 260px; transition: all 0.3s ease;"
                                 onclick="window.location.href='{{ route('admin.retailer.create', ['action' => 'upload_prescription']) }}'">
-                                <i data-feather="upload-cloud" class="mr-2" style="width: 16px; height: 16px;"></i> Upload Prescription (AI)
+                                <div class="bg-white bg-opacity-20 p-2 rounded-3 me-3">
+                                    <i data-feather="upload-cloud" style="width: 20px; height: 20px; stroke: white;"></i>
+                                </div>
+                                <span class="fs-6">Upload Prescription (AI)</span>
                             </button>
                         </div>
                     </div>

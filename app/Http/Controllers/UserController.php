@@ -214,14 +214,14 @@ class UserController extends Controller
         try {
             $user->delete();
             if (request()->ajax()) {
-                return response()->json(['success' => true, 'message' => 'User deleted successfully.']);
+                return response()->json(['success' => true, 'message' => 'User deleted.']);
             }
-            return back()->with('success', 'User deleted successfully.');
+            return back()->with('success', 'User deleted.');
         } catch (\Illuminate\Database\QueryException $e) {
             if (request()->ajax()) {
                 return response()->json(['success' => false, 'message' => 'Cannot delete user. They may have associated records.'], 422);
             }
-            return back()->with('error', 'Cannot delete user. They may have associated records (e.g. Orders, Retailers) that must be deleted first.');
+            return back()->with('error', 'Cannot delete user with associated records.');
         } catch (\Exception $e) {
             if (request()->ajax()) {
                 return response()->json(['success' => false, 'message' => 'An error occurred.'], 500);

@@ -63,7 +63,7 @@ class InventoryController extends Controller
             'remarks' => $request->operation . ' ' . $request->quantity
         ]);
 
-        if ($request->ajax()) return response()->json(['success' => 'Stock updated successfully']);
+        if ($request->ajax()) return response()->json(['success' => 'Stock updated.']);
         return back()->with('success', 'Stock updated');
     }
 
@@ -266,10 +266,10 @@ class InventoryController extends Controller
         }
 
         if ($request->ajax()) {
-            return response()->json(['success' => 'Inventory updated successfully.']);
+            return response()->json(['success' => 'Inventory updated.']);
         }
 
-        return redirect()->route('inventories.index')->with('success', 'Inventory updated successfully.');
+        return redirect()->route('inventories.index')->with('success', 'Inventory updated.');
     }
 
     public function show(Inventory $inventory)
@@ -316,10 +316,10 @@ class InventoryController extends Controller
         }
 
         if ($request->ajax()) {
-            return response()->json(['success' => 'Inventory updated successfully.']);
+            return response()->json(['success' => 'Inventory updated.']);
         }
 
-        return redirect()->route('inventories.index')->with('success', 'Inventory updated successfully.');
+        return redirect()->route('inventories.index')->with('success', 'Inventory updated.');
     }
 
     public function destroy(Request $request, Inventory $inventory)
@@ -327,9 +327,9 @@ class InventoryController extends Controller
         $inventory->delete();
 
         if ($request->ajax()) {
-            return response()->json(['success' => 'Inventory deleted successfully.']);
+            return response()->json(['success' => 'Inventory deleted.']);
         }
 
-        return redirect()->route('inventories.index')->with('success', 'Inventory deleted successfully.');
+        return redirect()->route('inventories.index')->with('success', 'Inventory deleted.');
     }
 }
