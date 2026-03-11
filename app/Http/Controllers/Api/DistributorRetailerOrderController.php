@@ -397,67 +397,110 @@ class DistributorRetailerOrderController extends Controller
         $ocrItems = collect($ocrItemsRaw);
 
         $expectedData = [];
+        $matchedDetails = [];
 
         foreach ($retailerOrder->items as $orderItem) {
             $productName = $orderItem->product->product_name;
             $expectedQty = (float)$orderItem->quantity;
+
+            // Normalize names for comparison (lowercase, trimmed)
+            $normalizedOrderName = strtolower(trim($productName));
+
+            // Find matching item in OCR
+            $match = $ocrItems->first(function ($item) use ($normalizedOrderName) {
+                // Assuming OCR item has 'product_name' or 'name' or 'description'
+                $name = strtolower(trim($item['product_name'] ?? $item['name'] ?? $item['description'] ?? ''));
+
+                // 1. Direct contains check
+                if (str_contains($name, $normalizedOrderName) || str_contains($normalizedOrderName, $name)) {
+                    return true;
+                }
+
+                // 2. Fuzzy match: Check if at least first 2 words match
+                $ocrWords = preg_split('/[\s,]+/', $name);
+                $orderWords = preg_split('/[\s,]+/', $normalizedOrderName);
+
+                if (count($ocrWords) >= 2 && count($orderWords) >= 2) {
+                    $matchCount = 0;
+                    $wordsToCheck = min(count($ocrWords), count($orderWords), 4);
+                    for ($i = 0; $i < $wordsToCheck; $i++) {
+                        if (isset($ocrWords[$i]) && isset($orderWords[$i]) && $ocrWords[$i] === $orderWords[$i]) {
+                            $matchCount++;
+                        }
+                    }
+                    if ($matchCount >= 2) return true;
+                }
+
+                return false;
+            });
+            if (!$match) {
+                $isMatch = false;
+                $mismatches[] = "Product '{$productName}' not found in invoice.";
+
+                $matchedDetails[] = [
+                    'order_item_id' => $orderItem->id,
+                    'product_name' => $productName,
+                    'expected_qty' => $expectedQty,
+                    'status' => 'missing',
+                    'ocr_data' => null
+                ];
+            } else {
+                $ocrQty = (float)($match['quantity'] ?? $match['qty'] ?? 0);
+                $freeQty = (float)($match['sch'] ?? $match['free_qty'] ?? 0);
+
+                $detail = [
+                    'order_item_id' => $orderItem->id,
+                    'product_name' => $productName,
+                    'expected_qty' => $expectedQty,
+                    'status' => 'matched',
+                    'ocr_data' => [
+                        'description' => $match['description'] ?? $match['product_name'] ?? $match['name'] ?? 'N/A',
+                        'batch' => $match['batch'] ?? 'N/A',
+                        'expiry' => $match['expiry'] ?? 'N/A',
+                        'qty' => $ocrQty,
+                        'free_qty' => $freeQty,
+                        'taxable_amt' => (float)($match['taxable_amt'] ?? $match['amount'] ?? 0),
+                        'gst_percent' => (float)($match['gst'] ?? 0),
+                        'total_amt' => (float)($match['total_amount'] ?? $match['amount'] ?? 0),
+                    ]
+                ];
+
+                if ($ocrQty < $expectedQty) {
+                    $isMatch = false;
+                    $mismatches[] = "Quantity mismatch for '{$productName}': Expected {$expectedQty}, found {$ocrQty}.";
+                    $detail['status'] = 'mismatch';
+                }
+
+                $matchedDetails[] = $detail;
+            }
 
             $expectedData[] = [
                 'id' => $orderItem->id,
                 'product_name' => $productName,
                 'quantity' => $expectedQty
             ];
-
-            // Normalize names for comparison (lowercase, trimmed)
-            $normalizedOrderName = strtolower(trim($productName));
-
-            // Find matching item in OCR
-            // This is a naive search, might need fuzzy logic or mapping if names diverge
-            $match = $ocrItems->first(function ($item) use ($normalizedOrderName) {
-                // Assuming OCR item has 'product_name' or 'name' and 'quantity' or 'qty'
-                $name = strtolower(trim($item['product_name'] ?? $item['name'] ?? ''));
-                return str_contains($name, $normalizedOrderName) || str_contains($normalizedOrderName, $name);
-            });
-
-            if (!$match) {
-                $isMatch = false;
-                $mismatches[] = "Product '{$productName}' not found in invoice.";
-            } else {
-                $ocrQty = (float)($match['quantity'] ?? $match['qty'] ?? 0);
-                if ($ocrQty < $expectedQty) {
-                    $isMatch = false;
-                    $mismatches[] = "Quantity mismatch for '{$productName}': Expected {$expectedQty}, found {$ocrQty}.";
-                }
-            }
         }
 
-        if ($isMatch) {
-            try {
-                // Auto-Approval
-                $result = $this->processOrderAcceptance($retailerOrder, null, 'pending', $path);
-
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Invoice matched and order accepted automatically!',
-                    'details' => $result
-                ]);
-            } catch (\Exception $e) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'OCR matched, but auto-acceptance failed: ' . $e->getMessage(),
-                    'ocr_data' => $ocrData['items']
-                ], 422);
-            }
-        }
-
-        // Mismatch: Save path and return error with data for cross-verification
+        // Always save path for manual approval later
         $retailerOrder->update(['invoice_path' => $path]);
 
+        if ($isMatch) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Invoice matched successfully! You can now proceed to accept the order.',
+                'matched_details' => $matchedDetails,
+                'ocr_data' => $ocrItemsRaw // Line items
+            ]);
+        }
+
+        // Mismatch: return error with data for cross-verification
         return response()->json([
             'status' => 'error',
             'message' => 'Invoice data mismatch. Please cross-verify and approve manually.',
             'mismatches' => $mismatches,
-            'ocr_data' => $ocrItemsRaw,
+            'matched_details' => $matchedDetails,
+            'ocr_data' => $ocrItemsRaw, // Line items
+            'data' => $ocrData, // Whole OCR object
             'expected_data' => $expectedData,
             'invoice_path' => $path
         ], 422);
