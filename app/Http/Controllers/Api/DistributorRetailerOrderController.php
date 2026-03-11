@@ -268,12 +268,7 @@ class DistributorRetailerOrderController extends Controller
      *             mediaType="multipart/form-data",
      *             @OA\Schema(
      *                 @OA\Property(property="invoice", type="string", format="binary", description="Invoice file (optional if already uploaded)"),
-     *                 @OA\Property(property="payment_status", type="string", enum={"pending","paid"}),
-     *                 @OA\Property(
-     *                     property="items_batches",
-     *                     type="string",
-     *                     description="JSON string: [{order_item_id: int, batches: [{inventory_id: int, quantity: decimal}]}]"
-     *                 )
+     *                 @OA\Property(property="payment_status", type="string", enum={"pending","paid"})
      *             )
      *         )
      *     ),
@@ -305,11 +300,6 @@ class DistributorRetailerOrderController extends Controller
             return response()->json(['error' => 'Invoice file is required because it hasn\'t been uploaded yet.'], 422);
         }
 
-        $itemsBatches = null;
-        if ($request->filled('items_batches')) {
-            $itemsBatches = is_string($request->items_batches) ? json_decode($request->items_batches, true) : $request->items_batches;
-        }
-
         $invoicePath = $retailerOrder->invoice_path;
         if ($request->hasFile('invoice')) {
             $file = $request->file('invoice');
@@ -320,7 +310,7 @@ class DistributorRetailerOrderController extends Controller
         try {
             $result = $this->processOrderAcceptance(
                 $retailerOrder,
-                $itemsBatches,
+                null, // Deprecated manual batch selection; forces FEFO
                 $request->payment_status,
                 $invoicePath
             );
@@ -601,7 +591,7 @@ class DistributorRetailerOrderController extends Controller
 
             // 2. Update Order
             $updateData = [
-                'status' => 'accepted',
+                'status' => 'approved',
             ];
             if ($invoicePath) {
                 $updateData['invoice_path'] = $invoicePath;

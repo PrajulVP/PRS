@@ -45,7 +45,7 @@ class FieldStaffDashboardApiController extends Controller
             'total' => (clone $retailerOrderQuery)->count(),
             'pending_approval' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_PENDING)->count(), // Orders they need to interact with
             'processing' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_PROCESSING)->count(),
-            'accepted' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_ACCEPTED)->count(),
+            'accepted' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_APPROVED)->count(),
             'delivered' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_DELIVERED)->count(),
             'cancelled' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_CANCELLED)->count(),
             'rejected' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_REJECTED)->count(),

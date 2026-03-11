@@ -12,6 +12,74 @@
             margin-left: 10px !important;
         }
 
+        /* Segmented Control for Payment Filter */
+        .segmented-control {
+            display: flex;
+            background-color: #e2e8f0;
+            border-radius: 50px;
+            padding: 4px;
+            position: relative;
+            width: 260px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+        }
+
+        .segmented-control input {
+            display: none;
+        }
+
+        .segmented-control label {
+            flex: 1;
+            text-align: center;
+            padding: 6px 0;
+            margin: 0;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+            transition: color 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .segmented-control input:checked+label {
+            color: #0f172a;
+        }
+
+        #pay_paid:checked+label {
+            color: #15803d;
+        }
+
+        #pay_unpaid:checked+label {
+            color: #b45309;
+        }
+
+        .selection-indicator {
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            left: 4px;
+            width: calc(33.333% - 2.66px);
+            background: #ffffff;
+            border-radius: 50px;
+            z-index: 1;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+        }
+
+        #pay_all:checked~.selection-indicator {
+            transform: translateX(0);
+        }
+
+        #pay_paid:checked~.selection-indicator {
+            transform: translateX(100%);
+        }
+
+        #pay_unpaid:checked~.selection-indicator {
+            transform: translateX(200%);
+        }
+
         .dataTables_length {
             text-align: left !important;
         }
@@ -247,36 +315,62 @@
 
     <div class="container-fluid">
         <div class="card shadow-sm border-0 rounded-3">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Distributor Order Approvals</h5>
+            <div class="card-header bg-white border-bottom pb-0">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 text-primary fw-bold">Distributor Order Approvals</h5>
+                </div>
+
+                <ul class="nav nav-tabs border-bottom-0" id="orderStatusTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-all" data-bs-toggle="tab" data-status=""
+                            type="button" role="tab">All</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-pending" data-bs-toggle="tab"
+                            data-status="pending" type="button" role="tab">Pending</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active px-4 fw-bold text-primary border-bottom-0" id="tab-processing"
+                            data-bs-toggle="tab" data-status="processing" type="button" role="tab">Processing</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-approved" data-bs-toggle="tab"
+                            data-status="approved" type="button" role="tab">Approved</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-delivered" data-bs-toggle="tab"
+                            data-status="delivered" type="button" role="tab">Delivered</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-cancelled" data-bs-toggle="tab"
+                            data-status="cancelled" type="button" role="tab">Cancelled</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-rejected" data-bs-toggle="tab"
+                            data-status="rejected" type="button" role="tab">Rejected</button>
+                    </li>
+                </ul>
             </div>
-            <div class="card-body">
+            <div class="card-body pt-4">
                 @if(session('success'))
                 <div class="alert alert-success">{{ session('success') }}</div> @endif
                 @if(session('error'))
                 <div class="alert alert-danger">{{ session('error') }}</div> @endif
 
                 <div id="filter_container" class="d-none">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="d-flex align-items-center">
-                            <label for="status_filter" class="form-label me-2 mb- fw-bold">Status:</label>
-                            <select id="status_filter" class="form-select form-select-sm" style="width: 150px;">
-                                <option value="">All Statuses</option>
-                                <option value="pending">Pending</option>
-                                <option value="processing">Processing</option>
-                                <option value="accepted">Accepted</option>
-                                <option value="delivered">Delivered</option>
-                                <option value="cancelled">Cancelled</option>
-                                <option value="rejected">Rejected</option>
-                            </select>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <label for="payment_status_filter" class="form-label me-2 mb-0 fw-bold">Payment:</label>
-                            <select id="payment_status_filter" class="form-select form-select-sm" style="width: 150px;">
-                                <option value="">All Payments</option>
-                                <option value="paid">Paid</option>
-                                <option value="pending">Unpaid</option>
-                            </select>
+                    <div class="d-flex align-items-center mb-0 ms-2">
+                        <span class="text-muted fw-bold me-3 small text-uppercase">Payment:</span>
+                        <div class="segmented-control" id="payment_status_filter_group">
+                            <input type="radio" name="payment_status" id="pay_all" value="" checked>
+                            <label for="pay_all">All</label>
+
+                            <input type="radio" name="payment_status" id="pay_paid" value="paid">
+                            <label for="pay_paid">Paid</label>
+
+                            <input type="radio" name="payment_status" id="pay_unpaid" value="pending">
+                            <label for="pay_unpaid">Unpaid</label>
+
+                            <div class="selection-indicator"></div>
                         </div>
                     </div>
                 </div>
@@ -821,19 +915,21 @@
                     var $filterContainer = $('#filter_container').removeClass('d-none');
                     $('.dt-buttons').parent().append($filterContainer);
 
-                    // Re-bind events since moving elements might detach them in some browsers/versions
-                    $('#status_filter').off('change').on('change', function () {
+                    $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+                        $('#orderStatusTabs .nav-link').removeClass('text-primary border-bottom-0').addClass('text-muted');
+                        $(this).removeClass('text-muted').addClass('text-primary border-bottom-0');
                         table.ajax.reload();
                     });
-                    $('#payment_status_filter').off('change').on('change', function () {
+
+                    $('input[name="payment_status"]').on('change', function () {
                         table.ajax.reload();
                     });
                 },
                 ajax: {
                     url: "{{ route('admin.approvals.distributor') }}",
                     data: function (d) {
-                        d.status = $('#status_filter').val();
-                        d.payment_status = $('#payment_status_filter').val();
+                        d.status = $('#orderStatusTabs .nav-link.active').attr('data-status');
+                        d.payment_status = $('input[name="payment_status"]:checked').val() || '';
                     }
                 },
                 columns: [
@@ -859,7 +955,7 @@
                             else if (statusRaw === 'processing') {
                                 bgClass = 'bg-primary';
                                 displayStatus = 'Processing';
-                            } else if (statusRaw === 'accepted') {
+                            } else if (statusRaw === 'approved') {
                                 bgClass = 'bg-info';
                                 displayStatus = 'Accepted';
                             } else if (statusRaw.includes('delivered')) bgClass = 'bg-success';
@@ -905,7 +1001,7 @@
 
                             let statusCheck = row.raw_status || (row.status ? row.status.toLowerCase().replace(/ /g, '_') : '');
 
-                            if (statusCheck === 'delivered' || statusCheck.includes('delivered') || statusCheck.includes('approved') || statusCheck.includes('accepted')) {
+                            if (statusCheck === 'delivered' || statusCheck.includes('delivered') || statusCheck.includes('approved') || statusCheck.includes('approved')) {
                                 return `<span class="text-muted small">No Invoice</span>`;
                             }
                             return `<span class="text-muted small">Pending Approval</span>`;
@@ -1082,7 +1178,7 @@
                 let badgeClass = 'bg-soft-secondary';
                 if (status === 'pending') badgeClass = 'bg-warning text-dark';
                 else if (status === 'processing') badgeClass = 'bg-info text-white';
-                else if (status === 'accepted' || status === 'delivered') badgeClass = 'bg-success text-white';
+                else if (status === 'approved' || status === 'delivered') badgeClass = 'bg-success text-white';
                 else if (status === 'cancelled' || status === 'rejected') badgeClass = 'bg-danger text-white';
 
                 $('#view_status_badge').text(row.status || 'Pending').removeClass().addClass('badge ' + badgeClass);
@@ -1101,12 +1197,12 @@
                 if (row.items && row.items.length) {
                     row.items.forEach(item => {
                         list.append(`
-        <div class="invoice-list-row p-2">
-            <div style="flex: 2;" class="fw-bold text-dark small ps-2">${item.product_name}</div>
-            <div style="flex: 1;" class="fw-bold text-primary text-center">${item.quantity} ${item.unit || 'Nos'}</div>
-            <div style="flex: 1;" class="fw-bold text-dark text-end pe-3">₹${item.total_amount}</div>
-        </div>
-                                `);
+                    <div class="invoice-list-row p-2">
+                        <div style="flex: 2;" class="fw-bold text-dark small ps-2">${item.product_name}</div>
+                        <div style="flex: 1;" class="fw-bold text-primary text-center">${item.quantity} ${item.unit || 'Nos'}</div>
+                        <div style="flex: 1;" class="fw-bold text-dark text-end pe-3">₹${item.total_amount}</div>
+                    </div>
+                                            `);
                     });
                 } else {
                     list.append('<div class="invoice-list-row justify-content-center text-muted">No items</div>');
@@ -1132,12 +1228,12 @@
                 if (row.items && row.items.length) {
                     row.items.forEach(item => {
                         list.append(`
-        <div class="invoice-list-row p-2">
-            <div style="flex: 2;" class="fw-bold text-dark small ps-2">${item.product_name}</div>
-            <div style="flex: 1;" class="fw-bold text-primary text-center">${item.quantity} ${item.unit || 'Nos'}</div>
-            <div style="flex: 1;" class="fw-bold text-dark text-end pe-3">₹${item.total_amount}</div>
-        </div>
-                                `);
+                    <div class="invoice-list-row p-2">
+                        <div style="flex: 2;" class="fw-bold text-dark small ps-2">${item.product_name}</div>
+                        <div style="flex: 1;" class="fw-bold text-primary text-center">${item.quantity} ${item.unit || 'Nos'}</div>
+                        <div style="flex: 1;" class="fw-bold text-dark text-end pe-3">₹${item.total_amount}</div>
+                    </div>
+                                            `);
                     });
                 } else {
                     list.append('<div class="invoice-list-row justify-content-center text-muted">No items found</div>');
@@ -1220,43 +1316,43 @@
                 if (row && row.items) {
                     row.items.forEach(item => {
                         let rowHtml = `
-                                                                                                        <div data-item-id="${item.order_item_id}">
-                                                                                                            <div class="d-none">
-                                                                                                                <div class="fw-bold product-name-marker">${item.product_name}</div>
-                                                                                                                <input type="number" name="batches[${item.order_item_id}][0][quantity]" value="${item.quantity}">
-                                                                                                            </div>
-                                                                                                            <div class="d-none" id="batches_for_${item.order_item_id}">
-                                                                                                                <input type="text" name="batches[${item.order_item_id}][0][batch_no]" class="hidden-batch-val" required>
-                                                                                                                <input type="date" name="batches[${item.order_item_id}][0][expiry_date]" class="hidden-expiry-val" required>
+                                                                                                                    <div data-item-id="${item.order_item_id}">
+                                                                                                                        <div class="d-none">
+                                                                                                                            <div class="fw-bold product-name-marker">${item.product_name}</div>
+                                                                                                                            <input type="number" name="batches[${item.order_item_id}][0][quantity]" value="${item.quantity}">
+                                                                                                                        </div>
+                                                                                                                        <div class="d-none" id="batches_for_${item.order_item_id}">
+                                                                                                                            <input type="text" name="batches[${item.order_item_id}][0][batch_no]" class="hidden-batch-val" required>
+                                                                                                                            <input type="date" name="batches[${item.order_item_id}][0][expiry_date]" class="hidden-expiry-val" required>
 
-                                                                                                                <input type="hidden" name="batches[${item.order_item_id}][0][mrp]" class="hidden-mrp-val">
-                                                                                                                <input type="hidden" name="batches[${item.order_item_id}][0][ptr]" class="hidden-ptr-val">
-                                                                                                                <input type="hidden" name="batches[${item.order_item_id}][0][pts]" class="hidden-pts-val">
-                                                                                                                <input type="hidden" name="batches[${item.order_item_id}][0][taxable_value]" class="hidden-taxable-val">
-                                                                                                                <input type="hidden" name="batches[${item.order_item_id}][0][cgst]" class="hidden-cgst-val">
-                                                                                                                <input type="hidden" name="batches[${item.order_item_id}][0][sgst]" class="hidden-sgst-val">
-                                                                                                                <input type="hidden" name="batches[${item.order_item_id}][0][igst]" class="hidden-igst-val">
-                                                                                                                <input type="hidden" name="batches[${item.order_item_id}][0][net_amount]" class="hidden-net-val">
-                                                                                                            </div>
-                                                                                                        </div>
-                                                                                                    `;
+                                                                                                                            <input type="hidden" name="batches[${item.order_item_id}][0][mrp]" class="hidden-mrp-val">
+                                                                                                                            <input type="hidden" name="batches[${item.order_item_id}][0][ptr]" class="hidden-ptr-val">
+                                                                                                                            <input type="hidden" name="batches[${item.order_item_id}][0][pts]" class="hidden-pts-val">
+                                                                                                                            <input type="hidden" name="batches[${item.order_item_id}][0][taxable_value]" class="hidden-taxable-val">
+                                                                                                                            <input type="hidden" name="batches[${item.order_item_id}][0][cgst]" class="hidden-cgst-val">
+                                                                                                                            <input type="hidden" name="batches[${item.order_item_id}][0][sgst]" class="hidden-sgst-val">
+                                                                                                                            <input type="hidden" name="batches[${item.order_item_id}][0][igst]" class="hidden-igst-val">
+                                                                                                                            <input type="hidden" name="batches[${item.order_item_id}][0][net_amount]" class="hidden-net-val">
+                                                                                                                        </div>
+                                                                                                                    </div>
+                                                                                                                `;
                         tbody.append(rowHtml);
 
                         let vRowHtml = `
-                                            <div id="v_row_${item.order_item_id}" class="invoice-list-row p-2">
-                                                <div class="ai-col-product fw-bold text-dark small ps-2">${item.product_name}</div>
-                                                <div class="ai-col-batch">
-                                                    <input type="text" class="form-control form-control-sm v-batch-input border-0 bg-light p-1" 
-                                                           data-id="${item.order_item_id}" placeholder="Wait AI...">
-                                                </div>
-                                                <div class="ai-col-expiry">
-                                                    <input type="text" class="form-control form-control-sm v-expiry-input border-0 bg-light p-1" 
-                                                           data-id="${item.order_item_id}" placeholder="MM/YY">
-                                                </div>
-                                                <div class="ai-col-qty fw-bold text-primary text-center v-qty-display" data-original-unit="${item.unit || 'Nos'}">${item.quantity} ${item.unit || 'Nos'}</div>
-                                                <div class="ai-col-value fw-bold text-dark text-end pe-3 v-taxable-display">--</div>
-                                            </div>
-                                        `;
+                                                        <div id="v_row_${item.order_item_id}" class="invoice-list-row p-2">
+                                                            <div class="ai-col-product fw-bold text-dark small ps-2">${item.product_name}</div>
+                                                            <div class="ai-col-batch">
+                                                                <input type="text" class="form-control form-control-sm v-batch-input border-0 bg-light p-1" 
+                                                                       data-id="${item.order_item_id}" placeholder="Wait AI...">
+                                                            </div>
+                                                            <div class="ai-col-expiry">
+                                                                <input type="text" class="form-control form-control-sm v-expiry-input border-0 bg-light p-1" 
+                                                                       data-id="${item.order_item_id}" placeholder="MM/YY">
+                                                            </div>
+                                                            <div class="ai-col-qty fw-bold text-primary text-center v-qty-display" data-original-unit="${item.unit || 'Nos'}">${item.quantity} ${item.unit || 'Nos'}</div>
+                                                            <div class="ai-col-value fw-bold text-dark text-end pe-3 v-taxable-display">--</div>
+                                                        </div>
+                                                    `;
                         vbody.append(vRowHtml);
                     });
                 }

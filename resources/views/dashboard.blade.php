@@ -785,7 +785,7 @@
                                                     <td>
                                                         <span
                                                             class="badge badge-pill px-3 py-2 
-                                                                    {{ $order->status == 'delivered' ? 'badge-success' : ($order->status == 'cancelled' ? 'badge-danger' : ($order->status == 'accepted' ? 'badge-info' : 'badge-primary')) }}"
+                                                                    {{ $order->status == 'delivered' ? 'badge-success' : ($order->status == 'cancelled' ? 'badge-danger' : ($order->status == 'approved' ? 'badge-info' : 'badge-primary')) }}"
                                                             style="font-size:12px;">
                                                             {{ ucfirst(str_replace('_', ' ', $order->status)) }}
                                                         </span>
@@ -830,7 +830,7 @@
                                                     <td>
                                                         <span
                                                             class="badge badge-pill px-3 py-2 
-                                                                    {{ $order->status == 'delivered' ? 'badge-success' : ($order->status == 'cancelled' ? 'badge-danger' : ($order->status == 'accepted' ? 'badge-info' : 'badge-primary')) }}"
+                                                                    {{ $order->status == 'delivered' ? 'badge-success' : ($order->status == 'cancelled' ? 'badge-danger' : ($order->status == 'approved' ? 'badge-info' : 'badge-primary')) }}"
                                                             style="font-size:12px;">
                                                             {{ ucfirst(str_replace('_', ' ', $order->status)) }}
                                                         </span>
@@ -877,7 +877,7 @@
                                 var statusSeries = orderTotal > 0 ? [
                                         {{ $retailerOrderStats['pending'] }},
                                         {{ $retailerOrderStats['processing'] }},
-                                        {{ $retailerOrderStats['accepted'] }},
+                                        {{ $retailerOrderStats['approved'] }},
                                         {{ $retailerOrderStats['delivered'] }},
                                         {{ $retailerOrderStats['cancelled'] }}
                                 ] : [1];

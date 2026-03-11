@@ -184,7 +184,7 @@ class User extends Authenticatable implements JWTSubject
         // 3. Retailer Orders (Orders to confirm receipt)
         if ($this->hasRole('retailer') && $this->retailer) {
             $counts['retailer_orders'] = \App\Models\RetailerOrder::where('retailer_id', $this->retailer->id)
-                ->where('status', RetailerOrder::STATUS_ACCEPTED)
+                ->where('status', RetailerOrder::STATUS_APPROVED)
                 ->count();
         }
 

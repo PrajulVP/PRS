@@ -16,7 +16,7 @@ class RetailerOrder extends Model
 
     const STATUS_PENDING = 'pending';
     const STATUS_PROCESSING = 'processing';
-    const STATUS_ACCEPTED = 'accepted';
+    const STATUS_APPROVED = 'approved';
     const STATUS_DELIVERED = 'delivered';
     const STATUS_CANCELLED = 'cancelled';
     const STATUS_REJECTED = 'rejected';

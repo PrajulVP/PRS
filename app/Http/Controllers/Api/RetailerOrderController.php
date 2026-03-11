@@ -293,7 +293,7 @@ class RetailerOrderController extends Controller
         DB::beginTransaction();
         try {
             if ($status === RetailerOrder::STATUS_DELIVERED) {
-                if ($order->status !== 'accepted') {
+                if ($order->status !== 'approved') {
                     return response()->json(['error' => 'Only accepted orders can be marked as delivered.'], 400);
                 }
                 $order->update([

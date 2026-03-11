@@ -487,7 +487,7 @@ class DistributorOrderController extends Controller
             }
 
             $distributorOrder->update([
-                'status' => DistributorOrder::STATUS_ACCEPTED,
+                'status' => DistributorOrder::STATUS_APPROVED,
                 'payment_status' => $request->payment_status,
                 'invoice_path' => $invoicePath
             ]);
@@ -864,7 +864,7 @@ class DistributorOrderController extends Controller
             return response()->json(['error' => 'Unauthorized action. Only the assigned distributor or an admin can confirm receipt.'], 403);
         }
 
-        if ($distributorOrder->status !== 'accepted') {
+        if ($distributorOrder->status !== 'approved') {
             return response()->json(['error' => 'Order must be accepted by Admin before confirmation.'], 400);
         }
 

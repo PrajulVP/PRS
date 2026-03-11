@@ -1033,10 +1033,6 @@
                                             "pending",
                                             "paid"
                                         ]
-                                    },
-                                    "items_batches": {
-                                        "description": "JSON string: [{order_item_id: int, batches: [{inventory_id: int, quantity: decimal}]}]",
-                                        "type": "string"
                                     }
                                 },
                                 "type": "object"
