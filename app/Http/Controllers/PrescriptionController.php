@@ -34,7 +34,10 @@ class PrescriptionController extends Controller
 
         $extractedData = $this->ocrService->extractPrescription($file);
 
-        if (!$extractedData || !isset($extractedData['medicines'])) {
+        // Flexible key check
+        $ocrItems = $extractedData['medicines'] ?? $extractedData['line_items'] ?? $extractedData['items'] ?? null;
+
+        if (!$extractedData || is_null($ocrItems)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to extract medicines from the prescription.'
@@ -43,9 +46,9 @@ class PrescriptionController extends Controller
 
         $matchedProducts = [];
 
-        foreach ($extractedData['medicines'] as $medicine) {
-            $name = $medicine['name'] ?? $medicine['product_name'] ?? null;
-            $quantity = $medicine['count'] ?? $medicine['quantity'] ?? 1;
+        foreach ($ocrItems as $medicine) {
+            $name = $medicine['name'] ?? $medicine['product_name'] ?? $medicine['description'] ?? null;
+            $quantity = $medicine['count'] ?? $medicine['quantity'] ?? $medicine['qty'] ?? 1;
 
             if (!$name) {
                 Log::warning('OCR medicine missing name', ['medicine' => $medicine]);
@@ -92,7 +95,7 @@ class PrescriptionController extends Controller
         return response()->json([
             'success' => true,
             'medicines' => $matchedProducts,
-            'raw_ocr_data' => $extractedData // Added for debugging in network tab
+            'data' => $extractedData // Added for debugging in network tab
         ]);
     }
 
