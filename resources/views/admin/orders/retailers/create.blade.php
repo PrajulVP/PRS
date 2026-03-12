@@ -506,14 +506,23 @@
                 let distId = $('#distributorSelect').val();
                 let qty = parseInt($('#qtyInput').val());
                 let unit = $('#unitSelect').val();
+                let distOption = $('#distributorSelect option:selected');
+                let maxStockRaw = parseInt(distOption.data('stock-raw') || 0);
 
                 if (!prodId || !distId || qty < 1) return showToast('info', 'Complete selections first');
 
-                let distName = $('#distributorSelect option:selected').text();
+                let distName = distOption.text();
                 let key = prodId + '-' + distId;
                 let mul = 1;
                 if (unit === 'Box') mul = parseInt(currentProductDetails.box_size || 1);
                 if (unit === 'Carton') mul = parseInt(currentProductDetails.box_size || 1) * parseInt(currentProductDetails.carton_size || 1);
+
+                let totalProposedNos = qty * mul;
+                let existingQtyNos = addedItems[key] ? (addedItems[key].qty * addedItems[key].multiplier) : 0;
+
+                if ((existingQtyNos + totalProposedNos) > maxStockRaw) {
+                    return showToast('error', `Insufficient stock. Please select another distributor.`);
+                }
 
                 if (addedItems[key]) {
                     addedItems[key].qty += qty;
@@ -525,7 +534,8 @@
                         qty: qty, unit: unit, multiplier: mul,
                         box_size: currentProductDetails.box_size,
                         carton_size: currentProductDetails.carton_size,
-                        is_count: currentProductDetails.is_count
+                        is_count: currentProductDetails.is_count,
+                        maxStock: maxStockRaw
                     };
                 }
                 renderTable(key);
@@ -534,6 +544,7 @@
                 $('#productDetailsCard').fadeOut(300);
                 $('#qtyInput').val(1);
                 currentProductDetails = null;
+                showToast('success', 'Product added to bundle');
             });
 
             // --- Prescription OCR Logic ---
@@ -589,28 +600,39 @@
                                 let p = item.product;
                                 let d = item.distributor;
                                 let key = p.id + '-' + d.id;
+                                let maxStockRaw = parseInt(d.pivot ? d.pivot.stock : 0);
 
                                 // Basic multiplier logic
                                 let mul = 1;
                                 if (item.unit === 'Box') mul = parseInt(p.box_size || 1);
                                 if (item.unit === 'Carton') mul = parseInt(p.box_size || 1) * parseInt(p.carton_size || 1);
 
-                                if (addedItems[key]) {
-                                    addedItems[key].qty += parseInt(item.quantity);
+                                let requestedQty = parseInt(item.quantity);
+                                let requestedNos = requestedQty * mul;
+                                
+                                let existingNos = addedItems[key] ? (addedItems[key].qty * addedItems[key].multiplier) : 0;
+                                
+                                if ((existingNos + requestedNos) <= maxStockRaw) {
+                                    if (addedItems[key]) {
+                                        addedItems[key].qty += requestedQty;
+                                    } else {
+                                        addedItems[key] = {
+                                            id: p.id,
+                                            distId: d.id,
+                                            distName: d.user ? d.user.name : 'Unknown',
+                                            name: p.product_name,
+                                            price: parseFloat(p.ptr),
+                                            qty: requestedQty,
+                                            unit: item.unit,
+                                            multiplier: mul,
+                                            box_size: p.box_size,
+                                            carton_size: p.carton_size,
+                                            is_count: item.unit === 'Nos',
+                                            maxStock: maxStockRaw
+                                        };
+                                    }
                                 } else {
-                                    addedItems[key] = {
-                                        id: p.id,
-                                        distId: d.id,
-                                        distName: d.user ? d.user.name : 'Unknown',
-                                        name: p.product_name,
-                                        price: parseFloat(p.ptr),
-                                        qty: parseInt(item.quantity),
-                                        unit: item.unit,
-                                        multiplier: mul,
-                                        box_size: p.box_size,
-                                        carton_size: p.carton_size,
-                                        is_count: item.unit === 'Nos'
-                                    };
+                                    console.warn('OCR Auto-add skipped for ' + p.product_name + ' due to stock limits');
                                 }
                             });
                             
@@ -670,7 +692,7 @@
                                                     <td class="ps-4 text-muted fw-bold small">${index++}</td>
                                                     <td>
                                                         <div class="fw-bold text-dark font-outfit">${item.name}</div>
-                                                        <div class="small text-muted text-uppercase" style="font-size: 0.65rem;">System Verified</div>
+                                                        <div class="small fw-medium text-muted text-uppercase" style="font-size: 0.65rem;">System Verified</div>
                                                         <input type="hidden" name="items[${key}][product_id]" value="${item.id}">
                                                         <input type="hidden" name="items[${key}][distributor_id]" value="${item.distId}">
                                                     </td>
@@ -709,8 +731,13 @@
             $(document).on('change', '.qty-change, .unit-change', function () {
                 let key = $(this).data('key');
                 let item = addedItems[key];
-                if ($(this).hasClass('qty-change')) item.qty = parseInt($(this).val()) || 1;
-                else {
+                let oldQty = item.qty;
+                let oldUnit = item.unit;
+                let oldMul = item.multiplier;
+
+                if ($(this).hasClass('qty-change')) {
+                    item.qty = parseInt($(this).val()) || 1;
+                } else {
                     let val = $(this).val();
                     let mul = 1;
                     if (val === 'Box') mul = parseInt(item.box_size || 1);
@@ -718,6 +745,15 @@
                     item.unit = val;
                     item.multiplier = mul;
                 }
+
+                // Stock Check
+                if ((item.qty * item.multiplier) > item.maxStock) {
+                    showToast('error', `Insufficient stock. Please select another distributor.`);
+                    item.qty = oldQty;
+                    item.unit = oldUnit;
+                    item.multiplier = oldMul;
+                }
+
                 renderTable();
             });
 

@@ -327,12 +327,16 @@
                         <button class="nav-link px-4 fw-bold text-muted" id="tab-all" data-bs-toggle="tab" data-status=""
                             type="button" role="tab">All</button>
                     </li>
+                    @php
+                        $user = Auth::user();
+                        $defaultPending = $user->hasRole(['salesmanager', 'fieldstaff']);
+                    @endphp
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link px-4 fw-bold text-muted" id="tab-pending" data-bs-toggle="tab"
+                        <button class="nav-link {{ $defaultPending ? 'active px-4 fw-bold text-primary border-bottom-0' : 'px-4 fw-bold text-muted' }}" id="tab-pending" data-bs-toggle="tab"
                             data-status="pending" type="button" role="tab">Pending</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active px-4 fw-bold text-primary border-bottom-0" id="tab-processing"
+                        <button class="nav-link {{ !$defaultPending ? 'active px-4 fw-bold text-primary border-bottom-0' : 'px-4 fw-bold text-muted' }}" id="tab-processing"
                             data-bs-toggle="tab" data-status="processing" type="button" role="tab">Processing</button>
                     </li>
                     <li class="nav-item" role="presentation">
