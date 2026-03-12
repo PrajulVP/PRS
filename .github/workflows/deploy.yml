@@ -46,7 +46,7 @@ jobs:
         run: |
           echo "APP_NAME=Laravel" > .env
           echo "APP_ENV=production" >> .env
-          echo "APP_KEY=" >> .env
+          echo "APP_KEY=" >> .env 
           echo "APP_DEBUG=false" >> .env
           echo "APP_URL=https://logiprompt.com/atomed/" >> .env
           echo "LOG_CHANNEL=stack" >> .env
@@ -131,11 +131,10 @@ jobs:
       - name: 🚀 FTP Deploy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
-          server: '104.21.47.120'
+          server: logiprompt.com
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftp
-          port: 21
           local-dir: ./
           server-dir: /
           timeout: 600000
