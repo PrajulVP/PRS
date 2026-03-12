@@ -44,58 +44,64 @@ class PrescriptionController extends Controller
             ], 500);
         }
 
-        $matchedProducts = [];
+        $matchedItems = [];
+        $unmatchedItems = [];
 
         foreach ($ocrItems as $medicine) {
-            $name = $medicine['name'] ?? $medicine['product_name'] ?? $medicine['description'] ?? null;
+            $nameStr = $medicine['name'] ?? $medicine['product_name'] ?? $medicine['description'] ?? null;
             $quantity = $medicine['count'] ?? $medicine['quantity'] ?? $medicine['qty'] ?? 1;
 
-            if (!$name) {
-                Log::warning('OCR medicine missing name', ['medicine' => $medicine]);
-                continue;
+            if (!$nameStr) continue;
+
+            $name = trim($nameStr);
+            
+            // 1. Exact Match
+            $product = Product::where('product_name', $name)->first();
+
+            // 2. Fuzzy Match (LIKE)
+            if (!$product) {
+                $product = Product::where('product_name', 'LIKE', "%{$name}%")->first();
             }
 
-            // Search for product with fuzzy matching or exact name match
-            $product = Product::where('product_name', 'LIKE', "%{$name}%")->first();
-
-            // Fallback: If "Mox 500" came from OCR, try searching for just "Mox" or parts of it
+            // 3. Fallback: Word by Word search
             if (!$product) {
-                $parts = explode(' ', $name);
-                if (count($parts) > 0) {
-                    $firstPart = $parts[0];
-                    if (strlen($firstPart) > 2) {
-                        $product = Product::where('product_name', 'LIKE', "%{$firstPart}%")->first();
+                $words = explode(' ', $name);
+                foreach ($words as $word) {
+                    if (strlen($word) > 3) {
+                        $product = Product::where('product_name', 'LIKE', "%{$word}%")->first();
+                        if ($product) break;
                     }
                 }
             }
 
             if ($product) {
-                // Get available distributors and calculate distance, similar to getProductDetails
                 $distributors = $this->getAvailableDistributors($product, $retailer);
-
+                
                 if ($distributors->isNotEmpty()) {
                     $bestDistributor = $distributors->first();
-
-                    $matchedProducts[] = [
+                    $matchedItems[] = [
                         'product' => $product,
                         'distributor' => $bestDistributor,
-                        'quantity' => $quantity,
+                        'quantity' => (int)$quantity,
                         'unit' => $this->determineDefaultUnit($product),
-                        'source' => 'ocr'
+                        'original_name' => $name
                     ];
-                    Log::info('OCR Match Success', ['name' => $name, 'matched' => $product->product_name]);
-                } else {
-                    Log::warning('OCR Match Failed: No Distributor with Stock', ['product' => $product->product_name]);
+                    continue;
                 }
-            } else {
-                Log::warning('OCR Match Failed: Product Not Found', ['name' => $name]);
             }
+
+            $unmatchedItems[] = [
+                'name' => $name,
+                'quantity' => (int)$quantity
+            ];
         }
 
         return response()->json([
             'success' => true,
-            'medicines' => $matchedProducts,
-            'data' => $extractedData // Added for debugging in network tab
+            'matched_count' => count($matchedItems),
+            'total_count' => count($ocrItems),
+            'matched_items' => $matchedItems,
+            'unmatched_items' => $unmatchedItems
         ]);
     }
 
