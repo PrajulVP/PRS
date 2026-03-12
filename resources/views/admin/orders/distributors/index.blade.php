@@ -632,6 +632,10 @@
                             }
                         }
 
+                        if (isDistributor && st === 'pending') {
+                            btns += `<button class="btn btn-danger btn-sm cancel-order-btn" data-id="${row.id}" title="Cancel Order"><i class="fa fa-times-circle"></i></button>`;
+                        }
+
                         btns += `</div>`;
                         return btns;
                     }

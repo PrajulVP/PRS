@@ -67,7 +67,13 @@ class RetailerOrderController extends Controller
                     'total_items'    => $order->total_items,
                     'total_quantity' => $order->total_quantity,
                     'notes'          => $order->notes,
-                    'delivery_notes' => $order->delivery_notes,
+                    'items'          => $order->items->map(function ($item) {
+                        return [
+                            'product_id' => $item->product_id,
+                            'product_name' => $item->product->product_name ?? 'N/A',
+                            'quantity'   => $item->quantity,
+                        ];
+                    }),
                     'invoice_url'    => $order->invoice_path
                         ? Storage::disk('public')->url($order->invoice_path)
                         : null,
@@ -79,72 +85,7 @@ class RetailerOrderController extends Controller
         return response()->json($orders);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/retailer-orders/{id}/products",
-     *     summary="Get products in a retailer order",
-     *     tags={"Retailer Orders"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Retailer Order ID",
-     *         required=true,
-     *         @OA\Schema(
-     *             type="integer"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Successful response",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="order_id", type="integer", example=1),
-     *             @OA\Property(property="order_code", type="string", example="RO-X9Y8Z7"),
-     *             @OA\Property(
-     *                 property="products",
-     *                 type="array",
-     *                 @OA\Items(
-     *                     @OA\Property(property="product_id", type="integer", example=10),
-     *                     @OA\Property(property="product_name", type="string", example="Paracetamol 500mg"),
-     *                     @OA\Property(property="quantity", type="integer", example=5),
-     *                     @OA\Property(property="unit_price", type="string", example="10.00"),
-     *                     @OA\Property(property="total_amount", type="string", example="50.00"),
-     *                     @OA\Property(property="product_details", type="object")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Order not found"
-     *     )
-     * )
-     */
-    public function getOrderItems($id)
-    {
-        $order = RetailerOrder::with('items.product')->find($id);
 
-        if (!$order) {
-            return response()->json(['message' => 'Order not found'], 404);
-        }
-
-        $products = $order->items->map(function ($item) {
-            return [
-                'product_id' => $item->product_id,
-                'product_name' => $item->product->product_name,
-                'quantity' => $item->quantity,
-                'unit_price' => $item->unit_price,
-                'total_amount' => $item->total_amount,
-                'product_details' => $item->product
-            ];
-        });
-
-        return response()->json([
-            'order_id' => $order->id,
-            'order_code' => $order->order_code,
-            'products' => $products
-        ]);
-    }
 
     /**
      * @OA\Post(
@@ -159,8 +100,7 @@ class RetailerOrderController extends Controller
      *                 @OA\Property(property="product_id", type="integer"),
      *                 @OA\Property(property="quantity", type="integer")
      *             )),
-     *             @OA\Property(property="notes", type="string", nullable=true),
-     *             @OA\Property(property="delivery_notes", type="string", nullable=true)
+     *             @OA\Property(property="notes", type="string", nullable=true)
      *         )
      *     ),
      *     @OA\Response(response=201, description="Order placed successfully"),
@@ -174,7 +114,6 @@ class RetailerOrderController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
             'notes' => 'nullable|string',
-            'delivery_notes' => 'nullable|string',
         ]);
 
         $user = auth('api')->user();
@@ -193,7 +132,6 @@ class RetailerOrderController extends Controller
                 'order_code' => 'ORD-' . strtoupper(uniqid()),
                 'status' => RetailerOrder::STATUS_PENDING,
                 'notes' => $request->notes,
-                'delivery_notes' => $request->delivery_notes,
                 'total_amount' => 0,
                 'total_items' => 0,
                 'total_quantity' => 0,

@@ -29,7 +29,8 @@
                                 class="col-xl-3 col-lg-4 text-center border-end pe-lg-4 d-flex flex-column align-items-center">
                                 <div class="mb-3 position-relative d-inline-block mx-auto">
                                     <img src="{{ $user->avatar_url }}" alt="Profile Picture" class="rounded-circle shadow"
-                                        style="width: 150px; height: 150px; object-fit: cover; border: 4px solid #f8f9fa;">
+                                        style="width: 150px; height: 150px; object-fit: cover; border: 4px solid #f8f9fa;"
+                                        onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&color=FFFFFF&background={{ $user->avatar_background ?? '374151' }}';">
                                 </div>
                                 <h3 class="fw-bold text-dark mb-1">{{ $user->name }}</h3>
                                 <div>
@@ -367,7 +368,8 @@
                                     <div class="position-relative d-inline-block">
                                         <img src="{{ $user->avatar_url }}" alt="Avatar"
                                             class="rounded-circle shadow-sm border border-3 border-white"
-                                            style="width: 100px; height: 100px; object-fit: cover;">
+                                            style="width: 100px; height: 100px; object-fit: cover;"
+                                            onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&color=FFFFFF&background={{ $user->avatar_background ?? '374151' }}';">
                                         <label for="profile_pic"
                                             class="position-absolute bottom-0 end-0 bg-white text-primary shadow-sm rounded-circle p-1 d-flex align-items-center justify-content-center"
                                             style="width: 32px; height: 32px; cursor: pointer; border: 2px solid #e9ecef;">

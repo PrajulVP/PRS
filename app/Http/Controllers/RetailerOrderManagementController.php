@@ -103,7 +103,7 @@ class RetailerOrderManagementController extends Controller
         $user = Auth::user();
 
         try {
-            \DB::beginTransaction();
+            DB::beginTransaction();
 
             $retailer = Retailer::findOrFail($request->retailer_id);
 
@@ -139,41 +139,46 @@ class RetailerOrderManagementController extends Controller
                     $product = Product::find($itemData['product_id']);
                     if (!$product) continue;
 
-                    // Availability check (Only check sum, don't deduct)
+                    $unit = $itemData['unit'] ?? 'Nos';
+                    $qty = (int)$itemData['quantity'];
+                    
+                    // Conversion logic (to Nos/Base units)
+                    $multiplier = 1;
+                    if ($unit === 'Box') {
+                        $multiplier = (int)($product->box_size ?? 1);
+                    } elseif ($unit === 'Carton') {
+                        $multiplier = (int)($product->box_size ?? 1) * (int)($product->carton_size ?? 1);
+                    }
+
+                    $totalQtyNos = $qty * $multiplier;
+
+                    // Availability check (In base units)
                     if ($distributor) {
                         $totalStock = DB::table('inventories')
                             ->where('distributor_id', $distributor->id)
                             ->where('product_id', $product->id)
                             ->sum('stock');
 
-                        if ($totalStock < $itemData['quantity']) {
-                            throw new \Exception("Insufficient total stock for " . $product->product_name . " (Available: {$totalStock})");
+                        if ($totalStock < $totalQtyNos) {
+                            throw new \Exception("Insufficient stock. Please select another distributor.");
                         }
                     }
 
-
-
                     // Price Logic: Retailer buys at PTR (Price to Retailer)
-                    $price = $product->ptr; // Strictly PTR
-
-                    if ($distributor) {
-                        // Optional: If distributor has logic to override price, add here. 
-                        // Currently assuming they sell at standard PTR.
-                    }
-
-                    $qty = $itemData['quantity'];
-                    $subtotal = $qty * $price;
+                    $price = (float)$product->ptr;
+                    $subtotal = $totalQtyNos * $price; // Subtotal based on total base units
 
                     $order->items()->create([
                         'product_id' => $product->id,
                         'quantity' => $qty,
+                        'unit' => $unit,
                         'unit_price' => $price,
                         'total_amount' => $subtotal,
                     ]);
 
                     $totalAmount += $subtotal;
                     $totalItems++;
-                    $totalQuantity += $qty;
+                    $totalQuantity += $totalQtyNos;
                 }
 
                 $order->update([
@@ -188,11 +193,11 @@ class RetailerOrderManagementController extends Controller
                 }
             }
 
-            \DB::commit();
+            DB::commit();
 
             return response()->json(['success' => 'Order created.']);
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -396,7 +401,7 @@ class RetailerOrderManagementController extends Controller
                         'status' => ucfirst(str_replace('_', ' ', $order->status)),
                         'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d H:i:s') : '-',
                         'payment_status' => $order->payment_status ?? 'pending',
-                        'invoice_url' => $order->invoice_path ? Storage::disk('public')->url($order->invoice_path) : null,
+                        'invoice_url' => $order->invoice_path ? \Illuminate\Support\Facades\Storage::url($order->invoice_path) : null,
                     ];
                 });
 
@@ -942,8 +947,10 @@ class RetailerOrderManagementController extends Controller
     {
         $request->validate(['cancellation_reason' => 'required|string|min:3']);
 
-        if (!Auth::user()->hasRole('distributor')) return response()->json(['error' => 'No permission'], 403);
-        if ($retailerOrder->distributor_id !== Auth::user()->distributor->id) return response()->json(['error' => 'Not your order'], 403);
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('distributor')) return response()->json(['error' => 'No permission'], 403);
+        if ($retailerOrder->distributor_id !== $user->distributor->id) return response()->json(['error' => 'Not your order'], 403);
 
         if (!in_array($retailerOrder->status, [RetailerOrder::STATUS_PENDING, RetailerOrder::STATUS_PROCESSING])) {
             return response()->json(['error' => 'Orders can only be cancelled while in pending or processing status.'], 400);
@@ -960,7 +967,9 @@ class RetailerOrderManagementController extends Controller
 
     public function approveCancellation(RetailerOrder $retailerOrder)
     {
-        if (!Auth::user()->hasRole('salesmanager')) return response()->json(['error' => 'No permission'], 403);
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'No permission'], 403);
         if ($retailerOrder->status !== RetailerOrder::STATUS_CANCELLED) return response()->json(['error' => 'Invalid status'], 400);
 
         $retailerOrder->status = RetailerOrder::STATUS_CANCELLED;
@@ -973,6 +982,7 @@ class RetailerOrderManagementController extends Controller
     {
         $request->validate(['cancellation_reason' => 'required|string|min:3']);
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         if ($user->hasRole('retailer') && $retailerOrder->retailer_id !== $user->retailer->id) {
             return response()->json(['error' => 'Unauthorized'], 403);
@@ -1053,6 +1063,7 @@ class RetailerOrderManagementController extends Controller
             'payment_status' => 'required|in:pending,paid',
         ]);
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         // Allow admins, superadmins, salesmanagers
@@ -1099,7 +1110,7 @@ class RetailerOrderManagementController extends Controller
 
             return response()->json([
                 'success' => 'Invoice uploaded successfully!',
-                'invoice_url' => Storage::disk('public')->url($path)
+                'invoice_url' => \Illuminate\Support\Facades\Storage::url($path)
             ]);
         }
 
