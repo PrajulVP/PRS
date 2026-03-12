@@ -137,6 +137,7 @@ jobs:
           protocol: ftp
           local-dir: ./
           server-dir: /
+          timeout: 90000
           exclude: |
             vendor/**
             .env
