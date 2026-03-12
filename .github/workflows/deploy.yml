@@ -131,13 +131,14 @@ jobs:
       - name: 🚀 FTP Deploy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
-          server: 104.21.47.120
+          server: logiprompt.com # IMPORTANT: Replace with Direct Origin IP if using Cloudflare
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftp
+          protocol: sftp
+          port: 22
           local-dir: ./
           server-dir: /
-          timeout: 90000
+          timeout: 1000000
           exclude: |
             vendor/**
             .env

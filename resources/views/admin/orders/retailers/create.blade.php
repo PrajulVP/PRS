@@ -583,12 +583,9 @@
                     contentType: false,
                     success: function (res) {
                         console.log('OCR Success Full Response:', JSON.stringify(res, null, 2));
-                        if (res.success && res.medicines && res.medicines.length > 0) {
-                            if (typeof showToast === 'function') {
-                                showToast('success', 'AI Identified ' + res.medicines.length + ' medicines');
-                            }
-
-                            res.medicines.forEach(function (item) {
+                        if (res.success && res.matched_items && res.matched_items.length > 0) {
+                            
+                            res.matched_items.forEach(function (item) {
                                 let p = item.product;
                                 let d = item.distributor;
                                 let key = p.id + '-' + d.id;
@@ -616,12 +613,18 @@
                                     };
                                 }
                             });
+                            
                             renderTable();
+
+                            if (typeof showToast === 'function') {
+                                let msg = 'AI Matched ' + res.matched_count + ' of ' + res.total_count + ' medicines';
+                                showToast('success', msg);
+                            }
                         } else {
                             if (typeof showToast === 'function') {
-                                showToast('error', 'No medicines could be extracted or matched.');
+                                showToast('warning', 'No medicines could be automatically matched or found in stock.');
                             } else {
-                                alert('No medicines could be extracted or matched.');
+                                alert('No medicines matched.');
                             }
                         }
                     },
