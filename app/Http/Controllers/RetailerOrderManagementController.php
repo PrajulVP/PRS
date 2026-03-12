@@ -44,10 +44,14 @@ class RetailerOrderManagementController extends Controller
         $retailerId = $request->get('retailer_id');
         $retailer = Retailer::find($retailerId);
 
-        // Fetch ALL distributors to ensure we show them even if stock is 0 or no record exists
-        $allDistributors = Distributor::with('user')->get();
+        // Filter distributors by the retailer's district
+        $query = Distributor::with('user');
+        if ($retailer && $retailer->district_id) {
+            $query->where('district_id', $retailer->district_id);
+        }
+        $allDistributors = $query->get();
 
-        // Get current stock levels for this product (all distributors who HAVE this product in inventory)
+        // Get current stock levels for this product
         $stockMap = DB::table('inventories')
             ->where('product_id', $product->id)
             ->selectRaw('distributor_id, SUM(stock) as total_stock')
@@ -56,36 +60,16 @@ class RetailerOrderManagementController extends Controller
 
         $distributors = $allDistributors->filter(function ($distributor) use ($stockMap) {
             return $stockMap->has($distributor->id);
-        })->map(function ($distributor) use ($retailer, $stockMap) {
-            // Attach a pseudo-pivot for compatibility with existing JS
+        })->map(function ($distributor) use ($stockMap) {
             $distributor->pivot = (object)[
                 'stock' => $stockMap[$distributor->id]
             ];
-
-            if ($retailer && $retailer->latitude && $retailer->longitude && $distributor->latitude && $distributor->longitude) {
-                $distributor->distance = $this->calculateDistance(
-                    (float)$retailer->latitude,
-                    (float)$retailer->longitude,
-                    (float)$distributor->latitude,
-                    (float)$distributor->longitude
-                );
-            } else {
-                $distributor->distance = null; // or large number for sorting
-            }
             return $distributor;
         });
 
-        $distributors = $distributors->sort(function ($a, $b) {
-            // Primarily by distance
-            $distA = $a->distance ?? 999999;
-            $distB = $b->distance ?? 999999;
-            if ($distA != $distB) {
-                return $distA <=> $distB;
-            }
-            // Secondarily by stock (descending)
-            $stockA = $a->pivot->stock ?? 0;
-            $stockB = $b->pivot->stock ?? 0;
-            return $stockB <=> $stockA;
+        // Sort by stock (descending) as distance is removed
+        $distributors = $distributors->sortByDesc(function ($d) {
+            return $d->pivot->stock ?? 0;
         })->values();
 
         return response()->json([

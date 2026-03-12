@@ -13,12 +13,12 @@ class PermissionCategorySeeder extends Seeder
      */
     public function run(): void
     {
-        // Define permission groups
-        $userManagementGroup = PermissionGroup::firstOrCreate(['name' => 'User Management']);
-        $regionsAreaGroup = PermissionGroup::firstOrCreate(['name' => 'Regions & Area']);
-        $productsGroup = PermissionGroup::firstOrCreate(['name' => 'Products']);
-        $ordersGroup = PermissionGroup::firstOrCreate(['name' => 'Orders']);
-        $approvalsGroup = PermissionGroup::firstOrCreate(['name' => 'Approvals']);
+        // Standardize groups (Search by old/new names to prevent duplicates)
+        $userManagementGroup = $this->getOrCreateGroup('User Management');
+        $regionsAreaGroup = $this->getOrCreateGroup('Regions & Areas', ['Regions & Area']);
+        $productsGroup = $this->getOrCreateGroup('Products');
+        $ordersGroup = $this->getOrCreateGroup('Orders');
+        $approvalsGroup = $this->getOrCreateGroup('Approvals');
 
         $categories = [
             // User Management
@@ -60,7 +60,7 @@ class PermissionCategorySeeder extends Seeder
                 'enable_delete' => true,
             ],
 
-            // Regions & Area
+            // Regions & Areas Group
             [
                 'name' => 'Districts',
                 'short_code' => 'districts',
@@ -137,5 +137,25 @@ class PermissionCategorySeeder extends Seeder
                 $categoryData
             );
         }
+    }
+
+    /**
+     * Helper to get or create a group, with optional fallback names to rename
+     */
+    private function getOrCreateGroup(string $name, array $fallbacks = []): PermissionGroup
+    {
+        $group = PermissionGroup::where('name', $name)->first();
+        if (!$group && !empty($fallbacks)) {
+            $group = PermissionGroup::whereIn('name', $fallbacks)->first();
+            if ($group) {
+                $group->update(['name' => $name]);
+            }
+        }
+        
+        if (!$group) {
+            $group = PermissionGroup::firstOrCreate(['name' => $name]);
+        }
+        
+        return $group;
     }
 }

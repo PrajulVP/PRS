@@ -49,7 +49,19 @@ class RolePermissionSeeder extends Seeder
                 $canDelete = false;
 
                 // Customize admin permissions here based on typical admin needs
-                if (in_array($category->short_code, ['managers', 'distributors', 'field_staff', 'retailers', 'products', 'retailer_orders', 'distributor_orders', 'retailer_approvals', 'distributor_approvals'])) {
+                if (in_array($category->short_code, [
+                    'managers', 
+                    'distributors', 
+                    'field_staff', 
+                    'retailers', 
+                    'products', 
+                    'inventories',
+                    'loyalty_points',
+                    'retailer_orders', 
+                    'distributor_orders', 
+                    'retailer_approvals', 
+                    'distributor_approvals'
+                ])) {
                     $canAdd = true;
                     $canEdit = true;
                     $canDelete = true;
