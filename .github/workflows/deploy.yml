@@ -131,10 +131,9 @@ jobs:
       - name: 🚀 FTP Deploy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
-          server: logiprompt.com
+          server: 103.159.84.76
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftp
           local-dir: ./
           server-dir: /
           timeout: 600000
