@@ -1176,6 +1176,54 @@
                 ]
             }
         },
+        "/api/field-staff/retailers/loyalty-points": {
+            "get": {
+                "tags": [
+                    "Field Staff Dashboard"
+                ],
+                "summary": "List all retailers under this Field Staff with their loyalty points",
+                "operationId": "33c1a8be6215442799fbee13ac23e093",
+                "responses": {
+                    "200": {
+                        "description": "List of retailers' loyalty points"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/field-staff/retailers/{id}/loyalty-points": {
+            "get": {
+                "tags": [
+                    "Field Staff Dashboard"
+                ],
+                "summary": "Get loyalty points summary and history for a retailer under this Field Staff",
+                "operationId": "8db44870105918a11561a6b7ec0ab11b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Loyalty points data"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/field-staff/retailer-orders": {
             "get": {
                 "tags": [
@@ -1503,6 +1551,124 @@
                         }
                     },
                     "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/retailer/dashboard/statistics": {
+            "get": {
+                "tags": [
+                    "Retailer Dashboard"
+                ],
+                "summary": "Get retailer dashboard statistics",
+                "operationId": "6dd43fa903582f92d9f2a4d8d93bd2c7",
+                "responses": {
+                    "200": {
+                        "description": "Dashboard statistics",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_orders": {
+                                            "type": "integer",
+                                            "example": 150
+                                        },
+                                        "pending_orders": {
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "processing_orders": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "approved_orders": {
+                                            "type": "integer",
+                                            "example": 20
+                                        },
+                                        "delivered_orders": {
+                                            "type": "integer",
+                                            "example": 110
+                                        },
+                                        "cancelled_orders": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "rejected_orders": {
+                                            "type": "integer",
+                                            "example": 2
+                                        },
+                                        "total_loyalty_points": {
+                                            "type": "integer",
+                                            "example": 500
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/retailer/loyalty-points": {
+            "get": {
+                "tags": [
+                    "Retailer Loyalty"
+                ],
+                "summary": "Get retailer loyalty points and history",
+                "operationId": "357a19309cff2e715c35d5315a47842e",
+                "responses": {
+                    "200": {
+                        "description": "Loyalty points details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_points": {
+                                            "type": "integer",
+                                            "example": 500
+                                        },
+                                        "history": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "order_code": {
+                                                        "type": "string",
+                                                        "example": "RO-ABC123"
+                                                    },
+                                                    "points_earned": {
+                                                        "type": "integer",
+                                                        "example": 50
+                                                    },
+                                                    "date": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
                         "description": "Unauthorized"
                     }
                 },
@@ -1903,6 +2069,25 @@
                 ]
             }
         },
+        "/api/sales-manager/retailers/loyalty-points": {
+            "get": {
+                "tags": [
+                    "Sales Manager Dashboard"
+                ],
+                "summary": "List all retailers under this Sales Manager with their loyalty points",
+                "operationId": "3d73d79e4b5ca87f526e1d617a98c476",
+                "responses": {
+                    "200": {
+                        "description": "List of retailers' loyalty points"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/sales-manager/retailers/{id}/loyalty-points": {
             "get": {
                 "tags": [
@@ -2072,6 +2257,14 @@
         {
             "name": "Products",
             "description": "Products"
+        },
+        {
+            "name": "Retailer Dashboard",
+            "description": "Retailer Dashboard"
+        },
+        {
+            "name": "Retailer Loyalty",
+            "description": "Retailer Loyalty"
         },
         {
             "name": "Retailer Orders",
