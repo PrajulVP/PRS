@@ -59,6 +59,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('fieldstaffs', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getFieldStaffs']);
         Route::get('retailers', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getRetailers']);
         Route::get('retailers/{id}/loyalty-points', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getRetailerLoyaltyDetails']);
+        Route::get('retailers/loyalty-points', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getRetailersLoyaltyPoints']);
         Route::post('retailers/{id}/approve', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'approveRetailer']);
 
         // Manage Retailer Orders
@@ -69,8 +70,16 @@ Route::middleware('auth:api')->group(function () {
     // Field Staff Dashboard & Orders
     Route::prefix('field-staff')->group(function () {
         Route::get('dashboard', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'index']);
+        Route::get('retailers/loyalty-points', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'getRetailersLoyaltyPoints']);
+        Route::get('retailers/{id}/loyalty-points', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'getRetailerLoyaltyDetails']);
         Route::get('retailer-orders', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'index']);
         Route::get('retailer-orders/{id}', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'show']);
         Route::post('retailer-orders/{id}/update-status', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'updateStatus']);
+    });
+
+    // Retailer Dashboard & Loyalty
+    Route::prefix('retailer')->group(function () {
+        Route::get('dashboard/statistics', [\App\Http\Controllers\Api\RetailerDashboardApiController::class, 'getStatistics']);
+        Route::get('loyalty-points', [\App\Http\Controllers\Api\RetailerDashboardApiController::class, 'getLoyaltyPoints']);
     });
 });

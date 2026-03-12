@@ -31,7 +31,13 @@ class LoyaltyPointsController extends Controller
                 ->orderBy('updated_at', 'desc')
                 ->get();
 
-            return view('admin.loyalty_points.retailer_view', compact('retailer', 'orders'));
+            $totalPoints = $retailer->retailerOrders()
+                ->whereNotNull('loyalty_points_earned')
+                ->where('loyalty_points_earned', '>', 0)
+                ->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED)
+                ->sum('loyalty_points_earned');
+
+            return view('admin.loyalty_points.retailer_view', compact('retailer', 'orders', 'totalPoints'));
         }
 
         // 2. For other roles (Admin, Manager, Field Staff), show selector page
@@ -91,6 +97,15 @@ class LoyaltyPointsController extends Controller
             }
         }
 
+        $retailers->map(function ($r) {
+            $r->dynamic_loyalty_points = $r->retailerOrders()
+                ->whereNotNull('loyalty_points_earned')
+                ->where('loyalty_points_earned', '>', 0)
+                ->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED)
+                ->sum('loyalty_points_earned');
+            return $r;
+        });
+
         return view('admin.loyalty_points.index', compact('retailers'));
     }
 
@@ -107,8 +122,14 @@ class LoyaltyPointsController extends Controller
         }
         // Add similar checks for distributor/manager if strict scoping is needed
 
+        $totalPoints = $retailer->retailerOrders()
+            ->whereNotNull('loyalty_points_earned')
+            ->where('loyalty_points_earned', '>', 0)
+            ->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED)
+            ->sum('loyalty_points_earned');
+
         return response()->json([
-            'total_points' => $retailer->loyalty_points,
+            'total_points' => $totalPoints,
             'redeemed_points' => 0, // Placeholder if redemption logic exists
             'shop_name' => $retailer->shop_name,
             'owner_name' => $retailer->user->name ?? 'N/A'

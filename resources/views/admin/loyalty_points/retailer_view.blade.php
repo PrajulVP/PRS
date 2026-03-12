@@ -47,7 +47,7 @@
                             <i class="fa fa-coins text-white fa-3x animate-bounce"></i>
                         </div>
                         <h1 class="fw-bold mb-0 mt-0 text-shadow text-nowrap" style="font-size: 3rem;">
-                            {{ number_format($retailer->loyalty_points, 2) }}
+                            {{ number_format($totalPoints, 2) }}
                         </h1>
                         <h6 class="text-uppercase font-weight-bold m-2">Total Points Earned</h6>
                     </div>

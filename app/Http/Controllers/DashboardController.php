@@ -43,7 +43,10 @@ class DashboardController extends Controller
         // Role-Based Filtering
         if ($user->hasAnyRole(['superadmin', 'admin'])) {
             // See lists and graphs of both distributor and retailer orders, top users, loyalty points, and fieldstaffs
-            $totalLoyaltyPoints = RetailerOrder::sum('loyalty_points_earned') ?? 0;
+            $totalLoyaltyPoints = RetailerOrder::where('status', RetailerOrder::STATUS_DELIVERED)
+                ->whereNotNull('loyalty_points_earned')
+                ->where('loyalty_points_earned', '>', 0)
+                ->sum('loyalty_points_earned');
 
             $topRetailers = RetailerOrder::select('retailer_id', DB::raw('COUNT(id) as total_orders'), DB::raw('SUM(total_amount) as total_revenue'))
                 ->groupBy('retailer_id')->orderByDesc('total_orders')->take(5)
@@ -134,7 +137,11 @@ class DashboardController extends Controller
                 $distributorOrderQuery->where('id', 0); // No access
                 $retailerQuery->where('id', 0); // Self only, or no list
 
-                $totalLoyaltyPoints = RetailerOrder::where('retailer_id', $retailer->id)->sum('loyalty_points_earned') ?? 0;
+                $totalLoyaltyPoints = RetailerOrder::where('retailer_id', $retailer->id)
+                    ->where('status', RetailerOrder::STATUS_DELIVERED)
+                    ->whereNotNull('loyalty_points_earned')
+                    ->where('loyalty_points_earned', '>', 0)
+                    ->sum('loyalty_points_earned');
             }
         }
 

@@ -33,7 +33,7 @@
                                         <option value="">-- Choose Retailer --</option>
                                         @foreach($retailers as $r)
                                             <option value="{{ $r->id }}">{{ $r->shop_name }} ({{ $r->user->name }}) -
-                                                {{ number_format($r->loyalty_points, 2) }} pts
+                                                {{ number_format($r->dynamic_loyalty_points, 2) }} pts
                                             </option>
                                         @endforeach
                                     </select>

@@ -206,6 +206,47 @@ class SalesManagerDashboardApiController extends Controller
 
     /**
      * @OA\Get(
+     *     path="/api/sales-manager/retailers/loyalty-points",
+     *     summary="List all retailers under this Sales Manager with their loyalty points",
+     *     tags={"Sales Manager Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(response=200, description="List of retailers' loyalty points")
+     * )
+     */
+    public function getRetailersLoyaltyPoints()
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
+
+        $salesManager = $user->salesManager;
+        $fieldStaffIds = $salesManager->fieldStaffs->pluck('id');
+
+        $retailers = Retailer::with('fieldStaff.user')
+            ->whereIn('field_staff_id', $fieldStaffIds)
+            ->get(['id', 'shop_name', 'contact_no', 'field_staff_id'])
+            ->map(function ($retailer) {
+                // dynamically sum points
+                $points = RetailerOrder::where('retailer_id', $retailer->id)
+                    ->whereNotNull('loyalty_points_earned')
+                    ->where('loyalty_points_earned', '>', 0)
+                    ->where('status', RetailerOrder::STATUS_DELIVERED)
+                    ->sum('loyalty_points_earned');
+
+                return [
+                    'id' => $retailer->id,
+                    'shop_name' => $retailer->shop_name,
+                    'contact_no' => $retailer->contact_no,
+                    'loyalty_points' => $points,
+                    'field_staff_name' => $retailer->fieldStaff->user->name ?? 'N/A'
+                ];
+            });
+
+        return response()->json($retailers);
+    }
+
+    /**
+     * @OA\Get(
      *     path="/api/sales-manager/retailers/{id}/loyalty-points",
      *     summary="Get loyalty points summary and history for a retailer",
      *     tags={"Sales Manager Dashboard"},
@@ -228,14 +269,22 @@ class SalesManagerDashboardApiController extends Controller
         $history = $retailer->retailerOrders()
             ->with('items.product')
             ->whereIn('status', [RetailerOrder::STATUS_APPROVED, RetailerOrder::STATUS_DELIVERED])
+            ->whereNotNull('loyalty_points_earned')
+            ->where('loyalty_points_earned', '>', 0)
             ->orderBy('updated_at', 'desc')
             ->get();
+
+        $totalLoyaltyPoints = $retailer->retailerOrders()
+            ->whereNotNull('loyalty_points_earned')
+            ->where('loyalty_points_earned', '>', 0)
+            ->where('status', RetailerOrder::STATUS_DELIVERED)
+            ->sum('loyalty_points_earned');
 
         return response()->json([
             'retailer' => [
                 'id' => $retailer->id,
                 'shop_name' => $retailer->shop_name,
-                'loyalty_points' => $retailer->loyalty_points,
+                'loyalty_points' => $totalLoyaltyPoints,
             ],
             'history' => $history->map(function ($order) {
                 return [
