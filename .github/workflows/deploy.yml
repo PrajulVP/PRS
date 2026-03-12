@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: 🧾 Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: ⚙️ Setup PHP
         uses: shivammathur/setup-php@v2
@@ -131,7 +131,7 @@ jobs:
       - name: 🚀 FTP Deploy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
-          server: logiprompt.com
+          server: 104.21.47.120
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftp
