@@ -41,13 +41,34 @@ class RetailerDashboardApiController extends Controller
 
         $retailerId = $user->retailer->id;
 
-        $totalOrders = RetailerOrder::where('retailer_id', $retailerId)->count();
-        $pendingOrders = RetailerOrder::where('retailer_id', $retailerId)->where('status', RetailerOrder::STATUS_PENDING)->count();
-        $processingOrders = RetailerOrder::where('retailer_id', $retailerId)->where('status', RetailerOrder::STATUS_PROCESSING)->count();
-        $approvedOrders = RetailerOrder::where('retailer_id', $retailerId)->where('status', RetailerOrder::STATUS_APPROVED)->count();
-        $deliveredOrders = RetailerOrder::where('retailer_id', $retailerId)->where('status', RetailerOrder::STATUS_DELIVERED)->count();
-        $cancelledOrders = RetailerOrder::where('retailer_id', $retailerId)->where('status', RetailerOrder::STATUS_CANCELLED)->count();
-        $rejectedOrders = RetailerOrder::where('retailer_id', $retailerId)->where('status', RetailerOrder::STATUS_REJECTED)->count();
+        $period = $request->get('period', 'monthly');
+        $endDate = now();
+        $startDate = now();
+
+        switch ($period) {
+            case 'weekly':
+                $startDate = now()->subDays(6)->startOfDay();
+                break;
+            case 'yearly':
+                $startDate = now()->startOfYear();
+                break;
+            case 'monthly':
+            default:
+                $period = 'monthly';
+                $startDate = now()->startOfMonth();
+                break;
+        }
+
+        $baseQuery = RetailerOrder::where('retailer_id', $retailerId)
+            ->whereBetween('created_at', [$startDate, $endDate]);
+
+        $totalOrders = (clone $baseQuery)->count();
+        $pendingOrders = (clone $baseQuery)->where('status', RetailerOrder::STATUS_PENDING)->count();
+        $processingOrders = (clone $baseQuery)->where('status', RetailerOrder::STATUS_PROCESSING)->count();
+        $approvedOrders = (clone $baseQuery)->where('status', RetailerOrder::STATUS_APPROVED)->count();
+        $deliveredOrders = (clone $baseQuery)->where('status', RetailerOrder::STATUS_DELIVERED)->count();
+        $cancelledOrders = (clone $baseQuery)->where('status', RetailerOrder::STATUS_CANCELLED)->count();
+        $rejectedOrders = (clone $baseQuery)->where('status', RetailerOrder::STATUS_REJECTED)->count();
 
         // Calculate loyalty points dynamically from delivered orders that earned points
         $totalLoyaltyPoints = RetailerOrder::where('retailer_id', $retailerId)
@@ -57,6 +78,7 @@ class RetailerDashboardApiController extends Controller
             ->sum('loyalty_points_earned');
 
         return response()->json([
+            'period' => $period,
             'total_orders' => $totalOrders,
             'pending_orders' => $pendingOrders,
             'processing_orders' => $processingOrders,

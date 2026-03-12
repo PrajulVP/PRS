@@ -85,6 +85,7 @@
 
         {{-- Distributor Orders (Standalone Links) --}}
         @if (Auth::user()->hasRole('distributor'))
+        @if (Auth::user()->hasPermissionToCategory('retailer_orders', 'view'))
         <li class="sidebar-list">
           <a class="sidebar-link sidebar-title link-nav" href="{{ route('distributor.orders.index') }}">
             <svg class="stroke-icon">
@@ -95,6 +96,7 @@
             </svg><span>Retailer Orders</span>
           </a>
         </li>
+        @endif
         @if (Auth::user()->hasPermissionToCategory('distributor_orders', 'view'))
         <li class="sidebar-list">
           <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.distributor-orders.index') }}">

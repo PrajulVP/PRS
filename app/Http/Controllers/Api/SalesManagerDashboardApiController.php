@@ -32,9 +32,28 @@ class SalesManagerDashboardApiController extends Controller
      *     @OA\Response(response=403, description="Unauthorized")
      * )
      */
-    public function index()
+    public function index(Request $request)
     {
         /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $period = $request->get('period', 'monthly');
+        $endDate = now();
+        $startDate = now();
+
+        switch ($period) {
+            case 'weekly':
+                $startDate = now()->subDays(6)->startOfDay();
+                break;
+            case 'yearly':
+                $startDate = now()->startOfYear();
+                break;
+            case 'monthly':
+            default:
+                $period = 'monthly';
+                $startDate = now()->startOfMonth();
+                break;
+        }
         $user = Auth::user();
 
         if (!$user->hasRole('salesmanager')) {
@@ -51,7 +70,7 @@ class SalesManagerDashboardApiController extends Controller
         // 1. Retailer Order Stats (Orders under this SM's fieldstaff)
         $retailerOrderQuery = RetailerOrder::whereHas('retailer', function ($q) use ($fieldStaffIds) {
             $q->whereIn('field_staff_id', $fieldStaffIds);
-        });
+        })->whereBetween('created_at', [$startDate, $endDate]);
 
         $retailerOrderStats = [
             'total' => (clone $retailerOrderQuery)->count(),
@@ -65,7 +84,7 @@ class SalesManagerDashboardApiController extends Controller
         // 2. Distributor Order Stats (Orders by distributors assigned to this SM)
         $distributorOrderQuery = DistributorOrder::whereHas('distributor', function ($q) use ($salesManager) {
             $q->where('sales_manager_id', $salesManager->id);
-        });
+        })->whereBetween('created_at', [$startDate, $endDate]);
 
         $distributorOrderStats = [
             'total' => (clone $distributorOrderQuery)->count(),
@@ -90,10 +109,12 @@ class SalesManagerDashboardApiController extends Controller
         // 4. Top FieldStaff performance
         $topFieldStaff = RetailerOrder::select('fieldstaff_id', DB::raw('COUNT(id) as total_orders'), DB::raw('SUM(total_amount) as total_revenue'))
             ->whereIn('fieldstaff_id', $fieldStaffIds)
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->groupBy('fieldstaff_id')->orderByDesc('total_orders')->take(5)
             ->with('fieldStaff.user')->get();
 
         return response()->json([
+            'period' => $period,
             'retailer_order_stats' => $retailerOrderStats,
             'distributor_order_stats' => $distributorOrderStats,
             'counts' => $counts,
@@ -413,5 +434,98 @@ class SalesManagerDashboardApiController extends Controller
         }
 
         return response()->json(['message' => 'Order status updated to ' . $order->status . '.']);
+    }
+    /**
+     * @OA\Get(
+     *     path="/api/sales-manager/distributor-insights",
+     *     summary="List all distributors with summary stats for Sales Manager",
+     *     tags={"Sales Manager Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(response=200, description="List of distributors with insights")
+     * )
+     */
+    public function getDistributorInsights()
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
+
+        $salesManager = $user->salesManager;
+        $distributors = \App\Models\Distributor::with('user')
+            ->where('sales_manager_id', $salesManager->id)
+            ->get()
+            ->map(function ($distributor) {
+                return [
+                    'id' => $distributor->id,
+                    'name' => $distributor->user->name ?? 'N/A',
+                    'shop_name' => $distributor->shop_name,
+                    'contact_no' => $distributor->contact_no,
+                    'total_own_orders' => \App\Models\DistributorOrder::where('distributor_id', $distributor->id)->count(),
+                    'total_retailer_orders_received' => \App\Models\RetailerOrder::where('distributor_id', $distributor->id)->count(),
+                ];
+            });
+
+        return response()->json($distributors);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/sales-manager/distributor-insights/{id}",
+     *     summary="Detailed insights for a specific distributor",
+     *     tags={"Sales Manager Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Detailed distributor insights")
+     * )
+     */
+    public function getDistributorDetailInsight($id)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
+
+        $salesManager = $user->salesManager;
+        $distributor = \App\Models\Distributor::with('user')
+            ->where('sales_manager_id', $salesManager->id)
+            ->findOrFail($id);
+
+        $fieldStaffIds = $salesManager->fieldStaffs->pluck('id');
+
+        // Their own orders (Distributor -> Company)
+        $ownOrders = \App\Models\DistributorOrder::where('distributor_id', $distributor->id)
+            ->latest()
+            ->get();
+
+        // Retailer orders assigned to this distributor
+        $retailerOrders = \App\Models\RetailerOrder::with(['retailer.user', 'fieldStaff.user'])
+            ->where('distributor_id', $distributor->id)
+            ->latest()
+            ->get()
+            ->map(function ($order) use ($fieldStaffIds) {
+                // Determine if retailer is under this SM's fieldstaff
+                $retailerFieldStaffId = $order->retailer->field_staff_id ?? null;
+                $isUnderMyFieldStaff = $fieldStaffIds->contains($retailerFieldStaffId);
+
+                return [
+                    'id' => $order->id,
+                    'order_code' => $order->order_code,
+                    'retailer_name' => $order->retailer->user->name ?? 'N/A',
+                    'field_staff_name' => $order->fieldStaff->user->name ?? 'N/A',
+                    'total_amount' => $order->total_amount,
+                    'status' => $order->status,
+                    'placed_at' => $order->placed_at,
+                    'categorization' => $isUnderMyFieldStaff ? 'Internal (Under My Field Staff)' : 'External (Other Sales Manager)',
+                ];
+            });
+
+        return response()->json([
+            'distributor' => [
+                'id' => $distributor->id,
+                'name' => $distributor->user->name ?? 'N/A',
+                'shop_name' => $distributor->shop_name,
+            ],
+            'own_orders' => $ownOrders,
+            'retailer_orders_received' => $retailerOrders
+        ]);
     }
 }

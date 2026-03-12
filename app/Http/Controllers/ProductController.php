@@ -134,7 +134,7 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'product_code' => 'required|string|max:255',
+            'product_code' => 'nullable|string|max:255',
             'product_name' => 'required|string|max:255',
             'generic_name' => 'nullable|string|max:255',
             'strip_size' => 'nullable|string|max:255',
@@ -176,7 +176,7 @@ class ProductController extends Controller
     public function update(Request $request, Product $product)
     {
         $request->validate([
-            'product_code' => 'required|string|max:255',
+            'product_code' => 'nullable|string|max:255',
             'product_name' => 'required|string|max:255',
             'generic_name' => 'nullable|string|max:255',
             'strip_size' => 'nullable|string|max:255',
@@ -269,19 +269,25 @@ class ProductController extends Controller
                 $productData = array_combine($header, $data);
 
                 // Basic validation for required fields
-                if (empty($productData['product_code']) || empty($productData['product_name']) || !isset($productData['mrp'])) {
-                    $errors[] = "Row $row: Missing required fields (Code/Name/MRP).";
+                if (empty($productData['product_name']) || !isset($productData['mrp'])) {
+                    $errors[] = "Row $row: Missing required fields (Name/MRP).";
                     continue;
                 }
 
+                $productCode = !empty($productData['product_code']) ? $productData['product_code'] : null;
+
                 try {
+                    $matchAttributes = ['product_name' => $productData['product_name']];
+                    if ($productCode) {
+                        $matchAttributes['product_code'] = $productCode;
+                    }
+
                     // Create or Update
                     Product::updateOrCreate(
+                        $matchAttributes,
                         [
-                            'product_code' => $productData['product_code'],
-                            'product_name' => $productData['product_name']
-                        ],
-                        [
+                            'product_code' => $productCode,
+                            'product_name' => $productData['product_name'],
                             'generic_name' => $productData['generic_name'] ?? null,
                             'strip_size' => $productData['strip_size'] ?: null,
                             'box_size' => $productData['box_size'] ?: null,

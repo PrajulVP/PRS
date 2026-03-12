@@ -106,8 +106,7 @@
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
                                 <label for="create_product_code" class="form-label fw-medium">Product Code</label>
-                                <input type="text" name="product_code" id="create_product_code" class="form-control"
-                                    required>
+                                <input type="text" name="product_code" id="create_product_code" class="form-control">
                             </div>
                             <div class="col-md-4">
                                 <label for="create_product_name" class="form-label fw-medium">Product Name</label>
@@ -201,7 +200,7 @@
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
                                 <label for="edit_product_code" class="form-label fw-medium">Product Code</label>
-                                <input type="text" name="product_code" id="edit_product_code" class="form-control" required>
+                                <input type="text" name="product_code" id="edit_product_code" class="form-control">
                             </div>
                             <div class="col-md-4">
                                 <label for="edit_product_name" class="form-label fw-medium">Product Name</label>
@@ -311,8 +310,8 @@
                         <div class="alert alert-info small mb-4">
                             <strong>Note:</strong> Download the template to ensure your CSV is formatted correctly.
                             <ul class="mb-0 mt-2 text-start">
-                                <li><strong>Required fields:</strong> Product Code, Product Name, MRP</li>
-                                <li>If a Product Code already exists, it will be automatically <strong>updated</strong>.
+                                <li><strong>Required fields:</strong> Product Name, MRP</li>
+                                <li>If a Product Code is provided and already exists, it will be automatically <strong>updated</strong>.
                                 </li>
                             </ul>
                         </div>

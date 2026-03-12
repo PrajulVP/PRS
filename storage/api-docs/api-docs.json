@@ -1561,6 +1561,35 @@
                 ]
             }
         },
+        "/api/products/{product}/distributors": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Get distributors for a product based on availability",
+                "operationId": "8cea4d67304e96a2b55c285b704ff949",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of distributors"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/retailer/dashboard/statistics": {
             "get": {
                 "tags": [
@@ -2198,6 +2227,54 @@
                 "responses": {
                     "200": {
                         "description": "Order status updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/sales-manager/distributor-insights": {
+            "get": {
+                "tags": [
+                    "Sales Manager Dashboard"
+                ],
+                "summary": "List all distributors with summary stats for Sales Manager",
+                "operationId": "a5c72f9858abf7177e2dee175b4ff3cb",
+                "responses": {
+                    "200": {
+                        "description": "List of distributors with insights"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/sales-manager/distributor-insights/{id}": {
+            "get": {
+                "tags": [
+                    "Sales Manager Dashboard"
+                ],
+                "summary": "Detailed insights for a specific distributor",
+                "operationId": "29783534ca10cc8480eb31ce499841a9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detailed distributor insights"
                     }
                 },
                 "security": [

@@ -23,9 +23,27 @@ class FieldStaffDashboardApiController extends Controller
      *     @OA\Response(response=403, description="Unauthorized")
      * )
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
+        
+        $period = $request->get('period', 'monthly');
+        $endDate = now();
+        $startDate = now();
+
+        switch ($period) {
+            case 'weekly':
+                $startDate = now()->subDays(6)->startOfDay();
+                break;
+            case 'yearly':
+                $startDate = now()->startOfYear();
+                break;
+            case 'monthly':
+            default:
+                $period = 'monthly';
+                $startDate = now()->startOfMonth();
+                break;
+        }
 
         if (!$user->hasRole('fieldstaff')) {
             return response()->json(['error' => 'Only Field Staff can access this dashboard'], 403);
@@ -39,7 +57,7 @@ class FieldStaffDashboardApiController extends Controller
                 ->orWhereHas('retailer', function ($qr) use ($fieldStaffId) {
                     $qr->where('field_staff_id', $fieldStaffId);
                 });
-        });
+        })->whereBetween('created_at', [$startDate, $endDate]);
 
         $orderStats = [
             'total' => (clone $retailerOrderQuery)->count(),
@@ -58,6 +76,7 @@ class FieldStaffDashboardApiController extends Controller
         ];
 
         return response()->json([
+            'period' => $period,
             'order_stats' => $orderStats,
             'counts' => $counts,
         ]);
