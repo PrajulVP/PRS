@@ -232,7 +232,7 @@
                         <div class="col-lg-4">
                             <div class="card p-4 mb-4">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h5 class="section-title mb-0" style="border-bottom: none;">Order Status Overview</h5>
+                                    <h5 class="section-title mb-0" style="border-bottom: none;">Status Overview ({{ isset($period) ? ucfirst($period) : 'Monthly' }})</h5>
                                 </div>
                                 <div id="orderStatusChart"></div>
                             </div>
@@ -318,7 +318,7 @@
                         <div class="col-lg-4">
                             <div class="card p-4 mb-4">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h5 class="section-title mb-0" style="border-bottom: none;">Order Fulfillment Rate</h5>
+                                    <h5 class="section-title mb-0" style="border-bottom: none;">Fulfillment Rate ({{ isset($period) ? ucfirst($period) : 'Monthly' }})</h5>
                                 </div>
                                 <div id="orderStatusChart"></div>
                             </div>
@@ -530,7 +530,7 @@
                         <div class="col-lg-4">
                             <div class="card p-4 mb-4">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h5 class="section-title mb-0" style="border-bottom: none;">Client Order Status</h5>
+                                    <h5 class="section-title mb-0" style="border-bottom: none;">Client Status ({{ isset($period) ? ucfirst($period) : 'Monthly' }})</h5>
                                 </div>
                                 <div id="orderStatusChart"></div>
                             </div>
