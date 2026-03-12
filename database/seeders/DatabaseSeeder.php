@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             PermissionCategorySeeder::class,
             RolePermissionSeeder::class, // Syncs roles_permissions table
             PermissionSeeder::class,     // Creates actual Spatie Permissions and Groups
+            LoyaltyPermissionSeeder::class, // Missing seeder for loyalty points
 
             SuperAdminSeeder::class, // Creates superadmin and admin users
             SalesManagerSeeder::class,

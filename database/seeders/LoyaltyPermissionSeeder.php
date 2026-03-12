@@ -12,8 +12,11 @@ class LoyaltyPermissionSeeder extends Seeder
 {
     public function run()
     {
-        // 1. Create or Find Group
-        $group = PermissionGroup::firstOrCreate(['name' => 'Loyalty Management']);
+        // 1. Create or Find Group (Standardize names to prevent duplicates)
+        $group = PermissionGroup::where('name', 'Loyalty Management')->first();
+        if (!$group) {
+            $group = PermissionGroup::firstOrCreate(['name' => 'Loyalty Management']);
+        }
 
         // 2. Create or Find Category
         $category = PermissionCategory::firstOrCreate(

@@ -71,49 +71,61 @@ class ProductController extends Controller
         $user = auth('api')->user();
         $retailer = $user ? $user->retailer : null;
 
-        $allDistributors = Distributor::with('user')->get();
+        // Base query for distributors
+        $query = Distributor::with('user');
 
+        // Filter by retailer's district if available
+        if ($retailer && $retailer->district_id) {
+            $query->where('district_id', $retailer->district_id);
+        }
+
+        $allDistributors = $query->get();
+
+        // Get current stock levels for this product
         $stockMap = DB::table('inventories')
             ->where('product_id', $product->id)
             ->selectRaw('distributor_id, SUM(stock) as total_stock')
             ->groupBy('distributor_id')
             ->pluck('total_stock', 'distributor_id');
 
+        // Map and filter (Only those with stock)
         $distributors = $allDistributors->filter(function ($distributor) use ($stockMap) {
             return $stockMap->has($distributor->id);
-        })->map(function ($distributor) use ($retailer, $stockMap) {
+        })->map(function ($distributor) use ($stockMap) {
             $distributor->pivot = (object)[
                 'stock' => $stockMap[$distributor->id]
             ];
-
-            if ($retailer && $retailer->latitude && $retailer->longitude && $distributor->latitude && $distributor->longitude) {
-                $distributor->distance = $this->calculateDistance(
-                    (float)$retailer->latitude,
-                    (float)$retailer->longitude,
-                    (float)$distributor->latitude,
-                    (float)$distributor->longitude
-                );
-            } else {
-                $distributor->distance = null;
-            }
             return $distributor;
         });
 
-        $distributors = $distributors->sort(function ($a, $b) {
-            $distA = $a->distance ?? 999999;
-            $distB = $b->distance ?? 999999;
-            if ($distA != $distB) {
-                return $distA <=> $distB;
-            }
-            $stockA = $a->pivot->stock ?? 0;
-            $stockB = $b->pivot->stock ?? 0;
-            return $stockB <=> $stockA;
+        // Sort by stock (descending) since distance is removed
+        $distributors = $distributors->sortByDesc(function ($d) {
+            return $d->pivot->stock ?? 0;
         })->values();
 
-        return response()->json([
-            'product' => $product,
-            'distributors' => $distributors
-        ]);
+        // Final cleanup: Remove unwanted fields and relations (like 'user')
+        $formatted = $distributors->map(function ($d) {
+            return [
+                'id' => $d->id,
+                'user_id' => $d->user_id,
+                'sales_manager_id' => $d->sales_manager_id,
+                'name' => $d->name,
+                'gst' => $d->gst,
+                'drug_license_no' => $d->drug_license_no,
+                'contact_no' => $d->contact_no,
+                'address' => $d->address,
+                'pincode' => $d->pincode,
+                'latitude' => $d->latitude,
+                'longitude' => $d->longitude,
+                'district_id' => $d->district_id,
+                'area_id' => $d->area_id,
+                'created_at' => $d->created_at,
+                'updated_at' => $d->updated_at,
+                'stock' => $d->pivot->stock ?? 0,
+            ];
+        });
+
+        return response()->json($formatted);
     }
 
     private function calculateDistance($lat1, $lon1, $lat2, $lon2)
