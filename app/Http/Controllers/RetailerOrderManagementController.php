@@ -216,6 +216,14 @@ class RetailerOrderManagementController extends Controller
     // Admin/Manager: List all orders
     public function index(Request $request)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        // Permission check
+        if (!$user->hasAnyRole(['admin', 'superadmin', 'salesmanager', 'retailer']) && !$user->hasPermissionToCategory('retailer_orders', 'view')) {
+            abort(403, 'Unauthorized action. You do not have permission to view retailer orders.');
+        }
+
         if ($request->ajax()) {
             try {
                 // Determine query based on role
@@ -270,9 +278,23 @@ class RetailerOrderManagementController extends Controller
                     $query->where('retailer_id', $request->retailer_id);
                 }
 
-                // Allow filtering by 'pending' for Manager dashboard link? 
-                // The original code had managerIndex separately. 
-                // We'll rely on DataTables search/filter if needed, or index handles general management.
+                // Apply status filter if exists
+                if ($request->has('status') && !empty($request->input('status'))) {
+                    $query->where('status', $request->input('status'));
+                }
+
+                // Apply payment_status filter if exists
+                if ($request->has('payment_status') && !empty($request->input('payment_status'))) {
+                    $status = $request->input('payment_status');
+                    if ($status === 'pending') {
+                        $query->where(function ($q) {
+                            $q->where('payment_status', 'pending')
+                                ->orWhereNull('payment_status');
+                        });
+                    } else {
+                        $query->where('payment_status', $status);
+                    }
+                }
 
                 $totalData = $query->count();
 

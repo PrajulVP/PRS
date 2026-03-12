@@ -29,6 +29,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('distributor-orders/{id}/update-status', [\App\Http\Controllers\Api\DistributorOrderApiController::class, 'updateStatus']);
 
     Route::get('products', [ProductController::class, 'index']);
+    Route::get('products/{product}/distributors', [ProductController::class, 'getDistributors']);
     Route::get('distributors/{distributorId}/products/{productId}/availability', [DistributorController::class, 'checkProductAvailability']);
     Route::get('distributor/inventory', [\App\Http\Controllers\Api\InventoryController::class, 'index']);
     Route::apiResource('inventory', \App\Http\Controllers\Api\InventoryController::class)->only(['index', 'show']);
@@ -65,6 +66,10 @@ Route::middleware('auth:api')->group(function () {
         // Manage Retailer Orders
         Route::get('retailer-orders', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getRetailerOrders']);
         Route::post('retailer-orders/{id}/update-status', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'updateRetailerOrderStatus']);
+
+        // Distributor Insights
+        Route::get('distributor-insights', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getDistributorInsights']);
+        Route::get('distributor-insights/{id}', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getDistributorDetailInsight']);
     });
 
     // Field Staff Dashboard & Orders

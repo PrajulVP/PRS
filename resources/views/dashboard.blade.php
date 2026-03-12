@@ -104,7 +104,14 @@
                     }
                 </style>
 
-                @php $user = auth()->user(); @endphp
+                @php 
+                    $user = auth()->user(); 
+                    $timeSelectHtml = '<select class="form-control form-control-sm cursor-pointer shadow-sm border-0 bg-light text-primary font-weight-bold" onchange="window.location.href=\'?period=\'+this.value" style="border-radius: 8px; width: 100px; padding: 4px 8px; font-size: 13px;">
+                        <option value="monthly" ' . ((!isset($period) || $period == 'monthly') ? 'selected' : '') . '>Monthly</option>
+                        <option value="weekly" ' . ((isset($period) && $period == 'weekly') ? 'selected' : '') . '>Weekly</option>
+                        <option value="yearly" ' . ((isset($period) && $period == 'yearly') ? 'selected' : '') . '>Yearly</option>
+                    </select>';
+                @endphp
 
                 @if(Auth::user()->hasRole('retailer'))
                     <div class="retailer-hero d-flex align-items-center justify-content-between">
@@ -215,13 +222,18 @@
                     <div class="row">
                         <div class="col-lg-8">
                             <div class="card p-4 mb-4">
-                                <h5 class="section-title">My Last 6 Months Orders</h5>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="section-title mb-0" style="border-bottom: none;">My Orders Over Time</h5>
+                                    {!! $timeSelectHtml !!}
+                                </div>
                                 <div id="monthlyOrdersChart"></div>
                             </div>
                         </div>
                         <div class="col-lg-4">
                             <div class="card p-4 mb-4">
-                                <h5 class="section-title">Order Status Overview</h5>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="section-title mb-0" style="border-bottom: none;">Order Status Overview</h5>
+                                </div>
                                 <div id="orderStatusChart"></div>
                             </div>
                         </div>
@@ -296,13 +308,18 @@
                     <div class="row">
                         <div class="col-lg-8">
                             <div class="card p-4 mb-4">
-                                <h5 class="section-title">Orders Received (Monthly Trend)</h5>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="section-title mb-0" style="border-bottom: none;">Orders Received (Trend)</h5>
+                                    {!! $timeSelectHtml !!}
+                                </div>
                                 <div id="monthlyOrdersChart"></div>
                             </div>
                         </div>
                         <div class="col-lg-4">
                             <div class="card p-4 mb-4">
-                                <h5 class="section-title">Order Fulfillment Rate</h5>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="section-title mb-0" style="border-bottom: none;">Order Fulfillment Rate</h5>
+                                </div>
                                 <div id="orderStatusChart"></div>
                             </div>
                         </div>
@@ -503,13 +520,18 @@
                     <div class="row">
                         <div class="col-lg-8">
                             <div class="card p-4 mb-4">
-                                <h5 class="section-title">My Performance (Orders per Month)</h5>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="section-title mb-0" style="border-bottom: none;">My Performance (Trend)</h5>
+                                    {!! $timeSelectHtml !!}
+                                </div>
                                 <div id="monthlyOrdersChart"></div>
                             </div>
                         </div>
                         <div class="col-lg-4">
                             <div class="card p-4 mb-4">
-                                <h5 class="section-title">Client Order Status</h5>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="section-title mb-0" style="border-bottom: none;">Client Order Status</h5>
+                                </div>
                                 <div id="orderStatusChart"></div>
                             </div>
                         </div>
@@ -618,7 +640,10 @@
                     <div class="row">
                         <div class="col-lg-6">
                             <div class="card p-4 mb-4">
-                                <h5 class="section-title">Retailer Orders</h5>
+                                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                                    <h5 class="section-title mb-0" style="border-bottom: none;">Retailer Orders</h5>
+                                    {!! $timeSelectHtml !!}
+                                </div>
                                 <div class="row text-center mb-3">
                                     <div class="col-4 border-right">
                                         <h6 class="text-muted mb-1">Total</h6>
@@ -638,7 +663,10 @@
                         </div>
                         <div class="col-lg-6">
                             <div class="card p-4 mb-4">
-                                <h5 class="section-title">Distributor Orders</h5>
+                                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                                    <h5 class="section-title mb-0" style="border-bottom: none;">Distributor Orders</h5>
+                                    {!! $timeSelectHtml !!}
+                                </div>
                                 <div class="row text-center mb-3">
                                     <div class="col-4 border-right">
                                         <h6 class="text-muted mb-1">Total Request</h6>
@@ -864,7 +892,7 @@
                                     chart: { type: 'area', height: 320, toolbar: { show: false }, zoom: { enabled: false } },
                                     dataLabels: { enabled: false },
                                     stroke: { curve: 'smooth', width: 3 },
-                                    xaxis: { categories: @json($chartData['months']) },
+                                    xaxis: { categories: @json($chartData['labels']) },
                                     colors: ['#00497a'],
                                     fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.6, opacityTo: 0.1, stops: [0, 90, 100] } }
                                 };
@@ -908,7 +936,7 @@
                                         chart: { type: 'area', height: 320, toolbar: { show: false }, zoom: { enabled: false } },
                                         dataLabels: { enabled: false },
                                         stroke: { curve: 'smooth', width: 3 },
-                                        xaxis: { categories: @json($monthlyDistributorOrdersChart['months']) },
+                                        xaxis: { categories: @json($monthlyDistributorOrdersChart['labels']) },
                                         colors: ['#8b5cf6'],
                                         fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.6, opacityTo: 0.1, stops: [0, 90, 100] } }
                                     };

@@ -18,9 +18,27 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
+        
+        $period = $request->get('period', 'monthly');
+        $endDate = now();
+        $startDate = now();
+
+        switch ($period) {
+            case 'weekly':
+                $startDate = now()->subDays(6)->startOfDay();
+                break;
+            case 'yearly':
+                $startDate = now()->startOfYear();
+                break;
+            case 'monthly':
+            default:
+                $period = 'monthly';
+                $startDate = now()->startOfMonth();
+                break;
+        }
 
         // Base Queries
         $retailerQuery = Retailer::query();
@@ -29,8 +47,8 @@ class DashboardController extends Controller
         $salesManagerQuery = \App\Models\SalesManager::query();
         $fieldStaffQuery = FieldStaff::query();
 
-        $retailerOrderQuery = RetailerOrder::query();
-        $distributorOrderQuery = DistributorOrder::query();
+        $retailerOrderQuery = RetailerOrder::query()->whereBetween('created_at', [$startDate, $endDate]);
+        $distributorOrderQuery = DistributorOrder::query()->whereBetween('created_at', [$startDate, $endDate]);
 
         // Role-Specific Metrics
         $topRetailers = collect();
@@ -198,36 +216,12 @@ class DashboardController extends Controller
             $recentDistributorOrders = $distributorOrderQuery->clone()->with(['distributor.user'])->latest()->take(5)->get();
         }
 
-        // 7. Chart Data: Monthly Retailer Orders (Last 6 Months)
-        $monthlyOrders = $retailerOrderQuery->clone()->select(
-            DB::raw('count(id) as count'),
-            DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month_year"),
-            DB::raw('YEAR(created_at) as year'),
-            DB::raw('MONTH(created_at) as month')
-        )->groupBy('year', 'month', 'month_year')
-            ->orderBy('year', 'desc')->orderBy('month', 'desc')
-            ->take(6)->get()->sortBy('month_year'); // Sort back to chronological
-
-        $chartData = [
-            'months' => $monthlyOrders->pluck('month_year')->values(),
-            'counts' => $monthlyOrders->pluck('count')->values(),
-        ];
-
+        // 7. Chart Data: Dynamic Orders based on period
+        $chartData = $this->generateChartData($retailerOrderQuery, $period, $startDate, $endDate);
+        
         // 8. Chart Data: Monthly Distributor Orders (Admin/SM)
         if ($user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
-            $monthlyDistributorOrders = $distributorOrderQuery->clone()->select(
-                DB::raw('count(id) as count'),
-                DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month_year"),
-                DB::raw('YEAR(created_at) as year'),
-                DB::raw('MONTH(created_at) as month')
-            )->groupBy('year', 'month', 'month_year')
-                ->orderBy('year', 'desc')->orderBy('month', 'desc')
-                ->take(6)->get()->sortBy('month_year');
-
-            $monthlyDistributorOrdersChart = [
-                'months' => $monthlyDistributorOrders->pluck('month_year')->values(),
-                'counts' => $monthlyDistributorOrders->pluck('count')->values(),
-            ];
+            $monthlyDistributorOrdersChart = $this->generateChartData($distributorOrderQuery, $period, $startDate, $endDate);
         }
 
         return view('dashboard', compact(
@@ -242,7 +236,77 @@ class DashboardController extends Controller
             'topProducts',
             'topDistributors',
             'totalLoyaltyPoints',
-            'monthlyDistributorOrdersChart'
+            'monthlyDistributorOrdersChart',
+            'period'
         ));
+    }
+
+    private function generateChartData($query, $period, $startDate, $endDate)
+    {
+        $q = $query->clone();
+        
+        if ($period === 'weekly') {
+            // Group by Day
+            $orders = $q->select(
+                DB::raw('count(id) as count'),
+                DB::raw("DATE_FORMAT(created_at, '%Y-%m-%d') as label"),
+                DB::raw('DATE(created_at) as date')
+            )->groupBy('date', 'label')
+                ->orderBy('date', 'asc')
+                ->get();
+                
+            // Fill missing days
+            $chartLabels = [];
+            $chartCounts = [];
+            for ($d = $startDate->copy(); $d->lte($endDate); $d->addDay()) {
+                $label = $d->format('Y-m-d');
+                $displayLabel = $d->format('D, M d');
+                $chartLabels[] = $displayLabel;
+                $found = $orders->firstWhere('label', $label);
+                $chartCounts[] = $found ? $found->count : 0;
+            }
+        } elseif ($period === 'yearly') {
+            // Group by Month (12 months)
+            $orders = $q->select(
+                DB::raw('count(id) as count'),
+                DB::raw("DATE_FORMAT(created_at, '%Y-%m') as label")
+            )->groupBy('label')
+                ->orderBy('label', 'asc')
+                ->get();
+                
+            $chartLabels = [];
+            $chartCounts = [];
+            for ($d = $startDate->copy()->startOfMonth(); $d->lte($endDate); $d->addMonth()) {
+                $label = $d->format('Y-m');
+                $displayLabel = $d->format('M Y');
+                $chartLabels[] = $displayLabel;
+                $found = $orders->firstWhere('label', $label);
+                $chartCounts[] = $found ? $found->count : 0;
+            }
+        } else {
+            // default monthly (group by day in current month)
+            $orders = $q->select(
+                DB::raw('count(id) as count'),
+                DB::raw("DATE_FORMAT(created_at, '%Y-%m-%d') as label"),
+                DB::raw('DATE(created_at) as date')
+            )->groupBy('date', 'label')
+                ->orderBy('date', 'asc')
+                ->get();
+                
+            $chartLabels = [];
+            $chartCounts = [];
+            for ($d = $startDate->copy(); $d->lte($endDate); $d->addDay()) {
+                $label = $d->format('Y-m-d');
+                $displayLabel = $d->format('d M');
+                $chartLabels[] = $displayLabel;
+                $found = $orders->firstWhere('label', $label);
+                $chartCounts[] = $found ? $found->count : 0;
+            }
+        }
+
+        return [
+            'labels' => $chartLabels,
+            'counts' => $chartCounts,
+        ];
     }
 }

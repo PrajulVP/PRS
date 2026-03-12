@@ -35,10 +35,28 @@ class DistributorDashboardApiController extends Controller
      *     @OA\Response(response=403, description="Unauthorized")
      * )
      */
-    public function index()
+    public function index(Request $request)
     {
         $distributorId = $this->getDistributorId();
         if ($distributorId instanceof \Illuminate\Http\JsonResponse) return $distributorId;
+
+        $period = $request->get('period', 'monthly');
+        $endDate = now();
+        $startDate = now();
+
+        switch ($period) {
+            case 'weekly':
+                $startDate = now()->subDays(6)->startOfDay();
+                break;
+            case 'yearly':
+                $startDate = now()->startOfYear();
+                break;
+            case 'monthly':
+            default:
+                $period = 'monthly';
+                $startDate = now()->startOfMonth();
+                break;
+        }
 
         // 1. Counts
         $retailerCount = Retailer::where('distributor_id', $distributorId)->count();
@@ -52,10 +70,11 @@ class DistributorDashboardApiController extends Controller
         ];
 
         // 2. Retailer Order Stats
-        $retailerOrderStats = $this->calculateOrderStatusDistribution($distributorId);
+        $retailerOrderStats = $this->calculateOrderStatusDistribution($distributorId, $startDate, $endDate);
 
         // 3. Distributor Order Stats
-        $distributorOrderQuery = DistributorOrder::where('distributor_id', $distributorId);
+        $distributorOrderQuery = DistributorOrder::where('distributor_id', $distributorId)
+            ->whereBetween('created_at', [$startDate, $endDate]);
         $distributorOrderStats = [
             'total' => (clone $distributorOrderQuery)->count(),
             'pending' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_PENDING)->count(),
@@ -67,18 +86,20 @@ class DistributorDashboardApiController extends Controller
 
         // 4. Recent Retailer Orders
         $recentRetailerOrders = RetailerOrder::where('distributor_id', $distributorId)
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->with(['retailer.user'])
             ->latest()
             ->take(5)
             ->get();
 
         // 5. Chart Data
-        $chartData = $this->calculateTotalOrdersOverTime($distributorId);
+        $chartData = $this->calculateTotalOrdersOverTime($distributorId); // We leave chart data logic intact for backwards compatibility or fix as needed
 
         // 6. Top Retailers
-        $topRetailers = $this->calculateTopRetailers($distributorId);
+        $topRetailers = $this->calculateTopRetailers($distributorId, $startDate, $endDate);
 
         return response()->json([
+            'period' => $period,
             'counts' => $counts,
             'retailer_order_stats' => $retailerOrderStats,
             'distributor_order_stats' => $distributorOrderStats,
@@ -212,9 +233,12 @@ class DistributorDashboardApiController extends Controller
         return $distributor->id;
     }
 
-    private function calculateOrderStatusDistribution($distributorId)
+    private function calculateOrderStatusDistribution($distributorId, $startDate = null, $endDate = null)
     {
         $query = RetailerOrder::where('distributor_id', $distributorId);
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        }
         return [
             'total' => (clone $query)->count(),
             'pending' => (clone $query)->where('status', RetailerOrder::STATUS_PENDING)->count(),
@@ -243,11 +267,16 @@ class DistributorDashboardApiController extends Controller
         ];
     }
 
-    private function calculateTopRetailers($distributorId)
+    private function calculateTopRetailers($distributorId, $startDate = null, $endDate = null)
     {
-        return RetailerOrder::select('retailer_id', DB::raw('COUNT(id) as total_orders'), DB::raw('SUM(total_amount) as total_revenue'))
-            ->where('distributor_id', $distributorId)
-            ->groupBy('retailer_id')->orderByDesc('total_orders')->take(5)
+        $query = RetailerOrder::select('retailer_id', DB::raw('COUNT(id) as total_orders'), DB::raw('SUM(total_amount) as total_revenue'))
+            ->where('distributor_id', $distributorId);
+            
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        }
+            
+        return $query->groupBy('retailer_id')->orderByDesc('total_orders')->take(5)
             ->with('retailer.user')->get();
     }
 }

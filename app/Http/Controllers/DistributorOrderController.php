@@ -19,6 +19,14 @@ class DistributorOrderController extends Controller
     use HandlesNotifications;
     public function index(Request $request)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        // Permission check
+        if (!$user->hasAnyRole(['admin', 'superadmin', 'salesmanager', 'distributor']) && !$user->hasPermissionToCategory('distributor_orders', 'view')) {
+            abort(403, 'Unauthorized action. You do not have permission to view distributor orders.');
+        }
+
         if ($request->ajax()) {
             try {
                 $query = DistributorOrder::with(['distributor.user', 'items.product', 'salesManager.user']);
@@ -42,6 +50,11 @@ class DistributorOrderController extends Controller
                 // Filter for Admin/Superadmin: Show all orders
                 if ($user->hasRole('admin') || $user->hasRole('superadmin')) {
                     // No additional filtering needed to show all orders
+                }
+
+                // Apply status filter if exists
+                if ($request->has('status') && !empty($request->input('status'))) {
+                    $query->where('status', $request->input('status'));
                 }
 
                 // Apply payment_status filter if exists

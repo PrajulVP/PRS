@@ -11,6 +11,68 @@
         margin-left: 10px !important;
     }
 
+    /* Segmented Control for Payment Filter */
+    .segmented-control {
+        display: flex;
+        background-color: #e2e8f0;
+        border-radius: 50px;
+        padding: 4px;
+        position: relative;
+        width: 260px;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+    .segmented-control input {
+        display: none;
+    }
+    .segmented-control label {
+        flex: 1;
+        text-align: center;
+        padding: 6px 0;
+        margin: 0;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #64748b;
+        cursor: pointer;
+        position: relative;
+        z-index: 2;
+        transition: color 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .segmented-control input:checked + label {
+        color: #0f172a;
+    }
+    #pay_paid:checked + label {
+        color: #15803d;
+    }
+    #pay_pending:checked + label {
+        color: #b45309;
+    }
+    .selection-indicator {
+        position: absolute;
+        top: 4px;
+        bottom: 4px;
+        left: 4px;
+        width: calc(33.333% - 2.66px);
+        background: #ffffff;
+        border-radius: 50px;
+        z-index: 1;
+        transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    #pay_all:checked ~ .selection-indicator {
+        transform: translateX(0);
+        background: #ffffff;
+    }
+    #pay_paid:checked ~ .selection-indicator {
+        transform: translateX(100%);
+        background: #dcfce7;
+    }
+    #pay_pending:checked ~ .selection-indicator {
+        transform: translateX(200%);
+        background: #fef9c3;
+    }
+
     .dataTables_length {
         text-align: left !important;
     }
@@ -80,15 +142,41 @@
 @section('page-body')
 
     <div class="container-fluid">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5>Distributor Orders</h5>
-                @if(Auth::user()->hasRole('distributor'))
-                    <a href="{{ route('admin.distributor-orders.create') }}" class="btn btn-primary btn-sm"><i
-                            class="fa fa-plus"></i> Create Order</a>
-                @endif
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-header bg-white border-bottom pb-0">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 text-primary fw-bold">Distributor Orders</h5>
+                    @if(Auth::user()->hasRole('distributor'))
+                        <a href="{{ route('admin.distributor-orders.create') }}" class="btn btn-primary btn-sm"><i
+                                class="fa fa-plus"></i> Create Order</a>
+                    @endif
+                </div>
+                
+                <ul class="nav nav-tabs border-bottom-0" id="orderStatusTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active px-4 fw-bold text-primary border-bottom-0" id="tab-all" data-bs-toggle="tab" data-status="" type="button" role="tab">All</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-pending" data-bs-toggle="tab" data-status="pending" type="button" role="tab">Pending</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-processing" data-bs-toggle="tab" data-status="processing" type="button" role="tab">Processing</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-approved" data-bs-toggle="tab" data-status="approved" type="button" role="tab">Approved</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-delivered" data-bs-toggle="tab" data-status="delivered" type="button" role="tab">Delivered</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-cancelled" data-bs-toggle="tab" data-status="cancelled" type="button" role="tab">Cancelled</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-rejected" data-bs-toggle="tab" data-status="rejected" type="button" role="tab">Rejected</button>
+                    </li>
+                </ul>
             </div>
-            <div class="card-body">
+            <div class="card-body pt-4">
                 @if(session('success'))
                     <div class="alert alert-success">{{ session('success') }}</div>
                 @endif
@@ -98,13 +186,20 @@
 
                 <!-- Hidden filter element to be moved into datatable wrapper -->
                 <div class="d-none" id="payment-filter-wrapper">
-                    <div class="d-flex align-items-center justify-content-center">
-                        <label class="form-label fw-bold mb-0 me-2 text-nowrap">Payment Status:</label>
-                        <select id="payment_status_filter" class="form-select form-select-sm w-auto">
-                            <option value="">All Payments</option>
-                            <option value="paid">Paid</option>
-                            <option value="pending">Pending</option>
-                        </select>
+                    <div class="d-flex align-items-center mb-0 ms-2">
+                        <span class="text-muted fw-bold me-3 small text-uppercase">Payment:</span>
+                        <div class="segmented-control" id="payment_status_filter_group">
+                            <input type="radio" name="payment_status" id="pay_all" value="" checked>
+                            <label for="pay_all">All</label>
+                            
+                            <input type="radio" name="payment_status" id="pay_paid" value="paid">
+                            <label for="pay_paid">Paid</label>
+                            
+                            <input type="radio" name="payment_status" id="pay_pending" value="pending">
+                            <label for="pay_pending">Pending</label>
+                            
+                            <div class="selection-indicator"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -408,7 +503,8 @@
                 ajax: {
                     url: "{{ route('admin.distributor-orders.index') }}",
                     data: function (d) {
-                        d.payment_status = $('#payment_status_filter').val();
+                        d.payment_status = $('input[name="payment_status"]:checked').val();
+                        d.status = $('#orderStatusTabs .nav-link.active').data('status');
                     }
                 },
                 columns: [{
@@ -584,7 +680,15 @@
             $('#payment-filter-wrapper').children().appendTo('.payment-filter-container');
 
             // Filter Change
-            $(document).on('change', '#payment_status_filter', function () {
+            $(document).on('change', 'input[name="payment_status"]', function () {
+                table.ajax.reload();
+            });
+
+            // Tab Click
+            $('#orderStatusTabs .nav-link').on('click', function(e) {
+                e.preventDefault();
+                $('#orderStatusTabs .nav-link').removeClass('active text-primary border-bottom-0').addClass('text-muted');
+                $(this).removeClass('text-muted').addClass('active text-primary border-bottom-0');
                 table.ajax.reload();
             });
 
