@@ -114,11 +114,11 @@
             background: var(--med-bg-sidebar) !important;
             border-right: none !important;
             box-shadow: 10px 0 50px rgba(0, 0, 0, 0.05);
+            transition: all 0.5s ease;
         }
 
         .sidebar-wrapper .logo-wrapper {
-            background: rgba(255, 255, 255, 0) !important;
-            backdrop-filter: blur(5px);
+            background: transparent !important;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
@@ -490,6 +490,107 @@
         body.dark-only .highlighted-row td {
             animation: rowShineDark 2.5s ease-out forwards !important;
             border: none !important;
+        }
+
+        /* Sidebar Toggle Mechanism & Header Fixes */
+        @media (min-width: 992px) {
+            .sidebar-wrapper.close_icon {
+                transform: translateX(-100%);
+                visibility: hidden;
+                transition: all 0.5s ease;
+            }
+
+            .page-header.close_icon {
+                margin-left: 0 !important;
+                width: 100% !important;
+                transition: all 0.5s ease;
+                height: 80px !important; 
+            }
+
+            .page-header.close_icon .header-wrapper {
+                height: 100% !important;
+                display: flex !important;
+                align-items: center !important;
+                margin: 0 !important;
+            }
+
+            .page-wrapper.compact-wrapper .page-body-wrapper .page-body.close_icon {
+                margin-left: 0 !important;
+                padding-left: 0 !important;
+                transition: all 0.5s ease;
+                width: 100% !important;
+            }
+
+            /* Clean Toggle at start of header when sidebar is closed */
+            .page-header.close_icon .header-logo-wrapper {
+                display: flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                width: 70px !important;
+                align-items: center !important;
+                justify-content: center !important;
+                height: 100% !important; 
+                padding: 0 !important;
+                margin: 0 !important;
+                flex: 0 0 auto !important;
+            }
+
+            .page-header.close_icon .header-logo-wrapper .logo-wrapper {
+                display: none !important;
+            }
+
+            .page-header.close_icon .header-logo-wrapper .toggle-sidebar {
+                display: flex !important;
+                visibility: visible !important;
+                cursor: pointer !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: 10px !important;
+                background: rgba(0, 73, 122, 0.05) !important; /* Light tint of sidebar color */
+                border-radius: 12px !important;
+                transition: all 0.3s ease !important;
+                margin-right: 5px !important;
+                transform: translateY(-22px) !important;
+            }
+
+            .page-header.close_icon .header-logo-wrapper .toggle-sidebar:hover {
+                background: rgba(0, 73, 122, 0.1) !important;
+            }
+
+            .page-header.close_icon .header-logo-wrapper .toggle-sidebar i {
+                color: #00497a !important; /* Sidebar primary color */
+                stroke: #00497a !important;
+                stroke-width: 3px !important; /* Bolder lines */
+                width: 26px !important;
+                height: 26px !important;
+            }
+
+            .page-header.close_icon .left-header {
+                padding-left: 30px !important;
+                display: flex !important;
+                align-items: center !important;
+                height: 100% !important;
+                flex: 1 !important;
+            }
+            .page-header.close_icon .left-header > div {
+                display: flex !important;
+                align-items: center !important;
+                gap: 15px !important;
+                margin: 0 !important;
+                padding-top: 2px !important; /* Subtle nudge down for optical centering */
+            }
+            .page-header.close_icon .left-header h4 {
+                margin: 0 !important;
+                line-height: normal !important;
+                font-weight: 600 !important;
+            }
+        }
+
+        /* Mobile Fix */
+        @media (max-width: 991px) {
+            .sidebar-wrapper.close_icon {
+                transform: translateX(-100%);
+            }
         }
     </style>
 </head>

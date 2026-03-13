@@ -122,6 +122,20 @@
         .full-content.d-none {
             display: none;
         }
+
+        /* Spacing Fix for DataTable Footer */
+        .dataTables_info {
+            padding-left: 20px !important;
+            padding-bottom: 20px !important;
+            padding-top: 20px !important;
+            color: var(--med-text-muted, #64748b) !important;
+            font-size: 0.85rem !important;
+        }
+        .dataTables_paginate {
+            padding-right: 20px !important;
+            padding-bottom: 20px !important;
+            padding-top: 20px !important;
+        }
     </style>
     <div class="container-fluid">
         <div class="card shadow-sm border-0 rounded-3">

@@ -144,7 +144,7 @@
               .big-gold-coin {
                 width: 25px;
                 height: 25px;
-                background: radial-gradient(ellipse at center, #ffd700 0%, #fdb931 100%);
+                background: radial-gradient(ellipse at center, #ffd700 0%, #daa520 100%);
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
@@ -152,18 +152,18 @@
                 box-shadow: 
                   inset 0 0 0 2px #d4af37,
                   0 2px 5px rgba(0,0,0,0.1);
-                animation: coin-flip-spin 3s infinite linear;
+                animation: coin-shine-flip 7s infinite ease-in-out;
                 position: relative;
                 transform-style: preserve-3d;
                 flex-shrink: 0;
               }
 
-              .big-gold-coin::before {
-                content: '';
-                position: absolute;
-                inset: 3px;
-                border: 1px dashed rgba(184, 134, 11, 0.5);
-                border-radius: 50%;
+              }
+
+              @keyframes coin-shine-flip {
+                0%, 75% { transform: rotateY(0deg); filter: brightness(1) drop-shadow(0 0 2px rgba(184, 134, 11, 0.3)); }
+                85% { filter: brightness(1.8) drop-shadow(0 0 10px rgba(212, 175, 55, 0.8)); transform: rotateY(0deg); }
+                100% { transform: rotateY(360deg); filter: brightness(1) drop-shadow(0 0 2px rgba(184, 134, 11, 0.3)); }
               }
 
               .coin-inner {

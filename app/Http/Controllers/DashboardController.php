@@ -61,13 +61,6 @@ class DashboardController extends Controller
         // Role-Based Filtering
         if ($user->hasAnyRole(['superadmin', 'admin'])) {
             // See lists and graphs of both distributor and retailer orders, top users, loyalty points, and fieldstaffs
-            $topLoyaltyRetailer = Retailer::with('user')
-                ->withSum(['retailerOrders as dynamic_loyalty_points' => function ($q) {
-                    $q->where('status', RetailerOrder::STATUS_DELIVERED);
-                }], 'loyalty_points_earned')
-                ->orderByDesc('dynamic_loyalty_points')
-                ->first();
-
             $topRetailers = RetailerOrder::select('retailer_id', DB::raw('COUNT(id) as total_orders'), DB::raw('SUM(total_amount) as total_revenue'))
                 ->groupBy('retailer_id')->orderByDesc('total_orders')->take(5)
                 ->with('retailer.user')->get();
@@ -162,8 +155,15 @@ class DashboardController extends Controller
                     ->whereNotNull('loyalty_points_earned')
                     ->where('loyalty_points_earned', '>', 0)
                     ->sum('loyalty_points_earned');
+
+                // Check if this retailer is the top performer globally
+                $topR = \App\Models\Retailer::withSum(['retailerOrders as pts' => function($q){ $q->where('status', 'delivered'); }], 'loyalty_points_earned')->orderByDesc('pts')->first();
+                $isTopRetailer = ($topR && $topR->id === $retailer->id);
             }
         }
+
+        // Initialize isTopRetailer for others
+        if(!isset($isTopRetailer)) $isTopRetailer = false;
 
         // 3. Counts - Product Logic
         $productCount = Product::count(); // Default for Admin, Sales Manager, Field Staff
@@ -236,9 +236,9 @@ class DashboardController extends Controller
             'topRetailers',
             'topFieldStaff',
             'topProducts',
-            'topLoyaltyRetailer',
             'topDistributors',
             'totalLoyaltyPoints',
+            'isTopRetailer',
             'monthlyDistributorOrdersChart',
             'period'
         ));

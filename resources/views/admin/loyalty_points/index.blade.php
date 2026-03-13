@@ -18,110 +18,141 @@
             font-weight: 500;
         }
 
-        /* PREMIUM 3D GOLD COIN (Flipkart Style) */
-        .coin-wrapper {
-            perspective: 1000px;
-            padding: 10px;
-            display: inline-block;
-        }
-        
-        .gold-coin-3d {
+        /* PREMIUM GLASS COIN DASHBOARD (Synced with Header) */
+        .big-gold-coin-dashboard {
             width: 70px;
             height: 70px;
-            background: radial-gradient(circle at 30% 30%, #fff7bc 0%, #ffd700 30%, #daa520 70%, #b8860b 100%);
+            background: radial-gradient(ellipse at center, #ffd700 0%, #daa520 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
             box-shadow: 
-                0 6px 12px rgba(0,0,0,0.15),
-                inset 0 -3px 6px rgba(0,0,0,0.3),
-                inset 0 3px 6px rgba(255,255,255,0.8);
-            border: 3px solid #f9a825;
-            animation: coinFloat3D 4s ease-in-out infinite, coinShine 3s linear infinite;
+                inset 0 0 0 4px #d4af37,
+                0 4px 10px rgba(0,0,0,0.1);
+            animation: coin-shine-flip-dashboard 7s infinite ease-in-out;
+            position: relative;
             transform-style: preserve-3d;
+            flex-shrink: 0;
         }
 
-        .gold-coin-3d::after {
+        .big-gold-coin-dashboard::before {
             content: '';
             position: absolute;
-            top: 5%;
-            left: 5%;
-            right: 5%;
-            bottom: 5%;
-            border: 2px solid rgba(255,255,255,0.3);
+            inset: 8px;
+            border: 2px dashed rgba(184, 134, 11, 0.5);
             border-radius: 50%;
-            pointer-events: none;
         }
 
-        .gold-coin-3d i {
-            font-size: 2rem;
-            color: rgba(0,0,0,0.4); /* Darker dollar symbol for engraving effect */
-            z-index: 2;
-            animation: iconPulse 2s ease-in-out infinite;
-            font-weight: 900;
+        .coin-inner-dashboard {
+            font-size: 35px;
+            color: #ffffff;
+            text-shadow: 2px 2px 4px rgba(184, 134, 11, 0.8);
+            transform: translateZ(1px);
         }
 
-        /* Removed Shine Effect Overlay - unnecessary white shade removed */
-
-        @keyframes coinFloat3D {
-            0%, 100% { transform: translateY(0) rotateY(0deg); }
-            50% { transform: translateY(-10px) rotateY(10deg); }
-        }
-        @keyframes shineSweep {
-            0% { left: -100%; }
-            20% { left: 100%; }
-            100% { left: 100%; }
-        }
-        @keyframes iconPulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.9; }
+        @keyframes coin-shine-flip-dashboard {
+            0%, 75% { transform: rotateY(0deg); filter: brightness(1) drop-shadow(0 0 3px rgba(184, 134, 11, 0.3)); }
+            85% { filter: brightness(1.8) drop-shadow(0 0 15px rgba(212, 175, 55, 0.8)); transform: rotateY(0deg); }
+            100% { transform: rotateY(360deg); filter: brightness(1) drop-shadow(0 0 3px rgba(184, 134, 11, 0.3)); }
         }
 
-        /* DataTable Polished Padding & Alignment */
-        #points-table {
-            border-collapse: separate !important;
-            border-spacing: 0 !important;
-        }
-        #points-table thead th {
-            padding: 18px 20px !important;
-            border-bottom: 2px solid var(--med-border, #f1f5f9) !important;
-            vertical-align: middle !important;
-        }
-        #points-table tbody td {
-            padding: 20px !important;
-            vertical-align: middle !important;
-            border-bottom: 1px solid var(--med-border, #f1f5f9) !important;
-        }
-        
-        .dt-buttons {
-            padding: 15px 20px !important;
-            display: flex !important;
-            gap: 10px !important;
-        }
-
-        /* Cards Theme Support */
-        .loyalty-card-stat {
+        /* Dashbord Summary Cards (Glassmorphism) */
+        .summary-card {
             background: var(--med-bg-card, #ffffff);
             border: 1px solid var(--med-border, #f1f5f9);
             border-radius: 20px !important;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
         }
-        
-        body.dark-only .profile-highlight-card {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        .summary-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.05) !important;
+        }
+        .summary-icon-box {
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
         }
 
-        .heading-theme { color: var(--med-text-main, #1e293b) !important; }
-        .sub-heading-theme { color: var(--med-text-muted, #64748b) !important; }
-        
-        .badge-points {
-            background: rgba(var(--bs-primary-rgb), 0.1);
-            color: var(--med-primary);
+        /* DataTable Enhancements */
+        .standard-table thead th {
+            padding: 18px 25px !important;
+            background: var(--med-bg-card, #fff);
             font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 8px;
-            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--med-border, #f1f5f9) !important;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            color: var(--med-text-muted);
+        }
+        .standard-table tbody td {
+            padding: 20px 25px !important;
+            border-bottom: 1px solid var(--med-border, #f1f5f9) !important;
+            vertical-align: middle !important;
+        }
+        .table-controls-row {
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--med-border, #f1f5f9);
+            background: rgba(0, 0, 0, 0.01);
+        }
+
+        /* Spacing Fix for DataTable Footer */
+        .dataTables_info {
+            padding-left: 20px !important;
+            padding-bottom: 15px !important;
+            padding-top: 15px !important;
+            color: var(--med-text-muted, #64748b) !important;
+            font-size: 0.85rem !important;
+        }
+        .dataTables_paginate {
+            padding-right: 20px !important;
+            padding-bottom: 15px !important;
+            padding-top: 15px !important;
+        }
+        .dt-buttons {
+            display: flex !important;
+            gap: 8px !important;
+            margin-bottom: 0 !important;
+        }
+        .dt-buttons .btn {
+            margin: 0 !important;
+            border-radius: 8px !important;
+        }
+        .dataTables_filter {
+            margin: 0 !important;
+        }
+        .dataTables_filter input {
+            border-radius: 10px !important;
+            padding: 8px 15px !important;
+            border: 1px solid var(--med-border, #dee2e6) !important;
+            outline: none !important;
+            width: 250px !important;
+        }
+
+        /* Branding Colors */
+        .bg-glass-primary { background: rgba(0, 73, 122, 0.05); color: #00497a; }
+        .bg-glass-warning { background: rgba(255, 215, 0, 0.1); color: #daa520; }
+        .bg-glass-success { background: rgba(46, 204, 113, 0.1); color: #2ecc71; }
+
+        /* Animation Helpers */
+        .entrance-fade { animation: fadeIn 0.8s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .summary-card.bg-navy { 
+            background: linear-gradient(135deg, #00497a 0%, #002b5c 100%) !important; 
+        }
+        .summary-card.bg-navy h4, .summary-card.bg-navy h5, .summary-card.bg-navy small {
+            color: #ffffff !important;
         }
     </style>
 
@@ -130,55 +161,193 @@
             <div class="row align-items-center">
                 <div class="col-sm-6">
                     <h3 class="fw-bold m-0 heading-theme">Loyalty Dashboard</h3>
-                    <p class="text-muted small m-0">Dynamic tracking of retailer reward milestones</p>
+                    <p class="text-muted small m-0">Performance analytics and reward tracking for retailers</p>
+                </div>
+                <div class="col-sm-6 text-end">
+                    <button id="btn-back-to-list" class="btn btn-primary btn-sm rounded-pill px-4 fw-bold" style="display:none;">
+                        <i class="fa fa-arrow-left me-2"></i>Back to Overview
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Selection Area -->
+    <!-- Summary Statistics section -->
+    <div id="summary-stats-region" class="container-fluid entrance-fade">
+        <div class="row">
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card summary-card border-0 shadow-sm h-100">
+                    <div class="card-body d-flex align-items-center p-4">
+                        <div class="summary-icon-box bg-glass-primary">
+                            <i class="fa fa-users fa-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-0 fw-800 heading-theme">{{ number_format($retailers->count()) }}</h4>
+                            <p class="text-muted small mb-0 fw-bold text-uppercase">Total Retailers</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6 col-md-6 mb-4">
+                <div class="card summary-card border-0 shadow-sm h-100">
+                    <div class="card-body d-flex align-items-center p-4">
+                        <div class="summary-icon-box bg-glass-warning">
+                            <i class="fa fa-star fa-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-0 fw-800 heading-theme">{{ number_format($globalLoyaltyPoints, 2) }}</h4>
+                            <p class="text-muted small mb-0 fw-bold text-uppercase">Total Loyalty Points Earned</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <div class="container-fluid">
         <div class="row">
-            <div class="col-12 mb-4">
-                <div class="card shadow-sm border-0" style="border-radius: 20px; background: var(--med-bg-card);">
-                    <div class="card-body p-4">
-                        <div class="row align-items-center">
-                            <div class="col-lg-5 mb-3 mb-lg-0">
-                                <h5 class="fw-bold mb-1 heading-theme">Retailer Selection</h5>
-                                <p class="text-muted small mb-0">Search and select a retailer to view their comprehensive points history.</p>
-                            </div>
-                            <div class="col-lg-7">
-                                <select id="retailer_selector" class="form-select select2">
-                                    <option value="">-- Choose/Search Retailer --</option>
-                                    @foreach($retailers as $r)
-                                        <option value="{{ $r->id }}" data-points="{{ number_format($r->dynamic_loyalty_points, 2) }}">
-                                            {{ $r->shop_name }} ({{ $r->user->name }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
+            <!-- OVERVIEW LIST VIEW (Shown by Default) -->
+            <div id="overview-view" class="col-12 entrance-fade">
+                <div class="card shadow-sm border-0" style="border-radius: 20px; overflow: hidden; background: var(--med-bg-card);">
+                    <div class="card-header bg-white py-4 px-4 border-bottom d-flex justify-content-between align-items-center" style="background: var(--med-bg-card) !important;">
+                        <div>
+                            <h5 class="fw-bold mb-1 heading-theme">Loyalty Performance Overview</h5>
+                            <p class="text-muted small mb-0">Select a retailer below to view comprehensive transaction level details.</p>
+                        </div>
+                        <div class="col-md-4">
+                             <select id="retailer_selector" class="form-select select2">
+                                <option value="">-- Quick Search Retailer --</option>
+                                @foreach($retailers as $r)
+                                    <option value="{{ $r->id }}" data-points="{{ number_format($r->dynamic_loyalty_points, 2) }}">
+                                        {{ $r->shop_name }} ({{ $r->user->name }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div id="overview-table-controls" class="table-controls-row">
+                        @if(auth()->user()->hasAnyRole(['admin', 'superadmin']))
+                        <div class="d-flex align-items-center gap-3">
+                            <form id="filter-form" action="{{ route('admin.loyalty-points.index') }}" method="GET" class="d-flex align-items-center gap-3 mb-0">
+                                <div class="position-relative" style="min-width: 220px;">
+                                    <select id="sm-filter" name="sales_manager_id" class="form-select select2-basic filter-select">
+                                        <option value="">All Sales Managers</option>
+                                        @foreach($salesManagers as $sm)
+                                            <option value="{{ $sm->id }}" {{ request('sales_manager_id') == $sm->id ? 'selected' : '' }}>
+                                                {{ $sm->user->name ?? 'N/A' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @if(request('sales_manager_id'))
+                                        <button type="button" class="btn-clear-filter" data-target="sm-filter" title="Clear Sales Manager">
+                                            <i class="fa fa-times-circle"></i>
+                                        </button>
+                                    @endif
+                                </div>
+                                <div class="position-relative" style="min-width: 220px;">
+                                    <select id="fs-filter" name="field_staff_id" class="form-select select2-basic filter-select">
+                                        <option value="">All Field Staff</option>
+                                        @foreach($fieldStaffs as $fs)
+                                            <option value="{{ $fs->id }}" {{ request('field_staff_id') == $fs->id ? 'selected' : '' }}>
+                                                {{ $fs->user->name ?? 'N/A' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @if(request('field_staff_id'))
+                                        <button type="button" class="btn-clear-filter" data-target="fs-filter" title="Clear Field Staff">
+                                            <i class="fa fa-times-circle"></i>
+                                        </button>
+                                    @endif
+                                </div>
+                            </form>
+                        </div>
+                        @endif
+                        <div class="d-flex align-items-center gap-3 ms-auto right-controls">
+                            <!-- DT Buttons and Search will be moved here -->
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0 standard-table" id="overview-table" style="width: 100%;">
+                                @php
+                                    $loyaltyColIndex = auth()->user()->hasAnyRole(['admin', 'superadmin']) ? 5 : 3;
+                                @endphp
+                                <thead>
+                                    <tr>
+                                        <th>Retailer Shop</th>
+                                        <th>Owner Name</th>
+                                        @if(auth()->user()->hasAnyRole(['admin', 'superadmin']))
+                                            <th>Sales Manager</th>
+                                            <th>Field Staff</th>
+                                        @endif
+                                        <th>Region & Area</th>
+                                        <th class="text-center">Loyalty Points</th>
+                                        <th class="text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{-- Server-side AJAX --}}
+                                @if(false)
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-xs bg-glass-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                        <i class="fa fa-shopping-bag small"></i>
+                                                    </div>
+                                                    <div class="fw-bold heading-theme">{{ $r->shop_name }}</div>
+                                                </div>
+                                            </td>
+                                            <td class="sub-heading-theme">{{ $r->user->name ?? 'N/A' }}</td>
+                                            @if(auth()->user()->hasAnyRole(['admin', 'superadmin']))
+                                                <td class="small sub-heading-theme">
+                                                    {{ $r->salesManager->user->name ?? 'N/A' }}
+                                                </td>
+                                                <td class="small sub-heading-theme">
+                                                    {{ $r->fieldStaff->user->name ?? 'N/A' }}
+                                                </td>
+                                            @endif
+                                            <td class="small sub-heading-theme">
+                                                {{ $r->district->name ?? 'N/A' }}, {{ $r->area->name ?? 'N/A' }}
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge-points px-3 py-2" style="font-size: 0.9rem;">
+                                                    {{ number_format($r->dynamic_loyalty_points, 2) }}
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                <button class="btn btn-primary btn-xs rounded-pill px-3 fw-bold detail-btn" data-id="{{ $r->id }}">
+                                                    View Details
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @endif
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Detail View -->
-            <div id="points-container" class="col-12" style="display:none;">
+            <!-- DETAILED RETAILER VIEW (Hidden by Default) -->
+            <div id="detail-view" class="col-12" style="display:none;">
                 <div class="row">
                     <!-- Retailer Profile Card -->
                     <div class="col-xl-4 mb-4">
-                        <div class="card h-100 shadow-sm profile-highlight-card loyalty-card-stat border-0">
+                        <div class="card h-100 shadow-sm profile-highlight-card border-0" style="background: var(--med-bg-card); border-radius: 20px;">
                             <div class="card-body p-4">
                                 <div class="d-flex align-items-center mb-4 pb-2 border-bottom">
-                                    <div class="avatar-md bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 52px; height: 52px; background: rgba(var(--bs-primary-rgb), 0.15) !important;">
+                                    <div class="avatar-md bg-glass-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 52px; height: 52px; position: relative;">
                                         <i class="fa fa-shopping-bag text-primary"></i>
+                                        <div id="top_performer_badge" style="display:none; position: absolute; bottom: -5px; right: -5px; background: #ffd700; color: #fff; width: 22px; height: 22px; border-radius: 50%; display: none; align-items: center; justify-content: center; border: 2px solid #fff; font-size: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                                            <i class="fa fa-trophy"></i>
+                                        </div>
                                     </div>
                                     <div class="text-truncate">
                                         <h5 id="display_shop_name" class="fw-bold mb-0 heading-theme text-truncate">...</h5>
                                         <p id="display_owner_name" class="sub-heading-theme mb-0 small">...</p>
                                     </div>
                                 </div>
-                                
                                 <div class="row g-4">
                                     <div class="col-6">
                                         <label class="text-muted small d-block text-uppercase fw-bold mb-1">Phone</label>
@@ -189,7 +358,7 @@
                                         <span id="display_region" class="heading-theme fw-500 text-truncate d-block">...</span>
                                     </div>
                                     <div class="col-12">
-                                        <small class="text-muted text-uppercase fw-bold mb-1 d-block" style="font-size: 0.7rem;">Email</small>
+                                        <small class="text-muted text-uppercase fw-bold mb-1 d-block" style="font-size: 0.7rem;">Email Address</small>
                                         <span id="display_email" class="heading-theme fw-500 text-break">...</span>
                                     </div>
                                     <div class="col-12">
@@ -203,11 +372,13 @@
 
                     <!-- Points Card -->
                     <div class="col-xl-4 mb-4">
-                        <div class="card h-100 shadow-sm loyalty-card-stat border-0 overflow-hidden">
+                        <div class="card h-100 shadow-sm border-0 overflow-hidden" style="background: var(--med-bg-card); border-radius: 20px;">
                             <div class="card-body d-flex flex-column justify-content-center align-items-center text-center p-4">
-                                <div class="coin-wrapper mb-4">
-                                    <div class="gold-coin-3d">
-                                        <i class="fa fa-dollar-sign"></i>
+                                <div class="mb-4">
+                                    <div class="big-gold-coin-dashboard">
+                                        <div class="coin-inner-dashboard">
+                                            <i class="fa fa-star"></i>
+                                        </div>
                                     </div>
                                 </div>
                                 <h1 id="display_total_points" class="display-5 fw-800 text-primary mb-1">0.00</h1>
@@ -221,7 +392,7 @@
                     
                     <!-- Redemption Summary -->
                     <div class="col-xl-4 mb-4">
-                        <div class="card h-100 shadow-sm loyalty-card-stat border-0">
+                        <div class="card h-100 shadow-sm border-0" style="background: var(--med-bg-card); border-radius: 20px;">
                             <div class="card-body p-4 d-flex flex-column">
                                 <h6 class="fw-bold heading-theme mb-3">Redemption Summary</h6>
                                 <div class="mt-auto">
@@ -241,18 +412,21 @@
                     <!-- Transaction Logs -->
                     <div class="col-12 mb-4">
                         <div class="card shadow-sm border-0 overflow-hidden" style="border-radius: 20px; background: var(--med-bg-card);">
-                            <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center" style="background: var(--med-bg-card) !important;">
-                                <h5 class="fw-bold mb-0 heading-theme">Transaction Summary</h5>
+                            <div class="card-header bg-white py-4 px-4 border-bottom d-flex justify-content-between align-items-center" style="background: var(--med-bg-card) !important;">
+                                <h5 class="fw-bold mb-0 heading-theme">Transaction Statement</h5>
+                            </div>
+                            <div id="detail-table-controls" class="table-controls-row">
+                                <!-- DT Buttons and Search will be moved here -->
                             </div>
                             <div class="card-body p-0">
-                                <table class="table table-hover align-middle mb-0" id="points-table" style="width: 100%;">
+                                <table class="table table-hover align-middle mb-0 standard-table" id="points-table" style="width: 100%;">
                                     <thead class="bg-light">
                                         <tr>
-                                            <th class="px-4 text-muted small text-uppercase">Date</th>
-                                            <th class="text-muted small text-uppercase">Reference</th>
-                                            <th class="text-muted small text-uppercase">Details</th>
-                                            <th class="text-center text-muted small text-uppercase">Points</th>
-                                            <th class="text-center text-muted small text-uppercase">Status</th>
+                                            <th>Date</th>
+                                            <th>Reference</th>
+                                            <th>Details</th>
+                                            <th class="text-center">Points</th>
+                                            <th class="text-center">Status</th>
                                         </tr>
                                     </thead>
                                     <tbody class="heading-theme">
@@ -262,15 +436,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            <!-- Empty State -->
-            <div id="empty-state" class="col-12 text-center py-5">
-                <div class="py-5 bg-white border shadow-sm" style="border-radius: 24px; background: var(--med-bg-card) !important;">
-                    <i class="fa fa-search text-muted opacity-25" style="font-size: 6rem;"></i>
-                    <h4 class="mt-4 heading-theme fw-bold">Select a Retailer</h4>
-                    <p class="text-muted px-4">Search for a retail partner to view their performance analytics.</p>
                 </div>
             </div>
         </div>
@@ -286,9 +451,70 @@
 
     <script>
         $(document).ready(function () {
+            // Main Overview Table
+            let overviewTable = $('#overview-table').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: "{{ route('admin.loyalty-points.index') }}",
+                    data: function (d) {
+                        d.sales_manager_id = $('#sm-filter').val();
+                        d.field_staff_id = $('#fs-filter').val();
+                    }
+                },
+                columns: [
+                    { data: 'shop_name', name: 'shop_name' },
+                    { data: 'owner_name', name: 'user.name' },
+                    @if(auth()->user()->hasAnyRole(['admin', 'superadmin']))
+                        { data: 'sales_manager', name: 'salesManager.user.name' },
+                        { data: 'field_staff', name: 'fieldStaff.user.name' },
+                    @endif
+                    { data: 'region_area', name: 'district.name' },
+                    { data: 'dynamic_loyalty_points', name: 'dynamic_loyalty_points', className: 'text-center' },
+                    { data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center' }
+                ],
+                pageLength: 10,
+                order: [[{{ $loyaltyColIndex }}, 'desc']],
+                dom: "Bfrtip",
+                buttons: [
+                    { extend: 'copy', className: 'btn btn-outline-secondary btn-xs rounded-pill px-3' },
+                    { extend: 'csv', className: 'btn btn-outline-secondary btn-xs rounded-pill px-3' },
+                    { extend: 'excel', className: 'btn btn-outline-secondary btn-xs rounded-pill px-3' }
+                ],
+                initComplete: function() {
+                    let container = $('#overview-table-controls .right-controls');
+                    $(this).closest('.card').find('.dt-buttons').appendTo(container);
+                    $(this).closest('.card').find('.dataTables_filter').appendTo(container);
+                    $(this).closest('.card').find('.dataTables_filter input').addClass('form-control-sm rounded-pill px-3');
+                },
+                language: { search: "_INPUT_", searchPlaceholder: "Search retailers..." }
+            });
+
+            // Auto-submit filter form (Dynamic AJAX Reload)
+            $('.filter-select').on('change', function() {
+                // If SM changed, we still need a full refresh to update the FS dropdown
+                if ($(this).attr('id') === 'sm-filter') {
+                    window.location.href = "{{ route('admin.loyalty-points.index') }}?sales_manager_id=" + $(this).val();
+                    return;
+                }
+                overviewTable.ajax.reload();
+            });
+
+            // Handle individual clear buttons
+            $('.btn-clear-filter').on('click', function(e) {
+                e.preventDefault();
+                let target = $(this).data('target');
+                $(`#${target}`).val('').trigger('change');
+            });
+            
+            // Basic Select2 for filters
+            $('.select2-basic').select2({
+                width: '100%'
+            });
+
             // Select2 custom template
             $('#retailer_selector').select2({
-                placeholder: "-- Search Retailer --",
+                placeholder: "-- Quick Search Retailer --",
                 allowClear: true,
                 width: '100%',
                 templateResult: formatRetailer,
@@ -304,25 +530,33 @@
                 </div>`);
             }
 
-            // Handle Selection
+            // Handle Row/Button Detail Click - Use delegation for DataTables
+            $(document).on('click', '.detail-btn', function() {
+                let id = $(this).data('id');
+                $('#retailer_selector').val(id).trigger('change');
+            });
+
+            // Handle Selection/Drill-down
             $('#retailer_selector').on('change', function () {
                 let id = $(this).val();
                 if (id) {
-                    $('#empty-state').hide();
-                    $('#points-container').fadeIn();
-                    fetchData(id);
-                    
-                    // Trigger confetti for premium feel
-                    confetti({
-                        particleCount: 100,
-                        spread: 70,
-                        origin: { y: 0.6 },
-                        colors: ['#ffd700', '#daa520', '#b8860b']
+                    $('#summary-stats-region, #overview-view').fadeOut(300, function() {
+                        $('#btn-back-to-list').fadeIn();
+                        $('#detail-view').fadeIn(300);
+                        fetchData(id);
                     });
-                } else {
-                    $('#points-container').hide();
-                    $('#empty-state').fadeIn();
+                    
+                    // Removed confetti per user request - Admin doesn't need excitement
                 }
+            });
+
+            // Back to List
+            $('#btn-back-to-list').on('click', function() {
+                $('#detail-view').fadeOut(300, function() {
+                    $('#retailer_selector').val('').trigger('change.select2');
+                    $('#btn-back-to-list').hide();
+                    $('#summary-stats-region, #overview-view').fadeIn(300);
+                });
             });
 
             function fetchData(retailerId) {
@@ -334,6 +568,13 @@
                     $('#display_region').text(data.district + ', ' + data.area);
                     $('#display_joined').text(data.joined_date);
                     $('#display_total_points, #available_points').text(parseFloat(data.total_points).toFixed(2));
+                    
+                    // Show trophy if top retailer
+                    if (data.is_top_retailer) {
+                        $('#top_performer_badge').css('display', 'flex');
+                    } else {
+                        $('#top_performer_badge').hide();
+                    }
                 });
 
                 if ($.fn.DataTable.isDataTable('#points-table')) {
@@ -347,14 +588,21 @@
                         url: "{{ route('admin.loyalty-points.index') }}",
                         data: function (d) { d.retailer_id = retailerId; }
                     },
-                    dom: "<'row'<'col-12'B>><'row'<'col-12'f>><'row'<'col-12'tr>><'row'<'col-5'i><'col-7'p>>",
+                    dom: "Bfrtip", // We'll move them manually for better control
+                    initComplete: function() {
+                        // Move controls to the dedicated row
+                        let container = $('#detail-table-controls');
+                        container.empty();
+                        $('.dt-buttons').appendTo(container);
+                        $('.dataTables_filter').appendTo(container);
+                    },
                     buttons: [
-                        { extend: 'copy', className: 'btn btn-xs btn-outline-secondary' },
-                        { extend: 'csv', className: 'btn btn-xs btn-outline-secondary' },
-                        { extend: 'excel', className: 'btn btn-xs btn-outline-secondary' }
+                        { extend: 'copy', className: 'btn btn-outline-secondary' },
+                        { extend: 'csv', className: 'btn btn-outline-secondary' },
+                        { extend: 'excel', className: 'btn btn-outline-secondary' }
                     ],
                     columns: [
-                        { data: 'updated_at', name: 'updated_at', className: 'px-4' },
+                        { data: 'updated_at', name: 'updated_at' },
                         { data: 'order_code', name: 'order_code', render: d => `<strong class="text-primary">#${d}</strong>` },
                         { data: 'product_summary', name: 'product_summary', orderable: false, className: 'small' },
                         {

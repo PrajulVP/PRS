@@ -116,11 +116,16 @@
                 @if(Auth::user()->hasRole('retailer'))
                     <div class="retailer-hero d-flex align-items-center justify-content-between">
                         <div>
-                            <h2>Welcome back, <span style="color: var(--med-primary)">{{ $user->name }}</span>!</h2>
+                            <h2>Welcome, <span style="color: var(--med-primary)">{{ $user->name }}</span>!</h2>
                             <p class="text-muted f-16 mb-0 mt-2">Manage your orders, track your loyalty points, and explore our
                                 catalog from your dashboard.</p>
                         </div>
-                        <div class="text-center p-3 rounded med-loyalty-badge">
+                        <div class="text-center p-3 rounded med-loyalty-badge position-relative">
+                            @if($isTopRetailer)
+                                <div style="position: absolute; top: -10px; right: -10px; background: #ffd700; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 10;">
+                                    <i class="fa fa-trophy"></i>
+                                </div>
+                            @endif
                             <i data-feather="coin" class="mr-2"></i>
                             <h5 class="mb-1" style="color: var(--med-primary)">My Loyalty Points</h5>
                             <h2 class="mb-0" style="color: var(--med-primary); font-weight:800;">
@@ -589,19 +594,15 @@
                                 </div>
                             </div>
                             <div class="col-sm-6 col-xl-3 col-lg-6 mb-4">
-                                <div class="card o-hidden border-0 med-widget-card h-100"
-                                    style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important; cursor: pointer;"
-                                    onclick="window.location.href='{{ route('admin.loyalty-points.index') }}'">
+                                <div class="card o-hidden border-0 med-widget-card h-100" style="cursor: pointer;"
+                                    onclick="window.location.href='{{ route('admin.sales-managers.index') }}'">
                                     <div class="card-body">
                                         <div class="media static-top-widget">
-                                            <div class="media-body m-2">
-                                                <span class="m-0 text-uppercase font-weight-bold">Top Loyalty Retailer</span>
-                                                <h4 class="mb-0 mt-2" style="font-size: 1.1rem; line-height: 1.2; color: #fff !important;">
-                                                    {{ $topLoyaltyRetailer->shop_name ?? 'No Retailer' }}
-                                                </h4>
-                                                <small class="text-white opacity-75">{{ number_format($topLoyaltyRetailer->dynamic_loyalty_points ?? 0) }} Points</small>
+                                            <div class="media-body m-2"><span class="m-0 text-uppercase font-weight-bold">Sales
+                                                    Managers</span>
+                                                <h4 class="mb-0 counter mt-2">{{ $counts['sales_managers'] }}</h4>
                                             </div>
-                                            <i data-feather="award"></i>
+                                            <i data-feather="user-check"></i>
                                         </div>
                                     </div>
                                 </div>

@@ -2,58 +2,55 @@
 
 @section('page-body')
     <style>
-        /* PREMIUM 3D GOLD COIN (Flipkart Style) - Smaller Size */
+        /* PREMIUM 3D GOLD COIN (Synced with Header big-gold-coin) */
         .coin-wrapper {
             perspective: 1000px;
             padding: 5px;
             display: inline-block;
         }
         
-        .gold-coin-3d {
+        .big-gold-coin-dashboard {
             width: 70px;
             height: 70px;
-            background: radial-gradient(circle at 30% 30%, #fff7bc 0%, #ffd700 30%, #daa520 70%, #b8860b 100%);
+            background: radial-gradient(ellipse at center, #ffd700 0%, #daa520 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
             box-shadow: 
-                0 6px 12px rgba(0,0,0,0.15),
-                inset 0 -3px 6px rgba(0,0,0,0.3),
-                inset 0 3px 6px rgba(255,255,255,0.8);
-            border: 3px solid #f9a825;
-            animation: coinFloat3D 4s ease-in-out infinite;
+                inset 0 0 0 4px #d4af37,
+                0 4px 10px rgba(0,0,0,0.1);
+            animation: coin-shine-flip-dashboard 7s infinite ease-in-out;
+            position: relative;
             transform-style: preserve-3d;
+            flex-shrink: 0;
+            margin: 0 auto 20px auto;
         }
 
-        .gold-coin-3d::after {
+        .big-gold-coin-dashboard::before {
             content: '';
             position: absolute;
-            top: 5%;
-            left: 5%;
-            right: 5%;
-            bottom: 5%;
-            border: 1px solid rgba(255,255,255,0.2);
+            inset: 8px;
+            border: 2px dashed rgba(184, 134, 11, 0.5);
             border-radius: 50%;
-            pointer-events: none;
         }
 
-        .gold-coin-3d i {
-            font-size: 2rem;
-            color: rgba(0,0,0,0.4);
-            z-index: 2;
-            animation: iconPulse 2s ease-in-out infinite;
-            font-weight: 900;
+        .coin-inner-dashboard {
+            font-size: 35px;
+            color: #ffffff;
+            text-shadow: 2px 2px 4px rgba(184, 134, 11, 0.8);
+            transform: translateZ(1px);
         }
 
-        @keyframes coinFloat3D {
-            0%, 100% { transform: translateY(0) rotateY(0deg); }
-            50% { transform: translateY(-10px) rotateY(10deg); }
+        @keyframes coin-flip-dashboard {
+            0%, 90% { transform: rotateY(0deg); }
+            100% { transform: rotateY(360deg); }
         }
-        @keyframes iconPulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.9; }
+
+        @keyframes coin-shine-flip-dashboard {
+            0%, 75% { transform: rotateY(0deg); filter: brightness(1) drop-shadow(0 0 3px rgba(184, 134, 11, 0.3)); }
+            85% { filter: brightness(1.8) drop-shadow(0 0 15px rgba(212, 175, 55, 0.8)); transform: rotateY(0deg); }
+            100% { transform: rotateY(360deg); filter: brightness(1) drop-shadow(0 0 3px rgba(184, 134, 11, 0.3)); }
         }
 
         /* Entrance Animations */
@@ -82,22 +79,33 @@
             vertical-align: middle !important;
         }
         
-        .dt-buttons {
-            padding: 20px 0 !important;
-            display: flex !important;
-            gap: 12px !important;
+        .table-controls-row {
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid var(--med-border, #f1f5f9);
+            background: rgba(0, 0, 0, 0.01);
         }
-
+        .dt-buttons {
+            display: flex !important;
+            gap: 8px !important;
+            margin-bottom: 0 !important;
+        }
+        .dt-buttons .btn {
+            margin: 0 !important;
+            border-radius: 8px !important;
+            padding: 5px 12px !important;
+        }
         .dataTables_filter {
-            padding: 15px 0 !important;
+            margin: 0 !important;
         }
-        
         .dataTables_filter input {
             border-radius: 10px !important;
             padding: 8px 15px !important;
             border: 1px solid var(--med-border, #dee2e6) !important;
             outline: none !important;
+            width: 250px !important;
         }
         
         /* Updated Points Card Style */
@@ -112,6 +120,20 @@
         .loyalty-widget-card h1 {
             color: #fff !important;
         }
+
+        /* Spacing Fix for DataTable Footer */
+        .dataTables_info {
+            padding-left: 25px !important;
+            padding-bottom: 20px !important;
+            padding-top: 15px !important;
+            color: var(--med-text-muted, #64748b) !important;
+            font-size: 0.85rem !important;
+        }
+        .dataTables_paginate {
+            padding-right: 25px !important;
+            padding-bottom: 20px !important;
+            padding-top: 15px !important;
+        }
     </style>
 
     <div class="container-fluid">
@@ -121,28 +143,30 @@
                     <h3 class="fw-bold m-0" style="color: var(--med-text-main, #1e293b);">Loyalty Points</h3>
                     <p class="text-muted small m-0">Dynamic tracking of your earned rewards</p>
                 </div>
-                <div class="col-6 text-end">
-                    <div class="p-2 bg-white shadow-sm d-inline-block rounded-circle" style="background: var(--med-bg-card) !important;">
-                        <i class="fa fa-coins text-warning fa-lg"></i>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
 
     <div class="container-fluid">
         <div class="row">
-            <!-- Total Points Card -->
-            <div class="col-xl-3 col-sm-6 mb-4 entrance-animate delay-1">
-                <div class="card shadow-sm border-0 h-100 loyalty-widget-card overflow-hidden">
-                    <div class="card-body text-center py-4">
-                        <div class="coin-wrapper mb-3">
-                            <div class="gold-coin-3d">
-                                <i class="fa fa-dollar-sign"></i>
+            <!-- Total Points Card (Horizontal & Simple) -->
+            <div class="col-xl-5 col-lg-6 mb-4 entrance-animate delay-1">
+                <div class="card shadow-sm border-0 loyalty-widget-card overflow-hidden">
+                    <div class="card-body d-flex align-items-center py-3 px-4">
+                        <div class="coin-wrapper me-4">
+                            <div class="big-gold-coin-dashboard" style="margin: 0; width: 60px; height: 60px;">
+                                <div class="coin-inner-dashboard" style="font-size: 30px;">
+                                    <i class="fa fa-star"></i>
+                                </div>
                             </div>
                         </div>
-                        <h1 class="fw-800 mb-1 display-5">{{ number_format($totalPoints, 2) }}</h1>
-                        <p class="text-muted text-uppercase mb-0 fw-bold small" style="letter-spacing: 0.5px;">Current Loyalty Points</p>
+                        <div class="flex-grow-1">
+                            <h1 class="fw-800 mb-0 display-6 line-height-1" style="line-height: 1;">{{ number_format($totalPoints, 2) }}</h1>
+                            <p class="text-white opacity-75 text-uppercase mb-0 fw-bold small" style="letter-spacing: 0.5px; font-size: 0.75rem;">Loyalty Points Balance</p>
+                        </div>
+                        <div class="ms-auto">
+                            <i class="fa fa-angle-right opacity-50"></i>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -153,6 +177,9 @@
                     <div class="card-header bg-white py-3 px-4 border-bottom" style="background: var(--med-bg-card) !important;">
                         <h5 class="card-title mb-0 fw-bold" style="color: var(--med-text-main);"><i class="fa fa-history me-2"></i>Points Transaction History</h5>
                     </div>
+                    <div id="retailer-table-controls" class="table-controls-row">
+                        <!-- DT Buttons and Search will be moved here -->
+                    </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table id="retailer-points-table" class="display table table-hover align-middle mb-0" style="width:100%">
@@ -161,7 +188,7 @@
                                         <th class="text-muted small text-uppercase">Finalized Date</th>
                                         <th class="text-muted small text-uppercase">Reference #</th>
                                         <th class="text-muted small text-uppercase">Items Summary</th>
-                                        <th class="text-muted small text-uppercase">Points Earned</th>
+                                        <th class="text-muted small text-uppercase">Loyalty Points</th>
                                         <th class="text-center text-muted small text-uppercase">Status</th>
                                     </tr>
                                 </thead>
@@ -171,9 +198,13 @@
                                             <td>{{ $order->updated_at->format('d M Y, h:i A') }}</td>
                                             <td><span class="fw-bold text-primary">#{{ $order->order_code }}</span></td>
                                             <td class="small">
-                                                {!! $order->items->map(function ($item) {
-                                                    return ($item->product ? $item->product->product_name : 'Unknown') . ' (' . $item->quantity . ' qty)';
-                                                })->implode('<br>') !!}
+                                                @foreach($order->items as $item)
+                                                    <div class="mb-1">
+                                                        <span class="fw-bold">{{ $item->product ? $item->product->product_name : 'Unknown' }}</span>
+                                                        <span class="text-muted small">({{ $item->product ? $item->product->brand : 'N/A' }})</span><br>
+                                                        <span class="small">{{ $item->quantity }} {{ $item->unit }}</span>
+                                                    </div>
+                                                @endforeach
                                             </td>
                                             <td class="fw-bold">{{ number_format($order->loyalty_points_earned, 2) }}</td>
                                             <td class="text-center">
@@ -200,7 +231,12 @@
     <script>
         $(document).ready(function () {
             $('#retailer-points-table').DataTable({
-                dom: "<'row'<'col-12'B>><'row'<'col-12'f>><'row'<'col-12'tr>><'row'<'col-5'i><'col-7'p>>",
+                dom: "Bfrtip", 
+                initComplete: function() {
+                    let container = $('#retailer-table-controls');
+                    $('.dt-buttons').appendTo(container);
+                    $('.dataTables_filter').appendTo(container);
+                },
                 buttons: [
                     { extend: 'copy', className: 'btn btn-xs btn-outline-secondary' },
                     { extend: 'csv', className: 'btn btn-xs btn-outline-secondary' },

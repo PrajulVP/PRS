@@ -356,8 +356,9 @@ class RetailerOrderManagementController extends Controller
                 $formattedOrders = $orders->map(function ($order) {
                     $productSummary = $order->items->map(function ($item) {
                         $pName = $item->product ? $item->product->product_name : 'Unknown Product';
-                        return $pName . ' (' . $item->quantity . ')';
-                    })->implode('<br>');
+                        $pBrand = $item->product ? $item->product->brand : 'N/A';
+                        return '<div class="mb-1"><span class="fw-bold">'.$pName.'</span> <span class="text-muted small">('.$pBrand.')</span><br><span class="small">'.$item->quantity.' '.$item->unit.'</span></div>';
+                    })->implode('');
 
                     return [
                         'id' => $order->id,
