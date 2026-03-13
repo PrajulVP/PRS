@@ -12,10 +12,13 @@ use App\Models\FieldStaff;
 use App\Models\District;
 use App\Models\Area;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\HandlesNotifications;
+use App\Traits\OneSignalNotifications;
 use DataTables;
 
 class RetailerController extends Controller
 {
+    use OneSignalNotifications;
     public function index(Request $request)
     {
         if ($request->ajax()) {
@@ -141,6 +144,14 @@ class RetailerController extends Controller
                     "New Retailer {$user->name} has been added to your team and requires review/activation.",
                     route('admin.retailers.index')
                 ));
+
+                // OneSignal Push
+                $this->sendOneSignalPush(
+                    [$salesManagerUser->id],
+                    "New Retailer {$user->name} has been added to your team and requires review/activation.",
+                    ['user_id' => $user->id, 'type' => 'user_approval'],
+                    'Retailer Approval Required'
+                );
             }
         }
 

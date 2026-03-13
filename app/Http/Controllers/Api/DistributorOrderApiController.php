@@ -13,10 +13,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use App\Traits\OneSignalNotifications;
+use App\Traits\HandlesNotifications;
 
 class DistributorOrderApiController extends Controller
 {
-    use \App\Traits\HandlesNotifications;
+    use HandlesNotifications, OneSignalNotifications;
     /**
      * @OA\Get(
      *     path="/api/distributor-orders",
@@ -263,6 +265,14 @@ class DistributorOrderApiController extends Controller
                         url('/approvals/distributors'),
                         'distributor_order'
                     ));
+
+                    // OneSignal Push
+                    $this->sendOneSignalPush(
+                        [$order->salesManager->user->id],
+                        "New Distributor Order #{$order->order_code} is ready for your approval.",
+                        ['order_id' => $order->id, 'type' => 'distributor_order'],
+                        'Distributor Order Pending'
+                    );
                 } catch (\Exception $e) {
                     Log::error('Notification failed: ' . $e->getMessage());
                 }
@@ -326,8 +336,19 @@ class DistributorOrderApiController extends Controller
                     ]);
                     $this->clearOrderNotifications($order->id, 'distributor_order');
                     $admins = \App\Models\User::role(['admin', 'superadmin'])->get();
+                    $adminIds = $admins->pluck('id')->toArray();
                     foreach ($admins as $admin) {
                         $this->notifyUnique($admin, new \App\Notifications\OrderActionRequired($order, "Distributor Order #{$order->order_code} has been processed and is ready for your approval.", url('/approvals/distributors'), 'distributor_order'));
+                    }
+                    
+                    // OneSignal Push to Admins
+                    if (!empty($adminIds)) {
+                        $this->sendOneSignalPush(
+                            $adminIds,
+                            "Distributor Order #{$order->order_code} has been processed and is ready for your approval.",
+                            ['order_id' => $order->id, 'type' => 'distributor_order'],
+                            'Order Processing Required'
+                        );
                     }
                     break;
 
@@ -341,6 +362,14 @@ class DistributorOrderApiController extends Controller
                     $this->clearOrderNotifications($order->id, 'distributor_order');
                     if ($order->distributor && $order->distributor->user) {
                         $this->notifyUnique($order->distributor->user, new \App\Notifications\OrderActionRequired($order, "Your order #{$order->order_code} has been accepted. Please confirm receipt upon delivery.", url('/distributor/orders'), 'distributor_order'));
+                        
+                        // OneSignal Push
+                        $this->sendOneSignalPush(
+                            [$order->distributor->user->id],
+                            "Your order #{$order->order_code} has been accepted. Please confirm receipt upon delivery.",
+                            ['order_id' => $order->id, 'type' => 'distributor_order'],
+                            'Order Approved'
+                        );
                     }
                     break;
 
@@ -387,6 +416,14 @@ class DistributorOrderApiController extends Controller
                     $this->deleteOrderNotifications($order->id, 'distributor_order');
                     if ($order->distributor && $order->distributor->user) {
                         $this->notifyUnique($order->distributor->user, new \App\Notifications\OrderActionRequired($order, "Your order #{$order->order_code} has been rejected.", url('/distributor/orders'), 'distributor_order'));
+                        
+                        // OneSignal Push
+                        $this->sendOneSignalPush(
+                            [$order->distributor->user->id],
+                            "Your order #{$order->order_code} has been rejected.",
+                            ['order_id' => $order->id, 'type' => 'distributor_order'],
+                            'Order Rejected'
+                        );
                     }
                     break;
             }

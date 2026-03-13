@@ -8,11 +8,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Traits\HandlesNotifications;
+use App\Traits\OneSignalNotifications;
 use App\Services\OcrService;
 
 class DistributorRetailerOrderController extends Controller
 {
-    use HandlesNotifications;
+    use HandlesNotifications, OneSignalNotifications;
 
     protected $ocrService;
 
@@ -632,6 +633,14 @@ class DistributorRetailerOrderController extends Controller
                         'retailer_order'
                     )
                 );
+
+                // OneSignal Push
+                $this->sendOneSignalPush(
+                    [$retailerOrder->retailer->user->id],
+                    "Your order #{$retailerOrder->order_code} has been accepted. Please confirm your order.",
+                    ['order_id' => $retailerOrder->id, 'type' => 'retailer_order'],
+                    'Order Approved'
+                );
             }
 
             DB::commit();
@@ -696,6 +705,14 @@ class DistributorRetailerOrderController extends Controller
                     url('/retailer/orders'),
                     'retailer_order'
                 )
+            );
+
+            // OneSignal Push
+            $this->sendOneSignalPush(
+                [$retailerOrder->retailer->user->id],
+                "Your order #{$retailerOrder->order_code} has been rejected by the distributor.",
+                ['order_id' => $retailerOrder->id, 'type' => 'retailer_order'],
+                'Order Rejected'
             );
         }
 

@@ -15,11 +15,12 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Notifications\OrderActionRequired;
 use App\Traits\HandlesNotifications;
+use App\Traits\OneSignalNotifications;
 use Illuminate\Support\Facades\Storage;
 
 class RetailerOrderManagementController extends Controller
 {
-    use HandlesNotifications;
+    use HandlesNotifications, OneSignalNotifications;
     // Create Order Page
     public function create()
     {
@@ -190,6 +191,14 @@ class RetailerOrderManagementController extends Controller
                 // Notify Field Staff
                 if ($order->fieldStaff && $order->fieldStaff->user) {
                     $order->fieldStaff->user->notify(new OrderActionRequired($order, "New order #{$order->order_code} assigned to you. Action required: Process or Cancel.", route('admin.approvals.retailer')));
+                    
+                    // OneSignal Push
+                    $this->sendOneSignalPush(
+                        [$order->fieldStaff->user->id],
+                        "New order #{$order->order_code} assigned to you. Action required: Process or Cancel.",
+                        ['order_id' => $order->id, 'type' => 'retailer_order'],
+                        'New Order Assigned'
+                    );
                 }
             }
 
@@ -467,9 +476,6 @@ class RetailerOrderManagementController extends Controller
             'cancellation_reason' => $request->rejection_reason
         ]);
 
-        // Clear existing notifications for this order
-        $this->clearOrderNotifications($retailerOrder->id, 'retailer_order');
-
         // Notify Retailer
         if ($retailerOrder->retailer && $retailerOrder->retailer->user) {
             $retailerOrder->retailer->user->notify(new OrderActionRequired(
@@ -478,6 +484,14 @@ class RetailerOrderManagementController extends Controller
                 route('retailer.orders.index'),
                 'retailer_order'
             ));
+
+            // OneSignal Push to Retailer
+            $this->sendOneSignalPush(
+                [$retailerOrder->retailer->user->id],
+                "Your order #{$retailerOrder->order_code} has been rejected by " . ($user->hasRole('distributor') ? 'the distributor' : 'admin') . ".",
+                ['order_id' => $retailerOrder->id, 'type' => 'retailer_order'],
+                'Order Rejected'
+            );
         }
 
         // Notify Field Staff
@@ -488,6 +502,14 @@ class RetailerOrderManagementController extends Controller
                 route('admin.approvals.retailer'),
                 'retailer_order'
             ));
+
+            // OneSignal Push to FS
+            $this->sendOneSignalPush(
+                [$retailerOrder->fieldStaff->user->id],
+                "Order #{$retailerOrder->order_code} has been rejected.",
+                ['order_id' => $retailerOrder->id, 'type' => 'retailer_order'],
+                'Order Rejected'
+            );
         }
 
         return response()->json(['success' => 'Order rejected.']);
@@ -541,6 +563,14 @@ class RetailerOrderManagementController extends Controller
             // Notify Distributor
             if ($retailerOrder->distributor && $retailerOrder->distributor->user) {
                 $this->notifyUnique($retailerOrder->distributor->user, new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} has been processed and is ready for your approval.", route('admin.approvals.retailer'), 'retailer_order'));
+                
+                // OneSignal Push
+                $this->sendOneSignalPush(
+                    [$retailerOrder->distributor->user->id],
+                    "Order #{$retailerOrder->order_code} has been processed and is ready for your approval.",
+                    ['order_id' => $retailerOrder->id, 'type' => 'retailer_order'],
+                    'Order Processing Required'
+                );
             }
 
             return response()->json(['success' => 'Order accepted.']);
@@ -699,6 +729,14 @@ class RetailerOrderManagementController extends Controller
             // Notify Retailer
             if ($retailerOrder->retailer && $retailerOrder->retailer->user) {
                 $this->notifyUnique($retailerOrder->retailer->user, new OrderActionRequired($retailerOrder, "Your order #{$retailerOrder->order_code} has been accepted. Please confirm your order.", url('/retailer/orders'), 'retailer_order'));
+                
+                // OneSignal Push
+                $this->sendOneSignalPush(
+                    [$retailerOrder->retailer->user->id],
+                    "Your order #{$retailerOrder->order_code} has been accepted. Please confirm your order.",
+                    ['order_id' => $retailerOrder->id, 'type' => 'retailer_order'],
+                    'Order Approved'
+                );
             }
 
             // Award Loyalty Points on Distributor Acceptance
@@ -1167,6 +1205,14 @@ class RetailerOrderManagementController extends Controller
             // Optional: Notify Field Staff / Distributor that order is closed
             if ($retailerOrder->fieldStaff && $retailerOrder->fieldStaff->user) {
                 $retailerOrder->fieldStaff->user->notify(new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} has been successfully delivered and confirmed by the retailer.", route('fieldstaff.orders.index')));
+                
+                // OneSignal Push
+                $this->sendOneSignalPush(
+                    [$retailerOrder->fieldStaff->user->id],
+                    "Order #{$retailerOrder->order_code} has been successfully delivered and confirmed by the retailer.",
+                    ['order_id' => $retailerOrder->id, 'type' => 'retailer_order'],
+                    'Order Delivered'
+                );
             }
 
             DB::commit();

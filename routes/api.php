@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthApiController;
 use App\Http\Controllers\Api\RetailerOrderController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\DistributorController;
+use App\Http\Controllers\Api\PrescriptionApiController;
 
 //add a prefix to all routes
 Route::post('login', [AuthApiController::class, 'login']);
@@ -13,10 +14,14 @@ Route::post('login', [AuthApiController::class, 'login']);
 Route::middleware('auth:api')->group(function () {
     Route::get('profile', [AuthApiController::class, 'profile']);
     Route::post('profile/update', [AuthApiController::class, 'updateProfile']);
+    Route::post('user/update-player-id', [\App\Http\Controllers\Api\UserApiController::class, 'updatePlayerId']);
     Route::post('logout', [AuthApiController::class, 'logout']);
     Route::get('retailer-orders', [RetailerOrderController::class, 'index']);
     Route::post('retailer-orders', [RetailerOrderController::class, 'store']);
     Route::post('retailer-orders/{id}/update-status', [RetailerOrderController::class, 'updateStatus']);
+
+    // Prescription Upload API
+    Route::post('prescriptions/upload', [PrescriptionApiController::class, 'upload']);
 
     // Distributor Orders
     Route::get('distributor-orders', [\App\Http\Controllers\Api\DistributorOrderApiController::class, 'index']);

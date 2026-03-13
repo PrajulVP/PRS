@@ -36,6 +36,7 @@ class User extends Authenticatable implements JWTSubject
         'pincode',
         'fathers_name',
         'mothers_name',
+        'player_id',
     ];
 
     public function distributor()

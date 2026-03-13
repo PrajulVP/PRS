@@ -7,13 +7,13 @@ use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\Retailer;
 use App\Models\User;
-use App\Services\OcrService;
+use App\Services\AiService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Mockery;
 use Tests\TestCase;
 
-class PrescriptionOcrTest extends TestCase
+class PrescriptionAiTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -78,24 +78,24 @@ class PrescriptionOcrTest extends TestCase
     /** @test */
     public function it_can_extract_and_match_medicines_from_prescription()
     {
-        $ocrMock = Mockery::mock(OcrService::class);
-        $ocrMock->shouldReceive('extractPrescription')->once()->andReturn([
+        $aiMock = Mockery::mock(AiService::class);
+        $aiMock->shouldReceive('extractPrescription')->once()->andReturn([
             'medicines' => [
                 ['name' => 'Paracetamol', 'count' => 2]
             ]
         ]);
-        $this->app->instance(OcrService::class, $ocrMock);
+        $this->app->instance(AiService::class, $aiMock);
 
         $response = $this->actingAs($this->user)
-            ->postJson(route('ocr.extract-prescription'), [
+            ->postJson(route('ai.extract-prescription'), [
                 'prescription' => UploadedFile::fake()->image('prescription.jpg'),
                 'retailer_id' => $this->retailer->id
             ]);
 
         $response->assertStatus(200);
         $response->assertJsonPath('success', true);
-        $response->assertJsonCount(1, 'medicines');
-        $response->assertJsonPath('medicines.0.product.product_name', 'Paracetamol 500mg');
-        $response->assertJsonPath('medicines.0.quantity', 2);
+        $response->assertJsonCount(1, 'matched_items');
+        $response->assertJsonPath('matched_items.0.product.product_name', 'Paracetamol 500mg');
+        $response->assertJsonPath('matched_items.0.quantity', 2);
     }
 }

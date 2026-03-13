@@ -1475,6 +1475,84 @@
                 ]
             }
         },
+        "/api/prescriptions/upload": {
+            "post": {
+                "tags": [
+                    "Prescription"
+                ],
+                "summary": "Upload a prescription and get OCR results",
+                "operationId": "471c4295c9c4fc84bcd9040536d43dc2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "prescription"
+                                ],
+                                "properties": {
+                                    "prescription": {
+                                        "description": "The prescription image or PDF",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OCR results",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to extract data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to extract data from the prescription."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/products": {
             "get": {
                 "tags": [
@@ -1803,10 +1881,6 @@
                                     "notes": {
                                         "type": "string",
                                         "nullable": true
-                                    },
-                                    "delivery_notes": {
-                                        "type": "string",
-                                        "nullable": true
                                     }
                                 },
                                 "type": "object"
@@ -1820,87 +1894,6 @@
                     },
                     "403": {
                         "description": "Unauthorized"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/retailer-orders/{id}/products": {
-            "get": {
-                "tags": [
-                    "Retailer Orders"
-                ],
-                "summary": "Get products in a retailer order",
-                "operationId": "8f98ef572e41da1b9af0fa2d2fd61f5d",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "Retailer Order ID",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "order_id": {
-                                            "type": "integer",
-                                            "example": 1
-                                        },
-                                        "order_code": {
-                                            "type": "string",
-                                            "example": "RO-X9Y8Z7"
-                                        },
-                                        "products": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "product_id": {
-                                                        "type": "integer",
-                                                        "example": 10
-                                                    },
-                                                    "product_name": {
-                                                        "type": "string",
-                                                        "example": "Paracetamol 500mg"
-                                                    },
-                                                    "quantity": {
-                                                        "type": "integer",
-                                                        "example": 5
-                                                    },
-                                                    "unit_price": {
-                                                        "type": "string",
-                                                        "example": "10.00"
-                                                    },
-                                                    "total_amount": {
-                                                        "type": "string",
-                                                        "example": "50.00"
-                                                    },
-                                                    "product_details": {
-                                                        "type": "object"
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Order not found"
                     }
                 },
                 "security": [
@@ -2330,6 +2323,10 @@
         {
             "name": "Inventory",
             "description": "Inventory"
+        },
+        {
+            "name": "Prescription",
+            "description": "Prescription"
         },
         {
             "name": "Products",

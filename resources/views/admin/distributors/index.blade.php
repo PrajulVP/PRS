@@ -173,6 +173,7 @@
                                 <label class="form-label">Address</label>
                                 <textarea name="address" class="form-control" rows="2" required></textarea>
                             </div>
+                            {{-- 
                             <input type="hidden" name="latitude" id="create_lat">
                             <input type="hidden" name="longitude" id="create_long">
                             <div class="col-12 mt-3">
@@ -185,6 +186,7 @@
                                 </div>
                                 <div id="create_map" style="height: 300px; width: 100%; margin-top: 10px;"></div>
                             </div>
+                            --}}
 
                         </div>
                     </div>
@@ -280,6 +282,7 @@
                                 <textarea name="address" id="edit_address" class="form-control" rows="2"
                                     required></textarea>
                             </div>
+                            {{-- 
                             <input type="hidden" name="latitude" id="edit_latitude">
                             <input type="hidden" name="longitude" id="edit_longitude">
                             <div class="col-12 mt-3">
@@ -292,6 +295,7 @@
                                 </div>
                                 <div id="edit_map" style="height: 300px; width: 100%; margin-top: 10px;"></div>
                             </div>
+                            --}}
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -406,9 +410,11 @@
                                 </div>
                             </div>
                         </div>
+                        {{-- 
                         <hr class="my-4">
                         <h6 class="mb-3"><i class="fa fa-map-marker-alt me-2"></i>Location on Map</h6>
                         <div id="show_map" style="height:300px;width:100%;border-radius:12px;border:1px solid #eee;"></div>
+                        --}}
                     </div>
                 </div>
                 <div class="modal-footer border-0" style="background: var(--med-bg-body);">
@@ -897,147 +903,10 @@
                 document.getElementById("create_lat").value = place.geometry.location.lat();
                 document.getElementById("create_long").value = place.geometry.location.lng();
             });
-
-            // Edit Map
-            editMap = new google.maps.Map(document.getElementById("edit_map"), {
-                zoom: 5,
-                center: defaultLoc,
-                mapId: "DEMO_MAP_ID",
-            });
-            editMarker = new google.maps.marker.AdvancedMarkerElement({
-                position: defaultLoc,
-                map: editMap,
-                gmpDraggable: true,
-            });
-            editMarker.addListener("dragend", (event) => {
-                const pos = editMarker.position;
-                let lat = (typeof pos.lat === 'function') ? pos.lat() : pos.lat;
-                let lng = (typeof pos.lng === 'function') ? pos.lng() : pos.lng;
-                document.getElementById("edit_latitude").value = lat;
-                document.getElementById("edit_longitude").value = lng;
-            });
-            editMap.addListener("click", (e) => {
-                editMarker.position = e.latLng;
-                document.getElementById("edit_latitude").value = e.latLng.lat();
-                document.getElementById("edit_longitude").value = e.latLng.lng();
-            });
-
-            // Edit Autocomplete
-            const editInput = document.getElementById("edit_pac-input");
-            const editAutocomplete = new google.maps.places.Autocomplete(editInput);
-            editAutocomplete.bindTo("bounds", editMap);
-            editAutocomplete.addListener("place_changed", () => {
-                const place = editAutocomplete.getPlace();
-                if (!place.geometry || !place.geometry.location) return;
-                if (place.geometry.viewport) {
-                    editMap.fitBounds(place.geometry.viewport);
-                } else {
-                    editMap.setCenter(place.geometry.location);
-                    editMap.setZoom(17);
-                }
-                editMarker.position = place.geometry.location;
-                document.getElementById("edit_latitude").value = place.geometry.location.lat();
-                document.getElementById("edit_longitude").value = place.geometry.location.lng();
-            });
-
-            // Show Map
-            showMap = new google.maps.Map(document.getElementById("show_map"), {
-                zoom: 5,
-                center: defaultLoc,
-                mapId: "DEMO_MAP_ID",
-            });
-            showMarker = new google.maps.marker.AdvancedMarkerElement({
-                position: defaultLoc,
-                map: showMap,
-                // Not draggable
-            });
         }
 
-        // Expose initMap to window
-        window.initMap = initMap;
-
-        $(document).ready(function () {
-            // Modal Show events
-            $('#createDistributorModal').on('shown.bs.modal', function () {
-                if (createMap) {
-                    google.maps.event.trigger(createMap, 'resize');
-                    createMap.setCenter(createMarker.position);
-                }
-            });
-
-            $('#editDistributorModal').on('shown.bs.modal', function () {
-                if (editMap) {
-                    google.maps.event.trigger(editMap, 'resize');
-                    let lat = parseFloat($('#edit_latitude').val());
-                    let lng = parseFloat($('#edit_longitude').val());
-                    if (lat && lng) {
-                        let pos = {
-                            lat: lat,
-                            lng: lng
-                        };
-                        editMarker.position = pos;
-                        editMap.setCenter(pos);
-                        editMap.setZoom(15);
-                    } else {
-                        editMap.setCenter(editMarker.position);
-                    }
-                }
-            });
-
-            $('#showDistributorModal').on('shown.bs.modal', function () {
-                if (showMap) {
-                    google.maps.event.trigger(showMap, 'resize');
-                    let lat = parseFloat($(this).data('lat'));
-                    let lng = parseFloat($(this).data('lng'));
-
-                    if (!isNaN(lat) && !isNaN(lng)) {
-                        let pos = {
-                            lat: lat,
-                            lng: lng
-                        };
-                        showMarker.position = pos;
-                        showMap.setCenter(pos);
-                        showMap.setZoom(15);
-                    } else {
-                        const defaultLoc = {
-                            lat: 20.5937,
-                            lng: 78.9629
-                        };
-                        showMap.setCenter(defaultLoc);
-                        showMap.setZoom(5);
-                        showMarker.position = defaultLoc;
-                    }
-                }
-            });
-        });
-
         function getGeoLocation(latId, longId, mapType) {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function (position) {
-                    let lat = position.coords.latitude;
-                    let lng = position.coords.longitude;
-                    document.getElementById(latId).value = lat;
-                    document.getElementById(longId).value = lng;
-
-                    let pos = {
-                        lat: lat,
-                        lng: lng
-                    };
-                    if (mapType === 'create' && createMap && createMarker) {
-                        createMarker.position = pos;
-                        createMap.setCenter(pos);
-                        createMap.setZoom(15);
-                    } else if (mapType === 'edit' && editMap && editMarker) {
-                        editMarker.position = pos;
-                        editMap.setCenter(pos);
-                        editMap.setZoom(15);
-                    }
-                }, function (error) {
-                    alert("Error getting location: " + error.message);
-                });
-            } else {
-                alert("Geolocation is not supported by this browser.");
-            }
+            // Geolocation disabled temporarily
         }
     </script>
     <script

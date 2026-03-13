@@ -50,7 +50,7 @@
                                             </div>
                                         </div>
                                         <div class="d-flex align-items-center">
-                                            <div id="ocrLoader" class="me-3 d-none">
+                                            <div id="aiLoader" class="me-3 d-none">
                                                 <div class="spinner-border spinner-border-sm text-primary me-2"
                                                     role="status"></div>
                                                 <small class="text-primary fw-bold">AI Processing...</small>
@@ -217,8 +217,6 @@
                                                 <div class="py-4 opacity-50">
                                                     <i class="fa fa-cart-arrow-down fa-4x mb-3 text-muted"></i>
                                                     <h5 class="text-muted fw-bold">Bundle is Empty</h5>
-                                                    <p class="text-muted small">Choose a retailer and add items to your
-                                                        cart.</p>
                                                 </div>
                                             </td>
                                         </tr>
@@ -253,14 +251,6 @@
                                     <i class="fa fa-check-circle me-2"></i> CONFIRM ORDER
                                 </button>
 
-                                <div class="mt-4 p-3 bg-light-soft border dark-bg-dark border-light-dark rounded-3">
-                                    <ul class="list-unstyled mb-0 small text-muted">
-                                        <li class="mb-2"><i class="fa fa-info-circle me-2"></i> Multi-distributor order
-                                            splitting enabled.</li>
-                                        <li><i class="fa fa-shield-alt me-2"></i> Inventory stocks verified in real-time.
-                                        </li>
-                                    </ul>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -583,17 +573,17 @@
                 formData.append('_token', '{{ csrf_token() }}');
 
                 $('#btnUploadPrescription').prop('disabled', true);
-                $('#ocrLoader').removeClass('d-none');
+                $('#aiLoader').removeClass('d-none');
 
-                console.log('Initiating OCR AJAX call...');
+                console.log('Initiating AI AJAX call...');
                 $.ajax({
-                    url: "{{ route('ocr.extract-prescription') }}",
+                    url: "{{ route('ai.extract-prescription') }}",
                     type: 'POST',
                     data: formData,
                     processData: false,
                     contentType: false,
                     success: function (res) {
-                        console.log('OCR Success Full Response:', JSON.stringify(res, null, 2));
+                        console.log('AI Success Full Response:', JSON.stringify(res, null, 2));
                         if (res.success && res.matched_items && res.matched_items.length > 0) {
                             
                             res.matched_items.forEach(function (item) {
@@ -651,8 +641,8 @@
                         }
                     },
                     error: function (xhr) {
-                        console.error('OCR AJAX Error:', xhr);
-                        let msg = 'OCR Extraction failed';
+                        console.error('AI AJAX Error:', xhr);
+                        let msg = 'AI Extraction failed';
                         if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
                         if (typeof showToast === 'function') {
                             showToast('error', msg);
@@ -662,7 +652,7 @@
                     },
                     complete: function () {
                         $('#btnUploadPrescription').prop('disabled', false);
-                        $('#ocrLoader').addClass('d-none');
+                        $('#aiLoader').addClass('d-none');
                         $('#prescriptionInput').val('');
                     }
                 });
@@ -692,7 +682,6 @@
                                                     <td class="ps-4 text-muted fw-bold small">${index++}</td>
                                                     <td>
                                                         <div class="fw-bold text-dark font-outfit">${item.name}</div>
-                                                        <div class="small fw-medium text-muted text-uppercase" style="font-size: 0.65rem;">System Verified</div>
                                                         <input type="hidden" name="items[${key}][product_id]" value="${item.id}">
                                                         <input type="hidden" name="items[${key}][distributor_id]" value="${item.distId}">
                                                     </td>

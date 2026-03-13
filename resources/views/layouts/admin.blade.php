@@ -710,6 +710,136 @@
                 }, 500);
             }
         });
+
+        // --- Live Notification Polling ---
+        let lastNotificationId = null;
+
+        function fetchLiveNotifications() {
+            fetch("{{ route('notifications.fetch') }}")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 1. Detect and show Toast for NEW notifications
+                        if (data.notifications.length > 0) {
+                            const latestId = data.notifications[0].id;
+                            if (lastNotificationId && lastNotificationId !== latestId) {
+                                // Find notifications that are newer than lastNotificationId
+                                const newNotifications = [];
+                                for (let n of data.notifications) {
+                                    if (n.id === lastNotificationId) break;
+                                    newNotifications.push(n);
+                                }
+                                
+                                // Show toasts in order (oldest of the new ones first)
+                                newNotifications.reverse().forEach(n => {
+                                    if (typeof showToast === 'function') {
+                                        showToast('info', n.message);
+                                    }
+                                });
+                            }
+                            lastNotificationId = latestId;
+                        } else {
+                            // Reset if no unread notifications
+                            lastNotificationId = null; 
+                        }
+
+                        // 2. Update Badge Count
+                        const badgeContainer = document.querySelector('.notification-box');
+                        let badge = badgeContainer.querySelector('.badge');
+                        if (data.unread_count > 0) {
+                            if (!badge) {
+                                badge = document.createElement('span');
+                                badge.className = 'badge rounded-pill badge-primary text-white pulse-badge';
+                                badgeContainer.appendChild(badge);
+                            }
+                            badge.innerText = data.unread_count;
+                        } else if (badge) {
+                            badge.remove();
+                        }
+
+                        // 3. Update Dropdown List
+                        const dropdownUl = document.querySelector('.notification-dropdown ul');
+                        if (dropdownUl) {
+                            // Find the "View all" li (last element)
+                            const viewAllLi = dropdownUl.querySelector('li.p-2.text-center');
+                            
+                            // Clear existing notification items (except "View all")
+                            const currentLis = dropdownUl.querySelectorAll('li:not(.p-2):not(.text-center.text-muted)');
+                            currentLis.forEach(li => {
+                                if (li !== viewAllLi) li.remove();
+                            });
+
+                            if (data.notifications.length > 0) {
+                                // Remove "No notifications found" if it exists
+                                const emptyMsg = dropdownUl.querySelector('li .text-center.text-muted');
+                                if (emptyMsg) emptyMsg.closest('li').remove();
+
+                                // Prepend new items
+                                data.notifications.forEach(n => {
+                                    const li = document.createElement('li');
+                                    li.className = n.is_pending ? 'b-l-primary border-4' : 'b-l-secondary border-4';
+                                    li.dataset.id = n.id;
+                                    
+                                    li.innerHTML = `
+                                        <a href="${n.action_url}" style="display: block; width: 100%; color: inherit; cursor: pointer; text-decoration: none;">
+                                            <p class="mb-1 fw-bold text-dark" style="font-size: 0.8rem;">
+                                                ${n.message}
+                                            </p>
+                                            <span class="${n.is_pending ? 'font-danger' : 'text-primary'}" style="font-size: 0.70rem;">
+                                                <i class="fa fa-clock-o"></i> ${n.created_at_human}
+                                            </span>
+                                        </a>
+                                    `;
+                                    
+                                    // Re-attach click handler for the new link
+                                    li.querySelector('a').addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        handleNotificationClick(n.id, n.action_url, li);
+                                    });
+
+                                    dropdownUl.insertBefore(li, viewAllLi);
+                                });
+                            } else if (dropdownUl.querySelectorAll('li').length === 1) { // Only View All exists
+                                const li = document.createElement('li');
+                                li.innerHTML = '<p class="text-center text-muted my-2">No notifications found</p>';
+                                dropdownUl.insertBefore(li, viewAllLi);
+                            }
+                        }
+                    }
+                })
+                .catch(error => console.error('Error fetching notifications:', error));
+        }
+
+        // Shared Click Handler for better DRY
+        function handleNotificationClick(notificationId, targetUrl, li) {
+            // Decrease badge immediately for dynamic feedback
+            if (li && li.classList.contains('b-l-primary')) {
+                window.updateNotificationBadge(1);
+            }
+
+            fetch("{{ route('notifications.read', ':id') }}".replace(':id', notificationId), {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            }).finally(function () {
+                if (targetUrl && targetUrl !== '#') {
+                    window.location.href = targetUrl;
+                }
+            });
+        }
+
+        // Initialize first ID and start polling
+        const initialBadge = document.querySelector('.notification-box .badge');
+        if (initialBadge) {
+            // Seed with first notification ID from existing UI if possible, or just wait for first fetch
+            const firstLi = document.querySelector('.notification-dropdown ul li[data-id]');
+            if (firstLi) lastNotificationId = firstLi.dataset.id;
+        }
+
+        setInterval(fetchLiveNotifications, 15000); // 15 seconds
     </script>
 </body>
 

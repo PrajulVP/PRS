@@ -179,11 +179,12 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::get('notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('notifications/fetch', [\App\Http\Controllers\NotificationController::class, 'fetchLatest'])->name('notifications.fetch');
     Route::post('notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
     Route::post('notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
 
-    // Prescription OCR Route
-    Route::post('ocr/extract-prescription', [App\Http\Controllers\PrescriptionController::class, 'extract'])->name('ocr.extract-prescription');
+    // Prescription AI Route
+    Route::post('ai/extract-prescription', [App\Http\Controllers\PrescriptionController::class, 'extract'])->name('ai.extract-prescription');
 });
 
 Route::prefix('system')->name('system.')->group(function () {

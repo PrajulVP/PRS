@@ -143,6 +143,7 @@
                             </div>
                         </div>
                         <!-- Map Section -->
+                        {{-- 
                         <div class="row">
                             <div class="col-12 mb-3">
                                 <label class="form-label">Location</label>
@@ -159,6 +160,7 @@
                         </div>
                         <input type="hidden" name="latitude" id="create_lat">
                         <input type="hidden" name="longitude" id="create_long">
+                        --}}
                         <div class="row">
                         </div>
                     </div>
@@ -228,6 +230,7 @@
                             </div>
                         </div>
                         <!-- Map Section -->
+                        {{-- 
                         <div class="row">
                             <div class="col-12 mb-3">
                                 <label class="form-label">Location</label>
@@ -244,6 +247,7 @@
                         </div>
                         <input type="hidden" name="latitude" id="edit_latitude">
                         <input type="hidden" name="longitude" id="edit_longitude">
+                        --}}
                         <div class="row">
                         </div>
                     </div>
@@ -347,10 +351,12 @@
                                         </div>
                                     </div>
                                 </div>
+                                {{-- 
                                 <hr class="my-4">
                                 <h6 class="mb-3"><i class="fa fa-map-marker-alt me-2"></i>Location on Map</h6>
                                 <div id="show_map"
                                     style="height:300px;width:100%;border-radius:12px;border:1px solid #eee;"></div>
+                                --}}
                             </div>
                             <div class="tab-pane fade" id="fs-retailer-panel" role="tabpanel">
                                 <div class="table-responsive" style="max-height: 400px;">
@@ -407,103 +413,17 @@
         let createMarker, editMarker, showMarker;
 
         function initMap() {
+            /* Map initialization disabled temporarily
             const defaultLoc = {
                 lat: 20.5937,
                 lng: 78.9629
-            }; // India Center
-
-            // Create Map
-            createMap = new google.maps.Map(document.getElementById("create_map"), {
-                zoom: 5,
-                center: defaultLoc,
-                mapId: "DEMO_MAP_ID",
-            });
-            createMarker = new google.maps.marker.AdvancedMarkerElement({
-                position: defaultLoc,
-                map: createMap,
-                gmpDraggable: true,
-            });
-            createMarker.addListener("dragend", () => {
-                const pos = createMarker.position;
-                let lat = (typeof pos.lat === 'function') ? pos.lat() : pos.lat;
-                let lng = (typeof pos.lng === 'function') ? pos.lng() : pos.lng;
-                document.getElementById("create_lat").value = lat;
-                document.getElementById("create_long").value = lng;
-            });
-            createMap.addListener("click", (e) => {
-                createMarker.position = e.latLng;
-                document.getElementById("create_lat").value = e.latLng.lat();
-                document.getElementById("create_long").value = e.latLng.lng();
-            });
-
-            // Create Autocomplete
-            const createInput = document.getElementById("create_pac-input");
-            const createAutocomplete = new google.maps.places.Autocomplete(createInput);
-            createAutocomplete.bindTo("bounds", createMap);
-            createAutocomplete.addListener("place_changed", () => {
-                const place = createAutocomplete.getPlace();
-                if (!place.geometry || !place.geometry.location) return;
-                if (place.geometry.viewport) createMap.fitBounds(place.geometry.viewport);
-                else {
-                    createMap.setCenter(place.geometry.location);
-                    createMap.setZoom(17);
-                }
-                createMarker.position = place.geometry.location;
-                document.getElementById("create_lat").value = place.geometry.location.lat();
-                document.getElementById("create_long").value = place.geometry.location.lng();
-            });
-
-            // Edit Map
-            editMap = new google.maps.Map(document.getElementById("edit_map"), {
-                zoom: 5,
-                center: defaultLoc,
-                mapId: "DEMO_MAP_ID",
-            });
-            editMarker = new google.maps.marker.AdvancedMarkerElement({
-                position: defaultLoc,
-                map: editMap,
-                gmpDraggable: true,
-            });
-            editMarker.addListener("dragend", (event) => {
-                const pos = editMarker.position;
-                let lat = (typeof pos.lat === 'function') ? pos.lat() : pos.lat;
-                let lng = (typeof pos.lng === 'function') ? pos.lng() : pos.lng;
-                document.getElementById("edit_latitude").value = lat;
-                document.getElementById("edit_longitude").value = lng;
-            });
-            editMap.addListener("click", (e) => {
-                editMarker.position = e.latLng;
-                document.getElementById("edit_latitude").value = e.latLng.lat();
-                document.getElementById("edit_longitude").value = e.latLng.lng();
-            });
-
-            // Edit Autocomplete
-            const editInput = document.getElementById("edit_pac-input");
-            const editAutocomplete = new google.maps.places.Autocomplete(editInput);
-            editAutocomplete.bindTo("bounds", editMap);
-            editAutocomplete.addListener("place_changed", () => {
-                const place = editAutocomplete.getPlace();
-                if (!place.geometry || !place.geometry.location) return;
-                if (place.geometry.viewport) editMap.fitBounds(place.geometry.viewport);
-                else {
-                    editMap.setCenter(place.geometry.location);
-                    editMap.setZoom(17);
-                }
-                editMarker.position = place.geometry.location;
-                document.getElementById("edit_latitude").value = place.geometry.location.lat();
-                document.getElementById("edit_longitude").value = place.geometry.location.lng();
-            });
-
-            // Show Map
-            showMap = new google.maps.Map(document.getElementById("show_map"), {
-                zoom: 5,
-                center: defaultLoc,
-                mapId: "DEMO_MAP_ID",
-            });
+            };
+            ...
             showMarker = new google.maps.marker.AdvancedMarkerElement({
                 position: defaultLoc,
                 map: showMap,
             });
+            */
         }
 
         // Expose initMap

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\District;
 use App\Models\SalesManager;
+use App\Traits\OneSignalNotifications;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
@@ -11,6 +13,7 @@ use Yajra\DataTables\Facades\DataTables;
 
 class SalesManagerController extends Controller
 {
+    use OneSignalNotifications;
     public function index(Request $request)
     {
         if ($request->ajax()) {
@@ -72,6 +75,17 @@ class SalesManagerController extends Controller
                 "New Sales Manager {$user->name} has been added and requires activation.",
                 route('admin.sales-managers.index')
             ));
+        }
+
+        // OneSignal Push to Super Admins
+        $superAdminIds = $superAdmins->pluck('id')->toArray();
+        if(!empty($superAdminIds)) {
+            $this->sendOneSignalPush(
+                $superAdminIds,
+                "New Sales Manager {$user->name} has been added and requires activation.",
+                ['user_id' => $user->id, 'type' => 'user_approval'],
+                'Sales Manager Approval Required'
+            );
         }
 
         if ($request->ajax()) {

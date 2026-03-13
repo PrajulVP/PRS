@@ -10,9 +10,12 @@ use App\Models\RetailerOrder;
 use App\Models\DistributorOrder;
 use App\Models\Retailer;
 use App\Models\User;
+use App\Traits\OneSignalNotifications;
+use App\Traits\HandlesNotifications;
 
 class SalesManagerDashboardApiController extends Controller
 {
+    use HandlesNotifications, OneSignalNotifications;
     /**
      * @OA\Get(
      *     path="/api/sales-manager/dashboard",
@@ -173,6 +176,14 @@ class SalesManagerDashboardApiController extends Controller
         $retailer = Retailer::whereIn('field_staff_id', $fieldStaffIds)->findOrFail($id);
 
         $retailer->user->update(['status' => 'active']);
+
+        // OneSignal Push
+        $this->sendOneSignalPush(
+            [$retailer->user->id],
+            "Your retailer account has been approved and activated. Welcome!",
+            ['user_id' => $retailer->user->id, 'type' => 'user_approval'],
+            'Account Activated'
+        );
 
         return response()->json(['message' => "Retailer {$retailer->user->name} approved successfully."]);
     }
@@ -426,10 +437,31 @@ class SalesManagerDashboardApiController extends Controller
                 $this->deleteOrderNotifications($order->id, 'retailer_order');
             }
             $admins = \App\Models\User::role(['admin', 'superadmin'])->get();
+            $adminIds = $admins->pluck('id')->toArray();
             foreach ($admins as $admin) {
                 if (method_exists($this, 'notifyUnique')) {
                     $this->notifyUnique($admin, new \App\Notifications\OrderActionRequired($order, "Retailer Order #{$order->order_code} has been processed and is ready for your approval.", url('/approvals/retailers'), 'retailer_order'));
                 }
+            }
+            
+            // OneSignal Push to Admins
+            if (!empty($adminIds)) {
+                $this->sendOneSignalPush(
+                    $adminIds,
+                    "Retailer Order #{$order->order_code} has been processed and is ready for your approval.",
+                    ['order_id' => $order->id, 'type' => 'retailer_order'],
+                    'Order Processing Required'
+                );
+            }
+        } elseif ($order->status === RetailerOrder::STATUS_REJECTED) {
+            // OneSignal Push to Retailer
+            if ($order->retailer && $order->retailer->user) {
+                $this->sendOneSignalPush(
+                    [$order->retailer->user->id],
+                    "Your order #{$order->order_code} has been rejected.",
+                    ['order_id' => $order->id, 'type' => 'retailer_order'],
+                    'Order Rejected'
+                );
             }
         }
 

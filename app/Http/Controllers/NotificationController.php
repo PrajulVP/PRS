@@ -93,4 +93,38 @@ class NotificationController extends Controller
         $user->unreadNotifications->markAsRead();
         return response()->json(['success' => true]);
     }
+
+    public function fetchLatest()
+    {
+        $user = auth()->user();
+        if (!$user) return response()->json(['error' => 'Unauthorized'], 401);
+
+        $unreadNotifications = $user->unreadNotifications()->latest()->take(5)->get();
+        $unreadCount = $user->unreadNotifications()->count();
+
+        $formatted = $unreadNotifications->map(function ($notification) {
+            $is_pending = self::checkActionStatus($notification);
+            $actionUrl = $notification->data['action_url'] ?? '#';
+            $orderCode = $notification->data['order_code'] ?? '';
+            
+            if ($actionUrl !== '#' && !empty($orderCode)) {
+                $separator = parse_url($actionUrl, PHP_URL_QUERY) ? '&' : '?';
+                $actionUrl .= $separator . 'highlight=' . urlencode($orderCode);
+            }
+
+            return [
+                'id' => $notification->id,
+                'message' => $notification->data['message'] ?? 'Notification',
+                'action_url' => $actionUrl,
+                'created_at_human' => $notification->created_at->diffForHumans(),
+                'is_pending' => $is_pending,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'unread_count' => $unreadCount,
+            'notifications' => $formatted
+        ]);
+    }
 }

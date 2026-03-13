@@ -9,11 +9,13 @@ use App\Models\User;
 use App\Models\District;
 use App\Models\Distributor;
 use App\Models\SalesManager;
+use App\Traits\OneSignalNotifications;
 use Yajra\DataTables\DataTables;
 
 
 class DistributorController extends Controller
 {
+    use OneSignalNotifications;
     public function index(Request $request)
     {
         if ($request->ajax()) {
@@ -75,6 +77,17 @@ class DistributorController extends Controller
                 "New Distributor {$user->name} has been added and requires approval/activation.",
                 route('admin.distributors.index')
             ));
+        }
+
+        // OneSignal Push to Super Admins
+        $superAdminIds = $superAdmins->pluck('id')->toArray();
+        if(!empty($superAdminIds)) {
+            $this->sendOneSignalPush(
+                $superAdminIds,
+                "New Distributor {$user->name} has been added and requires approval/activation.",
+                ['user_id' => $user->id, 'type' => 'user_approval'],
+                'Distributor Approval Required'
+            );
         }
 
         if ($request->ajax()) {

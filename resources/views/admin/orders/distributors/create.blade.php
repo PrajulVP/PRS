@@ -154,8 +154,6 @@
                                                         <i class="fa fa-shopping-basket fa-3x text-muted opacity-25"></i>
                                                     </div>
                                                     <h5 class="text-muted fw-bold">Bundle is Empty</h5>
-                                                    <p class="text-muted small">Search for products above to start building.
-                                                    </p>
                                                 </div>
                                             </td>
                                         </tr>
@@ -190,12 +188,6 @@
                                     <i class="fa fa-check-double me-2"></i> CONFIRM ORDER
                                 </button>
 
-                                <div class="mt-4 p-3 bg-light-soft border dark-bg-dark border-light-dark rounded-3">
-                                    <ul class="list-unstyled mb-0 small text-muted">
-                                        <li class="mb-2"><i class="fa fa-info-circle me-2"></i> Prices are per strip.</li>
-                                        <li><i class="fa fa-box me-2"></i> Taxes calculated automatically.</li>
-                                    </ul>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -455,7 +447,6 @@
                                                                                 <td class="ps-4 text-muted fw-bold small">${index++}</td>
                                                                                 <td>
                                                                                     <div class="fw-bold text-dark font-outfit">${item.name}</div>
-                                                                                    <div class="small text-muted text-uppercase" style="font-size: 0.65rem;">System Verified</div>
                                                                                     <input type="hidden" name="items[${key}][product_id]" value="${item.id}">
                                                                                 </td>
                                                                                 <td class="text-center">

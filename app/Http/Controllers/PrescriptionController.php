@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\OcrService;
+use App\Services\AiService;
 use App\Models\Product;
 use App\Models\Retailer;
 use App\Models\Distributor;
@@ -12,11 +12,11 @@ use Illuminate\Support\Facades\Log;
 
 class PrescriptionController extends Controller
 {
-    protected $ocrService;
+    protected $aiService;
 
-    public function __construct(OcrService $ocrService)
+    public function __construct(AiService $aiService)
     {
-        $this->ocrService = $ocrService;
+        $this->aiService = $aiService;
     }
 
     /**
@@ -32,12 +32,12 @@ class PrescriptionController extends Controller
         $file = $request->file('prescription');
         $retailer = Retailer::find($request->retailer_id);
 
-        $extractedData = $this->ocrService->extractPrescription($file);
+        $extractedData = $this->aiService->extractPrescription($file);
 
         // Flexible key check
-        $ocrItems = $extractedData['medicines'] ?? $extractedData['line_items'] ?? $extractedData['items'] ?? null;
+        $aiItems = $extractedData['medicines'] ?? $extractedData['line_items'] ?? $extractedData['items'] ?? null;
 
-        if (!$extractedData || is_null($ocrItems)) {
+        if (!$extractedData || is_null($aiItems)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to extract medicines from the prescription.'
@@ -47,7 +47,7 @@ class PrescriptionController extends Controller
         $matchedItems = [];
         $unmatchedItems = [];
 
-        foreach ($ocrItems as $medicine) {
+        foreach ($aiItems as $medicine) {
             $nameStr = $medicine['name'] ?? $medicine['product_name'] ?? $medicine['description'] ?? null;
             $quantity = $medicine['count'] ?? $medicine['quantity'] ?? $medicine['qty'] ?? 1;
 
@@ -99,7 +99,7 @@ class PrescriptionController extends Controller
         return response()->json([
             'success' => true,
             'matched_count' => count($matchedItems),
-            'total_count' => count($ocrItems),
+            'total_count' => count($aiItems),
             'matched_items' => $matchedItems,
             'unmatched_items' => $unmatchedItems
         ]);

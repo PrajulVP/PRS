@@ -8,10 +8,12 @@ use App\Models\FieldStaff;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Traits\OneSignalNotifications;
 use DataTables;
 
 class FieldStaffController extends Controller
 {
+    use OneSignalNotifications;
     public function index(Request $request)
     {
         if ($request->ajax()) {
@@ -140,6 +142,17 @@ class FieldStaffController extends Controller
                 "New Field Staff {$user->name} has been added and requires activation.",
                 route('admin.field-staffs.index')
             ));
+        }
+
+        // OneSignal Push to Admins
+        $adminIds = $admins->pluck('id')->toArray();
+        if (!empty($adminIds)) {
+            $this->sendOneSignalPush(
+                $adminIds,
+                "New Field Staff {$user->name} has been added and requires activation.",
+                ['user_id' => $user->id, 'type' => 'user_approval'],
+                'Field Staff Approval Required'
+            );
         }
 
         if ($request->ajax()) {

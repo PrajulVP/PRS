@@ -37,7 +37,7 @@ class OcrController extends Controller
 
         return response()->json([
             'success' => false,
-            'message' => 'Failed to extract data from the invoice. The external API did not return a valid response.'
+            'message' => 'Failed to extract data from the invoice. The external OCR API did not return a valid response.'
         ], 500);
     }
 }

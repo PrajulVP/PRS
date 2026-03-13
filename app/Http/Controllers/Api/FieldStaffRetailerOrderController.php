@@ -7,10 +7,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\RetailerOrder;
 use App\Traits\HandlesNotifications;
+use App\Traits\OneSignalNotifications;
 
 class FieldStaffRetailerOrderController extends Controller
 {
-    use HandlesNotifications;
+    use HandlesNotifications, OneSignalNotifications;
 
     /**
      * @OA\Get(
@@ -149,10 +150,29 @@ class FieldStaffRetailerOrderController extends Controller
             $salesManager = $user->fieldStaff->salesManager ?? null;
             if ($salesManager && $salesManager->user) {
                 $this->notifyUnique($salesManager->user, new \App\Notifications\OrderActionRequired($order, "Retailer Order #{$order->order_code} assigned to your team is pending your processing.", url('/approvals/retailers'), 'retailer_order'));
+                
+                // OneSignal Push
+                $this->sendOneSignalPush(
+                    [$salesManager->user->id],
+                    "Retailer Order #{$order->order_code} assigned to your team is pending your processing.",
+                    ['order_id' => $order->id, 'type' => 'retailer_order'],
+                    'Order Processing Required'
+                );
             } else {
                 $admins = \App\Models\User::role(['admin', 'superadmin'])->get();
+                $adminIds = $admins->pluck('id')->toArray();
                 foreach ($admins as $admin) {
                     $this->notifyUnique($admin, new \App\Notifications\OrderActionRequired($order, "Retailer Order #{$order->order_code} is pending your processing.", url('/approvals/retailers'), 'retailer_order'));
+                }
+                
+                // OneSignal Push to Admins
+                if (!empty($adminIds)) {
+                    $this->sendOneSignalPush(
+                        $adminIds,
+                        "Retailer Order #{$order->order_code} is pending your processing.",
+                        ['order_id' => $order->id, 'type' => 'retailer_order'],
+                        'Order Processing Required'
+                    );
                 }
             }
         }

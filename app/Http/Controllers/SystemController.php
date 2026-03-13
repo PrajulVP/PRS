@@ -92,33 +92,33 @@ class SystemController extends Controller
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/system/ocr-logs",
+     *     summary="View external OCR API communication logs",
+     *     tags={"Internal System"},
+     *     @OA\Response(response=200, description="Log lines")
+     * )
+     */
     public function getOcrLogs()
     {
         try {
-            $logFile = storage_path('logs/laravel.log');
-            if (!file_exists($logFile)) {
-                return response()->json(['message' => 'Log file not found.'], 404);
+            $logPath = storage_path('logs/laravel.log');
+            if (!file_exists($logPath)) {
+                return response()->json(['message' => 'No logs found'], 200);
             }
 
-            // Read the last 1MB of the log file for performance
-            $size = filesize($logFile);
-            $handle = fopen($logFile, 'r');
-            $readSize = min($size, 1024 * 1024); // 1MB
-            fseek($handle, -$readSize, SEEK_END);
-            $content = fread($handle, $readSize);
-            fclose($handle);
-
-            $lines = explode("\n", $content);
+            $lines = file($logPath);
             $ocrLogs = array_filter($lines, function ($line) {
                 return str_contains($line, 'OCR API');
             });
 
-            return response()->json([
-                'status' => 'success',
-                'logs' => array_values(array_slice($ocrLogs, -50)) // Return last 50 OCR entries
-            ]);
+            return response()->json(array_values($ocrLogs));
         } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 }

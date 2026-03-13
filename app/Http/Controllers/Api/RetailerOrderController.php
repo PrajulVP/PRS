@@ -10,11 +10,12 @@ use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Traits\HandlesNotifications;
+use App\Traits\OneSignalNotifications;
 use Illuminate\Support\Facades\Storage;
 
 class RetailerOrderController extends Controller
 {
-    use HandlesNotifications;
+    use HandlesNotifications, OneSignalNotifications;
 
     /**
      * @OA\Get(
@@ -176,6 +177,14 @@ class RetailerOrderController extends Controller
                         url('/approvals/retailers'),
                         'retailer_order'
                     )
+                );
+
+                // OneSignal Push
+                $this->sendOneSignalPush(
+                    [$order->fieldStaff->user->id],
+                    "New order #{$order->order_code} from {$retailer->user->name} assigned to you.",
+                    ['order_id' => $order->id, 'type' => 'retailer_order'],
+                    'New Retailer Order'
                 );
             }
 
