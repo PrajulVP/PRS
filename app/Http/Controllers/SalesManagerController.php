@@ -13,7 +13,7 @@ use Yajra\DataTables\Facades\DataTables;
 
 class SalesManagerController extends Controller
 {
-    use OneSignalNotifications;
+    use OneSignalNotifications, \App\Traits\HandlesNotifications;
     public function index(Request $request)
     {
         if ($request->ajax()) {
@@ -167,6 +167,8 @@ class SalesManagerController extends Controller
     {
         $salesManager->user->status = 'active';
         $salesManager->user->save();
+
+        $this->clearUserNotifications($salesManager->user->id);
 
         return redirect()->route('admin.sales-managers.index')->with('success', 'Sales Manager activated.');
     }

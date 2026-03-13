@@ -13,7 +13,7 @@ use DataTables;
 
 class FieldStaffController extends Controller
 {
-    use OneSignalNotifications;
+    use OneSignalNotifications, \App\Traits\HandlesNotifications;
     public function index(Request $request)
     {
         if ($request->ajax()) {
@@ -240,6 +240,9 @@ class FieldStaffController extends Controller
         if (Auth::user()->hasAnyRole(['superadmin', 'admin'])) {
             $fieldstaff->user->status = 'active';
             $fieldstaff->user->save();
+
+            $this->clearUserNotifications($fieldstaff->user->id);
+
             return redirect()->route('admin.field-staffs.index')->with('success', 'Field staff activated successfully!');
         }
 

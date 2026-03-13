@@ -1856,7 +1856,7 @@
                 "tags": [
                     "Retailer Orders"
                 ],
-                "summary": "Place a new retailer order",
+                "summary": "Place new retailer order(s). Items will be grouped by distributor_id into separate orders.",
                 "operationId": "403e0546298da0f2f242555703901986",
                 "requestBody": {
                     "required": true,
@@ -1869,10 +1869,26 @@
                                         "items": {
                                             "properties": {
                                                 "product_id": {
-                                                    "type": "integer"
+                                                    "type": "integer",
+                                                    "example": 1
                                                 },
                                                 "quantity": {
-                                                    "type": "integer"
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "unit": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "Nos",
+                                                        "Box",
+                                                        "Carton"
+                                                    ],
+                                                    "example": "Box"
+                                                },
+                                                "distributor_id": {
+                                                    "type": "integer",
+                                                    "example": 2,
+                                                    "nullable": true
                                                 }
                                             },
                                             "type": "object"
@@ -1880,6 +1896,7 @@
                                     },
                                     "notes": {
                                         "type": "string",
+                                        "example": "Urgent order",
                                         "nullable": true
                                     }
                                 },
@@ -1890,10 +1907,31 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Order placed successfully"
+                        "description": "Orders placed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "orders": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "403": {
                         "description": "Unauthorized"
+                    },
+                    "500": {
+                        "description": "Error creating orders (e.g. insufficient stock)"
                     }
                 },
                 "security": [

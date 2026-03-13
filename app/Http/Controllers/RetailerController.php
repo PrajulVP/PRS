@@ -18,7 +18,7 @@ use DataTables;
 
 class RetailerController extends Controller
 {
-    use OneSignalNotifications;
+    use OneSignalNotifications, HandlesNotifications;
     public function index(Request $request)
     {
         if ($request->ajax()) {
@@ -256,6 +256,8 @@ class RetailerController extends Controller
 
         $retailer->user->status = 'active';
         $retailer->user->save();
+
+        $this->clearUserNotifications($retailer->user->id);
 
         return redirect()->back()->with('success', 'Retailer activated successfully!');
     }

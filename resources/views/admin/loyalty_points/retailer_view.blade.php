@@ -1,330 +1,189 @@
 @extends('layouts.admin')
 
 @section('page-body')
-
     <style>
-        .page-title {
-            padding-top: 0px !important;
+        /* PREMIUM 3D GOLD COIN (Flipkart Style) - Smaller Size */
+        .coin-wrapper {
+            perspective: 1000px;
+            padding: 5px;
+            display: inline-block;
+        }
+        
+        .gold-coin-3d {
+            width: 70px;
+            height: 70px;
+            background: radial-gradient(circle at 30% 30%, #fff7bc 0%, #ffd700 30%, #daa520 70%, #b8860b 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 
+                0 6px 12px rgba(0,0,0,0.15),
+                inset 0 -3px 6px rgba(0,0,0,0.3),
+                inset 0 3px 6px rgba(255,255,255,0.8);
+            border: 3px solid #f9a825;
+            animation: coinFloat3D 4s ease-in-out infinite;
+            transform-style: preserve-3d;
         }
 
-        @keyframes pageEnter {
-            from {
-                opacity: 0;
-                transform: translateY(18px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .gold-coin-3d::after {
+            content: '';
+            position: absolute;
+            top: 5%;
+            left: 5%;
+            right: 5%;
+            bottom: 5%;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            pointer-events: none;
         }
 
-        .page-animate-in {
-            animation: pageEnter 0.45s ease both;
+        .gold-coin-3d i {
+            font-size: 2rem;
+            color: rgba(0,0,0,0.4);
+            z-index: 2;
+            animation: iconPulse 2s ease-in-out infinite;
+            font-weight: 900;
+        }
+
+        @keyframes coinFloat3D {
+            0%, 100% { transform: translateY(0) rotateY(0deg); }
+            50% { transform: translateY(-10px) rotateY(10deg); }
+        }
+        @keyframes iconPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.9; }
+        }
+
+        /* Entrance Animations */
+        .entrance-animate {
+            animation: slideUpFade 0.6s ease-out forwards;
+            opacity: 0;
+        }
+        @keyframes slideUpFade {
+            from { transform: translateY(25px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+
+        /* DataTable Polished Padding & Alignment */
+        #retailer-points-table thead th {
+            padding: 20px 25px !important;
+            background: var(--med-bg-card, #fff);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--med-border, #f1f5f9) !important;
+        }
+        #retailer-points-table tbody td {
+            padding: 22px 25px !important;
+            border-bottom: 1px solid var(--med-border, #f1f5f9) !important;
+            vertical-align: middle !important;
+        }
+        
+        .dt-buttons {
+            padding: 20px 0 !important;
+            display: flex !important;
+            gap: 12px !important;
+            align-items: center;
+        }
+
+        .dataTables_filter {
+            padding: 15px 0 !important;
+        }
+        
+        .dataTables_filter input {
+            border-radius: 10px !important;
+            padding: 8px 15px !important;
+            border: 1px solid var(--med-border, #dee2e6) !important;
+            outline: none !important;
+        }
+        
+        /* Updated Points Card Style */
+        .loyalty-widget-card {
+            background: linear-gradient(135deg, #00497a 0%, #002b5c 100%) !important;
+            border-radius: 20px;
+            color: #fff !important;
+        }
+        .loyalty-widget-card .text-muted {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+        .loyalty-widget-card h1 {
+            color: #fff !important;
         }
     </style>
+
     <div class="container-fluid">
         <div class="page-title">
-            <div class="row">
+            <div class="row align-items-center">
                 <div class="col-6">
-                    <h3>Loyalty Points</h3>
+                    <h3 class="fw-bold m-0" style="color: var(--med-text-main, #1e293b);">Loyalty Points</h3>
+                    <p class="text-muted small m-0">Dynamic tracking of your earned rewards</p>
                 </div>
                 <div class="col-6 text-end">
-                    <i class="fa fa-coins text-warning fa-3x"></i>
+                    <div class="p-2 bg-white shadow-sm d-inline-block rounded-circle" style="background: var(--med-bg-card) !important;">
+                        <i class="fa fa-coins text-warning fa-lg"></i>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="container-fluid page-animate-in">
+    <div class="container-fluid">
         <div class="row">
             <!-- Total Points Card -->
-            <div class="col-sm-6 col-xl-3 mb-4 entrance-delay-1">
-                <div
-                    class="card bg-warning text-white widget-visitor-card shadow-sm border-0 overflow-hidden position-relative loyalty-card">
-                    <div class="card-body text-center py-2 position-relative z-index-1">
-                        <div class="coin-container mb-2">
-                            <i class="fa fa-coins text-white fa-3x animate-bounce"></i>
+            <div class="col-xl-3 col-sm-6 mb-4 entrance-animate delay-1">
+                <div class="card shadow-sm border-0 h-100 loyalty-widget-card overflow-hidden">
+                    <div class="card-body text-center py-4">
+                        <div class="coin-wrapper mb-3">
+                            <div class="gold-coin-3d">
+                                <i class="fa fa-dollar-sign"></i>
+                            </div>
                         </div>
-                        <h1 class="fw-bold mb-0 mt-0 text-shadow text-nowrap" style="font-size: 3rem;">
-                            {{ number_format($totalPoints, 2) }}
-                        </h1>
-                        <h6 class="text-uppercase font-weight-bold m-2">Total Points Earned</h6>
+                        <h1 class="fw-800 mb-1 display-5">{{ number_format($totalPoints, 2) }}</h1>
+                        <p class="text-muted text-uppercase mb-0 fw-bold small" style="letter-spacing: 0.5px;">Current Loyalty Points</p>
                     </div>
-                    <!-- Decorative huge icon -->
-                    <i class="fa fa-coins font-warning"
-                        style="font-size: 150px; opacity: 0.15; position: absolute; right: -20px; bottom: -20px; transform: rotate(-15deg);"></i>
-
-                    <!-- Falling Coins Container -->
-                    <div id="falling-coins-container"></div>
                 </div>
             </div>
 
-            <style>
-                .loyalty-card {
-                    background: linear-gradient(135deg, rgb(131, 204, 97) 0%, #35c26b 100%) !important;
-                    transition: transform 0.3s;
-                    animation: cardGlow 2.5s ease-in-out infinite;
-                }
-
-                @keyframes cardGlow {
-
-                    0%,
-                    100% {
-                        box-shadow: 0 0 12px 2px rgba(56, 239, 125, 0.4);
-                    }
-
-                    50% {
-                        box-shadow: 0 0 28px 8px rgba(56, 239, 125, 0.75);
-                    }
-                }
-
-                .loyalty-card:hover {
-                    transform: translateY(-5px);
-                }
-
-                .animate-bounce {
-                    animation: bounce 2s infinite;
-                }
-
-                @keyframes bounce {
-
-                    0%,
-                    20%,
-                    50%,
-                    80%,
-                    100% {
-                        transform: translateY(0);
-                    }
-
-                    40% {
-                        transform: translateY(-10px);
-                    }
-
-                    60% {
-                        transform: translateY(-5px);
-                    }
-                }
-
-                .text-shadow {
-                    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-                }
-
-                /* Falling Coins Animation - Slower & More Graceful */
-                .falling-coin {
-                    position: absolute;
-                    top: -50px;
-                    width: 20px;
-                    height: 20px;
-                    background-color: #ffd700;
-                    border-radius: 50%;
-                    border: 2px solid #fff;
-                    box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
-                    animation: fall linear infinite;
-                    z-index: 0;
-                    opacity: 0.6;
-                }
-
-                .falling-coin::after {
-                    content: '₹';
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    font-size: 10px;
-                    color: #b8860b;
-                    font-weight: bold;
-                }
-
-                @keyframes fall {
-                    0% {
-                        transform: translateY(0) rotate(0deg);
-                        opacity: 0;
-                    }
-
-                    10% {
-                        opacity: 0.7;
-                    }
-
-                    90% {
-                        opacity: 0.7;
-                    }
-
-                    100% {
-                        transform: translateY(400px) rotate(720deg);
-                        opacity: 0;
-                    }
-                }
-
-                /* Page Entry Animations */
-                .entrance-delay-1 {
-                    animation: entranceSlideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-                    opacity: 0;
-                }
-
-                .entrance-delay-2 {
-                    animation: entranceSlideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards;
-                    opacity: 0;
-                }
-
-                @keyframes entranceSlideUp {
-                    from {
-                        transform: translateY(30px);
-                        opacity: 0;
-                    }
-
-                    to {
-                        transform: translateY(0);
-                        opacity: 1;
-                    }
-                }
-            </style>
-
-            {{-- Confetti Canvas Overlay --}}
-            <canvas id="confetti-canvas"
-                style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;"></canvas>
-
-            <script>
-                (function () {
-                    // --- Falling coins inside card ---
-                    document.addEventListener("DOMContentLoaded", function () {
-                        const container = document.getElementById('falling-coins-container');
-                        const coinCount = 12;
-                        for (let i = 0; i < coinCount; i++) {
-                            let coin = document.createElement('div');
-                            coin.classList.add('falling-coin');
-                            coin.style.left = Math.random() * 100 + '%';
-                            coin.style.animationDuration = (Math.random() * 7 + 7) + 's';
-                            coin.style.animationDelay = (Math.random() * 8) + 's';
-                            let size = Math.random() * 8 + 12;
-                            coin.style.width = size + 'px';
-                            coin.style.height = size + 'px';
-                            container.appendChild(coin);
-                        }
-                    });
-
-                    // --- Confetti burst on page load ---
-                    const canvas = document.getElementById('confetti-canvas');
-                    const ctx = canvas.getContext('2d');
-                    canvas.width = window.innerWidth;
-                    canvas.height = window.innerHeight;
-
-                    const colors = ['#11998e', '#38ef7d', '#ffd700', '#ff6b6b', '#a18cd1', '#fbc2eb', '#fff', '#43e97b'];
-                    const shapes = ['circle', 'rect', 'triangle'];
-                    let pieces = [];
-                    let running = true;
-
-                    for (let i = 0; i < 180; i++) {
-                        pieces.push({
-                            x: Math.random() * canvas.width,
-                            y: -20 - Math.random() * 300,
-                            r: Math.random() * 7 + 4,
-                            d: Math.random() * 3 + 1.5,
-                            color: colors[Math.floor(Math.random() * colors.length)],
-                            shape: shapes[Math.floor(Math.random() * shapes.length)],
-                            tilt: Math.random() * 10 - 5,
-                            tiltAngle: 0,
-                            tiltSpeed: Math.random() * 0.07 + 0.03,
-                            angle: Math.random() * Math.PI * 2,
-                            spin: (Math.random() - 0.5) * 0.15,
-                            opacity: 1,
-                        });
-                    }
-
-                    let startTime = null;
-                    const duration = 4000;
-
-                    function draw(ts) {
-                        if (!startTime) startTime = ts;
-                        const elapsed = ts - startTime;
-                        const fade = Math.max(0, 1 - (elapsed - 2500) / 1500);
-
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                        pieces.forEach(p => {
-                            ctx.save();
-                            ctx.globalAlpha = p.opacity * fade;
-                            ctx.fillStyle = p.color;
-                            ctx.translate(p.x, p.y);
-                            ctx.rotate(p.angle);
-                            if (p.shape === 'circle') {
-                                ctx.beginPath();
-                                ctx.arc(0, 0, p.r, 0, Math.PI * 2);
-                                ctx.fill();
-                            } else if (p.shape === 'rect') {
-                                ctx.fillRect(-p.r, -p.r / 2, p.r * 2, p.r);
-                            } else {
-                                ctx.beginPath();
-                                ctx.moveTo(0, -p.r);
-                                ctx.lineTo(p.r, p.r);
-                                ctx.lineTo(-p.r, p.r);
-                                ctx.closePath();
-                                ctx.fill();
-                            }
-                            ctx.restore();
-
-                            p.y += p.d;
-                            p.x += Math.sin(p.angle) * 1.2;
-                            p.angle += p.spin;
-                            p.tiltAngle += p.tiltSpeed;
-                            p.tilt = Math.sin(p.tiltAngle) * 12;
-                        });
-
-                        if (elapsed < duration && fade > 0) {
-                            requestAnimationFrame(draw);
-                        } else {
-                            ctx.clearRect(0, 0, canvas.width, canvas.height);
-                            canvas.style.display = 'none';
-                        }
-                    }
-
-                    requestAnimationFrame(draw);
-                })();
-            </script>
-
             <!-- Transaction History -->
-            <div class="col-sm-12 entrance-delay-2">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-white py-2 border-bottom">
-                        <h5 class="card-title mb-0"><i class="fa fa-history me-2"></i>Points History</h5>
+            <div class="col-xl-12 entrance-animate delay-2">
+                <div class="card shadow-sm border-0" style="border-radius: 20px; overflow: hidden; background: var(--med-bg-card);">
+                    <div class="card-header bg-white py-3 px-4 border-bottom" style="background: var(--med-bg-card) !important;">
+                        <h5 class="card-title mb-0 fw-bold" style="color: var(--med-text-main);"><i class="fa fa-history me-2"></i>Points Transaction History</h5>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table id="retailer-points-table" class="display table table-hover align-middle"
-                                style="width:100%">
-                                <thead class="table">
+                            <table id="retailer-points-table" class="display table table-hover align-middle mb-0" style="width:100%">
+                                <thead class="bg-light">
                                     <tr>
-                                        <th>Date</th>
-                                        <th>Order Reference</th>
-                                        <th>Product Summary</th>
-                                        <th>Points Earned</th>
-                                        <th>Status</th>
+                                        <th class="text-muted small text-uppercase">Finalized Date</th>
+                                        <th class="text-muted small text-uppercase">Reference #</th>
+                                        <th class="text-muted small text-uppercase">Items Summary</th>
+                                        <th class="text-muted small text-uppercase">Points Earned</th>
+                                        <th class="text-center text-muted small text-uppercase">Status</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody style="color: var(--med-text-main);">
                                     @forelse($orders as $order)
-                                                                    <tr>
-                                                                        <td>{{ $order->updated_at->format('d M Y, h:i A') }}</td>
-                                                                        <td>
-                                                                            <span class="fw-bold text-primary">#{{ $order->order_code }}</span>
-                                                                        </td>
-                                                                        <td>
-                                                                            {!! $order->items->map(function ($item) {
-                                            return ($item->product ? $item->product->product_name : 'Unknown') . ' (' . $item->quantity . ' qty)';
-                                        })->implode('<br>') !!}
-                                                                        </td>
-                                                                        <td>
-                                                                            <span class="badge bg-warning text-dark fs-6">
-                                                                                {{ number_format($order->loyalty_points_earned, 2) }}
-                                                                            </span>
-                                                                        </td>
-                                                                        <td>
-                                                                            <span class="badge bg-success">
-                                                                                {{ ucfirst(str_replace('_', ' ', $order->status)) }}
-                                                                            </span>
-                                                                        </td>
-                                                                    </tr>
+                                        <tr>
+                                            <td>{{ $order->updated_at->format('d M Y, h:i A') }}</td>
+                                            <td><span class="fw-bold text-primary">#{{ $order->order_code }}</span></td>
+                                            <td class="small">
+                                                {!! $order->items->map(function ($item) {
+                                                    return ($item->product ? $item->product->product_name : 'Unknown') . ' (' . $item->quantity . ' qty)';
+                                                })->implode('<br>') !!}
+                                            </td>
+                                            <td class="fw-bold">{{ number_format($order->loyalty_points_earned, 2) }}</td>
+                                            <td class="text-center">
+                                                <span class="badge {{ $order->status === 'delivered' ? 'bg-success' : 'bg-info' }} text-uppercase" style="font-size: 10px;">
+                                                    {{ str_replace('_', ' ', $order->status) }}
+                                                </span>
+                                            </td>
+                                        </tr>
                                     @empty
+                                        <tr><td colspan="5" class="text-center py-5">No loyalty points recorded yet.</td></tr>
                                     @endforelse
                                 </tbody>
                             </table>
@@ -337,54 +196,30 @@
 @endsection
 
 @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script>
         $(document).ready(function () {
-            let retailerName = '{{ $retailer->shop_name }} ({{ $retailer->user->name }})';
-            let exportTitle = 'Loyalty Points History - ' + retailerName;
-
             $('#retailer-points-table').DataTable({
-                // Let it look similar to the admin datatables with exports
-                dom: "<'row mb-3 d-flex align-items-center'<'col-sm-12 col-md-4'l><'col-sm-12 col-md-4 text-center'B><'col-sm-12 col-md-4'f>>" +
-                    "<'row '<'col-sm-12'tr>>" +
-                    "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
-                buttons: {
-                    dom: {
-                        button: {
-                            className: 'btn btn-sm btn-icon'
-                        }
-                    },
-                    buttons: [{
-                        extend: 'copy',
-                        className: 'btn btn-secondary btn-sm',
-                        text: '<i class="fa fa-copy"></i> Copy'
-                    },
-                    {
-                        extend: 'csv',
-                        className: 'btn btn-info btn-sm text-white',
-                        text: '<i class="fa fa-file-csv"></i> CSV'
-                    },
-                    {
-                        extend: 'excel',
-                        className: 'btn btn-success btn-sm',
-                        text: '<i class="fa fa-file-excel"></i> Excel'
-                    },
-                    {
-                        extend: 'pdf',
-                        className: 'btn btn-danger btn-sm',
-                        text: '<i class="fa fa-file-pdf"></i> PDF'
-                    },
-                    {
-                        extend: 'print',
-                        className: 'btn btn-dark btn-sm',
-                        text: '<i class="fa fa-print"></i> Print'
-                    }
-                    ]
-                },
-                order: [[0, 'desc']], // Order by Date descending initially
+                dom: "<'row'<'col-12'B>><'row'<'col-12'f>><'row'<'col-12'tr>><'row'<'col-5'i><'col-7'p>>",
+                buttons: [
+                    { extend: 'copy', className: 'btn btn-xs btn-outline-secondary' },
+                    { extend: 'csv', className: 'btn btn-xs btn-outline-secondary' },
+                    { extend: 'excel', className: 'btn btn-xs btn-outline-secondary' }
+                ],
+                order: [[0, 'desc']],
                 pageLength: 10,
                 language: {
-                    emptyTable: "<i class='fa fa-info-circle me-2'></i> No points earned yet."
+                    search: "_INPUT_",
+                    searchPlaceholder: "Filter transactions..."
                 }
+            });
+
+            // Trigger confetti on page load
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#ffd700', '#daa520', '#b8860b']
             });
         });
     </script>

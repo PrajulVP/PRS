@@ -73,6 +73,7 @@ class RetailerOrderController extends Controller
                             'product_id' => $item->product_id,
                             'product_name' => $item->product->product_name ?? 'N/A',
                             'quantity'   => $item->quantity,
+                            'unit'       => $item->unit ?? 'Nos',
                         ];
                     }),
                     'invoice_url'    => $order->invoice_path
@@ -91,21 +92,31 @@ class RetailerOrderController extends Controller
     /**
      * @OA\Post(
      *     path="/api/retailer-orders",
-     *     summary="Place a new retailer order",
+     *     summary="Place new retailer order(s). Items will be grouped by distributor_id into separate orders.",
      *     tags={"Retailer Orders"},
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
      *             @OA\Property(property="items", type="array", @OA\Items(
-     *                 @OA\Property(property="product_id", type="integer"),
-     *                 @OA\Property(property="quantity", type="integer")
+     *                 @OA\Property(property="product_id", type="integer", example=1),
+     *                 @OA\Property(property="quantity", type="integer", example=10),
+     *                 @OA\Property(property="unit", type="string", enum={"Nos", "Box", "Carton"}, example="Box"),
+     *                 @OA\Property(property="distributor_id", type="integer", nullable=true, example=2)
      *             )),
-     *             @OA\Property(property="notes", type="string", nullable=true)
+     *             @OA\Property(property="notes", type="string", nullable=true, example="Urgent order")
      *         )
      *     ),
-     *     @OA\Response(response=201, description="Order placed successfully"),
-     *     @OA\Response(response=403, description="Unauthorized")
+     *     @OA\Response(
+     *         response=201, 
+     *         description="Orders placed successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="orders", type="array", @OA\Items(type="object"))
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Unauthorized"),
+     *     @OA\Response(response=500, description="Error creating orders (e.g. insufficient stock)")
      * )
      */
     public function store(Request $request)
@@ -114,6 +125,8 @@ class RetailerOrderController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
+            'items.*.unit' => 'nullable|string|in:Nos,Box,Carton',
+            'items.*.distributor_id' => 'nullable|exists:distributors,id',
             'notes' => 'nullable|string',
         ]);
 
@@ -123,80 +136,115 @@ class RetailerOrderController extends Controller
         }
 
         $retailer = $user->retailer;
+        $createdOrders = [];
 
         DB::beginTransaction();
         try {
-            $order = RetailerOrder::create([
-                'retailer_id' => $retailer->id,
-                'distributor_id' => null, // Needs assignment by admin/system later
-                'fieldstaff_id' => $retailer->field_staff_id,
-                'order_code' => 'ORD-' . strtoupper(uniqid()),
-                'status' => RetailerOrder::STATUS_PENDING,
-                'notes' => $request->notes,
-                'total_amount' => 0,
-                'total_items' => 0,
-                'total_quantity' => 0,
-                'placed_at' => now(),
-            ]);
+            // Group items by distributor_id
+            $itemsByDistributor = collect($request->items)->groupBy('distributor_id');
 
-            $totalAmount = 0;
-            $totalItems = 0;
-            $totalQuantity = 0;
+            foreach ($itemsByDistributor as $distributorId => $items) {
+                $distributor = $distributorId ? \App\Models\Distributor::find($distributorId) : null;
 
-            foreach ($request->items as $itemData) {
-                $product = Product::findOrFail($itemData['product_id']);
-                $price = $product->ptr; // Retailers buy at PTR
-                $qty = $itemData['quantity'];
-                $subtotal = $qty * $price;
-
-                $order->items()->create([
-                    'product_id' => $product->id,
-                    'quantity' => $qty,
-                    'unit_price' => $price,
-                    'total_amount' => $subtotal,
+                $order = RetailerOrder::create([
+                    'retailer_id' => $retailer->id,
+                    'distributor_id' => $distributor ? $distributor->id : null,
+                    'fieldstaff_id' => $retailer->field_staff_id,
+                    'order_code' => 'ORD-' . strtoupper(uniqid()),
+                    'status' => RetailerOrder::STATUS_PENDING,
+                    'notes' => $request->notes,
+                    'total_amount' => 0,
+                    'total_items' => 0,
+                    'total_quantity' => 0,
+                    'placed_at' => now(),
                 ]);
 
-                $totalAmount += $subtotal;
-                $totalItems++;
-                $totalQuantity += $qty;
-            }
+                $totalAmount = 0;
+                $totalItemsCount = 0;
+                $totalQuantityNos = 0;
 
-            $order->update([
-                'total_amount' => $totalAmount,
-                'total_items' => $totalItems,
-                'total_quantity' => $totalQuantity
-            ]);
+                foreach ($items as $itemData) {
+                    $product = Product::findOrFail($itemData['product_id']);
+                    $unit = $itemData['unit'] ?? 'Nos';
+                    $qty = (int)$itemData['quantity'];
 
-            // Notify Field Staff
-            if ($order->fieldStaff && $order->fieldStaff->user) {
-                $this->notifyUnique(
-                    $order->fieldStaff->user,
-                    new \App\Notifications\OrderActionRequired(
-                        $order,
-                        "New order #{$order->order_code} from {$retailer->user->name} assigned to you.",
-                        url('/approvals/retailers'),
-                        'retailer_order'
-                    )
-                );
+                    // Conversion logic (to Nos/Base units)
+                    $multiplier = 1;
+                    if ($unit === 'Box') {
+                        $multiplier = (int)($product->box_size ?? 1);
+                    } elseif ($unit === 'Carton') {
+                        $multiplier = (int)($product->box_size ?? 1) * (int)($product->carton_size ?? 1);
+                    }
 
-                // OneSignal Push
-                $this->sendOneSignalPush(
-                    [$order->fieldStaff->user->id],
-                    "New order #{$order->order_code} from {$retailer->user->name} assigned to you.",
-                    ['order_id' => $order->id, 'type' => 'retailer_order'],
-                    'New Retailer Order'
-                );
+                    $totalQtyNos = $qty * $multiplier;
+
+                    // Stock Check
+                    if ($distributor) {
+                        $totalStock = DB::table('inventories')
+                            ->where('distributor_id', $distributor->id)
+                            ->where('product_id', $product->id)
+                            ->sum('stock');
+
+                        if ($totalStock < $totalQtyNos) {
+                            throw new \Exception("Insufficient stock for product '{$product->product_name}' at selected distributor.");
+                        }
+                    }
+
+                    $price = (float)$product->ptr; // Retailers buy at PTR
+                    $subtotal = $totalQtyNos * $price;
+
+                    $order->items()->create([
+                        'product_id' => $product->id,
+                        'quantity' => $qty,
+                        'unit' => $unit,
+                        'unit_price' => $price,
+                        'total_amount' => $subtotal,
+                    ]);
+
+                    $totalAmount += $subtotal;
+                    $totalItemsCount++;
+                    $totalQuantityNos += $totalQtyNos;
+                }
+
+                $order->update([
+                    'total_amount' => $totalAmount,
+                    'total_items' => $totalItemsCount,
+                    'total_quantity' => $totalQuantityNos
+                ]);
+
+                // Notify Field Staff
+                if ($order->fieldStaff && $order->fieldStaff->user) {
+                    $this->notifyUnique(
+                        $order->fieldStaff->user,
+                        new \App\Notifications\OrderActionRequired(
+                            $order,
+                            "New order #{$order->order_code} from {$retailer->shop_name} assigned to you.",
+                            url('/approvals/retailers'),
+                            'retailer_order'
+                        )
+                    );
+
+                    // OneSignal Push
+                    $this->sendOneSignalPush(
+                        [$order->fieldStaff->user->id],
+                        "New order #{$order->order_code} from {$retailer->shop_name} assigned to you.",
+                        ['order_id' => $order->id, 'type' => 'retailer_order'],
+                        'New Retailer Order'
+                    );
+                }
+
+                $createdOrders[] = $order->load('items.product');
             }
 
             DB::commit();
             return response()->json([
-                'message' => 'Order placed.',
-                'order' => $order->load('items.product')
+                'message' => 'Orders placed successfully.',
+                'orders' => $createdOrders
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('API Retailer Order creation failed: ' . $e->getMessage());
-            return response()->json(['error' => 'Unable to place order.'], 500);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 

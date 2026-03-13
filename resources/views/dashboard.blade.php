@@ -590,13 +590,16 @@
                             </div>
                             <div class="col-sm-6 col-xl-3 col-lg-6 mb-4">
                                 <div class="card o-hidden border-0 med-widget-card h-100"
-                                    style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%) !important; cursor: pointer;"
+                                    style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important; cursor: pointer;"
                                     onclick="window.location.href='{{ route('admin.loyalty-points.index') }}'">
                                     <div class="card-body">
                                         <div class="media static-top-widget">
-                                            <div class="media-body m-2"><span class="m-0 text-uppercase font-weight-bold">Global
-                                                    Loyalty Pts</span>
-                                                <h4 class="mb-0 counter mt-2">{{ number_format($totalLoyaltyPoints) }}</h4>
+                                            <div class="media-body m-2">
+                                                <span class="m-0 text-uppercase font-weight-bold">Top Loyalty Retailer</span>
+                                                <h4 class="mb-0 mt-2" style="font-size: 1.1rem; line-height: 1.2; color: #fff !important;">
+                                                    {{ $topLoyaltyRetailer->shop_name ?? 'No Retailer' }}
+                                                </h4>
+                                                <small class="text-white opacity-75">{{ number_format($topLoyaltyRetailer->dynamic_loyalty_points ?? 0) }} Points</small>
                                             </div>
                                             <i data-feather="award"></i>
                                         </div>

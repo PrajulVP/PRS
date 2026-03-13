@@ -15,7 +15,7 @@ use Yajra\DataTables\DataTables;
 
 class DistributorController extends Controller
 {
-    use OneSignalNotifications;
+    use OneSignalNotifications, \App\Traits\HandlesNotifications;
     public function index(Request $request)
     {
         if ($request->ajax()) {
@@ -193,6 +193,8 @@ class DistributorController extends Controller
     {
         $distributor->user->status = 'active';
         $distributor->user->save();
+
+        $this->clearUserNotifications($distributor->user->id);
 
         return redirect()->route('admin.distributors.index')->with('success', 'Distributor activated successfully!');
     }

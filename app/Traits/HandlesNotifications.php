@@ -13,9 +13,21 @@ trait HandlesNotifications
     {
         DB::table('notifications')
             ->whereNull('read_at')
-            ->where('data->order_id', $orderId)
+            ->where('data->order_id', (int)$orderId)
             ->where('data->order_type', $orderType)
-            ->delete();
+            ->update(['read_at' => now()]);
+    }
+
+    /**
+     * Mark unread user-approval notifications as read for specific user.
+     */
+    protected function clearUserNotifications($userId)
+    {
+        DB::table('notifications')
+            ->whereNull('read_at')
+            ->where('type', \App\Notifications\UserApprovalRequired::class)
+            ->where('data->user_id', (int)$userId)
+            ->update(['read_at' => now()]);
     }
 
     /**
