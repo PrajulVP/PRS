@@ -195,3 +195,4 @@ Route::prefix('system')->name('system.')->group(function () {
     Route::get('optimize', [SystemController::class, 'optimize'])->name('optimize');
     Route::get('ocr-logs', [SystemController::class, 'getOcrLogs'])->name('ocr.logs');
 });
+

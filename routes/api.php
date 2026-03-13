@@ -14,7 +14,7 @@ Route::post('login', [AuthApiController::class, 'login']);
 Route::middleware('auth:api')->group(function () {
     Route::get('profile', [AuthApiController::class, 'profile']);
     Route::post('profile/update', [AuthApiController::class, 'updateProfile']);
-    Route::post('user/update-player-id', [\App\Http\Controllers\Api\UserApiController::class, 'updatePlayerId']);
+    Route::post('user/player-id', [\App\Http\Controllers\Api\UserApiController::class, 'updatePlayerId']);
     Route::post('logout', [AuthApiController::class, 'logout']);
     Route::get('retailer-orders', [RetailerOrderController::class, 'index']);
     Route::post('retailer-orders', [RetailerOrderController::class, 'store']);

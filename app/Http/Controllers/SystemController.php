@@ -92,14 +92,6 @@ class SystemController extends Controller
         }
     }
 
-    /**
-     * @OA\Get(
-     *     path="/system/ocr-logs",
-     *     summary="View external OCR API communication logs",
-     *     tags={"Internal System"},
-     *     @OA\Response(response=200, description="Log lines")
-     * )
-     */
     public function getOcrLogs()
     {
         try {
