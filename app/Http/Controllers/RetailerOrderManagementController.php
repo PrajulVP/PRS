@@ -464,7 +464,6 @@ class RetailerOrderManagementController extends Controller
                 return response()->json(['error' => 'This order is not assigned to your distributorship.'], 403);
             }
         } elseif (!$user->hasAnyRole(['admin', 'superadmin', 'salesmanager', 'fieldstaff'])) {
-            // Also allow fieldstaff to reject IF it's in a state they can act on (e.g. pending)
             return response()->json(['error' => 'Unauthorized action.'], 403);
         }
 

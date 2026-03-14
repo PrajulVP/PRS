@@ -1310,12 +1310,11 @@
                                         "type": "string",
                                         "enum": [
                                             "processing",
-                                            "rejected",
-                                            "cancelled"
+                                            "rejected"
                                         ]
                                     },
                                     "cancellation_reason": {
-                                        "description": "Required if status is cancelled",
+                                        "description": "Required if status is rejected",
                                         "type": "string"
                                     }
                                 },

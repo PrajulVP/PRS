@@ -103,8 +103,8 @@ class FieldStaffRetailerOrderController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             @OA\Property(property="status", type="string", enum={"processing", "rejected", "cancelled"}),
-     *             @OA\Property(property="cancellation_reason", type="string", description="Required if status is cancelled")
+     *             @OA\Property(property="status", type="string", enum={"processing", "rejected"}),
+     *             @OA\Property(property="cancellation_reason", type="string", description="Required if status is rejected")
      *         )
      *     ),
      *     @OA\Response(response=200, description="Order status updated")
@@ -116,8 +116,8 @@ class FieldStaffRetailerOrderController extends Controller
         if (!$user->hasRole('fieldstaff')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $request->validate([
-            'status' => 'required|in:processing,rejected,cancelled',
-            'cancellation_reason' => 'required_if:status,cancelled|string|nullable'
+            'status' => 'required|in:processing,rejected',
+            'cancellation_reason' => 'required_if:status,rejected|string|nullable'
         ]);
 
         $fieldStaffId = $user->fieldStaff->id;
@@ -132,13 +132,8 @@ class FieldStaffRetailerOrderController extends Controller
             return response()->json(['error' => 'Only pending orders can be updated.'], 400);
         }
 
-        // Only the field staff who placed it can cancel it
-        if ($request->status === RetailerOrder::STATUS_CANCELLED && $order->fieldstaff_id !== $fieldStaffId) {
-            return response()->json(['error' => 'You can only cancel orders you placed.'], 403);
-        }
-
         $order->status = $request->status;
-        if ($request->status === RetailerOrder::STATUS_CANCELLED || $request->status === RetailerOrder::STATUS_REJECTED) {
+        if ($request->status === RetailerOrder::STATUS_REJECTED) {
             $order->cancellation_reason = $request->cancellation_reason;
         }
         $order->save();

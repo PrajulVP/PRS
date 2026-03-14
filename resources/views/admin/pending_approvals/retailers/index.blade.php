@@ -642,6 +642,7 @@
                     </div>
                     <div class="modal-footer bg-light">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger px-4 reject-retailer-btn" style="margin-right: auto;">Reject Order</button>
                         <button type="submit" class="btn btn-success px-4">Approve</button>
                     </div>
                 </form>
@@ -811,6 +812,7 @@
                     </div>
                     <div class="modal-footer bg-light border-top-0 py-3">
                         <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger px-4 fw-bold reject-retailer-btn" id="btnRejectDistributor" style="margin-right: auto;">Reject Order</button>
                         <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm"
                             id="btnSubmitDistributorApprove">Approve & Allocate Stock</button>
                     </div>
@@ -1232,7 +1234,20 @@
 
             // Reject Retailer Order handler
             $(document).on('click', '.reject-retailer-btn', function () {
-                $('#reject_retailer_order_id').val($(this).data('id'));
+                let id = $(this).data('id');
+                // If clicked from within an approval modal, grab the ID from the hidden input
+                if (!id) {
+                    id = $('#approve_retailer_order_id').val() || $('#dist_order_id').val();
+                }
+                
+                if (!id) {
+                    showToast('error', 'Unable to identify order ID.');
+                    return;
+                }
+
+                $('#reject_retailer_order_id').val(id);
+                // Hide any existing modal before showing rejection modal
+                $('.modal.show').modal('hide');
                 $('#rejectRetailerOrderModal').modal('show');
             });
 

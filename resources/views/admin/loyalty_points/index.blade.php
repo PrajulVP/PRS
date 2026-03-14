@@ -220,16 +220,17 @@
                                 <option value="">-- Quick Search Retailer --</option>
                                 @foreach($retailers as $r)
                                     <option value="{{ $r->id }}" data-points="{{ number_format($r->dynamic_loyalty_points, 2) }}">
-                                        {{ $r->shop_name }} ({{ $r->user->name }})
+                                        {{ $r->shop_name }} ({{ $r->user->name ?? 'N/A' }}) - {{ number_format($r->dynamic_loyalty_points, 2) }} pts
                                     </option>
                                 @endforeach
                             </select>
                         </div>
                     </div>
                     <div id="overview-table-controls" class="table-controls-row">
-                        @if(auth()->user()->hasAnyRole(['admin', 'superadmin']))
+                        @if(auth()->user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
                         <div class="d-flex align-items-center gap-3">
                             <form id="filter-form" action="{{ route('admin.loyalty-points.index') }}" method="GET" class="d-flex align-items-center gap-3 mb-0">
+                                @if(auth()->user()->hasAnyRole(['admin', 'superadmin']))
                                 <div class="position-relative" style="min-width: 220px;">
                                     <select id="sm-filter" name="sales_manager_id" class="form-select select2-basic filter-select">
                                         <option value="">All Sales Managers</option>
@@ -245,6 +246,7 @@
                                         </button>
                                     @endif
                                 </div>
+                                @endif
                                 <div class="position-relative" style="min-width: 220px;">
                                     <select id="fs-filter" name="field_staff_id" class="form-select select2-basic filter-select">
                                         <option value="">All Field Staff</option>
@@ -271,18 +273,19 @@
                         <div class="table-responsive">
                             <table class="table table-hover align-middle mb-0 standard-table" id="overview-table" style="width: 100%;">
                                 @php
-                                    $loyaltyColIndex = auth()->user()->hasAnyRole(['admin', 'superadmin']) ? 5 : 3;
+                                    $loyaltyColIndex = auth()->user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']) ? 6 : 4;
                                 @endphp
                                 <thead>
                                     <tr>
                                         <th>Retailer Shop</th>
                                         <th>Owner Name</th>
-                                        @if(auth()->user()->hasAnyRole(['admin', 'superadmin']))
+                                        @if(auth()->user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
                                             <th>Sales Manager</th>
                                             <th>Field Staff</th>
                                         @endif
                                         <th>Region & Area</th>
-                                        <th class="text-center">Loyalty Points</th>
+                                        <th>Order Summary</th>
+                                        <th class="text-center py-3">Accumulated Points</th>
                                         <th class="text-center">Action</th>
                                     </tr>
                                 </thead>
@@ -299,7 +302,7 @@
                                                 </div>
                                             </td>
                                             <td class="sub-heading-theme">{{ $r->user->name ?? 'N/A' }}</td>
-                                            @if(auth()->user()->hasAnyRole(['admin', 'superadmin']))
+                                            @if(auth()->user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
                                                 <td class="small sub-heading-theme">
                                                     {{ $r->salesManager->user->name ?? 'N/A' }}
                                                 </td>
@@ -425,7 +428,7 @@
                                             <th>Date</th>
                                             <th>Reference</th>
                                             <th>Details</th>
-                                            <th class="text-center">Points</th>
+                                            <th class="py-3">Points Earned</th>
                                             <th class="text-center">Status</th>
                                         </tr>
                                     </thead>
@@ -465,11 +468,12 @@
                 columns: [
                     { data: 'shop_name', name: 'shop_name' },
                     { data: 'owner_name', name: 'user.name' },
-                    @if(auth()->user()->hasAnyRole(['admin', 'superadmin']))
+                    @if(auth()->user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
                         { data: 'sales_manager', name: 'salesManager.user.name' },
                         { data: 'field_staff', name: 'fieldStaff.user.name' },
                     @endif
                     { data: 'region_area', name: 'district.name' },
+                    { data: 'order_summary', name: 'order_summary', orderable: false, searchable: false },
                     { data: 'dynamic_loyalty_points', name: 'dynamic_loyalty_points', className: 'text-center' },
                     { data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center' }
                 ],
@@ -524,6 +528,13 @@
             function formatRetailer(res) {
                 if (!res.id) return res.text;
                 let pts = $(res.element).data('points');
+                if (!pts) return res.text;
+                
+                // If the text already contains "pts", don't add the badge to avoid duplication
+                if (res.text.toLowerCase().includes('pts')) {
+                    return res.text;
+                }
+
                 return $(`<div class="d-flex justify-content-between align-items-center">
                     <span>${res.text}</span>
                     <span class="badge-points">${pts} PTS</span>
@@ -609,6 +620,8 @@
                             data: 'loyalty_points_earned',
                             name: 'loyalty_points_earned',
                             className: 'text-center fw-bold',
+                            render: data => parseFloat(data).toFixed(2)
+                        },
                             render: data => parseFloat(data).toFixed(2)
                         },
                         {

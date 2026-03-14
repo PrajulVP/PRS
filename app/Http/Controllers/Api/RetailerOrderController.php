@@ -125,7 +125,7 @@ class RetailerOrderController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
-            'items.*.unit' => 'nullable|string|in:Nos,Box,Carton',
+            'items.*.unit' => 'nullable|string',
             'items.*.distributor_id' => 'nullable|exists:distributors,id',
             'notes' => 'nullable|string',
         ]);
@@ -170,9 +170,10 @@ class RetailerOrderController extends Controller
 
                     // Conversion logic (to Nos/Base units)
                     $multiplier = 1;
-                    if ($unit === 'Box') {
+                    $normalizedUnit = strtolower($unit);
+                    if ($normalizedUnit === 'box') {
                         $multiplier = (int)($product->box_size ?? 1);
-                    } elseif ($unit === 'Carton') {
+                    } elseif ($normalizedUnit === 'carton') {
                         $multiplier = (int)($product->box_size ?? 1) * (int)($product->carton_size ?? 1);
                     }
 

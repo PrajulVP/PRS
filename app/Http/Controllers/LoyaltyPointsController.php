@@ -83,12 +83,21 @@ class LoyaltyPointsController extends Controller
         }
 
         // Fetch list of retailers based on role and filters
-        $retailersQuery = Retailer::with(['user', 'fieldStaff.user', 'salesManager.user']);
+        $retailersQuery = Retailer::query()
+            ->with(['user', 'fieldStaff.user', 'salesManager.user'])
+            ->withSum(['retailerOrders as dynamic_loyalty_points' => function ($query) {
+                $query->whereNotNull('loyalty_points_earned')
+                    ->where('loyalty_points_earned', '>', 0)
+                    ->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED);
+            }], 'loyalty_points_earned');
 
         if ($user->hasRole('fieldstaff')) {
             $retailersQuery->where('field_staff_id', $user->fieldStaff->id);
         } elseif ($user->hasRole('salesmanager')) {
             $retailersQuery->where('sales_manager_id', $user->salesManager->id);
+            if ($request->filled('field_staff_id')) {
+                $retailersQuery->where('field_staff_id', $request->field_staff_id);
+            }
         } elseif ($user->hasRole('distributor')) {
             $retailersQuery->where('distributor_id', $user->distributor->id);
         } else {
@@ -101,14 +110,8 @@ class LoyaltyPointsController extends Controller
             }
         }
 
-        $retailersQuery->withSum(['retailerOrders as dynamic_loyalty_points' => function ($query) {
-            $query->whereNotNull('loyalty_points_earned')
-                ->where('loyalty_points_earned', '>', 0)
-                ->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED);
-        }], 'loyalty_points_earned');
-
         if ($request->ajax() && !$request->has('retailer_id')) {
-            return DataTables::of($retailersQuery)
+            return DataTables::of(clone $retailersQuery)
                 ->addIndexColumn()
                 ->addColumn('shop_name', function ($row) {
                     return '<div class="d-flex align-items-center">
@@ -130,11 +133,28 @@ class LoyaltyPointsController extends Controller
                 ->addColumn('region_area', function ($row) {
                     return '<span class="small sub-heading-theme">'.($row->district->name ?? 'N/A').', '.($row->area->name ?? 'N/A').'</span>';
                 })
+                ->addColumn('order_summary', function ($row) {
+                    $lastOrder = $row->retailerOrders()
+                        ->with('items.product')
+                        ->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED)
+                        ->latest('updated_at')
+                        ->first();
+                    
+                    if (!$lastOrder) return '<span class="text-muted small">No delivered orders</span>';
+                    
+                    return $lastOrder->items->take(2)->map(function ($item) {
+                        $pName = $item->product ? $item->product->product_name : 'Unknown';
+                        return '<div class="small fw-bold"> &bull; ' . $pName . ' (' . $item->quantity . ')</div>';
+                    })->implode('') . ($lastOrder->items->count() > 2 ? '<div class="small text-muted ps-2">...and more</div>' : '');
+                })
                 ->editColumn('dynamic_loyalty_points', function ($row) {
                     $pts = number_format($row->dynamic_loyalty_points ?? 0, 2);
                     return '<div class="text-center">
                                 <span class="badge-points px-3 py-2" style="font-size: 0.9rem;">'.$pts.'</span>
                             </div>';
+                })
+                ->orderColumn('dynamic_loyalty_points', function ($query, $order) {
+                    $query->orderBy('dynamic_loyalty_points', $order);
                 })
                 ->addColumn('action', function ($row) {
                     return '<div class="text-center">
@@ -143,18 +163,18 @@ class LoyaltyPointsController extends Controller
                                 </button>
                             </div>';
                 })
-                ->rawColumns(['shop_name', 'owner_name', 'sales_manager', 'field_staff', 'region_area', 'dynamic_loyalty_points', 'action'])
+                ->rawColumns(['shop_name', 'owner_name', 'sales_manager', 'field_staff', 'region_area', 'order_summary', 'dynamic_loyalty_points', 'action'])
                 ->make(true);
         }
 
-        $retailers = $retailersQuery->withSum(['retailerOrders as dynamic_loyalty_points' => function ($query) {
-            $query->whereNotNull('loyalty_points_earned')
-                ->where('loyalty_points_earned', '>', 0)
-                ->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED);
-        }], 'loyalty_points_earned')->get();
+        $retailers = $retailersQuery->get();
+
+        // Calculate global summary using the loaded collection
+        $globalLoyaltyPoints = $retailers->sum('dynamic_loyalty_points');
 
         $salesManagers = collect();
         $fieldStaffs = collect();
+
         if ($user->hasAnyRole(['admin', 'superadmin'])) {
             $salesManagers = \App\Models\SalesManager::with('user')->get();
             
@@ -163,9 +183,12 @@ class LoyaltyPointsController extends Controller
                 $fsQuery->where('sales_manager_id', $request->sales_manager_id);
             }
             $fieldStaffs = $fsQuery->get();
+        } elseif ($user->hasRole('salesmanager')) {
+            $fieldStaffs = \App\Models\FieldStaff::with('user')
+                ->where('sales_manager_id', $user->salesManager->id)
+                ->get();
         }
 
-        $globalLoyaltyPoints = $retailers->sum('dynamic_loyalty_points');
         return view('admin.loyalty_points.index', compact('retailers', 'globalLoyaltyPoints', 'salesManagers', 'fieldStaffs'));
     }
 

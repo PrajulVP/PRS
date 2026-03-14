@@ -258,12 +258,17 @@ class SalesManagerDashboardApiController extends Controller
             ->whereIn('field_staff_id', $fieldStaffIds)
             ->get(['id', 'shop_name', 'contact_no', 'field_staff_id'])
             ->map(function ($retailer) {
-                // dynamically sum points
-                $points = RetailerOrder::where('retailer_id', $retailer->id)
+                // dynamically sum points and stats
+                $orderQuery = RetailerOrder::where('retailer_id', $retailer->id)
+                    ->where('status', RetailerOrder::STATUS_DELIVERED);
+
+                $points = (clone $orderQuery)
                     ->whereNotNull('loyalty_points_earned')
                     ->where('loyalty_points_earned', '>', 0)
-                    ->where('status', RetailerOrder::STATUS_DELIVERED)
                     ->sum('loyalty_points_earned');
+
+                $totalOrders = (clone $orderQuery)->count();
+                $lastOrderDate = (clone $orderQuery)->latest('updated_at')->value('updated_at')?->format('Y-m-d');
 
                 return [
                     'id' => $retailer->id,
@@ -323,10 +328,19 @@ class SalesManagerDashboardApiController extends Controller
                     'order_id' => $order->id,
                     'order_code' => $order->order_code,
                     'points_earned' => $order->loyalty_points_earned,
+                    'order_value' => $order->total_amount,
                     'date' => $order->updated_at->format('Y-m-d H:i:s'),
-                    'items_summary' => $order->items->map(function ($item) {
-                        return ($item->product->product_name ?? 'N/A') . ' (' . $item->quantity . ')';
-                    })->implode(', ')
+                    'items' => $order->items->map(function ($item) {
+                        return [
+                            'product_id' => $item->product_id,
+                            'product_name' => $item->product->product_name ?? 'Unknown',
+                            'brand' => $item->product->brand ?? 'N/A',
+                            'quantity' => $item->quantity,
+                            'unit' => $item->unit ?? 'N/A',
+                            'unit_price' => $item->unit_price,
+                            'total_amount' => $item->total_amount
+                        ];
+                    })
                 ];
             })
         ]);
