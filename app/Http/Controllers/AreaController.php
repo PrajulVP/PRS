@@ -77,7 +77,9 @@ class AreaController extends Controller
         }
 
         $districts = District::all(); // Fetch districts for the form
-        return view('admin.areas.index', compact('districts'));
+        $totalAreas = Area::count();
+        $totalDistricts = $districts->count();
+        return view('admin.areas.index', compact('districts', 'totalAreas', 'totalDistricts'));
     }
 
     public function create()

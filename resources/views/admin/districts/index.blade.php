@@ -27,27 +27,60 @@
 @section('page-body')
 <div class="container-fluid">
     <div class="row">
-        <div class="col-sm-12">
+        {{-- Left Column: Quick Add Form --}}
+        <div class="col-md-4">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5><i class="fa fa-map-marker me-2"></i>Districts</h5>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createDistrictModal">
-                        <i class="fa fa-plus me-1"></i>Add District
-                    </button>
+                <div class="card-header bg-white border-bottom-0 pb-0">
+                    <h5><i class="fa fa-plus-circle me-2 text-primary"></i>Add District</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('districts.store') }}" method="POST">
+                        @csrf
+                        <div class="mb-4">
+                            <label for="create_name" class="form-label fw-bold">District Name</label>
+                            <input type="text" name="name" id="create_name" class="form-control" placeholder="e.g. Ernakulam" required>
+                            <small class="text-muted">Enter a unique name for the new district.</small>
+                        </div>
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                                <i class="fa fa-save me-2"></i>Save District
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {{-- Right Column: Districts Table --}}
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom-0 pb-0">
+                    <div class="d-flex align-items-center">
+                        <h5 class="mb-0"><i class="fa fa-map-marker me-2 text-primary"></i>Districts</h5>
+                        <span class="badge badge-light-primary ms-3 px-3 py-2 rounded-pill" style="font-size: 0.85rem;">
+                            <i class="fa fa-database me-1"></i> Total: {{ $totalDistricts ?? 0 }}
+                        </span>
+                    </div>
                 </div>
                 <div class="card-body">
                     @if(session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <strong>Success!</strong> {{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
                     @endif
+                    
                     @if($errors->any())
-                    <div class="alert alert-danger">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
                         <ul class="mb-0">
                             @foreach($errors->all() as $error)
                             <li>{{ $error }}</li>
                             @endforeach
                         </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     @endif
+
                     <div class="table-responsive">
                         <table class="display table table-striped table-hover" id="districtTable">
                             <thead>
@@ -66,30 +99,6 @@
     </div>
 </div>
 
-{{-- Create District Modal --}}
-<div class="modal fade" id="createDistrictModal" tabindex="-1" aria-labelledby="createDistrictModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="createDistrictModalLabel">Add District</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="{{ route('districts.store') }}" method="POST">
-                @csrf
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="create_name" class="form-label">District Name</label>
-                        <input type="text" name="name" id="create_name" class="form-control" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Add District</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 {{-- Edit District Modal --}}
 <div class="modal fade" id="editDistrictModal" tabindex="-1" aria-labelledby="editDistrictModalLabel" aria-hidden="true">

@@ -103,6 +103,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('retailer/{retailerOrder}/assign-fieldstaff', [RetailerOrderManagementController::class, 'assignFieldStaff'])->name('retailer.assignFieldStaff');
         Route::post('orders/{order}/assign-distributor', [RetailerOrderManagementController::class, 'assignDistributor'])->name('orders.assign_distributor');
         Route::get('retailer/product/{product}', [RetailerOrderManagementController::class, 'getProductDetails'])->name('retailer.product-details');
+        Route::get('retailer/get-field-staffs-by-manager', [RetailerOrderManagementController::class, 'getFieldStaffsByManager'])->name('retailer.get-field-staffs-by-manager');
+        Route::get('retailer/get-retailers-by-field-staff', [RetailerOrderManagementController::class, 'getRetailersByFieldStaff'])->name('retailer.get-retailers-by-field-staff');
 
         // Cancellation / Approval endpoints (parity with distributor orders)
         Route::post('retailer/{retailerOrder}/request-cancellation', [RetailerOrderManagementController::class, 'requestCancellation'])->name('retailer.request-cancellation');
@@ -152,6 +154,7 @@ Route::middleware(['auth'])->group(function () {
         // Loyalty Points Dashboard
         Route::get('loyalty-points', [LoyaltyPointsController::class, 'index'])->name('loyalty-points.index');
         Route::get('loyalty-points/{retailer}/summary', [LoyaltyPointsController::class, 'getSummary'])->name('loyalty-points.summary');
+        Route::get('loyalty-points/get-field-staffs-by-manager', [LoyaltyPointsController::class, 'getFieldStaffByManager'])->name('loyalty-points.field-staffs-by-manager');
 
         // Master settings
         Route::get('settings/general', [SettingsController::class, 'general'])->name('settings.general');

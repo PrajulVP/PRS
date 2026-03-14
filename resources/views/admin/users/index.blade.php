@@ -5,8 +5,14 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5>User Management</h5>
+                @if(Auth::user()->hasAnyRole(['admin', 'superadmin']) || 
+                    Auth::user()->hasPermissionToCategory('sales_managers', 'add') || 
+                    Auth::user()->hasPermissionToCategory('distributors', 'add') || 
+                    Auth::user()->hasPermissionToCategory('field_staff', 'add') || 
+                    Auth::user()->hasPermissionToCategory('retailers', 'add'))
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal" id="btnCreate">Add
                     User</button>
+                @endif
             </div>
             <div class="card-body">
                 @if(session('success'))
@@ -23,6 +29,7 @@
                             <th>Email</th>
                             <th>Role</th>
                             <th>Status</th>
+                            <th>Orders</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -242,6 +249,15 @@
                     render: d => `<span class="badge bg-${d === 'active' ? 'success' : 'secondary'}">${d}</span>`
                 },
                 {
+                    data: 'order_count',
+                    render: function(d, t, row) {
+                        if (row.order_link && row.order_link !== '#') {
+                            return `<a href="${row.order_link}" class="btn btn-light btn-sm"><i class="fa fa-shopping-cart text-primary me-1"></i>${d} Orders</a>`;
+                        }
+                        return `—`;
+                    }
+                },
+                {
                     data: null,
                     render: function (d, t, row) {
                         let json = JSON.stringify(row).replace(/"/g, '&quot;');
@@ -250,7 +266,11 @@
 
                         let btns = `<div class="d-flex gap-1 flex-wrap">`;
                         btns += `<button class="btn btn-info btn-sm view-btn" data-row="${json}"><i class="fa fa-eye"></i> View</button>`;
-                        btns += `<button class="btn btn-primary btn-sm edit-btn" data-row="${json}">Edit</button>`;
+                        
+                        // Permission-based Edit
+                        if (row.can_edit) {
+                            btns += `<button class="btn btn-primary btn-sm edit-btn" data-row="${json}">Edit</button>`;
+                        }
 
                         if (row.status !== 'active') {
                             btns += `
@@ -260,10 +280,12 @@
                                     </form>`;
                         }
 
-                        // Delete Button
-                        btns += `
+                        // Permission-based Delete
+                        if (row.can_delete) {
+                            btns += `
                                     <button type="button" class="btn btn-danger btn-sm delete-btn" data-url="${deleteUrl}">Delete</button>
                                 `;
+                        }
 
                         return btns + `</div>`;
                     }

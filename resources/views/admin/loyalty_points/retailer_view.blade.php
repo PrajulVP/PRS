@@ -150,7 +150,7 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Total Points Card (Horizontal & Simple) -->
-            <div class="col-xl-5 col-lg-6 mb-4 entrance-animate delay-1">
+            <div class="col-xl-4 col-lg-6 mb-4 entrance-animate delay-1">
                 <div class="card shadow-sm border-0 loyalty-widget-card overflow-hidden">
                     <div class="card-body d-flex align-items-center py-3 px-4">
                         <div class="coin-wrapper me-4">
@@ -162,7 +162,7 @@
                         </div>
                         <div class="flex-grow-1">
                             <h1 class="fw-800 mb-0 display-6 line-height-1" style="line-height: 1;">{{ number_format($totalPoints, 2) }}</h1>
-                            <p class="text-white opacity-75 text-uppercase mb-0 fw-bold small" style="letter-spacing: 0.5px; font-size: 0.75rem;">Loyalty Points Balance</p>
+                            <p class="text-white opacity-75 text-uppercase mb-0 fw-bold small" style="letter-spacing: 0.5px; font-size: 0.75rem;">Loyalty Points</p>
                         </div>
                         <div class="ms-auto">
                             <i class="fa fa-angle-right opacity-50"></i>
@@ -200,8 +200,14 @@
                                             <td class="small">
                                                 @foreach($order->items as $item)
                                                     <div class="mb-1">
-                                                        <span class="fw-bold">{{ $item->product ? $item->product->product_name : 'Unknown' }}</span>
-                                                        <span class="text-muted small">({{ $item->product ? $item->product->brand : 'N/A' }})</span><br>
+                                                        @if($item->product)
+                                                            <span class="fw-bold">{{ $item->product->product_name }}</span>
+                                                            <span class="text-muted small">({{ $item->product->generic_name ?? 'N/A' }})</span>
+                                                        @else
+                                                            <span class="fw-bold">{{ $item->missing_product_name ?? 'Unknown Product #' . $item->product_id }}</span>
+                                                            <span class="text-muted small">({{ $item->missing_product_code ?? 'N/A' }})</span>
+                                                        @endif
+                                                        <br>
                                                         <span class="small">{{ $item->quantity }} {{ $item->unit }}</span>
                                                     </div>
                                                 @endforeach

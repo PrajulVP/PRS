@@ -17,20 +17,69 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
+        $currentUser = Auth::user();
+
         if ($request->ajax()) {
-            $query = User::with('roles');
+            $query = User::with(['roles', 'retailer', 'distributor', 'fieldStaff', 'salesManager']);
+
+            // Permission-based role filtering for non-admins
+            if (!$currentUser->hasAnyRole(['admin', 'superadmin'])) {
+                $allowedRoles = [];
+                if ($currentUser->hasPermissionToCategory('sales_managers', 'view')) $allowedRoles[] = 'salesmanager';
+                if ($currentUser->hasPermissionToCategory('distributors', 'view')) $allowedRoles[] = 'distributor';
+                if ($currentUser->hasPermissionToCategory('field_staff', 'view')) $allowedRoles[] = 'fieldstaff';
+                if ($currentUser->hasPermissionToCategory('retailers', 'view')) $allowedRoles[] = 'retailer';
+                
+                $query->whereIn('role', $allowedRoles);
+            }
+
             // Search
             if ($request->has('search') && !empty($request->input('search')['value'])) {
                 $val = $request->input('search')['value'];
-                $query->where('name', 'like', "%{$val}%")
-                    ->orWhere('email', 'like', "%{$val}%")
-                    ->orWhere('role', 'like', "%{$val}%");
+                $query->where(function($q) use ($val) {
+                    $q->where('name', 'like', "%{$val}%")
+                      ->orWhere('email', 'like', "%{$val}%")
+                      ->orWhere('role', 'like', "%{$val}%");
+                });
             }
-            $total = $query->count();
-            // Sort and pagination could be added similar to other controllers
-            $users = $query->get(); // Simplify for now or standard datatables logic
 
-            $formatted = $users->map(function ($u) {
+            $users = $query->get();
+
+            $formatted = $users->map(function ($u) use ($currentUser) {
+                // Determine order count and link
+                $orderCount = 0;
+                $orderLink = '#';
+                if ($u->role === 'retailer' && $u->retailer) {
+                    $orderCount = \App\Models\RetailerOrder::where('retailer_id', $u->retailer->id)->count();
+                    $orderLink = route('admin.retailer.index') . '?retailer_id=' . $u->retailer->id;
+                } elseif ($u->role === 'distributor' && $u->distributor) {
+                    $orderCount = \App\Models\DistributorOrder::where('distributor_id', $u->distributor->id)->count();
+                    $orderLink = route('admin.distributor-orders.index'); 
+                } elseif ($u->role === 'fieldstaff' && $u->fieldStaff) {
+                    $orderCount = \App\Models\RetailerOrder::where('fieldstaff_id', $u->fieldStaff->id)->count();
+                    $orderLink = route('admin.retailer.index'); 
+                }
+
+                // Determine permissions for this specific user's role
+                $catMap = [
+                    'salesmanager' => 'sales_managers',
+                    'distributor'  => 'distributors',
+                    'fieldstaff'   => 'field_staff',
+                    'retailer'     => 'retailers',
+                ];
+                $cat = $catMap[$u->role] ?? 'users';
+                
+                $canEdit = $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory($cat, 'edit');
+                $canDelete = $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory($cat, 'delete');
+
+                // Prevent editing/deleting higher or same roles if not admin
+                if (!$currentUser->hasAnyRole(['admin', 'superadmin'])) {
+                    if (in_array($u->role, ['admin', 'superadmin', 'salesmanager'])) {
+                        $canEdit = false;
+                        $canDelete = false;
+                    }
+                }
+
                 return [
                     'id'              => $u->id,
                     'name'            => $u->name,
@@ -43,10 +92,13 @@ class UserController extends Controller
                         : null,
                     'contact_no'      => $u->salesManager?->contact_no ?? $u->distributor?->contact_no ?? $u->retailer?->contact_no ?? $u->fieldStaff?->contact_no ?? '—',
                     'address'         => $u->salesManager?->address ?? $u->retailer?->address ?? $u->fieldStaff?->address ?? $u->distributor?->address ?? '—',
-                    // For Edit Modal
                     'distributor_id'  => $u->distributor?->id ?? $u->retailer?->distributor_id ?? $u->fieldStaff?->distributor_id,
                     'gst'             => $u->retailer?->gst,
                     'sales_manager_id' => $u->fieldStaff?->sales_manager_id,
+                    'order_count'     => $orderCount,
+                    'order_link'      => $orderLink,
+                    'can_edit'        => $canEdit,
+                    'can_delete'      => $canDelete,
                 ];
             });
 

@@ -642,7 +642,6 @@
                     </div>
                     <div class="modal-footer bg-light">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-danger px-4 reject-retailer-btn" style="margin-right: auto;">Reject Order</button>
                         <button type="submit" class="btn btn-success px-4">Approve</button>
                     </div>
                 </form>
@@ -1234,20 +1233,7 @@
 
             // Reject Retailer Order handler
             $(document).on('click', '.reject-retailer-btn', function () {
-                let id = $(this).data('id');
-                // If clicked from within an approval modal, grab the ID from the hidden input
-                if (!id) {
-                    id = $('#approve_retailer_order_id').val() || $('#dist_order_id').val();
-                }
-                
-                if (!id) {
-                    showToast('error', 'Unable to identify order ID.');
-                    return;
-                }
-
-                $('#reject_retailer_order_id').val(id);
-                // Hide any existing modal before showing rejection modal
-                $('.modal.show').modal('hide');
+                $('#reject_retailer_order_id').val($(this).data('id'));
                 $('#rejectRetailerOrderModal').modal('show');
             });
 

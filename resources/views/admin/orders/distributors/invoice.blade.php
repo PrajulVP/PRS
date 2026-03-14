@@ -55,7 +55,7 @@
         }
 
         .invoice-title {
-            font-size: 32px;
+            font-size: 24px;
             font-weight: 700;
             margin: 0 0 10px 0;
             color: #fff;
@@ -211,7 +211,7 @@
         }
 
         .totals-table tr.grand-total td {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
             color: #0f172a;
             border-top: 2px solid #cbd5e1;
@@ -311,6 +311,17 @@
                 border: 1px solid #cbd5e1;
             }
         }
+        /* Print Optimization */
+        @media print {
+            body { background: #fff !important; color: #000 !important; }
+            .invoice-wrapper { box-shadow: none !important; border: 1px solid #e2e8f0 !important; padding: 0 !important; }
+            .invoice-header { background: #000 !important; }
+            .invoice-title { color: #fff !important; }
+            .invoice-meta { color: #ccc !important; }
+            .totals-table { border: 1px solid #e2e8f0; }
+            .totals-table tr.grand-total td { border-top: 2px solid #000 !important; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
     </style>
 </head>
 
@@ -394,7 +405,17 @@
                     @foreach($distributorOrder->items as $item)
                         <tr>
                             <td>
-                                <div class="product-name">{{ $item->product->product_name ?? 'Product' }}</div>
+                                <div class="product-name">
+                                    {{ $item->product->product_name ?? 'Product' }}
+                                    <span style="font-size: 11px; color: #64748b; font-weight: 500;">
+                                        ({{ $item->product->product_code ?? 'N/A' }})
+                                    </span>
+                                </div>
+                                @if($item->product && $item->product->generic_name)
+                                    <div style="font-size: 11px; color: #475569; margin-top: 2px;">
+                                        {{ $item->product->generic_name }}
+                                    </div>
+                                @endif
                                 @if($item->batches && $item->batches->count() > 0)
                                     <div class="batch-info">
                                         @foreach($item->batches as $batch)
@@ -450,9 +471,6 @@
             </table>
         </div>
 
-        <div class="invoice-footer">
-            <p>Thank you for your business. For any inquiries, please contact info@prs.com</p>
-        </div>
     </div>
 </body>
 

@@ -154,6 +154,34 @@
         .summary-card.bg-navy h4, .summary-card.bg-navy h5, .summary-card.bg-navy small {
             color: #ffffff !important;
         }
+
+        /* Filter Alignment Fix */
+        .btn-clear-filter {
+            position: absolute;
+            right: 35px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #dc3545;
+            padding: 0;
+            cursor: pointer;
+            z-index: 10;
+        }
+        .filter-select {
+            padding-right: 60px !important;
+        }
+        
+        /* Pale Points Style */
+        .points-box-simple {
+            background: #f8f9fa;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
     </style>
 
     <div class="container-fluid">
@@ -188,7 +216,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-xl-6 col-md-6 mb-4">
+            {{-- <div class="col-xl-6 col-md-6 mb-4">
                 <div class="card summary-card border-0 shadow-sm h-100">
                     <div class="card-body d-flex align-items-center p-4">
                         <div class="summary-icon-box bg-glass-warning">
@@ -200,7 +228,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> --}}
         </div>
     </div>
 
@@ -220,7 +248,7 @@
                                 <option value="">-- Quick Search Retailer --</option>
                                 @foreach($retailers as $r)
                                     <option value="{{ $r->id }}" data-points="{{ number_format($r->dynamic_loyalty_points, 2) }}">
-                                        {{ $r->shop_name }} ({{ $r->user->name ?? 'N/A' }}) - {{ number_format($r->dynamic_loyalty_points, 2) }} pts
+                                        {{ $r->shop_name }} ({{ $r->user->name }})
                                     </option>
                                 @endforeach
                             </select>
@@ -273,18 +301,28 @@
                         <div class="table-responsive">
                             <table class="table table-hover align-middle mb-0 standard-table" id="overview-table" style="width: 100%;">
                                 @php
-                                    $loyaltyColIndex = auth()->user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']) ? 6 : 4;
+                                    $user = auth()->user();
+                                    if ($user->hasAnyRole(['admin', 'superadmin'])) {
+                                        $loyaltyColIndex = 7;
+                                    } elseif ($user->hasRole('salesmanager')) {
+                                        $loyaltyColIndex = 6;
+                                    } else {
+                                        $loyaltyColIndex = 5;
+                                    }
                                 @endphp
                                 <thead>
                                     <tr>
                                         <th>Retailer Shop</th>
                                         <th>Owner Name</th>
-                                        @if(auth()->user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
+                                        @if(auth()->user()->hasAnyRole(['admin', 'superadmin']))
                                             <th>Sales Manager</th>
+                                        @endif
+                                        @if(auth()->user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
                                             <th>Field Staff</th>
                                         @endif
                                         <th>Region & Area</th>
-                                        <th>Order Summary</th>
+                                        <th class="text-center">Total Orders</th>
+                                        <th>Last Order</th>
                                         <th class="text-center py-3">Accumulated Points</th>
                                         <th class="text-center">Action</th>
                                     </tr>
@@ -468,12 +506,15 @@
                 columns: [
                     { data: 'shop_name', name: 'shop_name' },
                     { data: 'owner_name', name: 'user.name' },
-                    @if(auth()->user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
+                    @if(auth()->user()->hasAnyRole(['admin', 'superadmin']))
                         { data: 'sales_manager', name: 'salesManager.user.name' },
+                    @endif
+                    @if(auth()->user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
                         { data: 'field_staff', name: 'fieldStaff.user.name' },
                     @endif
                     { data: 'region_area', name: 'district.name' },
-                    { data: 'order_summary', name: 'order_summary', orderable: false, searchable: false },
+                    { data: 'total_orders', name: 'total_orders', className: 'text-center' },
+                    { data: 'last_order', name: 'last_order_date' },
                     { data: 'dynamic_loyalty_points', name: 'dynamic_loyalty_points', className: 'text-center' },
                     { data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center' }
                 ],
@@ -496,12 +537,22 @@
 
             // Auto-submit filter form (Dynamic AJAX Reload)
             $('.filter-select').on('change', function() {
-                // If SM changed, we still need a full refresh to update the FS dropdown
                 if ($(this).attr('id') === 'sm-filter') {
-                    window.location.href = "{{ route('admin.loyalty-points.index') }}?sales_manager_id=" + $(this).val();
-                    return;
+                    let smId = $(this).val();
+                    // Update FS dropdown dynamically
+                    $.get("{{ route('admin.loyalty-points.field-staffs-by-manager') }}", { sales_manager_id: smId }, function(data) {
+                        let fsSelect = $('#fs-filter');
+                        fsSelect.empty();
+                        fsSelect.append('<option value="">All Field Staff</option>');
+                        data.forEach(function(item) {
+                            fsSelect.append(`<option value="${item.id}">${item.name}</option>`);
+                        });
+                        fsSelect.trigger('change.select2');
+                        overviewTable.ajax.reload();
+                    });
+                } else {
+                    overviewTable.ajax.reload();
                 }
-                overviewTable.ajax.reload();
             });
 
             // Handle individual clear buttons
@@ -522,24 +573,31 @@
                 allowClear: true,
                 width: '100%',
                 templateResult: formatRetailer,
-                templateSelection: formatRetailer
+                templateSelection: formatRetailerSelection
             });
 
-            function formatRetailer(res) {
-                if (!res.id) return res.text;
-                let pts = $(res.element).data('points');
-                if (!pts) return res.text;
-                
-                // If the text already contains "pts", don't add the badge to avoid duplication
-                if (res.text.toLowerCase().includes('pts')) {
-                    return res.text;
-                }
-
-                return $(`<div class="d-flex justify-content-between align-items-center">
-                    <span>${res.text}</span>
-                    <span class="badge-points">${pts} PTS</span>
-                </div>`);
+            function formatRetailer(state) {
+                if (!state.id) return state.text;
+                let points = $(state.element).data('points') || '0.00';
+                return $(
+                    `<div class="d-flex justify-content-between align-items-center">
+                        <div class="fw-bold">${state.text}</div>
+                        <div class="points-box-simple ms-3">${points} Pts</div>
+                    </div>`
+                );
             }
+
+            function formatRetailerSelection(state) {
+                if (!state.id) return state.text;
+                let points = $(state.element).data('points') || '0.00';
+                return $(
+                    `<div class="d-flex justify-content-between align-items-center w-100">
+                        <span class="fw-bold text-truncate" style="max-width: 70%">${state.text}</span>
+                        <div class="points-box-simple ms-2">${points} Pts</div>
+                    </div>`
+                );
+            }
+
 
             // Handle Row/Button Detail Click - Use delegation for DataTables
             $(document).on('click', '.detail-btn', function() {
@@ -620,8 +678,6 @@
                             data: 'loyalty_points_earned',
                             name: 'loyalty_points_earned',
                             className: 'text-center fw-bold',
-                            render: data => parseFloat(data).toFixed(2)
-                        },
                             render: data => parseFloat(data).toFixed(2)
                         },
                         {

@@ -7,6 +7,7 @@
             <div class="col-xxl-12 box-col-12">
 
                 <style>
+
                     .med-widget-card {
                         background: linear-gradient(135deg, var(--med-primary) 0%, var(--med-accent) 100%) !important;
                         transition: all 0.3s ease;

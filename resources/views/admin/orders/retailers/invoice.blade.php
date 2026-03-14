@@ -118,7 +118,7 @@
         }
 
         .invoice-id-box h1 {
-            font-size: 38px;
+            font-size: 28px;
             font-weight: 800;
             margin: 0;
             letter-spacing: -1px;
@@ -308,7 +308,7 @@
             border-top: 2px solid var(--slate-200);
             padding-top: 15px;
             margin-top: 15px;
-            font-size: 24px;
+            font-size: 18px;
             font-weight: 800;
             color: var(--slate-950);
         }
@@ -364,6 +364,17 @@
             font-size: 24px;
             color: #34d399;
         }
+        /* Print Optimization */
+        @media print {
+            body { background: #fff !important; color: #000 !important; }
+            .invoice-card { box-shadow: none !important; border: 1px solid #e2e8f0 !important; background: #fff !important; }
+            .invoice-card::before { display: none; }
+            .totals-card { background: #fff !important; border: 1px solid #e2e8f0 !important; }
+            .batch-pills span { background: #fff !important; border: 1px solid #e2e8f0 !important; color: #000 !important; }
+            .status-badge { background: #fff !important; border: 1px solid #e2e8f0 !important; color: #000 !important; }
+            .header-top, .header-meta, .billing-grid, .items-table th, .total-row.grand { border-color: #000 !important; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
     </style>
 </head>
 
@@ -399,10 +410,6 @@
                     <div class="meta-item">
                         <label>Order Status</label>
                         <value>{{ strtoupper($retailerOrder->status) }}</value>
-                    </div>
-                    <div class="meta-item">
-                        <label>Payment Mode</label>
-                        <value>---</value>
                     </div>
                     <div class="meta-item">
                         <label>Payment Status</label>
@@ -461,17 +468,6 @@
                     </div>
                 @endif
 
-                @if(isset($retailerOrder->loyalty_points_earned) && $retailerOrder->loyalty_points_earned > 0)
-                    <div class="loyalty-banner">
-                        <i class="fa fa-star"></i>
-                        <div>
-                            <div style="font-weight: 800; font-size: 16px;">
-                                +{{ number_format($retailerOrder->loyalty_points_earned) }} Points!</div>
-                            <div style="font-size: 12px; opacity: 0.9;">You've earned loyalty points on this transaction.
-                            </div>
-                        </div>
-                    </div>
-                @endif
 
                 <table class="items-table">
                     <thead>
@@ -486,7 +482,17 @@
                         @foreach($retailerOrder->items as $item)
                             <tr>
                                 <td>
-                                    <div class="product-title">{{ $item->product->product_name ?? 'Product' }}</div>
+                                    <div class="product-title">
+                                        {{ $item->product->product_name ?? 'Product' }}
+                                        <span style="font-size: 12px; color: var(--slate-400); font-weight: 500;">
+                                            ({{ $item->product->product_code ?? 'N/A' }})
+                                        </span>
+                                    </div>
+                                    @if($item->product && $item->product->generic_name)
+                                        <div style="font-size: 12px; color: var(--slate-600); margin-bottom: 5px;">
+                                            <i class="fa fa-flask me-1" style="font-size: 10px;"></i> {{ $item->product->generic_name }}
+                                        </div>
+                                    @endif
                                     @if($item->batches && $item->batches->count() > 0)
                                         <div class="batch-pills">
                                             @foreach($item->batches as $batch)
@@ -523,12 +529,7 @@
                 </table>
 
                 <div class="summary-box">
-                    <div class="notes-area">
-                        <div
-                            style="font-weight: 700; text-transform: uppercase; font-size: 10px; margin-bottom: 8px; letter-spacing: 1px;">
-                            Delivery Notes</div>
-                        {{ $retailerOrder->delivery_notes ?: 'No specific delivery instructions provided.' }}
-                    </div>
+                    <div style="flex: 1;"></div>
 
                     <div class="totals-card">
                         @php
@@ -560,13 +561,6 @@
                 </div>
             </div>
 
-            <div class="footer">
-                <p style="margin-bottom: 5px; font-weight: 700; color: var(--slate-600);">Authorized Signature</p>
-                <div style="width: 200px; border-bottom: 1px solid var(--slate-200); margin: 20px auto 10px;"></div>
-                <p>This is a computer generated invoice and does not require a signature.</p>
-                <p style="font-size: 11px; margin-top: 15px;">PRS Ecosystem &copy; {{ date('Y') }}. All rights reserved.
-                </p>
-            </div>
         </div>
     </div>
 </body>

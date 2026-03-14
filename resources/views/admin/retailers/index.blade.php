@@ -55,7 +55,7 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5><i class="fa fa-users me-2"></i>Retailers</h5>
-                        @if(auth()->user()->hasPermissionToCategory('retailers', 'add') || auth()->user()->hasRole('superadmin'))
+                        @if(Auth::user()->hasAnyRole(['admin', 'superadmin']) || Auth::user()->hasPermissionToCategory('retailers', 'add'))
                             <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                                 data-bs-target="#createRetailerModal">
                                 <i class="fa fa-plus me-1"></i>Add Retailer
@@ -515,15 +515,22 @@
                         */
                         let activateBtn = '';
 
-                        return `
+                        let btns = `
                                                                         <div class="action-buttons">
                                                                             ${activateBtn}
                                                                             ${isDistributor ? `<a href="{{ route('admin.retailer.index') }}?retailer_id=${id}" class="btn btn-sm btn-warning" title="View Orders"><i class="fa fa-shopping-cart"></i></a>` : ''}
-                                                                            <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>
-                                                                            ${canEdit ? `<button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>` : ''}
-                                                                            ${canDelete ? `<button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>` : ''}
-                                                                        </div>
-                                                                    `;
+                                                                            <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>`;
+                        
+                        if (row.can_edit) {
+                            btns += `<button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>`;
+                        }
+                        
+                        if (row.can_delete) {
+                            btns += `<button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>`;
+                        }
+                        
+                        btns += `</div>`;
+                        return btns;
                     }
                 }
                 ],

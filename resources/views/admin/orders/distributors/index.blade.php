@@ -1,5 +1,8 @@
 @extends('layouts.admin')
 
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
 <style>
     /* Compact the table */
     .dataTables_filter {
@@ -137,6 +140,99 @@
         border-color: #10b981;
         background: #ecfdf5;
     }
+
+    /* --- New Order View UI Styles --- */
+    .order-timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    .order-timeline::before {
+        content: '';
+        position: absolute;
+        left: 11px;
+        top: 5px;
+        bottom: 5px;
+        width: 2px;
+        background: #e2e8f0;
+    }
+    .timeline-item {
+        position: relative;
+        margin-bottom: 20px;
+    }
+    .timeline-marker {
+        position: absolute;
+        left: -24px;
+        top: 4px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #cbd5e1;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 2px #e2e8f0;
+        z-index: 1;
+    }
+    .timeline-item.active .timeline-marker {
+        background: #00497a;
+        box-shadow: 0 0 0 2px #00497a44;
+    }
+    .timeline-content h6 {
+        font-size: 0.85rem;
+        margin-bottom: 2px;
+        color: #1e293b;
+    }
+    .timeline-content span {
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .payment-status-card {
+        border-radius: 16px;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        height: 100%;
+    }
+    .payment-status-card.paid {
+        background: #f0fdf4;
+        border: 1px solid #dcfce7;
+    }
+    .payment-status-card.pending {
+        background: #fffbeb;
+        border: 1px solid #fef3c7;
+    }
+    .payment-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+    .paid .payment-icon {
+        background: #dcfce7;
+        color: #15803d;
+    }
+    .pending .payment-icon {
+        background: #fef3c7;
+        color: #b45309;
+    }
+    .payment-info h6 {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 2px;
+        color: #64748b;
+    }
+    .payment-info p {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+    .paid .payment-info p { color: #15803d; }
+    .pending .payment-info p { color: #b45309; }
+    /* --- End New Order View UI Styles --- */
 </style>
 
 @section('page-body')
@@ -478,12 +574,13 @@
         </div>
     </div>
     </div>
-    </div>
-    </div>
 
 @endsection
 
 @push('scripts')
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
     <script>
         $(document).ready(function () {
             const canDelete = {{ Auth::user()->hasAnyRole(['admin', 'superadmin']) ? 'true' : 'false' }};
@@ -588,7 +685,8 @@
                     orderable: false,
                     searchable: false,
                     render: function (data, type, row) {
-                        if (data) {
+                        let st = (row.status || '').toLowerCase().replace(/ /g, '_');
+                        if (data && st === 'delivered') {
                             let ext = data.split('.').pop().toLowerCase();
                             let icon = ext === 'pdf' ? 'fa-file-pdf-o' : 'fa-file-image-o';
 
@@ -609,22 +707,20 @@
                     orderable: false,
                     searchable: false,
                     render: function (data, type, row) {
+                        let st = (row.status || '').toLowerCase().replace(/ /g, '_');
                         let btns = `<div class="action-buttons">`;
                         // View Button (Always visible)
-                        btns += `<button class="btn btn-info btn-sm view-btn" data-row='${JSON.stringify(row).replace(/'/g, "&apos;")}'><i class="fa fa-eye"></i></button>`;
+                        btns += `<button class="btn btn-info btn-sm view-btn" title="View Details"><i class="fa fa-eye"></i></button>`;
 
                         // System Invoice Button
-                        let invoiceUrl = "{{ route('admin.distributor-orders.invoice', ':id') }}".replace(':id', row.id);
-                        btns += `<a href="${invoiceUrl}" target="_blank" class="btn btn-dark btn-sm" title="System Invoice"><i class="fa fa-print"></i></a>`;
-
-                        let st = row.status.toLowerCase();
+                        if (st === 'delivered') {
+                            let invoiceUrl = "{{ route('admin.distributor-orders.invoice', ':id') }}".replace(':id', row.id);
+                            btns += `<a href="${invoiceUrl}" target="_blank" class="btn btn-dark btn-sm" title="System Invoice"><i class="fa fa-print"></i></a>`;
+                        }
 
                         // Interactions simplified for history page
                         // Approval buttons moved to separate Approvals page
-
-                        if (!isDistributor && (st === 'processing' || st === 'approved')) {
-                            btns += `<button class="btn btn-warning btn-sm upload-invoice-btn" data-id="${row.id}" title="Upload/Change Invoice"><i class="fa fa-upload"></i></button>`;
-                        }
+                        // Upload Invoice button removed as per request (handled in approval modal)
 
                         if (st === 'approved') {
                             if (isDistributor) {
@@ -955,7 +1051,11 @@
 
             // --- Edit Modal Logic ---
             $('#distributor-orders-table').on('click', '.edit-btn', function () {
-                let row = $(this).data('row');
+                let tr = $(this).closest('tr');
+                if ($(tr).hasClass('child')) {
+                    tr = $(tr).prev();
+                }
+                let row = $('#distributor-orders-table').DataTable().row(tr).data();
                 $('#edit_order_code').text(row.order_code);
                 $('#edit_distributor_name').text(row.name);
                 $('#edit_distributor_id_hidden').val(row.distributor_id);
@@ -1115,51 +1215,57 @@
 
             // --- Show Modal ---
             $('#distributor-orders-table').on('click', '.view-btn', function () {
-                let row = $(this).data('row');
+                let tr = $(this).closest('tr');
+                if ($(tr).hasClass('child')) {
+                    tr = $(tr).prev();
+                }
+                let row = $('#distributor-orders-table').DataTable().row(tr).data();
+                if (!row) return;
+
                 $('#modalOrderCode').text('#' + row.order_code);
 
                 let detailsHtml = `
-                                                        <div class="row mb-4">
-                                                            <div class="col-md-6 mb-3 mb-md-0">
-                                                                <div class="card h-100 border-0 shadow-sm">
-                                                                    <div class="card-body">
-                                                                        <h6 class="text-uppercase text-muted fw-bold mb-3"><i class="fa fa-building me-2"></i>Distributor Info</h6>
-                                                                        <h5 class="fw-bold text-dark mb-1">${row.name || 'N/A'}</h5>
-                                                                        <div class="d-flex align-items-center mb-1"><i class="fa fa-envelope text-muted me-2" style="width: 16px;"></i> <span>${row.distributor_email || 'N/A'}</span></div>
-                                                                        <div class="d-flex align-items-center mb-1"><i class="fa fa-phone text-muted me-2" style="width: 16px;"></i> <span>${row.distributor_phone || 'N/A'}</span></div>
-                                                                        <div class="d-flex align-items-start mb-1"><i class="fa fa-map-marker text-muted me-2 mt-1" style="width: 16px;"></i> <span class="text-wrap">${row.distributor_address || 'N/A'}</span></div>
-                                                                        <div class="d-flex align-items-center mb-1"><i class="fa fa-id-card text-muted me-2" style="width: 16px;"></i> <span class="text-muted small me-1">GST:</span> <span>${row.distributor_gst || 'N/A'}</span></div>
-                                                                        <div class="d-flex align-items-center"><i class="fa fa-file-alt text-muted me-2" style="width: 16px;"></i> <span class="text-muted small me-1">DL No:</span> <span>${row.distributor_dl || 'N/A'}</span></div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <div class="card h-100 border-0 shadow-sm">
-                                                                    <div class="card-body">
-                                                                        <h6 class="text-uppercase text-muted fw-bold mb-3"><i class="fa fa-industry me-2"></i>Company Info</h6>
-                                                                        <h5 class="fw-bold text-dark mb-2">PRS Company</h5>
-                                                                        <div class="text-muted small mb-2"><i class="fa fa-user-tie me-2"></i>Sales Manager: ${row.sales_manager_name || 'N/A'}</div>
-                                                                        <div class="d-flex align-items-center mb-1"><i class="fa fa-envelope text-muted me-2" style="width: 16px;"></i> <span>info@prs.com</span></div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="card h-100 border-0 shadow-sm" style="border-radius: 16px !important;">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;"><i class="fa fa-building me-2"></i>Distributor Info</h6>
+                                    <h5 class="fw-bold text-dark mb-1">${row.name || 'N/A'}</h5>
+                                    <div class="d-flex align-items-center mb-1"><i class="fa fa-envelope text-muted me-2" style="width: 16px;"></i> <span class="small">${row.distributor_email || 'N/A'}</span></div>
+                                    <div class="d-flex align-items-center mb-1"><i class="fa fa-phone text-muted me-2" style="width: 16px;"></i> <span class="small">${row.distributor_phone || 'N/A'}</span></div>
+                                    <div class="d-flex align-items-start mb-1"><i class="fa fa-map-marker text-muted me-2 mt-1" style="width: 16px;"></i> <span class="text-wrap small">${row.distributor_address || 'N/A'}</span></div>
+                                    <div class="d-flex align-items-center mb-1"><i class="fa fa-id-card text-muted me-2" style="width: 16px;"></i> <span class="text-muted small me-1">GST:</span> <span class="small">${row.distributor_gst || 'N/A'}</span></div>
+                                    <div class="d-flex align-items-center"><i class="fa fa-file-alt text-muted me-2" style="width: 16px;"></i> <span class="text-muted small me-1">DL No:</span> <span class="small">${row.distributor_dl || 'N/A'}</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm" style="border-radius: 16px !important;">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;"><i class="fa fa-industry me-2"></i>Company Info</h6>
+                                    <h5 class="fw-bold text-dark mb-2">PRS Company</h5>
+                                    <div class="text-muted small mb-2"><i class="fa fa-user-tie me-2"></i>Sales Manager: ${row.sales_manager_name || 'N/A'}</div>
+                                    <div class="d-flex align-items-center mb-1"><i class="fa fa-envelope text-muted me-2" style="width: 16px;"></i> <span class="small">info@prs.com</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                                                        <div class="card border-0 shadow-sm mb-4">
-                                                            <div class="card-body p-0">
-                                                                <div class="table-responsive">
-                                                                    <table class="table table-striped table-hover mb-0">
-                                                                        <thead class="bg-light">
-                                                                            <tr>
-                                                                                <th class="py-3 px-4">Product</th>
-                                                                                <th class="py-3 px-4 text-center">Batch/Exp</th>
-                                                                                <th class="py-3 px-4 text-center">Qty</th>
-                                                                                <th class="py-3 px-4 text-end">Price</th>
-                                                                                <th class="py-3 px-4 text-end">Total</th>
-                                                                            </tr>
-                                                                        </thead>
-                                                                        <tbody>
-                                                    `;
+                    <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px !important;">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table mb-0">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th class="py-3 px-4" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Product</th>
+                                            <th class="py-3 px-4 text-center" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Batch/Exp</th>
+                                            <th class="py-3 px-4 text-center" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Qty</th>
+                                            <th class="py-3 px-4 text-end" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Price</th>
+                                            <th class="py-3 px-4 text-end" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                `;
 
                 row.items.forEach(function (i) {
                     let name = i.product_name || i.name || '-';
@@ -1169,50 +1275,82 @@
 
                     let batchHtml = '-';
                     if (i.batches && i.batches.length > 0) {
-                        batchHtml = i.batches.map(b => `<div class="small"><span class="badge bg-soft-primary text-primary px-1 py-0 me-1">${b.batch_no}</span><span class="text-muted small">${b.expiry_date}</span></div>`).join('');
+                        batchHtml = i.batches.map(b => `<div class="small"><span class="badge bg-soft-primary text-primary px-1 py-0 me-1" style="font-size: 0.65rem;">${b.batch_no}</span><span class="text-muted" style="font-size: 0.65rem;">${b.expiry_date}</span></div>`).join('');
                     }
 
                     detailsHtml += `
-                                                                <tr>
-                                                                    <td class="py-3 px-4">
-                                                                        <div class="fw-bold text-dark">${name}</div>
-                                                                    </td>
-                                                                    <td class="py-3 px-4 text-center">${batchHtml}</td>
-                                                                    <td class="py-3 px-4 text-center"><span class="badge bg-soft-primary text-primary px-2 py-1">${qty} ${i.unit || ''}</span></td>
-                                                                    <td class="py-3 px-4 text-end">₹${unitPrice.toFixed(2)}</td>
-                                                                    <td class="py-3 px-4 text-end fw-bold text-primary">₹${totalAmt.toFixed(2)}</td>
-                                                                </tr>
-                                                            `;
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td class="py-3 px-4">
+                                <div class="fw-bold text-dark">${name}</div>
+                            </td>
+                            <td class="py-3 px-4 text-center">${batchHtml}</td>
+                            <td class="py-3 px-4 text-center"><span class="badge bg-soft-primary text-primary px-2 py-1" style="font-size: 0.75rem;">${qty} ${i.unit || ''}</span></td>
+                            <td class="py-3 px-4 text-end small">₹${unitPrice.toFixed(2)}</td>
+                            <td class="py-3 px-4 text-end fw-bold text-primary">₹${totalAmt.toFixed(2)}</td>
+                        </tr>
+                    `;
                 });
 
                 detailsHtml += `
-                                                                            </tbody>
-                                                                            <tfoot class="bg-light">
-                                                                                <tr>
-                                                                                    <td colspan="4" class="text-end py-3 px-4 text-uppercase fw-bold text-muted">Grand Total:</td>
-                                                                                    <td class="py-3 px-4 text-end fw-bold text-success fs-5">₹${parseFloat(row.total_amount).toFixed(2)}</td>
-                                                                                </tr>
-                                                                            </tfoot>
-                                                                        </table>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
+                                    </tbody>
+                                    <tfoot class="bg-light">
+                                        <tr>
+                                            <td colspan="4" class="text-end py-3 px-4 text-uppercase fw-bold text-muted" style="font-size: 0.75rem;">Grand Total:</td>
+                                            <td class="py-3 px-4 text-end fw-bold text-success fs-5">₹${parseFloat(row.total_amount).toFixed(2)}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
 
-                                                            <div class="row">
-                                                                <div class="col-md-4 mb-3">
-                                                                    <div class="bg-light rounded p-3 h-100">
-                                                                        <h6 class="text-muted fw-bold text-uppercase mb-2">Payment Status</h6>
-                                                                        <p class="mb-0 fs-5"><span class="badge ${row.payment_status === 'paid' ? 'bg-success' : 'bg-warning'}">${(row.payment_status || 'Pending').toUpperCase()}</span></p>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-md-4 mb-3">
-                                                                    <div class="bg-light rounded p-3 h-100">
-                                                                        <h6 class="text-muted fw-bold text-uppercase mb-2">Order Timeline</h6>
-                                                                        <div class="d-flex align-items-center"><i class="fa fa-calendar-alt text-muted me-2"></i> <strong>${row.placed_at || 'N/A'}</strong></div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        `;
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="payment-status-card ${row.payment_status === 'paid' ? 'paid' : 'pending'} shadow-sm">
+                                <div class="payment-icon">
+                                    <i class="fa ${row.payment_status === 'paid' ? 'fa-check-circle' : 'fa-clock'}"></i>
+                                </div>
+                                <div class="payment-info">
+                                    <h6>Payment Status</h6>
+                                    <p>${(row.payment_status || 'Pending').toUpperCase()}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm" style="border-radius: 16px !important;">
+                                <div class="card-body py-2">
+                                    <h6 class="text-uppercase text-muted fw-bold mb-2" style="font-size: 0.7rem; letter-spacing: 0.05em;">Order Activity</h6>
+                                    <div class="order-timeline">
+                                        <div class="timeline-item active">
+                                            <div class="timeline-marker"></div>
+                                            <div class="timeline-content">
+                                                <h6>Order Placed</h6>
+                                                <span>${row.placed_at || 'N/A'}</span>
+                                            </div>
+                                        </div>
+                                        ${row.status === 'Delivered' ? `
+                                            <div class="timeline-item active">
+                                                <div class="timeline-marker"></div>
+                                                <div class="timeline-content">
+                                                    <h6>Order Delivered</h6>
+                                                    <span>Completed</span>
+                                                </div>
+                                            </div>
+                                        ` : `
+                                            <div class="timeline-item">
+                                                <div class="timeline-marker"></div>
+                                                <div class="timeline-content">
+                                                    <h6>Current Status</h6>
+                                                    <span>${row.status}</span>
+                                                </div>
+                                            </div>
+                                        `}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
 
                 $('#showOrderContent').html(detailsHtml);
                 $('#showOrderModal').modal('show');

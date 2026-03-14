@@ -14,7 +14,7 @@ use App\Models\Area;
 use Illuminate\Support\Facades\Auth;
 use App\Traits\HandlesNotifications;
 use App\Traits\OneSignalNotifications;
-use DataTables;
+use Yajra\DataTables\Facades\DataTables;
 
 class RetailerController extends Controller
 {
@@ -44,8 +44,15 @@ class RetailerController extends Controller
                 }
             }
 
+            $currentUser = Auth::user();
             return DataTables::of($query)
                 ->addIndexColumn()
+                ->addColumn('can_edit', function($row) use ($currentUser) {
+                    return $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory('retailers', 'edit');
+                })
+                ->addColumn('can_delete', function($row) use ($currentUser) {
+                    return $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory('retailers', 'delete');
+                })
                 ->addColumn('district_name', function ($row) {
                     return $row->district ? $row->district->name : 'N/A';
                 })

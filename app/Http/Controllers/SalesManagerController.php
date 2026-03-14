@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Auth;
 
 class SalesManagerController extends Controller
 {
@@ -18,8 +19,16 @@ class SalesManagerController extends Controller
     {
         if ($request->ajax()) {
             $data = SalesManager::with('user')->select('sales_managers.*')->orderBy('sales_managers.id', 'desc');
+            /** @var \App\Models\User $currentUser */
+            $currentUser = Auth::user();
             return DataTables::of($data)
                 ->addIndexColumn()
+                ->addColumn('can_edit', function($row) use ($currentUser) {
+                    return $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory('sales_managers', 'edit');
+                })
+                ->addColumn('can_delete', function($row) use ($currentUser) {
+                    return $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory('sales_managers', 'delete');
+                })
                 ->make(true);
         }
         return view('admin.salesmanagers.index');

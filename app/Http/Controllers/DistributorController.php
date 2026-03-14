@@ -10,6 +10,7 @@ use App\Models\District;
 use App\Models\Distributor;
 use App\Models\SalesManager;
 use App\Traits\OneSignalNotifications;
+use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\DataTables;
 
 
@@ -19,9 +20,16 @@ class DistributorController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
+            $currentUser = Auth::user();
             $data = Distributor::with('user', 'district', 'area', 'salesManager.user')->select('distributors.*')->orderBy('distributors.id', 'desc');
             return DataTables::of($data)
                 ->addIndexColumn()
+                ->addColumn('can_edit', function($row) use ($currentUser) {
+                    return $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory('distributors', 'edit');
+                })
+                ->addColumn('can_delete', function($row) use ($currentUser) {
+                    return $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory('distributors', 'delete');
+                })
                 ->make(true);
         }
 

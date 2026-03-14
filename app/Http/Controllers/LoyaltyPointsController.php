@@ -16,6 +16,7 @@ class LoyaltyPointsController extends Controller
      */
     public function index(Request $request)
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         // 1. If Retailer, show only their own points
@@ -27,9 +28,21 @@ class LoyaltyPointsController extends Controller
 
             // Get history of points earned (show all finalized orders)
             $orders = $retailer->retailerOrders()
+                ->with('items.product')
                 ->whereIn('status', ['approved', 'delivered'])
                 ->orderBy('updated_at', 'desc')
                 ->get();
+
+            // Handle missing products gracefully
+            $orders->each(function($order) {
+                $order->items->each(function($item) {
+                    if (!$item->product) {
+                        $inventory = \App\Models\Inventory::where('product_id', $item->product_id)->first();
+                        $item->missing_product_name = $inventory ? $inventory->product_name : 'Unknown Product #' . $item->product_id;
+                        $item->missing_product_code = $inventory ? $inventory->distributor_product_code : 'N/A';
+                    }
+                });
+            });
 
             $totalPoints = $retailer->retailerOrders()
                 ->whereNotNull('loyalty_points_earned')
@@ -66,9 +79,17 @@ class LoyaltyPointsController extends Controller
                     ->addIndexColumn()
                     ->addColumn('product_summary', function ($row) {
                         return $row->items->map(function ($item) {
-                            $prodName = $item->product ? $item->product->product_name : 'Unknown';
-                            $prodBrand = $item->product ? $item->product->brand : 'N/A';
-                            return '<div class="mb-1"><span class="fw-bold">'.$prodName.'</span> <span class="text-muted small">('.$prodBrand.')</span><br><span class="small">'.$item->quantity.' '.$item->unit.'</span></div>';
+                            $product = $item->product;
+                            if (!$product) {
+                                // Fallback: Check if we can find the name in inventories (orphaned data)
+                                $inventory = \App\Models\Inventory::where('product_id', $item->product_id)->first();
+                                $prodName = $inventory ? $inventory->product_name : 'Unknown Product #' . $item->product_id;
+                                $prodGeneric = $inventory ? $inventory->distributor_product_code : 'N/A';
+                            } else {
+                                $prodName = $product->product_name;
+                                $prodGeneric = $product->generic_name ?? 'N/A';
+                            }
+                            return '<div class="mb-1"><span class="fw-bold">'.$prodName.'</span> <span class="text-muted small">('.$prodGeneric.')</span><br><span class="small">'.$item->quantity.' '.$item->unit.'</span></div>';
                         })->implode('');
                     })
                     ->editColumn('updated_at', function ($row) {
@@ -83,13 +104,7 @@ class LoyaltyPointsController extends Controller
         }
 
         // Fetch list of retailers based on role and filters
-        $retailersQuery = Retailer::query()
-            ->with(['user', 'fieldStaff.user', 'salesManager.user'])
-            ->withSum(['retailerOrders as dynamic_loyalty_points' => function ($query) {
-                $query->whereNotNull('loyalty_points_earned')
-                    ->where('loyalty_points_earned', '>', 0)
-                    ->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED);
-            }], 'loyalty_points_earned');
+        $retailersQuery = Retailer::with(['user', 'fieldStaff.user', 'salesManager.user']);
 
         if ($user->hasRole('fieldstaff')) {
             $retailersQuery->where('field_staff_id', $user->fieldStaff->id);
@@ -110,8 +125,19 @@ class LoyaltyPointsController extends Controller
             }
         }
 
+        $retailersQuery->withCount(['retailerOrders as total_orders' => function ($query) {
+            $query->whereIn('status', ['approved', 'delivered']);
+        }])->withSum(['retailerOrders as dynamic_loyalty_points' => function ($query) {
+            $query->whereNotNull('loyalty_points_earned')
+                ->where('loyalty_points_earned', '>', 0)
+                ->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED);
+        }], 'loyalty_points_earned')
+        ->withMax(['retailerOrders as last_order_date' => function ($query) {
+            $query->whereIn('status', ['approved', 'delivered']);
+        }], 'updated_at');
+
         if ($request->ajax() && !$request->has('retailer_id')) {
-            return DataTables::of(clone $retailersQuery)
+            return DataTables::of($retailersQuery)
                 ->addIndexColumn()
                 ->addColumn('shop_name', function ($row) {
                     return '<div class="d-flex align-items-center">
@@ -133,19 +159,11 @@ class LoyaltyPointsController extends Controller
                 ->addColumn('region_area', function ($row) {
                     return '<span class="small sub-heading-theme">'.($row->district->name ?? 'N/A').', '.($row->area->name ?? 'N/A').'</span>';
                 })
-                ->addColumn('order_summary', function ($row) {
-                    $lastOrder = $row->retailerOrders()
-                        ->with('items.product')
-                        ->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED)
-                        ->latest('updated_at')
-                        ->first();
-                    
-                    if (!$lastOrder) return '<span class="text-muted small">No delivered orders</span>';
-                    
-                    return $lastOrder->items->take(2)->map(function ($item) {
-                        $pName = $item->product ? $item->product->product_name : 'Unknown';
-                        return '<div class="small fw-bold"> &bull; ' . $pName . ' (' . $item->quantity . ')</div>';
-                    })->implode('') . ($lastOrder->items->count() > 2 ? '<div class="small text-muted ps-2">...and more</div>' : '');
+                ->addColumn('total_orders', function ($row) {
+                    return '<div class="text-center fw-bold">'.$row->total_orders.'</div>';
+                })
+                ->addColumn('last_order', function ($row) {
+                    return $row->last_order_date ? \Carbon\Carbon::parse($row->last_order_date)->format('d M Y') : '<span class="text-muted">N/A</span>';
                 })
                 ->editColumn('dynamic_loyalty_points', function ($row) {
                     $pts = number_format($row->dynamic_loyalty_points ?? 0, 2);
@@ -153,17 +171,14 @@ class LoyaltyPointsController extends Controller
                                 <span class="badge-points px-3 py-2" style="font-size: 0.9rem;">'.$pts.'</span>
                             </div>';
                 })
-                ->orderColumn('dynamic_loyalty_points', function ($query, $order) {
-                    $query->orderBy('dynamic_loyalty_points', $order);
-                })
                 ->addColumn('action', function ($row) {
                     return '<div class="text-center">
                                 <button class="btn btn-primary btn-xs rounded-pill px-3 fw-bold detail-btn" data-id="'.$row->id.'">
-                                    <i class="fa fa-eye me-2"></i>View History
+                                    View
                                 </button>
                             </div>';
                 })
-                ->rawColumns(['shop_name', 'owner_name', 'sales_manager', 'field_staff', 'region_area', 'order_summary', 'dynamic_loyalty_points', 'action'])
+                ->rawColumns(['shop_name', 'owner_name', 'sales_manager', 'field_staff', 'region_area', 'total_orders', 'last_order', 'dynamic_loyalty_points', 'action'])
                 ->make(true);
         }
 
@@ -240,5 +255,30 @@ class LoyaltyPointsController extends Controller
             'district' => $retailer->district->name ?? 'N/A',
             'joined_date' => $retailer->created_at->format('d M Y')
         ]);
+    }
+
+    /**
+     * Get field staff list by manager (AJAX dropdown)
+     */
+    public function getFieldStaffByManager(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user->hasAnyRole(['admin', 'superadmin'])) {
+             return response()->json(['error' => 'Unauthorized Access'], 403);
+        }
+
+        $query = \App\Models\FieldStaff::with('user');
+        if ($request->filled('sales_manager_id')) {
+            $query->where('sales_manager_id', $request->sales_manager_id);
+        }
+        
+        $fieldStaffs = $query->get()->map(function($fs) {
+            return [
+                'id' => $fs->id,
+                'name' => $fs->user->name ?? 'N/A'
+            ];
+        });
+
+        return response()->json($fieldStaffs);
     }
 }

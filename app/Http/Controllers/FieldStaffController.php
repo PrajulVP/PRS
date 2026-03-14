@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Traits\OneSignalNotifications;
-use DataTables;
+use Yajra\DataTables\Facades\DataTables;
 
 class FieldStaffController extends Controller
 {
@@ -24,8 +24,15 @@ class FieldStaffController extends Controller
             }
 
 
+            $currentUser = Auth::user();
             return DataTables::of($query)
                 ->addIndexColumn()
+                ->addColumn('can_edit', function($row) use ($currentUser) {
+                    return $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory('field_staff', 'edit');
+                })
+                ->addColumn('can_delete', function($row) use ($currentUser) {
+                    return $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory('field_staff', 'delete');
+                })
                 ->make(true);
         }
 

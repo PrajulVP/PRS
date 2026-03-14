@@ -226,8 +226,6 @@ class RetailerOrderManagementController extends Controller
             try {
                 // Determine query based on role
                 $query = RetailerOrder::with(['retailer.user', 'fieldStaff.user', 'items.product', 'distributor.user']);
-                /** @var \App\Models\User $user */
-                $user = Auth::user();
                 Log::info("RetailerOrderManagementController@index: User ID " . $user->id . " Role " . ($user->hasRole('retailer') ? 'retailer' : 'other'));
 
                 if ($user->hasRole('distributor')) {
@@ -272,13 +270,42 @@ class RetailerOrderManagementController extends Controller
                     }
                 }
 
+                // Base count for this role (without custom filters)
+                $totalData = $query->count();
+
+                // Apply Custom Filters from request
                 if ($request->has('retailer_id') && !empty($request->retailer_id)) {
-                    $query->where('retailer_id', $request->retailer_id);
+                    $query->where('retailer_orders.retailer_id', $request->retailer_id);
+                }
+
+                if ($request->has('distributor_id') && !empty($request->distributor_id)) {
+                    $query->where('retailer_orders.distributor_id', $request->distributor_id);
+                }
+
+                if ($request->has('fieldstaff_id') && !empty($request->fieldstaff_id)) {
+                    $fsId = $request->fieldstaff_id;
+                    $query->where(function($q) use ($fsId) {
+                        $q->where('retailer_orders.fieldstaff_id', $fsId)
+                          ->orWhereHas('retailer', function($subQ) use ($fsId) {
+                              $subQ->where('field_staff_id', $fsId);
+                          });
+                    });
+                }
+
+                if ($request->has('sales_manager_id') && !empty($request->sales_manager_id)) {
+                    $smId = $request->sales_manager_id;
+                    $query->where(function($q) use ($smId) {
+                        $q->whereHas('fieldStaff', function ($sub) use ($smId) {
+                            $sub->where('sales_manager_id', $smId);
+                        })->orWhereHas('retailer.fieldStaff', function ($sub) use ($smId) {
+                            $sub->where('sales_manager_id', $smId);
+                        });
+                    });
                 }
 
                 // Apply status filter if exists
                 if ($request->has('status') && !empty($request->input('status'))) {
-                    $query->where('status', $request->input('status'));
+                    $query->where('retailer_orders.status', $request->input('status'));
                 }
 
                 // Apply payment_status filter if exists
@@ -286,17 +313,15 @@ class RetailerOrderManagementController extends Controller
                     $status = $request->input('payment_status');
                     if ($status === 'pending') {
                         $query->where(function ($q) {
-                            $q->where('payment_status', 'pending')
-                                ->orWhereNull('payment_status');
+                            $q->where('retailer_orders.payment_status', 'pending')
+                                ->orWhereNull('retailer_orders.payment_status');
                         });
                     } else {
-                        $query->where('payment_status', $status);
+                        $query->where('retailer_orders.payment_status', $status);
                     }
                 }
 
-                $totalData = $query->count();
-
-                // Search
+                // Global Search
                 if ($request->has('search') && !empty($request->input('search')['value'])) {
                     $searchValue = $request->input('search')['value'];
                     $query->where(function ($q) use ($searchValue) {
@@ -427,25 +452,59 @@ class RetailerOrderManagementController extends Controller
             }
         }
 
-        /** @var \App\Models\User $user */
-        $user = Auth::user();
-        $distributorProducts = collect();
-        if ($user->hasRole('retailer')) {
-            $retailer = $user->retailer;
-            if ($retailer && $retailer->distributor) {
-                $distributorProducts = $retailer->distributor->products;
-            }
+        $fieldstaffs = collect();
+        $retailers = collect();
+        $salesManagers = collect();
+        $distributors = Distributor::with('user')->get();
+        $products = Product::all();
+
+        if ($user->hasAnyRole(['admin', 'superadmin'])) {
+            $salesManagers = SalesManager::with('user')->get();
+            $fieldstaffs = FieldStaff::with('user')->get();
+            $retailers = Retailer::with('user')->get();
+        } elseif ($user->hasRole('salesmanager')) {
+            $salesManagers = SalesManager::where('user_id', $user->id)->with('user')->get();
+            $fieldstaffs = FieldStaff::where('sales_manager_id', $user->salesManager->id)->with('user')->get();
+            $retailers = Retailer::whereIn('field_staff_id', $fieldstaffs->pluck('id'))->with('user')->get();
+        } elseif ($user->hasRole('fieldstaff')) {
+            $fieldstaffs = FieldStaff::where('user_id', $user->id)->with('user')->get();
+            $retailers = Retailer::where('field_staff_id', $user->fieldStaff->id)->with('user')->get();
         }
 
-        $fieldstaffs = FieldStaff::with('user')->get()->map(function ($fs) {
-            return ['id' => $fs->id, 'name' => $fs->user->name];
+        return view('admin.orders.retailers.index', compact('fieldstaffs', 'retailers', 'products', 'distributors', 'salesManagers'));
+    }
+
+    public function getFieldStaffsByManager(Request $request)
+    {
+        $managerId = $request->manager_id;
+        $query = FieldStaff::with('user');
+        
+        if ($managerId) {
+            $query->where('sales_manager_id', $managerId);
+        }
+        
+        $fs = $query->get()->map(function($f) {
+            return ['id' => $f->id, 'name' => $f->user->name ?? 'N/A'];
         });
+        return response()->json($fs);
+    }
 
-        $retailers = Retailer::with('user')->get()->sortBy('user.name');
-        $products = Product::all();
-        $distributors = Distributor::with('user')->get();
+    public function getRetailersByFieldStaff(Request $request)
+    {
+        $fsId = $request->fieldstaff_id;
+        $query = Retailer::with('user');
 
-        return view('admin.orders.retailers.index', compact('fieldstaffs', 'retailers', 'products', 'distributors', 'distributorProducts'));
+        if ($fsId) {
+            $query->where('field_staff_id', $fsId);
+        }
+
+        $retailers = $query->get()->map(function($r) {
+            return [
+                'id' => $r->id, 
+                'name' => ($r->shop_name ?? 'N/A') . ' (' . ($r->user->name ?? 'N/A') . ')'
+            ];
+        });
+        return response()->json($retailers);
     }
 
     // Manager/Admin/Superadmin/FieldStaff/Distributor: Accept Order

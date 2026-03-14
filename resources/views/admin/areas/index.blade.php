@@ -27,27 +27,75 @@
 @section('page-body')
 <div class="container-fluid">
     <div class="row">
-        <div class="col-sm-12">
+        {{-- Left Column: Quick Add Form --}}
+        <div class="col-md-4">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5><i class="fa fa-map-pin me-2"></i>Areas</h5>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAreaModal">
-                        <i class="fa fa-plus me-1"></i>Add Area
-                    </button>
+                <div class="card-header bg-white border-bottom-0 pb-0">
+                    <h5><i class="fa fa-plus-circle me-2 text-primary"></i>Add Area</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('areas.store') }}" method="POST">
+                        @csrf
+                        <div class="mb-3">
+                            <label for="create_district_id" class="form-label fw-bold">District</label>
+                            <select name="district_id" id="create_district_id" class="form-control" required>
+                                <option value="">Select District</option>
+                                @foreach($districts as $d)
+                                <option value="{{ $d->id }}">{{ $d->name }}</option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">Select the district this area belongs to.</small>
+                        </div>
+                        <div class="mb-4">
+                            <label for="create_name" class="form-label fw-bold">Area Name</label>
+                            <input type="text" name="name" id="create_name" class="form-control" placeholder="e.g. Aluva" required>
+                            <small class="text-muted">Enter a unique name for the area.</small>
+                        </div>
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                                <i class="fa fa-save me-2"></i>Save Area
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {{-- Right Column: Areas Table --}}
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom-0 pb-0">
+                    <div class="d-flex align-items-center">
+                        <h5 class="mb-0"><i class="fa fa-map-pin me-2 text-primary"></i>Areas</h5>
+                        <div class="ms-3 d-flex gap-2">
+                            <span class="badge badge-light-primary px-3 py-2 rounded-pill" style="font-size: 0.85rem;">
+                                <i class="fa fa-location-arrow me-1"></i> Total Areas: {{ $totalAreas ?? 0 }}
+                            </span>
+                            <span class="badge badge-light-info px-3 py-2 rounded-pill" style="font-size: 0.85rem;">
+                                <i class="fa fa-map me-1"></i> Districts: {{ $totalDistricts ?? 0 }}
+                            </span>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
                     @if(session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <strong>Success!</strong> {{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
                     @endif
+
                     @if($errors->any())
-                    <div class="alert alert-danger">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
                         <ul class="mb-0">
                             @foreach($errors->all() as $error)
                             <li>{{ $error }}</li>
                             @endforeach
                         </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                     @endif
+
                     <div class="table-responsive">
                         <table class="display table table-striped table-hover" id="areas-table">
                             <thead>
@@ -67,39 +115,6 @@
     </div>
 </div>
 
-{{-- Create Area Modal --}}
-<div class="modal fade" id="createAreaModal" tabindex="-1" aria-labelledby="createAreaModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="createAreaModalLabel">Add Area</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="{{ route('areas.store') }}" method="POST">
-                @csrf
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="create_district_id" class="form-label">District</label>
-                        <select name="district_id" id="create_district_id" class="form-control" required>
-                            <option value="">Select District</option>
-                            @foreach($districts as $d)
-                            <option value="{{ $d->id }}">{{ $d->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="create_name" class="form-label">Area Name</label>
-                        <input type="text" name="name" id="create_name" class="form-control" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Add Area</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 {{-- Edit Area Modal --}}
 <div class="modal fade" id="editAreaModal" tabindex="-1" aria-labelledby="editAreaModalLabel" aria-hidden="true">

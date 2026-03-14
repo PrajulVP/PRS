@@ -47,7 +47,8 @@ class DistrictController extends Controller
             ]);
         }
 
-        return view('admin.districts.index');
+        $totalDistricts = District::count();
+        return view('admin.districts.index', compact('totalDistricts'));
     }
 
 

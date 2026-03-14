@@ -1,6 +1,8 @@
 @extends('layouts.admin')
 
 @section('page-body')
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
         .dataTables_filter {
             text-align: right !important;
@@ -136,6 +138,153 @@
             padding-bottom: 20px !important;
             padding-top: 20px !important;
         }
+
+        /* Minimal Filter Bar Styles */
+        .filter-bar {
+            background: #fff;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .filter-bar:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05) !important;
+        }
+
+        .select2-minimal + .select2-container .select2-selection--single {
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            height: 38px;
+            padding-left: 5px;
+            background-color: #f8f9fa;
+            transition: all 0.2s;
+        }
+
+        .select2-minimal + .select2-container .select2-selection--single:hover {
+            border-color: #3b82f6;
+            background-color: #fff;
+        }
+
+        .select2-minimal + .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 36px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #475569;
+        }
+
+        .select2-minimal + .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px;
+        }
+
+        #btn-clear-all {
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #dee2e6;
+            background: #fff;
+            color: #64748b;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+        }
+
+        #btn-clear-all:hover {
+            background: #fee2e2;
+            color: #b91c1c;
+            border-color: #fca5a5;
+        }
+
+        /* --- New Order View UI Styles --- */
+        .order-timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .order-timeline::before {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 5px;
+            bottom: 5px;
+            width: 2px;
+            background: #e2e8f0;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .timeline-marker {
+            position: absolute;
+            left: -24px;
+            top: 4px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 2px #e2e8f0;
+            z-index: 1;
+        }
+        .timeline-item.active .timeline-marker {
+            background: #00497a;
+            box-shadow: 0 0 0 2px #00497a44;
+        }
+        .timeline-content h6 {
+            font-size: 0.85rem;
+            margin-bottom: 2px;
+            color: #1e293b;
+        }
+        .timeline-content span {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .payment-status-card {
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            height: 100%;
+        }
+        .payment-status-card.paid {
+            background: #f0fdf4;
+            border: 1px solid #dcfce7;
+        }
+        .payment-status-card.pending {
+            background: #fffbeb;
+            border: 1px solid #fef3c7;
+        }
+        .payment-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+        .paid .payment-icon {
+            background: #dcfce7;
+            color: #15803d;
+        }
+        .pending .payment-icon {
+            background: #fef3c7;
+            color: #b45309;
+        }
+        .payment-info h6 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 2px;
+            color: #64748b;
+        }
+        .payment-info p {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0;
+        }
+        .paid .payment-info p { color: #15803d; }
+        .pending .payment-info p { color: #b45309; }
+        /* --- End New Order View UI Styles --- */
     </style>
     <div class="container-fluid">
         <div class="card shadow-sm border-0 rounded-3">
@@ -177,6 +326,74 @@
                 <div class="alert alert-success">{{ session('success') }}</div> @endif
                 @if(session('error'))
                 <div class="alert alert-danger">{{ session('error') }}</div> @endif
+
+                <!-- Dual-Track Filter Bar -->
+                <div class="filter-bar d-flex flex-wrap align-items-center gap-3 mb-4 p-3 bg-white rounded-4 shadow-sm border">
+                    
+                    <!-- Group 1: By Entity -->
+                    <div class="d-flex align-items-center gap-3 border-end pe-3 me-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fa fa-building text-primary"></i>
+                            <span class="fw-bold small text-uppercase text-muted" style="letter-spacing: 0.5px;">By Entity:</span>
+                        </div>
+                        
+                        <div class="filter-item" style="min-width: 180px;">
+                            <select id="filter_distributor" class="form-select select2-minimal" data-placeholder="Select Distributor">
+                                <option value="">All Distributors</option>
+                                @foreach($distributors as $d)
+                                    <option value="{{ $d->id }}">{{ $d->user->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        @if(!Auth::user()->hasRole('retailer'))
+                        <div class="filter-item" style="min-width: 220px;">
+                            <select id="filter_retailer" class="form-select select2-minimal" data-placeholder="Select Retailer">
+                                <option value="">All Retailers</option>
+                                @foreach($retailers as $r)
+                                    <option value="{{ $r->id }}">{{ $r->shop_name }} ({{ $r->user->name }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @endif
+                    </div>
+
+                    <!-- Group 2: By Hierarchy -->
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fa fa-sitemap text-info"></i>
+                            <span class="fw-bold small text-uppercase text-muted" style="letter-spacing: 0.5px;">By Hierarchy:</span>
+                        </div>
+
+                        @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
+                        <div class="filter-item" style="min-width: 180px;">
+                            <select id="filter_sales_manager" class="form-select select2-minimal" data-placeholder="Sales Manager">
+                                <option value="">All Managers</option>
+                                @foreach($salesManagers as $sm)
+                                    <option value="{{ $sm->id }}">{{ $sm->user->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @endif
+
+                        @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
+                        <div class="filter-item" style="min-width: 180px;">
+                            <select id="filter_fieldstaff" class="form-select select2-minimal" data-placeholder="Field Staff">
+                                <option value="">All Field Staff</option>
+                                @foreach($fieldstaffs as $fs)
+                                    <option value="{{ $fs->id }}">{{ $fs->user->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @endif
+                    </div>
+
+                    <div class="ms-auto d-flex gap-2">
+                        <button type="button" id="btn-clear-all" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-bold">
+                            <i class="fa fa-rotate-left me-1"></i> Reset
+                        </button>
+                    </div>
+                </div>
 
                 <!-- Hidden filter element to be moved into datatable wrapper -->
                 <div class="d-none" id="payment-filter-wrapper">
@@ -322,7 +539,7 @@
                         <label class="form-label">Select Field Staff</label>
                         <select id="modalFieldStaffSelect" class="form-select">
                             <option value="">-- Select --</option>
-                            @foreach($fieldstaffs as $fs) <option value="{{ $fs['id'] }}">{{ $fs['name'] }}</option>
+                            @foreach($fieldstaffs as $fs) <option value="{{ $fs->id }}">{{ $fs->user->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -449,6 +666,9 @@
 @endsection
 
 @push('scripts')
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
     <script>
         const canAcceptOrder = {{ Auth::user()->hasAnyRole(['distributor', 'admin', 'superadmin', 'manager']) ? 'true' : 'false' }};
         const canAssignFieldStaff = {{ Auth::user()->hasAnyRole(['admin', 'superadmin', 'manager', 'distributor']) ? 'true' : 'false' }};
@@ -460,9 +680,8 @@
 
             var ajaxUrl = "{{ route('admin.retailer.index') }}";
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('retailer_id')) {
-                ajaxUrl += "?retailer_id=" + urlParams.get('retailer_id');
-            }
+            // We'll pass retailer_id via data object in ajax call, so no need to append to Url if we want to be clean, 
+            // but let's just make sure we don't double count it.
 
             var table = $('#orders-table').DataTable({
                 order: [],
@@ -510,6 +729,10 @@
                     data: function(d) {
                         d.payment_status = $('input[name="payment_status"]:checked').val();
                         d.status = $('#orderStatusTabs .nav-link.active').data('status');
+                        d.sales_manager_id = $('#filter_sales_manager').val();
+                        d.fieldstaff_id = $('#filter_fieldstaff').val();
+                        d.retailer_id = $('#filter_retailer').val() || urlParams.get('retailer_id');
+                        d.distributor_id = $('#filter_distributor').val();
                     }
                 },
                 columns: [{
@@ -588,7 +811,8 @@
                     orderable: false,
                     searchable: false,
                     render: function (data, type, row) {
-                        if (data) {
+                        let st = (row.status || '').toLowerCase().replace(/ /g, '_');
+                        if (data && st === 'delivered') {
                             let ext = data.split('.').pop().toLowerCase();
                             let icon = ext === 'pdf' ? 'fa-file-pdf-o' : 'fa-file-image-o';
                             let code = row.order_code || 'Order';
@@ -602,19 +826,16 @@
                     data: null,
                     orderable: false,
                     render: function (d, t, row) {
-                        let rowData = JSON.stringify(row).replace(/'/g, "&apos;");
                         let btns = `<div class="action-buttons">`;
-                        btns += `<button class="btn btn-info btn-sm view-btn" data-row='${rowData}' title="View Details"><i class="fa fa-eye"></i></button>`;
-
-                        @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
-                            btns += `<button class="btn btn-primary btn-sm edit-btn" data-row='${rowData}' title="Edit"><i class="fa fa-edit"></i></button>`;
-                        @endif
+                        btns += `<button class="btn btn-info btn-sm view-btn" title="View Details"><i class="fa fa-eye"></i></button>`;
 
                         let st = (row.status || '').toLowerCase().replace(/ /g, '_');
 
                         // Print Invoice
-                        let invoiceUrl = "{{ route('admin.retailer.invoice', ':id') }}".replace(':id', row.id);
-                        btns += `<a href="${invoiceUrl}" target="_blank" class="btn btn-dark btn-sm" title="Print Invoice"><i class="fa fa-print"></i></a>`;
+                        if (st === 'delivered') {
+                            let invoiceUrl = "{{ route('admin.retailer.invoice', ':id') }}".replace(':id', row.id);
+                            btns += `<a href="${invoiceUrl}" target="_blank" class="btn btn-dark btn-sm" title="Print Invoice"><i class="fa fa-print"></i></a>`;
+                        }
 
                         // Retailer Cancel Pending Order
                         if (st === 'pending' && isRetailer) {
@@ -644,9 +865,73 @@
             // Move Custom Filter
             $('#payment-filter-wrapper').children().appendTo('.payment-filter-container');
 
-            // Filter Change
-            $(document).on('change', 'input[name="payment_status"]', function () {
+            // Initialize Minimal Select2
+            $('.select2-minimal').select2({
+                width: '100%',
+                allowClear: true
+            });
+
+            // Consolidated Filter Change Listener
+            $('#filter_sales_manager, #filter_fieldstaff, #filter_retailer, #filter_distributor').on('change', function(e) {
+                let id = $(this).attr('id');
+                
+                if (id === 'filter_sales_manager') {
+                    let managerId = $(this).val();
+                    let fsSelect = $('#filter_fieldstaff');
+                    
+                    $.get("{{ route('admin.retailer.get-field-staffs-by-manager') }}", { manager_id: managerId }, function(data) {
+                        fsSelect.empty().append('<option value="">All Field Staff</option>');
+                        data.forEach(function(item) {
+                            fsSelect.append(`<option value="${item.id}">${item.name}</option>`);
+                        });
+                        fsSelect.val(null).trigger('change.select2'); 
+                        table.ajax.reload(null, false);
+                    });
+                } else if (id === 'filter_fieldstaff') {
+                    let fsId = $(this).val();
+                    let retailerSelect = $('#filter_retailer');
+                    
+                    $.get("{{ route('admin.retailer.get-retailers-by-field-staff') }}", { fieldstaff_id: fsId }, function(data) {
+                        retailerSelect.empty().append('<option value="">All Retailers</option>');
+                        data.forEach(function(item) {
+                            retailerSelect.append(`<option value="${item.id}">${item.name}</option>`);
+                        });
+                        retailerSelect.val(null).trigger('change.select2');
+                        table.ajax.reload(null, false);
+                    });
+                } else {
+                    // Retailer, Distributor, or direct FS selection
+                    table.ajax.reload();
+                }
+            });
+
+            // Payment Status listener
+            $('input[name="payment_status"]').on('change', function() {
                 table.ajax.reload();
+            });
+
+            // Clear All Filters
+            $('#btn-clear-all').on('click', function() {
+                // First reset all selects
+                $('#filter_sales_manager, #filter_distributor').val(null).trigger('change.select2');
+                
+                // Since SM/FS change events will trigger their own reloads/fetches, 
+                // we might want to manually clear them and do a fresh fetch of all
+                $.get("{{ route('admin.retailer.get-field-staffs-by-manager') }}", {}, function(fsData) {
+                    let fsSelect = $('#filter_fieldstaff');
+                    fsSelect.empty().append('<option value="">All Field Staff</option>');
+                    fsData.forEach(function(f) { fsSelect.append(`<option value="${f.id}">${f.name}</option>`); });
+                    fsSelect.val(null).trigger('change.select2');
+                    
+                    $.get("{{ route('admin.retailer.get-retailers-by-field-staff') }}", {}, function(rData) {
+                        let rSelect = $('#filter_retailer');
+                        rSelect.empty().append('<option value="">All Retailers</option>');
+                        rData.forEach(function(r) { rSelect.append(`<option value="${r.id}">${r.name}</option>`); });
+                        rSelect.val(null).trigger('change.select2');
+                        
+                        table.ajax.reload();
+                    });
+                });
             });
 
             // Tab Click
@@ -659,7 +944,11 @@
 
             // --- Admin Edit Logic ---
             $(document).on('click', '.edit-btn', function () {
-                let row = $(this).data('row');
+                let tr = $(this).closest('tr');
+                if ($(tr).hasClass('child')) {
+                    tr = $(tr).prev();
+                }
+                let row = $('#orders-table').DataTable().row(tr).data();
                 $('#edit_retailer_id').val(row.retailer_id);
                 $('#edit_distributor_id').val(row.distributor_id);
                 $('#edit_status').val(row.status.toLowerCase().replace(/ /g, '_'));
@@ -1181,48 +1470,54 @@
 
             // --- Show Logic ---
             $(document).on('click', '.view-btn', function () {
-                let row = $(this).data('row');
+                let tr = $(this).closest('tr');
+                if ($(tr).hasClass('child')) {
+                    tr = $(tr).prev();
+                }
+                let row = $('#orders-table').DataTable().row(tr).data();
+                if (!row) return;
+
                 $('#modalOrderCode').text('#' + row.order_code);
 
                 let detailsHtml = `
-                                                        <div class="row mb-4">
-                                                            <div class="col-md-6 mb-3 mb-md-0">
-                                                                <div class="card h-100 border-0 shadow-sm">
-                                                                    <div class="card-body">
-                                                                        <h6 class="text-uppercase text-muted fw-bold mb-3"><i class="fa fa-shop me-2"></i>Retailer Info</h6>
-                                                                        <h5 class="fw-bold text-dark mb-1">${row.retailer_shop || row.retailer_name}</h5>
-                                                                        ${row.retailer_shop ? `<div class="text-muted small mb-2"><i class="fa fa-user me-2"></i>${row.retailer_name}</div>` : ''}
-                                                                        <div class="d-flex align-items-center mb-1"><i class="fa fa-phone text-muted me-2" style="width: 16px;"></i> <span>${row.retailer_phone || 'N/A'}</span></div>
-                                                                        <div class="d-flex align-items-start"><i class="fa fa-map-marker text-muted me-2 mt-1" style="width: 16px;"></i> <span class="text-wrap">${row.retailer_address || 'N/A'}</span></div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <div class="card h-100 border-0 shadow-sm">
-                                                                    <div class="card-body">
-                                                                        <h6 class="text-uppercase text-muted fw-bold mb-3"><i class="fa fa-building me-2"></i>Distributor Info</h6>
-                                                                        <h5 class="fw-bold text-dark mb-2">${row.distributor_name || 'N/A'}</h5>
-                                                                        <div class="d-flex align-items-center mb-1"><i class="fa fa-phone text-muted me-2" style="width: 16px;"></i> <span>${row.distributor_phone || 'N/A'}</span></div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="card h-100 border-0 shadow-sm" style="border-radius: 16px !important;">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;"><i class="fa fa-shop me-2"></i>Retailer Info</h6>
+                                    <h5 class="fw-bold text-dark mb-1">${row.retailer_shop || row.retailer_name}</h5>
+                                    ${row.retailer_shop ? `<div class="text-muted small mb-2"><i class="fa fa-user me-2"></i>${row.retailer_name}</div>` : ''}
+                                    <div class="d-flex align-items-center mb-1"><i class="fa fa-phone text-muted me-2" style="width: 16px;"></i> <span class="small">${row.retailer_phone || 'N/A'}</span></div>
+                                    <div class="d-flex align-items-start"><i class="fa fa-map-marker text-muted me-2 mt-1" style="width: 16px;"></i> <span class="text-wrap small">${row.retailer_address || 'N/A'}</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm" style="border-radius: 16px !important;">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;"><i class="fa fa-building me-2"></i>Distributor Info</h6>
+                                    <h5 class="fw-bold text-dark mb-2">${row.distributor_name || 'N/A'}</h5>
+                                    <div class="d-flex align-items-center mb-1"><i class="fa fa-phone text-muted me-2" style="width: 16px;"></i> <span class="small">${row.distributor_phone || 'N/A'}</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                                                        <div class="card border-0 shadow-sm mb-4">
-                                                            <div class="card-body p-0">
-                                                                <div class="table-responsive">
-                                                                    <table class="table table-striped table-hover mb-0">
-                                                                        <thead class="bg-light">
-                                                                            <tr>
-                                                                                <th class="py-3 px-4">Product</th>
-                                                                                <th class="py-3 px-4 text-center">Batch/Exp</th>
-                                                                                <th class="py-3 px-4 text-center">Qty</th>
-                                                                                <th class="py-3 px-4 text-end">Price</th>
-                                                                                <th class="py-3 px-4 text-end">Total</th>
-                                                                            </tr>
-                                                                        </thead>
-                                                                        <tbody>
-                                                    `;
+                    <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px !important;">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table mb-0">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th class="py-3 px-4" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Product</th>
+                                            <th class="py-3 px-4 text-center" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Batch/Exp</th>
+                                            <th class="py-3 px-4 text-center" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Qty</th>
+                                            <th class="py-3 px-4 text-end" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Price</th>
+                                            <th class="py-3 px-4 text-end" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                `;
 
                 (row.items || []).forEach(function (i) {
                     let name = i.product_name || i.name || '-';
@@ -1232,56 +1527,82 @@
 
                     let batchHtml = '-';
                     if (i.batches && i.batches.length > 0) {
-                        batchHtml = i.batches.map(b => `<div class="small"><span class="badge bg-soft-primary text-primary px-1 py-0 me-1">${b.batch_no}</span><span class="text-muted small">${b.expiry_date}</span></div>`).join('');
+                        batchHtml = i.batches.map(b => `<div class="small"><span class="badge bg-soft-primary text-primary px-1 py-0 me-1" style="font-size: 0.65rem;">${b.batch_no}</span><span class="text-muted" style="font-size: 0.65rem;">${b.expiry_date}</span></div>`).join('');
                     }
 
                     detailsHtml += `
-                                                            <tr>
-                                                                <td class="py-3 px-4">
-                                                                    <div class="fw-bold text-dark">${name}</div>
-                                                                </td>
-                                                                <td class="py-3 px-4 text-center">${batchHtml}</td>
-                                                                <td class="py-3 px-4 text-center"><span class="badge bg-soft-primary text-primary px-2 py-1">${qty} ${i.unit || ''}</span></td>
-                                                                <td class="py-3 px-4 text-end">₹${unitPrice.toFixed(2)}</td>
-                                                                <td class="py-3 px-4 text-end fw-bold text-primary">₹${totalAmt.toFixed(2)}</td>
-                                                            </tr>
-                                                        `;
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td class="py-3 px-4">
+                                <div class="fw-bold text-dark">${name}</div>
+                            </td>
+                            <td class="py-3 px-4 text-center">${batchHtml}</td>
+                            <td class="py-3 px-4 text-center"><span class="badge bg-soft-primary text-primary px-2 py-1" style="font-size: 0.75rem;">${qty} ${i.unit || ''}</span></td>
+                            <td class="py-3 px-4 text-end small">₹${unitPrice.toFixed(2)}</td>
+                            <td class="py-3 px-4 text-end fw-bold text-primary">₹${totalAmt.toFixed(2)}</td>
+                        </tr>
+                    `;
                 });
 
                 detailsHtml += `
-                                                                        </tbody>
-                                                                        <tfoot class="bg-light">
-                                                                            <tr>
-                                                                                <td colspan="4" class="text-end py-3 px-4 text-uppercase fw-bold text-muted">Grand Total:</td>
-                                                                                <td class="py-3 px-4 text-end fw-bold text-success fs-5">₹${parseFloat(row.total_amount).toFixed(2)}</td>
-                                                                            </tr>
-                                                                        </tfoot>
-                                                                    </table>
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                                    </tbody>
+                                    <tfoot class="bg-light">
+                                        <tr>
+                                            <td colspan="4" class="text-end py-3 px-4 text-uppercase fw-bold text-muted" style="font-size: 0.75rem;">Grand Total:</td>
+                                            <td class="py-3 px-4 text-end fw-bold text-success fs-5">₹${parseFloat(row.total_amount).toFixed(2)}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
 
-                                                        <div class="row">
-                                                            <div class="col-md-4 mb-3">
-                                                                <div class="bg-light rounded p-3 h-100">
-                                                                    <h6 class="text-muted fw-bold text-uppercase mb-2">Order Status</h6>
-                                                                    <p class="mb-0 fs-5"><span class="badge bg-secondary">${row.status}</span></p>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-4 mb-3">
-                                                                <div class="bg-light rounded p-3 h-100">
-                                                                    <h6 class="text-muted fw-bold text-uppercase mb-2">Payment Status</h6>
-                                                                    <p class="mb-0 fs-5"><span class="badge ${row.payment_status === 'paid' ? 'bg-success' : 'bg-warning'}">${(row.payment_status || 'Pending').toUpperCase()}</span></p>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-4 mb-3">
-                                                                <div class="bg-light rounded p-3 h-100">
-                                                                    <h6 class="text-muted fw-bold text-uppercase mb-2">Order Timeline</h6>
-                                                                    <div class="d-flex align-items-center"><i class="fa fa-calendar-alt text-muted me-2"></i> <strong>${row.placed_at || 'N/A'}</strong></div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    `;
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="payment-status-card ${row.payment_status === 'paid' ? 'paid' : 'pending'} shadow-sm">
+                                <div class="payment-icon">
+                                    <i class="fa ${row.payment_status === 'paid' ? 'fa-check-circle' : 'fa-clock'}"></i>
+                                </div>
+                                <div class="payment-info">
+                                    <h6>Payment Status</h6>
+                                    <p>${(row.payment_status || 'Pending').toUpperCase()}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm" style="border-radius: 16px !important;">
+                                <div class="card-body py-2">
+                                    <h6 class="text-uppercase text-muted fw-bold mb-2" style="font-size: 0.7rem; letter-spacing: 0.05em;">Order Activity</h6>
+                                    <div class="order-timeline">
+                                        <div class="timeline-item active">
+                                            <div class="timeline-marker"></div>
+                                            <div class="timeline-content">
+                                                <h6>Order Placed</h6>
+                                                <span>${row.placed_at || 'N/A'}</span>
+                                            </div>
+                                        </div>
+                                        ${row.status === 'Delivered' ? `
+                                            <div class="timeline-item active">
+                                                <div class="timeline-marker"></div>
+                                                <div class="timeline-content">
+                                                    <h6>Order Delivered</h6>
+                                                    <span>Completed</span>
+                                                </div>
+                                            </div>
+                                        ` : `
+                                            <div class="timeline-item">
+                                                <div class="timeline-marker"></div>
+                                                <div class="timeline-content">
+                                                    <h6>Current Status</h6>
+                                                    <span>${row.status}</span>
+                                                </div>
+                                            </div>
+                                        `}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
 
                 $('#showOrderContent').html(detailsHtml);
                 $('#showOrderModal').modal('show');

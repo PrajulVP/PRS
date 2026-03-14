@@ -53,10 +53,12 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5><i class="fa fa-users me-2"></i>Field Staff</h5>
+                        @if(Auth::user()->hasAnyRole(['admin', 'superadmin']) || Auth::user()->hasPermissionToCategory('field_staff', 'add'))
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                             data-bs-target="#createFieldStaffModal">
                             <i class="fa fa-plus me-1"></i>Add Field Staff
                         </button>
+                        @endif
                     </div>
                     <div class="card-body">
                         @if(session('success'))
@@ -537,15 +539,22 @@
                 */
                                                     let activateBtn = '';
 
-                return `
-                                                    <div class="action-buttons">
-                                                        ${activateBtn}
-                                                        <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>
-                                                        <button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>
-                                                        <button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>
-                                                    </div>
-                                                `;
-            }
+                                                    let btns = `
+                                                        <div class="action-buttons">
+                                                            ${activateBtn}
+                                                            <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>`;
+                                                    
+                                                    if (row.can_edit) {
+                                                        btns += `<button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>`;
+                                                    }
+                                                    
+                                                    if (row.can_delete) {
+                                                        btns += `<button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>`;
+                                                    }
+                                                    
+                                                    btns += `</div>`;
+                                                    return btns;
+                                                }
                                             }
                                         ],
             dom: "<'row mb-3'<'col-sm-12'B>>" +
