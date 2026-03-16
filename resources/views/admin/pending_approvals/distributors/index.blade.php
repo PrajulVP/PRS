@@ -876,6 +876,9 @@
                     }).nodes().each(function (cell, i) {
                         cell.innerHTML = i + 1 + settings._iDisplayStart;
                     });
+
+                    // Initialize Popovers
+                    $('[data-bs-toggle="popover"]').popover();
                 },
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
                     "<'row mb-3 d-flex align-items-center'<'col-md-6'l><'col-md-6'f>>" +
@@ -944,7 +947,20 @@
                         searchable: false
                     },
                     { data: 'order_code', render: (d, t, r) => r.invoice_url ? d + ' <i class="fa fa-check-circle text-success" title="Invoice Uploaded"></i>' : d },
-                    { data: 'distributor_name' },
+                    { 
+                        data: 'distributor_name',
+                        render: function(data, type, row) {
+                            return `<span class="fw-bold text-primary" 
+                                          style="cursor: pointer;"
+                                          data-bs-toggle="popover" 
+                                          data-bs-trigger="hover" 
+                                          data-bs-html="true"
+                                          title="Distributor Details"
+                                          data-bs-content="<b>Phone:</b> ${row.distributor_phone || 'N/A'}<br><b>Email:</b> ${row.distributor_email || 'N/A'}<br><b>Address:</b> ${row.distributor_address || 'N/A'}<br><b>GST:</b> ${row.distributor_gst || 'N/A'}<br><b>DL:</b> ${row.distributor_dl || 'N/A'}">
+                                        ${data}
+                                    </span>`;
+                        }
+                    },
                     { data: 'product_summary', render: d => d.length > 50 ? d.substring(0, 50) + '...' : d },
                     { data: 'total_amount' },
                     { data: 'placed_at' },

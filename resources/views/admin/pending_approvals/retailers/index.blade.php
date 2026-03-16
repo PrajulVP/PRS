@@ -391,6 +391,9 @@
                                 <th>Products</th>
                                 <th>Total</th>
                                 <th>Placed At</th>
+                                @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
+                                <th>Distributor</th>
+                                @endif
                                 <th>Status</th>
                                 <th>Payment Status</th>
                                 <th>Invoice</th>
@@ -903,6 +906,9 @@
                     }).nodes().each(function (cell, i) {
                         cell.innerHTML = i + 1 + settings._iDisplayStart;
                     });
+
+                    // Initialize Popovers
+                    $('[data-bs-toggle="popover"]').popover();
                 },
                 dom: "<'row mb-3'<'col-sm-12'B>>" + // Buttons on top
                     "<'row mb-3 d-flex align-items-center'<'col-md-6'l><'col-md-6'f>>" + // 'l' (length) on left, 'f' (filter/search) on right
@@ -972,7 +978,18 @@
                 },
                 {
                     data: 'retailer_name',
-                    name: 'retailer_name'
+                    name: 'retailer.user.name',
+                    render: function(data, type, row) {
+                        return `<span class="fw-bold text-primary" 
+                                      style="cursor: pointer;"
+                                      data-bs-toggle="popover" 
+                                      data-bs-trigger="hover" 
+                                      data-bs-html="true"
+                                      title="Retailer Details"
+                                      data-bs-content="<b>Shop:</b> ${row.retailer_name}<br><b>SM:</b> ${row.retailer_sm_name}<br><b>FS:</b> ${row.retailer_fs_name}<br><b>Phone:</b> ${row.retailer_phone}<br><b>GST:</b> ${row.retailer_gst}<br><b>DL:</b> ${row.retailer_dl}">
+                                    ${data}
+                                </span>`;
+                    }
                 },
                 {
                     data: 'product_summary',
@@ -988,6 +1005,22 @@
                 {
                     data: 'placed_at',
                     name: 'placed_at'
+                },
+                {
+                    data: 'distributor_name',
+                    name: 'distributor.user.name',
+                    visible: isAdmin || isSalesManager,
+                    render: function(data, type, row) {
+                        return `<span class="fw-bold text-primary" 
+                                      style="cursor: pointer;"
+                                      data-bs-toggle="popover" 
+                                      data-bs-trigger="hover" 
+                                      data-bs-html="true"
+                                      title="Distributor Details"
+                                      data-bs-content="<b>Phone:</b> ${row.distributor_phone || 'N/A'}<br><b>GST:</b> ${row.distributor_gst || 'N/A'}<br><b>DL:</b> ${row.distributor_dl || 'N/A'}">
+                                    ${data}
+                                </span>`;
+                    }
                 },
                 {
                     data: 'status',

@@ -13,6 +13,23 @@ use App\Traits\HandlesNotifications;
 use App\Traits\OneSignalNotifications;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * @OA\Schema(
+ *     schema="RetailerOrder",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="order_code", type="string", example="RO-X9Y8Z7"),
+ *     @OA\Property(property="status", type="string", example="pending"),
+ *     @OA\Property(property="payment_status", type="string", example="pending"),
+ *     @OA\Property(property="total_amount", type="string", example="1500.00"),
+ *     @OA\Property(property="total_items", type="integer", example=3),
+ *     @OA\Property(property="total_quantity", type="integer", example=12),
+ *     @OA\Property(property="notes", type="string", example="Urgent delivery"),
+ *     @OA\Property(property="loyalty_points_earned", type="integer", example=25),
+ *     @OA\Property(property="placed_at", type="string", format="date-time", example="2023-10-25 10:00:00"),
+ *     @OA\Property(property="delivered_at", type="string", format="date-time", nullable=true, example="2023-10-26 14:00:00")
+ * )
+ */
 class RetailerOrderController extends Controller
 {
     use HandlesNotifications, OneSignalNotifications;
@@ -28,16 +45,7 @@ class RetailerOrderController extends Controller
      *         description="List of retailer orders",
      *         @OA\JsonContent(
      *             type="array",
-     *             @OA\Items(
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="order_code", type="string", example="RO-X9Y8Z7"),
-     *                 @OA\Property(property="total_amount", type="string", example="1500.00"),
-     *                 @OA\Property(property="total_items", type="integer", example=3),
-     *                 @OA\Property(property="total_quantity", type="integer", example=12),
-     *                 @OA\Property(property="status", type="string", example="pending"),
-     *                 @OA\Property(property="notes", type="string", example="Urgent delivery"),
-     *                 @OA\Property(property="placed_at", type="string", format="date-time", example="2023-10-25 10:00:00")
-     *             )
+     *             @OA\Items(ref="#/components/schemas/RetailerOrder")
      *         )
      *     ),
      *     @OA\Response(
@@ -81,6 +89,7 @@ class RetailerOrderController extends Controller
                         : null,
                     'placed_at'      => $order->placed_at?->format('Y-m-d H:i:s'),
                     'delivered_at'   => $order->delivered_at?->format('Y-m-d H:i:s'),
+                    'loyalty_points_earned' => $order->status === RetailerOrder::STATUS_DELIVERED ? (int)$order->loyalty_points_earned : 0,
                 ];
             });
 
@@ -112,7 +121,7 @@ class RetailerOrderController extends Controller
      *         description="Orders placed successfully",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="orders", type="array", @OA\Items(type="object"))
+     *             @OA\Property(property="orders", type="array", @OA\Items(ref="#/components/schemas/RetailerOrder"))
      *         )
      *     ),
      *     @OA\Response(response=403, description="Unauthorized"),
@@ -263,7 +272,15 @@ class RetailerOrderController extends Controller
      *             @OA\Property(property="cancellation_reason", type="string", nullable=true)
      *         )
      *     ),
-     *     @OA\Response(response=200, description="Status updated successfully"),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Status updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="string", example="Order delivered."),
+     *             @OA\Property(property="order", ref="#/components/schemas/RetailerOrder"),
+     *             @OA\Property(property="new_points", type="integer", nullable=true, example=25)
+     *         )
+     *     ),
      *     @OA\Response(response=400, description="Invalid status or order state"),
      *     @OA\Response(response=403, description="Unauthorized")
      * )

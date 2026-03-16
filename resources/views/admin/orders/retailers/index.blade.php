@@ -327,73 +327,6 @@
                 @if(session('error'))
                 <div class="alert alert-danger">{{ session('error') }}</div> @endif
 
-                <!-- Dual-Track Filter Bar -->
-                <div class="filter-bar d-flex flex-wrap align-items-center gap-3 mb-4 p-3 bg-white rounded-4 shadow-sm border">
-                    
-                    <!-- Group 1: By Entity -->
-                    <div class="d-flex align-items-center gap-3 border-end pe-3 me-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="fa fa-building text-primary"></i>
-                            <span class="fw-bold small text-uppercase text-muted" style="letter-spacing: 0.5px;">By Entity:</span>
-                        </div>
-                        
-                        <div class="filter-item" style="min-width: 180px;">
-                            <select id="filter_distributor" class="form-select select2-minimal" data-placeholder="Select Distributor">
-                                <option value="">All Distributors</option>
-                                @foreach($distributors as $d)
-                                    <option value="{{ $d->id }}">{{ $d->user->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        @if(!Auth::user()->hasRole('retailer'))
-                        <div class="filter-item" style="min-width: 220px;">
-                            <select id="filter_retailer" class="form-select select2-minimal" data-placeholder="Select Retailer">
-                                <option value="">All Retailers</option>
-                                @foreach($retailers as $r)
-                                    <option value="{{ $r->id }}">{{ $r->shop_name }} ({{ $r->user->name }})</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        @endif
-                    </div>
-
-                    <!-- Group 2: By Hierarchy -->
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="fa fa-sitemap text-info"></i>
-                            <span class="fw-bold small text-uppercase text-muted" style="letter-spacing: 0.5px;">By Hierarchy:</span>
-                        </div>
-
-                        @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
-                        <div class="filter-item" style="min-width: 180px;">
-                            <select id="filter_sales_manager" class="form-select select2-minimal" data-placeholder="Sales Manager">
-                                <option value="">All Managers</option>
-                                @foreach($salesManagers as $sm)
-                                    <option value="{{ $sm->id }}">{{ $sm->user->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        @endif
-
-                        @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
-                        <div class="filter-item" style="min-width: 180px;">
-                            <select id="filter_fieldstaff" class="form-select select2-minimal" data-placeholder="Field Staff">
-                                <option value="">All Field Staff</option>
-                                @foreach($fieldstaffs as $fs)
-                                    <option value="{{ $fs->id }}">{{ $fs->user->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        @endif
-                    </div>
-
-                    <div class="ms-auto d-flex gap-2">
-                        <button type="button" id="btn-clear-all" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-bold">
-                            <i class="fa fa-rotate-left me-1"></i> Reset
-                        </button>
-                    </div>
-                </div>
 
                 <!-- Hidden filter element to be moved into datatable wrapper -->
                 <div class="d-none" id="payment-filter-wrapper">
@@ -426,6 +359,7 @@
                                 <th>Total</th>
                                 <th>Status</th>
                                 <th>Placed At</th>
+                                <th>Payment Status</th>
                                 <th>Invoice</th>
                                 <th>Actions</th>
                             </tr>
@@ -729,10 +663,7 @@
                     data: function(d) {
                         d.payment_status = $('input[name="payment_status"]:checked').val();
                         d.status = $('#orderStatusTabs .nav-link.active').data('status');
-                        d.sales_manager_id = $('#filter_sales_manager').val();
-                        d.fieldstaff_id = $('#filter_fieldstaff').val();
-                        d.retailer_id = $('#filter_retailer').val() || urlParams.get('retailer_id');
-                        d.distributor_id = $('#filter_distributor').val();
+                        d.retailer_id = urlParams.get('retailer_id');
                     }
                 },
                 columns: [{
@@ -751,13 +682,36 @@
                 {
                     data: 'retailer_name',
                     name: 'retailer_name',
-                    visible: !{{ Auth::user()->hasRole('retailer') ? 'true' : 'false' }} 
-                                                                                                                                                            },
+                    visible: !{{ Auth::user()->hasRole('retailer') ? 'true' : 'false' }},
+                    render: function(data, type, row) {
+                        return `<div class="d-flex flex-column">
+                                    <span class="fw-bold text-primary entity-info-popover" 
+                                          style="cursor: pointer;"
+                                          data-bs-toggle="popover" 
+                                          data-bs-trigger="hover" 
+                                          data-bs-html="true"
+                                          title="Retailer Details"
+                                          data-bs-content="<b>Shop:</b> ${row.retailer_shop}<br><b>SM:</b> ${row.retailer_sm_name}<br><b>FS:</b> ${row.retailer_fs_name}<br><b>Phone:</b> ${row.retailer_phone}<br><b>GST:</b> ${row.retailer_gst}<br><b>DL:</b> ${row.retailer_dl}">
+                                        ${data}
+                                    </span>
+                                    <span class="small text-muted">${row.retailer_shop}</span>
+                                </div>`;
+                    }
+                },
                 {
                     data: 'distributor_name',
                     name: 'distributor_name',
                     render: function (data, type, row) {
-                        return data ? data : '-';
+                        if (!data || data === 'N/A') return '-';
+                        return `<span class="fw-bold text-dark entity-info-popover" 
+                                      style="cursor: pointer;"
+                                      data-bs-toggle="popover" 
+                                      data-bs-trigger="hover" 
+                                      data-bs-html="true"
+                                      title="Distributor Details"
+                                      data-bs-content="<b>Phone:</b> ${row.distributor_phone || 'N/A'}<br><b>GST:</b> ${row.distributor_gst || 'N/A'}<br><b>DL:</b> ${row.distributor_dl || 'N/A'}">
+                                    ${data}
+                                </span>`;
                     }
                 },
                 {
@@ -804,6 +758,19 @@
                 {
                     data: 'placed_at',
                     name: 'placed_at'
+                },
+                {
+                    data: 'payment_status',
+                    name: 'payment_status',
+                    render: function (data, type, row) {
+                        let status = (data || 'pending').toLowerCase();
+                        let badgeClass = 'bg-secondary';
+                        if (status === 'paid') badgeClass = 'bg-success';
+                        else if (status === 'failed') badgeClass = 'bg-danger';
+                        else badgeClass = 'bg-warning text-dark';
+
+                        return `<span class="badge ${badgeClass}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
+                    }
                 },
                 {
                     data: 'invoice_url',
@@ -859,7 +826,10 @@
 
                     }
                 }
-                ]
+                ],
+                drawCallback: function() {
+                    $('[data-bs-toggle="popover"]').popover();
+                }
             });
 
             // Move Custom Filter
@@ -871,68 +841,12 @@
                 allowClear: true
             });
 
-            // Consolidated Filter Change Listener
-            $('#filter_sales_manager, #filter_fieldstaff, #filter_retailer, #filter_distributor').on('change', function(e) {
-                let id = $(this).attr('id');
-                
-                if (id === 'filter_sales_manager') {
-                    let managerId = $(this).val();
-                    let fsSelect = $('#filter_fieldstaff');
-                    
-                    $.get("{{ route('admin.retailer.get-field-staffs-by-manager') }}", { manager_id: managerId }, function(data) {
-                        fsSelect.empty().append('<option value="">All Field Staff</option>');
-                        data.forEach(function(item) {
-                            fsSelect.append(`<option value="${item.id}">${item.name}</option>`);
-                        });
-                        fsSelect.val(null).trigger('change.select2'); 
-                        table.ajax.reload(null, false);
-                    });
-                } else if (id === 'filter_fieldstaff') {
-                    let fsId = $(this).val();
-                    let retailerSelect = $('#filter_retailer');
-                    
-                    $.get("{{ route('admin.retailer.get-retailers-by-field-staff') }}", { fieldstaff_id: fsId }, function(data) {
-                        retailerSelect.empty().append('<option value="">All Retailers</option>');
-                        data.forEach(function(item) {
-                            retailerSelect.append(`<option value="${item.id}">${item.name}</option>`);
-                        });
-                        retailerSelect.val(null).trigger('change.select2');
-                        table.ajax.reload(null, false);
-                    });
-                } else {
-                    // Retailer, Distributor, or direct FS selection
-                    table.ajax.reload();
-                }
-            });
 
             // Payment Status listener
             $('input[name="payment_status"]').on('change', function() {
                 table.ajax.reload();
             });
 
-            // Clear All Filters
-            $('#btn-clear-all').on('click', function() {
-                // First reset all selects
-                $('#filter_sales_manager, #filter_distributor').val(null).trigger('change.select2');
-                
-                // Since SM/FS change events will trigger their own reloads/fetches, 
-                // we might want to manually clear them and do a fresh fetch of all
-                $.get("{{ route('admin.retailer.get-field-staffs-by-manager') }}", {}, function(fsData) {
-                    let fsSelect = $('#filter_fieldstaff');
-                    fsSelect.empty().append('<option value="">All Field Staff</option>');
-                    fsData.forEach(function(f) { fsSelect.append(`<option value="${f.id}">${f.name}</option>`); });
-                    fsSelect.val(null).trigger('change.select2');
-                    
-                    $.get("{{ route('admin.retailer.get-retailers-by-field-staff') }}", {}, function(rData) {
-                        let rSelect = $('#filter_retailer');
-                        rSelect.empty().append('<option value="">All Retailers</option>');
-                        rData.forEach(function(r) { rSelect.append(`<option value="${r.id}">${r.name}</option>`); });
-                        rSelect.val(null).trigger('change.select2');
-                        
-                        table.ajax.reload();
-                    });
-                });
-            });
 
             // Tab Click
             $('#orderStatusTabs .nav-link').on('click', function(e) {

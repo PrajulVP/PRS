@@ -51,7 +51,7 @@ class PendingApprovalController extends Controller
 
             // Logic based on requested view type
             if ($viewType === 'distributor') {
-                $query = \App\Models\DistributorOrder::with(['distributor.user', 'items.product', 'items.batches', 'salesManager.user']);
+                $query = \App\Models\DistributorOrder::with(['distributor.user', 'items.product', 'items.batches', 'distributor.salesManager.user', 'salesManager.user']);
 
                 if ($user->hasRole('salesmanager') && $user->salesManager) {
                     $salesManagerId = $user->salesManager->id;
@@ -86,7 +86,7 @@ class PendingApprovalController extends Controller
                 $data = $query->latest()->get();
             } elseif ($viewType === 'retailer') {
                 // Fetch Retailer Orders
-                $query = \App\Models\RetailerOrder::with(['retailer.user', 'items.product', 'distributor.user', 'fieldStaff.user']);
+                $query = \App\Models\RetailerOrder::with(['retailer.user', 'retailer.salesManager.user', 'retailer.fieldStaff.user', 'items.product', 'distributor.user', 'fieldStaff.user']);
 
                 if ($user->hasRole('distributor') && $user->distributor) {
                     $query->where('distributor_id', $user->distributor->id);
@@ -190,18 +190,32 @@ class PendingApprovalController extends Controller
 
                 if ($viewType === 'distributor') {
                     $res['distributor_id'] = $item->distributor_id;
-                    $res['distributor_name'] = $item->distributor->user->name ?? 'N/A';
+                    $res['distributor_name'] = $item->distributor->user->name ?? ($item->distributor->name ?? 'N/A');
+                    $res['distributor_phone'] = $item->distributor->contact_no ?? '--';
+                    $res['distributor_email'] = $item->distributor->user->email ?? '--';
+                    $res['distributor_address'] = $item->distributor->address ?? '--';
+                    $res['distributor_gst'] = $item->distributor->gst ?? '--';
+                    $res['distributor_dl'] = $item->distributor->drug_license_no ?? '--';
                     $res['payment_status'] = $item->payment_status ?? 'pending';
                     $res['invoice_url'] = $item->invoice_path ? Storage::disk('public')->url($item->invoice_path) : null;
                 } elseif ($viewType === 'retailer') {
                     $res['retailer_id'] = $item->retailer_id;
                     $res['distributor_id'] = $item->distributor_id;
                     $res['retailer_name'] = $item->retailer->shop_name ?? ($item->retailer->user->name ?? 'N/A');
+                    $res['retailer_sm_name'] = $item->retailer->salesManager->user->name ?? 'N/A';
+                    $res['retailer_fs_name'] = $item->retailer->fieldStaff->user->name ?? 'N/A';
                     $res['retailer_phone'] = $item->retailer->contact_no ?? '--';
-                    $res['retailer_gstin'] = $item->retailer->gst ?? '--';
+                    $res['retailer_gst'] = $item->retailer->gst ?? '--';
+                    $res['retailer_dl'] = $item->retailer->drug_license_no ?? '--';
                     $res['retailer_location'] = $item->retailer->address ?? '--';
                     $res['payment_status'] = $item->payment_status ?? 'pending';
                     $res['invoice_url'] = $item->invoice_path ? Storage::disk('public')->url($item->invoice_path) : null;
+                    
+                    // Added distributor details for popover as well
+                    $res['distributor_name'] = $item->distributor->user->name ?? ($item->distributor->name ?? 'N/A');
+                    $res['distributor_phone'] = $item->distributor->contact_no ?? '--';
+                    $res['distributor_gst'] = $item->distributor->gst ?? '--';
+                    $res['distributor_dl'] = $item->distributor->drug_license_no ?? '--';
                 }
 
                 return $res;

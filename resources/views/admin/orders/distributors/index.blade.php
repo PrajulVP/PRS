@@ -619,7 +619,18 @@
                 },
                     @if(!Auth::user()->hasRole('distributor')) {
                             data: 'name',
-                            name: 'distributor.user.name'
+                            name: 'distributor.user.name',
+                            render: function(data, type, row) {
+                                return `<span class="fw-bold text-primary entity-info-popover" 
+                                              style="cursor: pointer;"
+                                              data-bs-toggle="popover" 
+                                              data-bs-trigger="hover" 
+                                              data-bs-html="true"
+                                              title="Distributor Details"
+                                              data-bs-content="<b>Phone:</b> ${row.distributor_phone || 'N/A'}<br><b>Email:</b> ${row.distributor_email || 'N/A'}<br><b>Address:</b> ${row.distributor_address || 'N/A'}<br><b>GST:</b> ${row.distributor_gst || 'N/A'}<br><b>DL:</b> ${row.distributor_dl || 'N/A'}">
+                                            ${data}
+                                        </span>`;
+                            }
                         }, // Distributor Name
                     @endif
                 {
@@ -773,6 +784,9 @@
                         text: '<i class="fa fa-print"></i> Print'
                     }
                     ]
+                },
+                drawCallback: function() {
+                    $('[data-bs-toggle="popover"]').popover();
                 }
             });
 

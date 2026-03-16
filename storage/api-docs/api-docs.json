@@ -1800,42 +1800,7 @@
                                 "schema": {
                                     "type": "array",
                                     "items": {
-                                        "properties": {
-                                            "id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "order_code": {
-                                                "type": "string",
-                                                "example": "RO-X9Y8Z7"
-                                            },
-                                            "total_amount": {
-                                                "type": "string",
-                                                "example": "1500.00"
-                                            },
-                                            "total_items": {
-                                                "type": "integer",
-                                                "example": 3
-                                            },
-                                            "total_quantity": {
-                                                "type": "integer",
-                                                "example": 12
-                                            },
-                                            "status": {
-                                                "type": "string",
-                                                "example": "pending"
-                                            },
-                                            "notes": {
-                                                "type": "string",
-                                                "example": "Urgent delivery"
-                                            },
-                                            "placed_at": {
-                                                "type": "string",
-                                                "format": "date-time",
-                                                "example": "2023-10-25 10:00:00"
-                                            }
-                                        },
-                                        "type": "object"
+                                        "$ref": "#/components/schemas/RetailerOrder"
                                     }
                                 }
                             }
@@ -1917,7 +1882,7 @@
                                         "orders": {
                                             "type": "array",
                                             "items": {
-                                                "type": "object"
+                                                "$ref": "#/components/schemas/RetailerOrder"
                                             }
                                         }
                                     },
@@ -1982,7 +1947,28 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Status updated successfully"
+                        "description": "Status updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "string",
+                                            "example": "Order delivered."
+                                        },
+                                        "order": {
+                                            "$ref": "#/components/schemas/RetailerOrder"
+                                        },
+                                        "new_points": {
+                                            "type": "integer",
+                                            "example": 25,
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "400": {
                         "description": "Invalid status or order state"
@@ -2387,6 +2373,60 @@
         }
     },
     "components": {
+        "schemas": {
+            "RetailerOrder": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "order_code": {
+                        "type": "string",
+                        "example": "RO-X9Y8Z7"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "pending"
+                    },
+                    "payment_status": {
+                        "type": "string",
+                        "example": "pending"
+                    },
+                    "total_amount": {
+                        "type": "string",
+                        "example": "1500.00"
+                    },
+                    "total_items": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "total_quantity": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Urgent delivery"
+                    },
+                    "loyalty_points_earned": {
+                        "type": "integer",
+                        "example": 25
+                    },
+                    "placed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-10-25 10:00:00"
+                    },
+                    "delivered_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-10-26 14:00:00",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            }
+        },
         "securitySchemes": {
             "bearerAuth": {
                 "type": "http",

@@ -128,7 +128,7 @@ class DistributorOrderController extends Controller
                         'distributor_email' => $order->distributor?->email ?? $order->distributor?->user?->email ?? '',
                         'distributor_phone' => $order->distributor?->contact_no ?? $order->distributor?->phone ?? '',
                         'distributor_address' => trim(($order->distributor?->address ?? '') . ' ' . ($order->distributor?->pincode ?? '')),
-                        'distributor_gst' => $order->distributor?->gst_number ?? '',
+                        'distributor_gst' => $order->distributor?->gst ?? '',
                         'distributor_dl' => $order->distributor?->drug_license_no ?? '',
                         'distributor_id' => $order->distributor_id,
                         'sales_manager_name' => $order->salesManager?->user?->name ?? 'N/A',
