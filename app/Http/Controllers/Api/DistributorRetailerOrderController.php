@@ -393,22 +393,38 @@ class DistributorRetailerOrderController extends Controller
 
         foreach ($retailerOrder->items as $orderItem) {
             $productName = $orderItem->product->product_name;
+            $productCode = $orderItem->product->product_code;
             $expectedQty = (float)$orderItem->quantity;
+
+            // Fetch distributor_product_code if inventory exists
+            $inventory = \App\Models\Inventory::where('product_id', $orderItem->product_id)
+                ->where('distributor_id', $retailerOrder->distributor_id)
+                ->first();
+            $distProductCode = $inventory ? $inventory->distributor_product_code : null;
 
             // Normalize names for comparison (lowercase, trimmed)
             $normalizedOrderName = strtolower(trim($productName));
 
             // Find matching item in OCR
-            $match = $ocrItems->first(function ($item) use ($normalizedOrderName) {
+            $match = $ocrItems->first(function ($item) use ($normalizedOrderName, $productCode, $distProductCode) {
+                // 1. Code-based Match (Highest Priority)
+                $ocrCode = trim($item['product_code'] ?? $item['item_code'] ?? $item['code'] ?? '');
+                if (!empty($ocrCode)) {
+                    if ((!empty($productCode) && strcasecmp($ocrCode, $productCode) === 0) ||
+                        (!empty($distProductCode) && strcasecmp($ocrCode, $distProductCode) === 0)) {
+                        return true;
+                    }
+                }
+
                 // Assuming OCR item has 'product_name' or 'name' or 'description'
                 $name = strtolower(trim($item['product_name'] ?? $item['name'] ?? $item['description'] ?? ''));
 
-                // 1. Direct contains check
+                // 2. Direct contains check
                 if (str_contains($name, $normalizedOrderName) || str_contains($normalizedOrderName, $name)) {
                     return true;
                 }
 
-                // 2. Fuzzy match: Check if at least first 2 words match
+                // 3. Fuzzy match: Check if at least first 2 words match
                 $ocrWords = preg_split('/[\s,]+/', $name);
                 $orderWords = preg_split('/[\s,]+/', $normalizedOrderName);
 

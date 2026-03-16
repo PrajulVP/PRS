@@ -51,7 +51,7 @@ class SalesManagerController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:4|confirmed',
-            'contact_no' => 'nullable|string|max:255',
+            'contact_no' => 'nullable|digits:10',
             'address' => 'nullable|string',
         ]);
 
@@ -113,7 +113,7 @@ class SalesManagerController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $salesManager->user->id,
             'password' => 'nullable|string|min:4|confirmed',
-            'contact_no' => 'nullable|string|max:255',
+            'contact_no' => 'nullable|digits:10',
             'address' => 'nullable|string',
         ]);
 

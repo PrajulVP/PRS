@@ -1224,6 +1224,85 @@
                 ]
             }
         },
+        "/api/field-staff/retailers": {
+            "post": {
+                "tags": [
+                    "Field Staff Dashboard"
+                ],
+                "summary": "Create a new Retailer",
+                "operationId": "610d4ecb9b1a7411c5e24332e4a85c81",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password",
+                                    "password_confirmation",
+                                    "shop_name",
+                                    "contact_no",
+                                    "pincode",
+                                    "gst",
+                                    "district_id",
+                                    "area_id"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string"
+                                    },
+                                    "shop_name": {
+                                        "type": "string"
+                                    },
+                                    "contact_no": {
+                                        "type": "string"
+                                    },
+                                    "address": {
+                                        "type": "string"
+                                    },
+                                    "pincode": {
+                                        "type": "string"
+                                    },
+                                    "gst": {
+                                        "type": "string"
+                                    },
+                                    "drug_license_no": {
+                                        "type": "string"
+                                    },
+                                    "district_id": {
+                                        "type": "integer"
+                                    },
+                                    "area_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Retailer created successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/field-staff/retailer-orders": {
             "get": {
                 "tags": [
@@ -1472,6 +1551,45 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/api/locations/districts": {
+            "get": {
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "Get list of all districts",
+                "operationId": "98ebcc887c3f579e9ce5e260167a493d",
+                "responses": {
+                    "200": {
+                        "description": "List of districts"
+                    }
+                }
+            }
+        },
+        "/api/locations/areas": {
+            "get": {
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "Get list of areas, optionally filtered by district_id",
+                "operationId": "cf958b30ce3a9f7ca2c7926e9590cab4",
+                "parameters": [
+                    {
+                        "name": "district_id",
+                        "in": "query",
+                        "description": "Filter areas by district ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of areas"
+                    }
+                }
             }
         },
         "/api/prescriptions/upload": {
@@ -2093,6 +2211,64 @@
                         "bearerAuth": []
                     }
                 ]
+            },
+            "post": {
+                "tags": [
+                    "Sales Manager Dashboard"
+                ],
+                "summary": "Create a new Field Staff",
+                "operationId": "73be58697ecb520d5cbbebdb9453fcce",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password",
+                                    "password_confirmation",
+                                    "contact_no",
+                                    "pincode"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string"
+                                    },
+                                    "contact_no": {
+                                        "type": "string"
+                                    },
+                                    "address": {
+                                        "type": "string"
+                                    },
+                                    "pincode": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Field Staff created successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/sales-manager/retailers": {
@@ -2471,6 +2647,10 @@
         {
             "name": "Inventory",
             "description": "Inventory"
+        },
+        {
+            "name": "Locations",
+            "description": "Locations"
         },
         {
             "name": "Prescription",

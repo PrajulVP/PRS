@@ -73,6 +73,7 @@
                                         <th>Code</th>
                                         <th>Name</th>
                                         <th>Generic Name</th>
+                                        <th>Pack</th>
                                         <th>MRP</th>
                                         <th>PTR</th>
                                         <th>PTS</th>
@@ -128,6 +129,11 @@
                             <div class="col-md-6 border-end">
                                 <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Stock & Packaging</h6>
                                 <div class="row g-3">
+                                    <div class="col-md-12">
+                                        <label for="create_pack" class="form-label fw-medium">Pack</label>
+                                        <input type="text" name="pack" id="create_pack" class="form-control"
+                                            placeholder="e.g. 10x10, 30ml">
+                                    </div>
                                     <div class="col-md-6">
                                         <label for="create_strip_size" class="form-label fw-medium">Tablet / Strip</label>
                                         <input type="text" name="strip_size" id="create_strip_size" class="form-control"
@@ -221,6 +227,11 @@
                             <div class="col-md-6 border-end">
                                 <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Stock & Packaging</h6>
                                 <div class="row g-3">
+                                    <div class="col-md-12">
+                                        <label for="edit_pack" class="form-label fw-medium">Pack</label>
+                                        <input type="text" name="pack" id="edit_pack" class="form-control"
+                                            placeholder="e.g. 10x10, 30ml">
+                                    </div>
                                     <div class="col-md-6">
                                         <label for="edit_strip_size" class="form-label fw-medium">Tablet / Strip</label>
                                         <input type="text" name="strip_size" id="edit_strip_size" class="form-control"
@@ -382,6 +393,10 @@
                     name: 'generic_name'
                 },
                 {
+                    data: 'pack',
+                    name: 'pack'
+                },
+                {
                     data: 'mrp',
                     name: 'mrp',
                     render: function(data) {
@@ -486,6 +501,7 @@
                 $('#edit_product_code').val(product.product_code);
                 $('#edit_product_name').val(product.product_name);
                 $('#edit_generic_name').val(product.generic_name);
+                $('#edit_pack').val(product.pack);
 
                 $('#edit_strip_size').val(product.strip_size);
                 $('#edit_box_size').val(product.box_size);
@@ -516,7 +532,7 @@
                                                                                 <div class="col-md-12 mb-3">
                                                                                     <div class="p-4 bg-light rounded text-center">
                                                                                         <h3 class="fw-bold text-primary mb-1">${product.product_name}</h3>
-                                                                                        <div class="text-secondary">${product.product_code} <span class="mx-2">|</span> ${product.generic_name || 'Generic N/A'}</div>
+                                                                                        <div class="text-secondary">${product.product_code} <span class="mx-2">|</span> ${product.generic_name || 'Generic N/A'} <span class="mx-2">|</span> ${product.pack || 'Pack N/A'}</div>
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
@@ -526,6 +542,9 @@
                                                                                 <div class="col-md-6 border-end">
                                                                                     <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Stock & Packaging</h6>
                                                                                     <dl class="row mb-0">
+                                                                                        <dt class="col-sm-4 text-muted small text-uppercase">Pack</dt>
+                                                                                        <dd class="col-sm-8 fw-medium">${product.pack || '-'}</dd>
+
                                                                                         <dt class="col-sm-4 text-muted small text-uppercase">Tablet/Strip</dt>
                                                                                         <dd class="col-sm-8 fw-medium">${product.strip_size || '-'}</dd>
 

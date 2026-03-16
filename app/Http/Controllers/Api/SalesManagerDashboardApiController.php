@@ -10,6 +10,8 @@ use App\Models\RetailerOrder;
 use App\Models\DistributorOrder;
 use App\Models\Retailer;
 use App\Models\User;
+use App\Models\FieldStaff;
+use Illuminate\Support\Facades\Hash;
 use App\Traits\OneSignalNotifications;
 use App\Traits\HandlesNotifications;
 
@@ -573,5 +575,92 @@ class SalesManagerDashboardApiController extends Controller
             'own_orders' => $ownOrders,
             'retailer_orders_received' => $retailerOrders
         ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/sales-manager/fieldstaffs",
+     *     summary="Create a new Field Staff",
+     *     tags={"Sales Manager Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name","email","password","password_confirmation","contact_no","pincode"},
+     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="email", type="string"),
+     *             @OA\Property(property="password", type="string"),
+     *             @OA\Property(property="password_confirmation", type="string"),
+     *             @OA\Property(property="contact_no", type="string"),
+     *             @OA\Property(property="address", type="string"),
+     *             @OA\Property(property="pincode", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=201, description="Field Staff created successfully")
+     * )
+     */
+    public function storeFieldStaff(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager')) {
+            return response()->json(['error' => 'Unauthorized. Only Sales Managers can create Field Staff.'], 403);
+        }
+
+        $userData = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:4|confirmed',
+        ]);
+
+        $fieldstaffData = $request->validate([
+            'pincode' => 'required|string',
+            'contact_no' => 'required|digits:10',
+            'address' => 'nullable|string',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $newUser = User::create([
+                'name' => $userData['name'],
+                'email' => $userData['email'],
+                'password' => Hash::make($userData['password']),
+                'role' => 'fieldstaff',
+                'status' => 'inactive',
+                'contact_no' => $fieldstaffData['contact_no'],
+                'address' => $fieldstaffData['address'] ?? null,
+                'pincode' => $fieldstaffData['pincode'],
+            ]);
+            $newUser->assignRole('fieldstaff');
+
+            $fieldstaff = new FieldStaff($fieldstaffData);
+            $fieldstaff->user_id = $newUser->id;
+            $fieldstaff->sales_manager_id = $user->salesManager->id;
+            $fieldstaff->save();
+
+            // Notify Admins for approval
+            $admins = User::role(['admin', 'superadmin'])->get();
+            foreach ($admins as $admin) {
+                if (method_exists($this, 'notifyUnique')) {
+                    $this->notifyUnique($admin, new \App\Notifications\UserApprovalRequired(
+                        $newUser,
+                        "New Field Staff {$newUser->name} has been created by Sales Manager {$user->name} and requires activation.",
+                        url('/admin/field-staffs')
+                    ));
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Field Staff created successfully and is pending admin approval.',
+                'field_staff' => $fieldstaff->load('user')
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to create field staff. ' . $e->getMessage()], 500);
+        }
     }
 }

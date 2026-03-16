@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use App\Models\RetailerOrder;
 use App\Models\Retailer;
+use App\Models\User;
 
 class FieldStaffDashboardApiController extends Controller
 {
@@ -189,5 +192,108 @@ class FieldStaffDashboardApiController extends Controller
                 ];
             })
         ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/field-staff/retailers",
+     *     summary="Create a new Retailer",
+     *     tags={"Field Staff Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name","email","password","password_confirmation","shop_name","contact_no","pincode","gst","district_id","area_id"},
+     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="email", type="string"),
+     *             @OA\Property(property="password", type="string"),
+     *             @OA\Property(property="password_confirmation", type="string"),
+     *             @OA\Property(property="shop_name", type="string"),
+     *             @OA\Property(property="contact_no", type="string"),
+     *             @OA\Property(property="address", type="string"),
+     *             @OA\Property(property="pincode", type="string"),
+     *             @OA\Property(property="gst", type="string"),
+     *             @OA\Property(property="drug_license_no", type="string"),
+     *             @OA\Property(property="district_id", type="integer"),
+     *             @OA\Property(property="area_id", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(response=201, description="Retailer created successfully")
+     * )
+     */
+    public function storeRetailer(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('fieldstaff')) {
+            return response()->json(['error' => 'Unauthorized. Only Field Staff can create Retailers.'], 403);
+        }
+
+        $userData = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:4|confirmed',
+        ]);
+
+        $retailerData = $request->validate([
+            'shop_name' => 'required|string|max:255',
+            'pincode' => 'required',
+            'gst' => 'required|unique:retailers',
+            'drug_license_no' => 'nullable|string|max:255',
+            'contact_no' => 'required|digits:10',
+            'address' => 'required',
+            'district_id' => 'required|exists:districts,id',
+            'area_id' => 'required|exists:areas,id',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $newUser = User::create([
+                'name' => $userData['name'],
+                'email' => $userData['email'],
+                'password' => Hash::make($userData['password']),
+                'role' => 'retailer',
+                'status' => 'inactive',
+                'contact_no' => $retailerData['contact_no'],
+                'address' => $retailerData['address'],
+                'pincode' => $retailerData['pincode'],
+            ]);
+            $newUser->assignRole('retailer');
+
+            $fieldstaff = $user->fieldStaff;
+
+            $retailer = new Retailer($retailerData);
+            $retailer->user_id = $newUser->id;
+            $retailer->field_staff_id = $fieldstaff->id;
+            $retailer->sales_manager_id = $fieldstaff->sales_manager_id;
+            $retailer->save();
+
+            // Notify the assigned Sales Manager
+            if ($retailer->sales_manager_id) {
+                $salesManagerUser = User::whereHas('salesManager', function ($q) use ($retailer) {
+                    $q->where('id', $retailer->sales_manager_id);
+                })->first();
+
+                if ($salesManagerUser && method_exists($this, 'notifyUnique')) {
+                    $this->notifyUnique($salesManagerUser, new \App\Notifications\UserApprovalRequired(
+                        $newUser,
+                        "New Retailer {$newUser->name} from {$retailer->shop_name} has registered and requires your approval.",
+                        url('/admin/retailers')
+                    ));
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Retailer created successfully and is pending approval.',
+                'retailer' => $retailer->load('user')
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to create retailer. ' . $e->getMessage()], 500);
+        }
     }
 }

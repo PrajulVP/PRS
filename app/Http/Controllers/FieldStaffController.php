@@ -114,7 +114,7 @@ class FieldStaffController extends Controller
             'sales_manager_id' => 'nullable|exists:sales_managers,id',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
-            'contact_no' => 'required|string',
+            'contact_no' => 'required|digits:10',
             'address' => 'nullable|string',
         ]);
 

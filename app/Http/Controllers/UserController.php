@@ -132,6 +132,7 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:4|confirmed',
             'role' => 'required|string',
+            'contact_no' => 'nullable|digits:10',
         ]);
 
         // ... (Auth checks from original file)
@@ -196,7 +197,12 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         // Same Update logic
-        $request->validate(['name' => 'required', 'email' => 'required|unique:users,email,' . $user->id, 'role' => 'required']);
+        $request->validate([
+            'name' => 'required', 
+            'email' => 'required|unique:users,email,' . $user->id, 
+            'role' => 'required',
+            'contact_no' => 'nullable|digits:10'
+        ]);
 
         $data = [
             'name' => $request->name,

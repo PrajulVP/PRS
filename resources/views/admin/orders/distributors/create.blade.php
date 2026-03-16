@@ -29,6 +29,11 @@
                                     </select>
                                 </div>
 
+                                <div class="col-md-3" id="variantWrapper" style="display: none;">
+                                    <label class="form-label fw-bold text-muted small text-uppercase mb-2">Variant / Size</label>
+                                    <select id="variantSelect" class="form-select bg-light-soft font-outfit rounded-3">
+                                    </select>
+                                </div>
                                 <div class="col-md-3">
                                     <label class="form-label fw-bold text-muted small text-uppercase mb-2">Quantity</label>
                                     <div class="input-group">
@@ -44,9 +49,10 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-md-2 align-self-end text-end">
                                     <button type="button"
                                         class="btn btn-primary w-100 fw-bold py-2 shadow-sm font-outfit rounded-3"
+                                        style="padding-top: 10px; padding-bottom: 10px;"
                                         id="btnAddItem">
                                         <i class="fa fa-plus me-1"></i> ADD
                                     </button>
@@ -365,6 +371,22 @@
                         p.is_count = isCount;
                         currentProductDetails = p;
 
+                        // Check for Variants in Product Name e.g. (S/M/L)
+                        let pNameVar = p.product_name ? p.product_name : '';
+                        let variantMatch = pNameVar.match(/\(([^)]*\/[^)]*)\)/);
+                        if (variantMatch) {
+                            let variants = variantMatch[1].split(/[/\,]/).map(v => v.trim());
+                            let $varSel = $('#variantSelect');
+                            $varSel.empty();
+                            variants.forEach(v => {
+                                $varSel.append(`<option value="${v}">${v}</option>`);
+                            });
+                            $('#variantWrapper').fadeIn(200);
+                        } else {
+                            $('#variantWrapper').hide();
+                            $('#variantSelect').empty();
+                        }
+
                         let $unitSelect = $('#unitSelect');
                         $unitSelect.empty();
                         if (isCount) {
@@ -403,9 +425,11 @@
 
                 let qty = parseInt($('#qtyInput').val());
                 let unit = $('#unitSelect').val();
+                let variant = $('#variantWrapper').is(':visible') ? $('#variantSelect').val() : null;
+
                 if (qty < 1) return;
 
-                let key = prodId;
+                let key = prodId + (variant ? '-' + variant : '');
                 let mul = 1;
                 if (unit === 'Box') mul = parseInt(currentProductDetails.box_size || 1);
                 if (unit === 'Carton') mul = parseInt(currentProductDetails.box_size || 1) * parseInt(currentProductDetails.carton_size || 1);
@@ -417,6 +441,7 @@
                 } else {
                     addedItems[key] = {
                         id: prodId, name: currentProductDetails.product_name,
+                        variant: variant,
                         price: parseFloat(currentProductDetails.pts),
                         qty: qty, unit: unit, multiplier: mul,
                         box_size: currentProductDetails.box_size,
@@ -446,8 +471,11 @@
                                                                             <tr class="${rowClass}">
                                                                                 <td class="ps-4 text-muted fw-bold small">${index++}</td>
                                                                                 <td>
-                                                                                    <div class="fw-bold text-dark font-outfit">${item.name}</div>
+                                                                                    <div class="fw-bold text-dark font-outfit" style="max-width:250px; white-space:normal; line-height:1.2;">
+                                                                                        ${item.name} ${item.variant ? `<span class="badge bg-primary ms-1">${item.variant}</span>` : ''}
+                                                                                    </div>
                                                                                     <input type="hidden" name="items[${key}][product_id]" value="${item.id}">
+                                                                                    ${item.variant ? `<input type="hidden" name="items[${key}][variant]" value="${item.variant}">` : ''}
                                                                                 </td>
                                                                                 <td class="text-center">
                                                                                     <div class="input-group input-group-sm mx-auto" style="max-width: 160px;">

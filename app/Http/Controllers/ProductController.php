@@ -97,6 +97,7 @@ class ProductController extends Controller
                     'product_code' => $product->product_code,
                     'product_name' => $product->product_name,
                     'generic_name' => $product->generic_name,
+                    'pack' => $product->pack,
                     'strip_size' => $product->strip_size,
                     'box_size' => $product->box_size,
                     'carton_size' => $product->carton_size,
@@ -137,6 +138,7 @@ class ProductController extends Controller
             'product_code' => 'nullable|string|max:255',
             'product_name' => 'required|string|max:255',
             'generic_name' => 'nullable|string|max:255',
+            'pack' => 'nullable|string|max:255',
             'strip_size' => 'nullable|string|max:255',
             'box_size' => 'nullable|string|max:255',
             'carton_size' => 'nullable|string|max:255',
@@ -179,6 +181,7 @@ class ProductController extends Controller
             'product_code' => 'nullable|string|max:255',
             'product_name' => 'required|string|max:255',
             'generic_name' => 'nullable|string|max:255',
+            'pack' => 'nullable|string|max:255',
             'strip_size' => 'nullable|string|max:255',
             'box_size' => 'nullable|string|max:255',
             'carton_size' => 'nullable|string|max:255',
@@ -216,6 +219,7 @@ class ProductController extends Controller
             'product_code',
             'product_name',
             'generic_name',
+            'pack',
             'hsn_code',
             'strip_size',
             'box_size',
@@ -250,8 +254,8 @@ class ProductController extends Controller
         if (($handle = fopen($file->getRealPath(), "r")) !== FALSE) {
             $header = fgetcsv($handle, 0, ","); // length 0 for no limit
 
-            if (!$header || count($header) < 11) {
-                return redirect()->route('products.index')->with('error', 'Invalid CSV format or missing columns. Expected at least 11 columns, found ' . (is_array($header) ? count($header) : 0));
+            if (!$header || count($header) < 12) {
+                return redirect()->route('products.index')->with('error', 'Invalid CSV format or missing columns. Expected at least 12 columns, found ' . (is_array($header) ? count($header) : 0));
             }
 
             // Trim headers and remove BOM
@@ -289,6 +293,7 @@ class ProductController extends Controller
                             'product_code' => $productCode,
                             'product_name' => $productData['product_name'],
                             'generic_name' => $productData['generic_name'] ?? null,
+                            'pack' => $productData['pack'] ?? null,
                             'strip_size' => $productData['strip_size'] ?: null,
                             'box_size' => $productData['box_size'] ?: null,
                             'carton_size' => $productData['carton_size'] ?: null,

@@ -196,7 +196,7 @@ class AuthApiController extends Controller
         }
 
         if ($user->hasAnyRole(['superadmin', 'admin', 'distributor'])) {
-            $rules['contact_no'] = 'nullable|string|max:20';
+            $rules['contact_no'] = 'nullable|digits:10';
             if ($user->hasAnyRole(['superadmin', 'admin'])) {
                 $rules['email'] = 'required|email|unique:users,email,' . $user->id;
             }

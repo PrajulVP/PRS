@@ -11,7 +11,11 @@ use App\Http\Controllers\Api\PrescriptionApiController;
 //add a prefix to all routes
 Route::post('login', [AuthApiController::class, 'login']);
 
+// Location APIs wrapper (open to authenticated users)
 Route::middleware('auth:api')->group(function () {
+    Route::get('locations/districts', [\App\Http\Controllers\Api\LocationApiController::class, 'getDistricts']);
+    Route::get('locations/areas', [\App\Http\Controllers\Api\LocationApiController::class, 'getAreas']);
+
     Route::get('profile', [AuthApiController::class, 'profile']);
     Route::post('profile/update', [AuthApiController::class, 'updateProfile']);
     Route::post('user/player-id', [\App\Http\Controllers\Api\UserApiController::class, 'updatePlayerId']);
@@ -62,6 +66,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('dashboard', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'index']);
         Route::get('pending-retailers', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getPendingRetailers']);
         Route::get('fieldstaffs', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getFieldStaffs']);
+        Route::post('fieldstaffs', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'storeFieldStaff']);
         Route::get('retailers', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getRetailers']);
         Route::get('retailers/{id}/loyalty-points', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getRetailerLoyaltyDetails']);
         Route::get('retailers/loyalty-points', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getRetailersLoyaltyPoints']);
@@ -80,6 +85,7 @@ Route::middleware('auth:api')->group(function () {
     Route::prefix('field-staff')->group(function () {
         Route::get('dashboard', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'index']);
         Route::get('retailers/loyalty-points', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'getRetailersLoyaltyPoints']);
+        Route::post('retailers', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'storeRetailer']);
         Route::get('retailers/{id}/loyalty-points', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'getRetailerLoyaltyDetails']);
         Route::get('retailer-orders', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'index']);
         Route::get('retailer-orders/{id}', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'show']);
