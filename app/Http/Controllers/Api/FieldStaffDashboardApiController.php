@@ -87,14 +87,14 @@ class FieldStaffDashboardApiController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/field-staff/retailers/loyalty-points",
-     *     summary="List all retailers under this Field Staff with their loyalty points",
+     *     path="/api/field-staff/retailers",
+     *     summary="List all retailers under this Field Staff with full details and loyalty points",
      *     tags={"Field Staff Dashboard"},
      *     security={{"bearerAuth":{}}},
-     *     @OA\Response(response=200, description="List of retailers' loyalty points")
+     *     @OA\Response(response=200, description="List of retailers with details")
      * )
      */
-    public function getRetailersLoyaltyPoints(Request $request)
+    public function getRetailers(Request $request)
     {
         $user = Auth::user();
 
@@ -104,26 +104,28 @@ class FieldStaffDashboardApiController extends Controller
 
         $fieldStaffId = $user->fieldStaff->id;
 
-        $retailers = Retailer::where('field_staff_id', $fieldStaffId)
-            ->get(['id', 'shop_name', 'contact_no'])
+        $retailers = Retailer::with(['user', 'district'])
+            ->where('field_staff_id', $fieldStaffId)
+            ->get()
             ->map(function ($retailer) {
-                // Dynamically calculate loyalty points and order stats
-                $orderQuery = RetailerOrder::where('retailer_id', $retailer->id)
-                    ->where('status', RetailerOrder::STATUS_DELIVERED);
-                
-                $points = (clone $orderQuery)
+                // Dynamically calculate loyalty points
+                $points = RetailerOrder::where('retailer_id', $retailer->id)
+                    ->where('status', RetailerOrder::STATUS_DELIVERED)
                     ->whereNotNull('loyalty_points_earned')
                     ->where('loyalty_points_earned', '>', 0)
                     ->sum('loyalty_points_earned');
 
-                $totalOrders = (clone $orderQuery)->count();
-                $lastOrder = (clone $orderQuery)->latest('updated_at')->first();
-
                 return [
                     'id' => $retailer->id,
                     'shop_name' => $retailer->shop_name,
+                    'email' => $retailer->user->email ?? 'N/A',
                     'contact_no' => $retailer->contact_no,
-                    'loyalty_points' => $points
+                    'gst' => $retailer->gst,
+                    'drug_license_no' => $retailer->drug_license_no,
+                    'address' => $retailer->address,
+                    'city' => $retailer->district->name ?? 'N/A',
+                    'pincode' => $retailer->pincode,
+                    'loyalty_points' => number_format($points, 2, '.', '')
                 ];
             });
 

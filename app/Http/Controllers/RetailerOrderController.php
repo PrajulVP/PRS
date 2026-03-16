@@ -115,8 +115,16 @@ class RetailerOrderController extends Controller
                 }
 
                 $sub = $needed * $product->mrp;
+                
+                // Append variant to product name if provided
+                $finalProductName = $product->product_name;
+                if (!empty($item['variant'])) {
+                    $finalProductName .= ' [' . $item['variant'] . ']';
+                }
+
                 $order->items()->create([
                     'product_id' => $product->id,
+                    'product_name' => $finalProductName,
                     'quantity' => $needed,
                     'unit' => $item['unit'] ?? 'Strips',
                     'unit_price' => $product->mrp,

@@ -90,10 +90,12 @@
                                 {{-- Row 2: Variant, Qty and Add Button --}}
                                 <div class="col-md-12">
                                     <div class="row g-3 justify-content-end">
-                                        <div class="col-md-3" id="variantWrapper" style="display: none;">
-                                            <label class="form-label fw-bold text-muted small text-uppercase mb-2">Variant / Size</label>
-                                            <select id="variantSelect" class="form-select bg-light-soft font-outfit rounded-3">
-                                            </select>
+                                        <div class="col-md-12" id="variantWrapper" style="display: none;">
+                                            <label class="form-label fw-bold text-muted small text-uppercase mb-2">Select Size / Variant</label>
+                                            <div id="sizeSelector" class="d-flex flex-wrap gap-2">
+                                                {{-- Size buttons will be injected here --}}
+                                            </div>
+                                            <input type="hidden" id="variantValue" value="">
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label fw-bold text-muted small text-uppercase mb-2">Quantity
@@ -459,17 +461,29 @@
                         // Check for Variants in Product Name e.g. (S/M/L)
                         let pNameVar = p.product_name ? p.product_name : '';
                         let variantMatch = pNameVar.match(/\(([^)]*\/[^)]*)\)/);
+                        
+                        // Default sizes user requested
+                        const standardSizes = ['S', 'M', 'L', 'XL', 'XXL', '3XL'];
+                        let variants = [];
+
                         if (variantMatch) {
-                            let variants = variantMatch[1].split(/[/\,]/).map(v => v.trim());
-                            let $varSel = $('#variantSelect');
-                            $varSel.empty();
+                            variants = variantMatch[1].split(/[/\,]/).map(v => v.trim());
+                        } else if (pNameVar.toLowerCase().includes('size') || pNameVar.toLowerCase().includes('collar') || pNameVar.toLowerCase().includes('cap') || pNameVar.toLowerCase().includes('splint')) {
+                            // If it matches common sized items but no specific brackets, show standard
+                            variants = standardSizes;
+                        }
+
+                        if (variants.length > 0) {
+                            let $sizeSel = $('#sizeSelector');
+                            $sizeSel.empty();
                             variants.forEach(v => {
-                                $varSel.append(`<option value="${v}">${v}</option>`);
+                                $sizeSel.append(`<button type="button" class="btn btn-outline-primary size-btn px-3 py-2 fw-bold" data-size="${v}">${v}</button>`);
                             });
                             $('#variantWrapper').fadeIn(200);
+                            $('#variantValue').val(''); // Reset
                         } else {
                             $('#variantWrapper').hide();
-                            $('#variantSelect').empty();
+                            $('#variantValue').val('');
                         }
 
                         let $unitSelect = $('#unitSelect');
@@ -518,7 +532,11 @@
                 let distId = $('#distributorSelect').val();
                 let qty = parseInt($('#qtyInput').val());
                 let unit = $('#unitSelect').val();
-                let variant = $('#variantWrapper').is(':visible') ? $('#variantSelect').val() : null;
+                let variant = $('#variantWrapper').is(':visible') ? $('#variantValue').val() : null;
+
+                if ($('#variantWrapper').is(':visible') && !variant) {
+                    return showToast('warning', 'Please select a size/variant first');
+                }
                 let distOption = $('#distributorSelect option:selected');
                 let maxStockRaw = parseInt(distOption.data('stock-raw') || 0);
 
@@ -800,6 +818,11 @@
                         }
                     }
                 });
+            });
+            $(document).on('click', '.size-btn', function() {
+                $('.size-btn').removeClass('btn-primary text-white').addClass('btn-outline-primary');
+                $(this).removeClass('btn-outline-primary').addClass('btn-primary text-white');
+                $('#variantValue').val($(this).data('size'));
             });
         });
     </script>

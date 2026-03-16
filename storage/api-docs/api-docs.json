@@ -1176,55 +1176,24 @@
                 ]
             }
         },
-        "/api/field-staff/retailers/loyalty-points": {
-            "get": {
-                "tags": [
-                    "Field Staff Dashboard"
-                ],
-                "summary": "List all retailers under this Field Staff with their loyalty points",
-                "operationId": "33c1a8be6215442799fbee13ac23e093",
-                "responses": {
-                    "200": {
-                        "description": "List of retailers' loyalty points"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/field-staff/retailers/{id}/loyalty-points": {
-            "get": {
-                "tags": [
-                    "Field Staff Dashboard"
-                ],
-                "summary": "Get loyalty points summary and history for a retailer under this Field Staff",
-                "operationId": "8db44870105918a11561a6b7ec0ab11b",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Loyalty points data"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/api/field-staff/retailers": {
+            "get": {
+                "tags": [
+                    "Field Staff Dashboard"
+                ],
+                "summary": "List all retailers under this Field Staff with full details and loyalty points",
+                "operationId": "4b21e0ad70017cf893f8a0c1c1749023",
+                "responses": {
+                    "200": {
+                        "description": "List of retailers with details"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
             "post": {
                 "tags": [
                     "Field Staff Dashboard"
@@ -1294,6 +1263,35 @@
                 "responses": {
                     "201": {
                         "description": "Retailer created successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/field-staff/retailers/{id}/loyalty-points": {
+            "get": {
+                "tags": [
+                    "Field Staff Dashboard"
+                ],
+                "summary": "Get loyalty points summary and history for a retailer under this Field Staff",
+                "operationId": "8db44870105918a11561a6b7ec0ab11b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Loyalty points data"
                     }
                 },
                 "security": [

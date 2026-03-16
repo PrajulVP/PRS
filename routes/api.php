@@ -84,7 +84,7 @@ Route::middleware('auth:api')->group(function () {
     // Field Staff Dashboard & Orders
     Route::prefix('field-staff')->group(function () {
         Route::get('dashboard', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'index']);
-        Route::get('retailers/loyalty-points', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'getRetailersLoyaltyPoints']);
+        Route::get('retailers', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'getRetailers']);
         Route::post('retailers', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'storeRetailer']);
         Route::get('retailers/{id}/loyalty-points', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'getRetailerLoyaltyDetails']);
         Route::get('retailer-orders', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'index']);

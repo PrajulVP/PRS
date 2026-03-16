@@ -206,9 +206,15 @@ class RetailerOrderController extends Controller
                     $taxableSubtotal = $totalQtyNos * $price;
                     $subtotalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
 
+                    // Append variant to product name if provided
+                    $finalProductName = $product->product_name;
+                    if (!empty($itemData['variant'])) {
+                        $finalProductName .= ' [' . $itemData['variant'] . ']';
+                    }
+
                     $order->items()->create([
                         'product_id' => $product->id,
-                        'product_name' => $product->product_name,
+                        'product_name' => $finalProductName,
                         'quantity' => $qty,
                         'free_quantity' => $itemData['free_quantity'] ?? 0,
                         'unit' => $unit,

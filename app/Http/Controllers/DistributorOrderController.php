@@ -286,9 +286,15 @@ class DistributorOrderController extends Controller
                 $taxableAmount = $itemData['quantity'] * $unitPrice;
                 $itemTotalWithGst = $taxableAmount * (1 + ($gstRate / 100));
 
+                // Append variant to product name if provided
+                $finalProductName = $product->product_name;
+                if (!empty($itemData['variant'])) {
+                    $finalProductName .= ' [' . $itemData['variant'] . ']';
+                }
+
                 $order->items()->create([
                     'product_id' => $product->id,
-                    'product_name' => $product->product_name,
+                    'product_name' => $finalProductName,
                     'quantity' => $itemData['quantity'],
                     'free_quantity' => $itemData['free_quantity'] ?? 0,
                     'unit' => $itemData['unit'] ?? 'Box',
