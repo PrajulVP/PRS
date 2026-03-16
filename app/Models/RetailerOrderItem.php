@@ -10,7 +10,9 @@ class RetailerOrderItem extends Model
     protected $fillable = [
         'retailer_order_id',
         'product_id',
+        'product_name',
         'quantity',
+        'free_quantity',
         'unit',
         'unit_price',
         'total_amount',

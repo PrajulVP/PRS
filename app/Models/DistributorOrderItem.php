@@ -10,7 +10,9 @@ class DistributorOrderItem extends Model
     protected $fillable = [
         'distributor_order_id',
         'product_id',
+        'product_name',
         'quantity',
+        'free_quantity',
         'unit',
         'price',
         'subtotal',

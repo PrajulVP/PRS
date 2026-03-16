@@ -24,6 +24,8 @@ class Product extends Model
         'taxable_value',
         'gst',
         'net_amount',
+        'offer',
+        'discount',
         'loyalty_point_percentage',
     ];
 

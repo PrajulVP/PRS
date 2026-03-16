@@ -118,7 +118,12 @@ class DistributorOrderController extends Controller
 
                 $formattedOrders = $orders->map(function ($order) {
                     $productSummary = $order->items->map(function ($item) {
-                        return ($item->product?->product_name ?? 'Unknown Product') . ' - ' . $item->quantity . ' ' . ($item->product?->pack ?? '');
+                        $pName = $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product';
+                        $summary = $pName . ' - ' . $item->quantity;
+                        if ($item->free_quantity > 0) {
+                            $summary .= ' + ' . $item->free_quantity . ' Free';
+                        }
+                        return $summary . ' ' . ($item->product->pack ?? '');
                     })->implode('<br>');
 
                     return [
@@ -134,15 +139,15 @@ class DistributorOrderController extends Controller
                         'sales_manager_name' => $order->salesManager?->user?->name ?? 'N/A',
                         'total_items' => $order->total_items,
                         'total_quantity' => $order->total_quantity,
-                        'total_amount' => number_format($order->total_amount, 2),
+                        'total_amount' => $order->total_amount,
                         'product_summary' => $productSummary,
                         'status' => ucfirst(str_replace('_', ' ', $order->status)),
                         'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d H:i:s') : '-',
                         'items' => $order->items->map(function ($item) {
                             return [
                                 'product_id' => $item->product_id,
-                                'product_name' => $item->product?->product_name ?? 'Unknown Product',
-                                'product_code' => $item->product?->product_code ?? 'N/A',
+                                'product_name' => $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product',
+                                'product_code' => $item->product->product_code ?? 'N/A',
                                 'quantity' => $item->quantity,
                                 'unit_price' => $item->price,
                                 'total_amount' => $item->subtotal,
@@ -167,7 +172,7 @@ class DistributorOrderController extends Controller
                         }),
                         'delivery_notes' => $order->delivery_notes,
                         'cancellation_reason' => $order->cancellation_reason,
-                        'invoice_url' => $order->invoice_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($order->invoice_path) : null,
+                        'invoice_url' => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
                         'payment_status' => $order->payment_status, // Added for payment status display
                         'raw_status' => $order->status
                     ];
@@ -277,17 +282,21 @@ class DistributorOrderController extends Controller
 
                 // Price Logic: Distributor buys at PTS (Price to Stockist)
                 $unitPrice = $product->pts; // Strictly PTS
-                $itemTotalAmount = $itemData['quantity'] * $unitPrice;
+                $gstRate = (float)($product->gst ?? 0);
+                $taxableAmount = $itemData['quantity'] * $unitPrice;
+                $itemTotalWithGst = $taxableAmount * (1 + ($gstRate / 100));
 
                 $order->items()->create([
                     'product_id' => $product->id,
+                    'product_name' => $product->product_name,
                     'quantity' => $itemData['quantity'],
+                    'free_quantity' => $itemData['free_quantity'] ?? 0,
                     'unit' => $itemData['unit'] ?? 'Box',
                     'price' => $unitPrice,
-                    'subtotal' => $itemTotalAmount,
+                    'subtotal' => $itemTotalWithGst,
                 ]);
 
-                $totalAmount += $itemTotalAmount;
+                $totalAmount += $itemTotalWithGst;
                 $totalItems++;
                 $totalQuantity += $itemData['quantity'];
             }
@@ -738,7 +747,7 @@ class DistributorOrderController extends Controller
 
             return response()->json([
                 'success' => 'Invoice uploaded.',
-                'invoice_url' => \Illuminate\Support\Facades\Storage::disk('public')->url($path)
+                'invoice_url' => asset('storage/' . $path)
             ]);
         }
 
@@ -797,7 +806,7 @@ class DistributorOrderController extends Controller
 
         return response()->json([
             'success' => 'Order approved.',
-            'invoice_url' => $path ? \Illuminate\Support\Facades\Storage::disk('public')->url($path) : null
+            'invoice_url' => $path ? asset('storage/' . $path) : null
         ]);
     }
 

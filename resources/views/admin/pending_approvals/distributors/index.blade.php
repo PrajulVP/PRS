@@ -683,13 +683,18 @@
                                         </div>
                                         <div id="verification_table_footer" class="invoice-list-footer bg-light d-none"
                                             style="font-size: 0.75rem;">
-                                            <div class="d-flex w-100 justify-content-end align-items-center gap-3">
-                                                <div class="text-muted">Extracted Totals:</div>
-                                                <div>Txl: <span class="fw-bold" id="tfoot_taxable">0</span></div>
-                                                <div>GST: <span class="fw-bold" id="tfoot_gst_total">0</span></div>
-                                                <div class="ms-2 border-start ps-3 py-1">
-                                                    <div class="small text-muted mb-0">Invoice Net</div>
-                                                    <div class="fs-6 fw-bold text-primary" id="tfoot_net">₹0.00</div>
+                                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="$('#scan_file_input').val('').click()">
+                                                    <i class="fa fa-sync me-1"></i> Re-scan / Different File
+                                                </button>
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <div class="text-muted">Extracted Totals:</div>
+                                                    <div>Txl: <span class="fw-bold" id="tfoot_taxable">0</span></div>
+                                                    <div>GST: <span class="fw-bold" id="tfoot_gst_total">0</span></div>
+                                                    <div class="ms-2 border-start ps-3 py-1">
+                                                        <div class="small text-muted mb-0">Invoice Net</div>
+                                                        <div class="fs-6 fw-bold text-primary" id="tfoot_net">₹0.00</div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -962,7 +967,12 @@
                         }
                     },
                     { data: 'product_summary', render: d => d.length > 50 ? d.substring(0, 50) + '...' : d },
-                    { data: 'total_amount' },
+                    { 
+                        data: 'total_amount',
+                        render: function(data) {
+                            return `<span class="fw-bold text-success">₹${data}</span>`;
+                        }
+                    },
                     { data: 'placed_at' },
                     {
                         data: 'status',
@@ -1461,6 +1471,8 @@
                 $('#automation_idle_state').addClass('d-none');
                 $('#automation_success_state').addClass('d-none');
                 $('#automation_error_state').addClass('d-none');
+                $('#ocr_dropzone').removeClass('has-file');
+                $('#btn_approve_order').prop('disabled', true);
 
                 $('#ocr_progress_bar').css('width', '50%');
                 $('#ocr_status_text').text('AI is analyzing your invoice...');
@@ -1512,7 +1524,8 @@
                         let errMsg = xhr.responseJSON ? xhr.responseJSON.message : 'Unknown error during OCR processing';
                         showToast('error', 'OCR Failed: ' + errMsg);
                         $('#ocr_processing_state').addClass('d-none');
-                        $('#automation_idle_state').removeClass('d-none').fadeOut();
+                        $('#automation_idle_state').removeClass('d-none');
+                        $('#scan_file_input').val(''); // Clear failed file
                         $('#ocr_progress_bar').css('width', '0%');
                         $('#ocr_status_text').text('');
                     }

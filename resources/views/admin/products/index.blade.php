@@ -383,15 +383,24 @@
                 },
                 {
                     data: 'mrp',
-                    name: 'mrp'
+                    name: 'mrp',
+                    render: function(data) {
+                        return '₹' + parseFloat(data).toFixed(2);
+                    }
                 },
                 {
                     data: 'ptr',
-                    name: 'ptr'
+                    name: 'ptr',
+                    render: function(data) {
+                        return '₹' + parseFloat(data).toFixed(2);
+                    }
                 },
                 {
                     data: 'pts',
-                    name: 'pts'
+                    name: 'pts',
+                    render: function(data) {
+                        return '₹' + parseFloat(data).toFixed(2);
+                    }
                 },
                 {
                     data: 'loyalty_point_percentage',

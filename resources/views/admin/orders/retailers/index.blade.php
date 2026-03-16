@@ -737,7 +737,7 @@
                     data: 'total_amount',
                     name: 'total_amount',
                     render: function (data) {
-                        return `<span class="fw-bold text-success"><i class="fa fa-rupee"></i> ${data}</span>`;
+                        return `<span class="fw-bold text-success">₹${data}</span>`;
                     }
                 },
                 {
@@ -1426,6 +1426,7 @@
                                             <th class="py-3 px-4" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Product</th>
                                             <th class="py-3 px-4 text-center" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Batch/Exp</th>
                                             <th class="py-3 px-4 text-center" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Qty</th>
+                                            <th class="py-3 px-4 text-center" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Free</th>
                                             <th class="py-3 px-4 text-end" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Price</th>
                                             <th class="py-3 px-4 text-end" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Total</th>
                                         </tr>
@@ -1451,6 +1452,9 @@
                             </td>
                             <td class="py-3 px-4 text-center">${batchHtml}</td>
                             <td class="py-3 px-4 text-center"><span class="badge bg-soft-primary text-primary px-2 py-1" style="font-size: 0.75rem;">${qty} ${i.unit || ''}</span></td>
+                            <td class="py-3 px-4 text-center">
+                                ${i.free_quantity > 0 ? `<span class="badge bg-soft-success text-success px-2 py-1" style="font-size: 0.75rem;">${i.free_quantity}</span>` : '<span class="text-muted small">-</span>'}
+                            </td>
                             <td class="py-3 px-4 text-end small">₹${unitPrice.toFixed(2)}</td>
                             <td class="py-3 px-4 text-end fw-bold text-primary">₹${totalAmt.toFixed(2)}</td>
                         </tr>
@@ -1461,7 +1465,7 @@
                                     </tbody>
                                     <tfoot class="bg-light">
                                         <tr>
-                                            <td colspan="4" class="text-end py-3 px-4 text-uppercase fw-bold text-muted" style="font-size: 0.75rem;">Grand Total:</td>
+                                            <td colspan="5" class="text-end py-3 px-4 text-uppercase fw-bold text-muted" style="font-size: 0.75rem;">Grand Total:</td>
                                             <td class="py-3 px-4 text-end fw-bold text-success fs-5">₹${parseFloat(row.total_amount).toFixed(2)}</td>
                                         </tr>
                                     </tfoot>

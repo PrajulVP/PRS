@@ -56,6 +56,7 @@ class FieldStaffRetailerOrderController extends Controller
                     return [
                         'product_name' => $item->product->product_name ?? 'N/A',
                         'quantity' => $item->quantity,
+                        'free_quantity' => $item->free_quantity,
                         'price' => $item->price,
                         'subtotal' => $item->subtotal
                     ];

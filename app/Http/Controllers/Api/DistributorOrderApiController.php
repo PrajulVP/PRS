@@ -235,17 +235,19 @@ class DistributorOrderApiController extends Controller
             foreach ($request->items as $itemData) {
                 $product = Product::findOrFail($itemData['product_id']);
                 $unitPrice = $product->pts;
-                $subtotal = $itemData['quantity'] * $unitPrice;
+                $gstRate = (float)($product->gst ?? 0);
+                $taxableSubtotal = $itemData['quantity'] * $unitPrice;
+                $subtotalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
 
                 $order->items()->create([
                     'product_id' => $product->id,
                     'quantity' => $itemData['quantity'],
                     'unit' => $itemData['unit'] ?? 'Box',
                     'price' => $unitPrice,
-                    'subtotal' => $subtotal,
+                    'subtotal' => $subtotalWithGst,
                 ]);
 
-                $totalAmount += $subtotal;
+                $totalAmount += $subtotalWithGst;
                 $totalItems++;
                 $totalQuantity += $itemData['quantity'];
             }
@@ -455,13 +457,14 @@ class DistributorOrderApiController extends Controller
             'status' => $order->status,
             'payment_status' => $order->payment_status,
             'placed_at' => $order->placed_at,
-            'invoice_url' => $order->invoice_path ? Storage::disk('public')->url($order->invoice_path) : null,
+            'invoice_url' => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
             'items' => $order->items->map(function ($item) {
                 return [
                     'id' => $item->id,
                     'product_id' => $item->product_id,
                     'product_name' => $item->product->product_name ?? 'N/A',
                     'quantity' => $item->quantity,
+                    'free_quantity' => $item->free_quantity,
                     'unit' => $item->unit,
                     'price' => $item->price,
                     'subtotal' => $item->subtotal,

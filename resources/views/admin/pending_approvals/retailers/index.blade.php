@@ -764,6 +764,12 @@
 
                                 </div> <!-- Close success state here -->
 
+                                <div id="automation_success_footer" class="d-none mt-3 pb-3 border-bottom">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="$('#scan_retailer_file_input').val('').click()">
+                                        <i class="fa fa-sync me-1"></i> Scan Another File
+                                    </button>
+                                </div>
+
                                 <div id="automation_error_state" class="d-none">
                                     <div
                                         class="text-center py-5 bg-soft-danger rounded-3 border-start border-4 border-danger">
@@ -1000,7 +1006,10 @@
                 },
                 {
                     data: 'total_amount',
-                    name: 'total_amount'
+                    name: 'total_amount',
+                    render: function(data) {
+                        return `<span class="fw-bold text-success">₹${data}</span>`;
+                    }
                 },
                 {
                     data: 'placed_at',
@@ -1837,7 +1846,9 @@
                 $('#ocr_dropzone').addClass('d-none'); // Hide the dropzone
                 $('#results_loading_spinner').removeClass('d-none'); // Show loading spinner
                 $('#automation_success_state').hide();
+                $('#automation_success_footer').addClass('d-none');
                 $('#automation_error_state').addClass('d-none');
+                $('#batch_allocation_table_container').addClass('d-none');
 
                 let formData = new FormData();
                 formData.append('invoice', file);
@@ -1863,6 +1874,7 @@
                                 $('#automation_idle_state').hide();
                                 $('#results_loading_spinner').addClass('d-none');
                                 $('#automation_success_state').fadeIn();
+                                $('#automation_success_footer').removeClass('d-none');
                                 $('#batch_allocation_table_container').removeClass('d-none'); // Show grid
                                 $('#processed_summary_text').text(`${identifiedCount} products mapped from Invoice.`);
                             } else {

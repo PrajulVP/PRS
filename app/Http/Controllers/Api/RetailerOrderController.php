@@ -62,7 +62,7 @@ class RetailerOrderController extends Controller
             return response()->json(['message' => 'User is not a retailer'], 403);
         }
 
-        $orders = RetailerOrder::with(['items.product'])
+        $orders = RetailerOrder::with(['items.product', 'distributor.user'])
             ->where('retailer_id', $user->retailer->id)
             ->orderBy('created_at', 'desc')
             ->get()
@@ -70,6 +70,8 @@ class RetailerOrderController extends Controller
                 return [
                     'id'             => $order->id,
                     'order_code'     => $order->order_code,
+                    'distributor_id' => $order->distributor_id,
+                    'distributor_name' => $order->distributor?->user?->name ?? 'N/A',
                     'status'         => $order->status,
                     'payment_status' => $order->payment_status,
                     'total_amount'   => number_format($order->total_amount, 2),
@@ -79,14 +81,13 @@ class RetailerOrderController extends Controller
                     'items'          => $order->items->map(function ($item) {
                         return [
                             'product_id' => $item->product_id,
-                            'product_name' => $item->product->product_name ?? 'N/A',
+                            'product_name' => $item->product_name ?? $item->product->product_name ?? 'N/A',
                             'quantity'   => $item->quantity,
+                            'free_quantity' => $item->free_quantity,
                             'unit'       => $item->unit ?? 'Nos',
                         ];
                     }),
-                    'invoice_url'    => $order->invoice_path
-                        ? Storage::disk('public')->url($order->invoice_path)
-                        : null,
+                    'invoice_url'    => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
                     'placed_at'      => $order->placed_at?->format('Y-m-d H:i:s'),
                     'delivered_at'   => $order->delivered_at?->format('Y-m-d H:i:s'),
                     'loyalty_points_earned' => $order->status === RetailerOrder::STATUS_DELIVERED ? (int)$order->loyalty_points_earned : 0,
@@ -201,17 +202,21 @@ class RetailerOrderController extends Controller
                     }
 
                     $price = (float)$product->ptr; // Retailers buy at PTR
-                    $subtotal = $totalQtyNos * $price;
+                    $gstRate = (float)($product->gst ?? 0);
+                    $taxableSubtotal = $totalQtyNos * $price;
+                    $subtotalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
 
                     $order->items()->create([
                         'product_id' => $product->id,
+                        'product_name' => $product->product_name,
                         'quantity' => $qty,
+                        'free_quantity' => $itemData['free_quantity'] ?? 0,
                         'unit' => $unit,
                         'unit_price' => $price,
-                        'total_amount' => $subtotal,
+                        'total_amount' => $subtotalWithGst,
                     ]);
 
-                    $totalAmount += $subtotal;
+                    $totalAmount += $subtotalWithGst;
                     $totalItemsCount++;
                     $totalQuantityNos += $totalQtyNos;
                 }

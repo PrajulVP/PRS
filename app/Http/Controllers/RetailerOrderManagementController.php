@@ -167,17 +167,22 @@ class RetailerOrderManagementController extends Controller
 
                     // Price Logic: Retailer buys at PTR (Price to Retailer)
                     $price = (float)$product->ptr;
-                    $subtotal = $totalQtyNos * $price; // Subtotal based on total base units
+                    $gstRate = (float)($product->gst ?? 0);
+                    $taxableSubtotal = $totalQtyNos * $price;
+                    $gstAmount = $taxableSubtotal * ($gstRate / 100);
+                    $subtotalWithGst = $taxableSubtotal + $gstAmount;
 
                     $order->items()->create([
                         'product_id' => $product->id,
+                        'product_name' => $product->product_name,
                         'quantity' => $qty,
+                        'free_quantity' => $itemData['free_quantity'] ?? 0,
                         'unit' => $unit,
                         'unit_price' => $price,
-                        'total_amount' => $subtotal,
+                        'total_amount' => $subtotalWithGst,
                     ]);
 
-                    $totalAmount += $subtotal;
+                    $totalAmount += $subtotalWithGst;
                     $totalItems++;
                     $totalQuantity += $totalQtyNos;
                 }
@@ -377,10 +382,12 @@ class RetailerOrderManagementController extends Controller
                 $start = $request->input('start', 0);
                 $length = $request->input('length', 10);
                 $orders = $query->offset($start)->limit($length)->get();
-
                 $formattedOrders = $orders->map(function ($order) {
                     $productSummary = $order->items->map(function ($item) {
-                        $pName = $item->product ? $item->product->product_name : 'Unknown Product';
+                        $pName = $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product';
+                        if ($item->free_quantity > 0) {
+                            $pName .= ' ('.$item->quantity.' + '.$item->free_quantity.' Free)';
+                        }
                         $pBrand = $item->product ? $item->product->brand : 'N/A';
                         return '<div class="mb-1"><span class="fw-bold">'.$pName.'</span> <span class="text-muted small">('.$pBrand.')</span><br><span class="small">'.$item->quantity.' '.$item->unit.'</span></div>';
                     })->implode('');
@@ -403,8 +410,8 @@ class RetailerOrderManagementController extends Controller
                         'product_summary' => $productSummary,
                         'items' => $order->items->map(function ($item) {
                             return [
-                                'product_id' => $item->product_id,
-                                'product_name' => $item->product ? $item->product->product_name : 'Unknown Product',
+                                'product_name' => $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product',
+                                'free_quantity' => $item->free_quantity,
                                 'quantity' => $item->quantity,
                                 'unit' => $item->unit ?? 'Strips',
                                 'unit_price' => $item->unit_price,
@@ -436,7 +443,7 @@ class RetailerOrderManagementController extends Controller
                         'delivery_notes' => $order->delivery_notes,
                         'total_items' => $order->total_items,
                         'total_quantity' => $order->total_quantity,
-                        'total_amount' => number_format($order->total_amount, 2),
+                        'total_amount' => $order->total_amount,
                         'status' => ucfirst(str_replace('_', ' ', $order->status)),
                         'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d H:i:s') : '-',
                         'payment_status' => $order->payment_status ?? 'pending',
@@ -809,7 +816,7 @@ class RetailerOrderManagementController extends Controller
 
             foreach ($retailerOrder->items as $item) {
                 if ($item->product) {
-                    $ptr = (float) ($item->product->ptr ?? $item->product->mrp ?? 0);
+                    $ptr = (float) ($item->product->ptr ?? 0);
                     $percentage = (float) $item->product->loyalty_point_percentage;
 
                     Log::info("Item: {$item->product->product_name} (ID: {$item->product->id}) - Qty: {$item->quantity}, PTR: {$ptr}, Perc: {$percentage}");
@@ -878,7 +885,7 @@ class RetailerOrderManagementController extends Controller
 
                 foreach ($retailerOrder->items as $item) {
                     if ($item->product) {
-                        $ptr = (float) ($item->product->ptr ?? $item->product->mrp ?? 0);
+                        $ptr = (float) ($item->product->ptr ?? 0);
                         $percentage = (float) $item->product->loyalty_point_percentage;
 
                         Log::info("Item: {$item->product->product_name} (ID: {$item->product->id}) - Qty: {$item->quantity}, PTR: {$ptr}, Perc: {$percentage}");
@@ -1006,25 +1013,28 @@ class RetailerOrderManagementController extends Controller
                 }
 
                 $qty = $itemData['quantity'];
-                $subtotal = $qty * $product->ptr;
+                $price = (float)$product->ptr;
+                $gstRate = (float)($product->gst ?? 0);
+                $taxableSubtotal = $qty * $price;
+                $subtotalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
 
                 if ($currentOrderItem) {
                     $currentOrderItem->update([
                         'quantity' => $qty,
-                        'unit_price' => $product->ptr,
-                        'total_amount' => $subtotal
+                        'unit_price' => $price,
+                        'total_amount' => $subtotalWithGst
                     ]);
                     $requestItemIds[] = $currentOrderItem->id;
                 } else {
                     $newItem = $retailerOrder->items()->create([
                         'product_id' => $itemData['product_id'],
                         'quantity' => $qty,
-                        'unit_price' => $product->ptr, // Assuming PTR
-                        'total_amount' => $subtotal
+                        'unit_price' => $price, // Assuming PTR
+                        'total_amount' => $subtotalWithGst
                     ]);
                     $requestItemIds[] = $newItem->id;
                 }
-                $totalAmount += $subtotal;
+                $totalAmount += $subtotalWithGst;
                 $totalItems++;
                 $totalQuantity += $qty;
             }

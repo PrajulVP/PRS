@@ -111,7 +111,7 @@ class DistributorRetailerOrderController extends Controller
                 'total_quantity'  => $order->total_quantity,
                 'status'          => $order->status,
                 'payment_status'  => $order->payment_status ?? 'pending',
-                'invoice_url'     => $order->invoice_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($order->invoice_path) : null,
+                'invoice_url'     => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
                 'placed_at'       => $order->placed_at?->format('Y-m-d H:i:s'),
                 'delivered_at'    => $order->delivered_at?->format('Y-m-d H:i:s'),
                 'notes'           => $order->notes,
@@ -203,6 +203,7 @@ class DistributorRetailerOrderController extends Controller
                     'product_id'       => $item->product_id,
                     'product_name'     => $item->product?->product_name ?? 'N/A',
                     'quantity'         => $item->quantity,
+                    'free_quantity'    => $item->free_quantity,
                     'unit'             => $item->unit,
                     'unit_price'       => $item->unit_price,
                     'total_amount'     => $item->total_amount,
@@ -249,7 +250,7 @@ class DistributorRetailerOrderController extends Controller
                 return $itemData;
             }),
 
-            'invoice_url'    => $order->invoice_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($order->invoice_path) : null,
+            'invoice_url'    => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
             'placed_at'      => $order->placed_at?->format('Y-m-d H:i:s'),
             'notes'          => $order->notes,
         ]);
@@ -439,6 +440,12 @@ class DistributorRetailerOrderController extends Controller
                 $ocrQty = (float)($match['quantity'] ?? $match['qty'] ?? 0);
                 $freeQty = (float)($match['sch'] ?? $match['free_qty'] ?? 0);
 
+                // Update order item with free quantity and product name from OCR if found
+                $orderItem->update([
+                    'free_quantity' => $freeQty,
+                    'product_name' => $orderItem->product_name ?? $productName
+                ]);
+
                 $detail = [
                     'order_item_id' => $orderItem->id,
                     'product_name' => $productName,
@@ -606,7 +613,7 @@ class DistributorRetailerOrderController extends Controller
             $totalPoints = 0;
             foreach ($retailerOrder->items as $item) {
                 if ($item->product) {
-                    $ptr = (float) ($item->product->ptr ?? $item->product->mrp ?? 0);
+                    $ptr = (float) ($item->product->ptr ?? 0);
                     $percentage = (float) $item->product->loyalty_point_percentage;
                     if ($percentage > 0 && $ptr > 0) {
                         $totalPoints += ($item->quantity * $ptr) * ($percentage / 100);
