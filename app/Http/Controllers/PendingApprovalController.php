@@ -84,6 +84,24 @@ class PendingApprovalController extends Controller
                 }
 
                 $data = $query->latest()->get();
+
+                // Calculate Counts for Tabs
+                $countsQuery = \App\Models\DistributorOrder::query();
+                if ($user->hasRole('salesmanager') && $user->salesManager) {
+                    $salesManagerId = $user->salesManager->id;
+                    $countsQuery->where(function ($q) use ($salesManagerId) {
+                        $q->where('sales_manager_id', $salesManagerId)
+                            ->orWhereHas('distributor', function ($q) use ($salesManagerId) {
+                                $q->where('sales_manager_id', $salesManagerId);
+                            });
+                    });
+                }
+                if ($user->hasRole('distributor') && $user->distributor) {
+                    $countsQuery->where('distributor_id', $user->distributor->id);
+                }
+
+                $statusCounts = $countsQuery->selectRaw('status, count(*) as count')->groupBy('status')->pluck('count', 'status')->toArray();
+                $totalCount = array_sum($statusCounts);
             } elseif ($viewType === 'retailer') {
                 // Fetch Retailer Orders
                 $query = \App\Models\RetailerOrder::with(['retailer.user', 'retailer.salesManager.user', 'retailer.fieldStaff.user', 'items.product', 'distributor.user', 'fieldStaff.user']);
@@ -135,6 +153,39 @@ class PendingApprovalController extends Controller
                 }
 
                 $data = $query->latest()->get();
+
+                // Calculate Counts for Tabs
+                $countsQuery = \App\Models\RetailerOrder::query();
+                if ($user->hasRole('distributor') && $user->distributor) {
+                    $countsQuery->where('distributor_id', $user->distributor->id);
+                }
+                if ($user->hasRole('retailer') && $user->retailer) {
+                    $countsQuery->where('retailer_id', $user->retailer->id);
+                }
+                if ($user->hasRole('fieldstaff') && $user->fieldStaff) {
+                    $fieldStaffId = $user->fieldStaff->id;
+                    $countsQuery->where(function ($q) use ($fieldStaffId) {
+                        $q->where('fieldstaff_id', $fieldStaffId)
+                            ->orWhereHas('retailer', function ($qr) use ($fieldStaffId) {
+                                $qr->where('field_staff_id', $fieldStaffId);
+                            });
+                    });
+                }
+                if ($user->hasRole('salesmanager') && $user->salesManager) {
+                    $salesManagerId = $user->salesManager->id;
+                    $countsQuery->where(function ($q) use ($salesManagerId) {
+                        $q->whereHas('retailer', function ($subQ) use ($salesManagerId) {
+                            $subQ->whereHas('fieldStaff', function ($fsQ) use ($salesManagerId) {
+                                $fsQ->where('sales_manager_id', $salesManagerId);
+                            });
+                        })->orWhereHas('fieldStaff', function ($fsQ) use ($salesManagerId) {
+                            $fsQ->where('sales_manager_id', $salesManagerId);
+                        });
+                    });
+                }
+
+                $statusCounts = $countsQuery->selectRaw('status, count(*) as count')->groupBy('status')->pluck('count', 'status')->toArray();
+                $totalCount = array_sum($statusCounts);
             }
             // ... (other types removed as we focus on Orders for approvals page in this context)
 
@@ -221,7 +272,18 @@ class PendingApprovalController extends Controller
                 return $res;
             });
 
-            return response()->json(['data' => $formatted]);
+            return response()->json([
+                'data' => $formatted,
+                'counts' => $viewType === 'retailer' || $viewType === 'distributor' ? [
+                    'all' => $totalCount ?? 0,
+                    'pending' => $statusCounts['pending'] ?? 0,
+                    'processing' => $statusCounts['processing'] ?? 0,
+                    'approved' => $statusCounts['approved'] ?? 0,
+                    'delivered' => $statusCounts['delivered'] ?? 0,
+                    'cancelled' => $statusCounts['cancelled'] ?? 0,
+                    'rejected' => $statusCounts['rejected'] ?? 0,
+                ] : []
+            ]);
         }
 
         if ($viewType === 'retailer') {

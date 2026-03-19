@@ -385,15 +385,13 @@
                     <table class="table table-striped table-hover" id="retailer-approval-table">
                         <thead>
                             <tr>
-                                <th>Sl No</th>
+                                <th>No.</th>
                                 <th>Order Code</th>
                                 <th>Retailer</th>
                                 <th>Products</th>
                                 <th>Total</th>
                                 <th>Placed At</th>
-                                @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
                                 <th>Distributor</th>
-                                @endif
                                 <th>Status</th>
                                 <th>Payment Status</th>
                                 <th>Invoice</th>
@@ -916,8 +914,8 @@
                     // Initialize Popovers
                     $('[data-bs-toggle="popover"]').popover();
                 },
-                dom: "<'row mb-3'<'col-sm-12'B>>" + // Buttons on top
-                    "<'row mb-3 d-flex align-items-center'<'col-md-6'l><'col-md-6'f>>" + // 'l' (length) on left, 'f' (filter/search) on right
+                dom: "<'row mb-3'<'col-sm-12'B>>" +
+                    "<'row mb-3 d-flex align-items-center'<'col-md-4'l><'col-md-4 d-flex justify-content-center payment-filter-container'><'col-md-4'f>>" +
                     "<'row '<'col-sm-12'tr>>" +
                     "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
                 buttons: {
@@ -955,7 +953,7 @@
                 },
                 initComplete: function () {
                     var $filter = $('#filter_container').children().first();
-                    $('.dt-buttons').append($filter);
+                    $('.payment-filter-container').append($filter);
                     $('#filter_container').remove();
                 },
                 ajax: {
@@ -963,6 +961,20 @@
                     data: function (d) {
                         d.status = $('#orderStatusTabs .nav-link.active').attr('data-status');
                         d.payment_status = $('input[name="payment_status"]:checked').val() || '';
+                    },
+                    dataSrc: function (json) {
+                        // Logic to switch active tab if current is empty and others have data
+                        if (json.counts && json.data.length === 0 && !window.initialTabSelected) {
+                                if (json.counts.processing > 0) {
+                                    $('#tab-processing').tab('show');
+                                } else if (json.counts.pending > 0) {
+                                    $('#tab-pending').tab('show');
+                                } else if (json.counts.all > 0) {
+                                    $('#tab-all').tab('show');
+                                }
+                            window.initialTabSelected = true;
+                        }
+                        return json.data;
                     }
                 },
                 columns: [{
@@ -1117,10 +1129,11 @@
                         let canApprove = false;
                         if (isFieldStaff && statusRaw === 'pending') canApprove = true;
                         if (isDistributor && statusRaw === 'processing') canApprove = true;
-                        if ((isAdmin || isSalesManager) && (statusRaw === 'pending' || statusRaw === 'processing')) canApprove = true;
+                        if (isSalesManager && (statusRaw === 'pending' || statusRaw === 'processing')) canApprove = true;
+                        if (isAdmin && statusRaw === 'processing') canApprove = true; // Admin only for processing (distributor level)
 
                         if (canApprove) {
-                            if (isDistributor && statusRaw === 'processing') {
+                            if ((isDistributor || isAdmin) && statusRaw === 'processing') {
                                 btns += `<button class="btn btn-success btn-sm distributor-approve-btn" data-row="${rowData}" title="Approve & Allocate Batches"><i class="fa fa-check-circle"></i></button>`;
                             } else {
                                 btns += `<button class="btn btn-success btn-sm approve-retailer-btn" data-id="${row.id}" data-row="${rowData}" title="Approve"><i class="fa fa-check"></i></button>`;
@@ -1226,6 +1239,7 @@
                             $('#distributorApproveModal').modal('hide');
                             table.ajax.reload(null, false);
                             showToast('success', res.success);
+                            if (window.updateSidebarCounts) window.updateSidebarCounts();
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Order Approved!',
@@ -1263,6 +1277,7 @@
                             if (res.success) {
                                 table.ajax.reload(null, false);
                                 showToast('success', res.success);
+                                if (window.updateSidebarCounts) window.updateSidebarCounts();
                             } else {
                                 showToast('error', res.error || 'Failed to confirm order');
                             }
@@ -1275,7 +1290,11 @@
 
             // Reject Retailer Order handler
             $(document).on('click', '.reject-retailer-btn', function () {
-                $('#reject_retailer_order_id').val($(this).data('id'));
+                let id = $(this).data('id');
+                $('#reject_retailer_order_id').val(id);
+                // Hide any open approval modals if they exist
+                $('#approveRetailerOrderModal').modal('hide');
+                $('#distributorApproveModal').modal('hide');
                 $('#rejectRetailerOrderModal').modal('show');
             });
 
@@ -1295,6 +1314,7 @@
                         $('#rejectRetailerOrderModal').modal('hide');
                         showToast('success', res.success || 'Order rejected.');
                         table.ajax.reload(null, false);
+                        if (window.updateSidebarCounts) window.updateSidebarCounts();
                         $form[0].reset();
                     },
                     error: function (xhr) {
@@ -1336,6 +1356,7 @@
                         $('#retailerPaymentStatusModal').modal('hide');
                         showToast('success', res.success || 'Updated');
                         table.ajax.reload(null, false);
+                        if (window.updateSidebarCounts) window.updateSidebarCounts();
                     },
                     error: function (xhr) {
                         showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Update failed');
@@ -1403,6 +1424,7 @@
                         $select.addClass(newClass);
                         $select.data('original', newStatus);
                         showToast('success', res.success);
+                        if (window.updateSidebarCounts) window.updateSidebarCounts();
                     } else {
                         showToast('error', res.error || 'Failed to update status');
                         $select.val(originalStatus);
@@ -1457,8 +1479,25 @@
 
             let currentOrderIdForInvoice = null;
             $(document).on('click', '.upload-invoice-btn', function () {
-                currentOrderIdForInvoice = $(this).data('id');
-                $('#invoice_upload_input').click();
+                let id = $(this).data('id');
+                if (isAdmin) {
+                    Swal.fire({
+                        title: 'Confirm Admin Action',
+                        text: 'This invoice should ideally be uploaded by the respective distributor. Do you still want to proceed as an Admin?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, proceed',
+                        cancelButtonText: 'No, cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            currentOrderIdForInvoice = id;
+                            $('#invoice_upload_input').click();
+                        }
+                    });
+                } else {
+                    currentOrderIdForInvoice = id;
+                    $('#invoice_upload_input').click();
+                }
             });
 
             $('#invoice_upload_input').change(function () {
@@ -1481,6 +1520,7 @@
                     success: function (res) {
                         showToast('success', res.success);
                         table.ajax.reload(null, false);
+                        if (window.updateSidebarCounts) window.updateSidebarCounts();
                     },
                     error: function (xhr) {
                         showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Upload failed');
@@ -1625,58 +1665,79 @@
                 let id = $(this).data('id');
                 let row = $(this).data('row');
 
-                $('#approve_retailer_order_id').val(id);
-                $('#retailer_approve_order_code_display').text(row.order_code);
-                $('#retailer_approve_order_date_display').text(row.placed_at);
-                $('#retailer_approve_retailer_display').text(row.retailer_name || '--');
-                $('#retailer_approve_total_display').text(row.total_amount || '₹0');
+                const proceed = () => {
+                    $('#approve_retailer_order_id').val(id);
+                    $('#retailer_approve_order_code_display').text(row.order_code);
+                    $('#retailer_approve_order_date_display').text(row.placed_at);
+                    $('#retailer_approve_retailer_display').text(row.retailer_name || '--');
+                    $('#retailer_approve_total_display').text(row.total_amount || '₹0');
 
-                // Populate more retailer details
-                $('#retailer_approve_phone_display').text(row.retailer_phone || '--');
-                if (row.retailer_gstin) {
-                    $('#retailer_approve_gstin_display').text(row.retailer_gstin);
-                    $('#retailer_approve_gstin_container').removeClass('d-none');
-                } else {
-                    $('#retailer_approve_gstin_container').addClass('d-none');
-                }
+                    // Populate more retailer details
+                    $('#retailer_approve_phone_display').text(row.retailer_phone || '--');
+                    if (row.retailer_gstin) {
+                        $('#retailer_approve_gstin_display').text(row.retailer_gstin);
+                        $('#retailer_approve_gstin_container').removeClass('d-none');
+                    } else {
+                        $('#retailer_approve_gstin_container').addClass('d-none');
+                    }
 
-                let list = $('#retailer_approve_items_list');
-                list.empty();
+                    let list = $('#retailer_approve_items_list');
+                    list.empty();
 
-                if (row.items && row.items.length) {
-                    row.items.forEach(item => {
-                        list.append(`
-                                                                                                                                                                                                    <div class="invoice-list-row">
-                                                                                                                                                                                                        <div style="flex: 2;" class="fw-bold text-dark">${item.product_name}</div>
-                                                                                                                                                                                                        <div style="flex: 1;" class="text-center text-muted small">${item.quantity} ${item.unit || 'Box'}</div>
-                                                                                                                                                                                                        <div style="flex: 1;" class="text-end fw-bold text-success">₹${item.total_amount}</div>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                `);
+                    if (row.items && row.items.length) {
+                        row.items.forEach(item => {
+                            list.append(`
+                                <div class="invoice-list-row">
+                                    <div style="flex: 2;" class="fw-bold text-dark">${item.product_name}</div>
+                                    <div style="flex: 1;" class="text-center text-muted small">${item.quantity} ${item.unit || 'Box'}</div>
+                                    <div style="flex: 1;" class="text-end fw-bold text-success">₹${item.total_amount}</div>
+                                </div>
+                            `);
+                        });
+                    } else {
+                        list.append('<div class="invoice-list-row justify-content-center text-muted">No items found</div>');
+                    }
+
+                    // Reset dropzone state
+                    $('#file_preview_name').addClass('d-none');
+                    $('#retailer_invoice_dropzone').removeClass('has-file');
+                    $('#dropzone_title').text('Click or Drag & Drop to Upload Invoice');
+                    $('#dropzone_subtitle').text('Supported formats: PDF, JPG, PNG (Max 5MB)');
+
+                    $('#approveRetailerOrderForm')[0].reset();
+                    $('#modal_reject_retailer_btn').data('id', id);
+
+                    if (isFieldStaff) {
+                        $('#invoiceUploadGroup').hide();
+                        $('#retailer_invoice_file_input').prop('required', false);
+                        $('#approveModalTextContainer').removeClass('d-none');
+                        $('#approveModalText').text('Review the order items above. Are you sure you want to approve this order?');
+                    } else {
+                        $('#invoiceUploadGroup').show();
+                        $('#retailer_invoice_file_input').prop('required', true);
+                        $('#approveModalTextContainer').addClass('d-none');
+                    }
+
+                    $('#approveRetailerOrderModal').modal('show');
+                };
+
+                if (isAdmin) {
+                    Swal.fire({
+                        title: 'Confirm Admin Approval',
+                        text: 'This order should ideally be approved by the respective distributor. Do you still want to proceed as an Admin?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, proceed',
+                        cancelButtonText: 'No, cancel',
+                        confirmButtonColor: '#28a745'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            proceed();
+                        }
                     });
                 } else {
-                    list.append('<div class="invoice-list-row justify-content-center text-muted">No items found</div>');
+                    proceed();
                 }
-
-                // Reset dropzone state
-                $('#file_preview_name').addClass('d-none');
-                $('#retailer_invoice_dropzone').removeClass('has-file');
-                $('#dropzone_title').text('Click or Drag & Drop to Upload Invoice');
-                $('#dropzone_subtitle').text('Supported formats: PDF, JPG, PNG (Max 5MB)');
-
-                $('#approveRetailerOrderForm')[0].reset();
-
-                if (isFieldStaff) {
-                    $('#invoiceUploadGroup').hide();
-                    $('#retailer_invoice_file_input').prop('required', false);
-                    $('#approveModalTextContainer').removeClass('d-none');
-                    $('#approveModalText').text('Review the order items above. Are you sure you want to approve this order?');
-                } else {
-                    $('#invoiceUploadGroup').show();
-                    $('#retailer_invoice_file_input').prop('required', true);
-                    $('#approveModalTextContainer').addClass('d-none');
-                }
-
-                $('#approveRetailerOrderModal').modal('show');
             });
 
             $('#approveRetailerOrderForm').submit(function (e) {
@@ -1708,6 +1769,7 @@
                             $('#approveRetailerOrderModal').modal('hide');
                             table.ajax.reload(null, false);
                             showToast('success', res.success);
+                            if (window.updateSidebarCounts) window.updateSidebarCounts();
                         } else {
                             showToast('error', res.error || 'Failed to approve order');
                         }
@@ -1724,49 +1786,51 @@
             // --- Distributor Approve & Batch Allocation Logic ---
             $(document).on('click', '.distributor-approve-btn', function () {
                 let row = $(this).data('row');
-                $('#approve_order_id').val(row.id);
 
-                // Populate new premium header fields
-                $('#dist_approve_order_code_display').text(row.order_code || '--');
-                $('#dist_approve_order_date_display').text(row.placed_at || '--');
-                $('#dist_approve_retailer_display').text(row.retailer_name || '--');
-                $('#dist_approve_location_display').text(row.retailer_location || row.retailer_address || '--');
+                const proceed = () => {
+                    $('#approve_order_id').val(row.id);
 
-                // Reset payment status to pending
-                $('input[name="payment_status"][value="pending"]').prop('checked', true);
+                    // Populate new premium header fields
+                    $('#dist_approve_order_code_display').text(row.order_code || '--');
+                    $('#dist_approve_order_date_display').text(row.placed_at || '--');
+                    $('#dist_approve_retailer_display').text(row.retailer_name || '--');
+                    $('#dist_approve_location_display').text(row.retailer_location || row.retailer_address || '--');
 
-                let tbody = $('#batch_entry_body');
-                let vbody = $('#verification_table_body');
+                    // Reset payment status to pending
+                    $('input[name="payment_status"][value="pending"]').prop('checked', true);
 
-                // Reset UI visibility statuses when modal is opened anew
-                $('#automation_idle_state').show();
-                $('#automation_success_state').hide();
-                $('#automation_error_state').addClass('d-none');
-                $('#ocr_processing_state').hide();
-                $('#ocr_idle_state').show();
-                $('#batch_allocation_table_container').addClass('d-none');
-                $('#scan_retailer_file_input').val(''); // Clear old file inputs
+                    let tbody = $('#batch_entry_body');
+                    let vbody = $('#verification_table_body');
 
-                $('#distributorApproveModal').modal('show');
+                    // Reset UI visibility statuses when modal is opened anew
+                    $('#automation_idle_state').show();
+                    $('#automation_success_state').hide();
+                    $('#automation_error_state').addClass('d-none');
+                    $('#ocr_processing_state').hide();
+                    $('#ocr_idle_state').show();
+                    $('#batch_allocation_table_container').addClass('d-none');
+                    $('#scan_retailer_file_input').val(''); // Clear old file inputs
 
-                let itemsHtml = '';
-                let itemsProcessed = 0;
+                    $('#distributorApproveModal').modal('show');
 
-                if (!row.items || row.items.length === 0) {
-                    vbody.html('<div class="invoice-list-row justify-content-center text-danger">No items found in this order.</div>');
-                    return;
-                }
+                    let itemsHtml = '';
+                    let itemsProcessed = 0;
 
-                tbody.empty();
-                vbody.empty();
+                    if (!row.items || row.items.length === 0) {
+                        vbody.html('<div class="invoice-list-row justify-content-center text-danger">No items found in this order.</div>');
+                        return;
+                    }
 
-                row.items.forEach(function (item, index) {
-                    let productId = item.product_id;
-                    let orderItemId = item.order_item_id;
-                    let orderedQty = item.quantity;
+                    tbody.empty();
+                    vbody.empty();
 
-                    // 1. Hidden Submission Row
-                    let rowHtml = `
+                    row.items.forEach(function (item, index) {
+                        let productId = item.product_id;
+                        let orderItemId = item.order_item_id;
+                        let orderedQty = item.quantity;
+
+                        // 1. Hidden Submission Row
+                        let rowHtml = `
                                                                                                                                                                                 <div data-item-id="${orderItemId}" class="product-row" data-ordered-qty="${orderedQty}">
                                                                                                                                                                                     <div class="d-none">
                                                                                                                                                                                         <div class="fw-bold product-name-marker">${item.product_name}</div>
@@ -1789,10 +1853,10 @@
                                                                                                                                                                                     </div>
                                                                                                                                                                                 </div>
                                                                                                                                                                             `;
-                    tbody.append(rowHtml);
+                        tbody.append(rowHtml);
 
-                    // 2. Visible Verification Row (Invoiced Style)
-                    let vRowHtml = `
+                        // 2. Visible Verification Row (Invoiced Style)
+                        let vRowHtml = `
                                                                                                                                                                                 <div id="v_row_${orderItemId}" class="invoice-list-row">
                                                                                                                                                                                     <div class="ai-col-product fw-bold text-dark small">${item.product_name}</div>
                                                                                                                                                                                     <div class="ai-col-batch v-batch-display text-muted small" data-id="${orderItemId}">--</div>
@@ -1803,8 +1867,27 @@
                                                                                                                                                                                     <div class="ai-col-value text-end fw-bold v-net-display">--</div>
                                                                                                                                                                                 </div>
                                                                                                                                                                             `;
-                    vbody.append(vRowHtml);
-                });
+                        vbody.append(vRowHtml);
+                    });
+                };
+
+                if (isAdmin) {
+                    Swal.fire({
+                        title: 'Confirm Admin Approval',
+                        text: 'This order should ideally be approved by the respective distributor. Do you still want to proceed as an Admin?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, proceed',
+                        cancelButtonText: 'No, cancel',
+                        confirmButtonColor: '#28a745'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            proceed();
+                        }
+                    });
+                } else {
+                    proceed();
+                }
             });
 
             // OCR Dropzone Click

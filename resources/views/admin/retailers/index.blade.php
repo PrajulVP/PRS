@@ -1,52 +1,43 @@
 @extends('layouts.admin')
 
+@push('styles')
 <style>
-    .dataTables_filter {
-        text-align: right !important;
+    .nav-tabs.custom-tabs {
+        border-bottom: none;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        background: #f8fafc;
+        border-radius: 12px;
+        display: inline-flex;
     }
-
-    .dataTables_filter input {
-        width: 230px !important;
-        margin-left: 10px !important;
+    .nav-tabs.custom-tabs .nav-link {
+        border: 1px solid transparent !important;
+        color: #64748b;
+        font-weight: 600;
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px !important;
+        background: none;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
     }
-
-    .dataTables_length {
-        text-align: left !important;
+    .nav-tabs.custom-tabs .nav-link.active {
+        color: #00497a !important;
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
     }
-
-    .dataTables_length select {
-        padding: 5px 10px !important;
-        padding-right: 30px !important;
-        display: inline-block !important;
-        width: auto !important;
+    .nav-tabs.custom-tabs .nav-link:hover:not(.active) {
+        color: #475569;
+        background: #f1f5f9;
+        border-color: transparent;
     }
-
-    /* Flex wrapper for actions */
     .action-buttons {
-        display: inline-flex !important;
-        align-items: center;
-        gap: 4px;
-        flex-wrap: nowrap;
-    }
-
-
-
-    .action-buttons>* {
-        display: inline-flex !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    .action-buttons .btn {
-        padding: 6px 12px !important;
-        font-size: 0.75rem !important;
-        line-height: 1 !important;
-    }
-
-    .pac-container {
-        z-index: 10000 !important;
+        display: flex;
+        gap: 5px;
+        white-space: nowrap;
     }
 </style>
+@endpush
 
 @section('page-body')
     <div class="container-fluid">
@@ -54,7 +45,20 @@
             <div class="col-sm-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5><i class="fa fa-users me-2"></i>Retailers</h5>
+                    <div>
+                        <h5 class="mb-3"><i class="fa fa-users me-2"></i>Retailers</h5>
+                        <ul class="nav nav-tabs custom-tabs" id="userStatusTabs" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active" data-bs-toggle="tab" data-status="all" type="button">All Retailers</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-status="active" type="button">Active</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-status="inactive" type="button">Inactive</button>
+                            </li>
+                        </ul>
+                    </div>
                         @if(Auth::user()->hasAnyRole(['admin', 'superadmin']) || Auth::user()->hasPermissionToCategory('retailers', 'add'))
                             <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                                 data-bs-target="#createRetailerModal">
@@ -434,160 +438,158 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
+        // Global Map Variables
+        var createMap, editMap, showMap;
+        var createMarker, editMarker, showMarker;
+
+        function initMap() {
+            const createMapDiv = document.getElementById("create_map");
+            if (!createMapDiv) return;
+
+            const defaultLoc = { lat: 20.5937, lng: 78.9629 };
+
+            // Create Map
+            createMap = new google.maps.Map(createMapDiv, {
+                zoom: 5, center: defaultLoc, mapId: "DEMO_MAP_ID",
+            });
+            createMarker = new google.maps.marker.AdvancedMarkerElement({
+                position: defaultLoc, map: createMap, gmpDraggable: true,
+            });
+            createMarker.addListener("dragend", () => {
+                const pos = createMarker.position;
+                let lat = (typeof pos.lat === 'function') ? pos.lat() : pos.lat;
+                let lng = (typeof pos.lng === 'function') ? pos.lng() : pos.lng;
+                document.getElementById("create_lat").value = lat;
+                document.getElementById("create_long").value = lng;
+            });
+
+            // Edit Map
+            const editMapDiv = document.getElementById("edit_map");
+            if (editMapDiv) {
+                editMap = new google.maps.Map(editMapDiv, {
+                    zoom: 5, center: defaultLoc, mapId: "DEMO_MAP_ID_EDIT",
+                });
+                editMarker = new google.maps.marker.AdvancedMarkerElement({
+                    position: defaultLoc, map: editMap, gmpDraggable: true,
+                });
+                editMarker.addListener("dragend", () => {
+                    const pos = editMarker.position;
+                    let lat = (typeof pos.lat === 'function') ? pos.lat() : pos.lat;
+                    let lng = (typeof pos.lng === 'function') ? pos.lng() : pos.lng;
+                    document.getElementById("edit_latitude").value = lat;
+                    document.getElementById("edit_longitude").value = lng;
+                });
+            }
+
+            // Show Map
+            const showMapDiv = document.getElementById("show_map");
+            if (showMapDiv) {
+                showMap = new google.maps.Map(showMapDiv, {
+                    zoom: 5, center: defaultLoc, mapId: "DEMO_MAP_ID_SHOW",
+                });
+                showMarker = new google.maps.marker.AdvancedMarkerElement({
+                    position: defaultLoc, map: showMap,
+                });
+            }
+
+            // Autocomplete for Create
+            const createInput = document.getElementById("create_pac-input");
+            if (createInput) {
+                const createAutocomplete = new google.maps.places.Autocomplete(createInput);
+                createAutocomplete.bindTo("bounds", createMap);
+                createAutocomplete.addListener("place_changed", () => {
+                    const place = createAutocomplete.getPlace();
+                    if (!place.geometry || !place.geometry.location) return;
+                    if (place.geometry.viewport) createMap.fitBounds(place.geometry.viewport);
+                    else { createMap.setCenter(place.geometry.location); createMap.setZoom(17); }
+                    createMarker.position = place.geometry.location;
+                    document.getElementById("create_lat").value = place.geometry.location.lat();
+                    document.getElementById("create_long").value = place.geometry.location.lng();
+                });
+            }
+        }
+        window.initMap = initMap;
+
+        function fetchAreas(districtId, areaSelect, selectedAreaId = null) {
+            areaSelect.html('<option value="">Loading...</option>');
+            if (!districtId) { areaSelect.html('<option value="">Select Area</option>'); return; }
+            $.get("{{ route('retailers.getAreas', ':district') }}".replace(':district', districtId), (data) => {
+                areaSelect.html('<option value="">Select Area</option>');
+                $.each(data, (k, v) => areaSelect.append(`<option value="${v.id}">${v.name}</option>`));
+                if (selectedAreaId) areaSelect.val(selectedAreaId);
+            }).fail(() => areaSelect.html('<option value="">Error</option>'));
+        }
+
+        function getGeoLocation(latId, longId, mapType) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    let lat = pos.coords.latitude, lng = pos.coords.longitude;
+                    document.getElementById(latId).value = lat;
+                    document.getElementById(longId).value = lng;
+                    let p = { lat, lng };
+                    if (mapType === 'create' && createMap) { createMarker.position = p; createMap.setCenter(p); createMap.setZoom(15); }
+                    else if (mapType === 'edit' && editMap) { editMarker.position = p; editMap.setCenter(p); editMap.setZoom(15); }
+                }, (err) => alert("Error: " + err.message));
+            }
+        }
+
         $(document).ready(function () {
-            // Fix syntax error from previous version: remove spaces around '->'
-            const canActivate = @json(Auth::user()->hasAnyRole(['superadmin', 'admin', 'salesmanager']));
-            const canEdit = @json(Auth::user()->hasPermissionToCategory('retailers', 'edit') || Auth::user()->hasRole('superadmin'));
-            const canDelete = @json(Auth::user()->hasPermissionToCategory('retailers', 'delete') || Auth::user()->hasRole('superadmin'));
             const isDistributor = @json(Auth::user()->hasRole('distributor'));
-
             var table = $('#retailers-table').DataTable({
-                processing: true,
-                serverSide: true,
-                order: [],
-                ajax: "{{ route('admin.retailers.index') }}",
-                columns: [{
-                    data: null,
-                    orderable: false,
-                    searchable: false,
-                    render: function (data, type, row, meta) {
-                        return meta.row + meta.settings._iDisplayStart + 1;
-                    }
+                processing: true, serverSide: true, order: [],
+                ajax: {
+                    url: "{{ route('admin.retailers.index') }}",
+                    data: (d) => { d.status = $('#userStatusTabs button.active').data('status'); }
                 },
-                {
-                    data: 'shop_name',
-                    name: 'shop_name'
-                },
-                {
-                    data: 'user.name',
-                    name: 'user.name'
-                }, // Owner Name
-                {
-                    data: 'user.email',
-                    name: 'user.email'
-                },
-                {
-                    data: 'contact_no',
-                    name: 'contact_no'
-                },
-                {
-                    data: 'district_name',
-                    name: 'district_name'
-                },
-                {
-                    data: 'area_name',
-                    name: 'area_name'
-                },
-                {
-                    data: 'pincode',
-                    name: 'pincode'
-                },
-                {
-                    data: 'user.status',
-                    name: 'user.status',
-                    render: function (data, type, row) {
-                        if (data === 'active') {
-                            return `<span class="badge bg-success status-toggle cursor-pointer" style="cursor: pointer;" data-id="${row.id}" data-status="active" title="Click to deactivate">Active</span>`;
-                        } else {
-                            return `<span class="badge bg-danger status-toggle cursor-pointer" style="cursor: pointer;" data-id="${row.id}" data-status="inactive" title="Click to activate">Inactive</span>`;
+                columns: [
+                    { data: null, orderable: false, searchable: false, render: (d, t, r, m) => m.row + m.settings._iDisplayStart + 1 },
+                    { data: 'shop_name', name: 'shop_name' },
+                    { data: 'user.name', name: 'user.name' },
+                    { data: 'user.email', name: 'user.email' },
+                    { data: 'contact_no', name: 'contact_no' },
+                    { data: 'district_name', name: 'district_name' },
+                    { data: 'area_name', name: 'area_name' },
+                    { data: 'pincode', name: 'pincode' },
+                    { 
+                        data: 'user.status', name: 'user.status',
+                        render: (data, type, row) => `<span class="badge ${data === 'active' ? 'bg-success' : 'bg-danger'} status-toggle cursor-pointer" data-id="${row.id}" data-status="${data}">${data === 'active' ? 'Active' : 'Inactive'}</span>`
+                    },
+                    {
+                        data: 'id', orderable: false, searchable: false,
+                        render: function (id, type, row) {
+                            let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
+                            let deleteUrl = "{{ route('admin.retailers.destroy', ':id') }}".replace(':id', id);
+                            let btns = `<div class="action-buttons">
+                                ${isDistributor ? `<a href="{{ route('admin.retailer.index') }}?retailer_id=${id}" class="btn btn-sm btn-warning" title="View Orders"><i class="fa fa-shopping-cart"></i></a>` : ''}
+                                <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>`;
+                            if (row.can_edit) btns += `<button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>`;
+                            if (row.can_delete) btns += `<button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>`;
+                            return btns + `</div>`;
                         }
                     }
-                },
-                {
-                    data: 'id',
-                    orderable: false,
-                    searchable: false,
-                    render: function (id, type, row) {
-                        let deleteUrl = "{{ route('admin.retailers.destroy', ':id') }}".replace(':id', id);
-                        let csrf = "{{ csrf_token() }}";
-                        let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
-
-                        /*
-                        let activateBtn = '';
-                        if (canActivate && row.user.status === 'inactive') {
-                            activateBtn = `
-                                <button class="btn btn-sm btn-success activate-btn" 
-                                        data-id="${id}"
-                                        title="Activate">
-                                    <i class="fa fa-check"></i>
-                                </button>`;
-                        }
-                        */
-                        let activateBtn = '';
-
-                        let btns = `
-                                                                        <div class="action-buttons">
-                                                                            ${activateBtn}
-                                                                            ${isDistributor ? `<a href="{{ route('admin.retailer.index') }}?retailer_id=${id}" class="btn btn-sm btn-warning" title="View Orders"><i class="fa fa-shopping-cart"></i></a>` : ''}
-                                                                            <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>`;
-                        
-                        if (row.can_edit) {
-                            btns += `<button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>`;
-                        }
-                        
-                        if (row.can_delete) {
-                            btns += `<button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>`;
-                        }
-                        
-                        btns += `</div>`;
-                        return btns;
-                    }
-                }
                 ],
-                dom: "<'row mb-3'<'col-sm-12'B>>" +
-                    "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" +
-                    "<'row '<'col-sm-12'tr>>" +
-                    "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
+                dom: "<'row mb-3'<'col-sm-12'B>><'row mb-3'<'col-md-6'l><'col-md-6'f>><'row'<'col-sm-12'tr>><'row mt-3'<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
                 buttons: {
-                    dom: {
-                        button: {
-                            className: 'btn btn-sm btn-icon'
-                        }
-                    },
-                    buttons: [{
-                        extend: 'copy',
-                        className: 'btn btn-secondary btn-sm',
-                        text: '<i class="fa fa-copy"></i> Copy'
-                    },
-                    {
-                        extend: 'csv',
-                        className: 'btn btn-info btn-sm text-white',
-                        text: '<i class="fa fa-file-csv"></i> CSV'
-                    },
-                    {
-                        extend: 'excel',
-                        className: 'btn btn-success btn-sm',
-                        text: '<i class="fa fa-file-excel"></i> Excel'
-                    },
-                    {
-                        extend: 'pdf',
-                        className: 'btn btn-danger btn-sm',
-                        text: '<i class="fa fa-file-pdf"></i> PDF'
-                    },
-                    {
-                        extend: 'print',
-                        className: 'btn btn-dark btn-sm',
-                        text: '<i class="fa fa-print"></i> Print'
-                    }
+                    dom: { button: { className: 'btn btn-sm btn-icon' } },
+                    buttons: [
+                        { extend: 'copy', className: 'btn btn-secondary btn-sm', text: '<i class="fa fa-copy"></i> Copy' },
+                        { extend: 'csv', className: 'btn btn-info btn-sm text-white', text: '<i class="fa fa-file-csv"></i> CSV' },
+                        { extend: 'excel', className: 'btn btn-success btn-sm', text: '<i class="fa fa-file-excel"></i> Excel' },
+                        { extend: 'pdf', className: 'btn btn-danger btn-sm', text: '<i class="fa fa-file-pdf"></i> PDF' },
+                        { extend: 'print', className: 'btn btn-dark btn-sm', text: '<i class="fa fa-print"></i> Print' }
                     ]
                 }
             });
 
-            // Handle District Change for Create
+            // Handlers
             $('.district-select').on('change', function () {
-                let container = $(this).closest('form');
-                let areaSelect = container.find('.area-select');
-                if (typeof fetchAreas === 'function') {
-                    fetchAreas($(this).val(), areaSelect);
-                }
+                fetchAreas($(this).val(), $(this).closest('form').find('.area-select'));
             });
 
-            // Handle Edit
             $('#retailers-table').on('click', '.edit-btn', function () {
                 var data = $(this).data('row');
-
                 $('#edit_shop_name').val(data.shop_name);
-                $('#edit_name').val(data.user.name); // Owner Name
+                $('#edit_name').val(data.user.name);
                 $('#edit_email').val(data.user.email);
                 $('#edit_gst').val(data.gst);
                 $('#edit_drug_license_no').val(data.drug_license_no);
@@ -597,360 +599,68 @@
                 $('#edit_latitude').val(data.latitude);
                 $('#edit_longitude').val(data.longitude);
                 $('#edit_district_id').val(data.district_id);
-                if (data.user) {
-                    $('#edit_status').val(data.user.status);
-                }
-
-                if (typeof fetchAreas === 'function') {
-                    fetchAreas(data.district_id, $('#edit_area_id'), data.area_id);
-                }
-
-                var url = "{{ route('admin.retailers.update', ':id') }}".replace(':id', data.id);
-                $('#editRetailerForm').attr('action', url);
-
+                $('#edit_status').val(data.user?.status || '');
+                fetchAreas(data.district_id, $('#edit_area_id'), data.area_id);
+                $('#editRetailerForm').attr('action', "{{ route('admin.retailers.update', ':id') }}".replace(':id', data.id));
                 $('#editRetailerModal').modal('show');
             });
 
-            // Handle View
-            // Handle View
             $('#retailers-table').on('click', '.view-btn', function () {
                 var data = $(this).data('row');
-                let districtName = data.district ? data.district.name : 'N/A';
-                let areaName = data.area ? data.area.name : 'N/A';
-                let profileImg = data.user && data.user.profile_pic ? '/storage/' + data.user.profile_pic : null;
-
-                // Avatar
-                if (profileImg) {
-                    $('#ret_avatar_img').attr('src', profileImg).show();
-                    $('#ret_avatar_initials').hide();
-                } else {
-                    let initials = data.shop_name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
-                    $('#ret_avatar_initials').text(initials).show();
-                    $('#ret_avatar_img').hide();
-                }
-
-                let status = data.user ? data.user.status : '';
                 $('#ret_view_shop').text(data.shop_name);
                 $('#ret_view_owner').html('<i class="fa fa-user me-1"></i>Owner: ' + data.user.name);
-                $('#ret_view_status').attr('class', 'badge ' + (status === 'active' ? 'bg-success' : 'bg-danger')).text(status === 'active' ? 'Active' : 'Inactive');
+                $('#ret_view_status').attr('class', 'badge ' + (data.user?.status === 'active' ? 'bg-success' : 'bg-danger')).text(data.user?.status);
                 $('#ret_view_email').text(data.user.email);
                 $('#ret_view_contact').text(data.contact_no || 'N/A');
                 $('#ret_view_gst').text(data.gst || 'N/A');
                 $('#ret_view_drug').text(data.drug_license_no || 'N/A');
-                $('#ret_view_location').text(districtName + ' / ' + areaName);
+                $('#ret_view_location').text((data.district?.name || 'N/A') + ' / ' + (data.area?.name || 'N/A'));
                 $('#ret_view_pincode').text(data.pincode || 'N/A');
                 $('#ret_view_address').text(data.address || 'N/A');
-
-                $('#showRetailerModal').data('lat', data.latitude).data('lng', data.longitude);
                 $('#showRetailerModal').modal('show');
             });
 
-            // Create Retailer AJAX
-            $('#createRetailerForm').on('submit', function (e) {
+            $('#createRetailerForm, #editRetailerForm').on('submit', function (e) {
                 e.preventDefault();
-
-                let password = $('#create_password').val();
-                let confirmPassword = $('#create_password_confirmation').val();
-                if (password !== confirmPassword) {
-                    showToast('danger', 'Passwords do not match!');
-                    return false;
-                }
-
-                let formData = new FormData(this);
-                let submitBtn = $(this).find('button[type="submit"]');
-                submitBtn.prop('disabled', true).text('Creating...');
-
+                let form = $(this);
+                let btn = form.find('button[type="submit"]');
+                btn.prop('disabled', true);
                 $.ajax({
-                    url: "{{ route('admin.retailers.store') }}",
-                    type: "POST",
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function (response) {
-                        $('#createRetailerModal').modal('hide');
-                        $('#createRetailerForm')[0].reset();
-                        $('#retailers-table').DataTable().ajax.reload();
-                        submitBtn.prop('disabled', false).text('Create');
-                        showToast('success', 'Retailer created successfully');
+                    url: form.attr('action') || "{{ route('admin.retailers.store') }}",
+                    type: "POST", data: new FormData(this), processData: false, contentType: false,
+                    success: (res) => {
+                        $('.modal').modal('hide');
+                        form[0].reset();
+                        table.ajax.reload();
+                        btn.prop('disabled', false);
+                        showToast('success', 'Saved successfully');
                     },
-                    error: function (xhr) {
-                        submitBtn.prop('disabled', false).text('Create');
-                        let errors = xhr.responseJSON.errors;
-                        let errorMessage = '';
-                        if (errors) {
-                            $.each(errors, function (key, value) {
-                                errorMessage += value[0] + '\n';
-                            });
-                        } else {
-                            errorMessage = 'An error occurred. Please try again.';
-                        }
-                        showToast('error', errorMessage);
-                    }
+                    error: (xhr) => { btn.prop('disabled', false); showToast('danger', 'Error'); }
                 });
             });
 
-            // Handle Delete via AJAX
             $('#retailers-table').on('click', '.delete-btn', function () {
                 let url = $(this).data('url');
-                Swal.fire({
-                    title: 'Delete Retailer?',
-                    text: "Are you sure? This action cannot be undone.",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    confirmButtonText: 'Yes, delete it!'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: url,
-                            type: 'DELETE',
-                            data: {
-                                _token: "{{ csrf_token() }}"
-                            },
-                            success: function (response) {
-                                if (response.success) {
-                                    table.ajax.reload(null, false);
-                                    Swal.fire('Deleted!', response.message, 'success');
-                                } else {
-                                    Swal.fire('Error!', response.message, 'error');
-                                }
-                            },
-                            error: function (xhr) {
-                                let msg = 'Something went wrong.';
-                                if (xhr.responseJSON && xhr.responseJSON.message) {
-                                    msg = xhr.responseJSON.message;
-                                }
-                                Swal.fire('Error!', msg, 'error');
-                            }
-                        });
-                    }
+                Swal.fire({ title: 'Delete?', icon: 'warning', showCancelButton: true }).then((r) => {
+                    if (r.isConfirmed) $.ajax({ url, type: 'DELETE', data: { _token: "{{ csrf_token() }}" }, success: () => table.ajax.reload(null, false) });
                 });
             });
 
-            // Handle Activate
-            // Handle Status Toggle (Activate/Deactivate)
             $('#retailers-table').on('click', '.status-toggle', function () {
-                if (!canActivate) {
-                    showToast('warning', 'You do not have permission to change status.');
-                    return;
-                }
-
-                let id = $(this).data('id');
-                let currentStatus = $(this).data('status');
-                let newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-                let actionName = newStatus === 'active' ? 'Activate' : 'Deactivate';
-                let btnColor = newStatus === 'active' ? '#28a745' : '#dc3545'; // Green for activate, Red for deactivate
-
-                // Determine URL based on action
-                let url = "";
-                if (newStatus === 'active') {
-                    url = "{{ route('admin.retailers.activate', ':id') }}".replace(':id', id);
-                } else {
-                    url = "{{ route('admin.retailers.deactivate', ':id') }}".replace(':id', id);
-                }
-
-                Swal.fire({
-                    title: `${actionName} Retailer?`,
-                    text: `Are you sure you want to ${actionName.toLowerCase()} this user?`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: btnColor,
-                    confirmButtonText: `Yes, ${actionName.toLowerCase()}!`
-                }).then(result => {
-                    if (result.isConfirmed) {
-                        $.post(url, {
-                            _token: "{{ csrf_token() }}",
-                            _method: 'PATCH'
-                        }, () => {
-                            table.ajax.reload(null, false);
-                            let msg = newStatus === 'active' ? 'Retailer activated successfully.' : 'Retailer deactivated successfully.';
-                            Swal.fire('Updated!', msg, 'success');
-                        }).fail(function (xhr) {
-                            Swal.fire('Error!', 'Something went wrong.', 'error');
-                        });
-                    }
-                });
+                let id = $(this).data('id'), status = $(this).data('status'), next = status === 'active' ? 'inactive' : 'active';
+                let url = (next === 'active' ? "{{ route('admin.retailers.activate', ':id') }}" : "{{ route('admin.retailers.deactivate', ':id') }}").replace(':id', id);
+                $.post(url, { _token: "{{ csrf_token() }}", _method: 'PATCH' }, () => table.ajax.reload(null, false));
             });
 
-            // Handle Edit Retailer AJAX Submission
-            $('#editRetailerForm').on('submit', function (e) {
-                e.preventDefault();
+            $('#userStatusTabs button').on('click', () => setTimeout(() => table.ajax.reload(), 50));
 
-                let password = $('#edit_password').val();
-                let confirmPassword = $('#edit_password_confirmation').val();
-
-                if (password && password !== confirmPassword) {
-                    showToast('danger', 'Passwords do not match!');
-                    return false;
-                }
-
-                let formData = new FormData(this);
-                let submitBtn = $(this).find('button[type="submit"]');
-                submitBtn.prop('disabled', true).text('Updating...');
-
-                $.ajax({
-                    url: $(this).attr('action'),
-                    type: "POST",
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function (response) {
-                        $('#editRetailerModal').modal('hide');
-                        $('#editRetailerForm')[0].reset();
-                        $('#retailers-table').DataTable().ajax.reload();
-                        submitBtn.prop('disabled', false).text('Update');
-                        showToast('success', response.message);
-                    },
-                    error: function (xhr) {
-                        submitBtn.prop('disabled', false).text('Update');
-                        let errors = xhr.responseJSON.errors;
-                        let errorMessage = '';
-                        if (errors) {
-                            $.each(errors, function (key, value) {
-                                errorMessage += value[0] + '\n';
-                            });
-                        } else {
-                            errorMessage = 'An error occurred. Please try again.';
-                        }
-                        showToast('danger', errorMessage);
-                    }
-                });
-            });
-
-        });
-
-        function fetchAreas(districtId, areaSelect, selectedAreaId = null) {
-            areaSelect.html('<option value="">Loading...</option>');
-
-            if (districtId) {
-                $.ajax({
-                    url: "{{ route('retailers.getAreas', ':district') }}".replace(':district', districtId),
-                    type: "GET",
-                    dataType: "json",
-                    success: function (data) {
-                        areaSelect.html('<option value="">Select Area</option>');
-                        $.each(data, function (key, value) {
-                            areaSelect.append('<option value="' + value.id + '">' + value.name + '</option>');
-                        });
-                        if (selectedAreaId) {
-                            areaSelect.val(selectedAreaId);
-                        }
-                    },
-                    error: function (xhr) {
-                        areaSelect.html('<option value="">Error loading areas</option>');
-                        console.error('Error fetching areas:', xhr);
-                    }
-                });
-            } else {
-                areaSelect.html('<option value="">Select Area</option>');
-            }
-        }
-
-        // Global Map Variables
-        let createMap, editMap, showMap;
-        let createMarker, editMarker, showMarker;
-
-        function initMap() {
-            /* Map initialization disabled temporarily
-            const defaultLoc = {
-                lat: 20.5937,
-                lng: 78.9629
-            };
-            ...
-            showMarker = new google.maps.marker.AdvancedMarkerElement({
-                position: defaultLoc,
-                map: showMap,
-                // Not draggable
-            });
-            */
-        }
-
-        // Expose initMap to window
-        window.initMap = initMap;
-
-        $(document).ready(function () {
-            // Modal Show events
-            $('#createRetailerModal').on('shown.bs.modal', function () {
-                if (createMap) {
-                    google.maps.event.trigger(createMap, 'resize');
-                    createMap.setCenter(createMarker.position);
-                }
-            });
-
-            $('#editRetailerModal').on('shown.bs.modal', function () {
-                if (editMap) {
-                    google.maps.event.trigger(editMap, 'resize');
-                    let lat = parseFloat($('#edit_latitude').val());
-                    let lng = parseFloat($('#edit_longitude').val());
-                    if (lat && lng) {
-                        let pos = {
-                            lat: lat,
-                            lng: lng
-                        };
-                        editMarker.position = pos;
-                        editMap.setCenter(pos);
-                        editMap.setZoom(15);
-                    } else {
-                        editMap.setCenter(editMarker.position);
-                    }
-                }
-            });
-
-            $('#showRetailerModal').on('shown.bs.modal', function () {
-                if (showMap) {
-                    google.maps.event.trigger(showMap, 'resize');
-                    let lat = parseFloat($(this).data('lat'));
-                    let lng = parseFloat($(this).data('lng'));
-
-                    if (!isNaN(lat) && !isNaN(lng)) {
-                        let pos = {
-                            lat: lat,
-                            lng: lng
-                        };
-                        showMarker.position = pos;
-                        showMap.setCenter(pos);
-                        showMap.setZoom(15);
-                    } else {
-                        const defaultLoc = {
-                            lat: 20.5937,
-                            lng: 78.9629
-                        };
-                        showMap.setCenter(defaultLoc);
-                        showMap.setZoom(5);
-                        showMarker.position = defaultLoc;
-                    }
-                }
+            // Modal events for Map resize
+            $('.modal').on('shown.bs.modal', function() {
+                if (createMap) google.maps.event.trigger(createMap, 'resize');
+                if (editMap) google.maps.event.trigger(editMap, 'resize');
+                if (showMap) google.maps.event.trigger(showMap, 'resize');
             });
         });
-
-        function getGeoLocation(latId, longId, mapType) {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function (position) {
-                    let lat = position.coords.latitude;
-                    let lng = position.coords.longitude;
-                    document.getElementById(latId).value = lat;
-                    document.getElementById(longId).value = lng;
-
-                    let pos = {
-                        lat: lat,
-                        lng: lng
-                    };
-                    if (mapType === 'create' && createMap && createMarker) {
-                        createMarker.position = pos;
-                        createMap.setCenter(pos);
-                        createMap.setZoom(15);
-                    } else if (mapType === 'edit' && editMap && editMarker) {
-                        editMarker.position = pos;
-                        editMap.setCenter(pos);
-                        editMap.setZoom(15);
-                    }
-                }, function (error) {
-                    alert("Error getting location: " + error.message);
-                });
-            } else {
-                alert("Geolocation is not supported by this browser.");
-            }
-        }
     </script>
     <script
         src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&libraries=places,marker&v=weekly&loading=async&callback=initMap"

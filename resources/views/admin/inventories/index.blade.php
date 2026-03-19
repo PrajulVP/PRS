@@ -564,13 +564,42 @@
                     render: function (data, type, row) {
                         if (!row.product_details) return '-';
 
-                        let boxSize = parseInt(row.product_details.box_size) || 0;
-                        let cartonSize = parseInt(row.product_details.carton_size) || 0;
+                        let pPack = row.product_details.pack ? row.product_details.pack.toLowerCase() : '';
+                        let pName = row.product_name ? row.product_name.toLowerCase() : '';
+                        let isCount = (parseInt(boxSize) === 1 && parseInt(cartonSize) === 1) ||
+                            pPack.includes('nos') || pPack.includes('count') ||
+                            pPack.includes('pair') || pPack.includes('bottle') ||
+                            pPack.includes('ml') || pPack.includes('gm') || pPack.includes('syp') ||
+                            pName.includes('syp') || pName.includes('syrup') || pName.includes('drop') || pName.includes('ointment');
+                        let baseStr = isCount ? 'Nos' : 'Str';
+
+                        if (isCount) {
+                            // Requirement: Display just number as counts for "Nos"
+                            let countHtml = `<span class="badge bg-secondary me-1">${data} ${baseStr}</span>`;
+                            
+                            // Optional: Show conversions if relevant (boxSize > 1)
+                            if (boxSize > 1) {
+                                let remaining = data;
+                                let cartons = 0;
+                                if (cartonSize > 0) {
+                                    let stripsPerCarton = boxSize * cartonSize;
+                                    cartons = Math.floor(data / stripsPerCarton);
+                                    remaining = data % stripsPerCarton;
+                                }
+                                let boxes = Math.floor(remaining / boxSize);
+                                if (boxes > 0) countHtml += `<span class="badge bg-info text-white me-1">${boxes} Box</span>`;
+                                if (cartons > 0) countHtml += `<span class="badge bg-primary me-1">${cartons} Ctn</span>`;
+                            }
+
+                            countHtml += `<div class="mt-1 small text-muted" style="font-size: 0.7rem;">
+                                        (${boxSize > 0 ? boxSize : 1} ${baseStr}/Box | ${cartonSize || 0} Box/Ctn)
+                                     </div>`;
+                            return countHtml;
+                        }
 
                         if (boxSize <= 0) return '-';
 
                         let stripsPerCarton = boxSize * (cartonSize || 1);
-
                         let cartons = 0;
                         let remaining = data;
 
@@ -582,23 +611,21 @@
                         let boxes = Math.floor(remaining / boxSize);
                         let strips = remaining % boxSize;
 
-                        let pPack = row.product_details.pack ? row.product_details.pack.toLowerCase() : '';
-                        let pName = row.product_name ? row.product_name.toLowerCase() : '';
-                        let isCount = (parseInt(boxSize) === 1 && parseInt(cartonSize) === 1) ||
-                            pPack.includes('nos') || pPack.includes('count') ||
-                            pPack.includes('pair') || pPack.includes('bottle') ||
-                            pPack.includes('ml') || pPack.includes('gm') || pPack.includes('syp') ||
-                            pName.includes('syp') || pName.includes('syrup') || pName.includes('drop') || pName.includes('ointment');
-                        let baseStr = isCount ? 'Nos' : 'Str';
-
                         let html = '';
-                        if (cartonSize > 0 && cartons > 0) html += `<span class="badge bg-primary me-1">${cartons} Ctn</span>`;
-                        if (boxes > 0) html += `<span class="badge bg-info text-white me-1">${boxes} Box</span>`;
-                        if (strips > 0 || (cartons === 0 && boxes === 0)) html += `<span class="badge bg-secondary me-1">${strips} ${baseStr}</span>`;
+                        // Requirement: Show strips counts priorily, then Box and Carton
+                        if (strips > 0 || (boxes === 0 && cartons === 0)) {
+                            html += `<span class="badge bg-secondary me-1">${strips} ${baseStr}</span>`;
+                        }
+                        if (boxes > 0) {
+                            html += `<span class="badge bg-info text-white me-1">${boxes} Box</span>`;
+                        }
+                        if (cartonSize > 0 && cartons > 0) {
+                            html += `<span class="badge bg-primary me-1">${cartons} Ctn</span>`;
+                        }
 
                         html += `<div class="mt-1 small text-muted" style="font-size: 0.7rem;">
-                                                                        (${boxSize} ${baseStr}/Box | ${cartonSize || 0} Box/Ctn)
-                                                                     </div>`;
+                                    (${boxSize} ${baseStr}/Box | ${cartonSize || 0} Box/Ctn)
+                                 </div>`;
 
                         return html || '0';
                     }

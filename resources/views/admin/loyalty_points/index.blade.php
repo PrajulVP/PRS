@@ -84,13 +84,13 @@
         /* DataTable Enhancements */
         .standard-table thead th {
             padding: 18px 25px !important;
-            background: var(--med-bg-card, #fff);
+            background: rgba(148, 163, 184, 0.05) !important;
             font-weight: 700;
             letter-spacing: 0.5px;
-            border-bottom: 2px solid var(--med-border, #f1f5f9) !important;
+            border-bottom: 2px solid var(--med-border, #cbd5e0) !important;
             text-transform: uppercase;
             font-size: 0.75rem;
-            color: var(--med-text-muted);
+            color: var(--med-text-muted, #475569);
         }
         .standard-table tbody td {
             padding: 20px 25px !important;
@@ -102,8 +102,25 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid var(--med-border, #f1f5f9);
-            background: rgba(0, 0, 0, 0.01);
+            border-bottom: 1px solid var(--med-border, #cbd5e0);
+            background: rgba(148, 163, 184, 0.1) !important; /* Semi-transparent tint */
+        }
+        .loyalty-card-header {
+            background: rgba(148, 163, 184, 0.05) !important;
+            border-bottom: 1px solid var(--med-border, #cbd5e0) !important;
+        }
+        body.dark-only .table-controls-row {
+            background: rgba(255, 255, 255, 0.03) !important;
+            border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        body.dark-only .loyalty-card-header {
+            background: rgba(255, 255, 255, 0.02) !important;
+            border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        body.dark-only .standard-table thead th {
+            background: rgba(255, 255, 255, 0.04) !important;
+            border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+            color: #cbd5e0 !important;
         }
 
         /* Spacing Fix for DataTable Footer */
@@ -200,37 +217,6 @@
         </div>
     </div>
 
-    <!-- Summary Statistics section -->
-    <div id="summary-stats-region" class="container-fluid entrance-fade">
-        <div class="row">
-            <div class="col-xl-3 col-md-6 mb-4">
-                <div class="card summary-card border-0 shadow-sm h-100">
-                    <div class="card-body d-flex align-items-center p-4">
-                        <div class="summary-icon-box bg-glass-primary">
-                            <i class="fa fa-users fa-lg"></i>
-                        </div>
-                        <div>
-                            <h4 class="mb-0 fw-800 heading-theme">{{ number_format($retailers->count()) }}</h4>
-                            <p class="text-muted small mb-0 fw-bold text-uppercase">Total Retailers</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {{-- <div class="col-xl-6 col-md-6 mb-4">
-                <div class="card summary-card border-0 shadow-sm h-100">
-                    <div class="card-body d-flex align-items-center p-4">
-                        <div class="summary-icon-box bg-glass-warning">
-                            <i class="fa fa-star fa-lg"></i>
-                        </div>
-                        <div>
-                            <h4 class="mb-0 fw-800 heading-theme">{{ number_format($globalLoyaltyPoints, 2) }}</h4>
-                            <p class="text-muted small mb-0 fw-bold text-uppercase">Total Loyalty Points Earned</p>
-                        </div>
-                    </div>
-                </div>
-            </div> --}}
-        </div>
-    </div>
 
 
     <div class="container-fluid">
@@ -238,20 +224,22 @@
             <!-- OVERVIEW LIST VIEW (Shown by Default) -->
             <div id="overview-view" class="col-12 entrance-fade">
                 <div class="card shadow-sm border-0" style="border-radius: 20px; overflow: hidden; background: var(--med-bg-card);">
-                    <div class="card-header bg-white py-4 px-4 border-bottom d-flex justify-content-between align-items-center" style="background: var(--med-bg-card) !important;">
+                    <div class="card-header loyalty-card-header py-4 px-4 d-flex justify-content-between align-items-center">
                         <div>
-                            <h5 class="fw-bold mb-1 heading-theme">Loyalty Performance Overview</h5>
-                            <p class="text-muted small mb-0">Select a retailer below to view comprehensive transaction level details.</p>
+                            <h5 class="fw-bold mb-1 heading-theme">Retailer Performance</h5>
+                            <p class="text-muted small mb-0">Monitor loyalty points and transaction history across all retailers.</p>
                         </div>
-                        <div class="col-md-4">
-                             <select id="retailer_selector" class="form-select select2">
-                                <option value="">-- Quick Search Retailer --</option>
-                                @foreach($retailers as $r)
-                                    <option value="{{ $r->id }}" data-points="{{ number_format($r->dynamic_loyalty_points, 2) }}">
-                                        {{ $r->shop_name }} ({{ $r->user->name }})
-                                    </option>
-                                @endforeach
-                            </select>
+                        <div class="d-flex gap-3 align-items-center" style="width: 50%;">
+                             <div class="flex-grow-1">
+                                <select id="retailer_selector" class="form-select select2">
+                                    <option value="">-- Quick Search Retailer --</option>
+                                    @foreach($retailers as $r)
+                                        <option value="{{ $r->id }}" data-points="{{ number_format($r->dynamic_loyalty_points, 2) }}">
+                                            {{ $r->shop_name }} ({{ $r->user->name }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                             </div>
                         </div>
                     </div>
                     <div id="overview-table-controls" class="table-controls-row">
@@ -453,7 +441,7 @@
                     <!-- Transaction Logs -->
                     <div class="col-12 mb-4">
                         <div class="card shadow-sm border-0 overflow-hidden" style="border-radius: 20px; background: var(--med-bg-card);">
-                            <div class="card-header bg-white py-4 px-4 border-bottom d-flex justify-content-between align-items-center" style="background: var(--med-bg-card) !important;">
+                            <div class="card-header loyalty-card-header py-4 px-4 d-flex justify-content-between align-items-center">
                                 <h5 class="fw-bold mb-0 heading-theme">Transaction Statement</h5>
                             </div>
                             <div id="detail-table-controls" class="table-controls-row">
@@ -609,7 +597,7 @@
             $('#retailer_selector').on('change', function () {
                 let id = $(this).val();
                 if (id) {
-                    $('#summary-stats-region, #overview-view').fadeOut(300, function() {
+                    $('#overview-view').fadeOut(300, function() {
                         $('#btn-back-to-list').fadeIn();
                         $('#detail-view').fadeIn(300);
                         fetchData(id);
@@ -624,7 +612,7 @@
                 $('#detail-view').fadeOut(300, function() {
                     $('#retailer_selector').val('').trigger('change.select2');
                     $('#btn-back-to-list').hide();
-                    $('#summary-stats-region, #overview-view').fadeIn(300);
+                    $('#overview-view').fadeIn(300);
                 });
             });
 

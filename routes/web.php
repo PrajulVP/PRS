@@ -22,7 +22,8 @@ use App\Http\Controllers\{
     SettingsController,
     DistributorOrderController,
     LoyaltyPointsController,
-    SystemController
+    SystemController,
+    SidebarController
 };
 
 Route::get('/', function () {
@@ -63,6 +64,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
     Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
     Route::post('users/{user}/activate', [UserController::class, 'activateUser'])->name('admin.users.activate');
+    Route::post('users/{user}/deactivate', [UserController::class, 'deactivateUser'])->name('admin.users.deactivate');
 
     Route::get('roles', [PermissionController::class, 'index'])->name('admin.permissions.index');
     Route::get('roles/{role}/permissions', [PermissionController::class, 'edit'])->name('admin.permissions.edit');
@@ -82,6 +84,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('approvals/retailers', [PendingApprovalController::class, 'index'])->defaults('type', 'retailer')->name('approvals.retailer');
         Route::get('approvals/distributors', [PendingApprovalController::class, 'index'])->defaults('type', 'distributor')->name('approvals.distributor');
         Route::get('users/pending-approval', [PendingApprovalController::class, 'index'])->name('users.pending_approval');
+        Route::get('sidebar-counts', [SidebarController::class, 'getCounts'])->name('sidebar-counts');
 
         Route::resource('distributors', DistributorController::class);
         Route::patch('distributors/{distributor}/activate', [DistributorController::class, 'activate'])->name('distributors.activate');

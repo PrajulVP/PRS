@@ -399,11 +399,35 @@
             background-color: rgba(52, 211, 153, 0.05) !important;
         }
 
-        body.dark-only .btn-secondary,
-        body.dark-only .dt-buttons .btn {
+        body.dark-only .btn-secondary {
             background-color: var(--med-bg-card) !important;
             color: var(--med-text-main) !important;
             border-color: var(--med-border) !important;
+        }
+
+        /* Visible DataTables Export Buttons in Dark Mode */
+        body.dark-only .dt-buttons .btn.btn-secondary {
+            background: #4b5563 !important;
+            border: none !important;
+            color: #ffffff !important;
+        }
+
+        body.dark-only .dt-buttons .btn.btn-info {
+            background: #0ea5e9 !important;
+            border: none !important;
+            color: #ffffff !important;
+        }
+
+        body.dark-only .dt-buttons .btn.btn-danger {
+            background: #ef4444 !important;
+            border: none !important;
+            color: #ffffff !important;
+        }
+
+        body.dark-only .dt-buttons .btn.btn-dark {
+            background: #1f2937 !important;
+            border: 1px solid #374151 !important;
+            color: #ffffff !important;
         }
 
         body.dark-only .btn-secondary:hover,
@@ -712,6 +736,47 @@
                     badge.remove();
                 }
             };
+            
+            // Sidebar Counts Update Helper
+            window.updateSidebarCounts = function () {
+                fetch("{{ route('admin.sidebar-counts') }}", {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const counts = data.counts;
+                        const totalApprovals = counts.retailer_approvals + counts.distributor_approvals;
+                        
+                        const badgeMap = {
+                            'badge-total-approvals': totalApprovals,
+                            'badge-retailer-approvals': counts.retailer_approvals,
+                            'badge-distributor-approvals': counts.distributor_approvals,
+                            'badge-inactive-sales-managers': counts.inactive_sales_managers,
+                            'badge-inactive-distributors': counts.inactive_distributors,
+                            'badge-inactive-field-staff': counts.inactive_field_staff,
+                            'badge-inactive-retailers': counts.inactive_retailers
+                        };
+
+                        for (const [id, count] of Object.entries(badgeMap)) {
+                            const el = document.getElementById(id);
+                            if (el) {
+                                el.innerText = count;
+                                if (count > 0) {
+                                    el.style.setProperty('display', 'inline-flex', 'important');
+                                } else {
+                                    el.style.setProperty('display', 'none', 'important');
+                                }
+                            }
+                        }
+                    }
+                })
+                .catch(error => console.error('Error updating sidebar counts:', error));
+            };
 
             // Notification Click Handler
             document.querySelectorAll('.notification-dropdown a').forEach(function (link) {
@@ -941,6 +1006,7 @@
         }
 
         setInterval(fetchLiveNotifications, 15000); // 15 seconds
+
     </script>
 </body>
 

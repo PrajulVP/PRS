@@ -382,8 +382,8 @@
                 <table class="table table-striped table-hover" id="distributor-approval-table">
                     <thead>
                         <tr>
-                            <th>Sl No</th>
-                            <th>Order ID</th>
+                            <th>No.</th>
+                            <th>Order Code</th>
                             <th>Distributor</th>
                             <th>Summary</th>
                             <th>Total</th>
@@ -886,7 +886,7 @@
                     $('[data-bs-toggle="popover"]').popover();
                 },
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
-                    "<'row mb-3 d-flex align-items-center'<'col-md-6'l><'col-md-6'f>>" +
+                    "<'row mb-3 d-flex align-items-center'<'col-md-4'l><'col-md-4 d-flex justify-content-center payment-filter-container'><'col-md-4'f>>" +
                     "<'row '<'col-sm-12'tr>>" +
                     "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
                 buttons: {
@@ -924,8 +924,9 @@
                 },
                 initComplete: function () {
                     // Move custom filters to the DataTables filter area
-                    var $filterContainer = $('#filter_container').removeClass('d-none');
-                    $('.dt-buttons').parent().append($filterContainer);
+                    var $filter = $('#filter_container').children().first();
+                    $('.payment-filter-container').append($filter);
+                    $('#filter_container').remove();
 
                     $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
                         $('#orderStatusTabs .nav-link').removeClass('text-primary border-bottom-0').addClass('text-muted');
@@ -938,10 +939,24 @@
                     });
                 },
                 ajax: {
-                    url: "{{ route('admin.approvals.distributor') }}",
+                    url: window.location.href,
                     data: function (d) {
                         d.status = $('#orderStatusTabs .nav-link.active').attr('data-status');
                         d.payment_status = $('input[name="payment_status"]:checked').val() || '';
+                    },
+                    dataSrc: function (json) {
+                        // Logic to switch active tab if current is empty and others have data
+                        if (json.counts && json.data.length === 0 && !window.initialTabSelected) {
+                                if (json.counts.processing > 0) {
+                                    $('#tab-processing').tab('show');
+                                } else if (json.counts.pending > 0) {
+                                    $('#tab-pending').tab('show');
+                                } else if (json.counts.all > 0) {
+                                    $('#tab-all').tab('show');
+                                }
+                                window.initialTabSelected = true;
+                        }
+                        return json.data;
                     }
                 },
                 columns: [
@@ -1103,6 +1118,7 @@
                         $('#rejectOrderModal').modal('hide');
                         table.ajax.reload(null, false);
                         showToast('success', res.success);
+                        if (window.updateSidebarCounts) window.updateSidebarCounts();
                         $('#rejectOrderForm')[0].reset();
                     },
                     error: function (xhr) {
@@ -1136,7 +1152,11 @@
                     data: formData,
                     processData: false,
                     contentType: false,
-                    success: function (res) { showToast('success', res.success); table.ajax.reload(null, false); },
+                    success: function (res) {
+                        showToast('success', res.success);
+                        table.ajax.reload(null, false);
+                        if (window.updateSidebarCounts) window.updateSidebarCounts();
+                    },
                     error: function (xhr) { showToast('error', 'Upload Failed'); }
                 });
                 $(this).val('');
@@ -1153,7 +1173,11 @@
                 let url = "{{ route('admin.distributor-orders.remove-invoice', ':id') }}".replace(':id', removeInvoiceId);
                 $.post(url, { _token: '{{ csrf_token() }}' }, function (res) {
                     $('#removeInvoiceConfirmModal').modal('hide');
-                    if (res.success) { showToast('success', res.success); table.ajax.reload(null, false); }
+                    if (res.success) {
+                        showToast('success', res.success);
+                        table.ajax.reload(null, false);
+                        if (window.updateSidebarCounts) window.updateSidebarCounts();
+                    }
                     else { showToast('error', 'Failed'); }
                 });
             });
@@ -1185,6 +1209,7 @@
                         $('#paymentStatusModal').modal('hide');
                         showToast('success', res.success || 'Updated');
                         table.ajax.reload(null, false);
+                        if (window.updateSidebarCounts) window.updateSidebarCounts();
                     },
                     error: function (xhr) {
                         showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Update failed');
@@ -1295,6 +1320,7 @@
                         $('#approveOrderModal').modal('hide');
                         table.ajax.reload(null, false);
                         showToast('success', res.success || 'Order approved successfully');
+                        if (window.updateSidebarCounts) window.updateSidebarCounts();
                     },
                     error: function (xhr) {
                         showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Failed to approve order');
@@ -1753,6 +1779,7 @@
                         $('#processOrderModal').modal('hide');
                         table.ajax.reload(null, false);
                         showToast('success', res.success);
+                        if (window.updateSidebarCounts) window.updateSidebarCounts();
                     },
                     error: function (xhr) {
                         showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Failed to approve order');

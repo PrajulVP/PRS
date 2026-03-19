@@ -18,7 +18,15 @@ class SalesManagerController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = SalesManager::with('user')->select('sales_managers.*')->orderBy('sales_managers.id', 'desc');
+            $data = SalesManager::with('user')->select('sales_managers.*');
+            
+            if ($request->filled('status') && $request->status !== 'all') {
+                $data->whereHas('user', function($q) use ($request) {
+                    $q->where('status', $request->status);
+                });
+            }
+
+            $data->orderBy('sales_managers.id', 'desc');
             /** @var \App\Models\User $currentUser */
             $currentUser = Auth::user();
             return DataTables::of($data)

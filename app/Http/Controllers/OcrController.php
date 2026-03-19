@@ -26,18 +26,25 @@ class OcrController extends Controller
         $file = $request->file('invoice');
         $type = $request->get('type', 'admin');
 
-        $extractedData = $this->ocrService->processInvoice($file, $type);
+        try {
+            $extractedData = $this->ocrService->processInvoice($file, $type);
 
-        if ($extractedData) {
+            if ($extractedData) {
+                return response()->json([
+                    'success' => true,
+                    'data' => $extractedData
+                ]);
+            }
+
             return response()->json([
-                'success' => true,
-                'data' => $extractedData
-            ]);
+                'success' => false,
+                'message' => 'OCR processing failed. The service returned an empty or invalid response without a specific error.'
+            ], 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to extract data from the invoice. The external OCR API did not return a valid response.'
-        ], 500);
     }
 }

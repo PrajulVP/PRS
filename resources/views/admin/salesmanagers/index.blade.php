@@ -1,47 +1,43 @@
 @extends('layouts.admin')
 
+@push('styles')
 <style>
-    .dataTables_filter {
-        text-align: right !important;
+    .nav-tabs.custom-tabs {
+        border-bottom: none;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        background: #f8fafc;
+        border-radius: 12px;
+        display: inline-flex;
     }
-
-    .dataTables_filter input {
-        width: 230px !important;
-        margin-left: 10px !important;
+    .nav-tabs.custom-tabs .nav-link {
+        border: 1px solid transparent !important;
+        color: #64748b;
+        font-weight: 600;
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px !important;
+        background: none;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
     }
-
-    .dataTables_length {
-        text-align: left !important;
+    .nav-tabs.custom-tabs .nav-link.active {
+        color: #00497a !important;
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
     }
-
-    .dataTables_length select {
-        padding: 5px 10px !important;
-        padding-right: 30px !important;
-        display: inline-block !important;
-        width: auto !important;
+    .nav-tabs.custom-tabs .nav-link:hover:not(.active) {
+        color: #475569;
+        background: #f1f5f9;
+        border-color: transparent;
     }
-
-    /* Flex wrapper for actions */
     .action-buttons {
-        display: inline-flex !important;
-        align-items: center;
-        gap: 4px;
-        flex-wrap: nowrap;
-    }
-
-
-    .action-buttons>* {
-        display: inline-flex !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    .action-buttons .btn {
-        padding: 6px 12px !important;
-        font-size: 0.75rem !important;
-        line-height: 1 !important;
+        display: flex;
+        gap: 5px;
+        white-space: nowrap;
     }
 </style>
+@endpush
 
 @section('page-body')
     <div class="container-fluid">
@@ -49,7 +45,20 @@
             <div class="col-sm-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5><i class="fa fa-users me-2"></i>Sales Managers</h5>
+                    <div>
+                        <h5 class="mb-3"><i class="fa fa-users me-2"></i>Sales Managers</h5>
+                        <ul class="nav nav-tabs custom-tabs" id="userStatusTabs" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active" data-bs-toggle="tab" data-status="all" type="button">All Sales Managers</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-status="active" type="button">Active</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-status="inactive" type="button">Inactive</button>
+                            </li>
+                        </ul>
+                    </div>
                         @if(Auth::user()->hasAnyRole(['admin', 'superadmin']) || Auth::user()->hasPermissionToCategory('sales_managers', 'add'))
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                             data-bs-target="#createSalesManagerModal">
@@ -353,405 +362,115 @@
         $(document).ready(function () {
             const canActivate = @json(Auth::user()->hasRole('superadmin'));
 
-            // Handle Create Form AJAX
-            $('#createSalesManagerForm').on('submit', function (e) {
-                e.preventDefault();
-                let formData = new FormData(this);
-                let submitBtn = $(this).find('button[type="submit"]');
-                submitBtn.prop('disabled', true).text('Creating...');
-
-                $.ajax({
-                    url: $(this).attr('action'),
-                    type: "POST",
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function (response) {
-                        $('#createSalesManagerModal').modal('hide');
-                        $('#createSalesManagerForm')[0].reset();
-                        $('#sales-managers-table').DataTable().ajax.reload();
-                        submitBtn.prop('disabled', false).text('Create');
-                        showToast('success', response.message);
-                    },
-                    error: function (xhr) {
-                        submitBtn.prop('disabled', false).text('Create');
-                        let errors = xhr.responseJSON.errors;
-                        let errorMessage = '';
-                        if (errors) {
-                            $.each(errors, function (key, value) {
-                                errorMessage += value[0] + '\n';
-                            });
-                        } else {
-                            errorMessage = 'An error occurred. Please try again.';
-                        }
-                        showToast('error', errorMessage);
-                    }
-                });
-            });
-
-            // Handle Edit Form AJAX
-            $('#editSalesManagerForm').on('submit', function (e) {
-                e.preventDefault();
-                let formData = new FormData(this);
-                let submitBtn = $(this).find('button[type="submit"]');
-                submitBtn.prop('disabled', true).text('Updating...');
-
-                $.ajax({
-                    url: $(this).attr('action'),
-                    type: "POST", // Method spoofing will handle PUT
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function (response) {
-                        $('#editSalesManagerModal').modal('hide');
-                        $('#editSalesManagerForm')[0].reset();
-                        $('#sales-managers-table').DataTable().ajax.reload();
-                        submitBtn.prop('disabled', false).text('Update');
-                        showToast('success', response.message);
-                    },
-                    error: function (xhr) {
-                        submitBtn.prop('disabled', false).text('Update');
-                        let errors = xhr.responseJSON.errors;
-                        let errorMessage = '';
-                        if (errors) {
-                            $.each(errors, function (key, value) {
-                                errorMessage += value[0] + '\n';
-                            });
-                        } else {
-                            errorMessage = 'An error occurred. Please try again.';
-                        }
-                        showToast('error', errorMessage);
-                    }
-                });
-            });
-
             var table = $('#sales-managers-table').DataTable({
-                processing: true,
-                serverSide: true,
-                order: [],
-                ajax: "{{ route('admin.sales-managers.index') }}",
-                columns: [{
-                    data: null,
-                    orderable: false,
-                    searchable: false,
-                    render: function (data, type, row, meta) {
-                        return meta.row + meta.settings._iDisplayStart + 1;
-                    }
+                processing: true, serverSide: true, order: [],
+                ajax: {
+                    url: "{{ route('admin.sales-managers.index') }}",
+                    data: (d) => { d.status = $('#userStatusTabs button.active').data('status'); }
                 },
-                {
-                    data: 'name',
-                    name: 'name'
-                },
-                {
-                    data: 'user.email',
-                    name: 'user.email'
-                },
-                {
-                    data: 'contact_no',
-                    name: 'contact_no'
-                },
-                {
-                    data: 'address',
-                    name: 'address'
-                },
-                {
-                    data: 'user.status',
-                    name: 'user.status',
-                    render: function (data, type, row) {
-                        if (data === 'active') {
-                            return `<span class="badge bg-success status-toggle cursor-pointer" style="cursor: pointer;" data-id="${row.id}" data-status="active" title="Click to deactivate">Active</span>`;
-                        } else {
-                            return `<span class="badge bg-danger status-toggle cursor-pointer" style="cursor: pointer;" data-id="${row.id}" data-status="inactive" title="Click to activate">Inactive</span>`;
+                columns: [
+                    { data: null, orderable: false, searchable: false, render: (d, t, r, m) => m.row + m.settings._iDisplayStart + 1 },
+                    { data: 'name', name: 'name' },
+                    { data: 'user.email', name: 'user.email' },
+                    { data: 'contact_no', name: 'contact_no' },
+                    { data: 'address', name: 'address' },
+                    {
+                        data: 'user.status', name: 'user.status',
+                        render: (data, type, row) => `<span class="badge ${data === 'active' ? 'bg-success' : 'bg-danger'} status-toggle cursor-pointer" data-id="${row.id}" data-status="${data}">${data === 'active' ? 'Active' : 'Inactive'}</span>`
+                    },
+                    {
+                        data: 'id', orderable: false, searchable: false,
+                        render: function (id, type, row) {
+                            let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
+                            let deleteUrl = "{{ route('admin.sales-managers.destroy', ':id') }}".replace(':id', id);
+                            let btns = `<div class="action-buttons">
+                                <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>`;
+                            if (row.can_edit) btns += `<button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>`;
+                            if (row.can_delete) btns += `<button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>`;
+                            return btns + `</div>`;
                         }
                     }
-                },
-                {
-                    data: 'id',
-                    orderable: false,
-                    searchable: false,
-                    render: function (id, type, row) {
-                        let deleteUrl = "{{ route('admin.sales-managers.destroy', ':id') }}".replace(':id', id);
-                        let csrf = "{{ csrf_token() }}";
-                        let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
-
-                        /*
-                        // Removed separate Activate button as requested
-                        let activateBtn = '';
-                        if (canActivate && row.user.status === 'inactive') {
-                            activateBtn = `
-                                <button class="btn btn-sm btn-success activate-btn" 
-                                        data-id="${id}"
-                                        title="Activate">
-                                    <i class="fa fa-check"></i>
-                                </button>`;
-                        }
-                        */
-                                                    let activateBtn = '';
-
-                                                    let btns = `
-                                                        <div class="action-buttons">
-                                                            ${activateBtn}
-                                                            <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>`;
-                                                    
-                                                    if (row.can_edit) {
-                                                        btns += `<button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>`;
-                                                    }
-                                                    
-                                                    if (row.can_delete) {
-                                                        btns += `<button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>`;
-                                                    }
-                                                    
-                                                    btns += `</div>`;
-                                                    return btns;
-                                                }
-                }
                 ],
-                dom: "<'row mb-3'<'col-sm-12'B>>" +
-                    "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" +
-                    "<'row '<'col-sm-12'tr>>" +
-                    "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
+                dom: "<'row mb-3'<'col-sm-12'B>><'row mb-3'<'col-md-6'l><'col-md-6'f>><'row'<'col-sm-12'tr>><'row mt-3'<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
                 buttons: {
-                    dom: {
-                        button: {
-                            className: 'btn btn-sm btn-icon'
-                        }
-                    },
-                    buttons: [{
-                        extend: 'copy',
-                        className: 'btn btn-secondary btn-sm',
-                        text: '<i class="fa fa-copy"></i> Copy'
-                    },
-                    {
-                        extend: 'csv',
-                        className: 'btn btn-info btn-sm text-white',
-                        text: '<i class="fa fa-file-csv"></i> CSV'
-                    },
-                    {
-                        extend: 'excel',
-                        className: 'btn btn-success btn-sm',
-                        text: '<i class="fa fa-file-excel"></i> Excel'
-                    },
-                    {
-                        extend: 'pdf',
-                        className: 'btn btn-danger btn-sm',
-                        text: '<i class="fa fa-file-pdf"></i> PDF'
-                    },
-                    {
-                        extend: 'print',
-                        className: 'btn btn-dark btn-sm',
-                        text: '<i class="fa fa-print"></i> Print'
-                    }
+                    dom: { button: { className: 'btn btn-sm btn-icon' } },
+                    buttons: [
+                        { extend: 'copy', className: 'btn btn-secondary btn-sm', text: '<i class="fa fa-copy"></i> Copy' },
+                        { extend: 'csv', className: 'btn btn-info btn-sm text-white', text: '<i class="fa fa-file-csv"></i> CSV' },
+                        { extend: 'excel', className: 'btn btn-success btn-sm', text: '<i class="fa fa-file-excel"></i> Excel' },
+                        { extend: 'pdf', className: 'btn btn-danger btn-sm', text: '<i class="fa fa-file-pdf"></i> PDF' },
+                        { extend: 'print', className: 'btn btn-dark btn-sm', text: '<i class="fa fa-print"></i> Print' }
                     ]
                 }
             });
 
-            // Handle Edit Button
+            // Handlers
             $('#sales-managers-table').on('click', '.edit-btn', function () {
                 var data = $(this).data('row');
-
                 $('#edit_name').val(data.name);
-                var email = data.user ? data.user.email : (data.email || '');
-                var address = data.address || '';
-
-                $('#edit_email').val(email);
+                $('#edit_email').val(data.user?.email || '');
                 $('#edit_contact_no').val(data.contact_no);
-                $('#edit_address').val(address);
-                if (data.user) {
-                    $('#edit_status').val(data.user.status);
-                }
-
-                var url = "{{ route('admin.sales-managers.update', ':id') }}".replace(':id', data.id);
-                $('#editSalesManagerForm').attr('action', url);
-
+                $('#edit_address').val(data.address);
+                $('#edit_status').val(data.user?.status || '');
+                $('#editSalesManagerForm').attr('action', "{{ route('admin.sales-managers.update', ':id') }}".replace(':id', data.id));
                 $('#editSalesManagerModal').modal('show');
             });
 
-            // Handle View Button
             $('#sales-managers-table').on('click', '.view-btn', function () {
                 var data = $(this).data('row');
-                var id = data.id;
-                var url = "{{ route('admin.sales-managers.show', ':id') }}".replace(':id', id);
-
-                // Clear previous data
-                $('#sm_avatar_img').hide();
-                $('#sm_avatar_initials').text('').show();
-                $('#sm_view_name').text('Loading...');
-                $('#sm_view_email').text('Loading...');
-                $('#sm_view_contact').text('Loading...');
-                $('#sm_view_address').text('Loading...');
-                $('#showFieldStaffBody').html('<tr><td colspan="4" class="text-center">Loading...</td></tr>');
-                $('#showRetailerBody').html('<tr><td colspan="5" class="text-center">Loading...</td></tr>');
-                $('#fieldStaffCount').text('0');
-                $('#retailerCount').text('0');
-
+                var url = "{{ route('admin.sales-managers.show', ':id') }}".replace(':id', data.id);
                 $('#showSalesManagerModal').modal('show');
+                $.get(url, (res) => {
+                    if (res.success) {
+                        let sm = res.data;
+                        $('#sm_view_name').text(sm.name);
+                        $('#sm_view_email').text(sm.user?.email || 'N/A');
+                        $('#sm_view_contact').text(sm.contact_no || 'N/A');
+                        $('#sm_view_address').text(sm.address || 'N/A');
+                        $('#sm_view_status').attr('class', 'badge ' + (sm.user?.status === 'active' ? 'bg-success' : 'bg-danger')).text(sm.user?.status);
+                        
+                        let fsHtml = sm.field_staffs?.map(fs => `<tr><td>${fs.user.name}</td><td>${fs.user.email}</td><td>${fs.contact_no || 'N/A'}</td><td><span class="badge ${fs.user.status === 'active' ? 'bg-success' : 'bg-danger'}">${fs.user.status}</span></td></tr>`).join('') || '<tr><td colspan="4">None</td></tr>';
+                        $('#showFieldStaffBody').html(fsHtml);
+                        $('#fieldStaffCount').text(sm.field_staffs?.length || 0);
 
-                $.ajax({
-                    url: url,
-                    type: 'GET',
-                    success: function (response) {
-                        if (response.success) {
-                            let sm = response.data;
-                            let email = sm.user ? sm.user.email : (sm.email || 'N/A');
-                            let profileImg = sm.user && sm.user.profile_image ? '/storage/' + sm.user.profile_image : null;
-
-                            // Avatar
-                            if (profileImg) {
-                                $('#sm_avatar_img').attr('src', profileImg).show();
-                                $('#sm_avatar_initials').hide();
-                            } else {
-                                let initials = sm.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
-                                $('#sm_avatar_initials').text(initials).show();
-                                $('#sm_avatar_img').hide();
-                            }
-
-                            let status = sm.user ? sm.user.status : '';
-                            $('#sm_view_name').text(sm.name);
-                            $('#sm_view_email').text(email);
-                            $('#sm_view_contact').text(sm.contact_no || 'N/A');
-                            $('#sm_view_address').text(sm.address || 'N/A');
-                            $('#sm_view_status').attr('class', 'badge ' + (status === 'active' ? 'bg-success' : 'bg-danger')).text(status === 'active' ? 'Active' : 'Inactive');
-
-                            // Populate Field Staff
-                            let fieldStaff = sm.field_staffs || [];
-                            $('#fieldStaffCount').text(fieldStaff.length);
-                            let fsHtml = '';
-                            if (fieldStaff.length > 0) {
-                                fieldStaff.forEach(fs => {
-                                    let fsStatus = fs.user ? fs.user.status : 'inactive';
-                                    let fsBadgeClass = fsStatus === 'active' ? 'bg-success' : 'bg-danger';
-                                    fsHtml += `
-                                            <tr>
-                                                <td style="color: var(--med-text-main) !important;">${fs.user.name}</td>
-                                                <td style="color: var(--med-text-main) !important;">${fs.user.email}</td>
-                                                <td style="color: var(--med-text-main) !important;">${fs.contact_no || 'N/A'}</td>
-                                                <td style="color: var(--med-text-main) !important;"><span class="badge ${fsBadgeClass}">${fsStatus}</span></td>
-                                            </tr>
-                                        `;
-                                });
-                            } else {
-                                fsHtml = '<tr><td colspan="4" class="text-center text-muted">No Field Staff assigned.</td></tr>';
-                            }
-                            $('#showFieldStaffBody').html(fsHtml);
-
-                            // Retailers
-                            let retailers = sm.retailers || [];
-                            $('#retailerCount').text(retailers.length);
-                            let retHtml = '';
-                            if (retailers.length > 0) {
-                                retailers.forEach(ret => {
-                                    let rStatus = ret.user ? ret.user.status : 'inactive';
-                                    let rBadgeClass = rStatus === 'active' ? 'bg-success' : 'bg-danger';
-                                    let owner = ret.user ? ret.user.name : 'N/A';
-                                    let email = ret.user ? ret.user.email : 'N/A';
-                                    retHtml += `
-                                            <tr>
-                                                <td style="color: var(--med-text-main) !important;">${ret.shop_name}</td>
-                                                <td style="color: var(--med-text-main) !important;">${owner}</td>
-                                                <td style="color: var(--med-text-main) !important;">${email}</td>
-                                                <td style="color: var(--med-text-main) !important;">${ret.contact_no || 'N/A'}</td>
-                                                <td style="color: var(--med-text-main) !important;"><span class="badge ${rBadgeClass}">${rStatus}</span></td>
-                                            </tr>
-                                        `;
-                                });
-                            } else {
-                                retHtml = '<tr><td colspan="5" class="text-center text-muted">No Retailers assigned.</td></tr>';
-                            }
-                            $('#showRetailerBody').html(retHtml);
-
-                        } else {
-                            Swal.fire('Error!', 'Failed to fetch details.', 'error');
-                        }
-                    },
-                    error: function () {
-                        Swal.fire('Error!', 'Something went wrong fetching details.', 'error');
+                        let retHtml = sm.retailers?.map(ret => `<tr><td>${ret.shop_name}</td><td>${ret.user.name}</td><td>${ret.user.email}</td><td>${ret.contact_no || 'N/A'}</td><td><span class="badge ${ret.user.status === 'active' ? 'bg-success' : 'bg-danger'}">${ret.user.status}</span></td></tr>`).join('') || '<tr><td colspan="5">None</td></tr>';
+                        $('#showRetailerBody').html(retHtml);
+                        $('#retailerCount').text(sm.retailers?.length || 0);
                     }
                 });
             });
 
-            // Handle Delete via AJAX
+            $('#createSalesManagerForm, #editSalesManagerForm').on('submit', function (e) {
+                e.preventDefault();
+                let form = $(this), btn = form.find('button[type="submit"]');
+                btn.prop('disabled', true);
+                $.ajax({
+                    url: form.attr('action'), type: "POST", data: new FormData(this), processData: false, contentType: false,
+                    success: (res) => {
+                        $('.modal').modal('hide');
+                        form[0].reset();
+                        table.ajax.reload();
+                        btn.prop('disabled', false);
+                        showToast('success', 'Saved successfully');
+                    },
+                    error: () => { btn.prop('disabled', false); showToast('danger', 'Error'); }
+                });
+            });
+
             $('#sales-managers-table').on('click', '.delete-btn', function () {
                 let url = $(this).data('url');
-                Swal.fire({
-                    title: 'Delete Sales Manager?',
-                    text: "Are you sure? This action cannot be undone.",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    confirmButtonText: 'Yes, delete it!'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: url,
-                            type: 'DELETE',
-                            data: {
-                                _token: "{{ csrf_token() }}"
-                            },
-                            success: function (response) {
-                                if (response.success) {
-                                    table.ajax.reload(null, false);
-                                    Swal.fire('Deleted!', response.message, 'success');
-                                } else {
-                                    Swal.fire('Error!', response.message, 'error');
-                                }
-                            },
-                            error: function (xhr) {
-                                let msg = 'Something went wrong.';
-                                if (xhr.responseJSON && xhr.responseJSON.message) {
-                                    msg = xhr.responseJSON.message;
-                                }
-                                Swal.fire('Error!', msg, 'error');
-                            }
-                        });
-                    }
+                Swal.fire({ title: 'Delete?', icon: 'warning', showCancelButton: true }).then((r) => {
+                    if (r.isConfirmed) $.ajax({ url, type: 'DELETE', data: { _token: "{{ csrf_token() }}" }, success: () => table.ajax.reload(null, false) });
                 });
             });
 
-            // Handle Activate
-            // Handle Status Toggle (Activate/Deactivate)
             $('#sales-managers-table').on('click', '.status-toggle', function () {
-                if (!canActivate) {
-                    showToast('warning', 'You do not have permission to change status.');
-                    return;
-                }
-
-                let id = $(this).data('id');
-                let currentStatus = $(this).data('status');
-                let newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-                let actionName = newStatus === 'active' ? 'Activate' : 'Deactivate';
-                let btnColor = newStatus === 'active' ? '#28a745' : '#dc3545'; // Green for activate, Red for deactivate
-
-                // Determine URL based on action
-                let url = "";
-                if (newStatus === 'active') {
-                    url = "{{ route('admin.sales-managers.activate', ':id') }}".replace(':id', id);
-                } else {
-                    url = "{{ route('admin.sales-managers.deactivate', ':id') }}".replace(':id', id);
-                }
-
-                Swal.fire({
-                    title: `${actionName} Sales Manager?`,
-                    text: `Are you sure you want to ${actionName.toLowerCase()} this user?`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: btnColor,
-                    confirmButtonText: `Yes, ${actionName.toLowerCase()}!`
-                }).then(result => {
-                    if (result.isConfirmed) {
-                        $.post(url, {
-                            _token: "{{ csrf_token() }}",
-                            _method: 'PATCH'
-                        }, () => {
-                            table.ajax.reload(null, false);
-                            let msg = newStatus === 'active' ? 'Sales Manager activated successfully.' : 'Sales Manager deactivated successfully.';
-                            Swal.fire('Updated!', msg, 'success');
-                        }).fail(function (xhr) {
-                            Swal.fire('Error!', 'Something went wrong.', 'error');
-                        });
-                    }
-                });
+                let id = $(this).data('id'), status = $(this).data('status'), next = status === 'active' ? 'inactive' : 'active';
+                let url = (next === 'active' ? "{{ route('admin.sales-managers.activate', ':id') }}" : "{{ route('admin.sales-managers.deactivate', ':id') }}").replace(':id', id);
+                $.post(url, { _token: "{{ csrf_token() }}", _method: 'PATCH' }, () => table.ajax.reload(null, false));
             });
 
+            $('#userStatusTabs button').on('click', () => setTimeout(() => table.ajax.reload(), 50));
         });
     </script>
 @endpush

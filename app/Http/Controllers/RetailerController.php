@@ -22,28 +22,40 @@ class RetailerController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $query = Retailer::with(['user', 'distributor.user', 'fieldStaff.user', 'salesManager.user', 'district', 'area'])->orderBy('retailers.id', 'desc');
+            $query = Retailer::with(['user', 'distributor.user', 'fieldStaff.user', 'salesManager.user', 'district', 'area']);
 
-            if (Auth::user()->hasRole('distributor')) {
-                $distributor = Auth::user()->distributor;
+            if ($request->filled('status') && $request->status !== 'all') {
+                $query->whereHas('user', function($q) use ($request) {
+                    $q->where('status', $request->status);
+                });
+            }
+
+            /** @var \App\Models\User $currentUser */
+            $currentUser = Auth::user();
+
+            if ($currentUser->hasRole('distributor')) {
+                $distributor = $currentUser->distributor;
                 if ($distributor) {
                     $query->whereHas('retailerOrders', function ($orderQuery) use ($distributor) {
                         $orderQuery->where('distributor_id', $distributor->id);
                     });
                 }
-            } elseif (Auth::user()->hasRole('fieldstaff')) {
-                $fieldstaff = Auth::user()->fieldStaff;
+            } elseif ($currentUser->hasRole('fieldstaff')) {
+                $fieldstaff = $currentUser->fieldStaff;
                 if ($fieldstaff) {
                     $query->where('field_staff_id', $fieldstaff->id);
                 }
-            } elseif (Auth::user()->hasRole('salesmanager')) {
-                $salesManager = Auth::user()->salesManager;
+            } elseif ($currentUser->hasRole('salesmanager')) {
+                $salesManager = $currentUser->salesManager;
                 if ($salesManager) {
                     $fieldStaffIds = $salesManager->fieldStaffs->pluck('id');
                     $query->whereIn('field_staff_id', $fieldStaffIds);
                 }
             }
 
+            $query->orderBy('retailers.id', 'desc');
+
+            /** @var \App\Models\User $currentUser */
             $currentUser = Auth::user();
             return DataTables::of($query)
                 ->addIndexColumn()
@@ -130,17 +142,20 @@ class RetailerController extends Controller
         $retailer = new Retailer(array_merge($retailerData, ['pincode' => $request->pincode]));
         $retailer->user_id = $user->id;
 
-        if (Auth::user()->hasRole('salesmanager')) {
-            $retailer->sales_manager_id = Auth::user()->salesManager->id;
-        } elseif (Auth::user()->hasRole('fieldstaff')) {
-            $retailer->field_staff_id = Auth::user()->fieldStaff->id;
-            $retailer->sales_manager_id = Auth::user()->fieldStaff->salesManager->id;
+        /** @var \App\Models\User $currentUser */
+        $currentUser = Auth::user();
+        if ($currentUser->hasRole('salesmanager')) {
+            $retailer->sales_manager_id = $currentUser->salesManager->id;
+        } elseif ($currentUser->hasRole('fieldstaff')) {
+            $retailer->field_staff_id = $currentUser->fieldStaff->id;
+            $retailer->sales_manager_id = $currentUser->fieldStaff->salesManager->id;
         }
 
         $retailer->save();
 
         // Notify the assigned Sales Manager
         if ($retailer->sales_manager_id) {
+            /** @var \App\Models\User $salesManagerUser */
             $salesManagerUser = User::whereHas('salesManager', function ($q) use ($retailer) {
                 $q->where('id', $retailer->sales_manager_id);
             })->first();
@@ -257,7 +272,9 @@ class RetailerController extends Controller
 
     public function activate(Retailer $retailer)
     {
-        if (!Auth::user()->hasRole('admin') && !Auth::user()->hasRole('salesmanager')) {
+        /** @var \App\Models\User $currentUser */
+        $currentUser = Auth::user();
+        if (!$currentUser->hasRole('admin') && !$currentUser->hasRole('salesmanager')) {
             return redirect()->back()->with('error', 'You are not authorized to activate a retailer.');
         }
 
@@ -271,7 +288,9 @@ class RetailerController extends Controller
 
     public function deactivate(Retailer $retailer)
     {
-        if (!Auth::user()->hasRole(['superadmin', 'admin']) && !Auth::user()->hasRole('salesmanager')) {
+        /** @var \App\Models\User $currentUser */
+        $currentUser = Auth::user();
+        if (!$currentUser->hasAnyRole(['superadmin', 'admin']) && !$currentUser->hasRole('salesmanager')) {
             return redirect()->back()->with('error', 'You are not authorized to deactivate a retailer.');
         }
 

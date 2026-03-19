@@ -36,17 +36,29 @@ class OcrService
                 return $data;
             }
 
+            $errorMsg = "The OCR service returned an error (Status: " . $response->status() . ")";
+            if ($response->status() === 504 || $response->status() === 502) {
+                $errorMsg = "The OCR server is taking too long to respond or is temporarily unavailable (Status: " . $response->status() . ")";
+            }
+
             Log::error('OCR API Error Response', [
                 'status' => $response->status(),
                 'body' => $response->body()
             ]);
-            return null;
+            
+            throw new \Exception($errorMsg);
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            Log::error('OCR API Connection Error', ['message' => $e->getMessage()]);
+            throw new \Exception("The OCR server at {$basePath} is unreachable. Please ensure the server is running and accessible.");
+        } catch (\Illuminate\Http\Client\RequestException $e) {
+            Log::error('OCR API Request Error', ['status' => $e->getCode(), 'message' => $e->getMessage()]);
+            throw new \Exception("The OCR service returned an error. Please try again later.");
         } catch (\Exception $e) {
             Log::error('OCR API Exception', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return null;
+            throw $e;
         }
     }
 }

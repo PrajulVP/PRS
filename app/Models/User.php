@@ -153,6 +153,11 @@ class User extends Authenticatable implements JWTSubject
             'distributor_approvals' => 0,
             'retailer_orders' => 0,
             'distributor_orders' => 0,
+            'inactive_users' => 0,
+            'inactive_sales_managers' => 0,
+            'inactive_distributors' => 0,
+            'inactive_field_staff' => 0,
+            'inactive_retailers' => 0,
         ];
 
         // 1. Retailer Approvals (Retailer Orders in pending states)
@@ -163,15 +168,20 @@ class User extends Authenticatable implements JWTSubject
                 $query->where('fieldstaff_id', $this->fieldStaff->id)->where('status', RetailerOrder::STATUS_PENDING);
             } elseif ($this->hasRole('distributor') && $this->distributor) {
                 $query->where('distributor_id', $this->distributor->id)->where('status', RetailerOrder::STATUS_PROCESSING);
-            } elseif ($this->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
+            } elseif ($this->hasRole('salesmanager')) {
                 $query->whereIn('status', [RetailerOrder::STATUS_PENDING, RetailerOrder::STATUS_PROCESSING]);
+            } elseif ($this->hasAnyRole(['admin', 'superadmin'])) {
+                // Admin should not get notified on dot icon when distributor needs to approve (processing)
+                // And we recently restricted them from pending as well in the UI.
+                // So for Retailer Approvals, Admin count is 0 for the dot notification.
+                $query->whereRaw('1=0');
             } else {
                 $query->whereRaw('1=0');
             }
             $counts['retailer_approvals'] = $query->count();
         }
 
-        // 2. Distributor Order Approvals
+        // 2. Distributor Order Approvals (Distributor Orders to Admins)
         if ($this->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
             $query = \App\Models\DistributorOrder::query();
             if ($this->hasRole('salesmanager')) {
@@ -188,6 +198,18 @@ class User extends Authenticatable implements JWTSubject
                 ->where('status', RetailerOrder::STATUS_APPROVED)
                 ->count();
         }
+
+        // 4. Inactive Users (for Activation)
+        if ($this->hasRole('superadmin')) {
+            $counts['inactive_sales_managers'] = User::where('status', 'inactive')->where('role', 'salesmanager')->count();
+            $counts['inactive_distributors'] = User::where('status', 'inactive')->where('role', 'distributor')->count();
+        } elseif ($this->hasRole('admin')) {
+            $counts['inactive_field_staff'] = User::where('status', 'inactive')->where('role', 'fieldstaff')->count();
+        } elseif ($this->hasRole('salesmanager')) {
+            $counts['inactive_retailers'] = User::where('status', 'inactive')->where('role', 'retailer')->count();
+        }
+
+        $counts['inactive_users'] = $counts['inactive_sales_managers'] + $counts['inactive_distributors'] + $counts['inactive_field_staff'] + $counts['inactive_retailers'];
 
         return $counts;
     }

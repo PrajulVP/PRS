@@ -4,6 +4,12 @@
     <div class="back-btn"><i class="fa fa-angle-left"> </i></div>
     <div class="toggle-sidebar"><i class="status_toggle middle sidebar-toggle" data-feather="grid"> </i></div>
   </div>
+  <style>
+    .sidebar-wrapper .sidebar-main .sidebar-links li .according-menu {
+        right: 15px !important;
+        top: 13px !important;
+    }
+  </style>
   {{-- <div class="logo-icon-wrapper"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/atom-logo-main-white.png') }}" width="170" alt=""></a></div> --}}
   <nav class="sidebar-main">
     <div class="left-arrow" id="left-arrow"><i data-feather="arrow-left"></i></div>
@@ -33,7 +39,8 @@
             </svg>
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-home"></use>
-            </svg><span>Dashboard</span></a>
+            </svg><span>Dashboard</span>
+          </a>
         </li>
 
         @if (Auth::user()->hasPermissionToCategory('loyalty_points', 'view') || Auth::user()->hasRole('retailer'))
@@ -159,19 +166,31 @@
             </svg>
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-user"></use>
-            </svg><span>Order Approval</span>
+            </svg>
+            <span style="display: inline-flex; align-items: center; gap: 8px;">Order Approval
+                <span id="badge-total-approvals" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; {{ $totalApprovals > 0 ? '' : 'display: none !important;' }}">{{ $totalApprovals }}</span>
+            </span>
           </a>
           <ul class="sidebar-submenu">
              @if(Auth::user()->hasPermissionToCategory('retailer_approvals', 'view') || Auth::user()->hasRole('fieldstaff') || $hasApprovalRoles)
-             <li style="position: relative;"><a href="{{ route('admin.approvals.retailer') }}">Retailers</a></li>
+             <li style="position: relative;"><a href="{{ route('admin.approvals.retailer') }}">
+               <span style="display: inline-flex; align-items: center; gap: 8px;">Retailers
+                   <span id="badge-retailer-approvals" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; {{ $actionCounts['retailer_approvals'] > 0 ? '' : 'display: none !important;' }}">{{ $actionCounts['retailer_approvals'] }}</span>
+               </span>
+             </a></li>
             @endif
              @if(Auth::user()->hasPermissionToCategory('distributor_approvals', 'view') || $hasApprovalRoles)
-             <li style="position: relative;"><a href="{{ route('admin.approvals.distributor') }}">Distributors</a></li>
+             <li style="position: relative;"><a href="{{ route('admin.approvals.distributor') }}">
+               <span style="display: inline-flex; align-items: center; gap: 8px;">Distributors
+                   <span id="badge-distributor-approvals" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; {{ $actionCounts['distributor_approvals'] > 0 ? '' : 'display: none !important;' }}">{{ $actionCounts['distributor_approvals'] }}</span>
+               </span>
+             </a></li>
             @endif
           </ul>
         </li>
+
+
         @endif
-        
 
 
         @if (Auth::user()->hasAnyRole(['admin', 'superadmin']) || Auth::user()->hasPermissionToCategory('products', 'view'))
@@ -268,7 +287,11 @@
             </svg>
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-form"></use>
-            </svg><span>Sales Managers</span></a>
+            </svg>
+            <span style="display: inline-flex; align-items: center; gap: 8px;">Sales Managers
+                <span id="badge-inactive-sales-managers" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; {{ $actionCounts['inactive_sales_managers'] > 0 ? '' : 'display: none !important;' }}">{{ $actionCounts['inactive_sales_managers'] }}</span>
+            </span>
+          </a>
         </li>
         @endif
 
@@ -280,7 +303,11 @@
             </svg>
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-form"></use>
-            </svg><span>Distributors</span></a>
+            </svg>
+            <span style="display: inline-flex; align-items: center; gap: 8px;">Distributors
+                <span id="badge-inactive-distributors" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; {{ $actionCounts['inactive_distributors'] > 0 ? '' : 'display: none !important;' }}">{{ $actionCounts['inactive_distributors'] }}</span>
+            </span>
+          </a>
         </li>
         @endif
 
@@ -292,7 +319,11 @@
             </svg>
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-form"></use>
-            </svg><span>Field Staff</span></a>
+            </svg>
+            <span style="display: inline-flex; align-items: center; gap: 8px;">Field Staff
+                <span id="badge-inactive-field-staff" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; {{ $actionCounts['inactive_field_staff'] > 0 ? '' : 'display: none !important;' }}">{{ $actionCounts['inactive_field_staff'] }}</span>
+            </span>
+          </a>
         </li>
         @endif
 
@@ -304,7 +335,11 @@
             </svg>
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-form"></use>
-            </svg><span>Retailers</span></a>
+            </svg>
+            <span style="display: inline-flex; align-items: center; gap: 8px;">Retailers
+                <span id="badge-inactive-retailers" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; {{ $actionCounts['inactive_retailers'] > 0 ? '' : 'display: none !important;' }}">{{ $actionCounts['inactive_retailers'] }}</span>
+            </span>
+          </a>
         </li>
         @endif
 
@@ -458,6 +493,61 @@
     }
     100% {
       box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    }
+  }
+
+  /* Robust Action Required Dot */
+  .action-required-dot {
+    position: absolute !important;
+    top: 50% !important;
+    right: 40px !important;
+    transform: translateY(-50%) !important;
+    width: 8px !important;
+    height: 8px !important;
+    border-radius: 50% !important;
+    background-color: #ff3333 !important; /* Bright Red */
+    border: 1.5px solid #fff !important;
+    z-index: 9999 !important;
+    display: block !important;
+    pointer-events: none !important;
+  }
+
+  .inline-dot {
+    position: relative !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    margin-left: 8px !important;
+    top: -1px !important;
+    right: auto !important;
+    transform: none !important;
+    width: 10px !important;
+    height: 10px !important;
+  }
+
+  /* Subtle Action Required Dot */
+  .subtle-action-dot {
+    display: inline-block !important;
+    width: 8px !important;
+    height: 8px !important;
+    border-radius: 50% !important;
+    background-color: #f1c40f !important; /* Soft gold/yellow that blends well */
+    box-shadow: 0 0 4px rgba(241, 196, 15, 0.6) !important;
+    animation: pulse-subtle 2s infinite !important;
+    margin-left: 8px !important;
+    vertical-align: middle !important;
+    position: relative !important;
+    top: -1px !important;
+  }
+
+  @keyframes pulse-subtle {
+    0% {
+      box-shadow: 0 0 0 0 rgba(241, 196, 15, 0.7) !important;
+    }
+    70% {
+      box-shadow: 0 0 0 5px rgba(241, 196, 15, 0) !important;
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(241, 196, 15, 0) !important;
     }
   }
 </style>

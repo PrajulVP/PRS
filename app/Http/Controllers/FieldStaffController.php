@@ -17,14 +17,23 @@ class FieldStaffController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $query = FieldStaff::with('user', 'salesManager.user')->orderBy('fieldstaffs.id', 'desc');
+            $query = FieldStaff::with('user', 'salesManager.user');
 
-            if (Auth::user()->hasRole('salesmanager')) {
-                $query->where('sales_manager_id', Auth::user()->salesManager->id);
+            if ($request->filled('status') && $request->status !== 'all') {
+                $query->whereHas('user', function($q) use ($request) {
+                    $q->where('status', $request->status);
+                });
             }
 
-
+            /** @var \App\Models\User $currentUser */
             $currentUser = Auth::user();
+
+            if ($currentUser->hasRole('salesmanager')) {
+                $query->where('sales_manager_id', $currentUser->salesManager->id);
+            }
+
+            $query->orderBy('fieldstaffs.id', 'desc');
+
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('can_edit', function($row) use ($currentUser) {
@@ -54,7 +63,9 @@ class FieldStaffController extends Controller
 
     public function store(Request $request)
     {
-        if (!Auth::user()->hasRole('salesmanager') && !Auth::user()->hasRole('admin')) {
+        /** @var \App\Models\User $currentUser */
+        $currentUser = Auth::user();
+        if (!$currentUser->hasRole('salesmanager') && !$currentUser->hasRole('admin')) {
             // Allowing admin to create too based on logic, or just salesmanager as per original? 
             // Original: if (!Auth::user()->hasRole('salesmanager')) return error.
             // But admin usually can too? The Role check was strict. I will keep it strict if that was the intent, 
@@ -132,9 +143,11 @@ class FieldStaffController extends Controller
 
         $fieldstaff = new FieldStaff($fieldstaffData);
         $fieldstaff->user_id = $user->id;
+        /** @var \App\Models\User $currentUser */
+        $currentUser = Auth::user();
         // If logged in user is SalesManager, do we force it?
-        if (Auth::user()->hasRole('salesmanager')) {
-            $fieldstaff->sales_manager_id = Auth::user()->salesManager->id;
+        if ($currentUser->hasRole('salesmanager')) {
+            $fieldstaff->sales_manager_id = $currentUser->salesManager->id;
             // But the form submitted `sales_manager_id`. We override it? 
             // Original code: `if (Auth::user()->hasRole('salesmanager')) { $fieldstaff->sales_manager_id = ... }`
             // Yes, it overrides.
@@ -142,6 +155,7 @@ class FieldStaffController extends Controller
         $fieldstaff->save();
 
         // Notify Admins for approval
+        /** @var \Illuminate\Database\Eloquent\Collection|\App\Models\User[] $admins */
         $admins = User::role(['admin', 'superadmin'])->get();
         foreach ($admins as $admin) {
             $admin->notify(new \App\Notifications\UserApprovalRequired(
@@ -244,7 +258,9 @@ class FieldStaffController extends Controller
 
     public function activate(FieldStaff $fieldstaff)
     {
-        if (Auth::user()->hasAnyRole(['superadmin', 'admin'])) {
+        /** @var \App\Models\User $currentUser */
+        $currentUser = Auth::user();
+        if ($currentUser->hasAnyRole(['superadmin', 'admin'])) {
             $fieldstaff->user->status = 'active';
             $fieldstaff->user->save();
 
@@ -258,7 +274,9 @@ class FieldStaffController extends Controller
 
     public function deactivate(FieldStaff $fieldstaff)
     {
-        if (Auth::user()->hasAnyRole(['superadmin', 'admin'])) {
+        /** @var \App\Models\User $currentUser */
+        $currentUser = Auth::user();
+        if ($currentUser->hasAnyRole(['superadmin', 'admin'])) {
             $fieldstaff->user->status = 'inactive';
             $fieldstaff->user->save();
             return redirect()->route('admin.field-staffs.index')->with('success', 'Field staff deactivated successfully!');

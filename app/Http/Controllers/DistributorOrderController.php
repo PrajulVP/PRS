@@ -297,7 +297,7 @@ class DistributorOrderController extends Controller
                     'product_name' => $finalProductName,
                     'quantity' => $itemData['quantity'],
                     'free_quantity' => $itemData['free_quantity'] ?? 0,
-                    'unit' => $itemData['unit'] ?? 'Box',
+                    'unit' => $itemData['unit'] ?? 'Strips',
                     'price' => $unitPrice,
                     'subtotal' => $itemTotalWithGst,
                 ]);

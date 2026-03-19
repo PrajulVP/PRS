@@ -351,7 +351,7 @@
                     <table class="table table-striped table-hover" id="orders-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>No.</th>
                                 <th>Order Code</th>
                                 <th>Retailer</th>
                                 <th>Distributor</th>
@@ -618,9 +618,9 @@
             // but let's just make sure we don't double count it.
 
             var table = $('#orders-table').DataTable({
-                order: [],
+                order: [[7, 'desc']],
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
-                    "<'row mb-3 d-flex align-items-center'<'col-md-4'l><'col-md-4 payment-filter-container'><'col-md-4'f>>" +
+                    "<'row mb-4 d-flex align-items-center'<'col-md-4'l><'col-md-4 d-flex justify-content-center payment-filter-container'><'col-md-4'f>>" +
                     "<'row '<'col-sm-12'tr>>" +
                     "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
                 buttons: {
@@ -974,6 +974,7 @@
                         if (response.success || response.message) {
                             $('#editOrderModal').modal('hide');
                             table.ajax.reload();
+                            if (window.updateSidebarCounts) window.updateSidebarCounts();
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Updated!',
@@ -1020,6 +1021,7 @@
                         $('#deleteConfirmModal').modal('hide');
                         if (res.success) {
                             table.ajax.reload();
+                            if (window.updateSidebarCounts) window.updateSidebarCounts();
                             showToast('success', res.success || 'Order deleted');
                         } else {
                             showToast('error', res.error || 'Failed to delete order');
@@ -1054,6 +1056,7 @@
                     $('#cancelConfirmModal').modal('hide');
                     if (res.success) {
                         table.ajax.reload();
+                        if (window.updateSidebarCounts) window.updateSidebarCounts();
                         showToast('success', res.success || 'Order cancelled');
                     } else {
                         showToast('error', res.error || 'Failed to cancel order');
@@ -1086,6 +1089,7 @@
                         }, function (res) {
                             if (res.success) {
                                 table.ajax.reload();
+                                if (window.updateSidebarCounts) window.updateSidebarCounts();
                                 showToast('success', res.success || 'Cancellation requested');
                             } else showToast('error', res.error || 'Failed to request cancellation');
                         }).fail(function () {
@@ -1110,6 +1114,7 @@
                         }, function (res) {
                             if (res.success) {
                                 table.ajax.reload();
+                                if (window.updateSidebarCounts) window.updateSidebarCounts();
                                 showToast('success', res.success || 'Cancellation approved');
                             } else showToast('error', res.error || 'Failed to approve cancellation');
                         }).fail(function () {
@@ -1136,6 +1141,7 @@
                         $.post(url, { _token: '{{ csrf_token() }}' }, function (res) {
                             if (res.success) {
                                 table.ajax.reload(null, false);
+                                if (window.updateSidebarCounts) window.updateSidebarCounts();
                                 showToast('success', res.success);
                                 if (res.new_points) {
                                     $('.notification-box .badge').text(parseFloat(res.new_points).toFixed(2));
@@ -1312,6 +1318,7 @@
                         if (res.success) {
                             $('#distributorApproveModal').modal('hide');
                             table.ajax.reload(null, false);
+                            if (window.updateSidebarCounts) window.updateSidebarCounts();
                             showToast('success', res.success);
                         } else {
                             showToast('error', res.error || 'Failed to approve order');
@@ -1342,6 +1349,7 @@
                         }, function (res) {
                             if (res.success) {
                                 table.ajax.reload();
+                                if (window.updateSidebarCounts) window.updateSidebarCounts();
                                 showToast('success', res.success || 'Order approved successfully.');
                             } else {
                                 showToast('error', res.error || 'Error accepting order');
@@ -1373,6 +1381,7 @@
                     if (res.success) {
                         $('#assignFieldStaffModal').modal('hide');
                         table.ajax.reload();
+                        if (window.updateSidebarCounts) window.updateSidebarCounts();
                         showToast('success', 'Field Staff assigned successfully');
                     } else {
                         showToast('error', res.error || 'Failed to assign field staff');

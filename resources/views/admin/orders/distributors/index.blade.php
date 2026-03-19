@@ -749,7 +749,7 @@
                 }
                 ],
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
-                    "<'row mb-3 d-flex align-items-center'<'col-md-4'l><'col-md-4 payment-filter-container'><'col-md-4'f>>" +
+                    "<'row mb-4 d-flex align-items-center'<'col-md-4'l><'col-md-4 d-flex justify-content-center payment-filter-container'><'col-md-4'f>>" +
                     "<'row '<'col-sm-12'tr>>" +
                     "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
                 buttons: {
@@ -882,6 +882,7 @@
                     success: function (res) {
                         $('#uploadInvoiceModal').modal('hide');
                         table.ajax.reload(null, false);
+                        if (window.updateSidebarCounts) window.updateSidebarCounts();
                         showToast('success', res.success || 'Invoice uploaded successfully');
                     },
                     error: function (xhr) {
@@ -913,6 +914,7 @@
                         $('#deleteConfirmModal').modal('hide');
                         if (res.success) {
                             table.ajax.reload();
+                            if (window.updateSidebarCounts) window.updateSidebarCounts();
                             showToast('success', res.success || 'Order deleted successfully');
                         } else {
                             showToast('error', res.error || 'Failed to delete order');
@@ -951,6 +953,7 @@
                         if (res.success) {
                             $('#uploadInvoiceModal').modal('hide');
                             table.ajax.reload();
+                            if (window.updateSidebarCounts) window.updateSidebarCounts();
                             showToast('success', res.success);
                         } else {
                             showToast('error', res.error || 'Failed to upload invoice');
@@ -1004,6 +1007,7 @@
                         if (res.success || res.message) {
                             $('#createOrderModal').modal('hide');
                             table.ajax.reload();
+                            if (window.updateSidebarCounts) window.updateSidebarCounts();
                             showToast('success', res.success || res.message);
                         } else {
                             showToast('error', res.error);
@@ -1138,6 +1142,7 @@
                         if (res.success || res.message) {
                             $('#editOrderModal').modal('hide');
                             table.ajax.reload();
+                            if (window.updateSidebarCounts) window.updateSidebarCounts();
                             showToast('success', res.success || res.message);
                         } else {
                             showToast('error', res.error);
@@ -1392,6 +1397,7 @@
                         }, function (res) {
                             if (res.success) {
                                 table.ajax.reload();
+                                if (window.updateSidebarCounts) window.updateSidebarCounts();
                                 showToast('success', res.success);
                             } else showToast('error', res.error);
                         }).fail(function () {
@@ -1426,6 +1432,7 @@
                     $('#cancelConfirmModal').modal('hide');
                     if (res.success) {
                         table.ajax.reload();
+                        if (window.updateSidebarCounts) window.updateSidebarCounts();
                         showToast('success', res.success);
                     } else showToast('error', res.error);
                 }).fail(function (xhr) {
@@ -1458,6 +1465,7 @@
                         }, function (res) {
                             if (res.success) {
                                 table.ajax.reload();
+                                if (window.updateSidebarCounts) window.updateSidebarCounts();
                                 showToast('success', res.success);
                             } else showToast('error', res.error);
                         });
@@ -1480,6 +1488,7 @@
                         }, function (res) {
                             if (res.success) {
                                 table.ajax.reload();
+                                if (window.updateSidebarCounts) window.updateSidebarCounts();
                                 showToast('success', res.success);
                             } else showToast('error', res.error);
                         });
@@ -1511,6 +1520,7 @@
                         $('#approveOrderModal').modal('hide');
                         if (res.success) {
                             table.ajax.reload();
+                            if (window.updateSidebarCounts) window.updateSidebarCounts();
                             showToast('success', res.success);
                         } else showToast('error', res.error);
                     },
@@ -1551,6 +1561,7 @@
                         }, function (res) {
                             if (res.success) {
                                 table.ajax.reload();
+                                if (window.updateSidebarCounts) window.updateSidebarCounts();
                                 showToast('success', res.success);
                             } else showToast('error', res.error);
                         });
@@ -1575,6 +1586,7 @@
                         }, function (res) {
                             if (res.success) {
                                 table.ajax.reload();
+                                if (window.updateSidebarCounts) window.updateSidebarCounts();
                                 showToast('success', res.success);
                             } else showToast('error', res.error);
                         });

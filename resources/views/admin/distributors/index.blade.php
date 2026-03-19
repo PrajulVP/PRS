@@ -1,52 +1,43 @@
 @extends('layouts.admin')
 
+@push('styles')
 <style>
-    .dataTables_filter {
-        text-align: right !important;
+    .nav-tabs.custom-tabs {
+        border-bottom: none;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        background: #f8fafc;
+        border-radius: 12px;
+        display: inline-flex;
     }
-
-    .dataTables_filter input {
-        width: 230px !important;
-        margin-left: 10px !important;
+    .nav-tabs.custom-tabs .nav-link {
+        border: 1px solid transparent !important;
+        color: #64748b;
+        font-weight: 600;
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px !important;
+        background: none;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
     }
-
-    .dataTables_length {
-        text-align: left !important;
+    .nav-tabs.custom-tabs .nav-link.active {
+        color: #00497a !important;
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
     }
-
-    .dataTables_length select {
-        padding: 5px 10px !important;
-        padding-right: 30px !important;
-        display: inline-block !important;
-        width: auto !important;
+    .nav-tabs.custom-tabs .nav-link:hover:not(.active) {
+        color: #475569;
+        background: #f1f5f9;
+        border-color: transparent;
     }
-
-    /* Flex wrapper for actions */
     .action-buttons {
-        display: inline-flex !important;
-        align-items: center;
-        gap: 4px;
-        flex-wrap: nowrap;
-    }
-
-
-
-    .action-buttons>* {
-        display: inline-flex !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    .action-buttons .btn {
-        padding: 6px 12px !important;
-        font-size: 0.75rem !important;
-        line-height: 1 !important;
-    }
-
-    .pac-container {
-        z-index: 10000 !important;
+        display: flex;
+        gap: 5px;
+        white-space: nowrap;
     }
 </style>
+@endpush
 
 @section('page-body')
     <div class="container-fluid">
@@ -54,7 +45,20 @@
             <div class="col-sm-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5><i class="fa fa-users me-2"></i>Distributors</h5>
+                    <div>
+                        <h5 class="mb-3"><i class="fa fa-users me-2"></i>Distributors</h5>
+                        <ul class="nav nav-tabs custom-tabs" id="userStatusTabs" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active" data-bs-toggle="tab" data-status="all" type="button">All Distributors</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-status="active" type="button">Active</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-status="inactive" type="button">Inactive</button>
+                            </li>
+                        </ul>
+                    </div>
                         @if(Auth::user()->hasAnyRole(['admin', 'superadmin']) || Auth::user()->hasPermissionToCategory('distributors', 'add'))
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                             data-bs-target="#createDistributorModal">
@@ -446,428 +450,17 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        $(document).ready(function () {
-            const canActivate = @json(Auth::user()->hasRole(['superadmin']));
-
-            var table = $('#distributors-table').DataTable({
-                processing: true,
-                serverSide: true,
-                order: [],
-                ajax: "{{ route('admin.distributors.index') }}",
-                columns: [{
-                    data: null,
-                    orderable: false,
-                    searchable: false,
-                    render: function (data, type, row, meta) {
-                        return meta.row + meta.settings._iDisplayStart + 1;
-                    }
-                },
-                {
-                    data: 'name',
-                    name: 'name'
-                },
-                {
-                    data: 'sales_manager',
-                    name: 'salesManager.user.name',
-                    orderable: false,
-                    render: function (data, type, row) {
-                        return data && data.user ? data.user.name : '<span class="text-muted small">Not Assigned</span>';
-                    }
-                },
-                {
-                    data: 'user.email',
-                    name: 'user.email'
-                },
-                {
-                    data: 'gst',
-                    name: 'gst'
-                },
-                {
-                    data: 'drug_license_no',
-                    name: 'drug_license_no'
-                },
-                {
-                    data: 'contact_no',
-                    name: 'contact_no'
-                },
-                {
-                    data: 'district.name',
-                    name: 'district.name'
-                },
-                {
-                    data: 'area.name',
-                    name: 'area.name'
-                },
-                {
-                    data: 'pincode',
-                    name: 'pincode'
-                },
-                {
-                    data: 'user.status',
-                    name: 'user.status',
-                    render: function (data, type, row) {
-                        if (data === 'active') {
-                            return `<span class="badge bg-success status-toggle cursor-pointer" style="cursor: pointer;" data-id="${row.id}" data-status="active" title="Click to deactivate">Active</span>`;
-                        } else {
-                            return `<span class="badge bg-danger status-toggle cursor-pointer" style="cursor: pointer;" data-id="${row.id}" data-status="inactive" title="Click to activate">Inactive</span>`;
-                        }
-                    }
-                },
-                {
-                    data: 'id',
-                    orderable: false,
-                    searchable: false,
-                    render: function (id, type, row) {
-                        let deleteUrl = "{{ route('admin.distributors.destroy', ':id') }}".replace(':id', id);
-                        let csrf = "{{ csrf_token() }}";
-                        let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
-
-                        /*
-                        let activateBtn = '';
-                        if (canActivate && row.user.status === 'inactive') {
-                            activateBtn = `
-                                <button class="btn btn-sm btn-success activate-btn" 
-                                        data-id="${id}"
-                                        title="Activate">
-                                    <i class="fa fa-check"></i>
-                                </button>`;
-                        }
-                        */
-                        let activateBtn = '';
-
-                        let btns = `<div class="action-buttons">
-                                        <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>`;
-                        if (row.can_edit) {
-                            btns += `<button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>`;
-                        }
-                        if (row.can_delete) {
-                            btns += `<button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>`;
-                        }
-                        btns += `</div>`;
-                        return btns;
-                    }
-                }
-                ],
-                dom: "<'row mb-3'<'col-sm-12'B>>" +
-                    "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" +
-                    "<'row '<'col-sm-12'tr>>" +
-                    "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
-                buttons: {
-                    dom: {
-                        button: {
-                            className: 'btn btn-sm btn-icon'
-                        }
-                    },
-                    buttons: [{
-                        extend: 'copy',
-                        className: 'btn btn-secondary btn-sm',
-                        text: '<i class="fa fa-copy"></i> Copy'
-                    },
-                    {
-                        extend: 'csv',
-                        className: 'btn btn-info btn-sm text-white',
-                        text: '<i class="fa fa-file-csv"></i> CSV'
-                    },
-                    {
-                        extend: 'excel',
-                        className: 'btn btn-success btn-sm',
-                        text: '<i class="fa fa-file-excel"></i> Excel'
-                    },
-                    {
-                        extend: 'pdf',
-                        className: 'btn btn-danger btn-sm',
-                        text: '<i class="fa fa-file-pdf"></i> PDF'
-                    },
-                    {
-                        extend: 'print',
-                        className: 'btn btn-dark btn-sm',
-                        text: '<i class="fa fa-print"></i> Print'
-                    }
-                    ]
-                }
-            });
-
-            // Handle District Change for Create
-            $('.district-select').on('change', function () {
-                let container = $(this).closest('form');
-                let areaSelect = container.find('.area-select');
-                if (typeof fetchAreas === 'function') {
-                    fetchAreas($(this).val(), areaSelect);
-                }
-            });
-
-            // Handle Edit
-            $('#distributors-table').on('click', '.edit-btn', function () {
-                var data = $(this).data('row');
-
-                $('#edit_name').val(data.name);
-                $('#edit_email').val(data.user.email);
-                $('#edit_gst').val(data.gst);
-                $('#edit_drug_license_no').val(data.drug_license_no);
-                $('#edit_contact_no').val(data.contact_no);
-                $('#edit_pincode').val(data.pincode);
-                $('#edit_address').val(data.address);
-                $('#edit_latitude').val(data.latitude);
-                $('#edit_longitude').val(data.longitude);
-                $('#edit_district_id').val(data.district_id);
-                $('#edit_sales_manager_id').val(data.sales_manager_id || '');
-                if (data.user) {
-                    $('#edit_status').val(data.user.status);
-                }
-
-                if (typeof fetchAreas === 'function') {
-                    fetchAreas(data.district_id, $('#edit_area_id'), data.area_id);
-                }
-
-                var url = "{{ route('admin.distributors.update', ':id') }}".replace(':id', data.id);
-                $('#editDistributorForm').attr('action', url);
-
-                $('#editDistributorModal').modal('show');
-            });
-
-            // Handle View
-            $('#distributors-table').on('click', '.view-btn', function () {
-                var data = $(this).data('row');
-                let districtName = data.district ? data.district.name : 'N/A';
-                let areaName = data.area ? data.area.name : 'N/A';
-                let managerName = (data.sales_manager && data.sales_manager.user) ? data.sales_manager.user.name : 'N/A';
-                let profileImg = data.user && data.user.profile_image ? '/storage/' + data.user.profile_image : null;
-
-                if (profileImg) {
-                    $('#dist_avatar_img').attr('src', profileImg).show();
-                    $('#dist_avatar_initials').hide();
-                } else {
-                    let initials = data.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
-                    $('#dist_avatar_initials').text(initials).show();
-                    $('#dist_avatar_img').hide();
-                }
-
-                let status = data.user ? data.user.status : '';
-                $('#dist_view_name').text(data.name);
-                $('#dist_view_manager').html('<i class="fa fa-user-tie me-1"></i>Manager: ' + managerName);
-                $('#dist_view_status').attr('class', 'badge ' + (status === 'active' ? 'bg-success' : 'bg-danger')).text(status === 'active' ? 'Active' : 'Inactive');
-                $('#dist_view_email').text(data.user ? data.user.email : 'N/A');
-                $('#dist_view_contact').text(data.contact_no || 'N/A');
-                $('#dist_view_gst').text(data.gst || 'N/A');
-                $('#dist_view_drug').text(data.drug_license_no || 'N/A');
-                $('#dist_view_location').text(districtName + ' / ' + areaName);
-                $('#dist_view_pincode').text(data.pincode || 'N/A');
-                $('#dist_view_address').text(data.address || 'N/A');
-
-                $('#showDistributorModal').data('lat', data.latitude).data('lng', data.longitude);
-                $('#showDistributorModal').modal('show');
-            });
-
-            // Create Distributor AJAX
-            $('#createDistributorForm').on('submit', function (e) {
-                e.preventDefault();
-
-                let password = $('#create_password').val();
-                let confirmPassword = $('#create_password_confirmation').val();
-                if (password !== confirmPassword) {
-                    showToast('danger', 'Passwords do not match!');
-                    return false;
-                }
-
-                let formData = new FormData(this);
-                let submitBtn = $(this).find('button[type="submit"]');
-                submitBtn.prop('disabled', true).text('Creating...');
-
-                $.ajax({
-                    url: "{{ route('admin.distributors.store') }}",
-                    type: "POST",
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function (response) {
-                        $('#createDistributorModal').modal('hide');
-                        $('#createDistributorForm')[0].reset();
-                        $('#distributors-table').DataTable().ajax.reload();
-                        submitBtn.prop('disabled', false).text('Create');
-                        showToast('success', 'Distributor created successfully');
-                    },
-                    error: function (xhr) {
-                        submitBtn.prop('disabled', false).text('Create');
-                        let errors = xhr.responseJSON.errors;
-                        let errorMessage = '';
-                        if (errors) {
-                            $.each(errors, function (key, value) {
-                                errorMessage += value[0] + '\n';
-                            });
-                        } else {
-                            errorMessage = 'An error occurred. Please try again.';
-                        }
-                        showToast('error', errorMessage);
-                    }
-                });
-            });
-
-            // Handle Delete via AJAX
-            $('#distributors-table').on('click', '.delete-btn', function () {
-                let url = $(this).data('url');
-                Swal.fire({
-                    title: 'Delete Distributor?',
-                    text: "Are you sure? This action cannot be undone.",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    confirmButtonText: 'Yes, delete it!'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: url,
-                            type: 'DELETE',
-                            data: {
-                                _token: "{{ csrf_token() }}"
-                            },
-                            success: function (response) {
-                                if (response.success) {
-                                    table.ajax.reload(null, false);
-                                    Swal.fire('Deleted!', response.message, 'success');
-                                } else {
-                                    Swal.fire('Error!', response.message || 'Error deleting distributor', 'error');
-                                }
-                            },
-                            error: function (xhr) {
-                                let msg = 'Something went wrong.';
-                                if (xhr.responseJSON && xhr.responseJSON.message) {
-                                    msg = xhr.responseJSON.message;
-                                }
-                                Swal.fire('Error!', msg, 'error');
-                            }
-                        });
-                    }
-                });
-            });
-
-            // Handle Activate
-            // Handle Status Toggle (Activate/Deactivate)
-            $('#distributors-table').on('click', '.status-toggle', function () {
-                if (!canActivate) {
-                    showToast('warning', 'You do not have permission to change status.');
-                    return;
-                }
-
-                let id = $(this).data('id');
-                let currentStatus = $(this).data('status');
-                let newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-                let actionName = newStatus === 'active' ? 'Activate' : 'Deactivate';
-                let btnColor = newStatus === 'active' ? '#28a745' : '#dc3545'; // Green for activate, Red for deactivate
-
-                // Determine URL based on action
-                let url = "";
-                if (newStatus === 'active') {
-                    url = "{{ route('admin.distributors.activate', ':id') }}".replace(':id', id);
-                } else {
-                    url = "{{ route('admin.distributors.deactivate', ':id') }}".replace(':id', id);
-                }
-
-                Swal.fire({
-                    title: `${actionName} Distributor?`,
-                    text: `Are you sure you want to ${actionName.toLowerCase()} this user?`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: btnColor,
-                    confirmButtonText: `Yes, ${actionName.toLowerCase()}!`
-                }).then(result => {
-                    if (result.isConfirmed) {
-                        $.post(url, {
-                            _token: "{{ csrf_token() }}",
-                            _method: 'PATCH'
-                        }, () => {
-                            table.ajax.reload(null, false);
-                            let msg = newStatus === 'active' ? 'Distributor activated successfully.' : 'Distributor deactivated successfully.';
-                            Swal.fire('Updated!', msg, 'success');
-                        }).fail(function (xhr) {
-                            Swal.fire('Error!', 'Something went wrong.', 'error');
-                        });
-                    }
-                });
-            });
-
-            // Handle Edit Distributor AJAX Submission
-            $('#editDistributorForm').on('submit', function (e) {
-                e.preventDefault();
-
-                let password = $('#edit_password').val();
-                let confirmPassword = $('#edit_password_confirmation').val();
-
-                if (password && password !== confirmPassword) {
-                    showToast('danger', 'Passwords do not match!');
-                    return false;
-                }
-
-                let formData = new FormData(this);
-                let submitBtn = $(this).find('button[type="submit"]');
-                submitBtn.prop('disabled', true).text('Updating...');
-
-                $.ajax({
-                    url: $(this).attr('action'),
-                    type: "POST",
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function (response) {
-                        $('#editDistributorModal').modal('hide');
-                        $('#editDistributorForm')[0].reset();
-                        $('#distributors-table').DataTable().ajax.reload();
-                        submitBtn.prop('disabled', false).text('Update');
-                        showToast('success', response.message);
-                    },
-                    error: function (xhr) {
-                        submitBtn.prop('disabled', false).text('Update');
-                        let errors = xhr.responseJSON.errors;
-                        let errorMessage = '';
-                        if (errors) {
-                            $.each(errors, function (key, value) {
-                                errorMessage += value[0] + '\n';
-                            });
-                        } else {
-                            errorMessage = 'An error occurred. Please try again.';
-                        }
-                        showToast('danger', errorMessage);
-                    }
-                });
-            });
-        });
-
         // Global Map Variables
-        let createMap, editMap, showMap;
-        let createMarker, editMarker, showMarker;
-
-
-        function fetchAreas(districtId, areaSelect, selectedAreaId = null) {
-            areaSelect.html('<option value="">Loading...</option>');
-
-            if (!districtId) {
-                areaSelect.html('<option value="">Select Area</option>');
-                return;
-            }
-
-            $.ajax({
-                url: "{{ route('distributors.getAreas', ':id') }}".replace(':id', districtId),
-                type: 'GET',
-                success: function (response) {
-                    areaSelect.html('<option value="">Select Area</option>');
-                    $.each(response, function (key, area) {
-                        let selected = (selectedAreaId && selectedAreaId == area.id) ? 'selected' : '';
-                        areaSelect.append(`<option value="${area.id}" ${selected}>${area.name}</option>`);
-                    });
-                },
-                error: function () {
-                    areaSelect.html('<option value="">Error loading areas</option>');
-                }
-            });
-        }
+        var createMap, editMap, showMap;
+        var createMarker, editMarker, showMarker;
 
         function initMap() {
-            const defaultLoc = {
-                lat: 20.5937,
-                lng: 78.9629
-            };
+            const createMapDiv = document.getElementById("create_map");
+            if (!createMapDiv) return;
 
-            // Create Map
-            createMap = new google.maps.Map(document.getElementById("create_map"), {
+            const defaultLoc = { lat: 20.5937, lng: 78.9629 };
+
+            createMap = new google.maps.Map(createMapDiv, {
                 zoom: 5,
                 center: defaultLoc,
                 mapId: "DEMO_MAP_ID",
@@ -890,16 +483,14 @@
                 document.getElementById("create_long").value = e.latLng.lng();
             });
 
-            // Create Autocomplete
             const createInput = document.getElementById("create_pac-input");
             const createAutocomplete = new google.maps.places.Autocomplete(createInput);
             createAutocomplete.bindTo("bounds", createMap);
             createAutocomplete.addListener("place_changed", () => {
                 const place = createAutocomplete.getPlace();
                 if (!place.geometry || !place.geometry.location) return;
-                if (place.geometry.viewport) {
-                    createMap.fitBounds(place.geometry.viewport);
-                } else {
+                if (place.geometry.viewport) createMap.fitBounds(place.geometry.viewport);
+                else {
                     createMap.setCenter(place.geometry.location);
                     createMap.setZoom(17);
                 }
@@ -908,10 +499,175 @@
                 document.getElementById("create_long").value = place.geometry.location.lng();
             });
         }
+        window.initMap = initMap;
 
-        function getGeoLocation(latId, longId, mapType) {
-            // Geolocation disabled temporarily
+        function fetchAreas(districtId, areaSelect, selectedAreaId = null) {
+            areaSelect.html('<option value="">Loading...</option>');
+            if (!districtId) {
+                areaSelect.html('<option value="">Select Area</option>');
+                return;
+            }
+            $.get("{{ route('distributors.getAreas', ':id') }}".replace(':id', districtId), (response) => {
+                areaSelect.html('<option value="">Select Area</option>');
+                $.each(response, function (key, area) {
+                    let selected = (selectedAreaId && selectedAreaId == area.id) ? 'selected' : '';
+                    areaSelect.append(`<option value="${area.id}" ${selected}>${area.name}</option>`);
+                });
+            }).fail(() => areaSelect.html('<option value="">Error loading areas</option>'));
         }
+
+        function getGeoLocation(latId, longId, mapType) {}
+
+        $(document).ready(function () {
+            var table = $('#distributors-table').DataTable({
+                processing: true,
+                serverSide: true,
+                order: [],
+                ajax: {
+                    url: "{{ route('admin.distributors.index') }}",
+                    data: function(d) {
+                        d.status = $('#userStatusTabs button.active').data('status');
+                    }
+                },
+                columns: [
+                    { data: null, orderable: false, searchable: false, render: (data, type, row, meta) => meta.row + meta.settings._iDisplayStart + 1 },
+                    { data: 'name', name: 'name' },
+                    { 
+                        data: 'sales_manager', name: 'salesManager.user.name', orderable: false,
+                        render: (data) => data?.user?.name || '<span class="text-muted small">Not Assigned</span>'
+                    },
+                    { data: 'user.email', name: 'user.email' },
+                    { data: 'gst', name: 'gst' },
+                    { data: 'drug_license_no', name: 'drug_license_no' },
+                    { data: 'contact_no', name: 'contact_no' },
+                    { data: 'district.name', name: 'district.name' },
+                    { data: 'area.name', name: 'area.name' },
+                    { data: 'pincode', name: 'pincode' },
+                    { 
+                        data: 'user.status', name: 'user.status',
+                        render: (data, type, row) => `<span class="badge ${data === 'active' ? 'bg-success' : 'bg-danger'} status-toggle cursor-pointer" data-id="${row.id}" data-status="${data}">${data === 'active' ? 'Active' : 'Inactive'}</span>`
+                    },
+                    {
+                        data: 'id', orderable: false, searchable: false,
+                        render: function (id, type, row) {
+                            let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
+                            let deleteUrl = "{{ route('admin.distributors.destroy', ':id') }}".replace(':id', id);
+                            let btns = `<div class="action-buttons">
+                                <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>`;
+                            if (row.can_edit) btns += `<button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>`;
+                            if (row.can_delete) btns += `<button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>`;
+                            btns += `</div>`;
+                            return btns;
+                        }
+                    }
+                ],
+                dom: "<'row mb-3'<'col-sm-12'B>><'row mb-3'<'col-md-6'l><'col-md-6'f>><'row'<'col-sm-12'tr>><'row mt-3'<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
+                buttons: {
+                    dom: { button: { className: 'btn btn-sm btn-icon' } },
+                    buttons: [
+                        { extend: 'copy', className: 'btn btn-secondary btn-sm', text: '<i class="fa fa-copy"></i> Copy' },
+                        { extend: 'csv', className: 'btn btn-info btn-sm text-white', text: '<i class="fa fa-file-csv"></i> CSV' },
+                        { extend: 'excel', className: 'btn btn-success btn-sm', text: '<i class="fa fa-file-excel"></i> Excel' },
+                        { 
+                            extend: 'pdf', className: 'btn btn-danger btn-sm', text: '<i class="fa fa-file-pdf"></i> PDF',
+                            exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8] },
+                            customize: function (doc) {
+                                doc.defaultStyle.fontSize = 8;
+                                doc.styles.tableHeader.fontSize = 9;
+                                doc.content[1].table.widths = ['5%', '15%', '15%', '15%', '12%', '10%', '10%', '8%', '10%'];
+                            }
+                        },
+                        { extend: 'print', className: 'btn btn-dark btn-sm', text: '<i class="fa fa-print"></i> Print', exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8] } }
+                    ]
+                }
+            });
+
+            // Handlers
+            $('.district-select').on('change', function () {
+                let container = $(this).closest('form');
+                fetchAreas($(this).val(), container.find('.area-select'));
+            });
+
+            $('#distributors-table').on('click', '.edit-btn', function () {
+                var data = $(this).data('row');
+                $('#edit_name').val(data.name);
+                $('#edit_email').val(data.user.email);
+                $('#edit_gst').val(data.gst);
+                $('#edit_drug_license_no').val(data.drug_license_no);
+                $('#edit_contact_no').val(data.contact_no);
+                $('#edit_pincode').val(data.pincode);
+                $('#edit_address').val(data.address);
+                $('#edit_latitude').val(data.latitude);
+                $('#edit_longitude').val(data.longitude);
+                $('#edit_district_id').val(data.district_id);
+                $('#edit_sales_manager_id').val(data.sales_manager_id || '');
+                $('#edit_status').val(data.user?.status || '');
+                fetchAreas(data.district_id, $('#edit_area_id'), data.area_id);
+                $('#editDistributorForm').attr('action', "{{ route('admin.distributors.update', ':id') }}".replace(':id', data.id));
+                $('#editDistributorModal').modal('show');
+            });
+
+            $('#distributors-table').on('click', '.view-btn', function () {
+                var data = $(this).data('row');
+                $('#dist_view_name').text(data.name);
+                $('#dist_view_manager').html('<i class="fa fa-user-tie me-1"></i>Manager: ' + (data.sales_manager?.user?.name || 'N/A'));
+                $('#dist_view_status').attr('class', 'badge ' + (data.user?.status === 'active' ? 'bg-success' : 'bg-danger')).text(data.user?.status);
+                $('#dist_view_email').text(data.user?.email || 'N/A');
+                $('#dist_view_contact').text(data.contact_no || 'N/A');
+                $('#dist_view_gst').text(data.gst || 'N/A');
+                $('#dist_view_drug').text(data.drug_license_no || 'N/A');
+                $('#dist_view_location').text((data.district?.name || 'N/A') + ' / ' + (data.area?.name || 'N/A'));
+                $('#dist_view_pincode').text(data.pincode || 'N/A');
+                $('#dist_view_address').text(data.address || 'N/A');
+                $('#showDistributorModal').modal('show');
+            });
+
+            $('#createDistributorForm, #editDistributorForm').on('submit', function (e) {
+                e.preventDefault();
+                let form = $(this);
+                let btn = form.find('button[type="submit"]');
+                btn.prop('disabled', true);
+                $.ajax({
+                    url: form.attr('action') || "{{ route('admin.distributors.store') }}",
+                    type: "POST", data: new FormData(this), processData: false, contentType: false,
+                    success: (res) => {
+                        $('.modal').modal('hide');
+                        form[0].reset();
+                        table.ajax.reload();
+                        btn.prop('disabled', false);
+                        showToast('success', 'Saved successfully');
+                    },
+                    error: (xhr) => {
+                        btn.prop('disabled', false);
+                        showToast('danger', 'Error saving data');
+                    }
+                });
+            });
+
+            $('#distributors-table').on('click', '.delete-btn', function () {
+                let url = $(this).data('url');
+                Swal.fire({ title: 'Delete?', text: "Are you sure?", icon: 'warning', showCancelButton: true }).then((r) => {
+                    if (r.isConfirmed) $.ajax({ url: url, type: 'DELETE', data: { _token: "{{ csrf_token() }}" }, success: (res) => {
+                        table.ajax.reload(null, false);
+                        Swal.fire('Deleted!', 'Success', 'success');
+                    }});
+                });
+            });
+
+            $('#distributors-table').on('click', '.status-toggle', function () {
+                let id = $(this).data('id'), status = $(this).data('status'), next = status === 'active' ? 'inactive' : 'active';
+                let url = (next === 'active' ? "{{ route('admin.distributors.activate', ':id') }}" : "{{ route('admin.distributors.deactivate', ':id') }}").replace(':id', id);
+                Swal.fire({ title: 'Change Status?', text: `Confirm to ${next} user`, icon: 'warning', showCancelButton: true }).then(r => {
+                    if (r.isConfirmed) $.post(url, { _token: "{{ csrf_token() }}", _method: 'PATCH' }, () => {
+                        table.ajax.reload(null, false);
+                    });
+                });
+            });
+
+            $('#userStatusTabs button').on('click', function() {
+                setTimeout(() => table.ajax.reload(), 50);
+            });
+        });
     </script>
     <script
         src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&libraries=places,marker&v=weekly&loading=async&callback=initMap"

@@ -1,50 +1,43 @@
 @extends('layouts.admin')
 
+@push('styles')
 <style>
-    .dataTables_filter {
-        text-align: right !important;
+    .nav-tabs.custom-tabs {
+        border-bottom: none;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        background: #f8fafc;
+        border-radius: 12px;
+        display: inline-flex;
     }
-
-    .dataTables_filter input {
-        width: 230px !important;
-        margin-left: 10px !important;
+    .nav-tabs.custom-tabs .nav-link {
+        border: 1px solid transparent !important;
+        color: #64748b;
+        font-weight: 600;
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px !important;
+        background: none;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
     }
-
-    .dataTables_length {
-        text-align: left !important;
+    .nav-tabs.custom-tabs .nav-link.active {
+        color: #00497a !important;
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
     }
-
-    .dataTables_length select {
-        padding: 5px 10px !important;
-        padding-right: 30px !important;
-        display: inline-block !important;
-        width: auto !important;
+    .nav-tabs.custom-tabs .nav-link:hover:not(.active) {
+        color: #475569;
+        background: #f1f5f9;
+        border-color: transparent;
     }
-
-    /* Flex wrapper for actions */
     .action-buttons {
-        display: inline-flex !important;
-        align-items: center;
-        gap: 4px;
-        flex-wrap: nowrap;
-    }
-
-
-
-    /* Make every child inline-flex (buttons + forms) */
-    .action-buttons>* {
-        display: inline-flex !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    /* Normalize button sizes */
-    .action-buttons .btn {
-        padding: 6px 12px !important;
-        font-size: 0.75rem !important;
-        line-height: 1 !important;
+        display: flex;
+        gap: 5px;
+        white-space: nowrap;
     }
 </style>
+@endpush
 
 @section('page-body')
     <div class="container-fluid">
@@ -52,7 +45,20 @@
             <div class="col-sm-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5><i class="fa fa-users me-2"></i>Field Staff</h5>
+                    <div>
+                        <h5 class="mb-3"><i class="fa fa-users me-2"></i>Field Staff</h5>
+                        <ul class="nav nav-tabs custom-tabs" id="userStatusTabs" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active" data-bs-toggle="tab" data-status="all" type="button">All Field Staff</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-status="active" type="button">Active</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-status="inactive" type="button">Inactive</button>
+                            </li>
+                        </ul>
+                    </div>
                         @if(Auth::user()->hasAnyRole(['admin', 'superadmin']) || Auth::user()->hasPermissionToCategory('field_staff', 'add'))
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                             data-bs-target="#createFieldStaffModal">
@@ -77,7 +83,7 @@
                             <table class="display table table-striped table-hover" id="fieldstaffs-table">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
+                                        <th>No.</th>
                                         <th>Name</th>
                                         <th>Email</th>
                                         <th>Contact No</th>
@@ -411,24 +417,41 @@
 
     <script>
         // Global Map Variables
-        let createMap, editMap, showMap;
-        let createMarker, editMarker, showMarker;
+        var createMap, editMap, showMap;
+        var createMarker, editMarker, showMarker;
 
         function initMap() {
-            /* Map initialization disabled temporarily
-            const defaultLoc = {
-                lat: 20.5937,
-                lng: 78.9629
-            };
-            ...
-            showMarker = new google.maps.marker.AdvancedMarkerElement({
-                position: defaultLoc,
-                map: showMap,
-            });
-            */
-        }
+            const createMapDiv = document.getElementById("create_map");
+            const editMapDiv = document.getElementById("edit_map");
+            const showMapDiv = document.getElementById("show_map");
 
-        // Expose initMap
+            if (!createMapDiv && !editMapDiv && !showMapDiv) return;
+
+            const defaultLoc = { lat: 20.5937, lng: 78.9629 };
+
+            if (createMapDiv) {
+                createMap = new google.maps.Map(createMapDiv, { center: defaultLoc, zoom: 12 });
+                createMarker = new google.maps.Marker({ position: defaultLoc, map: createMap, draggable: true });
+                google.maps.event.addListener(createMarker, 'dragend', function () {
+                    $('#create_latitude').val(createMarker.getPosition().lat());
+                    $('#create_longitude').val(createMarker.getPosition().lng());
+                });
+            }
+
+            if (editMapDiv) {
+                editMap = new google.maps.Map(editMapDiv, { center: defaultLoc, zoom: 12 });
+                editMarker = new google.maps.Marker({ position: defaultLoc, map: editMap, draggable: true });
+                google.maps.event.addListener(editMarker, 'dragend', function () {
+                    $('#edit_latitude').val(editMarker.getPosition().lat());
+                    $('#edit_longitude').val(editMarker.getPosition().lng());
+                });
+            }
+
+            if (showMapDiv) {
+                showMap = new google.maps.Map(showMapDiv, { center: defaultLoc, zoom: 12 });
+                showMarker = new google.maps.Marker({ position: defaultLoc, map: showMap, draggable: false });
+            }
+        }
         window.initMap = initMap;
 
         function getGeoLocation(latId, longId, mapType) {
@@ -438,25 +461,20 @@
                     let lng = position.coords.longitude;
                     document.getElementById(latId).value = lat;
                     document.getElementById(longId).value = lng;
-                    let pos = {
-                        lat: lat,
-                        lng: lng
-                    };
+                    let pos = { lat: lat, lng: lng };
 
                     if (mapType === 'create' && createMap) {
-                        createMarker.position = pos;
+                        createMarker.setPosition(pos);
                         createMap.setCenter(pos);
                         createMap.setZoom(15);
                     } else if (mapType === 'edit' && editMap) {
-                        editMarker.position = pos;
+                        editMarker.setPosition(pos);
                         editMap.setCenter(pos);
                         editMap.setZoom(15);
                     }
                 }, function (error) {
                     alert("Error getting location: " + error.message);
                 });
-            } else {
-                alert("Geolocation is not supported.");
             }
         }
 
@@ -465,471 +483,159 @@
                 processing: true,
                 serverSide: true,
                 order: [],
-                ajax: "{{ route('admin.field-staffs.index') }}",
-                columns: [{
-                    data: 'id',
-                    name: 'id'
+                ajax: {
+                    url: "{{ route('admin.field-staffs.index') }}",
+                    data: function(d) {
+                        d.status = $('#userStatusTabs button.active').data('status');
+                    }
                 },
-                {
-                    data: 'user.name',
-                    name: 'user.name'
-                },
-                {
-                    data: 'user.email',
-                    name: 'user.email'
-                },
-                {
-                    data: 'contact_no',
-                    name: 'contact_no',
-                    defaultContent: 'N/A'
-                },
-                {
-                    data: 'sales_manager.user.name',
-                    name: 'salesManager.user.name',
-                    defaultContent: 'N/A'
-                },
-                {
-                    data: 'pincode',
-                    name: 'pincode'
-                },
-                {
-                    data: 'user.status',
-                    name: 'user.status',
-                    render: function (data, type, row) {
-                        if (data === 'active') {
-                            return `<span class="badge bg-success status-toggle cursor-pointer" style="cursor: pointer;" data-id="${row.id}" data-status="active" title="Click to deactivate">Active</span>`;
-                        } else {
-                            return `<span class="badge bg-danger status-toggle cursor-pointer" style="cursor: pointer;" data-id="${row.id}" data-status="inactive" title="Click to activate">Inactive</span>`;
+                columns: [
+                    { data: null, orderable: false, searchable: false, render: (data, type, row, meta) => meta.row + meta.settings._iDisplayStart + 1 },
+                    { data: 'user.name', name: 'user.name' },
+                    { data: 'user.email', name: 'user.email' },
+                    { data: 'contact_no', name: 'contact_no', defaultContent: 'N/A' },
+                    { data: 'sales_manager.user.name', name: 'salesManager.user.name', defaultContent: 'N/A' },
+                    { data: 'pincode', name: 'pincode' },
+                    { 
+                        data: 'user.status', name: 'user.status',
+                        render: function (data, type, row) {
+                            return `<span class="badge ${data === 'active' ? 'bg-success' : 'bg-danger'} status-toggle cursor-pointer" data-id="${row.id}" data-status="${data}">${data === 'active' ? 'Active' : 'Inactive'}</span>`;
+                        }
+                    },
+                    {
+                        data: 'id', orderable: false, searchable: false,
+                        render: function (id, type, row) {
+                            let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
+                            let deleteUrl = "{{ route('admin.field-staffs.destroy', ':id') }}".replace(':id', id);
+                            let btns = `<div class="action-buttons">
+                                <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>`;
+                            if (row.can_edit) btns += `<button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>`;
+                            if (row.can_delete) btns += `<button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>`;
+                            btns += `</div>`;
+                            return btns;
                         }
                     }
-                },
-                {
-                    data: 'id',
-                    orderable: false,
-                    searchable: false,
-                    render: function (id, type, row) {
-                        let deleteUrl = "{{ route('admin.field-staffs.destroy', ':id') }}".replace(':id', id);
-                        let activateUrl = "{{ route('admin.field-staffs.activate', ':id') }}".replace(':id', id);
-                        let csrf = "{{ csrf_token() }}";
-                        let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
-
-                        let canActivate = @json(Auth::user()->hasAnyRole(['superadmin', 'admin']));
-                                                    /*
-                                                    let activateBtn = '';
-                                                    if (canActivate) {
-                                                        if (row.user.status === 'inactive') {
-                                                            activateBtn = `
-                                                                <form action="${activateUrl}" method="POST" class="activate-form" style="display:inline;">
-                                                                    <input type="hidden" name="_token" value="${csrf}">
-                                                                    <input type="hidden" name="_method" value="PATCH">
-                                                                    <button type="submit" class="btn btn-sm btn-success" title="Activate"><i class="fa fa-check"></i></button>
-                                                                </form>
-                                                            `;
-                                                        } else {
-                                                            let deactivateUrl = "{{ route('admin.field-staffs.deactivate', ':id') }}".replace(':id', id);
-                        activateBtn = `
-                                                                <form action="${deactivateUrl}" method="POST" class="deactivate-form" style="display:inline;">
-                                                                    <input type="hidden" name="_token" value="${csrf}">
-                                                                    <input type="hidden" name="_method" value="PATCH">
-                                                                    <button type="submit" class="btn btn-sm btn-warning" title="Deactivate"><i class="fa fa-ban"></i></button>
-                                                                </form>
-                                                            `;
-                    }
+                ],
+                dom: "<'row mb-3'<'col-sm-12'B>><'row mb-3'<'col-md-6'l><'col-md-6'f>><'row'<'col-sm-12'tr>><'row mt-3'<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
+                buttons: {
+                    dom: { button: { className: 'btn btn-sm btn-icon' } },
+                    buttons: [
+                        { extend: 'copy', className: 'btn btn-secondary btn-sm', text: '<i class="fa fa-copy"></i> Copy' },
+                        { extend: 'csv', className: 'btn btn-info btn-sm text-white', text: '<i class="fa fa-file-csv"></i> CSV' },
+                        { extend: 'excel', className: 'btn btn-success btn-sm', text: '<i class="fa fa-file-excel"></i> Excel' },
+                        { 
+                            extend: 'pdf', className: 'btn btn-danger btn-sm', text: '<i class="fa fa-file-pdf"></i> PDF',
+                            exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] },
+                            customize: function (doc) {
+                                doc.defaultStyle.fontSize = 8;
+                                doc.styles.tableHeader.fontSize = 9;
+                                doc.content[1].table.widths = ['5%', '20%', '20%', '15%', '20%', '10%', '10%'];
+                            }
+                        },
+                        { extend: 'print', className: 'btn btn-dark btn-sm', text: '<i class="fa fa-print"></i> Print', exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] } }
+                    ]
                 }
-                */
-                                                    let activateBtn = '';
+            });
 
-                                                    let btns = `
-                                                        <div class="action-buttons">
-                                                            ${activateBtn}
-                                                            <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>`;
-                                                    
-                                                    if (row.can_edit) {
-                                                        btns += `<button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>`;
-                                                    }
-                                                    
-                                                    if (row.can_delete) {
-                                                        btns += `<button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>`;
-                                                    }
-                                                    
-                                                    btns += `</div>`;
-                                                    return btns;
-                                                }
-                                            }
-                                        ],
-            dom: "<'row mb-3'<'col-sm-12'B>>" +
-            "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" +
-            "<'row '<'col-sm-12'tr>>" +
-        "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
-            buttons: {
-            dom: {
-                button: {
-                    className: 'btn btn-sm btn-icon'
-                }
-            },
-            buttons: [{
-                extend: 'copy',
-                className: 'btn btn-secondary btn-sm',
-                text: '<i class="fa fa-copy"></i> Copy'
-            },
-            {
-                extend: 'csv',
-                className: 'btn btn-info btn-sm text-white',
-                text: '<i class="fa fa-file-csv"></i> CSV'
-            },
-            {
-                extend: 'excel',
-                className: 'btn btn-success btn-sm',
-                text: '<i class="fa fa-file-excel"></i> Excel'
-            },
-            {
-                extend: 'pdf',
-                className: 'btn btn-danger btn-sm',
-                text: '<i class="fa fa-file-pdf"></i> PDF'
-            },
-            {
-                extend: 'print',
-                className: 'btn btn-dark btn-sm',
-                text: '<i class="fa fa-print"></i> Print'
-            }
-            ]
-        }
-                                    });
+            $('#userStatusTabs button').on('click', function() {
+                setTimeout(() => table.ajax.reload(), 50);
+            });
 
-        // Handle Edit Button
-        $('#fieldstaffs-table').on('click', '.edit-btn', function () {
-            var data = $(this).data('row');
-
-            $('#edit_name').val(data.user.name);
-            $('#edit_email').val(data.user.email);
-            $('#edit_contact_no').val(data.contact_no);
-            $('#edit_address').val(data.user.address);
-            $('#edit_pincode').val(data.pincode);
-            $('#edit_latitude').val(data.latitude);
-            $('#edit_longitude').val(data.longitude);
-            if (data.user) {
-                $('#edit_status').val(data.user.status);
-            }
-
-            var url = "{{ route('admin.field-staffs.update', ':id') }}".replace(':id', data.id);
-            $('#editFieldStaffForm').attr('action', url);
-
-            $('#editFieldStaffModal').modal('show');
-        });
-
-        // Handle View Button
-        $('#fieldstaffs-table').on('click', '.view-btn', function () {
-            var data = $(this).data('row');
-            var id = data.id;
-            var url = "{{ route('admin.field-staffs.show', ':id') }}".replace(':id', id);
-
-            // Reset and show modal with loading state
-            $('#fs_view_name').text('Loading...');
-            $('#fs_view_manager').text('Loading...');
-            $('#fs_avatar_img').hide();
-            $('#fs_avatar_initials').text('').show();
-            $('#fs_view_retailers_body').html('<tr><td colspan="4" class="text-center">Loading...</td></tr>');
-            $('#fsRetailerCount').text('0');
-
-            // Switch to info tab by default
-            $('#fs-info-tab').tab('show');
-
-            $('#showFieldStaffModal').modal('show');
-
-            $.ajax({
-                url: url,
-                type: 'GET',
-                success: function (response) {
+            // Handle View Button
+            $('#fieldstaffs-table').on('click', '.view-btn', function () {
+                var data = $(this).data('row');
+                var url = "{{ route('admin.field-staffs.show', ':id') }}".replace(':id', data.id);
+                $('#showFieldStaffModal').modal('show');
+                $.get(url, (response) => {
                     if (response.success) {
                         let fs = response.data;
-                        let smName = fs.sales_manager && fs.sales_manager.user ? fs.sales_manager.user.name : 'N/A';
-                        let profileImg = fs.user && fs.user.profile_image ? '/storage/' + fs.user.profile_image : null;
-
-                        // Avatar
-                        if (profileImg) {
-                            $('#fs_avatar_img').attr('src', profileImg).show();
-                            $('#fs_avatar_initials').hide();
-                        } else {
-                            let fsName = fs.user ? fs.user.name : 'User';
-                            let initials = fsName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
-                            $('#fs_avatar_initials').text(initials).show();
-                            $('#fs_avatar_img').hide();
-                        }
-
-                        let status = fs.user ? fs.user.status : '';
-                        let userName = fs.user ? fs.user.name : 'N/A';
-                        let userEmail = fs.user ? fs.user.email : 'N/A';
-                        let userAddress = fs.user ? fs.user.address : (fs.address || 'N/A');
-
-                        $('#fs_view_name').text(userName);
-                        $('#fs_view_manager').html('<i class="fa fa-user-tie me-1"></i>Manager: ' + smName);
-                        $('#fs_view_status').attr('class', 'badge ' + (status === 'active' ? 'bg-success' : 'bg-danger')).text(status === 'active' ? 'Active' : 'Inactive');
-                        $('#fs_view_email').text(userEmail);
+                        $('#fs_view_name').text(fs.user.name);
+                        $('#fs_view_manager').html('<i class="fa fa-user-tie me-1"></i>Manager: ' + (fs.sales_manager?.user?.name || 'N/A'));
+                        $('#fs_view_status').attr('class', 'badge ' + (fs.user.status === 'active' ? 'bg-success' : 'bg-danger')).text(fs.user.status);
+                        $('#fs_view_email').text(fs.user.email);
                         $('#fs_view_contact').text(fs.contact_no || 'N/A');
                         $('#fs_view_pincode').text(fs.pincode || 'N/A');
-                        $('#fs_view_address').text(userAddress);
-
-                        // Retailers
-                        let retailers = fs.retailers || [];
-                        $('#fsRetailerCount').text(retailers.length);
-                        let html = '';
-                        if (retailers.length > 0) {
-                            retailers.forEach(ret => {
-                                let rStatus = ret.user ? ret.user.status : 'inactive';
-                                let badgeClass = rStatus === 'active' ? 'bg-success' : 'bg-danger';
-                                let owner = ret.user ? ret.user.name : 'N/A';
-                                html += `
-                                        <tr>
-                                            <td style="color: var(--med-text-main) !important;">${ret.shop_name}</td>
-                                            <td style="color: var(--med-text-main) !important;">${owner}</td>
-                                            <td style="color: var(--med-text-main) !important;">${ret.contact_no || 'N/A'}</td>
-                                            <td style="color: var(--med-text-main) !important;"><span class="badge ${badgeClass}">${rStatus}</span></td>
-                                        </tr>
-                                    `;
-                            });
-                        } else {
-                            html = '<tr><td colspan="4" class="text-center text-muted">No retailers assigned.</td></tr>';
-                        }
-                        $('#fs_view_retailers_body').html(html);
-
+                        $('#fs_view_address').text(fs.user.address || fs.address || 'N/A');
                         $('#showFieldStaffModal').data('lat', fs.latitude).data('lng', fs.longitude);
                     }
-                },
-                error: function (xhr, status, error) {
-                    console.error("AJAX Error:", status, error);
-                    $('#fs_view_name').text('Error loading data');
-                    $('#fs_view_retailers_body').html('<tr><td colspan="4" class="text-center text-danger">Failed to load assigned retailers.</td></tr>');
-                }
+                });
             });
-        });
 
-        // Handle Delete via AJAX
-        $('#fieldstaffs-table').on('click', '.delete-btn', function () {
-            let url = $(this).data('url');
-            Swal.fire({
-                title: 'Delete Field Staff?',
-                text: "Are you sure? This action cannot be undone.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'Yes, delete it!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: url,
-                        type: 'DELETE',
-                        data: {
-                            _token: "{{ csrf_token() }}"
-                        },
-                        success: function (response) {
-                            if (response.success) {
-                                table.ajax.reload(null, false);
-                                Swal.fire('Deleted!', response.message, 'success');
-                            } else {
-                                Swal.fire('Error!', response.message, 'error');
-                            }
-                        },
-                        error: function (xhr) {
-                            let msg = 'Something went wrong.';
-                            if (xhr.responseJSON && xhr.responseJSON.message) {
-                                msg = xhr.responseJSON.message;
-                            }
-                            Swal.fire('Error!', msg, 'error');
-                        }
-                    });
-                }
+            // Handle Edit Button
+            $('#fieldstaffs-table').on('click', '.edit-btn', function () {
+                var data = $(this).data('row');
+                $('#edit_name').val(data.user.name);
+                $('#edit_email').val(data.user.email);
+                $('#edit_contact_no').val(data.contact_no);
+                $('#edit_address').val(data.user.address);
+                $('#edit_pincode').val(data.pincode);
+                $('#edit_latitude').val(data.latitude);
+                $('#edit_longitude').val(data.longitude);
+                $('#edit_status').val(data.user.status);
+                $('#editFieldStaffForm').attr('action', "{{ route('admin.field-staffs.update', ':id') }}".replace(':id', data.id));
+                $('#editFieldStaffModal').modal('show');
             });
-        });
- 
-        // Handle Create Field Staff AJAX Submission
-        $('#createFieldStaffForm').on('submit', function (e) {
-            e.preventDefault();
 
-            // JS Password Validation
-            let password = $('#create_password').val();
-            let confirmPassword = $('#create_password_confirmation').val();
-
-            if (password !== confirmPassword) {
-                showToast('danger', 'Passwords do not match!');
-                return false;
-            }
-
-            let formData = new FormData(this);
-            let submitBtn = $(this).find('button[type="submit"]');
-            submitBtn.prop('disabled', true).text('Creating...');
-
-            $.ajax({
-                url: $(this).attr('action'),
-                type: "POST",
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function (response) {
-                    $('#createFieldStaffModal').modal('hide');
-                    $('#createFieldStaffForm')[0].reset();
-                    $('#fieldstaffs-table').DataTable().ajax.reload();
-                    submitBtn.prop('disabled', false).text('Create');
-                    showToast('success', response.message);
-                },
-                error: function (xhr) {
-                    submitBtn.prop('disabled', false).text('Create');
-                    let errors = xhr.responseJSON.errors;
-                    let errorMessage = '';
-                    if (errors) {
-                        $.each(errors, function (key, value) {
-                            errorMessage += value[0] + '\n';
-                        });
-                    } else {
-                        errorMessage = 'An error occurred. Please try again.';
+            // Handle Delete
+            $('#fieldstaffs-table').on('click', '.delete-btn', function () {
+                let url = $(this).data('url');
+                Swal.fire({ title: 'Delete?', text: "Are you sure?", icon: 'warning', showCancelButton: true }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({ url: url, type: 'DELETE', data: { _token: "{{ csrf_token() }}" }, success: (res) => {
+                            table.ajax.reload(null, false);
+                            if (window.updateSidebarCounts) window.updateSidebarCounts();
+                            Swal.fire('Deleted!', res.message, 'success');
+                        }});
                     }
-                    showToast('error', errorMessage);
-                }
+                });
             });
-        });
 
-        // Handle Edit Field Staff AJAX Submission
-        $('#editFieldStaffForm').on('submit', function (e) {
-            e.preventDefault();
-
-            let password = $('#edit_password').val();
-            let confirmPassword = $('#edit_password_confirmation').val();
-
-            if (password && password !== confirmPassword) {
-                showToast('danger', 'Passwords do not match!');
-                return false;
-            }
-
-            let formData = new FormData(this);
-            let submitBtn = $(this).find('button[type="submit"]');
-            submitBtn.prop('disabled', true).text('Updating...');
-//
-            $.ajax({
-                url: $(this).attr('action'),
-                type: "POST",
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function (response) {
-                    $('#editFieldStaffModal').modal('hide');
-                    $('#editFieldStaffForm')[0].reset();
-                    $('#fieldstaffs-table').DataTable().ajax.reload();
-                    submitBtn.prop('disabled', false).text('Update');
-                    showToast('success', response.message);
-                },
-                error: function (xhr) {
-                    submitBtn.prop('disabled', false).text('Update');
-                    let errors = xhr.responseJSON.errors;
-                    let errorMessage = '';
-                    if (errors) {
-                        $.each(errors, function (key, value) {
-                            errorMessage += value[0] + '\n';
-                        });
-                    } else {
-                        errorMessage = 'An error occurred. Please try again.';
+            // Handle AJAX Forms
+            $('#createFieldStaffForm, #editFieldStaffForm').on('submit', function (e) {
+                e.preventDefault();
+                let form = $(this);
+                let btn = form.find('button[type="submit"]');
+                btn.prop('disabled', true);
+                $.ajax({
+                    url: form.attr('action'), type: "POST", data: new FormData(this), processData: false, contentType: false,
+                    success: (res) => {
+                        $('.modal').modal('hide');
+                        form[0].reset();
+                        table.ajax.reload();
+                        btn.prop('disabled', false);
+                        if (window.updateSidebarCounts) window.updateSidebarCounts();
+                        showToast('success', res.message);
+                    },
+                    error: (xhr) => {
+                        btn.prop('disabled', false);
+                        showToast('danger', 'Error processing request');
                     }
-                    showToast('danger', errorMessage);
+                });
+            });
+
+            // Map Resize on Modal Show
+            $('#createFieldStaffModal, #editFieldStaffModal, #showFieldStaffModal').on('shown.bs.modal', function () {
+                let m = (this.id === 'createFieldStaffModal') ? createMap : (this.id === 'editFieldStaffModal' ? editMap : showMap);
+                if (m) {
+                    google.maps.event.trigger(m, 'resize');
+                    let lat = parseFloat($('#' + (this.id === 'showFieldStaffModal' ? 'showFieldStaffModal' : (this.id === 'editFieldStaffModal' ? 'edit_latitude' : 'create_latitude'))).val() || $(this).data('lat'));
+                    let lng = parseFloat($('#' + (this.id === 'showFieldStaffModal' ? 'showFieldStaffModal' : (this.id === 'editFieldStaffModal' ? 'edit_longitude' : 'create_longitude'))).val() || $(this).data('lng'));
+                    if (lat && lng) m.setCenter({lat, lng});
                 }
             });
-        });
 
-        // Modal Show Events for Map Resize
-        $('#createFieldStaffModal').on('shown.bs.modal', function () {
-            if (createMap) {
-                google.maps.event.trigger(createMap, 'resize');
-                createMap.setCenter(createMarker.position);
-            }
-        });
-        $('#editFieldStaffModal').on('shown.bs.modal', function () {
-            if (editMap) {
-                google.maps.event.trigger(editMap, 'resize');
-                let lat = parseFloat($('#edit_latitude').val());
-                let lng = parseFloat($('#edit_longitude').val());
-                if (lat && lng) {
-                    let pos = {
-                        lat: lat,
-                        lng: lng
-                    };
-                    editMarker.position = pos;
-                    editMap.setCenter(pos);
-                    editMap.setZoom(15);
-                } else {
-                    editMap.setCenter(editMarker.position);
-                }
-            }
-        });
-        $('#showFieldStaffModal').on('shown.bs.modal', function () {
-            if (showMap) {
-                google.maps.event.trigger(showMap, 'resize');
-                let lat = parseFloat($(this).data('lat'));
-                let lng = parseFloat($(this).data('lng'));
-                if (!isNaN(lat) && !isNaN(lng)) {
-                    let pos = {
-                        lat: lat,
-                        lng: lng
-                    };
-                    showMarker.position = pos;
-                    showMap.setCenter(pos);
-                    showMap.setZoom(15);
-                } else {
-                    const defaultLoc = {
-                        lat: 20.5937,
-                        lng: 78.9629
-                    };
-                    showMap.setCenter(defaultLoc);
-                    showMap.setZoom(5);
-                    showMarker.position = defaultLoc;
-                }
-            }
-        });
-        // Handle Status Toggle (Activate/Deactivate)
-        $('#fieldstaffs-table').on('click', '.status-toggle', function () {
-            // Re-check permission (canActivate was defined inside row render loop in original code, need to define it globally if not present)
-            // original logic: let canActivate = @json(Auth::user()->hasAnyRole('admin')); inside render loop.
-            // Let's assume we can get it or just rely on server side check. 
-            // Better to define it outside:
-            // const canActivate = @json(Auth::user()->hasAnyRole('admin')); // But 'admin' role check might need array. 
-            // In original code it was `hasAnyRole('admin')`.
-
-            // To be safe, let's grab it from a global variable if we define it, or just proceed and let server handle unauthorized.
-            // But let's define it at top of script if needed.
-
-            let id = $(this).data('id');
-            let currentStatus = $(this).data('status');
-            let newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-            let actionName = newStatus === 'active' ? 'Activate' : 'Deactivate';
-            let btnColor = newStatus === 'active' ? '#28a745' : '#dc3545'; // Green for activate, Red for deactivate
-
-            // Determine URL based on action
-            let url = "";
-            if (newStatus === 'active') {
-                url = "{{ route('admin.field-staffs.activate', ':id') }}".replace(':id', id);
-            } else {
-                url = "{{ route('admin.field-staffs.deactivate', ':id') }}".replace(':id', id);
-            }
-
-            Swal.fire({
-                title: `${actionName} Field Staff?`,
-                text: `Are you sure you want to ${actionName.toLowerCase()} this user?`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: btnColor,
-                confirmButtonText: `Yes, ${actionName.toLowerCase()}!`
-            }).then(result => {
-                if (result.isConfirmed) {
-                    $.post(url, {
-                        _token: "{{ csrf_token() }}",
-                        _method: 'PATCH'
-                    }, () => {
+            // Status Toggle
+            $('#fieldstaffs-table').on('click', '.status-toggle', function () {
+                let id = $(this).data('id'), status = $(this).data('status'), next = status === 'active' ? 'inactive' : 'active';
+                let url = (next === 'active' ? "{{ route('admin.field-staffs.activate', ':id') }}" : "{{ route('admin.field-staffs.deactivate', ':id') }}").replace(':id', id);
+                Swal.fire({ title: 'Change Status?', text: `Confirm to ${next} user`, icon: 'warning', showCancelButton: true }).then(r => {
+                    if (r.isConfirmed) $.post(url, { _token: "{{ csrf_token() }}", _method: 'PATCH' }, () => {
                         table.ajax.reload(null, false);
-                        let msg = newStatus === 'active' ? 'Field Staff activated successfully.' : 'Field Staff deactivated successfully.';
-                        Swal.fire('Updated!', msg, 'success');
-                    }).fail(function (xhr) {
-                        Swal.fire('Error!', 'Something went wrong.', 'error');
+                        if (window.updateSidebarCounts) window.updateSidebarCounts();
                     });
-                }
+                });
             });
         });
-                                });
     </script>
     <script
         src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&libraries=places,marker&v=weekly&loading=async&callback=initMap"

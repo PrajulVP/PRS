@@ -20,8 +20,17 @@ class DistributorController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
+            /** @var \App\Models\User $currentUser */
             $currentUser = Auth::user();
-            $data = Distributor::with('user', 'district', 'area', 'salesManager.user')->select('distributors.*')->orderBy('distributors.id', 'desc');
+            $data = Distributor::with('user', 'district', 'area', 'salesManager.user')->select('distributors.*');
+
+            if ($request->filled('status') && $request->status !== 'all') {
+                $data->whereHas('user', function($q) use ($request) {
+                    $q->where('status', $request->status);
+                });
+            }
+
+            $data->orderBy('distributors.id', 'desc');
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('can_edit', function($row) use ($currentUser) {

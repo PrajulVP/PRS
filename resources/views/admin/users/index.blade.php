@@ -1,17 +1,64 @@
 @extends('layouts.admin')
 
 @section('page-body')
+    <style>
+        .nav-tabs.custom-tabs {
+            border-bottom: 2px solid #f1f5f9;
+            gap: 2rem;
+        }
+        .nav-tabs.custom-tabs .nav-link {
+            border: none;
+            color: #64748b;
+            font-weight: 600;
+            padding: 0.75rem 0;
+            position: relative;
+            background: none;
+            font-size: 0.9rem;
+        }
+        .nav-tabs.custom-tabs .nav-link.active {
+            color: #00497a;
+            background: none;
+        }
+        .nav-tabs.custom-tabs .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #00497a;
+        }
+        .nav-tabs.custom-tabs .nav-link:hover:not(.active) {
+            color: #475569;
+            border: none;
+        }
+    </style>
+
     <div class="container-fluid">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5>User Management</h5>
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom-0 pb-0 d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-3">User Management</h5>
+                    <ul class="nav nav-tabs custom-tabs" id="userStatusTabs" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" data-bs-toggle="tab" data-status="all" type="button">All Users</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-status="active" type="button">Active</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-status="inactive" type="button">Inactive</button>
+                        </li>
+                    </ul>
+                </div>
                 @if(Auth::user()->hasAnyRole(['admin', 'superadmin']) || 
                     Auth::user()->hasPermissionToCategory('sales_managers', 'add') || 
                     Auth::user()->hasPermissionToCategory('distributors', 'add') || 
                     Auth::user()->hasPermissionToCategory('field_staff', 'add') || 
                     Auth::user()->hasPermissionToCategory('retailers', 'add'))
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal" id="btnCreate">Add
-                    User</button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal" id="btnCreate">
+                    <i class="fa fa-plus me-1"></i> Add User
+                </button>
                 @endif
             </div>
             <div class="card-body">
@@ -22,19 +69,22 @@
                         <ul>@foreach($errors->all() as $e)<li>{{$e}}</li>@endforeach</ul>
                 </div> @endif
 
-                <table class="table table-striped" id="users-table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Status</th>
-                            <th>Orders</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="users-table">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Orders</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -236,8 +286,22 @@
                     }
                     ]
                 },
-                ajax: "{{ route('admin.users') }}",
-                columns: [{
+                ajax: {
+                    url: "{{ route('admin.users') }}",
+                    data: function(d) {
+                        d.status = $('#userStatusTabs button.active').data('status');
+                    }
+                },
+                columns: [
+                {
+                    data: null,
+                    orderable: false,
+                    searchable: false,
+                    render: function (data, type, row, meta) {
+                        return meta.row + meta.settings._iDisplayStart + 1;
+                    }
+                },
+                {
                     data: 'name'
                 }, {
                     data: 'email'
@@ -273,11 +337,10 @@
                         }
 
                         if (row.status !== 'active') {
-                            btns += `
-                                    <form action="${activateUrl}" method="POST">
-                                        @csrf
-                                        <button class="btn btn-success btn-sm">Activate</button>
-                                    </form>`;
+                            btns += `<button class="btn btn-success btn-sm status-toggle-btn" data-url="${activateUrl}" data-action="activate">Activate</button>`;
+                        } else {
+                            let deactivateUrl = "{{ route('admin.users.deactivate', ':id') }}".replace(':id', row.id);
+                            btns += `<button class="btn btn-warning btn-sm status-toggle-btn" data-url="${deactivateUrl}" data-action="deactivate">Deactivate</button>`;
                         }
 
                         // Permission-based Delete
@@ -291,6 +354,14 @@
                     }
                 }
                 ]
+            });
+
+            // Tab Click Handler
+            $('#userStatusTabs button').on('click', function() {
+                // The delay is needed to let Bootstrap set the 'active' class
+                setTimeout(() => {
+                    table.ajax.reload();
+                }, 50);
             });
 
             // Handle Delete via AJAX
@@ -307,6 +378,7 @@
                     success: function (response) {
                         if (response.success) {
                             table.ajax.reload(null, false);
+                            if (window.updateSidebarCounts) window.updateSidebarCounts();
                             alert(response.message);
                         } else {
                             alert(response.message);
@@ -314,6 +386,44 @@
                     },
                     error: function (xhr) {
                         alert('Error deleting user');
+                    }
+                });
+            });
+
+            // Handle Status Toggle via AJAX
+            $('#users-table').on('click', '.status-toggle-btn', function () {
+                let url = $(this).data('url');
+                let action = $(this).data('action');
+                let btn = $(this);
+                let oldText = btn.text();
+
+                btn.prop('disabled', true).text('Working...');
+
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: {
+                        _token: "{{ csrf_token() }}"
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            table.ajax.reload(null, false);
+                            if (window.updateSidebarCounts) window.updateSidebarCounts();
+                            // Optional: showToast if available, else alert
+                            if (typeof showToast === 'function') {
+                                showToast('success', response.message);
+                            } else {
+                                alert(response.message);
+                            }
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function (xhr) {
+                        alert('Error changing user status');
+                    },
+                    complete: function () {
+                        btn.prop('disabled', false).text(oldText);
                     }
                 });
             });

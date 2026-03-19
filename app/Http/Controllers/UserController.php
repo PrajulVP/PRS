@@ -17,6 +17,7 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
+        /** @var \App\Models\User $currentUser */
         $currentUser = Auth::user();
 
         if ($request->ajax()) {
@@ -31,6 +32,11 @@ class UserController extends Controller
                 if ($currentUser->hasPermissionToCategory('retailers', 'view')) $allowedRoles[] = 'retailer';
                 
                 $query->whereIn('role', $allowedRoles);
+            }
+
+            // Status Filter
+            if ($request->has('status') && in_array($request->status, ['active', 'inactive'])) {
+                $query->where('status', $request->status);
             }
 
             // Search
@@ -80,6 +86,7 @@ class UserController extends Controller
                     }
                 }
 
+                /** @var \App\Models\User $u */
                 return [
                     'id'              => $u->id,
                     'name'            => $u->name,
@@ -88,7 +95,7 @@ class UserController extends Controller
                     'status'          => $u->status,
                     'roles_display'   => $u->getRoleNames()->implode(', '),
                     'profile_image_url' => $u->profile_pic
-                        ? \Illuminate\Support\Facades\Storage::disk('public')->url($u->profile_pic)
+                        ? \Illuminate\Support\Facades\Storage::url($u->profile_pic)
                         : null,
                     'contact_no'      => $u->salesManager?->contact_no ?? $u->distributor?->contact_no ?? $u->retailer?->contact_no ?? $u->fieldStaff?->contact_no ?? '—',
                     'address'         => $u->salesManager?->address ?? $u->retailer?->address ?? $u->fieldStaff?->address ?? $u->distributor?->address ?? '—',
@@ -262,7 +269,9 @@ class UserController extends Controller
         }
 
         // Prevent unauthorized deletion of Super Admins
-        if ($user->hasRole('superadmin') && !Auth::user()->hasRole('superadmin')) {
+        /** @var \App\Models\User $currentUser */
+        $currentUser = Auth::user();
+        if ($user->hasRole('superadmin') && !$currentUser->hasRole('superadmin')) {
             if (request()->ajax()) {
                 return response()->json(['success' => false, 'message' => 'You do not have permission to delete a Super Admin.'], 403);
             }
@@ -291,6 +300,18 @@ class UserController extends Controller
     public function activateUser(User $user)
     {
         $user->update(['status' => 'active']);
+        if (request()->ajax()) {
+            return response()->json(['success' => true, 'message' => 'User activated successfully.']);
+        }
         return back()->with('success', 'User activated.');
+    }
+
+    public function deactivateUser(User $user)
+    {
+        $user->update(['status' => 'inactive']);
+        if (request()->ajax()) {
+            return response()->json(['success' => true, 'message' => 'User deactivated successfully.']);
+        }
+        return back()->with('success', 'User deactivated.');
     }
 }

@@ -363,13 +363,8 @@
                     success: function (res) {
                         let p = res.product;
 
-                        let pPack = p.pack ? p.pack.toLowerCase() : '';
-                        let pName = p.product_name ? p.product_name.toLowerCase() : '';
-                        let isCount = (parseInt(p.box_size) === 1 && parseInt(p.carton_size) === 1) ||
-                            pPack.includes('nos') || pPack.includes('count') ||
-                            pPack.includes('pair') || pPack.includes('bottle') ||
-                            pPack.includes('ml') || pPack.includes('gm') || pPack.includes('syp') ||
-                            pName.includes('syp') || pName.includes('syrup') || pName.includes('drop') || pName.includes('ointment');
+                        // Updated Unit Logic: If product_code exists -> Nos, otherwise -> Strips
+                        let isCount = !!(p.product_code && p.product_code.trim() !== '');
                         p.is_count = isCount;
                         currentProductDetails = p;
 

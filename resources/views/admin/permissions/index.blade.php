@@ -11,7 +11,7 @@
                 <table class="table table-hover table-bordered" id="roles-table">
                     <thead class="table-light">
                         <tr>
-                            <th>#</th>
+                            <th>No.</th>
                             <th>Role Name</th>
                             <th>Actions</th>
                         </tr>
