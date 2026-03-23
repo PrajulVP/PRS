@@ -84,6 +84,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('distributors', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getDistributors']);
         Route::get('distributor-insights', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getDistributorInsights']);
         Route::get('distributor-insights/{id}', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getDistributorDetailInsight']);
+        Route::get('distributor-orders', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getDistributorOrders']);
         Route::post('distributor-orders/{id}/approve', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'approveDistributorOrder']);
     });
 

@@ -609,6 +609,37 @@ class SalesManagerDashboardApiController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/sales-manager/distributor-orders",
+     *     summary="List all distributor orders for distributors assigned to this Sales Manager",
+     *     tags={"Sales Manager Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="status", in="query", required=false, @OA\Schema(type="string", enum={"pending","processing","approved","delivered","cancelled","rejected"})),
+     *     @OA\Response(response=200, description="List of distributor orders")
+     * )
+     */
+    public function getDistributorOrders(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
+
+        $salesManager = $user->salesManager;
+        $query = DistributorOrder::with(['distributor.user', 'items.product'])
+            ->whereHas('distributor', function ($q) use ($salesManager) {
+                $q->where('sales_manager_id', $salesManager->id);
+            });
+
+        if ($request->has('status') && !empty($request->status)) {
+            $query->where('status', $request->status);
+        }
+
+        $orders = $query->latest()->get();
+
+        return response()->json($orders);
+    }
+
+    /**
      * @OA\Post(
      *     path="/api/sales-manager/distributor-orders/{id}/approve",
      *     summary="Approve (process) a distributor order",

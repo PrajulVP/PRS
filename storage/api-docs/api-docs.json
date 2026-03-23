@@ -2600,6 +2600,43 @@
                 ]
             }
         },
+        "/api/sales-manager/distributor-orders": {
+            "get": {
+                "tags": [
+                    "Sales Manager Dashboard"
+                ],
+                "summary": "List all distributor orders for distributors assigned to this Sales Manager",
+                "operationId": "ddbb8cb850596acc287fae4b32b49e79",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "processing",
+                                "approved",
+                                "delivered",
+                                "cancelled",
+                                "rejected"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of distributor orders"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/sales-manager/distributor-orders/{id}/approve": {
             "post": {
                 "tags": [
