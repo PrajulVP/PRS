@@ -250,9 +250,9 @@
         $(document).ready(function () {
             var table = $('#users-table').DataTable({
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
-                    "<'row mb-3 d-flex align-items-center'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                    "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" +
                     "<'row '<'col-sm-12'tr>>" +
-                    "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
+                    "<'row mt-3'<'col-sm-12 col-md-5 d-flex justify-content-center justify-content-md-start align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-center justify-content-md-end align-items-center'p>>",
                 buttons: {
                     dom: {
                         button: {
@@ -367,25 +367,40 @@
             // Handle Delete via AJAX
             $('#users-table').on('click', '.delete-btn', function () {
                 let url = $(this).data('url');
-                if (!confirm('Are you sure you want to delete this user?')) return;
 
-                $.ajax({
-                    url: url,
-                    type: 'DELETE',
-                    data: {
-                        _token: "{{ csrf_token() }}"
-                    },
-                    success: function (response) {
-                        if (response.success) {
-                            table.ajax.reload(null, false);
-                            if (window.updateSidebarCounts) window.updateSidebarCounts();
-                            alert(response.message);
-                        } else {
-                            alert(response.message);
-                        }
-                    },
-                    error: function (xhr) {
-                        alert('Error deleting user');
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "This user will be permanently deleted!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#00497a',
+                    cancelButtonColor: '#ef4444',
+                    confirmButtonText: 'Yes, delete it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: url,
+                            type: 'DELETE',
+                            data: {
+                                _token: "{{ csrf_token() }}"
+                            },
+                            success: function (response) {
+                                if (response.success) {
+                                    table.ajax.reload(null, false);
+                                    if (window.updateSidebarCounts) window.updateSidebarCounts();
+                                    showToast('success', response.message || 'User deleted');
+                                } else {
+                                    showToast('error', response.message || 'Failed to delete');
+                                }
+                            },
+                            error: function (xhr) {
+                                let err = 'Error deleting user';
+                                if (xhr.responseJSON) {
+                                    err = xhr.responseJSON.message || xhr.responseJSON.error || err;
+                                }
+                                showToast('error', err);
+                            }
+                        });
                     }
                 });
             });
@@ -409,18 +424,39 @@
                         if (response.success) {
                             table.ajax.reload(null, false);
                             if (window.updateSidebarCounts) window.updateSidebarCounts();
-                            // Optional: showToast if available, else alert
                             if (typeof showToast === 'function') {
                                 showToast('success', response.message);
                             } else {
-                                alert(response.message);
+                                Swal.fire('Success', response.message, 'success');
                             }
                         } else {
-                            alert(response.message);
+                            Swal.fire('Error', response.message || 'Error occurred', 'error');
                         }
                     },
                     error: function (xhr) {
-                        alert('Error changing user status');
+                        console.error('Status Toggle Error:', xhr);
+                        let msg = 'Error changing user status';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            msg = xhr.responseJSON.message;
+                        } else if (xhr.responseText) {
+                            try {
+                                let err = JSON.parse(xhr.responseText);
+                                if (err.message) msg = err.message;
+                            } catch (e) {
+                                console.error('Error parsing responseText:', e);
+                            }
+                        }
+
+                        if (window.Swal) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Permission Denied',
+                                text: msg,
+                                confirmButtonColor: '#00497a'
+                            });
+                        } else {
+                            alert('Permission Denied: ' + msg);
+                        }
                     },
                     complete: function () {
                         btn.prop('disabled', false).text(oldText);

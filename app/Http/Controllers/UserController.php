@@ -299,6 +299,41 @@ class UserController extends Controller
 
     public function activateUser(User $user)
     {
+        /** @var \App\Models\User $currentUser */
+        $currentUser = Auth::user();
+
+        // Check if current user has permission to edit this user's role category
+        $catMap = [
+            'salesmanager' => 'sales_managers',
+            'distributor'  => 'distributors',
+            'fieldstaff'   => 'field_staff',
+            'retailer'     => 'retailers',
+        ];
+        $cat = $catMap[$user->role] ?? 'users';
+
+        $canEdit = $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory($cat, 'edit');
+
+        // Admin specific restrictions: Cannot activate Superadmin, Admin, Sales Manager, or Distributor
+        if ($currentUser->hasRole('admin')) {
+            if (in_array($user->role, ['admin', 'superadmin', 'salesmanager', 'distributor'])) {
+                $canEdit = false;
+            }
+        }
+
+        // Non-admin (Sales Managers, etc.) restrictions: Cannot activate higher roles
+        if (!$currentUser->hasAnyRole(['admin', 'superadmin'])) {
+            if (in_array($user->role, ['admin', 'superadmin', 'salesmanager', 'distributor', 'fieldstaff'])) {
+                $canEdit = false;
+            }
+        }
+
+        if (!$canEdit) {
+            if (request()->ajax()) {
+                return response()->json(['success' => false, 'message' => 'You do not have permission to change the status of this user.'], 403);
+            }
+            return back()->with('error', 'You do not have permission to change the status of this user.');
+        }
+
         $user->update(['status' => 'active']);
         if (request()->ajax()) {
             return response()->json(['success' => true, 'message' => 'User activated successfully.']);
@@ -308,6 +343,41 @@ class UserController extends Controller
 
     public function deactivateUser(User $user)
     {
+        /** @var \App\Models\User $currentUser */
+        $currentUser = Auth::user();
+
+        // Check permission
+        $catMap = [
+            'salesmanager' => 'sales_managers',
+            'distributor'  => 'distributors',
+            'fieldstaff'   => 'field_staff',
+            'retailer'     => 'retailers',
+        ];
+        $cat = $catMap[$user->role] ?? 'users';
+
+        $canEdit = $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory($cat, 'edit');
+
+        // Admin specific restrictions: Cannot deactivate Superadmin, Admin, Sales Manager, or Distributor
+        if ($currentUser->hasRole('admin')) {
+            if (in_array($user->role, ['admin', 'superadmin', 'salesmanager', 'distributor'])) {
+                $canEdit = false;
+            }
+        }
+
+        // Non-admin (Sales Managers, etc.) restrictions: Cannot deactivate higher roles
+        if (!$currentUser->hasAnyRole(['admin', 'superadmin'])) {
+            if (in_array($user->role, ['admin', 'superadmin', 'salesmanager', 'distributor', 'fieldstaff'])) {
+                $canEdit = false;
+            }
+        }
+
+        if (!$canEdit) {
+            if (request()->ajax()) {
+                return response()->json(['success' => false, 'message' => 'You do not have permission to change the status of this user.'], 403);
+            }
+            return back()->with('error', 'You do not have permission to change the status of this user.');
+        }
+
         $user->update(['status' => 'inactive']);
         if (request()->ajax()) {
             return response()->json(['success' => true, 'message' => 'User deactivated successfully.']);

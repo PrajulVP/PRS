@@ -621,8 +621,8 @@
                 order: [[7, 'desc']],
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
                     "<'row mb-4 d-flex align-items-center'<'col-md-4'l><'col-md-4 d-flex justify-content-center payment-filter-container'><'col-md-4'f>>" +
-                    "<'row '<'col-sm-12'tr>>" +
-                    "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
+                    "<'row'<'col-sm-12'tr>>" +
+                    "<'row mt-3'<'col-sm-12 col-md-5 d-flex justify-content-center justify-content-md-start align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-center justify-content-md-end align-items-center'p>>",
                 buttons: {
                     dom: {
                         button: {
@@ -784,7 +784,7 @@
                             let icon = ext === 'pdf' ? 'fa-file-pdf-o' : 'fa-file-image-o';
                             let code = row.order_code || 'Order';
                             let filename = `Invoice_${code}.${ext}`;
-                            return `<a href="${data}" download="${filename}" target="_blank" class="btn btn-sm btn-success"><i class="fa ${icon}"></i> Download</a>`;
+                            return `<a href="${data}" download="${filename}" target="_blank" class="btn btn-sm btn-success"><i class="fa ${icon}"></i> &nbsp;Download</a>`;
                         }
                         return '<span class="text-muted small">No Invoice</span>';
                     }
@@ -812,13 +812,6 @@
                         // Retailer Confirmation
                         if (st === 'approved' && isRetailer) {
                             btns += `<button class="btn btn-success btn-sm confirm-receipt-btn" data-id="${row.id}" title="Confirm Receipt">Confirm</button>`;
-                        }
-
-                        // Fallback for Admin/SalesManager to see confirm button if needed
-                        if (isAdmin) {
-                            if (st === 'approved') {
-                                btns += `<button class="btn btn-success btn-sm confirm-receipt-btn" data-id="${row.id}" title="Confirm (Admin override)"><i class="fa fa-handshake-o"></i> Confirm</button>`;
-                            }
                         }
 
                         btns += `</div>`;
@@ -992,7 +985,9 @@
                     },
                     error: function (xhr) {
                         let err = 'An error occurred.';
-                        if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
+                        if (xhr.responseJSON) {
+                            err = xhr.responseJSON.message || xhr.responseJSON.error || err;
+                        }
                         Swal.fire({
                             icon: 'error',
                             title: 'Error',
@@ -1030,7 +1025,9 @@
                     error: function (xhr) {
                         $('#deleteConfirmModal').modal('hide');
                         let err = 'An error occurred.';
-                        if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
+                        if (xhr.responseJSON) {
+                            err = xhr.responseJSON.message || xhr.responseJSON.error || err;
+                        }
                         showToast('error', err);
                     }
                 });
@@ -1064,7 +1061,9 @@
                 }).fail(function (xhr) {
                     $('#cancelConfirmModal').modal('hide');
                     let err = 'Request failed';
-                    if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
+                    if (xhr.responseJSON) {
+                        err = xhr.responseJSON.message || xhr.responseJSON.error || err;
+                    }
                     showToast('error', err);
                 });
             });

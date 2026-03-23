@@ -36,6 +36,49 @@
         gap: 5px;
         white-space: nowrap;
     }
+    .modal-content {
+        font-family: 'Montserrat', sans-serif !important;
+    }
+    .quick-card {
+        background: var(--med-bg-body);
+        border: 1px solid var(--med-border);
+        border-radius: 16px;
+        padding: 1rem 1.25rem;
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .quick-card:hover {
+        border-color: var(--med-primary);
+        box-shadow: var(--med-shadow-glow);
+        transform: translateY(-2px);
+    }
+    .quick-card i {
+        font-size: 1.1rem;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+    }
+    .quick-card .label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--med-text-muted);
+        margin-bottom: 2px;
+    }
+    .quick-card .value {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--med-text-main);
+        word-break: break-all;
+    }
 </style>
 @endpush
 
@@ -88,6 +131,7 @@
                                         <th>Email</th>
                                         <th>Contact No</th>
                                         <th>Address</th>
+                                        <th>Pincode</th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
@@ -237,10 +281,15 @@
                                                                 background:linear-gradient(135deg,#1e3a5f,#2e6da4);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
                             </div>
                         </div>
-                        <div>
-                            <h4 class="mb-1 fw-bold" id="sm_view_name"></h4>
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <h4 class="mb-0 fw-bold" id="sm_view_name"></h4>
+                                <span class="badge" id="sm_view_status"></span>
+                            </div>
                             <div class="mb-1 text-muted small"><i class="fa fa-user-tie me-1"></i>Sales Manager</div>
-                            <span class="badge" id="sm_view_status"></span>
+                        </div>
+                        <div class="text-end">
+                            {{-- Badge moved to name part --}}
                         </div>
                     </div>
 
@@ -268,13 +317,23 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-12">
+                            <div class="col-md-6 text-dark">
                                 <div class="d-flex align-items-start gap-2 p-3 rounded"
                                     style="background: var(--med-bg-body);">
                                     <i class="fa fa-map-marker-alt mt-1 text-danger"></i>
                                     <div>
                                         <div class="text-muted small">Address</div>
                                         <div class="fw-semibold" id="sm_view_address"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start gap-2 p-3 rounded"
+                                    style="background: var(--med-bg-body);">
+                                    <i class="fa fa-hashtag mt-1 text-secondary"></i>
+                                    <div>
+                                        <div class="text-muted small">Pincode</div>
+                                        <div class="fw-semibold" id="sm_view_pincode"></div>
                                     </div>
                                 </div>
                             </div>
@@ -339,6 +398,19 @@
             </div>
         </div>
     </div>
+
+    {{-- Quick View Modal --}}
+    <div class="modal fade" id="quickViewModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-light border-0">
+                    <h6 class="modal-title fw-bold"><i class="fa fa-eye me-2 text-primary"></i>Quick View</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4" id="quickViewContent"></div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('styles')
@@ -374,9 +446,10 @@
                     { data: 'user.email', name: 'user.email' },
                     { data: 'contact_no', name: 'contact_no' },
                     { data: 'address', name: 'address' },
+                    { data: 'pincode', name: 'pincode' },
                     {
                         data: 'user.status', name: 'user.status',
-                        render: (data, type, row) => `<span class="badge ${data === 'active' ? 'bg-success' : 'bg-danger'} status-toggle cursor-pointer" data-id="${row.id}" data-status="${data}">${data === 'active' ? 'Active' : 'Inactive'}</span>`
+                        render: (data, type, row) => `<span class="status-badge ${data === 'active' ? 'status-badge-active' : 'status-badge-inactive'} status-toggle cursor-pointer" data-id="${row.id}" data-status="${data}">${data === 'active' ? 'Active' : 'Inactive'}</span>`
                     },
                     {
                         data: 'id', orderable: false, searchable: false,
@@ -391,15 +464,15 @@
                         }
                     }
                 ],
-                dom: "<'row mb-3'<'col-sm-12'B>><'row mb-3'<'col-md-6'l><'col-md-6'f>><'row'<'col-sm-12'tr>><'row mt-3'<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
+                dom: "<'row mb-3'<'col-sm-12'B>><'row mb-3'<'col-md-6'l><'col-md-6'f>><'row'<'col-sm-12'tr>><'row mt-3'<'col-sm-12 col-md-5 d-flex justify-content-center justify-content-md-start align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-center justify-content-md-end align-items-center'p>>",
                 buttons: {
                     dom: { button: { className: 'btn btn-sm btn-icon' } },
                     buttons: [
                         { extend: 'copy', className: 'btn btn-secondary btn-sm', text: '<i class="fa fa-copy"></i> Copy' },
                         { extend: 'csv', className: 'btn btn-info btn-sm text-white', text: '<i class="fa fa-file-csv"></i> CSV' },
                         { extend: 'excel', className: 'btn btn-success btn-sm', text: '<i class="fa fa-file-excel"></i> Excel' },
-                        { extend: 'pdf', className: 'btn btn-danger btn-sm', text: '<i class="fa fa-file-pdf"></i> PDF' },
-                        { extend: 'print', className: 'btn btn-dark btn-sm', text: '<i class="fa fa-print"></i> Print' }
+                        { extend: 'pdf', className: 'btn btn-danger btn-sm', text: '<i class="fa fa-file-pdf"></i> PDF', exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] } },
+                        { extend: 'print', className: 'btn btn-dark btn-sm', text: '<i class="fa fa-print"></i> Print', exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] } }
                     ]
                 }
             });
@@ -422,22 +495,104 @@
                 $('#showSalesManagerModal').modal('show');
                 $.get(url, (res) => {
                     if (res.success) {
-                        let sm = res.data;
-                        $('#sm_view_name').text(sm.name);
-                        $('#sm_view_email').text(sm.user?.email || 'N/A');
-                        $('#sm_view_contact').text(sm.contact_no || 'N/A');
-                        $('#sm_view_address').text(sm.address || 'N/A');
-                        $('#sm_view_status').attr('class', 'badge ' + (sm.user?.status === 'active' ? 'bg-success' : 'bg-danger')).text(sm.user?.status);
-                        
-                        let fsHtml = sm.field_staffs?.map(fs => `<tr><td>${fs.user.name}</td><td>${fs.user.email}</td><td>${fs.contact_no || 'N/A'}</td><td><span class="badge ${fs.user.status === 'active' ? 'bg-success' : 'bg-danger'}">${fs.user.status}</span></td></tr>`).join('') || '<tr><td colspan="4">None</td></tr>';
-                        $('#showFieldStaffBody').html(fsHtml);
-                        $('#fieldStaffCount').text(sm.field_staffs?.length || 0);
+                        let smData = res.data;
+                        // Avatar logic
+                        if (smData.user?.avatar) {
+                            $('#sm_avatar_img').attr('src', smData.user.avatar).show();
+                            $('#sm_avatar_initials').hide();
+                        } else {
+                            $('#sm_avatar_img').hide();
+                            let initials = smData.user?.name ? smData.user.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '??';
+                            $('#sm_avatar_initials').text(initials).show();
+                        }
 
-                        let retHtml = sm.retailers?.map(ret => `<tr><td>${ret.shop_name}</td><td>${ret.user.name}</td><td>${ret.user.email}</td><td>${ret.contact_no || 'N/A'}</td><td><span class="badge ${ret.user.status === 'active' ? 'bg-success' : 'bg-danger'}">${ret.user.status}</span></td></tr>`).join('') || '<tr><td colspan="5">None</td></tr>';
+                        $('#sm_view_name').text(smData.user?.name || 'N/A');
+                        $('#sm_view_email').text(smData.user?.email || 'N/A');
+                        $('#sm_view_contact').text(smData.contact_no || 'N/A');
+                        $('#sm_view_address').text(smData.address || 'N/A');
+                        $('#sm_view_pincode').text(smData.pincode || 'N/A');
+                        $('#sm_view_status').attr('class', 'status-badge ' + (smData.user?.status === 'active' ? 'status-badge-active' : 'status-badge-inactive')).text(smData.user?.status);
+                        
+                        let fsHtml = smData.field_staffs?.map(fs => {
+                            let fsData = JSON.stringify(fs).replace(/"/g, '&quot;');
+                            let title = `Email: ${fs.user.email}&#10;Contact: ${fs.contact_no || 'N/A'}`;
+                            return `<tr>
+                                <td><a href="javascript:void(0)" class="fw-bold text-primary quick-view-trigger" data-type="fieldstaff" data-item='${fsData}' title="${title}">${fs.user.name}</a></td>
+                                <td>${fs.user.email}</td>
+                                <td>${fs.contact_no || 'N/A'}</td>
+                                <td><span class="status-badge ${fs.user.status === 'active' ? 'status-badge-active' : 'status-badge-inactive'}">${fs.user.status}</span></td>
+                            </tr>`;
+                        }).join('') || '<tr><td colspan="4">None</td></tr>';
+                        $('#showFieldStaffBody').html(fsHtml);
+                        $('#fieldStaffCount').text(smData.field_staffs?.length || 0);
+
+                        let retHtml = smData.retailers?.map(ret => {
+                            let retData = JSON.stringify(ret).replace(/"/g, '&quot;');
+                            let title = `Email: ${ret.user.email}&#10;Contact: ${ret.contact_no || 'N/A'}&#10;Points: ${ret.loyalty_points}`;
+                            return `<tr>
+                                <td><a href="javascript:void(0)" class="fw-bold text-primary quick-view-trigger" data-type="retailer" data-item='${retData}' title="${title}">${ret.shop_name}</a></td>
+                                <td>${ret.user.name}</td>
+                                <td>${ret.user.email}</td>
+                                <td>${ret.contact_no || 'N/A'}</td>
+                                <td><span class="status-badge ${ret.user.status === 'active' ? 'status-badge-active' : 'status-badge-inactive'}">${ret.user.status}</span></td>
+                            </tr>`;
+                        }).join('') || '<tr><td colspan="5">None</td></tr>';
                         $('#showRetailerBody').html(retHtml);
-                        $('#retailerCount').text(sm.retailers?.length || 0);
+                        $('#retailerCount').text(smData.retailers?.length || 0);
                     }
                 });
+            });
+
+            // Quick View logic
+            $(document).on('click', '.quick-view-trigger', function() {
+                let data = $(this).data('item'), type = $(this).data('type');
+                let name = type === 'retailer' ? data.shop_name : data.user.name;
+                let owner = type === 'retailer' ? `<div class="text-muted small">Owner: ${data.user.name}</div>` : '';
+                let initials = (type === 'retailer' ? data.shop_name : data.user.name).split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                
+                let avatarHtml = data.user?.avatar ? `<img src="${data.user.avatar}" class="rounded-circle shadow-sm" style="width:60px;height:60px;object-fit:cover;">` : 
+                                 `<div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="width:60px;height:60px;background:linear-gradient(135deg,#1e3a5f,#2e6da4);font-size:1.4rem;">${initials}</div>`;
+
+                let bodyHtml = `
+                    <div class="text-center mb-4">
+                        <div class="d-inline-block position-relative mb-3">
+                            ${avatarHtml}
+                            <span class="position-absolute bottom-0 end-0 status-badge ${data.user?.status === 'active' ? 'status-badge-active' : 'status-badge-inactive'}" style="border: 2px solid var(--med-bg-card); transform: scale(0.8); transform-origin: bottom right;">
+                                ${data.user?.status}
+                            </span>
+                        </div>
+                        <h5 class="fw-bold mb-0 text-main" style="font-family: 'Montserrat', sans-serif;">${name}</h5>
+                        ${owner}
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="quick-card">
+                                <div class="label"><i class="fa fa-envelope bg-primary-light text-primary me-1"></i>Email Address</div>
+                                <div class="value">${data.user?.email}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="quick-card">
+                                <div class="label"><i class="fa fa-phone bg-success-light text-success me-1"></i>Contact No</div>
+                                <div class="value">${data.contact_no || 'N/A'}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="quick-card">
+                                <div class="label"><i class="fa ${type==='retailer'?'fa-award':'fa-hashtag'} ${type==='retailer'?'bg-warning-light text-warning':'bg-info-light text-info'} me-1"></i>${type==='retailer'?'Loyalty Points':'Pincode'}</div>
+                                <div class="value ${type==='retailer'?'text-warning':'text-main'}">${type==='retailer'?parseFloat(data.loyalty_points || 0).toFixed(2):data.pincode}</div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="quick-card">
+                                <div class="label"><i class="fa ${type==='retailer'?'fa-map-marker-alt':'fa-home'} bg-secondary-light text-secondary me-1"></i>${type==='retailer'?'Business Address':'Address'}</div>
+                                <div class="value">${data.address || 'N/A'}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                $('#quickViewContent').html(bodyHtml);
+                $('#quickViewModal').modal('show');
             });
 
             $('#createSalesManagerForm, #editSalesManagerForm').on('submit', function (e) {
@@ -466,8 +621,60 @@
 
             $('#sales-managers-table').on('click', '.status-toggle', function () {
                 let id = $(this).data('id'), status = $(this).data('status'), next = status === 'active' ? 'inactive' : 'active';
-                let url = (next === 'active' ? "{{ route('admin.sales-managers.activate', ':id') }}" : "{{ route('admin.sales-managers.deactivate', ':id') }}").replace(':id', id);
-                $.post(url, { _token: "{{ csrf_token() }}", _method: 'PATCH' }, () => table.ajax.reload(null, false));
+                
+                // Frontend Permission Check (Only Superadmin can manage Sales Managers)
+                const isSuperadmin = @json(Auth::user()->hasRole('superadmin'));
+                if (!isSuperadmin) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Permission Denied',
+                        text: 'You do not have permission to change the status of sales managers.',
+                        confirmButtonColor: '#00497a'
+                    });
+                    return;
+                }
+
+                Swal.fire({
+                    title: `Change Status to ${next.toUpperCase()}?`,
+                    text: `Are you sure you want to ${next} this sales manager?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#00497a',
+                    cancelButtonColor: '#ef4444',
+                    confirmButtonText: 'Yes, change it!'
+                }).then((r) => {
+                    if (r.isConfirmed) {
+                        let url = (next === 'active' ? "{{ route('admin.sales-managers.activate', ':id') }}" : "{{ route('admin.sales-managers.deactivate', ':id') }}").replace(':id', id);
+                        $.post(url, { _token: "{{ csrf_token() }}", _method: 'PATCH' }, () => {
+                            table.ajax.reload(null, false);
+                            showToast('success', 'Status updated successfully');
+                        }).fail((xhr) => {
+                            console.error('Status Toggle Error:', xhr);
+                            let msg = 'Error changing user status';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            } else if (xhr.responseText) {
+                                try {
+                                    let err = JSON.parse(xhr.responseText);
+                                    if (err.message) msg = err.message;
+                                } catch (e) {
+                                    console.error('Error parsing responseText:', e);
+                                }
+                            }
+
+                            if (window.Swal) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Permission Denied',
+                                    text: msg,
+                                    confirmButtonColor: '#00497a'
+                                });
+                            } else {
+                                alert('Permission Denied: ' + msg);
+                            }
+                        });
+                    }
+                });
             });
 
             $('#userStatusTabs button').on('click', () => setTimeout(() => table.ajax.reload(), 50));

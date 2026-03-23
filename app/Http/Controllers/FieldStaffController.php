@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\SalesManager;
 use App\Models\FieldStaff;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Traits\OneSignalNotifications;
@@ -41,6 +42,15 @@ class FieldStaffController extends Controller
                 })
                 ->addColumn('can_delete', function($row) use ($currentUser) {
                     return $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory('field_staff', 'delete');
+                })
+                ->addColumn('address', function ($row) {
+                    return $row->address ?? 'N/A';
+                })
+                ->addColumn('latitude', function ($row) {
+                    return $row->latitude ?? '';
+                })
+                ->addColumn('longitude', function ($row) {
+                    return $row->longitude ?? '';
                 })
                 ->make(true);
         }
@@ -260,28 +270,43 @@ class FieldStaffController extends Controller
     {
         /** @var \App\Models\User $currentUser */
         $currentUser = Auth::user();
+        
         if ($currentUser->hasAnyRole(['superadmin', 'admin'])) {
             $fieldstaff->user->status = 'active';
             $fieldstaff->user->save();
 
             $this->clearUserNotifications($fieldstaff->user->id);
 
+            if (request()->ajax()) {
+                return response()->json(['success' => true, 'message' => 'Field staff activated successfully!']);
+            }
             return redirect()->route('admin.field-staffs.index')->with('success', 'Field staff activated successfully!');
         }
 
-        return redirect()->route('admin.field-staffs.index')->with('error', 'You are not authorized to activate a field staff.');
+        if (request()->ajax() || request()->expectsJson()) {
+            return response()->json(['success' => false, 'message' => 'You do not have permission to change the status of this user.'], 403);
+        }
+        return redirect()->route('admin.field-staffs.index')->with('error', 'You do not have permission to change the status of this user.');
     }
 
     public function deactivate(FieldStaff $fieldstaff)
     {
         /** @var \App\Models\User $currentUser */
         $currentUser = Auth::user();
+
         if ($currentUser->hasAnyRole(['superadmin', 'admin'])) {
             $fieldstaff->user->status = 'inactive';
             $fieldstaff->user->save();
+            
+            if (request()->ajax()) {
+                return response()->json(['success' => true, 'message' => 'Field staff deactivated successfully!']);
+            }
             return redirect()->route('admin.field-staffs.index')->with('success', 'Field staff deactivated successfully!');
         }
 
-        return redirect()->route('admin.field-staffs.index')->with('error', 'You are not authorized to deactivate a field staff.');
+        if (request()->ajax() || request()->expectsJson()) {
+            return response()->json(['success' => false, 'message' => 'You do not have permission to change the status of this user.'], 403);
+        }
+        return redirect()->route('admin.field-staffs.index')->with('error', 'You do not have permission to change the status of this user.');
     }
 }

@@ -467,7 +467,7 @@
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
                     "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" +
                     "<'row'<'col-sm-12'tr>>" +
-                    "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                    "<'row mt-3'<'col-sm-12 col-md-5 d-flex justify-content-center justify-content-md-start align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-center justify-content-md-end align-items-center'p>>",
                 initComplete: function () {
                     var $filter = $('#distributor_filter_container');
                     $filter.removeClass('d-none').addClass('ms-4');
@@ -563,6 +563,9 @@
                     searchable: false,
                     render: function (data, type, row) {
                         if (!row.product_details) return '-';
+
+                        let boxSize = row.product_details.box_size || 0;
+                        let cartonSize = row.product_details.carton_size || 0;
 
                         let pPack = row.product_details.pack ? row.product_details.pack.toLowerCase() : '';
                         let pName = row.product_name ? row.product_name.toLowerCase() : '';

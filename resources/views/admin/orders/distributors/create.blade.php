@@ -161,7 +161,7 @@
                                                         style="width: 100px; height: 100px;">
                                                         <i class="fa fa-shopping-basket fa-3x text-muted opacity-25"></i>
                                                     </div>
-                                                    <h5 class="text-muted fw-bold">Bundle is Empty</h5>
+                                                    <h5 class="text-muted fw-bold">Cart is Empty</h5>
                                                 </div>
                                             </td>
                                         </tr>

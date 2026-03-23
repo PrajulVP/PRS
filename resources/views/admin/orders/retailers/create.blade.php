@@ -41,7 +41,7 @@
                             <div class="row mb-4">
                                 <div class="col-12">
                                     <div
-                                        class="p-4 border rounded-4 bg-white d-flex align-items-center justify-content-between shadow-sm mb-4 border-primary border-opacity-10">
+                                        class="p-4 border rounded-4 bg-white d-flex align-items-center justify-content-between shadow-sm mb-0 border-primary border-opacity-10">
                                         <div class="d-flex align-items-center">
                                             <div>
                                                 <h5 class="mb-1 fw-bold text-dark">Have a handwritten prescription?</h5>
@@ -63,6 +63,22 @@
                                                 <i class="fa fa-upload me-2"></i> UPLOAD PRESCRIPTION
                                             </button>
                                         </div>
+                                    </div>
+                                    
+                                    <!-- AI Results Interactive Container -->
+                                    <div id="aiResultsContainer" class="mt-3 d-none border rounded-4 bg-light-soft p-3 shadow-sm">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6 class="fw-bold mb-0 text-primary"><i class="fa fa-magic me-2"></i>AI Detection Results</h6>
+                                            <button type="button" class="btn btn-xs btn-outline-danger border-0 fw-bold px-3 py-1" 
+                                                style="border-radius: 8px; background: rgba(220, 53, 69, 0.05);"
+                                                onclick="$('#aiResultsContainer').addClass('d-none')">
+                                                <i class="fa fa-times me-1"></i> Dismiss
+                                            </button>
+                                        </div>
+                                        <div id="aiResultsList">
+                                            <!-- Result rows injected here -->
+                                        </div>
+                                        <div id="unmatchedList" class="mt-2 small text-muted"></div>
                                     </div>
                                 </div>
                             </div>
@@ -224,7 +240,7 @@
                                             <td colspan="7" class="text-center py-5">
                                                 <div class="py-4 opacity-50">
                                                     <i class="fa fa-cart-arrow-down fa-4x mb-3 text-muted"></i>
-                                                    <h5 class="text-muted fw-bold">Bundle is Empty</h5>
+                                                    <h5 class="text-muted fw-bold">Cart is Empty</h5>
                                                 </div>
                                             </td>
                                         </tr>
@@ -404,6 +420,8 @@
 
     <script>
         $(document).ready(function () {
+            let addedItems = {};
+            let lastAiResponse = null; 
             $('.select2').select2({ placeholder: "Search...", allowClear: true });
 
             $('#distributorSelect').select2({
@@ -426,7 +444,6 @@
                 return opt.text;
             }
 
-            var addedItems = {};
             var currentProductDetails = null;
 
             $('#productSelect').on('select2:select', function (e) {
@@ -623,61 +640,88 @@
                     contentType: false,
                     success: function (res) {
                         console.log('AI Success Full Response:', JSON.stringify(res, null, 2));
+                        lastAiResponse = res;
+                        
+                        $('#aiResultsContainer').removeClass('d-none');
+                        let resultsList = $('#aiResultsList');
+                        resultsList.empty();
+                        $('#unmatchedList').empty();
+
                         if (res.success && res.matched_items && res.matched_items.length > 0) {
-                            
-                            res.matched_items.forEach(function (item) {
+                            res.matched_items.forEach(function (item, idx) {
                                 let p = item.product;
                                 let d = item.distributor;
-                                let key = p.id + '-' + d.id;
-                                let maxStockRaw = parseInt(d.pivot ? d.pivot.stock : 0);
-
-                                // Basic multiplier logic
-                                let mul = 1;
-                                if (item.unit === 'Box') mul = parseInt(p.box_size || 1);
-                                if (item.unit === 'Carton') mul = parseInt(p.box_size || 1) * parseInt(p.carton_size || 1);
-
-                                let requestedQty = parseInt(item.quantity);
-                                let requestedNos = requestedQty * mul;
+                                let distName = d.shop_name || d.name || 'N/A';
+                                let options = `<option value="${p.id}" selected>${p.product_name} (₹${p.ptr})</option>`;
                                 
-                                let existingNos = addedItems[key] ? (addedItems[key].qty * addedItems[key].multiplier) : 0;
-                                
-                                if ((existingNos + requestedNos) <= maxStockRaw) {
-                                    if (addedItems[key]) {
-                                        addedItems[key].qty += requestedQty;
-                                    } else {
-                                        addedItems[key] = {
-                                            id: p.id,
-                                            distId: d.id,
-                                            distName: d.user ? d.user.name : 'Unknown',
-                                            name: p.product_name,
-                                            variant: null, // AI matching doesn't currently handle variants specifically
-                                            price: parseFloat(p.ptr),
-                                            qty: requestedQty,
-                                            unit: item.unit,
-                                            multiplier: mul,
-                                            box_size: p.box_size,
-                                            carton_size: p.carton_size,
-                                            is_count: item.unit === 'Nos',
-                                            maxStock: maxStockRaw
-                                        };
-                                    }
-                                } else {
-                                    console.warn('OCR Auto-add skipped for ' + p.product_name + ' due to stock limits');
-                                }
+                                let distHtml = `
+                                    <select class="form-select select2-ai ai-dist-select" data-pid="${p.id}">
+                                        <option value="${d.id}" data-stock="${d.stock}" selected>${distName} - Stock: ${d.stock}</option>
+                                    </select>`;
+
+                                let rowHtml = `
+                                    <div class="ai-result-row p-3 bg-white rounded-3 shadow-sm mb-2 border overflow-hidden">
+                                        <div class="row align-items-center g-2 text-start">
+                                            <div class="col-md-2">
+                                                <span class="text-muted small d-block">Rx Molecule</span>
+                                                <span class="fw-bold text-dark text-truncate d-block" title="${item.original_name}">${item.original_name}</span>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <span class="text-muted small d-block">Product</span>
+                                                <select class="form-select select2-ai ai-prod-select">
+                                                    ${options}
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <span class="text-muted small d-block">Distributor</span>
+                                                ${distHtml}
+                                            </div>
+                                            <div class="col-md-1">
+                                                <span class="text-muted small d-block">Qty</span>
+                                                <input type="number" class="form-control form-control-sm ai-qty" value="${item.quantity}" min="1" style="height: 38px;">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <span class="text-muted small d-block">Unit</span>
+                                                <select class="form-select form-select-sm ai-unit" style="height: 38px;">
+                                                    <option value="Strips" ${item.unit === 'Strips' ? 'selected' : ''}>Strips</option>
+                                                    <option value="Box" ${item.unit === 'Box' ? 'selected' : ''}>Box</option>
+                                                    <option value="Carton" ${item.unit === 'Carton' ? 'selected' : ''}>Carton</option>
+                                                    <option value="Nos" ${item.unit === 'Nos' ? 'selected' : ''}>Nos</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3 text-end">
+                                                <button type="button" class="btn btn-primary btn-sm ai-add-btn w-100 fw-bold" 
+                                                    style="height: 38px; margin-top: 18px; border-radius: 8px;"
+                                                    data-idx="${idx}">
+                                                    <i class="fa fa-plus-circle me-1"></i> ADD
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>`;
+                                resultsList.append(rowHtml);
                             });
-                            
-                            renderTable();
 
-                            if (typeof showToast === 'function') {
-                                let msg = 'AI Matched ' + res.matched_count + ' of ' + res.total_count + ' medicines';
-                                showToast('success', msg);
+                            $('.select2-ai').select2({ width: '100%', dropdownParent: $('#aiResultsContainer') });
+
+                            // Handle Out of Stock Items
+                            if (res.out_of_stock_items && res.out_of_stock_items.length > 0) {
+                                let stockMsg = res.out_of_stock_items.map(i => `<span class="badge bg-soft-warning text-warning me-2" style="font-size: 0.85rem; border: 1px solid rgba(255,193,7,0.2);">${i.product_name} (${i.original_name})</span>`).join('');
+                                $('#unmatchedList').append(`<hr class="my-3 text-muted opacity-25"><div class="text-muted fw-bold mb-2" style="font-size: 0.95rem;"><i class="fa fa-exclamation-triangle me-1 text-warning"></i> Matched products currently NOT in stock:</div><div class="d-flex flex-wrap">${stockMsg}</div>`);
                             }
+
+                            if (res.unmatched_items && res.unmatched_items.length > 0) {
+                                let names = res.unmatched_items.map(i => `<span class="badge bg-soft-danger text-danger me-2" style="font-size: 0.9rem; border: 1px solid rgba(220,53,69,0.2);">${i.name}</span>`).join('');
+                                $('#unmatchedList').html(`<hr class="my-3 text-muted opacity-25"><div class="text-muted fw-bold mb-2" style="font-size: 0.95rem;"><i class="fa fa-info-circle me-1 text-danger"></i> Molecule(s) not found in our current product catalog:</div><div class="d-flex flex-wrap">${names}</div>`);
+                            }
+                            
+                            showToast('success', `AI identified multiple options. Please review and add them.`);
                         } else {
-                            if (typeof showToast === 'function') {
-                                showToast('warning', 'No medicines could be automatically matched or found in stock.');
-                            } else {
-                                alert('No medicines matched.');
+                            resultsList.html('<div class="text-center py-3 text-muted">No items matched in our database.</div>');
+                            if (res.unmatched_items && res.unmatched_items.length > 0) {
+                                let names = res.unmatched_items.map(i => `<span class="badge bg-soft-danger text-danger me-2" style="font-size: 0.9rem; border: 1px solid rgba(220,53,69,0.2);">${i.name}</span>`).join('');
+                                $('#unmatchedList').html(`<hr class="my-3 text-muted opacity-25"><div class="text-muted fw-bold mb-2" style="font-size: 0.95rem;"><i class="fa fa-info-circle me-1 text-danger"></i> Molecule(s) not found in our current product catalog:</div><div class="d-flex flex-wrap">${names}</div>`);
                             }
+                            showToast('error', 'AI could not find any of these items in stock.');
                         }
                     },
                     error: function (xhr) {
@@ -814,6 +858,71 @@
                     }
                 });
             });
+
+            // Handle AI Result Add Button
+            $(document).on('click', '.ai-add-btn', function() {
+                let btn = $(this);
+                let idx = btn.data('idx');
+                let row = btn.closest('.ai-result-row');
+                
+                if (!lastAiResponse || !lastAiResponse.matched_items[idx]) return;
+                
+                let item = lastAiResponse.matched_items[idx];
+                let p = item.product;
+                let distSelect = row.find('.ai-dist-select');
+                let distId = distSelect.val();
+                
+                if (!distId) {
+                    showToast('error', 'Please select a distributor with stock.');
+                    return;
+                }
+
+                let distName = distSelect.find('option:selected').text().split(' - ')[0];
+                let maxStockRaw = parseInt(distSelect.find('option:selected').data('stock'));
+                
+                let qty = parseInt(row.find('.ai-qty').val()) || 1;
+                let unit = row.find('.ai-unit').val();
+                
+                let mul = 1;
+                if (unit === 'Box') mul = parseInt(p.box_size || 1);
+                if (unit === 'Carton') mul = parseInt(p.box_size || 1) * parseInt(p.carton_size || 1);
+
+                let requestedNos = qty * mul;
+                let key = p.id + '-' + distId;
+
+                // Existing nos check
+                let existingNos = addedItems[key] ? (addedItems[key].qty * addedItems[key].multiplier) : 0;
+                
+                if ((existingNos + requestedNos) > maxStockRaw) {
+                    showToast('error', `Insufficient stock for ${p.product_name}. Max available is ${maxStockRaw}.`);
+                    return;
+                }
+
+                if (addedItems[key]) {
+                    addedItems[key].qty += qty;
+                } else {
+                    addedItems[key] = {
+                        id: p.id,
+                        distId: distId,
+                        distName: distName,
+                        name: p.product_name,
+                        variant: null,
+                        price: parseFloat(p.ptr),
+                        qty: qty,
+                        unit: unit,
+                        multiplier: mul,
+                        box_size: p.box_size,
+                        carton_size: p.carton_size,
+                        is_count: unit === 'Nos',
+                        maxStock: maxStockRaw
+                    };
+                }
+
+                renderTable(key);
+                btn.removeClass('btn-primary').addClass('btn-success').html('<i class="fa fa-check"></i> Added').prop('disabled', true);
+                showToast('success', `${p.product_name} added to order.`);
+            });
+
             $(document).on('click', '.size-btn', function() {
                 $('.size-btn').removeClass('btn-primary text-white').addClass('btn-outline-primary');
                 $(this).removeClass('btn-outline-primary').addClass('btn-primary text-white');

@@ -37,6 +37,9 @@ class SalesManagerController extends Controller
                 ->addColumn('can_delete', function($row) use ($currentUser) {
                     return $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory('sales_managers', 'delete');
                 })
+                ->addColumn('pincode', function ($row) {
+                    return $row->user->pincode ?? 'N/A';
+                })
                 ->make(true);
         }
         return view('admin.salesmanagers.index');
@@ -182,19 +185,43 @@ class SalesManagerController extends Controller
 
     public function activate(SalesManager $salesManager)
     {
+        /** @var User $currentUser */
+        $currentUser = Auth::user();
+        if (!$currentUser->hasRole('superadmin')) {
+            if (request()->ajax() || request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'You do not have permission to change the status of this user.'], 403);
+            }
+            return redirect()->route('admin.sales-managers.index')->with('error', 'You do not have permission to change the status of this user.');
+        }
+
         $salesManager->user->status = 'active';
         $salesManager->user->save();
 
         $this->clearUserNotifications($salesManager->user->id);
 
+        if (request()->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Sales Manager activated.']);
+        }
         return redirect()->route('admin.sales-managers.index')->with('success', 'Sales Manager activated.');
     }
 
     public function deactivate(SalesManager $salesManager)
     {
+        /** @var User $currentUser */
+        $currentUser = Auth::user();
+        if (!$currentUser->hasRole('superadmin')) {
+            if (request()->ajax() || request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'You do not have permission to change the status of this user.'], 403);
+            }
+            return redirect()->route('admin.sales-managers.index')->with('error', 'You do not have permission to change the status of this user.');
+        }
+
         $salesManager->user->status = 'inactive';
         $salesManager->user->save();
 
+        if (request()->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Sales Manager deactivated.']);
+        }
         return redirect()->route('admin.sales-managers.index')->with('success', 'Sales Manager deactivated.');
     }
 }

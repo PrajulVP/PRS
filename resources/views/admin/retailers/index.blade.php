@@ -88,9 +88,12 @@
                                         <th>Owner Name</th>
                                         <th>Email</th>
                                         <th>Contact No</th>
+                                        <th>GST</th>
+                                        <th>Drug Lic.</th>
                                         <th>District</th>
                                         <th>Area</th>
                                         <th>Pincode</th>
+                                        <th>Address</th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
@@ -167,6 +170,28 @@
                             <div class="col-md-6">
                                 <label class="form-label">Pincode</label>
                                 <input type="text" name="pincode" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Field Staff</label>
+                                        <select name="field_staff_id" class="form-select">
+                                            <option value="">Select Field Staff</option>
+                                            @foreach ($fieldStaffs as $fs)
+                                                <option value="{{ $fs->id }}">{{ $fs->user->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Sales Manager</label>
+                                        <select name="sales_manager_id" class="form-select">
+                                            <option value="">Select Sales Manager</option>
+                                            @foreach ($salesManagers as $sm)
+                                                <option value="{{ $sm->id }}">{{ $sm->user->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Address</label>
@@ -324,10 +349,22 @@
                                                                                     background:linear-gradient(135deg,#1e3a5f,#2e6da4);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
                             </div>
                         </div>
-                        <div>
-                            <h4 class="mb-1 fw-bold" id="ret_view_shop"></h4>
-                            <div class="mb-1 text-muted small" id="ret_view_owner"></div>
-                            <span class="badge" id="ret_view_status"></span>
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-3">
+                                <h4 class="mb-0 fw-bold" id="ret_view_shop"></h4>
+                                <span class="badge" id="ret_view_status"></span>
+                            </div>
+                            <div class="mt-1 text-muted small" id="ret_view_owner"></div>
+                        </div>
+                        <div class="text-end">
+                            <div class="loyalty-badge shadow-sm rounded-3 py-2 px-3 d-inline-flex align-items-center gap-2" 
+                                 style="background: linear-gradient(135deg, #ffd700, #ffa500); border: 1px solid rgba(255,255,255,0.4); font-family: 'Montserrat', sans-serif;">
+                                <i class="fa fa-award text-white fs-4"></i>
+                                <div class="text-start">
+                                    <div class="text-white small fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px; line-height: 1;">Loyalty Points</div>
+                                    <div class="text-white fw-bold fs-5" id="ret_header_points" style="line-height: 1.1; font-family: 'Montserrat', sans-serif;">0.00</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     {{-- Info Cards --}}
@@ -393,7 +430,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-12">
+                            <div class="col-md-6 text-dark">
                                 <div class="d-flex align-items-start gap-2 p-3 rounded"
                                     style="background: var(--med-bg-body);">
                                     <i class="fa fa-map-marker-alt mt-1 text-danger"></i>
@@ -403,6 +440,28 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start gap-2 p-3 rounded"
+                                    style="background: var(--med-bg-body);">
+                                    <i class="fa fa-user-tie mt-1 text-success"></i>
+                                    <div>
+                                        <div class="text-muted small">Field Staff</div>
+                                        <div class="fw-semibold" id="ret_view_fieldstaff"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start gap-2 p-3 rounded"
+                                    style="background: var(--med-bg-body);">
+                                    <i class="fa fa-user-shield mt-1 text-primary"></i>
+                                    <div>
+                                        <div class="text-muted small">Sales Manager</div>
+                                        <div class="fw-semibold" id="ret_view_salesmanager"></div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                         {{-- 
                         <hr class="my-4">
@@ -547,12 +606,15 @@
                     { data: 'user.name', name: 'user.name' },
                     { data: 'user.email', name: 'user.email' },
                     { data: 'contact_no', name: 'contact_no' },
+                    { data: 'gst', name: 'gst' },
+                    { data: 'drug_license_no', name: 'drug_license_no' },
                     { data: 'district_name', name: 'district_name' },
                     { data: 'area_name', name: 'area_name' },
                     { data: 'pincode', name: 'pincode' },
+                    { data: 'address', name: 'address' },
                     { 
                         data: 'user.status', name: 'user.status',
-                        render: (data, type, row) => `<span class="badge ${data === 'active' ? 'bg-success' : 'bg-danger'} status-toggle cursor-pointer" data-id="${row.id}" data-status="${data}">${data === 'active' ? 'Active' : 'Inactive'}</span>`
+                        render: (data, type, row) => `<span class="status-badge ${data === 'active' ? 'status-badge-active' : 'status-badge-inactive'} status-toggle" data-id="${row.id}" data-status="${data}">${data === 'active' ? 'Active' : 'Inactive'}</span>`
                     },
                     {
                         data: 'id', orderable: false, searchable: false,
@@ -568,15 +630,24 @@
                         }
                     }
                 ],
-                dom: "<'row mb-3'<'col-sm-12'B>><'row mb-3'<'col-md-6'l><'col-md-6'f>><'row'<'col-sm-12'tr>><'row mt-3'<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
+                dom: "<'row mb-3'<'col-sm-12'B>><'row mb-3'<'col-md-6'l><'col-md-6'f>><'row'<'col-sm-12'tr>><'row mt-3'<'col-sm-12 col-md-5 d-flex justify-content-center justify-content-md-start align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-center justify-content-md-end align-items-center'p>>",
                 buttons: {
                     dom: { button: { className: 'btn btn-sm btn-icon' } },
                     buttons: [
                         { extend: 'copy', className: 'btn btn-secondary btn-sm', text: '<i class="fa fa-copy"></i> Copy' },
                         { extend: 'csv', className: 'btn btn-info btn-sm text-white', text: '<i class="fa fa-file-csv"></i> CSV' },
                         { extend: 'excel', className: 'btn btn-success btn-sm', text: '<i class="fa fa-file-excel"></i> Excel' },
-                        { extend: 'pdf', className: 'btn btn-danger btn-sm', text: '<i class="fa fa-file-pdf"></i> PDF' },
-                        { extend: 'print', className: 'btn btn-dark btn-sm', text: '<i class="fa fa-print"></i> Print' }
+                        { 
+                            extend: 'pdf', className: 'btn btn-danger btn-sm', text: '<i class="fa fa-file-pdf"></i> PDF',
+                            exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
+                            orientation: 'landscape',
+                            pageSize: 'A4',
+                            customize: function(doc) {
+                                doc.defaultStyle.fontSize = 7;
+                                doc.styles.tableHeader.fontSize = 8;
+                            }
+                        },
+                        { extend: 'print', className: 'btn btn-dark btn-sm', text: '<i class="fa fa-print"></i> Print', exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] } }
                     ]
                 }
             });
@@ -607,9 +678,19 @@
 
             $('#retailers-table').on('click', '.view-btn', function () {
                 var data = $(this).data('row');
+                // Avatar logic
+                if (data.user?.avatar) {
+                    $('#ret_avatar_img').attr('src', data.user.avatar).show();
+                    $('#ret_avatar_initials').hide();
+                } else {
+                    $('#ret_avatar_img').hide();
+                    let initials = data.user?.name ? data.user.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '??';
+                    $('#ret_avatar_initials').text(initials).show();
+                }
+
                 $('#ret_view_shop').text(data.shop_name);
                 $('#ret_view_owner').html('<i class="fa fa-user me-1"></i>Owner: ' + data.user.name);
-                $('#ret_view_status').attr('class', 'badge ' + (data.user?.status === 'active' ? 'bg-success' : 'bg-danger')).text(data.user?.status);
+                $('#ret_view_status').attr('class', 'status-badge ' + (data.user?.status === 'active' ? 'status-badge-active' : 'status-badge-inactive')).text(data.user?.status);
                 $('#ret_view_email').text(data.user.email);
                 $('#ret_view_contact').text(data.contact_no || 'N/A');
                 $('#ret_view_gst').text(data.gst || 'N/A');
@@ -617,6 +698,10 @@
                 $('#ret_view_location').text((data.district?.name || 'N/A') + ' / ' + (data.area?.name || 'N/A'));
                 $('#ret_view_pincode').text(data.pincode || 'N/A');
                 $('#ret_view_address').text(data.address || 'N/A');
+                let points = parseFloat(data.loyalty_points || 0).toFixed(2);
+                $('#ret_header_points').text(points);
+                $('#ret_view_fieldstaff').text(data.field_staff_name || 'N/A');
+                $('#ret_view_salesmanager').text(data.sales_manager_name || 'N/A');
                 $('#showRetailerModal').modal('show');
             });
 
@@ -648,8 +733,60 @@
 
             $('#retailers-table').on('click', '.status-toggle', function () {
                 let id = $(this).data('id'), status = $(this).data('status'), next = status === 'active' ? 'inactive' : 'active';
-                let url = (next === 'active' ? "{{ route('admin.retailers.activate', ':id') }}" : "{{ route('admin.retailers.deactivate', ':id') }}").replace(':id', id);
-                $.post(url, { _token: "{{ csrf_token() }}", _method: 'PATCH' }, () => table.ajax.reload(null, false));
+                
+                // Frontend Permission Check
+                const canManage = @json(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']));
+                if (!canManage) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Permission Denied',
+                        text: 'You do not have permission to change the status of retailers.',
+                        confirmButtonColor: '#00497a'
+                    });
+                    return;
+                }
+
+                Swal.fire({
+                    title: `Change Status to ${next.toUpperCase()}?`,
+                    text: `Are you sure you want to ${next} this retailer?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#00497a',
+                    cancelButtonColor: '#ef4444',
+                    confirmButtonText: 'Yes, change it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        let url = (next === 'active' ? "{{ route('admin.retailers.activate', ':id') }}" : "{{ route('admin.retailers.deactivate', ':id') }}").replace(':id', id);
+                        $.post(url, { _token: "{{ csrf_token() }}", _method: 'PATCH' }, () => {
+                            table.ajax.reload(null, false);
+                            showToast('success', 'Status updated successfully');
+                        }).fail((xhr) => {
+                            console.error('Status Toggle Error:', xhr);
+                            let msg = 'Error changing user status';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            } else if (xhr.responseText) {
+                                try {
+                                    let err = JSON.parse(xhr.responseText);
+                                    if (err.message) msg = err.message;
+                                } catch (e) {
+                                    console.error('Error parsing responseText:', e);
+                                }
+                            }
+
+                            if (window.Swal) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Permission Denied',
+                                    text: msg,
+                                    confirmButtonColor: '#00497a'
+                                });
+                            } else {
+                                alert('Permission Denied: ' + msg);
+                            }
+                        });
+                    }
+                });
             });
 
             $('#userStatusTabs button').on('click', () => setTimeout(() => table.ajax.reload(), 50));

@@ -80,6 +80,36 @@ class RetailerController extends Controller
                 ->editColumn('user.status', function ($row) {
                     return $row->user ? $row->user->status : 'N/A';
                 })
+                ->addColumn('gst', function ($row) {
+                    return $row->gst ?? 'N/A';
+                })
+                ->addColumn('drug_license_no', function ($row) {
+                    return $row->drug_license_no ?? 'N/A';
+                })
+                ->addColumn('address', function ($row) {
+                    return $row->address ?? 'N/A';
+                })
+                ->addColumn('credit_limit', function ($row) {
+                    return $row->credit_limit ?? 0;
+                })
+                ->addColumn('loyalty_points', function ($row) {
+                    return $row->loyalty_points ?? 0;
+                })
+                ->addColumn('latitude', function ($row) {
+                    return $row->latitude ?? '';
+                })
+                ->addColumn('longitude', function ($row) {
+                    return $row->longitude ?? '';
+                })
+                ->addColumn('distributor_name', function ($row) {
+                    return $row->distributor && $row->distributor->user ? $row->distributor->user->name : 'N/A';
+                })
+                ->addColumn('field_staff_name', function ($row) {
+                    return $row->fieldStaff && $row->fieldStaff->user ? $row->fieldStaff->user->name : 'N/A';
+                })
+                ->addColumn('sales_manager_name', function ($row) {
+                    return $row->salesManager && $row->salesManager->user ? $row->salesManager->user->name : 'N/A';
+                })
                 ->rawColumns(['user.status', 'action'])
                 ->make(true);
         }
@@ -274,30 +304,42 @@ class RetailerController extends Controller
     {
         /** @var \App\Models\User $currentUser */
         $currentUser = Auth::user();
-        if (!$currentUser->hasRole('admin') && !$currentUser->hasRole('salesmanager')) {
-            return redirect()->back()->with('error', 'You are not authorized to activate a retailer.');
+        if ($currentUser->hasAnyRole(['superadmin', 'admin']) || $currentUser->hasRole('salesmanager')) {
+            $retailer->user->status = 'active';
+            $retailer->user->save();
+
+            $this->clearUserNotifications($retailer->user->id);
+
+            if (request()->ajax()) {
+                return response()->json(['success' => true, 'message' => 'Retailer activated successfully!']);
+            }
+            return redirect()->back()->with('success', 'Retailer activated successfully!');
         }
 
-        $retailer->user->status = 'active';
-        $retailer->user->save();
-
-        $this->clearUserNotifications($retailer->user->id);
-
-        return redirect()->back()->with('success', 'Retailer activated successfully!');
+        if (request()->ajax()) {
+            return response()->json(['success' => false, 'message' => 'You do not have permission to change the status of this user.'], 403);
+        }
+        return redirect()->back()->with('error', 'You do not have permission to change the status of this user.');
     }
 
     public function deactivate(Retailer $retailer)
     {
         /** @var \App\Models\User $currentUser */
         $currentUser = Auth::user();
-        if (!$currentUser->hasAnyRole(['superadmin', 'admin']) && !$currentUser->hasRole('salesmanager')) {
-            return redirect()->back()->with('error', 'You are not authorized to deactivate a retailer.');
+        if ($currentUser->hasAnyRole(['superadmin', 'admin']) || $currentUser->hasRole('salesmanager')) {
+            $retailer->user->status = 'inactive';
+            $retailer->user->save();
+
+            if (request()->ajax()) {
+                return response()->json(['success' => true, 'message' => 'Retailer deactivated successfully!']);
+            }
+            return redirect()->back()->with('success', 'Retailer deactivated successfully!');
         }
 
-        $retailer->user->status = 'inactive';
-        $retailer->user->save();
-
-        return redirect()->back()->with('success', 'Retailer deactivated successfully!');
+        if (request()->ajax()) {
+            return response()->json(['success' => false, 'message' => 'You do not have permission to change the status of this user.'], 403);
+        }
+        return redirect()->back()->with('error', 'You do not have permission to change the status of this user.');
     }
 
     public function getAreas($district_id)

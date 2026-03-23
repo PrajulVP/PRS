@@ -241,7 +241,7 @@ class InventoryController extends Controller
         } else {
             $previousStock = 0;
             $inventory = Inventory::create([
-                'distributor_product_code' => $product->product_code,
+                'distributor_product_code' => !empty($product->product_code) ? $product->product_code : 'NA-' . $product->id,
                 'product_id' => $product->id,
                 'product_name' => $product->product_name,
                 'distributor_id' => $distributorId,

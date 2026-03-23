@@ -93,6 +93,7 @@
                                         <th>District</th>
                                         <th>Area</th>
                                         <th>Pincode</th>
+                                        <th>Address</th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
@@ -336,10 +337,15 @@
                                                                     background:linear-gradient(135deg,#1e3a5f,#2e6da4);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
                             </div>
                         </div>
-                        <div>
-                            <h4 class="mb-1 fw-bold" id="dist_view_name"></h4>
-                            <div class="mb-1 text-muted small" id="dist_view_manager"></div>
-                            <span class="badge" id="dist_view_status"></span>
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-3">
+                                <h4 class="mb-0 fw-bold" id="dist_view_name"></h4>
+                                <span class="badge" id="dist_view_status"></span>
+                            </div>
+                            <div class="mt-1 text-muted small" id="dist_view_manager"></div>
+                        </div>
+                        <div class="text-end">
+                            {{-- Badge moved to name part --}}
                         </div>
                     </div>
                     {{-- Info Cards --}}
@@ -405,7 +411,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-12">
+                            <div class="col-12 text-dark">
                                 <div class="d-flex align-items-start gap-2 p-3 rounded"
                                     style="background: var(--med-bg-body);">
                                     <i class="fa fa-map-marker-alt mt-1 text-danger"></i>
@@ -519,6 +525,7 @@
         function getGeoLocation(latId, longId, mapType) {}
 
         $(document).ready(function () {
+            const canActivate = @json(Auth::user()->hasRole('superadmin'));
             var table = $('#distributors-table').DataTable({
                 processing: true,
                 serverSide: true,
@@ -540,12 +547,13 @@
                     { data: 'gst', name: 'gst' },
                     { data: 'drug_license_no', name: 'drug_license_no' },
                     { data: 'contact_no', name: 'contact_no' },
-                    { data: 'district.name', name: 'district.name' },
-                    { data: 'area.name', name: 'area.name' },
+                    { data: 'district_name', name: 'district_name' },
+                    { data: 'area_name', name: 'area_name' },
                     { data: 'pincode', name: 'pincode' },
+                    { data: 'address', name: 'address' },
                     { 
                         data: 'user.status', name: 'user.status',
-                        render: (data, type, row) => `<span class="badge ${data === 'active' ? 'bg-success' : 'bg-danger'} status-toggle cursor-pointer" data-id="${row.id}" data-status="${data}">${data === 'active' ? 'Active' : 'Inactive'}</span>`
+                        render: (data, type, row) => `<span class="status-badge ${data === 'active' ? 'status-badge-active' : 'status-badge-inactive'} status-toggle cursor-pointer" data-id="${row.id}" data-status="${data}">${data === 'active' ? 'Active' : 'Inactive'}</span>`
                     },
                     {
                         data: 'id', orderable: false, searchable: false,
@@ -561,7 +569,7 @@
                         }
                     }
                 ],
-                dom: "<'row mb-3'<'col-sm-12'B>><'row mb-3'<'col-md-6'l><'col-md-6'f>><'row'<'col-sm-12'tr>><'row mt-3'<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
+                dom: "<'row mb-3'<'col-sm-12'B>><'row mb-3'<'col-md-6'l><'col-md-6'f>><'row'<'col-sm-12'tr>><'row mt-3'<'col-sm-12 col-md-5 d-flex justify-content-center justify-content-md-start align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-center justify-content-md-end align-items-center'p>>",
                 buttons: {
                     dom: { button: { className: 'btn btn-sm btn-icon' } },
                     buttons: [
@@ -570,14 +578,15 @@
                         { extend: 'excel', className: 'btn btn-success btn-sm', text: '<i class="fa fa-file-excel"></i> Excel' },
                         { 
                             extend: 'pdf', className: 'btn btn-danger btn-sm', text: '<i class="fa fa-file-pdf"></i> PDF',
-                            exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8] },
-                            customize: function (doc) {
-                                doc.defaultStyle.fontSize = 8;
-                                doc.styles.tableHeader.fontSize = 9;
-                                doc.content[1].table.widths = ['5%', '15%', '15%', '15%', '12%', '10%', '10%', '8%', '10%'];
+                            exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
+                            orientation: 'landscape',
+                            pageSize: 'A4',
+                            customize: function(doc) {
+                                doc.defaultStyle.fontSize = 7;
+                                doc.styles.tableHeader.fontSize = 8;
                             }
                         },
-                        { extend: 'print', className: 'btn btn-dark btn-sm', text: '<i class="fa fa-print"></i> Print', exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8] } }
+                        { extend: 'print', className: 'btn btn-dark btn-sm', text: '<i class="fa fa-print"></i> Print', exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] } }
                     ]
                 }
             });
@@ -611,8 +620,25 @@
                 var data = $(this).data('row');
                 $('#dist_view_name').text(data.name);
                 $('#dist_view_manager').html('<i class="fa fa-user-tie me-1"></i>Manager: ' + (data.sales_manager?.user?.name || 'N/A'));
-                $('#dist_view_status').attr('class', 'badge ' + (data.user?.status === 'active' ? 'bg-success' : 'bg-danger')).text(data.user?.status);
+                $('#dist_view_status').attr('class', 'status-badge ' + (data.user?.status === 'active' ? 'status-badge-active' : 'status-badge-inactive')).text(data.user?.status);
                 $('#dist_view_email').text(data.user?.email || 'N/A');
+                $('#dist_view_contact').text(data.contact_no || 'N/A');
+                $('#dist_view_gst').text(data.gst || 'N/A');
+                $('#dist_view_drug').text(data.drug_license_no || 'N/A');
+                // Avatar logic
+                if (data.user?.avatar) {
+                    $('#dist_avatar_img').attr('src', data.user.avatar).show();
+                    $('#dist_avatar_initials').hide();
+                } else {
+                    $('#dist_avatar_img').hide();
+                    let initials = data.user?.name ? data.user.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '??';
+                    $('#dist_avatar_initials').text(initials).show();
+                }
+
+                $('#dist_view_name').text(data.name);
+                $('#dist_view_manager').html('<i class="fa fa-user-tie me-1"></i>Manager: ' + (data.sales_manager?.user?.name || 'Not Assigned'));
+                $('#dist_view_status').attr('class', 'status-badge ' + (data.user?.status === 'active' ? 'status-badge-active' : 'status-badge-inactive')).text(data.user?.status);
+                $('#dist_view_email').text(data.user.email);
                 $('#dist_view_contact').text(data.contact_no || 'N/A');
                 $('#dist_view_gst').text(data.gst || 'N/A');
                 $('#dist_view_drug').text(data.drug_license_no || 'N/A');
@@ -656,11 +682,59 @@
 
             $('#distributors-table').on('click', '.status-toggle', function () {
                 let id = $(this).data('id'), status = $(this).data('status'), next = status === 'active' ? 'inactive' : 'active';
-                let url = (next === 'active' ? "{{ route('admin.distributors.activate', ':id') }}" : "{{ route('admin.distributors.deactivate', ':id') }}").replace(':id', id);
-                Swal.fire({ title: 'Change Status?', text: `Confirm to ${next} user`, icon: 'warning', showCancelButton: true }).then(r => {
-                    if (r.isConfirmed) $.post(url, { _token: "{{ csrf_token() }}", _method: 'PATCH' }, () => {
-                        table.ajax.reload(null, false);
+                
+                // Frontend Permission Check (Only Superadmin can manage Distributors)
+                const isSuperadmin = @json(Auth::user()->hasRole('superadmin'));
+                if (!isSuperadmin) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Permission Denied',
+                        text: 'You do not have permission to change the status of distributors.',
+                        confirmButtonColor: '#00497a'
                     });
+                    return;
+                }
+
+                Swal.fire({
+                    title: `Change Status to ${next.toUpperCase()}?`,
+                    text: `Are you sure you want to ${next} this distributor?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#ef4444',
+                    confirmButtonText: 'Yes, change it!'
+                }).then((r) => {
+                    if (r.isConfirmed) {
+                        let url = (next === 'active' ? "{{ route('admin.distributors.activate', ':id') }}" : "{{ route('admin.distributors.deactivate', ':id') }}").replace(':id', id);
+                        $.post(url, { _token: "{{ csrf_token() }}", _method: 'PATCH' }, () => {
+                            table.ajax.reload(null, false);
+                            showToast('success', 'Status updated successfully');
+                        }).fail((xhr) => {
+                            console.error('Status Toggle Error:', xhr);
+                            let msg = 'Error changing user status';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            } else if (xhr.responseText) {
+                                try {
+                                    let err = JSON.parse(xhr.responseText);
+                                    if (err.message) msg = err.message;
+                                } catch (e) {
+                                    console.error('Error parsing responseText:', e);
+                                }
+                            }
+
+                            if (window.Swal) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Permission Denied',
+                                    text: msg,
+                                    confirmButtonColor: '#00497a'
+                                });
+                            } else {
+                                alert('Permission Denied: ' + msg);
+                            }
+                        });
+                    }
                 });
             });
 

@@ -18,7 +18,8 @@ class PrescriptionApiController extends Controller
     /**
      * @OA\Post(
      *     path="/api/prescriptions/upload",
-     *     summary="Upload a prescription and get AI results",
+     *     summary="Upload a prescription and get AI matched results",
+     *     description="Extracts medicines from an image/PDF and matches them with available products and distributors.",
      *     tags={"Prescription"},
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
@@ -26,35 +27,21 @@ class PrescriptionApiController extends Controller
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
      *             @OA\Schema(
-     *                 @OA\Property(
-     *                     property="prescription",
-     *                     description="The prescription image or PDF",
-     *                     type="string",
-     *                     format="binary"
-     *                 ),
+     *                 @OA\Property(property="prescription", type="string", format="binary"),
+     *                 @OA\Property(property="retailer_id", type="integer", description="Optional retailer id for distance calculation and stock filtering"),
      *                 required={"prescription"}
      *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="AI results",
+     *         description="AI results with multi-match options",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="data", type="object")
+     *             @OA\Property(property="matched_items", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="out_of_stock_items", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="unmatched_items", type="array", @OA\Items(type="object"))
      *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Failed to extract data",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Failed to extract data from the prescription.")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthorized"
      *     )
      * )
      */
@@ -62,21 +49,24 @@ class PrescriptionApiController extends Controller
     {
         $request->validate([
             'prescription' => 'required|file|mimes:jpg,jpeg,png,pdf',
+            'retailer_id' => 'nullable|exists:retailers,id'
         ]);
 
         $file = $request->file('prescription');
-        $extractedData = $this->aiService->extractPrescription($file);
+        $retailer = $request->retailer_id ? \App\Models\Retailer::find($request->retailer_id) : null;
 
-        if ($extractedData) {
+        $extractedData = $this->aiService->extractPrescription($file);
+        
+        if (!$extractedData) {
             return response()->json([
-                'success' => true,
-                'data' => $extractedData
-            ]);
+                'success' => false,
+                'message' => 'Failed to extract data from the prescription.'
+            ], 500);
         }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to extract data from the prescription.'
-        ], 500);
+        $aiItems = $extractedData['medicines'] ?? $extractedData['line_items'] ?? $extractedData['items'] ?? [];
+        $results = $this->aiService->matchExtractedMedicines($aiItems, $retailer);
+
+        return response()->json(array_merge(['success' => true], $results));
     }
 }

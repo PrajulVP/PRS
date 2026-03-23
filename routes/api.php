@@ -24,6 +24,10 @@ Route::middleware('auth:api')->group(function () {
     Route::post('retailer-orders', [RetailerOrderController::class, 'store']);
     Route::post('retailer-orders/{id}/update-status', [RetailerOrderController::class, 'updateStatus']);
 
+    Route::get('notifications', [\App\Http\Controllers\Api\NotificationApiController::class, 'index']);
+    Route::post('notifications/{id}/read', [\App\Http\Controllers\Api\NotificationApiController::class, 'markAsRead']);
+    Route::post('notifications/read-all', [\App\Http\Controllers\Api\NotificationApiController::class, 'markAllRead']);
+
     // Prescription Upload API
     Route::post('prescriptions/upload', [PrescriptionApiController::class, 'upload']);
 
@@ -35,6 +39,7 @@ Route::middleware('auth:api')->group(function () {
     // Distributor-specific listings (for Admin/Manager navigation)
     Route::post('distributor-orders', [\App\Http\Controllers\Api\DistributorOrderApiController::class, 'store']);
     Route::post('distributor-orders/{id}/update-status', [\App\Http\Controllers\Api\DistributorOrderApiController::class, 'updateStatus']);
+    Route::post('distributor-orders/{id}/approve', [\App\Http\Controllers\Api\DistributorOrderApiController::class, 'approve']);
 
     Route::get('products', [ProductController::class, 'index']);
     Route::get('products/{product}/distributors', [ProductController::class, 'getDistributors']);
@@ -74,11 +79,12 @@ Route::middleware('auth:api')->group(function () {
 
         // Manage Retailer Orders
         Route::get('retailer-orders', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getRetailerOrders']);
-        Route::post('retailer-orders/{id}/update-status', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'updateRetailerOrderStatus']);
 
-        // Distributor Insights
+        // Distributor Hub
+        Route::get('distributors', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getDistributors']);
         Route::get('distributor-insights', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getDistributorInsights']);
         Route::get('distributor-insights/{id}', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getDistributorDetailInsight']);
+        Route::post('distributor-orders/{id}/approve', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'approveDistributorOrder']);
     });
 
     // Field Staff Dashboard & Orders

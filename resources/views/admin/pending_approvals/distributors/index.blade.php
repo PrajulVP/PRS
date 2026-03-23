@@ -327,14 +327,15 @@
                     </li>
                     @php
                         $user = Auth::user();
-                        $defaultPending = $user->hasRole(['salesmanager', 'fieldstaff']);
+                        $isSMorFS = $user->hasRole(['salesmanager', 'fieldstaff']);
+                        $defaultStatus = $isSMorFS ? 'pending' : 'processing';
                     @endphp
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link {{ $defaultPending ? 'active px-4 fw-bold text-primary border-bottom-0' : 'px-4 fw-bold text-muted' }}" id="tab-pending" data-bs-toggle="tab"
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-pending" data-bs-toggle="tab"
                             data-status="pending" type="button" role="tab">Pending</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link {{ !$defaultPending ? 'active px-4 fw-bold text-primary border-bottom-0' : 'px-4 fw-bold text-muted' }}" id="tab-processing"
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-processing"
                             data-bs-toggle="tab" data-status="processing" type="button" role="tab">Processing</button>
                     </li>
                     <li class="nav-item" role="presentation">
@@ -869,6 +870,10 @@
             $('#processOrderModal').appendTo("body");
             $('#removeInvoiceConfirmModal').appendTo("body");
 
+            const INITIAL_STATUS = "{{ $defaultStatus }}";
+            window.currentStatus = INITIAL_STATUS;
+            window.initialTabSelected = false;
+
             var table = $('#distributor-approval-table').DataTable({
                 order: [
                     [5, 'desc']
@@ -928,9 +933,18 @@
                     $('.payment-filter-container').append($filter);
                     $('#filter_container').remove();
 
+                    // Definitive Tab Activation using Bootstrap API
+                    // This ensures the correct tab is marked active and internal state is synced
+                    const $targetTab = $('#tab-' + INITIAL_STATUS);
+                    if ($targetTab.length) {
+                        const tabTrigger = bootstrap.Tab.getOrCreateInstance($targetTab[0]);
+                        tabTrigger.show();
+                    }
+                    
                     $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
-                        $('#orderStatusTabs .nav-link').removeClass('text-primary border-bottom-0').addClass('text-muted');
-                        $(this).removeClass('text-muted').addClass('text-primary border-bottom-0');
+                        $('#orderStatusTabs .nav-link').removeClass('active text-primary border-bottom-0').addClass('text-muted');
+                        $(this).removeClass('text-muted').addClass('active text-primary border-bottom-0');
+                        window.currentStatus = $(this).attr('data-status');
                         table.ajax.reload();
                     });
 
@@ -941,7 +955,7 @@
                 ajax: {
                     url: window.location.href,
                     data: function (d) {
-                        d.status = $('#orderStatusTabs .nav-link.active').attr('data-status');
+                        d.status = window.currentStatus;
                         d.payment_status = $('input[name="payment_status"]:checked').val() || '';
                     },
                     dataSrc: function (json) {
@@ -1002,7 +1016,7 @@
                                 displayStatus = 'Processing';
                             } else if (statusRaw === 'approved') {
                                 bgClass = 'bg-info';
-                                displayStatus = 'Accepted';
+                                displayStatus = 'Approved';
                             } else if (statusRaw.includes('delivered')) bgClass = 'bg-success';
                             else if (statusRaw.includes('cancelled')) bgClass = 'bg-danger';
                             else if (statusRaw.includes('rejected')) bgClass = 'bg-danger';
@@ -1039,7 +1053,7 @@
                                 let ext = row.invoice_url.split('.').pop().toLowerCase();
                                 let icon = ext === 'pdf' ? 'fa-file-pdf-o' : 'fa-file-image-o';
                                 let html = `<div class="d-flex align-items-center gap-2">`;
-                                html += `<a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-info text-white" title="View Invoice"><i class="fa ${icon}"></i> View</a>`;
+                                html += `<a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-info text-white" title="View Invoice"><i class="fa ${icon}"></i> &nbsp;View</a>`;
                                 html += `</div>`;
                                 return html;
                             }

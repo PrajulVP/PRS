@@ -329,14 +329,15 @@
                     </li>
                     @php
                         $user = Auth::user();
-                        $defaultPending = $user->hasRole(['salesmanager', 'fieldstaff']);
+                        $isSMorFS = $user->hasRole(['salesmanager', 'fieldstaff']);
+                        $defaultStatus = $isSMorFS ? 'pending' : 'processing';
                     @endphp
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link {{ $defaultPending ? 'active px-4 fw-bold text-primary border-bottom-0' : 'px-4 fw-bold text-muted' }}" id="tab-pending" data-bs-toggle="tab"
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-pending" data-bs-toggle="tab"
                             data-status="pending" type="button" role="tab">Pending</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link {{ !$defaultPending ? 'active px-4 fw-bold text-primary border-bottom-0' : 'px-4 fw-bold text-muted' }}" id="tab-processing"
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-processing"
                             data-bs-toggle="tab" data-status="processing" type="button" role="tab">Processing</button>
                     </li>
                     <li class="nav-item" role="presentation">
@@ -892,6 +893,10 @@
 @push('scripts')
     <script>
         $(document).ready(function () {
+            const INITIAL_STATUS = "{{ $defaultStatus }}";
+            window.currentStatus = INITIAL_STATUS;
+            window.initialTabSelected = false;
+
             const isFieldStaff = {{ Auth::user()->hasRole('fieldstaff') ? 'true' : 'false' }};
             const isDistributor = {{ Auth::user()->hasRole('distributor') ? 'true' : 'false' }};
             const isRetailer = {{ Auth::user()->hasRole('retailer') ? 'true' : 'false' }};
@@ -916,8 +921,8 @@
                 },
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
                     "<'row mb-3 d-flex align-items-center'<'col-md-4'l><'col-md-4 d-flex justify-content-center payment-filter-container'><'col-md-4'f>>" +
-                    "<'row '<'col-sm-12'tr>>" +
-                    "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
+                    "<'row'<'col-sm-12'tr>>" +
+                    "<'row mt-3'<'col-sm-12 col-md-5 d-flex justify-content-center justify-content-md-start align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-center justify-content-md-end align-items-center'p>>",
                 buttons: {
                     dom: {
                         button: {
@@ -955,11 +960,26 @@
                     var $filter = $('#filter_container').children().first();
                     $('.payment-filter-container').append($filter);
                     $('#filter_container').remove();
+                    
+                    // Definitive Tab Activation using Bootstrap API
+                    // This ensures the correct tab is marked active and internal state is synced
+                    const $targetTab = $('#tab-' + INITIAL_STATUS);
+                    if ($targetTab.length) {
+                        const tabTrigger = bootstrap.Tab.getOrCreateInstance($targetTab[0]);
+                        tabTrigger.show();
+                    }
+                    
+                    $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+                        $('#orderStatusTabs .nav-link').removeClass('active text-primary border-bottom-0').addClass('text-muted');
+                        $(this).removeClass('text-muted').addClass('active text-primary border-bottom-0');
+                        window.currentStatus = $(this).attr('data-status');
+                        table.ajax.reload();
+                    });
                 },
                 ajax: {
                     url: window.location.href,
                     data: function (d) {
-                        d.status = $('#orderStatusTabs .nav-link.active').attr('data-status');
+                        d.status = window.currentStatus;
                         d.payment_status = $('input[name="payment_status"]:checked').val() || '';
                     },
                     dataSrc: function (json) {
@@ -1058,7 +1078,7 @@
                         }
                         else if (statusRaw === 'approved') {
                             bgClass = 'bg-info text-white';
-                            displayStatus = 'Accepted';
+                            displayStatus = 'Approved';
                         }
                         else if (statusRaw === 'delivered') bgClass = 'bg-success text-white';
                         else if (statusRaw === 'cancelled') bgClass = 'bg-danger text-white';

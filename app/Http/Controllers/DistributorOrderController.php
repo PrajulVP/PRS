@@ -443,7 +443,7 @@ class DistributorOrderController extends Controller
         $distributorOrder->save();
 
         // Notify Admins
-        $admins = \App\Models\User::role(['admin', 'superadmin'])->get();
+        $admins = \App\Models\User::role('admin')->get();
         foreach ($admins as $admin) {
             $this->notifyUnique($admin, new \App\Notifications\OrderActionRequired(
                 $distributorOrder,
@@ -800,7 +800,7 @@ class DistributorOrderController extends Controller
         $this->clearOrderNotifications($distributorOrder->id, 'distributor_order');
 
         // Notify Admins
-        $admins = \App\Models\User::role(['admin', 'superadmin'])->get();
+        $admins = \App\Models\User::role('admin')->get();
         foreach ($admins as $admin) {
             $this->notifyUnique($admin, new OrderActionRequired(
                 $distributorOrder,

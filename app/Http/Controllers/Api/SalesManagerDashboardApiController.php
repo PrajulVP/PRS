@@ -355,6 +355,7 @@ class SalesManagerDashboardApiController extends Controller
      *     tags={"Sales Manager Dashboard"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="status", in="query", required=false, @OA\Schema(type="string", enum={"pending","processing","accepted","delivered","cancelled","rejected"})),
+     *     @OA\Parameter(name="field_staff_id", in="query", required=false, @OA\Schema(type="integer"), description="Filter by Field Staff ID"),
      *     @OA\Response(response=200, description="List of retailer orders")
      * )
      */
@@ -374,6 +375,10 @@ class SalesManagerDashboardApiController extends Controller
 
         if ($request->has('status') && !empty($request->status)) {
             $query->where('status', $request->status);
+        }
+
+        if ($request->has('field_staff_id') && !empty($request->field_staff_id)) {
+            $query->where('fieldstaff_id', $request->field_staff_id);
         }
 
         $orders = $query->latest()->get();
@@ -399,90 +404,6 @@ class SalesManagerDashboardApiController extends Controller
         }));
     }
 
-    /**
-     * @OA\Post(
-     *     path="/api/sales-manager/retailer-orders/{id}/update-status",
-     *     summary="Accept or reject a pending retailer order",
-     *     description="Sales managers can accept a pending order (moves to processing) or reject it.",
-     *     tags={"Sales Manager Dashboard"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="status", type="string", enum={"processing", "rejected"}),
-     *             @OA\Property(property="cancellation_reason", type="string", description="Required if status is rejected")
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Order status updated")
-     * )
-     */
-    public function updateRetailerOrderStatus(Request $request, $id)
-    {
-        /** @var \App\Models\User $user */
-        $user = Auth::user();
-        if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
-
-        $request->validate([
-            'status' => 'required|in:processing,rejected',
-            'cancellation_reason' => 'required_if:status,rejected|string|nullable'
-        ]);
-
-        $salesManager = $user->salesManager;
-        $fieldStaffIds = $salesManager->fieldStaffs->pluck('id');
-
-        $order = RetailerOrder::where(function ($q) use ($fieldStaffIds) {
-            $q->whereHas('retailer', function ($sq) use ($fieldStaffIds) {
-                $sq->whereIn('field_staff_id', $fieldStaffIds);
-            })->orWhereIn('fieldstaff_id', $fieldStaffIds);
-        })->findOrFail($id);
-
-        if ($order->status !== RetailerOrder::STATUS_PENDING) {
-            return response()->json(['error' => 'Only pending orders can be updated by the Sales Manager.'], 400);
-        }
-
-        $order->status = $request->status;
-        if ($request->status === RetailerOrder::STATUS_REJECTED) {
-            $order->cancellation_reason = $request->cancellation_reason;
-        }
-        $order->save();
-
-        // If moved to processing, notify Admin
-        if ($order->status === RetailerOrder::STATUS_PROCESSING) {
-            if (method_exists($this, 'deleteOrderNotifications')) {
-                $this->deleteOrderNotifications($order->id, 'retailer_order');
-            }
-            $admins = \App\Models\User::role(['admin', 'superadmin'])->get();
-            $adminIds = $admins->pluck('id')->toArray();
-            foreach ($admins as $admin) {
-                if (method_exists($this, 'notifyUnique')) {
-                    $this->notifyUnique($admin, new \App\Notifications\OrderActionRequired($order, "Retailer Order #{$order->order_code} has been processed and is ready for your approval.", url('/approvals/retailers'), 'retailer_order'));
-                }
-            }
-            
-            // OneSignal Push to Admins
-            if (!empty($adminIds)) {
-                $this->sendOneSignalPush(
-                    $adminIds,
-                    "Retailer Order #{$order->order_code} has been processed and is ready for your approval.",
-                    ['order_id' => $order->id, 'type' => 'retailer_order'],
-                    'Order Processing Required'
-                );
-            }
-        } elseif ($order->status === RetailerOrder::STATUS_REJECTED) {
-            // OneSignal Push to Retailer
-            if ($order->retailer && $order->retailer->user) {
-                $this->sendOneSignalPush(
-                    [$order->retailer->user->id],
-                    "Your order #{$order->order_code} has been rejected.",
-                    ['order_id' => $order->id, 'type' => 'retailer_order'],
-                    'Order Rejected'
-                );
-            }
-        }
-
-        return response()->json(['message' => 'Order status updated to ' . $order->status . '.']);
-    }
     /**
      * @OA\Get(
      *     path="/api/sales-manager/distributor-insights",
@@ -662,5 +583,73 @@ class SalesManagerDashboardApiController extends Controller
             DB::rollBack();
             return response()->json(['error' => 'Failed to create field staff. ' . $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/sales-manager/distributors",
+     *     summary="List all distributors assigned to this Sales Manager",
+     *     tags={"Sales Manager Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(response=200, description="List of distributors")
+     * )
+     */
+    public function getDistributors()
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
+
+        $salesManager = $user->salesManager;
+        $distributors = \App\Models\Distributor::with('user')
+            ->where('sales_manager_id', $salesManager->id)
+            ->get();
+
+        return response()->json($distributors);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/sales-manager/distributor-orders/{id}/approve",
+     *     summary="Approve (process) a distributor order",
+     *     description="Changes order status to 'processing'. Only for orders assigned to this Sales Manager.",
+     *     tags={"Sales Manager Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Order approved successfully")
+     * )
+     */
+    public function approveDistributorOrder($id)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
+
+        $salesManager = $user->salesManager;
+        $order = DistributorOrder::whereHas('distributor', function ($q) use ($salesManager) {
+            $q->where('sales_manager_id', $salesManager->id);
+        })->findOrFail($id);
+
+        if ($order->status !== DistributorOrder::STATUS_PENDING) {
+            return response()->json(['error' => 'Order is not in pending status'], 400);
+        }
+
+        $order->update([
+            'status' => DistributorOrder::STATUS_PROCESSING,
+            'sales_manager_id' => $salesManager->id
+        ]);
+
+        // Notify Admins
+        $admins = User::role(['admin', 'superadmin'])->get();
+        foreach ($admins as $admin) {
+            $this->notifyUnique($admin, new \App\Notifications\OrderActionRequired(
+                $order,
+                "Distributor Order #{$order->order_code} has been processed by {$user->name} and is ready for your approval.",
+                route('admin.approvals.distributor'),
+                'distributor_order'
+            ));
+        }
+
+        return response()->json(['message' => "Order #{$order->order_code} approved successfully."]);
     }
 }

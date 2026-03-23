@@ -442,6 +442,38 @@ class DistributorOrderApiController extends Controller
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/distributor-orders/{id}/approve",
+     *     summary="Approve a distributor order",
+     *     description="Sales Managers: Changes status to 'processing'. Admins: Changes status to 'accepted' (requires invoice and batches).",
+     *     tags={"Distributor Orders"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="payment_status", type="string", enum={"pending", "paid", "failed"}),
+     *             @OA\Property(property="cancellation_reason", type="string"),
+     *             @OA\Property(property="batches", type="object", description="Required for Admin 'accepted' status")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Order approved successfully")
+     * )
+     */
+    public function approve(Request $request, $id)
+    {
+        $user = Auth::user();
+        if ($user->hasRole('salesmanager')) {
+            $request->merge(['status' => DistributorOrder::STATUS_PROCESSING]);
+        } elseif ($user->hasAnyRole(['admin', 'superadmin'])) {
+            $request->merge(['status' => DistributorOrder::STATUS_APPROVED]);
+        } else {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        return $this->updateStatus($request, $id);
+    }
+
+    /**
      * Helper to format order response.
      */
     private function formatOrder($order)

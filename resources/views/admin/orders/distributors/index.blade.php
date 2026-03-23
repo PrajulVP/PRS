@@ -708,7 +708,7 @@
                             let code = row.order_code || 'Order';
 
                             let filename = `Invoice_${code}_${name}_${date}.${ext}`;
-                            return `<a href="${data}" download="${filename}" target="_blank" class="btn btn-sm btn-success"><i class="fa ${icon}"></i> Download</a>`;
+                            return `<a href="${data}" download="${filename}" target="_blank" class="btn btn-sm btn-success"><i class="fa ${icon}"></i> &nbsp;Download</a>`;
                         }
                         return '<span class="text-muted small">No Invoice</span>';
                     }
@@ -750,8 +750,8 @@
                 ],
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
                     "<'row mb-4 d-flex align-items-center'<'col-md-4'l><'col-md-4 d-flex justify-content-center payment-filter-container'><'col-md-4'f>>" +
-                    "<'row '<'col-sm-12'tr>>" +
-                    "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
+                    "<'row'<'col-sm-12'tr>>" +
+                    "<'row mt-3'<'col-sm-12 col-md-5 d-flex justify-content-center justify-content-md-start align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-center justify-content-md-end align-items-center'p>>",
                 buttons: {
                     dom: {
                         button: {
@@ -886,7 +886,11 @@
                         showToast('success', res.success || 'Invoice uploaded successfully');
                     },
                     error: function (xhr) {
-                        showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Upload failed');
+                        let err = 'Upload failed';
+                        if (xhr.responseJSON) {
+                            err = xhr.responseJSON.message || xhr.responseJSON.error || err;
+                        }
+                        showToast('error', err);
                     },
                     complete: function () {
                         $btn.prop('disabled', false).text('Upload');
@@ -923,7 +927,9 @@
                     error: function (xhr) {
                         $('#deleteConfirmModal').modal('hide');
                         let err = 'An error occurred.';
-                        if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
+                        if (xhr.responseJSON) {
+                            err = xhr.responseJSON.message || xhr.responseJSON.error || err;
+                        }
                         showToast('error', err);
                     }
                 });
@@ -961,7 +967,9 @@
                     },
                     error: function (xhr) {
                         let err = 'An error occurred';
-                        if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
+                        if (xhr.responseJSON) {
+                            err = xhr.responseJSON.message || xhr.responseJSON.error || err;
+                        }
                         showToast('error', err);
                     }
                 });
@@ -1015,7 +1023,9 @@
                     },
                     error: function (xhr) {
                         let err = 'An error occurred.';
-                        if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
+                        if (xhr.responseJSON) {
+                            err = xhr.responseJSON.message || xhr.responseJSON.error || err;
+                        }
                         showToast('error', err);
                     }
                 });
@@ -1150,7 +1160,9 @@
                     },
                     error: function (xhr) {
                         let err = 'An error occurred.';
-                        if (xhr.responseJSON && xhr.responseJSON.message) err = xhr.responseJSON.message;
+                        if (xhr.responseJSON) {
+                            err = xhr.responseJSON.message || xhr.responseJSON.error || err;
+                        }
                         showToast('error', err);
                     }
                 });

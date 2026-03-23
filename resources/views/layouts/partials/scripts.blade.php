@@ -65,6 +65,9 @@
 
     // Global Toast Function (Premium SweetAlert2 Toast)
     function showToast(type, message) {
+        // Map 'danger' to 'error' for SweetAlert2 compatibility
+        const iconType = type === 'danger' ? 'error' : type;
+        
         const Toast = Swal.mixin({
             toast: true,
             position: 'top-end',
@@ -78,7 +81,7 @@
         });
 
         Toast.fire({
-            icon: type, // 'success', 'error', 'warning', 'info', 'question'
+            icon: iconType, // 'success', 'error', 'warning', 'info', 'question'
             title: message
         });
     }

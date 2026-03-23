@@ -753,6 +753,62 @@
                 ]
             }
         },
+        "/api/distributor-orders/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Distributor Orders"
+                ],
+                "summary": "Approve a distributor order",
+                "description": "Sales Managers: Changes status to 'processing'. Admins: Changes status to 'accepted' (requires invoice and batches).",
+                "operationId": "fb01db1e4dc899f38fc8c4db12f0be03",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "payment_status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "paid",
+                                            "failed"
+                                        ]
+                                    },
+                                    "cancellation_reason": {
+                                        "type": "string"
+                                    },
+                                    "batches": {
+                                        "description": "Required for Admin 'accepted' status",
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Order approved successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/distributor/retailers": {
             "get": {
                 "tags": [
@@ -1590,12 +1646,112 @@
                 }
             }
         },
+        "/api/notifications": {
+            "get": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Get notifications for the authenticated user",
+                "operationId": "3787b2cd3e17cdabb9b83e850f48b4fa",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of notifications",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "unread_count": {
+                                            "type": "integer"
+                                        },
+                                        "notifications": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/notifications/{id}/read": {
+            "post": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Mark a notification as read",
+                "operationId": "74e5c2672d6ea62323361647be625c3e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Marked as read"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/notifications/read-all": {
+            "post": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Mark all notifications as read",
+                "operationId": "478c2d216ab8854558a6876cb312e92b",
+                "responses": {
+                    "200": {
+                        "description": "All marked as read"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/prescriptions/upload": {
             "post": {
                 "tags": [
                     "Prescription"
                 ],
-                "summary": "Upload a prescription and get AI results",
+                "summary": "Upload a prescription and get AI matched results",
+                "description": "Extracts medicines from an image/PDF and matches them with available products and distributors.",
                 "operationId": "471c4295c9c4fc84bcd9040536d43dc2",
                 "requestBody": {
                     "required": true,
@@ -1607,9 +1763,12 @@
                                 ],
                                 "properties": {
                                     "prescription": {
-                                        "description": "The prescription image or PDF",
                                         "type": "string",
                                         "format": "binary"
+                                    },
+                                    "retailer_id": {
+                                        "description": "Optional retailer id for distance calculation and stock filtering",
+                                        "type": "integer"
                                     }
                                 },
                                 "type": "object"
@@ -1619,7 +1778,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "AI results",
+                        "description": "AI results with multi-match options",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1628,37 +1787,29 @@
                                             "type": "boolean",
                                             "example": true
                                         },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to extract data",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
+                                        "matched_items": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
                                         },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Failed to extract data from the prescription."
+                                        "out_of_stock_items": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "unmatched_items": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
                                         }
                                     },
                                     "type": "object"
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "description": "Unauthorized"
                     }
                 },
                 "security": [
@@ -2359,64 +2510,20 @@
                                 "rejected"
                             ]
                         }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "List of retailer orders"
-                    }
-                },
-                "security": [
+                    },
                     {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/sales-manager/retailer-orders/{id}/update-status": {
-            "post": {
-                "tags": [
-                    "Sales Manager Dashboard"
-                ],
-                "summary": "Accept or reject a pending retailer order",
-                "description": "Sales managers can accept a pending order (moves to processing) or reject it.",
-                "operationId": "21827c29f262d47f6d26b543c7145883",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
+                        "name": "field_staff_id",
+                        "in": "query",
+                        "description": "Filter by Field Staff ID",
+                        "required": false,
                         "schema": {
                             "type": "integer"
                         }
                     }
                 ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "status": {
-                                        "type": "string",
-                                        "enum": [
-                                            "processing",
-                                            "rejected"
-                                        ]
-                                    },
-                                    "cancellation_reason": {
-                                        "description": "Required if status is rejected",
-                                        "type": "string"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
-                        "description": "Order status updated"
+                        "description": "List of retailer orders"
                     }
                 },
                 "security": [
@@ -2465,6 +2572,55 @@
                 "responses": {
                     "200": {
                         "description": "Detailed distributor insights"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/sales-manager/distributors": {
+            "get": {
+                "tags": [
+                    "Sales Manager Dashboard"
+                ],
+                "summary": "List all distributors assigned to this Sales Manager",
+                "operationId": "48e63b2ba286bdcf3e30dbbe1d4d3b92",
+                "responses": {
+                    "200": {
+                        "description": "List of distributors"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/sales-manager/distributor-orders/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Sales Manager Dashboard"
+                ],
+                "summary": "Approve (process) a distributor order",
+                "description": "Changes order status to 'processing'. Only for orders assigned to this Sales Manager.",
+                "operationId": "141c6ec4b0c88c00ce15481654e59dbf",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Order approved successfully"
                     }
                 },
                 "security": [
@@ -2649,6 +2805,10 @@
         {
             "name": "Locations",
             "description": "Locations"
+        },
+        {
+            "name": "Notifications",
+            "description": "Notifications"
         },
         {
             "name": "Prescription",

@@ -101,6 +101,81 @@
             opacity: 1;
         }
 
+        /* === Premium Status Badges === */
+        .status-badge {
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+            cursor: pointer;
+            user-select: none;
+            line-height: 1.2;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .status-badge-active {
+            background: #10b981 !important;
+            color: #ffffff !important;
+            border-color: #059669 !important;
+        }
+
+        .status-badge-active:hover {
+            background: #059669 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .status-badge-active::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: #ffffff;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 6px #ffffff;
+        }
+
+        .status-badge-inactive {
+            background: #ef4444 !important;
+            color: #ffffff !important;
+            border-color: #dc2626 !important;
+        }
+
+        .status-badge-inactive:hover {
+            background: #dc2626 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .status-badge-inactive::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: #ffffff;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 6px #ffffff;
+        }
+
+        /* Smaller version for modals next to names */
+        .modal-body .status-badge {
+            padding: 4px 10px !important;
+            font-size: 0.65rem !important;
+            gap: 5px !important;
+            letter-spacing: 0.6px !important;
+        }
+        .modal-body .status-badge::before {
+            width: 5px !important;
+            height: 5px !important;
+        }
+
         .card-header,
         .card-footer {
             background-color: transparent !important;
@@ -235,6 +310,26 @@
             filter: brightness(1.1);
         }
 
+        /* === Force Red Delete & Danger Buttons === */
+        .btn-danger, .btn-outline-danger {
+            background-color: #ef4444 !important;
+            border-color: #ef4444 !important;
+            color: #ffffff !important;
+        }
+
+        .btn-danger:hover, .btn-outline-danger:hover {
+            background-color: #dc2626 !important;
+            border-color: #dc2626 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+            filter: brightness(1.1);
+        }
+
+        /* Specifically target icons inside danger buttons */
+        .btn-danger i, .btn-outline-danger i {
+            color: #ffffff !important;
+        }
+
         .btn-secondary {
             background: #ffffff !important;
             color: var(--med-primary) !important;
@@ -285,16 +380,16 @@
         }
 
         .dataTables_wrapper .dataTables_paginate .paginate_button {
-            border-radius: 12px !important;
-            margin: 0 4px !important;
+            border-radius: 8px !important;
+            margin: 0 2px !important;
             border: 1px solid var(--med-border) !important;
             background: var(--med-bg-card) !important;
             color: var(--med-text-main) !important;
             transition: all 0.3s ease !important;
-            padding: 6px 14px !important;
+            padding: 4px 10px !important;
             display: inline-block !important;
-            /* Fix inline layout for arrows */
             vertical-align: middle !important;
+            font-size: 0.8rem !important;
         }
 
         .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
@@ -313,6 +408,7 @@
             font-weight: 700 !important;
             box-shadow: 0 4px 12px rgba(0, 73, 122, 0.3) !important;
         }
+
 
         .dataTables_wrapper .dataTables_filter input,
         .dataTables_wrapper .dataTables_length select {
@@ -389,6 +485,65 @@
             font-size: 0.85rem !important;
             font-weight: 500 !important;
         }
+
+        /* Refined DataTables Footer Wrapping & Compact Pagination (Bootstrap 5) */
+        .dataTables_wrapper .pagination .page-link {
+            padding: 0.15rem 0.4rem !important;
+            font-size: 0.75rem !important;
+            min-width: 28px !important;
+            text-align: center !important;
+            border-radius: 4px !important;
+            margin: 0 1px !important;
+        }
+
+        /* Specific styling for Previous/Next to keep them readable */
+        .dataTables_wrapper .pagination .page-item:first-child .page-link,
+        .dataTables_wrapper .pagination .page-item:last-child .page-link {
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+        }
+
+        .dataTables_wrapper .pagination {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            justify-content: flex-end !important;
+            margin-bottom: 0 !important;
+        }
+
+        .dataTables_wrapper .row:last-child {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            margin-top: 1.5rem !important;
+            gap: 0 !important;
+        }
+
+        /* Force stacking only on mobile/small tablets, or if container is narrow */
+        @media (max-width: 991px) {
+            .dataTables_wrapper .row:last-child > div {
+                width: 100% !important;
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
+                justify-content: center !important;
+                text-align: center !important;
+                display: flex !important;
+            }
+            
+            .dataTables_wrapper .dataTables_info {
+                margin-bottom: 0.5rem !important;
+                justify-content: center !important;
+                text-align: center !important;
+                width: 100% !important;
+            }
+
+            .dataTables_wrapper .dataTables_paginate {
+                width: 100% !important;
+                display: flex !important;
+                justify-content: center !important;
+            }
+        }
+
+
 
         /* Dark Mode Adjustments */
         body.dark-only .table tbody tr:hover {
@@ -808,6 +963,11 @@
                     }
                 });
             });
+
+            // Table Pagination Logic Globally (1 2 3 ... Last)
+            if (window.jQuery && $.fn.DataTable) {
+                $.fn.dataTable.ext.pager.numbers_length = 5;
+            }
 
             // Datatables Global Highlight Logic
             var urlParams = new URLSearchParams(window.location.search);

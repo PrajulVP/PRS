@@ -33,6 +33,24 @@ class DistributorController extends Controller
             $data->orderBy('distributors.id', 'desc');
             return DataTables::of($data)
                 ->addIndexColumn()
+                ->editColumn('user.status', function ($row) {
+                    return $row->user ? $row->user->status : 'N/A';
+                })
+                ->addColumn('address', function ($row) {
+                    return $row->address ?? 'N/A';
+                })
+                ->addColumn('district_name', function ($row) {
+                    return $row->district ? $row->district->name : 'N/A';
+                })
+                ->addColumn('area_name', function ($row) {
+                    return $row->area ? $row->area->name : 'N/A';
+                })
+                ->addColumn('latitude', function ($row) {
+                    return $row->latitude ?? '';
+                })
+                ->addColumn('longitude', function ($row) {
+                    return $row->longitude ?? '';
+                })
                 ->addColumn('can_edit', function($row) use ($currentUser) {
                     return $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory('distributors', 'edit');
                 })
@@ -208,19 +226,43 @@ class DistributorController extends Controller
 
     public function activate(Distributor $distributor)
     {
+        /** @var User $currentUser */
+        $currentUser = Auth::user();
+        if (!$currentUser->hasRole('superadmin')) {
+            if (request()->ajax() || request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'You do not have permission to change the status of this user.'], 403);
+            }
+            return redirect()->route('admin.distributors.index')->with('error', 'You do not have permission to change the status of this user.');
+        }
+
         $distributor->user->status = 'active';
         $distributor->user->save();
 
         $this->clearUserNotifications($distributor->user->id);
 
+        if (request()->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Distributor activated successfully!']);
+        }
         return redirect()->route('admin.distributors.index')->with('success', 'Distributor activated successfully!');
     }
 
     public function deactivate(Distributor $distributor)
     {
+        /** @var User $currentUser */
+        $currentUser = Auth::user();
+        if (!$currentUser->hasRole('superadmin')) {
+            if (request()->ajax() || request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'You do not have permission to change the status of this user.'], 403);
+            }
+            return redirect()->route('admin.distributors.index')->with('error', 'You do not have permission to change the status of this user.');
+        }
+
         $distributor->user->status = 'inactive';
         $distributor->user->save();
 
+        if (request()->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Distributor deactivated successfully!']);
+        }
         return redirect()->route('admin.distributors.index')->with('success', 'Distributor deactivated successfully!');
     }
 }

@@ -531,8 +531,12 @@
                                                                             <div class="row g-3">
                                                                                 <div class="col-md-12 mb-3">
                                                                                     <div class="p-4 bg-light rounded text-center">
-                                                                                        <h3 class="fw-bold text-primary mb-1">${product.product_name}</h3>
-                                                                                        <div class="text-secondary">${product.product_code} <span class="mx-2">|</span> ${product.generic_name || 'Generic N/A'} <span class="mx-2">|</span> ${product.pack || 'Pack N/A'}</div>
+                                                                                        <h3 class="fw-bold text-primary mb-2">${product.product_name}</h3>
+                                                                                        <div class="d-flex flex-wrap justify-content-center gap-3 text-secondary">
+                                                                                            <span class="badge bg-white text-dark border shadow-sm px-3 py-2"><i class="fa fa-tag me-1 text-primary"></i>${product.product_code}</span>
+                                                                                            <span class="badge bg-white text-dark border shadow-sm px-3 py-2"><i class="fa fa-dna me-1 text-info"></i>${product.generic_name || 'Generic N/A'}</span>
+                                                                                            <span class="badge bg-white text-dark border shadow-sm px-3 py-2"><i class="fa fa-box me-1 text-warning"></i>${product.pack || 'Pack N/A'}</span>
+                                                                                        </div>
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
