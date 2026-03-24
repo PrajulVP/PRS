@@ -121,7 +121,7 @@ class LoyaltyPointsController extends Controller
                             }
 
                             $summary = '<div class="mb-1"><span class="fw-bold">'.$pName.'</span>';
-                            if ($pGeneric && $pGeneric !== 'N/A') {
+                            if (!empty(trim($pGeneric)) && strtoupper(trim($pGeneric)) !== 'N/A') {
                                 $summary .= ' <span class="text-muted small">('.$pGeneric.')</span>';
                             }
                             $summary .= '<br><span class="small">'.$item->quantity.' '.$item->unit.'</span></div>';

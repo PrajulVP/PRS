@@ -665,7 +665,13 @@
                     },
                     error: (xhr) => {
                         btn.prop('disabled', false);
-                        showToast('danger', 'Error saving data');
+                        let message = 'Error';
+                        if (xhr.status === 422 && xhr.responseJSON.errors) {
+                            message = Object.values(xhr.responseJSON.errors).map(e => e[0]).join('<br>');
+                        } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                            message = xhr.responseJSON.message;
+                        }
+                        showToast('danger', message);
                     }
                 });
             });

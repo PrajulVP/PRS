@@ -124,7 +124,7 @@
                                         data-strip-size="{{ $p->strip_size ?? 0 }}" data-box-size="{{ $p->box_size ?? 0 }}"
                                         data-carton-size="{{ $p->carton_size ?? 0 }}"
                                         data-pack="{{ strtolower($p->pack ?? '') }}">
-                                        {{ $p->product_name }}{{ $p->product_code ? ' ('.$p->product_code.')' : '' }}
+                                        {{ $p->product_name }}{{ (!empty(trim($p->product_code)) && strtoupper(trim($p->product_code)) !== 'N/A') ? ' ('.$p->product_code.')' : '' }}
                                     </option>
                                 @endforeach
                             </select>

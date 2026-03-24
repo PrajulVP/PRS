@@ -390,7 +390,7 @@ class RetailerOrderManagementController extends Controller
                         }
                         $pBrand = $item->product ? $item->product->brand : null;
                         $summary = '<div class="mb-1"><span class="fw-bold">'.$pName.'</span>';
-                        if ($pBrand && $pBrand !== 'N/A') {
+                        if (!empty(trim($pBrand)) && strtoupper(trim($pBrand)) !== 'N/A') {
                             $summary .= ' <span class="text-muted small">('.$pBrand.')</span>';
                         }
                         $summary .= '<br><span class="small">'.$item->quantity.' '.$item->unit.'</span></div>';

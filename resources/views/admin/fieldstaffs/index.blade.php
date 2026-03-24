@@ -146,6 +146,13 @@
                             </div>
                         </div>
 
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Address</label>
+                                <textarea name="address" class="form-control" rows="2"></textarea>
+                            </div>
+                        </div>
+
                         @if(Auth::user()->hasAnyRole(['admin', 'superadmin']))
                         <div class="row">
                             <div class="col-md-12 mb-3">
@@ -226,24 +233,27 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Contact No</label>
-                                <input type="text" name="contact_no" id="edit_contact_no" class="form-control">
+                                <input type="text" name="contact_no" id="edit_contact_no" class="form-control" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Pincode</label>
                                 <input type="text" name="pincode" id="edit_pincode" class="form-control" required>
                             </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Address</label>
+                                <textarea name="address" id="edit_address" class="form-control" rows="2"></textarea>
+                            </div>
+                        </div>
+                        <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Status</label>
                                 <select name="status" id="edit_status" class="form-select">
                                     <option value="active">Active</option>
                                     <option value="inactive">Inactive</option>
                                 </select>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12 mb-3">
-                                <label class="form-label">Address</label>
-                                <textarea name="address" id="edit_address" class="form-control"></textarea>
                             </div>
                         </div>
                         <!-- Map Section -->
@@ -716,12 +726,12 @@
                 var data = $(this).data('row');
                 $('#edit_name').val(data.user.name);
                 $('#edit_email').val(data.user.email);
-                $('#edit_contact_no').val(data.contact_no);
-                $('#edit_address').val(data.user.address);
-                $('#edit_pincode').val(data.pincode);
+                $('#edit_contact_no').val(data.contact_no || '');
+                $('#edit_pincode').val(data.pincode || '');
+                $('#edit_address').val(data.address || ''); // Populate address
+                $('#edit_status').val(data.user.status);
                 $('#edit_latitude').val(data.latitude);
                 $('#edit_longitude').val(data.longitude);
-                $('#edit_status').val(data.user.status);
                 $('#editFieldStaffForm').attr('action', "{{ route('admin.field-staffs.update', ':id') }}".replace(':id', data.id));
                 $('#editFieldStaffModal').modal('show');
             });
@@ -754,11 +764,17 @@
                         table.ajax.reload();
                         btn.prop('disabled', false);
                         if (window.updateSidebarCounts) window.updateSidebarCounts();
-                        showToast('success', res.message);
+                        showToast('success', 'Saved successfully');
                     },
                     error: (xhr) => {
                         btn.prop('disabled', false);
-                        showToast('danger', 'Error processing request');
+                        let message = 'Error';
+                        if (xhr.status === 422 && xhr.responseJSON.errors) {
+                            message = Object.values(xhr.responseJSON.errors).map(e => e[0]).join('<br>');
+                        } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                            message = xhr.responseJSON.message;
+                        }
+                        showToast('danger', message);
                     }
                 });
             });

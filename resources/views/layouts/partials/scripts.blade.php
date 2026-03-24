@@ -82,7 +82,7 @@
 
         Toast.fire({
             icon: iconType, // 'success', 'error', 'warning', 'info', 'question'
-            title: message
+            html: message
         });
     }
 

@@ -480,8 +480,44 @@
                 $('#edit_name').val(row.name);
                 $('#edit_email').val(row.email);
                 $('#edit_role').val(row.role);
+                // Trigger change to update visibility of conditional fields
+                $('#edit_role').trigger('change');
                 $('#editForm').attr('action', `/users/${row.id}`);
                 $('#editUserModal').modal('show');
+            });
+
+            $('#createForm, #editForm').on('submit', function (e) {
+                e.preventDefault();
+                let form = $(this);
+                let btn = form.find('button[type="submit"]');
+                let oldText = btn.text();
+                btn.prop('disabled', true).text('Saving...');
+
+                $.ajax({
+                    url: form.attr('action'),
+                    type: "POST",
+                    data: new FormData(this),
+                    processData: false,
+                    contentType: false,
+                    success: (res) => {
+                        $('.modal').modal('hide');
+                        form[0].reset();
+                        table.ajax.reload();
+                        btn.prop('disabled', false).text(oldText);
+                        if (window.updateSidebarCounts) window.updateSidebarCounts();
+                        showToast('success', 'Saved successfully');
+                    },
+                    error: (xhr) => {
+                        btn.prop('disabled', false).text(oldText);
+                        let message = 'Error';
+                        if (xhr.status === 422 && xhr.responseJSON.errors) {
+                            message = Object.values(xhr.responseJSON.errors).map(e => e[0]).join('<br>');
+                        } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                            message = xhr.responseJSON.message;
+                        }
+                        showToast('danger', message);
+                    }
+                });
             });
 
             // View Modal handler
