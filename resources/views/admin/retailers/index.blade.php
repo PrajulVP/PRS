@@ -173,6 +173,7 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="row g-3">
+                                    @if(!Auth::user()->hasRole('fieldstaff'))
                                     <div class="col-md-6">
                                         <label class="form-label fw-bold">Field Staff</label>
                                         <select name="field_staff_id" class="form-select">
@@ -182,6 +183,9 @@
                                             @endforeach
                                         </select>
                                     </div>
+                                    @endif
+                                    
+                                    @if(Auth::user()->hasAnyRole(['admin', 'superadmin']))
                                     <div class="col-md-6">
                                         <label class="form-label fw-bold">Sales Manager</label>
                                         <select name="sales_manager_id" class="form-select">
@@ -191,6 +195,7 @@
                                             @endforeach
                                         </select>
                                     </div>
+                                    @endif
                                 </div>
                             </div>
                             <div class="col-12">

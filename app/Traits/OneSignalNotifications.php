@@ -45,21 +45,30 @@ trait OneSignalNotifications
         }
 
         try {
-            Log::info('Sending OneSignal Notification', ['payload' => $payload]);
+            Log::info('OneSignal Push Request', [
+                'target_user_ids' => $userIds,
+                'found_player_ids_count' => count($playerIds),
+                'payload' => $payload
+            ]);
 
             $response = Http::withHeaders([
                 'Authorization' => 'Basic ' . $restApiKey,
                 'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
             ])->post('https://onesignal.com/api/v1/notifications', $payload);
 
+            $responseBody = $response->json();
+
             if ($response->successful()) {
-                Log::info('OneSignal Notification sent successfully', ['response' => $response->json()]);
+                Log::info('OneSignal Push Success', [
+                    'response' => $responseBody
+                ]);
                 return true;
             }
 
-            Log::error('OneSignal Notification failed', [
+            Log::error('OneSignal Push Failed', [
                 'status' => $response->status(),
-                'response' => $response->body()
+                'response' => $responseBody ?? $response->body()
             ]);
             return false;
 

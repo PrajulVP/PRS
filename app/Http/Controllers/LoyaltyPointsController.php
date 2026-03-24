@@ -54,77 +54,29 @@ class LoyaltyPointsController extends Controller
         }
 
         // 2. For other roles (Admin, Manager, Field Staff), show selector page
-        if ($request->ajax()) {
-            // Return logic for DataTables if we want to list ALL retailers with points summary
-            // But the requirement is "select box".
-            // So we might return JSON for select2 or handle search.
+        
+        // --- PREPARE BASE QUERY (Shared for AJAX and View) ---
+        $retailersQuery = \App\Models\Retailer::with(['user', 'salesManager.user', 'fieldStaff.user', 'district', 'area'])
+            ->select('retailers.*');
 
-            // If it's a request for the summary TABLE of a selected retailer
-            if ($request->has('retailer_id')) {
-                $retailerId = $request->input('retailer_id');
-                // Permission check: ensure user can view this retailer
-                $retailer = Retailer::findOrFail($retailerId);
-
-                // Add scoped permission checks here if needed (e.g. Field Staff can only see own retailers)
-                if ($user->hasRole('fieldstaff') && $retailer->field_staff_id !== $user->fieldStaff->id) {
-                    return response()->json(['error' => 'Unauthorized access to this retailer.'], 403);
-                }
-
-                $orders = $retailer->retailerOrders()
-                    ->with('items.product')
-                    ->whereIn('status', ['approved', 'delivered'])
-                    ->orderBy('updated_at', 'desc');
-
-                return DataTables::of($orders)
-                    ->addIndexColumn()
-                    ->addColumn('product_summary', function ($row) {
-                        return $row->items->map(function ($item) {
-                            $product = $item->product;
-                            if (!$product) {
-                                // Fallback: Check if we can find the name in inventories (orphaned data)
-                                $inventory = \App\Models\Inventory::where('product_id', $item->product_id)->first();
-                                $prodName = $inventory ? $inventory->product_name : 'Unknown Product #' . $item->product_id;
-                                $prodGeneric = $inventory ? $inventory->distributor_product_code : 'N/A';
-                            } else {
-                                $prodName = $product->product_name;
-                                $prodGeneric = $product->generic_name ?? 'N/A';
-                            }
-                            return '<div class="mb-1"><span class="fw-bold">'.$prodName.'</span> <span class="text-muted small">('.$prodGeneric.')</span><br><span class="small">'.$item->quantity.' '.$item->unit.'</span></div>';
-                        })->implode('');
-                    })
-                    ->editColumn('updated_at', function ($row) {
-                        return $row->updated_at->format('d M Y, h:i A');
-                    })
-                    ->editColumn('loyalty_points_earned', function ($row) {
-                        return number_format($row->loyalty_points_earned, 2);
-                    })
-                    ->rawColumns(['product_summary', 'loyalty_points_earned'])
-                    ->make(true);
-            }
-        }
-
-        // Fetch list of retailers based on role and filters
-        $retailersQuery = Retailer::with(['user', 'fieldStaff.user', 'salesManager.user']);
-
+        // Role-based Access Control
         if ($user->hasRole('fieldstaff')) {
             $retailersQuery->where('field_staff_id', $user->fieldStaff->id);
         } elseif ($user->hasRole('salesmanager')) {
             $retailersQuery->where('sales_manager_id', $user->salesManager->id);
-            if ($request->filled('field_staff_id')) {
-                $retailersQuery->where('field_staff_id', $request->field_staff_id);
-            }
         } elseif ($user->hasRole('distributor')) {
             $retailersQuery->where('distributor_id', $user->distributor->id);
-        } else {
-            // Admin/Superadmin - can filter by Sales Manager or Field Staff
-            if ($request->filled('sales_manager_id')) {
-                $retailersQuery->where('sales_manager_id', $request->sales_manager_id);
-            }
-            if ($request->filled('field_staff_id')) {
-                $retailersQuery->where('field_staff_id', $request->field_staff_id);
-            }
         }
 
+        // Request-based Region Filters (Sync with selects)
+        if ($request->filled('sales_manager_id')) {
+            $retailersQuery->where('sales_manager_id', $request->sales_manager_id);
+        }
+        if ($request->filled('field_staff_id')) {
+            $retailersQuery->where('field_staff_id', $request->field_staff_id);
+        }
+
+        // Add Aggregates
         $retailersQuery->withCount(['retailerOrders as total_orders' => function ($query) {
             $query->whereIn('status', ['approved', 'delivered']);
         }])->withSum(['retailerOrders as dynamic_loyalty_points' => function ($query) {
@@ -136,14 +88,61 @@ class LoyaltyPointsController extends Controller
             $query->whereIn('status', ['approved', 'delivered']);
         }], 'updated_at');
 
-        if ($request->ajax() && !$request->has('retailer_id')) {
+        // --- HANDLE AJAX REQUESTS ---
+        if ($request->ajax()) {
+            
+            // Case A: Detail Transaction Table for a specific retailer
+            if ($request->has('retailer_id')) {
+                $retailerId = $request->input('retailer_id');
+                $targetRetailer = Retailer::findOrFail($retailerId);
+
+                // Permission check
+                if ($user->hasRole('fieldstaff') && $targetRetailer->field_staff_id !== $user->fieldStaff->id) {
+                    return response()->json(['error' => 'Unauthorized access.'], 403);
+                }
+
+                $orders = $targetRetailer->retailerOrders()
+                    ->with('items.product')
+                    ->whereIn('status', ['approved', 'delivered'])
+                    ->orderBy('updated_at', 'desc');
+
+                return DataTables::of($orders)
+                    ->addIndexColumn()
+                    ->addColumn('product_summary', function ($row) {
+                        return $row->items->map(function ($item) {
+                            $pName = $item->product->product_name ?? 'Product';
+                            $pGeneric = $item->product->generic_name ?? null;
+
+                            // Handle missing product case
+                            if (!$item->product) {
+                                $inventory = \App\Models\Inventory::where('product_id', $item->product_id)->first();
+                                $pName = $inventory ? $inventory->product_name : 'Unknown Product #' . $item->product_id;
+                                $pGeneric = $inventory ? $inventory->distributor_product_code : null;
+                            }
+
+                            $summary = '<div class="mb-1"><span class="fw-bold">'.$pName.'</span>';
+                            if ($pGeneric && $pGeneric !== 'N/A') {
+                                $summary .= ' <span class="text-muted small">('.$pGeneric.')</span>';
+                            }
+                            $summary .= '<br><span class="small">'.$item->quantity.' '.$item->unit.'</span></div>';
+                            return $summary;
+                        })->implode('');
+                    })
+                    ->editColumn('updated_at', function ($row) {
+                        return $row->updated_at->format('d M Y, h:i A');
+                    })
+                    ->editColumn('loyalty_points_earned', function ($row) {
+                        return number_format($row->loyalty_points_earned ?? 0, 2);
+                    })
+                    ->rawColumns(['product_summary'])
+                    ->make(true);
+            }
+
+            // Case B: Overview Table (List of Retailers)
             return DataTables::of($retailersQuery)
                 ->addIndexColumn()
                 ->addColumn('shop_name', function ($row) {
                     return '<div class="d-flex align-items-center">
-                                <div class="avatar-xs bg-glass-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                    <i class="fa fa-shopping-bag small"></i>
-                                </div>
                                 <div class="fw-bold heading-theme">' . ($row->shop_name ?? 'N/A') . '</div>
                             </div>';
                 })
@@ -178,13 +177,37 @@ class LoyaltyPointsController extends Controller
                                 </button>
                             </div>';
                 })
+                ->filterColumn('shop_name', function($query, $keyword) {
+                    $query->where('retailers.shop_name', 'like', "%{$keyword}%");
+                })
+                ->filterColumn('owner_name', function($query, $keyword) {
+                    $query->whereHas('user', function($q) use ($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('sales_manager', function($query, $keyword) {
+                    $query->whereHas('salesManager.user', function($q) use ($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('field_staff', function($query, $keyword) {
+                    $query->whereHas('fieldStaff.user', function($q) use ($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('region_area', function($query, $keyword) {
+                    $query->whereHas('district', function($q) use ($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
+                    })->orWhereHas('area', function($q) use ($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
+                    });
+                })
                 ->rawColumns(['shop_name', 'owner_name', 'sales_manager', 'field_staff', 'region_area', 'total_orders', 'last_order', 'dynamic_loyalty_points', 'action'])
                 ->make(true);
         }
 
-        $retailers = $retailersQuery->get();
-
-        // Calculate global summary using the loaded collection
+        // --- HANDLE NON-AJAX REQUEST (Initial View Load) ---
+        $retailers = (clone $retailersQuery)->get();
         $globalLoyaltyPoints = $retailers->sum('dynamic_loyalty_points');
 
         $salesManagers = collect();
@@ -192,7 +215,6 @@ class LoyaltyPointsController extends Controller
 
         if ($user->hasAnyRole(['admin', 'superadmin'])) {
             $salesManagers = \App\Models\SalesManager::with('user')->get();
-            
             $fsQuery = \App\Models\FieldStaff::with('user');
             if ($request->filled('sales_manager_id')) {
                 $fsQuery->where('sales_manager_id', $request->sales_manager_id);
@@ -214,29 +236,18 @@ class LoyaltyPointsController extends Controller
     {
         $user = Auth::user();
 
-        // Strict Role-based Permission Check
+        // Permissions
         if ($user->hasRole('fieldstaff') && $retailer->field_staff_id !== $user->fieldStaff->id) {
             return response()->json(['error' => 'Unauthorized Access'], 403);
         }
-        
         if ($user->hasRole('salesmanager') && $retailer->sales_manager_id !== $user->salesManager->id) {
             return response()->json(['error' => 'Unauthorized Access'], 403);
-        }
-
-        if ($user->hasRole('distributor') && $retailer->distributor_id !== $user->distributor->id) {
-            return response()->json(['error' => 'Unauthorized Access'], 403);
-        }
-
-        // Logic check for non-admin roles without specific profile but with permissions
-        if (!$user->hasAnyRole(['admin', 'superadmin', 'fieldstaff', 'salesmanager', 'distributor', 'retailer'])) {
-             return response()->json(['error' => 'Unauthorized Access'], 403);
         }
 
         $totalPoints = $retailer->retailerOrders()
             ->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED)
             ->sum('loyalty_points_earned');
 
-        // Check if this retailer is the top performer globally
         $isTop = Retailer::withSum(['retailerOrders as points' => function($q){
                 $q->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED);
             }], 'loyalty_points_earned')
@@ -272,13 +283,8 @@ class LoyaltyPointsController extends Controller
             $query->where('sales_manager_id', $request->sales_manager_id);
         }
         
-        $fieldStaffs = $query->get()->map(function($fs) {
-            return [
-                'id' => $fs->id,
-                'name' => $fs->user->name ?? 'N/A'
-            ];
-        });
-
-        return response()->json($fieldStaffs);
+        return response()->json($query->get()->map(function($fs) {
+            return ['id' => $fs->id, 'name' => $fs->user->name ?? 'N/A'];
+        }));
     }
 }

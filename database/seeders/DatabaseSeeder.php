@@ -34,8 +34,8 @@ class DatabaseSeeder extends Seeder
             RetailerSeeder::class,
             CreateRetailerEntriesSeeder::class, // Ensure all retailer users have entries
 
-            ProductSeeder::class,    // Creates general products
-            RetailerOrderSeeder::class, // Creates dummy retailer orders
+            // ProductSeeder::class,    // Creates general products
+            // RetailerOrderSeeder::class, // Creates dummy retailer orders
 
             // Application-wide settings
             \Database\Seeders\SettingSeeder::class,

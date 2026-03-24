@@ -145,6 +145,20 @@
                                 <input type="text" name="pincode" class="form-control" required>
                             </div>
                         </div>
+
+                        @if(Auth::user()->hasAnyRole(['admin', 'superadmin']))
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label fw-bold">Sales Manager</label>
+                                <select name="sales_manager_id" class="form-select" required>
+                                    <option value="">Select Sales Manager</option>
+                                    @foreach ($salesManagers as $sm)
+                                        <option value="{{ $sm->id }}">{{ $sm->user->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        @endif
                         <!-- Map Section -->
                         {{-- 
                         <div class="row">

@@ -1007,11 +1007,7 @@
                     data: 'order_code',
                     name: 'order_code',
                     render: function (data, type, row) {
-                        let code = data;
-                        if (row.invoice_url) {
-                            code += ' <i class="fa fa-check-circle text-success" title="Invoice Uploaded"></i>';
-                        }
-                        return code;
+                        return data;
                     }
                 },
                 {

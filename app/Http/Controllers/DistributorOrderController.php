@@ -123,7 +123,8 @@ class DistributorOrderController extends Controller
                         if ($item->free_quantity > 0) {
                             $summary .= ' + ' . $item->free_quantity . ' Free';
                         }
-                        return $summary . ' ' . ($item->product->pack ?? '');
+                        $pack = $item->product->pack ?? null;
+                        return $summary . ($pack ? ' ' . $pack : '');
                     })->implode('<br>');
 
                     return [

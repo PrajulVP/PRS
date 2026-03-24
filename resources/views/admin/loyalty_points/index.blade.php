@@ -98,62 +98,43 @@
             vertical-align: middle !important;
         }
         .table-controls-row {
-            padding: 12px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--med-border, #cbd5e0);
-            background: rgba(148, 163, 184, 0.1) !important; /* Semi-transparent tint */
-        }
-        .loyalty-card-header {
-            background: rgba(148, 163, 184, 0.05) !important;
+            padding: 10px 25px !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
             border-bottom: 1px solid var(--med-border, #cbd5e0) !important;
-        }
-        body.dark-only .table-controls-row {
-            background: rgba(255, 255, 255, 0.03) !important;
-            border-bottom-color: rgba(255, 255, 255, 0.1) !important;
-        }
-        body.dark-only .loyalty-card-header {
-            background: rgba(255, 255, 255, 0.02) !important;
-            border-bottom-color: rgba(255, 255, 255, 0.1) !important;
-        }
-        body.dark-only .standard-table thead th {
-            background: rgba(255, 255, 255, 0.04) !important;
-            border-bottom-color: rgba(255, 255, 255, 0.1) !important;
-            color: #cbd5e0 !important;
-        }
-
-        /* Spacing Fix for DataTable Footer */
-        .dataTables_info {
-            padding-left: 20px !important;
-            padding-bottom: 15px !important;
-            padding-top: 15px !important;
-            color: var(--med-text-muted, #64748b) !important;
-            font-size: 0.85rem !important;
-        }
-        .dataTables_paginate {
-            padding-right: 20px !important;
-            padding-bottom: 15px !important;
-            padding-top: 15px !important;
+            background: rgba(148, 163, 184, 0.1) !important;
         }
         .dt-buttons {
             display: flex !important;
-            gap: 8px !important;
-            margin-bottom: 0 !important;
+            gap: 12px !important;
+            margin: 15px 20px !important; /* Vertical and Horizontal margin */
         }
         .dt-buttons .btn {
             margin: 0 !important;
             border-radius: 8px !important;
+            padding: 8px 16px !important;
+            font-weight: 600 !important;
         }
         .dataTables_filter {
+            margin: 15px 20px !important; /* Vertical and Horizontal margin */
+        }
+        .dataTables_filter label {
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
             margin: 0 !important;
         }
         .dataTables_filter input {
-            border-radius: 10px !important;
-            padding: 8px 15px !important;
-            border: 1px solid var(--med-border, #dee2e6) !important;
-            outline: none !important;
-            width: 250px !important;
+            padding: 8px 20px !important;
+            border-radius: 20px !important;
+            border: 1px solid var(--med-border, #cbd5e0) !important;
+            min-width: 250px !important;
+            background: #fff !important;
+        }
+        .dt-buttons .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
         }
 
         /* Branding Colors */
@@ -198,6 +179,10 @@
             padding: 2px 8px;
             font-size: 0.7rem;
             font-weight: 600;
+        }
+        /* Hide Unnecessary Loading Icon (Oval) */
+        .dataTables_processing {
+            display: none !important;
         }
     </style>
 
@@ -247,9 +232,9 @@
                         <div class="d-flex align-items-center gap-3">
                             <form id="filter-form" action="{{ route('admin.loyalty-points.index') }}" method="GET" class="d-flex align-items-center gap-3 mb-0">
                                 @if(auth()->user()->hasAnyRole(['admin', 'superadmin']))
-                                <div class="position-relative" style="min-width: 220px;">
+                                <div class="position-relative" style="min-width: 200px;">
                                     <select id="sm-filter" name="sales_manager_id" class="form-select select2-basic filter-select">
-                                        <option value="">All Sales Managers</option>
+                                        <option value="">Sales Managers</option>
                                         @foreach($salesManagers as $sm)
                                             <option value="{{ $sm->id }}" {{ request('sales_manager_id') == $sm->id ? 'selected' : '' }}>
                                                 {{ $sm->user->name ?? 'N/A' }}
@@ -263,9 +248,9 @@
                                     @endif
                                 </div>
                                 @endif
-                                <div class="position-relative" style="min-width: 220px;">
+                                <div class="position-relative" style="min-width: 200px;">
                                     <select id="fs-filter" name="field_staff_id" class="form-select select2-basic filter-select">
-                                        <option value="">All Field Staff</option>
+                                        <option value="">Field Staffs</option>
                                         @foreach($fieldStaffs as $fs)
                                             <option value="{{ $fs->id }}" {{ request('field_staff_id') == $fs->id ? 'selected' : '' }}>
                                                 {{ $fs->user->name ?? 'N/A' }}
@@ -321,9 +306,9 @@
                                         <tr>
                                             <td>
                                                 <div class="d-flex align-items-center">
-                                                    <div class="avatar-xs bg-glass-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                    {{-- <div class="avatar-xs bg-glass-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
                                                         <i class="fa fa-shopping-bag small"></i>
-                                                    </div>
+                                                    </div> --}}
                                                     <div class="fw-bold heading-theme">{{ $r->shop_name }}</div>
                                                 </div>
                                             </td>
@@ -444,14 +429,15 @@
                             <div class="card-header loyalty-card-header py-4 px-4 d-flex justify-content-between align-items-center">
                                 <h5 class="fw-bold mb-0 heading-theme">Transaction Statement</h5>
                             </div>
-                            <div id="detail-table-controls" class="table-controls-row">
-                                <!-- DT Buttons and Search will be moved here -->
+                            <div id="detail-table-controls" class="table-controls-row d-flex justify-content-between align-items-center">
+                                <div class="left-controls d-flex align-items-center gap-3"></div>
+                                <div class="right-controls d-flex align-items-center gap-3"></div>
                             </div>
                             <div class="card-body p-0">
-                                <table class="table table-hover align-middle mb-0 standard-table" id="points-table" style="width: 100%;">
+                                <table class="table table-hover align-middle mb-0" id="points-table" style="width: 100%;">
                                     <thead class="bg-light">
                                         <tr>
-                                            <th>Date</th>
+                                            <th>Date</th>   
                                             <th>Reference</th>
                                             <th>Details</th>
                                             <th class="py-3">Points Earned</th>
@@ -481,7 +467,8 @@
     <script>
         $(document).ready(function () {
             // Main Overview Table
-            let overviewTable = $('#overview-table').DataTable({
+
+            var overviewTable = $('#overview-table').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {
@@ -491,36 +478,43 @@
                         d.field_staff_id = $('#fs-filter').val();
                     }
                 },
+                pageLength: 10,
+                dom: "Bfrtip",
                 columns: [
                     { data: 'shop_name', name: 'shop_name' },
-                    { data: 'owner_name', name: 'user.name' },
+                    { data: 'owner_name', name: 'owner_name' },
                     @if(auth()->user()->hasAnyRole(['admin', 'superadmin']))
-                        { data: 'sales_manager', name: 'salesManager.user.name' },
+                        { data: 'sales_manager', name: 'sales_manager' },
                     @endif
                     @if(auth()->user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
-                        { data: 'field_staff', name: 'fieldStaff.user.name' },
+                        { data: 'field_staff', name: 'field_staff' },
                     @endif
-                    { data: 'region_area', name: 'district.name' },
-                    { data: 'total_orders', name: 'total_orders', className: 'text-center' },
-                    { data: 'last_order', name: 'last_order_date' },
-                    { data: 'dynamic_loyalty_points', name: 'dynamic_loyalty_points', className: 'text-center' },
+                    { data: 'region_area', name: 'region_area' },
+                    { data: 'total_orders', name: 'total_orders', className: 'text-center', searchable: false },
+                    { data: 'last_order', name: 'last_order', className: 'text-center', searchable: false },
+                    { data: 'dynamic_loyalty_points', name: 'dynamic_loyalty_points', className: 'text-center', searchable: false },
                     { data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center' }
                 ],
-                pageLength: 10,
-                order: [[{{ $loyaltyColIndex }}, 'desc']],
-                dom: "Bfrtip",
-                buttons: [
-                    { extend: 'copy', className: 'btn btn-outline-secondary btn-xs rounded-pill px-3' },
-                    { extend: 'csv', className: 'btn btn-outline-secondary btn-xs rounded-pill px-3' },
-                    { extend: 'excel', className: 'btn btn-outline-secondary btn-xs rounded-pill px-3' }
-                ],
                 initComplete: function() {
-                    let container = $('#overview-table-controls .right-controls');
-                    $(this).closest('.card').find('.dt-buttons').appendTo(container);
-                    $(this).closest('.card').find('.dataTables_filter').appendTo(container);
-                    $(this).closest('.card').find('.dataTables_filter input').addClass('form-control-sm rounded-pill px-3');
+                    let containerRight = $('#overview-table-controls .right-controls');
+                    let $tableApi = $(this).DataTable();
+                    let $wrapper = $($tableApi.table().container());
+                    
+                    // Move search and buttons to overview row (right)
+                    $wrapper.find('.dt-buttons').appendTo(containerRight);
+                    $wrapper.find('.dataTables_filter').appendTo(containerRight);
+                    $wrapper.find('.dataTables_filter input').addClass('form-control-sm rounded-pill px-3');
                 },
-                language: { search: "_INPUT_", searchPlaceholder: "Search retailers..." }
+                language: {
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search retailers...",
+                    processing: '<div class="spinner-border text-primary" role="status"></div>'
+                }
+            });
+
+            // Reload table on filter change
+            $('#sm-filter, #fs-filter').on('change', function() {
+                overviewTable.ajax.reload();
             });
 
             // Auto-submit filter form (Dynamic AJAX Reload)
@@ -647,17 +641,28 @@
                     },
                     dom: "Bfrtip", // We'll move them manually for better control
                     initComplete: function() {
-                        // Move controls to the dedicated row
-                        let container = $('#detail-table-controls');
-                        container.empty();
-                        $('.dt-buttons').appendTo(container);
-                        $('.dataTables_filter').appendTo(container);
+                        // Move controls TO LOCAL detail container
+                        let containerLeft = $('#detail-table-controls .left-controls');
+                        let containerRight = $('#detail-table-controls .right-controls');
+                        
+                        let $tableApi = $(this).DataTable();
+                        let $wrapper = $($tableApi.table().container());
+                        
+                        // Buttons on the left, Search on the right (proximal to the detail table)
+                        $wrapper.find('.dt-buttons').appendTo(containerLeft);
+                        $wrapper.find('.dataTables_filter').appendTo(containerRight);
+                        $wrapper.find('.dataTables_filter input').addClass('form-control-sm rounded-pill px-3');
                     },
                     buttons: [
-                        { extend: 'copy', className: 'btn btn-outline-secondary' },
-                        { extend: 'csv', className: 'btn btn-outline-secondary' },
-                        { extend: 'excel', className: 'btn btn-outline-secondary' }
+                        { extend: 'copy', className: 'btn btn-outline-secondary btn-xs rounded-pill px-3' },
+                        { extend: 'csv', className: 'btn btn-outline-secondary btn-xs rounded-pill px-3' },
+                        { extend: 'excel', className: 'btn btn-outline-secondary btn-xs rounded-pill px-3' },
+                        { extend: 'pdf', className: 'btn btn-outline-secondary btn-xs rounded-pill px-3' },
                     ],
+                    language: {
+                        search: "_INPUT_",
+                        searchPlaceholder: "Filter transactions..."
+                    },
                     columns: [
                         { data: 'updated_at', name: 'updated_at' },
                         { data: 'order_code', name: 'order_code', render: d => `<strong class="text-primary">#${d}</strong>` },

@@ -407,9 +407,11 @@
                             <td>
                                 <div class="product-name">
                                     {{ $item->product->product_name ?? 'Product' }}
-                                    <span style="font-size: 11px; color: #64748b; font-weight: 500;">
-                                        ({{ $item->product->product_code ?? 'N/A' }})
-                                    </span>
+                                    @if($item->product && $item->product->product_code)
+                                        <span style="font-size: 11px; color: #64748b; font-weight: 500;">
+                                            ({{ $item->product->product_code }})
+                                        </span>
+                                    @endif
                                 </div>
                                 @if($item->product && $item->product->generic_name)
                                     <div style="font-size: 11px; color: #475569; margin-top: 2px;">

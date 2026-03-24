@@ -7,13 +7,18 @@
             <div class="col-xxl-12 box-col-12">
 
                 <style>
+                    :root {
+                        --med-primary-rgb: 0, 73, 122;
+                        --med-accent-rgb: 0, 43, 92;
+                    }
 
                     .med-widget-card {
                         background: linear-gradient(135deg, var(--med-primary) 0%, var(--med-accent) 100%) !important;
-                        transition: all 0.3s ease;
-                        border-radius: 12px;
+                        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+                        border-radius: 16px;
                         overflow: hidden;
                         position: relative;
+                        border: none !important;
                     }
 
                     .med-widget-card::after {
@@ -23,85 +28,133 @@
                         right: -50%;
                         width: 100%;
                         height: 100%;
-                        background: rgba(255, 255, 255, 0.05);
-                        transform: rotate(30deg);
+                        background: rgba(255, 255, 255, 0.1);
+                        transform: rotate(35deg);
                         pointer-events: none;
                     }
 
                     .med-widget-card:hover {
-                        transform: translateY(-5px);
-                        box-shadow: 0 15px 30px rgba(0, 73, 122, 0.4) !important;
+                        transform: translateY(-8px);
+                        box-shadow: 0 20px 40px rgba(0, 73, 122, 0.25) !important;
                     }
 
-                    .med-widget-card .card-body {
-                        background: transparent !important;
-                        position: relative;
-                        z-index: 1;
-                    }
-
-                    .med-widget-card .media-body span,
-                    .med-widget-card .media-body h4,
-                    .med-widget-card i,
-                    .med-widget-card svg {
-                        color: #ffffff !important;
-                        stroke: #ffffff !important;
-                    }
-
-                    .med-widget-card i,
-                    .med-widget-card svg {
-                        font-size: 2.5rem;
-                        opacity: 0.8;
-                    }
-
-                    .retailer-hero {
-                        background: linear-gradient(135deg, var(--med-bg-card) 0%, rgba(0, 73, 122, 0.05) 100%);
-                        border-radius: 20px;
-                        padding: 40px;
-                        box-shadow: 0 10px 30px -10px rgba(0, 73, 122, 0.1);
-                        margin-bottom: 35px;
-                        border: 1px solid var(--med-border);
+                    .premium-stats-card {
+                        background: var(--med-bg-card) !important;
+                        border-radius: 16px;
+                        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+                        border: 1px solid var(--med-border) !important;
                         position: relative;
                         overflow: hidden;
                     }
 
-                    .retailer-hero::before {
-                        content: '';
+                    .premium-stats-card:hover {
+                        transform: translateY(-8px);
+                        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05) !important;
+                        border-color: var(--med-primary) !important;
+                    }
+
+                    .premium-stats-card .icon-bg {
                         position: absolute;
-                        top: -20px;
-                        right: -20px;
-                        width: 150px;
-                        height: 150px;
-                        background: radial-gradient(circle, var(--med-primary) 0%, transparent 70%);
+                        right: -10px;
+                        bottom: -10px;
                         opacity: 0.05;
-                        border-radius: 50%;
+                        transition: all 0.4s ease;
                     }
 
-                    .retailer-hero h2 {
-                        font-weight: 800;
-                        letter-spacing: -0.5px;
-                        margin-bottom: 10px;
+                    .premium-stats-card:hover .icon-bg {
+                        transform: scale(1.2) rotate(-10deg);
+                        opacity: 0.1;
                     }
 
-                    .section-title {
-                        font-weight: 700;
-                        color: var(--med-primary);
-                        margin-bottom: 20px;
-                        padding-bottom: 10px;
-                        border-bottom: 2px solid var(--med-border);
-                    }
-
-                    body.dark-only .retailer-hero {
+                    .retailer-hero-glass {
                         background: var(--med-bg-card);
-                        background: linear-gradient(to right, var(--med-bg-card), rgba(56, 189, 248, 0.05));
+                        backdrop-filter: blur(10px);
+                        border-radius: 20px;
+                        padding: 15px 25px;
+                        margin-bottom: 25px;
+                        border: 1px solid var(--med-border);
+                        position: relative;
+                        overflow: hidden;
+                        box-shadow: var(--med-shadow-soft);
                     }
 
-                    .med-loyalty-badge {
-                        background: rgba(0, 73, 122, 0.08);
+                    .profile-avatar {
+                        width: 70px;
+                        height: 70px;
+                        border-radius: 18px;
+                        background: var(--med-primary);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: #fff;
+                        font-size: 24px;
+                        font-weight: 800;
+                        box-shadow: 0 8px 20px rgba(0, 73, 122, 0.2);
+                        flex-shrink: 0;
+                    }
+
+                    .profile-info-item {
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        color: var(--med-text-muted);
+                        font-size: 0.8rem;
+                        font-weight: 600;
+                        background: rgba(var(--med-primary-rgb), 0.03);
+                        padding: 4px 12px;
+                        border-radius: 10px;
+                        border: 1px solid rgba(var(--med-primary-rgb), 0.05);
+                    }
+
+                    .profile-info-item i {
+                        width: 12px;
+                        height: 12px;
+                        color: var(--med-primary);
+                        opacity: 0.8;
+                    }
+
+                    .dark-only .retailer-hero-glass {
+                        background: rgba(255, 255, 255, 0.03);
+                    }
+
+                    .floating-loyalty {
+                        background: var(--med-bg-card);
+                        border-radius: 20px;
+                        padding: 20px 30px;
+                        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+                        border: 1px solid var(--med-border);
                         transition: all 0.3s ease;
                     }
 
-                    body.dark-only .med-loyalty-badge {
-                        background: rgba(56, 189, 248, 0.1);
+                    .floating-loyalty:hover {
+                        transform: scale(1.02);
+                        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+                    }
+
+                    .action-btn-premium {
+                        border-radius: 18px !important;
+                        padding: 1.2rem 1.8rem !important;
+                        font-weight: 700 !important;
+                        letter-spacing: 0.3px;
+                        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+                    }
+
+                    .action-btn-premium:hover {
+                        transform: translateY(-4px) scale(1.02);
+                    }
+
+                    .section-header-modern {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        margin-bottom: 25px;
+                    }
+
+                    .section-header-modern .dash {
+                        height: 3px;
+                        width: 40px;
+                        background: var(--med-primary);
+                        border-radius: 2px;
                     }
                 </style>
 
@@ -115,85 +168,25 @@
                 @endphp
 
                 @if(Auth::user()->hasRole('retailer'))
-                    <div class="retailer-hero d-flex align-items-center justify-content-between">
-                        <div>
-                            <h2>Welcome, <span style="color: var(--med-primary)">{{ $user->name }}</span>!</h2>
-                            <p class="text-muted f-16 mb-0 mt-2">Manage your orders, track your loyalty points, and explore our
-                                catalog from your dashboard.</p>
-                        </div>
-                        <div class="text-center p-3 rounded med-loyalty-badge position-relative">
-                            @if($isTopRetailer)
-                                <div style="position: absolute; top: -10px; right: -10px; background: #ffd700; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 10;">
-                                    <i class="fa fa-trophy"></i>
-                                </div>
-                            @endif
-                            <i data-feather="coin" class="mr-2"></i>
-                            <h5 class="mb-1" style="color: var(--med-primary)">My Loyalty Points</h5>
-                            <h2 class="mb-0" style="color: var(--med-primary); font-weight:800;">
-                                {{ number_format($totalLoyaltyPoints) }}</h2>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-xl-3 col-sm-6 mb-4">
-                            <div class="card med-widget-card border-0 h-100"
-                                onclick="window.location.href='{{ route('retailer.orders.index') }}'" style="cursor: pointer;">
-                                <div class="card-body">
-                                    <div class="media align-items-center static-top-widget">
-                                        <div class="media-body m-2">
-                                            <span class="m-0 text-uppercase font-weight-bold">Total Orders</span>
-                                            <h4 class="mb-0 counter mt-2">{{ $retailerOrderStats['total'] }}</h4>
-                                        </div>
-                                        <i data-feather="shopping-cart"></i>
-                                    </div>
-                                </div>
+                    <div class="retailer-hero-glass d-flex align-items-center justify-content-between flex-wrap gap-4">
+                        <div class="d-flex align-items-center gap-4">
+                            <div class="profile-avatar">
+                                {{ strtoupper(substr($user->name, 0, 1)) }}
                             </div>
-                        </div>
-                        <div class="col-xl-3 col-sm-6 mb-4">
-                            <div class="card border-0 h-100"
-                                style="background: var(--med-bg-card) !important; border-left: 5px solid #f59e0b !important; box-shadow: var(--med-shadow-soft); cursor: pointer;"
-                                onclick="window.location.href='{{ route('retailer.orders.index') }}'">
-                                <div class="card-body">
-                                    <div class="media">
-                                        <div class="media-body">
-                                            <p class="mb-1 text-muted font-weight-bold text-uppercase">Pending</p>
-                                            <h3 class="mb-0" style="color: #f59e0b">{{ $retailerOrderStats['pending'] }}</h3>
-                                        </div>
-                                        <div class="align-self-center"><i data-feather="clock"
-                                                 style="color: #f59e0b; width:40px; height:40px;"></i></div>
+                            <div>
+                                <h5 class="fw-800 mb-2" style="color: var(--med-primary); letter-spacing: -0.3px; margin-top: 2px;">{{ $user->name }}</h5>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <div class="profile-info-item">
+                                        <i data-feather="home"></i>
+                                        <span>{{ $user->retailer->shop_name ?? 'Medical Store' }}</span>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-xl-3 col-sm-6 mb-4">
-                            <div class="card border-0 h-100"
-                                style="background: var(--med-bg-card) !important; border-left: 5px solid #10b981 !important; box-shadow: var(--med-shadow-soft); cursor: pointer;"
-                                onclick="window.location.href='{{ route('retailer.orders.index') }}'">
-                                <div class="card-body">
-                                    <div class="media">
-                                        <div class="media-body">
-                                            <p class="mb-1 text-muted font-weight-bold text-uppercase">Delivered</p>
-                                            <h3 class="mb-0" style="color: #10b981">{{ $retailerOrderStats['delivered'] }}</h3>
-                                        </div>
-                                        <div class="align-self-center"><i data-feather="check-circle"
-                                                style="color: #10b981; width:40px; height:40px;"></i></div>
+                                    <div class="profile-info-item">
+                                        <i data-feather="phone"></i>
+                                        <span>{{ $user->retailer->contact_no ?? 'N/A' }}</span>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-xl-3 col-sm-6 mb-4">
-                            <div class="card border-0 h-100"
-                                style="background: var(--med-bg-card) !important; border-left: 5px solid var(--med-primary) !important; box-shadow: var(--med-shadow-soft); cursor: pointer;"
-                                onclick="window.location.href='{{ route('products.index') }}'">
-                                <div class="card-body">
-                                    <div class="media">
-                                        <div class="media-body">
-                                            <p class="mb-1 text-muted font-weight-bold text-uppercase">products</p>
-                                            <h3 class="mb-0" style="color: var(--med-primary)">{{ $counts['products'] }} Items
-                                            </h3>
-                                        </div>
-                                        <div class="align-self-center"><i data-feather="grid"
-                                                style="color: var(--med-primary); width:40px; height:40px;"></i></div>
+                                    <div class="profile-info-item">
+                                        <i data-feather="map-pin"></i>
+                                        <span>{{ $user->retailer->district->name ?? 'Local District' }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -201,45 +194,75 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-12 mb-3">
-                            <h5 class="section-title mb-0" style="border-bottom: none; font-size: 1.1rem; letter-spacing: 0.5px; text-transform: uppercase;">Quick Actions</h5>
+                        @php
+                            $stats = [
+                                ['label' => 'Total Orders', 'value' => $retailerOrderStats['total'], 'icon' => 'shopping-cart', 'color' => 'var(--med-primary)', 'bg' => 'rgba(var(--med-primary-rgb), 0.1)', 'route' => route('retailer.orders.index')],
+                                ['label' => 'Pending', 'value' => $retailerOrderStats['pending'], 'icon' => 'clock', 'color' => '#f59e0b', 'bg' => 'rgba(245, 158, 11, 0.1)', 'route' => route('retailer.orders.index')],
+                                ['label' => 'Delivered', 'value' => $retailerOrderStats['delivered'], 'icon' => 'check-circle', 'color' => '#10b981', 'bg' => 'rgba(16, 185, 129, 0.1)', 'route' => route('retailer.orders.index')],
+                                ['label' => 'Loyalty Points', 'value' => number_format($totalLoyaltyPoints), 'icon' => 'database', 'color' => '#fbbf24', 'bg' => 'rgba(251, 191, 36, 0.1)', 'route' => '#']
+                            ];
+                        @endphp
+
+                        @foreach($stats as $stat)
+                            <div class="col-xl-3 col-md-6 mb-4">
+                                <div class="card premium-stats-card h-100 cursor-pointer" onclick="window.location.href='{{ $stat['route'] }}'">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex align-items-center justify-content-between mb-3">
+                                            <div class="p-3 rounded-blink" style="background: {{ $stat['bg'] }}">
+                                                <i data-feather="{{ $stat['icon'] }}" style="color: {{ $stat['color'] }}; width: 24px; height: 24px;"></i>
+                                            </div>
+                                            <div class="text-end">
+                                                <h6 class="text-muted text-uppercase fw-700 mb-1" style="font-size: 11px; letter-spacing: 0.5px;">{{ $stat['label'] }}</h6>
+                                                <h3 class="mb-0 fw-800" style="color: {{ $stat['color'] }}">{{ $stat['value'] }}</h3>
+                                            </div>
+                                        </div>
+                                        <i data-feather="{{ $stat['icon'] }}" class="icon-bg" style="width: 80px; height: 80px;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <div class="section-header-modern">
+                                <div class="dash"></div>
+                                <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.9rem; letter-spacing: 1.5px; color: var(--med-primary);">Quick Actions</h5>
+                            </div>
                         </div>
-                        <div class="col-12 mb-5 d-flex gap-3">
-                            <button class="btn btn-outline-primary shadow-sm d-flex align-items-center justify-content-center py-3 px-4" 
-                                style="border-radius: 15px; font-weight: 700; border-width: 2px; min-width: 200px; transition: all 0.3s ease;"
+                        <div class="col-12 mb-5 d-flex gap-4 flex-wrap">
+                            <button class="btn btn-outline-primary action-btn-premium shadow-sm d-flex align-items-center px-5" 
                                 onclick="window.location.href='{{ route('admin.retailer.create') }}'">
-                                <div class="bg-primary bg-opacity-10 p-2 rounded-3 me-3">
-                                    <i data-feather="plus-circle" style="width: 20px; height: 20px;"></i>
-                                </div>
-                                <span class="fs-6">Create Order</span>
+                                <i data-feather="plus-circle" class="me-3" style="width: 22px; height: 22px;"></i>
+                                <span>Create New Order</span>
                             </button>
                             
-                            <button class="btn btn-primary shadow d-flex align-items-center justify-content-center py-3 px-4" 
-                                style="border-radius: 15px; font-weight: 700; background: linear-gradient(135deg, var(--med-primary) 0%, var(--med-accent) 100%); border: none; min-width: 260px; transition: all 0.3s ease;"
+                            <button class="btn btn-primary action-btn-premium shadow-lg d-flex align-items-center px-5" 
+                                style="background: linear-gradient(135deg, var(--med-primary) 0%, var(--med-accent) 100%); border: none;"
                                 onclick="window.location.href='{{ route('admin.retailer.create', ['action' => 'upload_prescription']) }}'">
-                                <div class="bg-white bg-opacity-20 p-2 rounded-3 me-3">
-                                    <i data-feather="upload-cloud" style="width: 20px; height: 20px; stroke: white;"></i>
-                                </div>
-                                <span class="fs-6">Upload Prescription (AI)</span>
+                                <i data-feather="cpu" class="me-3" style="width: 22px; height: 22px; stroke-width: 2.5px;"></i>
+                                <span>Upload Prescription (AI)</span>
                             </button>
                         </div>
                     </div>
 
                     <div class="row">
                         <div class="col-lg-8">
-                            <div class="card p-4 mb-4">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h5 class="section-title mb-0" style="border-bottom: none;">My Orders Over Time</h5>
-                                    {!! $timeSelectHtml !!}
-                                </div>
+                            <div class="section-header-modern mb-3 mt-2">
+                                <div class="dash"></div>
+                                <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.9rem; letter-spacing: 1px; color: var(--med-primary);">My Orders Over Time</h5>
+                                <div class="ms-auto">{!! $timeSelectHtml !!}</div>
+                            </div>
+                            <div class="card p-4 mb-4 border-0 shadow-sm" style="border-radius: 15px;">
                                 <div id="monthlyOrdersChart"></div>
                             </div>
                         </div>
                         <div class="col-lg-4">
-                            <div class="card p-4 mb-4">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h5 class="section-title mb-0" style="border-bottom: none;">Status Overview ({{ isset($period) ? ucfirst($period) : 'Monthly' }})</h5>
-                                </div>
+                            <div class="section-header-modern mb-3 mt-2">
+                                <div class="dash"></div>
+                                <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.9rem; letter-spacing: 1px; color: var(--med-primary);">Status Overview ({{ isset($period) ? ucfirst($period) : 'Monthly' }})</h5>
+                            </div>
+                            <div class="card p-4 mb-4 border-0 shadow-sm" style="border-radius: 15px;">
                                 <div id="orderStatusChart"></div>
                             </div>
                         </div>
@@ -250,65 +273,37 @@
                 {{-- DISTRIBUTOR DASHBOARD --}}
                 {{-- ========================================== --}}
                 @if(Auth::user()->hasRole('distributor'))
-                    <h4 class="mb-4 text-primary">Distributor Control Panel</h4>
+                    <div class="section-header-modern">
+                        <div class="dash"></div>
+                        <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.9rem; letter-spacing: 1.5px; color: var(--med-primary);">Distributor Control Panel</h5>
+                    </div>
                     <div class="row">
-                        <div class="col-sm-6 col-xl-3 col-lg-6 mb-4">
-                            <div class="card o-hidden border-0 med-widget-card h-100"
-                                onclick="window.location.href='{{ route('distributor.orders.index') }}'"
-                                style="cursor: pointer;">
-                                <div class="card-body">
-                                    <div class="media static-top-widget">
-                                        <div class="media-body m-2">
-                                            <span class="m-0 font-weight-bold text-uppercase">Order Volume</span>
-                                            <h4 class="mb-0 counter mt-2">{{ $retailerOrderStats['total'] }}</h4>
+                        @php
+                            $stats = [
+                                ['label' => 'Order Volume', 'value' => $retailerOrderStats['total'], 'icon' => 'truck', 'color' => 'var(--med-primary)', 'bg' => 'rgba(var(--med-primary-rgb), 0.1)', 'route' => route('distributor.orders.index')],
+                                ['label' => 'Delivered', 'value' => $retailerOrderStats['delivered'], 'icon' => 'check-square', 'color' => '#10b981', 'bg' => 'rgba(16, 185, 129, 0.1)', 'route' => route('distributor.orders.index')],
+                                ['label' => 'Pending', 'value' => $retailerOrderStats['pending'], 'icon' => 'clock', 'color' => '#f59e0b', 'bg' => 'rgba(245, 158, 11, 0.1)', 'route' => route('distributor.orders.index')],
+                                ['label' => 'My Stock Items', 'value' => $counts['products'], 'icon' => 'layers', 'color' => 'var(--med-accent)', 'bg' => 'rgba(var(--med-accent-rgb), 0.1)', 'route' => route('products.index')]
+                            ];
+                        @endphp
+                        @foreach($stats as $stat)
+                            <div class="col-xl-3 col-md-6 mb-4">
+                                <div class="card premium-stats-card h-100 cursor-pointer" onclick="window.location.href='{{ $stat['route'] }}'">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex align-items-center justify-content-between mb-3">
+                                            <div class="p-3 rounded-blink" style="background: {{ $stat['bg'] }}">
+                                                <i data-feather="{{ $stat['icon'] }}" style="color: {{ $stat['color'] }}; width: 24px; height: 24px;"></i>
+                                            </div>
+                                            <div class="text-end">
+                                                <h6 class="text-muted text-uppercase fw-700 mb-1" style="font-size: 11px; letter-spacing: 0.5px;">{{ $stat['label'] }}</h6>
+                                                <h3 class="mb-0 fw-800" style="color: {{ $stat['color'] }}">{{ $stat['value'] }}</h3>
+                                            </div>
                                         </div>
-                                        <i data-feather="truck"></i>
+                                        <i data-feather="{{ $stat['icon'] }}" class="icon-bg" style="width: 80px; height: 80px;"></i>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-sm-6 col-xl-3 col-lg-6 mb-4">
-                            <div class="card o-hidden border-0 med-widget-card h-100"
-                                style="background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; cursor: pointer;">
-                                <div class="card-body">
-                                    <div class="media static-top-widget">
-                                        <div class="media-body m-2">
-                                            <span class="m-0 font-weight-bold text-uppercase">Delivered</span>
-                                            <h4 class="mb-0 counter mt-2">{{ $retailerOrderStats['delivered'] }}</h4>
-                                        </div>
-                                        <i data-feather="check-square"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-6 col-xl-3 col-lg-6 mb-4">
-                            <div class="card o-hidden border-0 med-widget-card h-100"
-                                style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important; cursor: pointer;">
-                                <div class="card-body">
-                                    <div class="media static-top-widget">
-                                        <div class="media-body m-2">
-                                            <span class="m-0 font-weight-bold text-uppercase">Pending</span>
-                                            <h4 class="mb-0 counter mt-2">{{ $retailerOrderStats['pending'] }}</h4>
-                                        </div>
-                                        <i data-feather="clock"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-6 col-xl-3 col-lg-6 mb-4">
-                            <div class="card o-hidden border-0 med-widget-card h-100"
-                                onclick="window.location.href='{{ route('products.index') }}'" style="cursor: pointer;">
-                                <div class="card-body">
-                                    <div class="media static-top-widget">
-                                        <div class="media-body m-2">
-                                            <span class="m-0 font-weight-bold text-uppercase">My Stock Items</span>
-                                            <h4 class="mb-0 counter mt-2">{{ $counts['products'] }}</h4>
-                                        </div>
-                                        <i data-feather="layers"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        @endforeach
                     </div>
 
                     <div class="row">
@@ -335,64 +330,59 @@
                         <!-- Top Retailers -->
                         <div class="col-lg-6 mb-4">
                             <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; overflow: hidden;">
-                                <div class="card-header bg-white border-0 pt-4 pb-3">
-                                    <h6 class="m-0 font-weight-bold text-primary text-uppercase"
-                                        style="letter-spacing: 0.05em; font-size: 0.9rem;">
-                                        <i data-feather="award" class="mr-2"
-                                            style="width: 18px; height: 18px; margin-top:-3px;"></i> Top Producing Retailers
+                                <div class="card-header bg-white border-0 pt-4 pb-2">
+                                    <h6 class="m-0 font-weight-bold text-primary text-uppercase d-flex align-items-center"
+                                        style="letter-spacing: 0.05em; font-size: 0.85rem;">
+                                        <i data-feather="award" class="me-2 text-warning"
+                                            style="width: 18px; height: 18px;"></i> Top Producing Retailers
                                     </h6>
                                 </div>
                                 <div class="card-body p-0">
                                     <div class="table-responsive">
                                         <table class="table table-hover table-borderless align-middle mb-0">
                                             <thead class="bg-light text-muted"
-                                                style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                                                style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">
                                                 <tr>
-                                                    <th class="pl-4 py-3 font-weight-bold">Retailer</th>
-                                                    <th class="py-3 font-weight-bold">Top Product</th>
-                                                    <th class="text-right pr-4 py-3 font-weight-bold">Revenue</th>
+                                                    <th class="px-4 py-3 font-weight-bold" style="width: 40%;">Retailer</th>
+                                                    <th class="px-3 py-3 font-weight-bold text-center">Top Product</th>
+                                                    <th class="text-right px-4 py-3 font-weight-bold">Revenue</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @forelse($topRetailers as $tr)
                                                     <tr style="border-bottom: 1px solid #f8f9fc;">
-                                                        <td class="pl-4 py-3">
+                                                        <td class="px-4 py-3">
                                                             <div class="d-flex align-items-center">
-                                                                <div class="rounded-circle d-flex align-items-center justify-content-center mr-3 text-white shadow-sm"
-                                                                    style="width: 42px; height: 42px; background: linear-gradient(135deg, #4e73df 0%, #224abe 100%); font-weight: 600; font-size: 1.1rem; flex-shrink: 0;">
+                                                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3 text-white shadow-sm"
+                                                                    style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--med-primary) 0%, var(--med-accent) 100%); font-weight: 600; font-size: 1rem; flex-shrink: 0;">
                                                                     {{ strtoupper(substr($tr->retailer->user->name ?? 'U', 0, 1)) }}
                                                                 </div>
-                                                                <div>
-                                                                    <h6 class="mb-1 font-weight-bold text-dark"
-                                                                        style="font-size: 0.95rem;">
+                                                                <div style="min-width: 0;">
+                                                                    <h6 class="mb-0 font-weight-bold text-dark text-truncate"
+                                                                        style="font-size: 0.9rem;">
                                                                         {{ $tr->retailer->user->name ?? 'Unknown' }}</h6>
-                                                                    <div class="text-muted" style="font-size: 0.8rem;">
-                                                                        <i data-feather="shopping-bag"
-                                                                            style="width: 12px; height: 12px; margin-bottom: 2px;"></i>
+                                                                    <div class="text-muted" style="font-size: 0.75rem;">
                                                                         {{ $tr->total_orders ?? '0' }} Orders
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td class="py-3 align-middle">
-                                                            <span
-                                                                class="badge badge-light text-secondary px-3 py-2 rounded-pill border"
-                                                                style="font-size: 0.8rem; font-weight: 500;">
-                                                                {{ \Illuminate\Support\Str::limit($tr->top_product_name ?? 'N/A', 25) }}
+                                                        <td class="px-3 py-3 text-center align-middle">
+                                                            <span class="badge badge-light text-secondary px-3 py-2 rounded-pill border shadow-xs"
+                                                                style="font-size: 0.75rem; font-weight: 600; max-width: 140px; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                                {{ $tr->top_product_name ?? 'N/A' }}
                                                             </span>
                                                         </td>
-                                                        <td class="text-right pr-4 py-3 align-middle">
-                                                            <h6 class="mb-0 font-weight-bold text-success" style="font-size: 1rem;">
+                                                        <td class="text-right px-4 py-3 align-middle">
+                                                            <h6 class="mb-0 font-weight-bold text-success" style="font-size: 0.95rem;">
                                                                 ₹{{ number_format($tr->total_revenue, 2) }}</h6>
                                                         </td>
                                                     </tr>
                                                 @empty
                                                     <tr>
                                                         <td colspan="3" class="text-center py-5">
-                                                            <div class="text-muted">
-                                                                <i data-feather="users"
-                                                                    style="width: 48px; height: 48px; opacity: 0.2;"
-                                                                    class="mb-3"></i>
+                                                            <div class="text-muted opacity-50">
+                                                                <i data-feather="users" style="width: 40px; height: 40px;" class="mb-2"></i>
                                                                 <p class="mb-0 font-weight-500">No retailer data available yet.</p>
                                                             </div>
                                                         </td>
@@ -404,63 +394,60 @@
                                 </div>
                             </div>
                         </div>
-
+ 
                         <!-- Top Products -->
                         <div class="col-lg-6 mb-4">
                             <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; overflow: hidden;">
-                                <div class="card-header bg-white border-0 pt-4 pb-3">
-                                    <h6 class="m-0 font-weight-bold text-success text-uppercase"
-                                        style="letter-spacing: 0.05em; font-size: 0.9rem;">
-                                        <i data-feather="trending-up" class="mr-2"
-                                            style="width: 18px; height: 18px; margin-top:-3px;"></i> Top Products Ordered
+                                <div class="card-header bg-white border-0 pt-4 pb-2">
+                                    <h6 class="m-0 font-weight-bold text-success text-uppercase d-flex align-items-center"
+                                        style="letter-spacing: 0.05em; font-size: 0.85rem;">
+                                        <i data-feather="trending-up" class="me-2"
+                                            style="width: 18px; height: 18px;"></i> Top Products Ordered
                                     </h6>
                                 </div>
                                 <div class="card-body p-0">
                                     <div class="table-responsive">
                                         <table class="table table-hover table-borderless align-middle mb-0">
                                             <thead class="bg-light text-muted"
-                                                style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                                                style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">
                                                 <tr>
-                                                    <th class="pl-4 py-3 font-weight-bold">Product</th>
-                                                    <th class="py-3 font-weight-bold">Units Sold</th>
-                                                    <th class="text-right pr-4 py-3 font-weight-bold">Revenue</th>
+                                                    <th class="px-4 py-3 font-weight-bold" style="width: 45%;">Product</th>
+                                                    <th class="px-3 py-3 font-weight-bold text-center">Units Sold</th>
+                                                    <th class="text-right px-4 py-3 font-weight-bold">Revenue</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @forelse($topProducts as $tp)
                                                     <tr style="border-bottom: 1px solid #f8f9fc;">
-                                                        <td class="pl-4 py-3">
+                                                        <td class="px-4 py-3">
                                                             <div class="d-flex align-items-center">
-                                                                <div class="rounded d-flex align-items-center justify-content-center mr-3 text-success shadow-sm"
-                                                                    style="width: 42px; height: 42px; background: #e8f5e9; flex-shrink: 0;">
-                                                                    <i data-feather="package"
-                                                                        style="width: 20px; height: 20px;"></i>
+                                                                <div class="rounded d-flex align-items-center justify-content-center me-3 text-success shadow-sm"
+                                                                    style="width: 38px; height: 38px; background: #e8f5e9; flex-shrink: 0;">
+                                                                    <i data-feather="package" style="width: 18px; height: 18px;"></i>
                                                                 </div>
                                                                 <h6 class="mb-0 font-weight-bold text-dark"
-                                                                    style="font-size: 0.95rem;">
-                                                                    {{ \Illuminate\Support\Str::limit($tp->product_name, 35) }}
+                                                                    style="font-size: 0.9rem; line-height: 1.4;">
+                                                                    {{ \Illuminate\Support\Str::limit($tp->product_name, 40) }}
                                                                 </h6>
                                                             </div>
                                                         </td>
-                                                        <td class="py-3 align-middle">
-                                                            <div class="d-flex align-items-baseline">
-                                                                <span class="font-weight-bold text-dark mr-1"
-                                                                    style="font-size: 1.05rem;">{{ $tp->total_quantity_ordered }}</span>
-                                                                <small class="text-muted font-weight-500">Units</small>
+                                                        <td class="px-3 py-3 text-center align-middle">
+                                                            <div class="d-inline-flex align-items-baseline">
+                                                                <span class="font-weight-bold text-dark me-1"
+                                                                    style="font-size: 1rem;">{{ $tp->total_quantity_ordered }}</span>
+                                                                <small class="text-muted font-weight-600" style="font-size: 0.7rem;">Units</small>
                                                             </div>
                                                         </td>
-                                                        <td class="text-right pr-4 py-3 align-middle">
-                                                            <h6 class="mb-0 font-weight-bold text-success" style="font-size: 1rem;">
+                                                        <td class="text-right px-4 py-3 align-middle">
+                                                            <h6 class="mb-0 font-weight-bold text-success" style="font-size: 0.95rem;">
                                                                 ₹{{ number_format($tp->total_revenue, 2) }}</h6>
                                                         </td>
                                                     </tr>
                                                 @empty
                                                     <tr>
                                                         <td colspan="3" class="text-center py-5">
-                                                            <div class="text-muted">
-                                                                <i data-feather="box"
-                                                                    style="width: 48px; height: 48px; opacity: 0.2;"
-                                                                    class="mb-3"></i>
+                                                            <div class="text-muted opacity-50">
+                                                                <i data-feather="box" style="width: 40px; height: 40px;" class="mb-2"></i>
                                                                 <p class="mb-0 font-weight-500">No product data available yet.</p>
                                                             </div>
                                                         </td>
@@ -471,7 +458,6 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
                     </div>
                 @endif
 
@@ -479,65 +465,55 @@
                 {{-- FIELD STAFF DASHBOARD --}}
                 {{-- ========================================== --}}
                 @if(Auth::user()->hasRole('fieldstaff'))
-                    <h4 class="mb-4 text-primary">Field Force Overview</h4>
+                    <div class="section-header-modern">
+                        <div class="dash"></div>
+                        <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.9rem; letter-spacing: 1.5px; color: var(--med-primary);">Field Force Overview</h5>
+                    </div>
                     <div class="row">
-                        <div class="col-sm-6 col-xl-4 col-lg-6 mb-4">
-                            <div class="card o-hidden border-0 med-widget-card h-100" style="cursor: pointer;">
-                                <div class="card-body">
-                                    <div class="media static-top-widget">
-                                        <div class="media-body m-2">
-                                            <span class="m-0 font-weight-bold text-uppercase">My Retailers</span>
-                                            <h4 class="mb-0 counter mt-2">{{ $counts['retailers'] }}</h4>
+                        @php
+                            $stats = [
+                                ['label' => 'My Retailers', 'value' => $counts['retailers'], 'icon' => 'users', 'color' => 'var(--med-primary)', 'bg' => 'rgba(var(--med-primary-rgb), 0.1)', 'route' => '#'],
+                                ['label' => 'Orders Generated', 'value' => $retailerOrderStats['total'], 'icon' => 'shopping-bag', 'color' => '#10b981', 'bg' => 'rgba(16, 185, 129, 0.1)', 'route' => '#'],
+                                ['label' => 'Total Products', 'value' => $counts['products'], 'icon' => 'grid', 'color' => 'var(--med-accent)', 'bg' => 'rgba(var(--med-accent-rgb), 0.1)', 'route' => '#']
+                            ];
+                        @endphp
+                        @foreach($stats as $stat)
+                            <div class="col-xl-4 col-md-6 mb-4">
+                                <div class="card premium-stats-card h-100 cursor-pointer" onclick="window.location.href='{{ $stat['route'] }}'">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex align-items-center justify-content-between mb-3">
+                                            <div class="p-3 rounded-blink" style="background: {{ $stat['bg'] }}">
+                                                <i data-feather="{{ $stat['icon'] }}" style="color: {{ $stat['color'] }}; width: 24px; height: 24px;"></i>
+                                            </div>
+                                            <div class="text-end">
+                                                <h6 class="text-muted text-uppercase fw-700 mb-1" style="font-size: 11px; letter-spacing: 0.5px;">{{ $stat['label'] }}</h6>
+                                                <h3 class="mb-0 fw-800" style="color: {{ $stat['color'] }}">{{ $stat['value'] }}</h3>
+                                            </div>
                                         </div>
-                                        <i data-feather="users"></i>
+                                        <i data-feather="{{ $stat['icon'] }}" class="icon-bg" style="width: 80px; height: 80px;"></i>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-sm-6 col-xl-4 col-lg-6 mb-4">
-                            <div class="card o-hidden border-0 med-widget-card h-100"
-                                style="background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; cursor: pointer;">
-                                <div class="card-body">
-                                    <div class="media static-top-widget">
-                                        <div class="media-body m-2">
-                                            <span class="m-0 font-weight-bold text-uppercase">Orders Generated</span>
-                                            <h4 class="mb-0 counter mt-2">{{ $retailerOrderStats['total'] }}</h4>
-                                        </div>
-                                        <i data-feather="shopping-bag"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-6 col-xl-4 col-lg-12 mb-4">
-                            <div class="card o-hidden border-0 med-widget-card h-100" style="cursor: pointer;">
-                                <div class="card-body">
-                                    <div class="media static-top-widget">
-                                        <div class="media-body m-2">
-                                            <span class="m-0 font-weight-bold text-uppercase">Total Products</span>
-                                            <h4 class="mb-0 counter mt-2">{{ $counts['products'] }}</h4>
-                                        </div>
-                                        <i data-feather="grid"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        @endforeach
                     </div>
 
                     <div class="row">
                         <div class="col-lg-8">
-                            <div class="card p-4 mb-4">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h5 class="section-title mb-0" style="border-bottom: none;">My Performance (Trend)</h5>
-                                    {!! $timeSelectHtml !!}
-                                </div>
+                            <div class="section-header-modern mb-3 mt-2">
+                                <div class="dash"></div>
+                                <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.9rem; letter-spacing: 1px; color: var(--med-primary);">My Performance (Trend)</h5>
+                                <div class="ms-auto">{!! $timeSelectHtml !!}</div>
+                            </div>
+                            <div class="card p-4 mb-4 border-0 shadow-sm" style="border-radius: 15px;">
                                 <div id="monthlyOrdersChart"></div>
                             </div>
                         </div>
                         <div class="col-lg-4">
-                            <div class="card p-4 mb-4">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h5 class="section-title mb-0" style="border-bottom: none;">Client Status ({{ isset($period) ? ucfirst($period) : 'Monthly' }})</h5>
-                                </div>
+                            <div class="section-header-modern mb-3 mt-2">
+                                <div class="dash"></div>
+                                <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.9rem; letter-spacing: 1px; color: var(--med-primary);">Client Status ({{ isset($period) ? ucfirst($period) : 'Monthly' }})</h5>
+                            </div>
+                            <div class="card p-4 mb-4 border-0 shadow-sm" style="border-radius: 15px;">
                                 <div id="orderStatusChart"></div>
                             </div>
                         </div>
@@ -548,98 +524,45 @@
                 {{-- ADMIN & SUPERADMIN & SALES MANAGER DASHBOARD --}}
                 {{-- ========================================== --}}
                 @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
-                    <h4 class="mb-4 text-primary font-weight-bold">Analytics & Command Center</h4>
+                    <div class="section-header-modern">
+                        <div class="dash"></div>
+                        <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.9rem; letter-spacing: 1.5px; color: var(--med-primary);">Analytics & Command Center</h5>
+                    </div>
 
                     <div class="row">
-                        <div class="col-sm-6 col-xl-3 col-lg-6 mb-4">
-                            <div class="card o-hidden border-0 med-widget-card h-100" style="cursor: pointer;"
-                                onclick="window.location.href='{{ route('admin.distributors.index') }}'">
-                                <div class="card-body">
-                                    <div class="media static-top-widget">
-                                        <div class="media-body m-2"><span
-                                                class="m-0 text-uppercase font-weight-bold">Distributors</span>
-                                            <h4 class="mb-0 counter mt-2">{{ $counts['distributors'] }}</h4>
-                                        </div>
-                                        <i data-feather="briefcase"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-6 col-xl-3 col-lg-6 mb-4">
-                            <div class="card o-hidden border-0 med-widget-card h-100" style="cursor: pointer;"
-                                onclick="window.location.href='{{ route('admin.retailers.index') }}'">
-                                <div class="card-body">
-                                    <div class="media static-top-widget">
-                                        <div class="media-body m-2"><span
-                                                class="m-0 text-uppercase font-weight-bold">Retailers</span>
-                                            <h4 class="mb-0 counter mt-2">{{ $counts['retailers'] }}</h4>
-                                        </div>
-                                        <i data-feather="shopping-bag"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        @if(Auth::user()->hasAnyRole(['admin', 'superadmin']))
-                            <div class="col-sm-6 col-xl-3 col-lg-6 mb-4">
-                                <div class="card o-hidden border-0 med-widget-card h-100" style="cursor: pointer;"
-                                    onclick="window.location.href='{{ route('admin.field-staffs.index') }}'">
-                                    <div class="card-body">
-                                        <div class="media static-top-widget">
-                                            <div class="media-body m-2"><span class="m-0 text-uppercase font-weight-bold">Field
-                                                    Staff</span>
-                                                <h4 class="mb-0 counter mt-2">{{ $counts['field_staff'] }}</h4>
-                                            </div>
-                                            <i data-feather="users"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-sm-6 col-xl-3 col-lg-6 mb-4">
-                                <div class="card o-hidden border-0 med-widget-card h-100" style="cursor: pointer;"
-                                    onclick="window.location.href='{{ route('admin.sales-managers.index') }}'">
-                                    <div class="card-body">
-                                        <div class="media static-top-widget">
-                                            <div class="media-body m-2"><span class="m-0 text-uppercase font-weight-bold">Sales
-                                                    Managers</span>
-                                                <h4 class="mb-0 counter mt-2">{{ $counts['sales_managers'] }}</h4>
-                                            </div>
-                                            <i data-feather="user-check"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
+                        @php
+                            $adminStats = [
+                                ['label' => 'Distributors', 'value' => $counts['distributors'], 'icon' => 'briefcase', 'color' => 'var(--med-primary)', 'bg' => 'rgba(var(--med-primary-rgb), 0.1)', 'route' => route('admin.distributors.index')],
+                                ['label' => 'Retailers', 'value' => $counts['retailers'], 'icon' => 'shopping-bag', 'color' => '#10b981', 'bg' => 'rgba(16, 185, 129, 0.1)', 'route' => route('admin.retailers.index')]
+                            ];
 
-                        @if(Auth::user()->hasRole('salesmanager'))
-                            <div class="col-sm-6 col-xl-3 col-lg-6 mb-4">
-                                <div class="card o-hidden border-0 med-widget-card h-100"
-                                    style="background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;"
-                                    onclick="window.location.href='{{ route('admin.field-staffs.index') }}'">
-                                    <div class="card-body">
-                                        <div class="media static-top-widget">
-                                            <div class="media-body m-2"><span class="m-0 text-uppercase font-weight-bold">Field
-                                                    Staff</span>
-                                                <h4 class="mb-0 counter mt-2">{{ $counts['field_staff'] }}</h4>
+                            if (Auth::user()->hasAnyRole(['admin', 'superadmin'])) {
+                                $adminStats[] = ['label' => 'Field Staff', 'value' => $counts['field_staff'], 'icon' => 'users', 'color' => '#f59e0b', 'bg' => 'rgba(245, 158, 11, 0.1)', 'route' => route('admin.field-staffs.index')];
+                                $adminStats[] = ['label' => 'Sales Managers', 'value' => $counts['sales_managers'], 'icon' => 'user-check', 'color' => 'var(--med-accent)', 'bg' => 'rgba(var(--med-accent-rgb), 0.1)', 'route' => route('admin.sales-managers.index')];
+                            } elseif (Auth::user()->hasRole('salesmanager')) {
+                                $adminStats[] = ['label' => 'Field Staff', 'value' => $counts['field_staff'], 'icon' => 'users', 'color' => '#f59e0b', 'bg' => 'rgba(245, 158, 11, 0.1)', 'route' => route('admin.field-staffs.index')];
+                                $adminStats[] = ['label' => 'Products', 'value' => $counts['products'], 'icon' => 'box', 'color' => 'var(--med-accent)', 'bg' => 'rgba(var(--med-accent-rgb), 0.1)', 'route' => '#'];
+                            }
+                        @endphp
+
+                        @foreach($adminStats as $stat)
+                            <div class="col-xl-3 col-md-6 mb-4">
+                                <div class="card premium-stats-card h-100 cursor-pointer" onclick="window.location.href='{{ $stat['route'] }}'">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex align-items-center justify-content-between mb-3">
+                                            <div class="p-3 rounded-blink" style="background: {{ $stat['bg'] }}">
+                                                <i data-feather="{{ $stat['icon'] }}" style="color: {{ $stat['color'] }}; width: 24px; height: 24px;"></i>
                                             </div>
-                                            <i data-feather="users"></i>
+                                            <div class="text-end">
+                                                <h6 class="text-muted text-uppercase fw-700 mb-1" style="font-size: 11px; letter-spacing: 0.5px;">{{ $stat['label'] }}</h6>
+                                                <h3 class="mb-0 fw-800" style="color: {{ $stat['color'] }}">{{ $stat['value'] }}</h3>
+                                            </div>
                                         </div>
+                                        <i data-feather="{{ $stat['icon'] }}" class="icon-bg" style="width: 80px; height: 80px;"></i>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-sm-6 col-xl-3 col-lg-6 mb-4">
-                                <div class="card o-hidden border-0 med-widget-card h-100">
-                                    <div class="card-body">
-                                        <div class="media static-top-widget">
-                                            <div class="media-body m-2"><span
-                                                    class="m-0 text-uppercase font-weight-bold">Products</span>
-                                                <h4 class="mb-0 counter mt-2">{{ $counts['products'] }}</h4>
-                                            </div>
-                                            <i data-feather="box"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
+                        @endforeach
                     </div>
 
                     <div class="row">
@@ -789,9 +712,13 @@
                     @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager', 'distributor', 'fieldstaff', 'retailer']))
                         <div
                             class="col-lg-{{ Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']) ? '6' : '12' }} mb-4">
-                            <div class="card p-4 h-100 mb-4">
-                                <h5 class="section-title">
-                                    {{ Auth::user()->hasRole('retailer') ? 'My Recent Orders' : 'Recent Retailer Orders' }}</h5>
+                            <div class="section-header-modern mb-3 mt-2">
+                                <div class="dash"></div>
+                                <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.9rem; letter-spacing: 1.5px; color: var(--med-primary);">
+                                    {{ Auth::user()->hasRole('retailer') ? 'My Recent Orders' : 'Recent Retailer Orders' }}
+                                </h5>
+                            </div>
+                            <div class="card p-4 h-100 mb-4 border-0 shadow-sm" style="border-radius: 15px;">
                                 <div class="table-responsive">
                                     <table class="table table-hover">
                                         <thead>
@@ -839,8 +766,11 @@
 
                     @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
                         <div class="col-lg-6 mb-4">
-                            <div class="card p-4 h-100 mb-4">
-                                <h5 class="section-title">Recent Distributor Orders</h5>
+                            <div class="section-header-modern mb-3 mt-2">
+                                <div class="dash"></div>
+                                <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.9rem; letter-spacing: 1.5px; color: var(--med-primary);">Recent Distributor Orders</h5>
+                            </div>
+                            <div class="card p-4 h-100 mb-4 border-0 shadow-sm" style="border-radius: 15px;">
                                 <div class="table-responsive">
                                     <table class="table table-hover">
                                         <thead>

@@ -32,8 +32,7 @@
 
             <div class="row">
                 {{-- Left Side: Picker, Spotlight & Bundle Table --}}
-                <div class="col-xl-8 col-lg-7">
-
+                <div class="col-xl-9 col-lg-8">
                     {{-- 1. Input Section --}}
                     <div class="card shadow-sm border-0 mb-4 builder-main-card rounded-3">
                         <div class="card-body p-4">
@@ -41,13 +40,11 @@
                             <div class="row mb-4">
                                 <div class="col-12">
                                     <div
-                                        class="p-4 border rounded-4 bg-white d-flex align-items-center justify-content-between shadow-sm mb-0 border-primary border-opacity-10">
-                                        <div class="d-flex align-items-center">
-                                            <div>
-                                                <h5 class="mb-1 fw-bold text-dark">Have a handwritten prescription?</h5>
-                                                <p class="text-muted small mb-0">Upload it and our AI will automatically
-                                                    identify medicines for you.</p>
-                                            </div>
+                                        class="p-4 border rounded-4 bg-white d-flex flex-column flex-md-row align-items-center justify-content-between shadow-sm mb-0 border-primary border-opacity-10 gap-3">
+                                        <div class="text-center text-md-start">
+                                            <h5 class="mb-1 fw-bold text-dark">Have a handwritten prescription?</h5>
+                                            <p class="text-muted small mb-0">Upload it and our AI will automatically
+                                                identify medicines for you.</p>
                                         </div>
                                         <div class="d-flex align-items-center">
                                             <div id="aiLoader" class="me-3 d-none">
@@ -105,7 +102,7 @@
 
                                 {{-- Row 2: Variant, Qty and Add Button --}}
                                 <div class="col-md-12">
-                                    <div class="row g-3 justify-content-end">
+                                    <div class="row g-3 align-items-end">
                                         <div class="col-md-12" id="variantWrapper" style="display: none;">
                                             <label class="form-label fw-bold text-muted small text-uppercase mb-2">Select Size / Variant</label>
                                             <div id="sizeSelector" class="d-flex flex-wrap gap-2">
@@ -129,10 +126,9 @@
                                                 </select>
                                             </div>
                                         </div>
-                                        <div class="col-md-3 align-self-end text-end">
+                                        <div class="col-md-3">
                                             <button type="button"
-                                                class="btn btn-primary w-100 fw-bold shadow-sm font-outfit rounded-3"
-                                                style="padding-top: 10px; padding-bottom: 10px;"
+                                                class="btn btn-primary w-100 fw-bold shadow-sm font-outfit rounded-3 py-2"
                                                 id="btnAddItem">
                                                 <i class="fa fa-plus me-1"></i> ADD
                                             </button>
@@ -204,7 +200,38 @@
                             </div>
                         </div>
                     </div>
+                </div>
 
+                {{-- Right Side: Recap & Submit --}}
+                <div class="col-xl-3 col-lg-4">
+                    <div class="sticky-top" style="top: 20px; z-index: 5;">
+                        <div class="card shadow-lg border-0 summary-card rounded-3 overflow-hidden">
+                            <div class="card-header bg-dark text-white py-3">
+                                <h5 class="card-title mb-0 fw-bold"><i class="fa fa-receipt me-2"></i>Grand Total</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div
+                                    class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-light-dark">
+                                    <div>
+                                        <span class="text-dark fw-bold d-block h5 mb-0 label-font">Total Value (PTR)</span>
+                                        <small class="text-muted"><i class="fa fa-info-circle text-warning"></i> GST & other
+                                            charges will be calculated on the invoice</small>
+                                    </div>
+                                    <span id="grandTotal" class="h3 fw-bold text-primary mb-0 font-outfit">₹0.00</span>
+                                </div>
+
+                                <button type="submit"
+                                    class="btn btn-success btn-lg w-100 py-2 fw-bold shadow-sm font-outfit btn-confirm rounded-3"
+                                    id="btnSubmitOrder" disabled>
+                                    <i class="fa fa-check-circle me-2"></i> CONFIRM ORDER
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Full Width Bundle Table --}}
+                <div class="col-xl-12 mt-4">
                     {{-- 3. Bundle Table --}}
                     <div class="card shadow-sm border-0 mb-4 overflow-hidden rounded-3">
                         <div
@@ -250,35 +277,6 @@
                         </div>
                     </div>
                 </div>
-
-                {{-- Right Side: Recap & Submit --}}
-                <div class="col-xl-4 col-lg-5">
-                    <div class="sticky-top" style="top: 20px; z-index: 5;">
-                        <div class="card shadow-lg border-0 summary-card rounded-3">
-                            <div class="card-header bg-dark text-white py-3">
-                                <h5 class="card-title mb-0 fw-bold"><i class="fa fa-receipt me-2"></i>Grand Total</h5>
-                            </div>
-                            <div class="card-body p-4">
-                                <div
-                                    class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-light-dark">
-                                    <div>
-                                        <span class="text-dark fw-bold d-block h5 mb-0 label-font">Total Value (PTR)</span>
-                                        <small class="text-muted"><i class="fa fa-info-circle text-warning"></i> GST & other
-                                            charges will be calculated on the invoice</small>
-                                    </div>
-                                    <span id="grandTotal" class="h3 fw-bold text-primary mb-0 font-outfit">₹0.00</span>
-                                </div>
-
-                                <button type="submit"
-                                    class="btn btn-success btn-lg w-100 py-2 fw-bold shadow-sm font-outfit btn-confirm rounded-3"
-                                    id="btnSubmitOrder" disabled>
-                                    <i class="fa fa-check-circle me-2"></i> CONFIRM ORDER
-                                </button>
-
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </form>
     </div>
@@ -306,6 +304,15 @@
 
         .bg-light-soft {
             background-color: #f8fafc !important;
+        }
+
+        .hover-shadow {
+            transition: all 0.3s ease;
+        }
+
+        .hover-shadow:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
         }
 
         .spotlight-image-wrapper {
@@ -660,40 +667,45 @@
                                     </select>`;
 
                                 let rowHtml = `
-                                    <div class="ai-result-row p-3 bg-white rounded-3 shadow-sm mb-2 border overflow-hidden">
-                                        <div class="row align-items-center g-2 text-start">
-                                            <div class="col-md-2">
-                                                <span class="text-muted small d-block">Rx Molecule</span>
-                                                <span class="fw-bold text-dark text-truncate d-block" title="${item.original_name}">${item.original_name}</span>
+                                    <div class="ai-result-row p-4 bg-white rounded-4 shadow-sm mb-3 border border-light-dark overflow-hidden transition-all hover-shadow">
+                                        <div class="row g-3">
+                                            <!-- Main Details -->
+                                            <div class="col-lg-4 col-md-6">
+                                                <label class="text-muted small fw-bold text-uppercase mb-1 d-block"><i class="fa fa-flask me-1 text-primary"></i> Rx Molecule</label>
+                                                <div class="p-2 bg-light-soft rounded-3 border">
+                                                    <span class="fw-bold text-dark d-block text-truncate" title="${item.original_name}">${item.original_name}</span>
+                                                </div>
                                             </div>
-                                            <div class="col-md-2">
-                                                <span class="text-muted small d-block">Product</span>
+                                            <div class="col-lg-4 col-md-6">
+                                                <label class="text-muted small fw-bold text-uppercase mb-1 d-block"><i class="fa fa-box me-1 text-primary"></i> Suggested Product</label>
                                                 <select class="form-select select2-ai ai-prod-select">
                                                     ${options}
                                                 </select>
                                             </div>
-                                            <div class="col-md-2">
-                                                <span class="text-muted small d-block">Distributor</span>
+                                            <div class="col-lg-4 col-md-6">
+                                                <label class="text-muted small fw-bold text-uppercase mb-1 d-block"><i class="fa fa-truck me-1 text-primary"></i> Select Distributor</label>
                                                 ${distHtml}
                                             </div>
-                                            <div class="col-md-1">
-                                                <span class="text-muted small d-block">Qty</span>
-                                                <input type="number" class="form-control form-control-sm ai-qty" value="${item.quantity}" min="1" style="height: 38px;">
+                                            
+                                            <!-- Action & Qty -->
+                                            <div class="col-lg-2 col-md-4 col-6">
+                                                <label class="text-muted small fw-bold text-uppercase mb-1 d-block">Quantity</label>
+                                                <input type="number" class="form-control ai-qty fw-bold" value="${item.quantity}" min="1" style="height: 42px;">
                                             </div>
-                                            <div class="col-md-2">
-                                                <span class="text-muted small d-block">Unit</span>
-                                                <select class="form-select form-select-sm ai-unit" style="height: 38px;">
+                                            <div class="col-lg-2 col-md-4 col-6">
+                                                <label class="text-muted small fw-bold text-uppercase mb-1 d-block">Unit</label>
+                                                <select class="form-select ai-unit fw-medium" style="height: 42px;">
                                                     <option value="Strips" ${item.unit === 'Strips' ? 'selected' : ''}>Strips</option>
                                                     <option value="Box" ${item.unit === 'Box' ? 'selected' : ''}>Box</option>
                                                     <option value="Carton" ${item.unit === 'Carton' ? 'selected' : ''}>Carton</option>
                                                     <option value="Nos" ${item.unit === 'Nos' ? 'selected' : ''}>Nos</option>
                                                 </select>
                                             </div>
-                                            <div class="col-md-3 text-end">
-                                                <button type="button" class="btn btn-primary btn-sm ai-add-btn w-100 fw-bold" 
-                                                    style="height: 38px; margin-top: 18px; border-radius: 8px;"
+                                            <div class="col-lg-8 col-md-4 col-12 d-flex align-items-end">
+                                                <button type="button" class="btn btn-primary ai-add-btn w-100 fw-bold shadow-sm" 
+                                                    style="height: 42px; border-radius: 10px; background: var(--med-primary);"
                                                     data-idx="${idx}">
-                                                    <i class="fa fa-plus-circle me-1"></i> ADD
+                                                    <i class="fa fa-plus-circle me-1"></i> ADD TO CART
                                                 </button>
                                             </div>
                                         </div>

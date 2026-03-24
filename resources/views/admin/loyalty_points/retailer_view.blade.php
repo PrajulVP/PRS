@@ -202,10 +202,14 @@
                                                     <div class="mb-1">
                                                         @if($item->product)
                                                             <span class="fw-bold">{{ $item->product->product_name }}</span>
-                                                            <span class="text-muted small">({{ $item->product->generic_name ?? 'N/A' }})</span>
+                                                            @if($item->product->generic_name && $item->product->generic_name !== 'N/A')
+                                                                <span class="text-muted small">({{ $item->product->generic_name }})</span>
+                                                            @endif
                                                         @else
                                                             <span class="fw-bold">{{ $item->missing_product_name ?? 'Unknown Product #' . $item->product_id }}</span>
-                                                            <span class="text-muted small">({{ $item->missing_product_code ?? 'N/A' }})</span>
+                                                            @if($item->missing_product_code && $item->missing_product_code !== 'N/A')
+                                                                <span class="text-muted small">({{ $item->missing_product_code }})</span>
+                                                            @endif
                                                         @endif
                                                         <br>
                                                         <span class="small">{{ $item->quantity }} {{ $item->unit }}</span>

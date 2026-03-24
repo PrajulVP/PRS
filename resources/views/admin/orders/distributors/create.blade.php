@@ -12,14 +12,14 @@
 
             <div class="row">
                 {{-- Left Column: Product Spotlight, Picker & Table --}}
-                <div class="col-xl-8 col-lg-7">
-
+                <div class="col-xl-9 col-lg-8">
                     {{-- 1. Input Section --}}
                     <div class="card shadow-sm border-0 mb-4 builder-main-card rounded-3">
                         <div class="card-body p-4">
-                            <div class="row g-3 align-items-end">
-                                <div class="col-md-7">
-                                    <label class="form-label fw-bold text-muted small text-uppercase mb-2">Search
+                            <div class="row g-4">
+                                {{-- Row 1: Product and Distributor (for Admin) --}}
+                                <div class="col-md-{{ Auth::user()->distributor ? '12' : '6' }}">
+                                    <label class="form-label fw-bold text-muted small text-uppercase mb-2">Find
                                         Product</label>
                                     <select id="productSelect" class="form-select select2">
                                         <option value="">Search by Name or POS Code...</option>
@@ -29,35 +29,55 @@
                                     </select>
                                 </div>
 
-                                <div class="col-md-12 my-2" id="variantWrapper" style="display: none;">
-                                    <label class="form-label fw-bold text-muted small text-uppercase mb-2">Select Size / Variant</label>
-                                    <div id="sizeSelector" class="d-flex flex-wrap gap-2">
-                                        {{-- Size buttons will be injected here --}}
-                                    </div>
-                                    <input type="hidden" id="variantValue" value="">
+                                @if(!Auth::user()->distributor)
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-muted small text-uppercase mb-2">Select Distributor</label>
+                                    <select name="distributor_id" id="distributor_id" class="form-select select2">
+                                        <option value="">Pick Distributor...</option>
+                                        @foreach($distributors as $d)
+                                            <option value="{{ $d->id }}">{{ $d->name ?? $d->user->name }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
-                                <div class="col-md-3">
-                                    <label class="form-label fw-bold text-muted small text-uppercase mb-2">Quantity</label>
-                                    <div class="input-group">
-                                        <input type="number" id="qtyInput" class="form-control fw-bold rounded-start"
-                                            value="1" min="1">
-                                        <select
-                                            class="form-select input-group-text bg-light-soft border-start-0 font-outfit rounded-end"
-                                            id="unitSelect" style="max-width: 130px;">
-                                            <option value="Carton">Carton</option>
-                                            <option value="Box">Box</option>
-                                            <option value="Strips">Strips</option>
-                                            <option value="Nos">Nos</option>
-                                        </select>
+                                @endif
+
+                                {{-- Row 2: Qty and Add Button --}}
+                                <div class="col-md-12">
+                                    <div class="row g-3 align-items-end">
+                                        <div class="col-md-5">
+                                            <label class="form-label fw-bold text-muted small text-uppercase mb-2">Quantity & Type</label>
+                                            <div class="input-group">
+                                                <input type="number" id="qtyInput" class="form-control fw-bold rounded-start"
+                                                    value="1" min="1" style="height: 48px;">
+                                                <select
+                                                    class="form-select input-group-text bg-light-soft border-start-0 font-outfit rounded-end"
+                                                    id="unitSelect" style="max-width: 120px; height: 48px;">
+                                                    <option value="Strips">Strips</option>
+                                                    <option value="Box">Box</option>
+                                                    <option value="Carton">Carton</option>
+                                                    <option value="Nos">Nos</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <button type="button"
+                                                class="btn btn-primary w-100 fw-bold py-2 shadow-sm font-outfit rounded-3"
+                                                style="height: 48px;"
+                                                id="btnAddItem">
+                                                <i class="fa fa-plus me-1"></i> ADD
+                                            </button>
+                                        </div>
+
+                                        {{-- Variant Wrapper - stays here for flow --}}
+                                        <div class="col-md-12 my-2" id="variantWrapper" style="display: none;">
+                                            <label class="form-label fw-bold text-muted small text-uppercase mb-2">Select Size / Variant</label>
+                                            <div id="sizeSelector" class="d-flex flex-wrap gap-2">
+                                                {{-- Size buttons will be injected here --}}
+                                            </div>
+                                            <input type="hidden" id="variantValue" value="">
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="col-md-2 align-self-end text-end">
-                                    <button type="button"
-                                        class="btn btn-primary w-100 fw-bold py-2 shadow-sm font-outfit rounded-3"
-                                        style="padding-top: 10px; padding-bottom: 10px;"
-                                        id="btnAddItem">
-                                        <i class="fa fa-plus me-1"></i> ADD
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -122,7 +142,38 @@
                             </div>
                         </div>
                     </div>
+                </div>
 
+                {{-- Right Column: Final Order Recap --}}
+                <div class="col-xl-3 col-lg-4">
+                    <div class="sticky-top" style="top: 20px; z-index: 5;">
+                        <div class="card shadow-lg border-0 summary-card rounded-3">
+                            <div class="card-header bg-dark text-white py-3">
+                                <h5 class="card-title mb-0 fw-bold"><i class="fa fa-receipt me-2"></i>Order Recap</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div
+                                    class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-light-dark">
+                                    <div>
+                                        <span class="text-dark fw-bold d-block h5 mb-0 label-font">Total Value (PTS)</span>
+                                        <small class="text-muted"><i class="fa fa-info-circle text-warning"></i> GST & other
+                                            charges will be calculated on the invoice</small>
+                                    </div>
+                                    <span id="grandTotal" class="h3 fw-bold text-primary mb-0 font-outfit">₹0.00</span>
+                                </div>
+
+                                <button type="submit"
+                                    class="btn btn-success btn-lg w-100 py-2 fw-bold shadow-sm font-outfit btn-confirm rounded-3"
+                                    id="btnSubmitOrder" disabled>
+                                    <i class="fa fa-check-double me-2"></i> CONFIRM ORDER
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Full Width Order Cart Table --}}
+                <div class="col-xl-12 mt-4">
                     {{-- 3. Order Bundle Table --}}
                     <div class="card shadow-sm border-0 mb-4 overflow-hidden rounded-3">
                         <div
@@ -167,35 +218,6 @@
                                         </tr>
                                     </tbody>
                                 </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Right Column: Final Order Recap --}}
-                <div class="col-xl-4 col-lg-5">
-                    <div class="sticky-top" style="top: 20px; z-index: 5;">
-                        <div class="card shadow-lg border-0 summary-card rounded-3">
-                            <div class="card-header bg-dark text-white py-3">
-                                <h5 class="card-title mb-0 fw-bold"><i class="fa fa-receipt me-2"></i>Order Recap</h5>
-                            </div>
-                            <div class="card-body p-4">
-                                <div
-                                    class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-light-dark">
-                                    <div>
-                                        <span class="text-dark fw-bold d-block h5 mb-0 label-font">Total Value (PTS)</span>
-                                        <small class="text-muted"><i class="fa fa-info-circle text-warning"></i> GST & other
-                                            charges will be calculated on the invoice</small>
-                                    </div>
-                                    <span id="grandTotal" class="h3 fw-bold text-primary mb-0 font-outfit">₹0.00</span>
-                                </div>
-
-                                <button type="submit"
-                                    class="btn btn-success btn-lg w-100 py-2 fw-bold shadow-sm font-outfit btn-confirm rounded-3"
-                                    id="btnSubmitOrder" disabled>
-                                    <i class="fa fa-check-double me-2"></i> CONFIRM ORDER
-                                </button>
-
                             </div>
                         </div>
                     </div>

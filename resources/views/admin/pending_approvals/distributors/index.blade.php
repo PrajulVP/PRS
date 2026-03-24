@@ -980,7 +980,7 @@
                         orderable: false,
                         searchable: false
                     },
-                    { data: 'order_code', render: (d, t, r) => r.invoice_url ? d + ' <i class="fa fa-check-circle text-success" title="Invoice Uploaded"></i>' : d },
+                    { data: 'order_code', render: (d, t, r) => d },
                     { 
                         data: 'distributor_name',
                         render: function(data, type, row) {
