@@ -27,16 +27,29 @@ class RetailerOrderController extends Controller
                 return [
                     'id' => $order->id,
                     'order_code' => $order->order_code,
-                    'product_summary' => $order->items->map(fn($i) => $i->product->product_name . ' (' . $i->quantity . ')')->implode(', '),
+                    'product_summary' => $order->items->map(function($i) {
+                         $pName = $i->product_name ?? $i->product->product_name ?? 'Product';
+                         if (!empty($i->variant) && strpos($pName, '[' . $i->variant . ']') === false && strpos($pName, '(' . $i->variant . ')') === false) {
+                             $pName .= ' [' . $i->variant . ']';
+                         }
+                         return $pName . ' (' . $i->quantity . ')';
+                    })->implode(', '),
                     'total_amount' => number_format($order->total_amount, 2),
                     'status' => ucfirst($order->status),
                     'placed_at' => $order->placed_at ? $order->placed_at->format('Y-m-d') : '-',
-                    'items' => $order->items->map(fn($i) => [
-                        'name' => $i->product->product_name,
-                        'qty' => $i->quantity,
-                        'price' => $i->unit_price,
-                        'total' => $i->total_amount
-                    ]),
+                    'items' => $order->items->map(function($i) {
+                        $pName = $i->product_name ?? $i->product->product_name ?? 'Product';
+                        if (!empty($i->variant) && strpos($pName, '[' . $i->variant . ']') === false && strpos($pName, '(' . $i->variant . ')') === false) {
+                            $pName .= ' [' . $i->variant . ']';
+                        }
+                        return [
+                            'name' => $pName,
+                            'qty' => $i->quantity,
+                            'price' => $i->unit_price,
+                            'total' => $i->total_amount,
+                            'variant' => $i->variant
+                        ];
+                    }),
                     'notes' => $order->notes,
                     'delivery_notes' => $order->delivery_notes
                 ];
@@ -72,7 +85,9 @@ class RetailerOrderController extends Controller
         $request->validate([
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1'
+            'items.*.quantity' => 'required|numeric|min:0.01',
+            'items.*.unit' => 'nullable|string',
+            'items.*.variant' => 'nullable|string'
         ]);
 
         $retailer = Auth::user()->retailer;
@@ -102,19 +117,41 @@ class RetailerOrderController extends Controller
                 $product = Product::find($item['product_id']);
                 if (!$product) throw new \Exception('Product not found');
 
-                $needed = (int)$item['quantity'];
+                $unit = $item['unit'] ?? 'Strips';
+                $qty = (float)$item['quantity'];
+
+                // Conversion logic using numeric fields
+                $multiplier = 1;
+                $normalizedUnit = strtolower($unit);
+                if ($normalizedUnit === 'box') {
+                    $multiplier = (int)($product->strips_per_box ?? 1);
+                } elseif ($normalizedUnit === 'carton') {
+                    $multiplier = (int)($product->boxes_per_carton ?? 1) * (int)($product->strips_per_box ?? 1);
+                } elseif ($normalizedUnit === 'nos' || $normalizedUnit === 'no' || $normalizedUnit === 'unit') {
+                    $multiplier = 1 / (max(1, (int)($product->units_per_strip ?? 1)));
+                }
+
+                $neededStrips = ceil($qty * $multiplier);
 
                 // Availability check: ensure distributor has enough total stock across all active batches
                 $available = Inventory::where('distributor_id', $distributor->id)
                     ->where('product_id', $product->id)
+                    ->when(!empty($item['variant']), function($q) use ($item) {
+                        return $q->where('variant', $item['variant']);
+                    })
                     ->where('stock', '>', 0)
                     ->sum('stock');
 
-                if ($available < $needed) {
-                    throw new \Exception("Insufficient total stock for product: {$product->product_name} (Requested: {$needed}, Available: {$available})");
+                if ($available < $neededStrips) {
+                    throw new \Exception("Insufficient total stock for product: {$product->product_name} (Requested: {$neededStrips}, Available: {$available})");
                 }
 
-                $sub = $needed * $product->mrp;
+                // Price Logic: Retailer buys at PTR (Price to Retailer)
+                $price = (float)$product->ptr;
+                $gstRate = (float)($product->gst ?? 0);
+                $taxableSubtotal = $neededStrips * $price;
+                $gstAmount = $taxableSubtotal * ($gstRate / 100);
+                $subtotalWithGst = $taxableSubtotal + $gstAmount;
                 
                 // Append variant to product name if provided
                 $finalProductName = $product->product_name;
@@ -125,13 +162,15 @@ class RetailerOrderController extends Controller
                 $order->items()->create([
                     'product_id' => $product->id,
                     'product_name' => $finalProductName,
-                    'quantity' => $needed,
-                    'unit' => $item['unit'] ?? 'Strips',
-                    'unit_price' => $product->mrp,
-                    'total_amount' => $sub
+                    'quantity' => $qty,
+                    'unit' => $unit,
+                    'price' => $price,
+                    'subtotal' => $subtotalWithGst,
+                    'variant' => $item['variant'] ?? null,
                 ]);
-                $totalAmt += $sub;
-                $totalQty += $needed;
+
+                $totalAmt += $subtotalWithGst;
+                $totalQty += $neededStrips;
             }
 
 

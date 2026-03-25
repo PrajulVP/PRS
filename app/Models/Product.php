@@ -27,6 +27,10 @@ class Product extends Model
         'offer',
         'discount',
         'loyalty_point_percentage',
+        'units_per_strip',
+        'strips_per_box',
+        'boxes_per_carton',
+        'has_variants',
     ];
 
     protected $casts = [

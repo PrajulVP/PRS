@@ -119,6 +119,12 @@ class DistributorOrderController extends Controller
                 $formattedOrders = $orders->map(function ($order) {
                     $productSummary = $order->items->map(function ($item) {
                         $pName = $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product';
+                        
+                        // Backward compatibility for variant display
+                        if (!empty($item->variant) && strpos($pName, '[' . $item->variant . ']') === false && strpos($pName, '(' . $item->variant . ')') === false) {
+                            $pName .= ' [' . $item->variant . ']';
+                        }
+                        
                         $summary = $pName . ' - ' . $item->quantity;
                         if ($item->free_quantity > 0) {
                             $summary .= ' + ' . $item->free_quantity . ' Free';
@@ -145,10 +151,16 @@ class DistributorOrderController extends Controller
                         'status' => ucfirst(str_replace('_', ' ', $order->status)),
                         'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d H:i:s') : '-',
                         'items' => $order->items->map(function ($item) {
+                            $pName = $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product';
+                            // Backward compatibility for variant display
+                            if (!empty($item->variant) && strpos($pName, '[' . $item->variant . ']') === false && strpos($pName, '(' . $item->variant . ')') === false) {
+                                $pName .= ' [' . $item->variant . ']';
+                            }
                             return [
                                 'product_id' => $item->product_id,
-                                'product_name' => $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product',
+                                'product_name' => $pName,
                                 'product_code' => $item->product->product_code ?? 'N/A',
+                                'variant' => $item->variant,
                                 'quantity' => $item->quantity,
                                 'unit_price' => $item->price,
                                 'total_amount' => $item->subtotal,
@@ -223,7 +235,9 @@ class DistributorOrderController extends Controller
     public function getProductDetails(Product $product)
     {
         return response()->json([
-            'product' => $product
+            'product' => $product,
+            'strips_per_box' => $product->strips_per_box,
+            'boxes_per_carton' => $product->boxes_per_carton,
         ]);
     }
 
@@ -235,7 +249,9 @@ class DistributorOrderController extends Controller
             'delivery_notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.quantity' => 'required|numeric|min:0.01',
+            'items.*.unit' => 'nullable|string',
+            'items.*.variant' => 'nullable|string'
         ]);
 
         $distributorId = null;
@@ -282,9 +298,24 @@ class DistributorOrderController extends Controller
                 //$product->save();
 
                 // Price Logic: Distributor buys at PTS (Price to Stockist)
-                $unitPrice = $product->pts; // Strictly PTS
+                $unitPrice = (float)$product->pts; // Strictly PTS
+                $unit = $itemData['unit'] ?? 'Strips';
+                $qty = (float)$itemData['quantity'];
+
+                // Conversion logic
+                $multiplier = 1;
+                $normalizedUnit = strtolower($unit);
+                if ($normalizedUnit === 'box') {
+                    $multiplier = (int)($product->strips_per_box ?? 1);
+                } elseif ($normalizedUnit === 'carton') {
+                    $multiplier = (int)($product->boxes_per_carton ?? 1) * (int)($product->strips_per_box ?? 1);
+                } elseif ($normalizedUnit === 'nos' || $normalizedUnit === 'no' || $normalizedUnit === 'unit') {
+                    $multiplier = 1 / (max(1, (int)($product->units_per_strip ?? 1)));
+                }
+
+                $totalQtyNos = ceil($qty * $multiplier);
                 $gstRate = (float)($product->gst ?? 0);
-                $taxableAmount = $itemData['quantity'] * $unitPrice;
+                $taxableAmount = $totalQtyNos * $unitPrice;
                 $itemTotalWithGst = $taxableAmount * (1 + ($gstRate / 100));
 
                 // Append variant to product name if provided
@@ -296,16 +327,17 @@ class DistributorOrderController extends Controller
                 $order->items()->create([
                     'product_id' => $product->id,
                     'product_name' => $finalProductName,
-                    'quantity' => $itemData['quantity'],
+                    'quantity' => $qty,
                     'free_quantity' => $itemData['free_quantity'] ?? 0,
-                    'unit' => $itemData['unit'] ?? 'Strips',
+                    'unit' => $unit,
                     'price' => $unitPrice,
                     'subtotal' => $itemTotalWithGst,
+                    'variant' => $itemData['variant'] ?? null,
                 ]);
 
                 $totalAmount += $itemTotalWithGst;
                 $totalItems++;
-                $totalQuantity += $itemData['quantity'];
+                $totalQuantity += $totalQtyNos;
             }
 
             $order->total_amount = $totalAmount;
@@ -381,20 +413,24 @@ class DistributorOrderController extends Controller
                     if ($currentOrderItem) $oldQuantity = $currentOrderItem->quantity;
                 }
 
+                $unit = $itemData['unit'] ?? 'Box';
                 $newQuantity = $itemData['quantity'];
-                // Stock logic... (omitted detailed stock check for brevity, assuming standard decrement/increment logic or trust in stock)
-                // But we should check stock if increasing quantity?
-                // The previous controller logic:
-                // "So, no stock adjustment needed during update for stock that was already decremented at creation." 
-                // "Restore stock for items that were in the old order but not in the new request"
 
-                $unitPrice = $product->pts;
-                $itemTotalAmount = $newQuantity * $unitPrice;
+                $multiplier = 1;
+                if ($unit === 'Box') {
+                    $multiplier = (int)($product->strips_per_box ?? 1);
+                } elseif ($unit === 'Carton') {
+                    $multiplier = (int)($product->boxes_per_carton ?? 1) * (int)($product->strips_per_box ?? 1);
+                }
+
+                $totalQtyNos = $newQuantity * $multiplier;
+                $unitPrice = (float)$product->pts;
+                $itemTotalAmount = $totalQtyNos * $unitPrice;
 
                 if ($currentOrderItem) {
                     $currentOrderItem->update([
                         'quantity' => $newQuantity,
-                        'unit' => $itemData['unit'] ?? 'Box',
+                        'unit' => $unit,
                         'price' => $unitPrice,
                         'subtotal' => $itemTotalAmount,
                     ]);
@@ -403,7 +439,7 @@ class DistributorOrderController extends Controller
                     $newItem = $distributorOrder->items()->create([
                         'product_id' => $product->id,
                         'quantity' => $newQuantity,
-                        'unit' => $itemData['unit'] ?? 'Box',
+                        'unit' => $unit,
                         'price' => $unitPrice,
                         'subtotal' => $itemTotalAmount,
                     ]);
@@ -412,7 +448,7 @@ class DistributorOrderController extends Controller
 
                 $totalAmount += $itemTotalAmount;
                 $totalItems++;
-                $totalQuantity += $newQuantity;
+                $totalQuantity += $totalQtyNos;
             }
 
             // Delete removed items
@@ -548,35 +584,8 @@ class DistributorOrderController extends Controller
 
             // Update Distributor Inventory
             // This logic is now handled by confirmReceipt
-            /*
-            foreach ($distributorOrder->items as $item) {
-                $inventory = \App\Models\Inventory::firstOrNew([
-                    'product_id' => $item->product_id,
-                    'distributor_id' => $distributorOrder->distributor_id
-                ]);
-
-                // Set basic details for new records
-                if (!$inventory->exists) {
-                    $inventory->product_name = $item->product->product_name;
-                    $inventory->distributor_product_code = $item->product->product_code;
-                }
-
-                $previousStock = $inventory->stock ?? 0;
-                $inventory->stock = $previousStock + $item->quantity;
-                $inventory->save();
-
-                // Optional: Log stock history if needed
-                \App\Models\StockHistory::create([
-                    'inventory_id' => $inventory->id,
-                    'user_id' => Auth::id(), // Admin performed action
-                    'previous_stock' => $previousStock,
-                    'new_stock' => $inventory->stock,
-                    'quantity_change' => $item->quantity,
-                    'change_type' => 'order_received',
-                    'remarks' => 'Order #' . $distributorOrder->order_code
-                ]);
-            }
-            */
+            // Add items to inventory immediately upon Admin Approval
+            $this->addOrderItemsToInventory($distributorOrder);
 
             DB::commit();
 
@@ -842,18 +851,17 @@ class DistributorOrderController extends Controller
                 $totalStrips = $qty;
 
                 if ($unit === 'box') {
-                    $totalStrips = $qty * ($product->box_size ?? 1);
+                    $totalStrips = $qty * (int)($product->strips_per_box ?? 1);
                 } elseif ($unit === 'carton') {
-                    $boxSize = $product->box_size ?? 1;
-                    $cartonSize = $product->carton_size ?? 1;
-                    $totalStrips = $qty * $boxSize * $cartonSize;
+                    $totalStrips = $qty * (int)($product->boxes_per_carton ?? 1) * (int)($product->strips_per_box ?? 1);
                 }
 
                 $inventory = Inventory::firstOrNew([
                     'distributor_id' => $order->distributor_id,
                     'product_id' => $product->id,
                     'batch_no' => $batch->batch_no,
-                    'expiry_date' => $batch->expiry_date
+                    'expiry_date' => $batch->expiry_date,
+                    'variant' => $item->variant
                 ]);
 
                 if (!$inventory->exists) {
@@ -904,9 +912,6 @@ class DistributorOrderController extends Controller
                 'status' => 'delivered',
                 'delivered_at' => now()
             ]);
-
-            // Add items to inventory upon delivery
-            $this->addOrderItemsToInventory($distributorOrder);
 
             DB::commit();
 

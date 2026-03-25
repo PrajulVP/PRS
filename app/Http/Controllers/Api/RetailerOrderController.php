@@ -111,7 +111,8 @@ class RetailerOrderController extends Controller
      *             @OA\Property(property="items", type="array", @OA\Items(
      *                 @OA\Property(property="product_id", type="integer", example=1),
      *                 @OA\Property(property="quantity", type="integer", example=10),
-     *                 @OA\Property(property="unit", type="string", enum={"Nos", "Box", "Carton"}, example="Box"),
+     *                 @OA\Property(property="unit", type="string", enum={"Nos", "Strips", "Box", "Carton"}, example="Box"),
+     *                 @OA\Property(property="variant", type="string", nullable=true, example="M"),
      *                 @OA\Property(property="distributor_id", type="integer", nullable=true, example=2)
      *             )),
      *             @OA\Property(property="notes", type="string", nullable=true, example="Urgent order")
@@ -178,26 +179,36 @@ class RetailerOrderController extends Controller
                     $unit = $itemData['unit'] ?? 'Nos';
                     $qty = (int)$itemData['quantity'];
 
-                    // Conversion logic (to Nos/Base units)
+                    // Conversion logic using numeric fields
                     $multiplier = 1;
                     $normalizedUnit = strtolower($unit);
                     if ($normalizedUnit === 'box') {
-                        $multiplier = (int)($product->box_size ?? 1);
+                        $multiplier = (int)($product->strips_per_box ?? 1);
                     } elseif ($normalizedUnit === 'carton') {
-                        $multiplier = (int)($product->box_size ?? 1) * (int)($product->carton_size ?? 1);
+                        $multiplier = (int)($product->boxes_per_carton ?? 1) * (int)($product->strips_per_box ?? 1);
+                    } elseif ($normalizedUnit === 'nos' || $normalizedUnit === 'no' || $normalizedUnit === 'unit') {
+                        $multiplier = 1 / (max(1, (int)($product->units_per_strip ?? 1)));
                     }
 
                     $totalQtyNos = $qty * $multiplier;
+                    // If multiplier resulted in float, we handle it as needed (ceil for strips if we only sell full strips)
+                    // But in pharma, usually they sell by strips. If they select Nos, it might be 10 Nos = 1 Strip.
+                    // For now, let's keep it as is, or use ceil if we want to round up to nearest strip.
+                    $totalQtyNos = ceil($totalQtyNos); 
 
                     // Stock Check
                     if ($distributor) {
                         $totalStock = DB::table('inventories')
                             ->where('distributor_id', $distributor->id)
                             ->where('product_id', $product->id)
+                            ->when(!empty($itemData['variant']), function ($q) use ($itemData) {
+                                return $q->where('variant', $itemData['variant']);
+                            })
                             ->sum('stock');
 
                         if ($totalStock < $totalQtyNos) {
-                            throw new \Exception("Insufficient stock for product '{$product->product_name}' at selected distributor.");
+                            $variantMsg = !empty($itemData['variant']) ? " (variant: {$itemData['variant']})" : "";
+                            throw new \Exception("Insufficient stock for product '{$product->product_name}'{$variantMsg} at selected distributor.");
                         }
                     }
 
@@ -220,6 +231,7 @@ class RetailerOrderController extends Controller
                         'unit' => $unit,
                         'unit_price' => $price,
                         'total_amount' => $subtotalWithGst,
+                        'variant' => $itemData['variant'] ?? null,
                     ]);
 
                     $totalAmount += $subtotalWithGst;

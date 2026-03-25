@@ -106,6 +106,9 @@ class ProductController extends Controller
                     'ptr' => number_format((float)$product->ptr, 2),
                     'pts' => number_format((float)$product->pts, 2),
                     'loyalty_point_percentage' => $product->loyalty_point_percentage,
+                    'units_per_strip' => $product->units_per_strip,
+                    'strips_per_box' => $product->strips_per_box,
+                    'boxes_per_carton' => $product->boxes_per_carton,
                     'actions' => null, // Actions column will be rendered by DataTables
                 ];
             });
@@ -151,6 +154,11 @@ class ProductController extends Controller
 
         $data = $request->all();
 
+        // Sync numeric fields
+        $data['units_per_strip'] = $this->parseNumber($request->strip_size);
+        $data['strips_per_box'] = $this->parseNumber($request->box_size);
+        $data['boxes_per_carton'] = $this->parseNumber($request->carton_size);
+
         Product::create($data);
 
         return redirect()->route('products.index')->with('success', 'Product created successfully.');
@@ -193,6 +201,11 @@ class ProductController extends Controller
         ]);
 
         $data = $request->all();
+        
+        // Sync numeric fields
+        $data['units_per_strip'] = $this->parseNumber($request->strip_size);
+        $data['strips_per_box'] = $this->parseNumber($request->box_size);
+        $data['boxes_per_carton'] = $this->parseNumber($request->carton_size);
 
         $product->update($data);
 
@@ -247,41 +260,126 @@ class ProductController extends Controller
 
         $file = $request->file('import_file');
 
-        $row = 1;
+        $rowCount = 1;
         $successCount = 0;
         $errors = [];
 
         if (($handle = fopen($file->getRealPath(), "r")) !== FALSE) {
             $header = fgetcsv($handle, 0, ","); // length 0 for no limit
 
-            if (!$header || count($header) < 12) {
-                return redirect()->route('products.index')->with('error', 'Invalid CSV format or missing columns. Expected at least 12 columns, found ' . (is_array($header) ? count($header) : 0));
+            if (!$header) {
+                return redirect()->route('products.index')->with('error', 'Empty CSV file.');
             }
 
-            // Trim headers and remove BOM
-            $header = array_map(function ($h) {
-                return trim(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $h));
+            // Normalizing headers and mapping aliases
+            $mapping = [
+                'product_c' => 'product_code',
+                'product_code' => 'product_code',
+                'product_n' => 'product_name',
+                'product_name' => 'product_name',
+                'generic_n' => 'generic_name',
+                'generic_name' => 'generic_name',
+                'carton_siz' => 'carton_size',
+                'carton_size' => 'carton_size',
+                'loyalty_po' => 'loyalty_point_percentage',
+                'loyalty_point_percentage' => 'loyalty_point_percentage',
+                'pts' => 'pts',
+                'ptr' => 'ptr',
+                'mrp' => 'mrp',
+                'hsn_code' => 'hsn_code',
+                'strip_size' => 'strip_size',
+                'box_size' => 'box_size',
+                'pack' => 'pack'
+            ];
+
+            $header = array_map(function ($h) use ($mapping) {
+                $clean = strtolower(trim(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $h)));
+                return $mapping[$clean] ?? $clean;
             }, $header);
 
+            // Essential columns check
+            $required = ['product_name', 'mrp'];
+            $missing = array_diff($required, $header);
+            if (!empty($missing)) {
+                return redirect()->route('products.index')->with('error', 'Missing required columns: ' . implode(', ', $missing) . '. Please check your CSV headers.');
+            }
+
             while (($data = fgetcsv($handle, 0, ",")) !== FALSE) {
-                $row++;
-                if (count($header) !== count($data)) {
-                    $errors[] = "Row $row: Column count mismatch.";
-                    continue;
+                $rowCount++;
+                
+                // Handle trailing empty columns in data or header
+                if (count($header) > count($data)) {
+                    $data = array_pad($data, count($header), null);
+                } elseif (count($header) < count($data)) {
+                    $data = array_slice($data, 0, count($header));
                 }
 
                 $productData = array_combine($header, $data);
 
                 // Basic validation for required fields
-                if (empty($productData['product_name']) || !isset($productData['mrp'])) {
-                    $errors[] = "Row $row: Missing required fields (Name/MRP).";
+                if (empty($productData['product_name'])) {
+                    $errors[] = "Row $rowCount: Product Name is empty.";
                     continue;
                 }
 
-                $productCode = !empty($productData['product_code']) ? $productData['product_code'] : null;
+                if (!isset($productData['mrp']) || trim($productData['mrp']) === '') {
+                    $errors[] = "Row $rowCount: MRP is missing for '{$productData['product_name']}'.";
+                    continue;
+                }
+
+                $productCode = !empty($productData['product_code']) ? trim($productData['product_code']) : null;
+
+                // Parsing logic
+                $unitsPerStrip = 1;
+                if (!empty($productData['strip_size'])) {
+                    if (preg_match('/(\d+)/', $productData['strip_size'], $m)) {
+                        $unitsPerStrip = (int)$m[1];
+                    }
+                }
+
+                $stripsPerBox = 1;
+                if (!empty($productData['box_size'])) {
+                    $boxSizeParts = [];
+                    if (preg_match_all('/(\d+)/', $productData['box_size'], $m)) {
+                        $boxSizeParts = array_map('intval', $m[1]);
+                    }
+                    
+                    if (count($boxSizeParts) > 1) {
+                        // If the last number matches unitsPerStrip, it's likely (Strips x Packing x Units)
+                        // e.g., 10x3x10 for 30 strips of 10.
+                        if (end($boxSizeParts) === $unitsPerStrip) {
+                            $stripsPerBox = 1;
+                            for ($i = 0; $i < count($boxSizeParts) - 1; $i++) {
+                                $stripsPerBox *= $boxSizeParts[$i];
+                            }
+                        } else {
+                            // Otherwise just multiply everything
+                            $stripsPerBox = array_product($boxSizeParts);
+                        }
+                    } elseif (count($boxSizeParts) === 1) {
+                        $stripsPerBox = $boxSizeParts[0];
+                    }
+                }
+
+                $boxesPerCarton = 1;
+                if (!empty($productData['carton_size'])) {
+                    if (preg_match('/(\d+)/', $productData['carton_size'], $m)) {
+                        $boxesPerCarton = (int)$m[1];
+                    }
+                }
+
+                // has_variants detection (S/M/L patterns)
+                $hasVariants = false;
+                if (preg_match('/\([SML\/]+\)/i', $productData['product_name']) || preg_match('/(S|M|L|XL|XXL|XXXL)/i', $productData['product_name'])) {
+                     // Note: Simple detection, can be refined.
+                     if (str_contains($productData['product_name'], 'Knee cap') || str_contains($productData['product_name'], 'Ankle') || str_contains($productData['product_name'], 'Belt')) {
+                        $hasVariants = true;
+                     }
+                }
 
                 try {
-                    $matchAttributes = ['product_name' => $productData['product_name']];
+                    // Decide if we match by name or code
+                    $matchAttributes = ['product_name' => trim($productData['product_name'])];
                     if ($productCode) {
                         $matchAttributes['product_code'] = $productCode;
                     }
@@ -291,22 +389,26 @@ class ProductController extends Controller
                         $matchAttributes,
                         [
                             'product_code' => $productCode,
-                            'product_name' => $productData['product_name'],
+                            'product_name' => trim($productData['product_name']),
                             'generic_name' => $productData['generic_name'] ?? null,
                             'pack' => $productData['pack'] ?? null,
                             'strip_size' => $productData['strip_size'] ?: null,
                             'box_size' => $productData['box_size'] ?: null,
                             'carton_size' => $productData['carton_size'] ?: null,
                             'hsn_code' => $productData['hsn_code'] ?? null,
-                            'mrp' => (float)($productData['mrp'] ?? 0),
-                            'ptr' => (float)($productData['ptr'] ?? 0),
-                            'pts' => (float)($productData['pts'] ?? 0),
-                            'loyalty_point_percentage' => (float)($productData['loyalty_point_percentage'] ?? 0),
+                            'mrp' => (float)preg_replace('/[^0-9.]/', '', $productData['mrp'] ?? 0),
+                            'ptr' => (float)preg_replace('/[^0-9.]/', '', $productData['ptr'] ?? 0),
+                            'pts' => (float)preg_replace('/[^0-9.]/', '', $productData['pts'] ?? 0),
+                            'loyalty_point_percentage' => (float)preg_replace('/[^0-9.]/', '', $productData['loyalty_point_percentage'] ?? 0),
+                            'units_per_strip' => $unitsPerStrip,
+                            'strips_per_box' => $stripsPerBox,
+                            'boxes_per_carton' => $boxesPerCarton,
+                            'has_variants' => $hasVariants,
                         ]
                     );
                     $successCount++;
                 } catch (\Exception $e) {
-                    $errors[] = "Row $row: " . $e->getMessage();
+                    $errors[] = "Row $rowCount: " . $e->getMessage();
                 }
             }
             fclose($handle);
@@ -317,5 +419,15 @@ class ProductController extends Controller
         }
 
         return redirect()->route('products.index')->with('success', "$successCount products imported successfully.");
+    }
+
+    private function parseNumber($string)
+    {
+        if (empty($string)) return 1;
+        if (preg_match_all('/(\d+)/', $string, $m)) {
+            $parts = array_map('intval', $m[1]);
+            return count($parts) > 1 ? array_product($parts) : $parts[0];
+        }
+        return 1;
     }
 }

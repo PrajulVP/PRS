@@ -42,6 +42,7 @@
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5><i class="fa fa-package me-2"></i>Products</h5>
                         <div class="d-flex gap-2">
+                            @if(Auth::user()->hasAnyRole(['admin', 'superadmin']) || Auth::user()->hasPermissionToCategory('products', 'add'))
                             <button type="button" class="btn btn-secondary" data-bs-toggle="modal"
                                 data-bs-target="#importProductModal">
                                 <i class="fa fa-upload me-1"></i>Import Products
@@ -50,11 +51,15 @@
                                 data-bs-target="#createProductModal">
                                 <i class="fa fa-plus me-1"></i>Add Product
                             </button>
+                            @endif
                         </div>
                     </div>
                     <div class="card-body">
                         @if(session('success'))
                             <div class="alert alert-success">{{ session('success') }}</div>
+                        @endif
+                        @if(session('error'))
+                            <div class="alert alert-danger">{{ session('error') }}</div>
                         @endif
                         @if($errors->any())
                             <div class="alert alert-danger">
@@ -367,6 +372,9 @@
 
     <script>
         $(document).ready(function () {
+            const canEdit = @json(Auth::user()->hasAnyRole(['admin', 'superadmin']) || Auth::user()->hasPermissionToCategory('products', 'edit'));
+            const canDelete = @json(Auth::user()->hasAnyRole(['admin', 'superadmin']) || Auth::user()->hasPermissionToCategory('products', 'delete'));
+
             var table = $('#products-table').DataTable({
                 processing: true,
                 serverSide: true,
@@ -435,12 +443,13 @@
                         return `
                                                                                     <div class="action-buttons">
                                                                                         <button type="button" class="btn btn-sm btn-primary view-btn" data-product='${rowData}'><i class="fa fa-eye"></i></button>
-                                                                                        <button type="button" class="btn btn-sm btn-primary edit-btn" data-product='${rowData}'><i class="fa fa-edit"></i></button>
+                                                                                        ${canEdit ? `<button type="button" class="btn btn-sm btn-primary edit-btn" data-product='${rowData}'><i class="fa fa-edit"></i></button>` : ''}
+                                                                                        ${canDelete ? `
                                                                                         <form action="${deleteUrl}" method="POST" onsubmit="return confirm('Are you sure?')">
                                                                                             <input type="hidden" name="_token" value="${csrf}">
                                                                                             <input type="hidden" name="_method" value="DELETE">
                                                                                             <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
-                                                                                        </form>
+                                                                                        </form>` : ''}
                                                                                     </div>
                                                                                 `;
                     }

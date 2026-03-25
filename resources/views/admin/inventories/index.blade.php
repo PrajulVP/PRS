@@ -52,10 +52,12 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5><i class="fa fa-boxes me-2"></i>Stock</h5>
+                        @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'distributor']) || Auth::user()->hasPermissionToCategory('inventories', 'add'))
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                             data-bs-target="#createInventoryModal">
                             <i class="fa fa-plus me-1"></i>Add Product
                         </button>
+                        @endif
                     </div>
                     <div class="card-body">
                         @if(session('success'))
@@ -86,6 +88,7 @@
                                             <th>Distributor</th>
                                         @endif
                                         <th>Batch No</th>
+                                        <th>Variant</th>
                                         <th>Expiry Date</th>
                                         <th>Stock (Total)</th>
                                         <th>Breakdown</th>
@@ -121,8 +124,12 @@
                                 <option value="">-- Select product --</option>
                                 @foreach($products as $p)
                                     <option value="{{ $p->id }}" data-code="{{ $p->product_code }}"
-                                        data-strip-size="{{ $p->strip_size ?? 0 }}" data-box-size="{{ $p->box_size ?? 0 }}"
-                                        data-carton-size="{{ $p->carton_size ?? 0 }}"
+                                        data-name="{{ $p->product_name }}"
+                                        data-units-per-strip="{{ $p->units_per_strip ?? 1 }}"
+                                        data-strips-per-box="{{ $p->strips_per_box ?? 1 }}"
+                                        data-boxes-per-carton="{{ $p->boxes_per_carton ?? 1 }}"
+                                        data-has-variants="{{ $p->has_variants ? '1' : '0' }}"
+                                        data-box-size="{{ $p->box_size ?? '' }}"
                                         data-pack="{{ strtolower($p->pack ?? '') }}">
                                         {{ $p->product_name }}{{ (!empty(trim($p->product_code)) && strtoupper(trim($p->product_code)) !== 'N/A') ? ' ('.$p->product_code.')' : '' }}
                                     </option>
@@ -142,85 +149,177 @@
                             </div>
                         @endif
                         <script>
-                            document.addEventListener('DOMContentLoaded', function () {
-                                var select = document.getElementById('create_product_id');
-                                var code = document.getElementById('create_distributor_product_code');
-                                var packInfo = document.getElementById('create_pack_info');
+                             document.addEventListener('DOMContentLoaded', function () {
+                                 var select = document.getElementById('create_product_id');
+                                 var packInfo = document.getElementById('create_pack_info');
+                                 var calcQty = document.getElementById('create_input_qty');
+                                 var calcUnit = document.getElementById('create_input_unit');
+                                 var totalInput = document.getElementById('create_stock');
+                                 var variantContainer = document.getElementById('variant_container');
 
-                                var calcCtn = document.getElementById('create_calc_ctn');
-                                var calcQty = document.getElementById('create_input_qty');
-                                var calcUnit = document.getElementById('create_input_unit');
-                                var totalInput = document.getElementById('create_stock');
+                                 function calculateCreateTotal() {
+                                     var opt = select.options[select.selectedIndex];
+                                     if (!opt || opt.value === "") return;
 
-                                function calculateCreateTotal() {
-                                    var opt = select.options[select.selectedIndex];
-                                    if (!opt || opt.value === "") return;
+                                     var stripsPerBox = parseInt(opt.getAttribute('data-strips-per-box')) || 1;
+                                     var boxesPerCarton = parseInt(opt.getAttribute('data-boxes-per-carton')) || 1;
+                                     var unitsPerStrip = parseInt(opt.getAttribute('data-units-per-strip')) || 1;
 
-                                    var boxSize = parseInt(opt.getAttribute('data-box-size')) || 0;
-                                    var cartonSize = parseInt(opt.getAttribute('data-carton-size')) || 0;
+                                     var qty = parseFloat(calcQty.value) || 0;
+                                     var unit = calcUnit.value;
 
-                                    var qty = parseInt(calcQty.value) || 0;
-                                    var unit = calcUnit.value;
+                                     var total = 0;
+                                     if (unit === 'strip') {
+                                         total = qty;
+                                     } else if (unit === 'box') {
+                                         total = qty * stripsPerBox;
+                                     } else if (unit === 'carton') {
+                                         total = qty * stripsPerBox * boxesPerCarton;
+                                     }
 
-                                    var total = 0;
-                                    if (unit === 'strip') {
-                                        total = qty;
-                                    } else if (unit === 'box') {
-                                        total = qty * boxSize;
-                                    } else if (unit === 'carton') {
-                                        total = qty * boxSize * (cartonSize || 1);
-                                    }
+                                     totalInput.value = total;
+                                 }
 
-                                    totalInput.value = total;
-                                }
+                                 function calculateAdjustTotal() {
+                 var product = currentInventory.product || {};
+                 var stripsPerBox = parseInt(product.strips_per_box) || 1;
+                 var boxesPerCarton = parseInt(product.boxes_per_carton) || 1;
 
-                                if (select) {
-                                    select.addEventListener('change', function () {
-                                        var selected = select.options[select.selectedIndex];
-                                        if (selected && selected.value !== "") {
-                                            var prodCode = selected.getAttribute('data-code');
-                                            var bSize = selected.getAttribute('data-box-size');
-                                            var cSize = selected.getAttribute('data-carton-size');
+                 var qty = parseFloat(adjustQtyInput.value) || 0;
+                 var unit = adjustUnitSelect.value;
+                 var action = adjustActionSelect.value;
 
-                                            var pPack = selected.getAttribute('data-pack') || '';
-                                            var pName = (selected.text || '').toLowerCase();
-                                            var isCount = (parseInt(bSize) === 1 && parseInt(cSize) === 1) ||
-                                                pPack.includes('nos') || pPack.includes('count') ||
-                                                pPack.includes('pair') || pPack.includes('bottle') ||
-                                                pPack.includes('ml') || pPack.includes('gm') || pPack.includes('syp') ||
-                                                pName.includes('syp') || pName.includes('syrup') || pName.includes('drop') || pName.includes('ointment');
+                 var total = 0;
+                 if (unit === 'strip') {
+                     total = qty;
+                 } else if (unit === 'box') {
+                     total = qty * stripsPerBox;
+                 } else if (unit === 'carton') {
+                     total = qty * stripsPerBox * boxesPerCarton;
+                 }
 
-                                            var unitSelect = calcUnit;
-                                            var totalLabel = document.getElementById('create_stock_label');
+                 var currentStock = parseInt(currentInventory.stock) || 0;
+                 var finalStock = action === 'add' ? currentStock + total : currentStock - total;
 
-                                            // Rebuild unit options based on pack type
-                                            unitSelect.innerHTML = '';
-                                            if (isCount) {
-                                                unitSelect.innerHTML += '<option value="strip">Nos</option>';
-                                                totalLabel.innerText = "Converted Total (Nos)";
-                                                packInfo.innerHTML = `Packaging: <b>${bSize} Nos/Box</b> | <b>${cSize} Box/Ctn</b>`;
-                                            } else {
-                                                unitSelect.innerHTML += '<option value="strip">Strips</option>';
-                                                totalLabel.innerText = "Converted Total (Strips)";
-                                                packInfo.innerHTML = `Packaging: <b>${bSize} Str/Box</b> | <b>${cSize} Box/Ctn</b>`;
-                                            }
-                                            unitSelect.innerHTML += '<option value="box">Boxes</option>';
-                                            unitSelect.innerHTML += '<option value="carton">Cartons</option>';
+                 totalAdjustInput.value = total;
+                 finalStockInput.value = finalStock;
 
-                                            if (code && (!code.value || code.value.trim() === '')) {
-                                                code.value = prodCode || '';
-                                            }
+                 // Dynamic label update
+                 var boxSizeStr = product.box_size || '';
+                 var pPack = (product.pack || '').toLowerCase();
+                 var pName = (currentInventory.product_name || '').toLowerCase();
+                 var isCount = boxSizeStr === "";
+                 if (!isCount) {
+                     isCount = pPack.includes('nos') || pPack.includes('count') ||
+                         pPack.includes('pair') || pPack.includes('bottle') ||
+                         pPack.includes('ml') || pPack.includes('gm') || pPack.includes('syp') ||
+                         pName.includes('syp') || pName.includes('syrup') || pName.includes('drop') || 
+                         pName.includes('ointment') || pName.includes('belt') ||
+                         pName.includes('cap') || pName.includes('binder') ||
+                         pName.includes('splint') || pName.includes('brace') ||
+                         pName.includes('cuff') || pName.includes('walker');
+                 }
 
-                                            calculateCreateTotal();
-                                        } else {
-                                            packInfo.innerText = "Select a product to see packaging rules";
-                                        }
-                                    });
-                                }
+                 var unitLabel = isCount ? 'Nos' : 'Strips';
+                 document.getElementById('adjust_total_stock_label').innerText = "Adjust Total (" + unitLabel + ")";
+                 document.getElementById('adjust_final_stock_label').innerText = "Final Stock (" + unitLabel + ")";
+                 
+                 // Rebuild unit select options if needed? 
+                 // (Usually it's better to do it once when opening modal)
+             }
 
-                                $('#create_input_qty, #create_input_unit').on('input change', calculateCreateTotal);
-                            });
+                                 if (select) {
+                                     select.addEventListener('change', function () {
+                                         var selected = select.options[select.selectedIndex];
+                                         if (selected && selected.value !== "") {
+                                             var stripsPerBox = selected.getAttribute('data-strips-per-box') || 1;
+                                             var boxesPerCarton = parseInt(selected.getAttribute('data-boxes-per-carton')) || 1;
+                                             var unitsPerStrip = parseInt(selected.getAttribute('data-units-per-strip')) || 1;
+                                             var hasVariants = selected.getAttribute('data-has-variants') == '1';
+                                             var boxSizeStr = selected.getAttribute('data-box-size') || '';
+                                             var pName = (selected.getAttribute('data-name') || '').toLowerCase();
+                                             var pPack = (selected.getAttribute('data-pack') || '').toLowerCase();
+
+                                             // Refined Unit Logic: If box_size is empty, it's Nos
+                                             var isCount = boxSizeStr === "" || boxSizeStr === null;
+                                             
+                                             // Add keyword-based detection to isCount
+                                             if (!isCount) {
+                                                 isCount = pPack.includes('nos') || pPack.includes('count') ||
+                                                     pPack.includes('pair') || pPack.includes('bottle') ||
+                                                     pPack.includes('ml') || pPack.includes('gm') || 
+                                                     pPack.includes('syp') || pName.includes('syp') || 
+                                                     pName.includes('syrup') || pName.includes('drop') || 
+                                                     pName.includes('ointment') || pName.includes('belt') ||
+                                                     pName.includes('cap') || pName.includes('binder') ||
+                                                     pName.includes('splint') || pName.includes('brace') ||
+                                                     pName.includes('cuff') || pName.includes('walker');
+                                             }
+
+                                             var unitSelect = calcUnit;
+                                             var totalLabel = document.getElementById('create_stock_label');
+
+                                             // Rebuild unit options 
+                                             unitSelect.innerHTML = '';
+                                             if (isCount) {
+                                                 unitSelect.innerHTML += '<option value="strip">Nos</option>';
+                                                 totalLabel.innerText = "Converted Total (Nos)";
+                                                 packInfo.innerHTML = `Packaging: <b>${unitsPerStrip} Nos/Unit</b> | <b>${stripsPerBox} Units/Box</b> | <b>${boxesPerCarton} Box/Ctn</b>`;
+                                             } else {
+                                                 unitSelect.innerHTML += '<option value="strip">Strips</option>';
+                                                 totalLabel.innerText = "Converted Total (Strips)";
+                                                 packInfo.innerHTML = `Packaging: <b>${unitsPerStrip} Tab/Str</b> | <b>${stripsPerBox} Str/Box</b> | <b>${boxesPerCarton} Box/Ctn</b>`;
+                                             }
+                                             unitSelect.innerHTML += '<option value="box">Boxes</option>';
+                                             unitSelect.innerHTML += '<option value="carton">Cartons</option>';
+
+                                             // Show/Hide variant and handle dynamic parsing
+                                             var variantSelect = document.getElementById('create_variant');
+                                             if (hasVariants || pName.includes('(')) {
+                                                 variantContainer.classList.remove('d-none');
+                                                 
+                                                 // Dynamic parsing for (S/M/L) patterns
+                                                 var match = pName.match(/\(([^)]+)\)/g);
+                                                 if (match) {
+                                                     var lastMatch = match[match.length - 1].replace('(', '').replace(')', '');
+                                                     if (lastMatch.includes('/')) {
+                                                         var sizes = lastMatch.split('/');
+                                                         variantSelect.innerHTML = '<option value="">-- Select Size --</option>';
+                                                         sizes.forEach(s => {
+                                                             let size = s.trim().toUpperCase();
+                                                             variantSelect.innerHTML += `<option value="${size}">${size}</option>`;
+                                                         });
+                                                     }
+                                                 }
+                                             } else {
+                                                 variantContainer.classList.add('d-none');
+                                                 variantSelect.value = '';
+                                             }
+
+                                             calculateCreateTotal();
+                                         } else {
+                                             packInfo.innerText = "Select a product to see packaging rules";
+                                             variantContainer.classList.add('d-none');
+                                         }
+                                     });
+                                 }
+
+                                 $('#create_input_qty, #create_input_unit').on('input change', calculateCreateTotal);
+                             });
                         </script>
+
+                        <div id="variant_container" class="mb-3 d-none">
+                            <label for="create_variant" class="form-label fw-bold">Size / Variant</label>
+                            <select name="variant" id="create_variant" class="form-select">
+                                <option value="">-- Select Size --</option>
+                                <option value="S">S (Small)</option>
+                                <option value="M">M (Medium)</option>
+                                <option value="L">L (Large)</option>
+                                <option value="XL">XL (Extra Large)</option>
+                                <option value="XXL">XXL</option>
+                                <option value="XXXL">XXXL</option>
+                            </select>
+                        </div>
 
                         <div class="row g-2 mb-3">
                             <div class="col-md-6">
@@ -237,11 +336,11 @@
                         <div class="row g-2 mb-3">
                             <div class="col-md-8">
                                 <label class="form-label fw-bold">Quantity</label>
-                                <input type="number" id="create_input_qty" class="form-control" placeholder="0" min="0">
+                                <input type="number" id="create_input_qty" class="form-control" placeholder="0" min="0" step="0.01">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-bold">Unit</label>
-                                <select id="create_input_unit" class="form-select">
+                                <select name="unit" id="create_input_unit" class="form-select">
                                     <option value="strip">Strips</option>
                                     <option value="box">Boxes</option>
                                     <option value="carton">Cartons</option>
@@ -448,7 +547,16 @@
     <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
     <script>
+        @php
+            $user = Auth::user();
+            $canEdit = $user->hasAnyRole(['admin', 'superadmin', 'distributor']) || $user->hasPermissionToCategory('inventories', 'edit');
+            $canDelete = $user->hasAnyRole(['admin', 'superadmin']) || $user->hasPermissionToCategory('inventories', 'delete');
+            $isDistributor = $user->hasRole('distributor');
+        @endphp
         $(document).ready(function () {
+            const canEdit = @json($canEdit);
+            const canDelete = @json($canDelete);
+            const isDistributor = @json($isDistributor);
             var table = $('#inventories-table').DataTable({
                 processing: true,
                 serverSide: true,
@@ -546,6 +654,13 @@
                     name: 'batch_no'
                 },
                 {
+                    data: 'variant',
+                    name: 'variant',
+                    render: function(data) {
+                        return data ? `<span class="badge bg-light text-dark border">${data}</span>` : '-';
+                    }
+                },
+                {
                     data: 'expiry_date',
                     name: 'expiry_date'
                 },
@@ -564,16 +679,28 @@
                     render: function (data, type, row) {
                         if (!row.product_details) return '-';
 
-                        let boxSize = row.product_details.box_size || 0;
-                        let cartonSize = row.product_details.carton_size || 0;
+                        let boxSize = row.product_details.strips_per_box || 0;
+                        let cartonSize = row.product_details.boxes_per_carton || 0;
 
                         let pPack = row.product_details.pack ? row.product_details.pack.toLowerCase() : '';
                         let pName = row.product_name ? row.product_name.toLowerCase() : '';
-                        let isCount = (parseInt(boxSize) === 1 && parseInt(cartonSize) === 1) ||
-                            pPack.includes('nos') || pPack.includes('count') ||
-                            pPack.includes('pair') || pPack.includes('bottle') ||
-                            pPack.includes('ml') || pPack.includes('gm') || pPack.includes('syp') ||
-                            pName.includes('syp') || pName.includes('syrup') || pName.includes('drop') || pName.includes('ointment');
+                        let boxSizeStr = row.product_details.box_size || '';
+
+                        // Refined Unit Logic: box_size empty = Nos
+                        let isCount = boxSizeStr === "";
+                        
+                        // Add keyword-based detection to isCount
+                        if (!isCount) {
+                            isCount = pPack.includes('nos') || pPack.includes('count') ||
+                                pPack.includes('pair') || pPack.includes('bottle') ||
+                                pPack.includes('ml') || pPack.includes('gm') || pPack.includes('syp') ||
+                                pName.includes('syp') || pName.includes('syrup') || pName.includes('drop') || 
+                                pName.includes('ointment') || pName.includes('belt') ||
+                                pName.includes('cap') || pName.includes('binder') ||
+                                pName.includes('splint') || pName.includes('brace') ||
+                                pName.includes('cuff') || pName.includes('walker');
+                        }
+                        
                         let baseStr = isCount ? 'Nos' : 'Str';
 
                         if (isCount) {
@@ -642,19 +769,28 @@
                         let csrf = "{{ csrf_token() }}";
                         let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
 
-                        return `
-                                                    <div class="action-buttons">
-                                                        <button type="button" class="btn btn-sm btn-info edit-btn" data-inventory='${rowData}' title="Edit Stock"><i class="fa fa-edit"></i></button>
-                                                        <button type="button" class="btn btn-sm btn-success stock-btn" data-id="${id}" data-op="add" data-name="${row.product_name}" data-box-size="${row.product_details?.box_size || 0}" data-carton-size="${row.product_details?.carton_size || 0}" title="Add Stock"><i class="fa fa-plus"></i></button>
-                                                        <button type="button" class="btn btn-sm btn-warning stock-btn" data-id="${id}" data-op="subtract" data-name="${row.product_name}" data-box-size="${row.product_details?.box_size || 0}" data-carton-size="${row.product_details?.carton_size || 0}" title="Reduce Stock"><i class="fa fa-minus"></i></button>
+                        let btns = `<div class="action-buttons">`;
+                        
+                        // Edit button
+                        if (canEdit) {
+                            btns += `<button type="button" class="btn btn-sm btn-info edit-btn" data-inventory='${rowData}' title="Edit Stock"><i class="fa fa-edit"></i></button>`;
+                            
+                            // Stock adjustment buttons
+                            btns += `<button type="button" class="btn btn-sm btn-success stock-btn" data-id="${id}" data-op="add" data-name="${row.product_name}" data-strips-per-box="${row.product_details?.strips_per_box || 0}" data-boxes-per-carton="${row.product_details?.boxes_per_carton || 0}" title="Add Stock"><i class="fa fa-plus"></i></button>`;
+                            btns += `<button type="button" class="btn btn-sm btn-warning stock-btn" data-id="${id}" data-op="subtract" data-name="${row.product_name}" data-strips-per-box="${row.product_details?.strips_per_box || 0}" data-boxes-per-carton="${row.product_details?.boxes_per_carton || 0}" title="Reduce Stock"><i class="fa fa-minus"></i></button>`;
+                        }
 
-                                                        <form id="delete-form-${id}" action="${deleteUrl}" method="POST" style="display:inline;">
-                                                            <input type="hidden" name="_token" value="${csrf}">
-                                                            <input type="hidden" name="_method" value="DELETE">
-                                                            <button type="button" class="btn btn-sm btn-danger delete-btn" data-id="${id}" title="Remove from Stock"><i class="fa fa-trash"></i></button>
-                                                        </form>
-                                                    </div>
-                                                    `;
+                        // Delete button
+                        if (canDelete) {
+                            btns += `<form id="delete-form-${id}" action="${deleteUrl}" method="POST" style="display:inline;">
+                                        <input type="hidden" name="_token" value="${csrf}">
+                                        <input type="hidden" name="_method" value="DELETE">
+                                        <button type="button" class="btn btn-sm btn-danger delete-btn" data-id="${id}" title="Remove from Stock"><i class="fa fa-trash"></i></button>
+                                    </form>`;
+                        }
+                        
+                        btns += `</div>`;
+                        return btns;
                     }
                 }
                 ]
@@ -699,20 +835,20 @@
             });
 
             // Stock Adjustment Handler
-            let currentBoxSize = 0;
-            let currentCartonSize = 0;
+            let currentStripsPerBox = 0;
+            let currentBoxesPerCarton = 0;
 
             function calculateAdjTotal() {
-                let qty = parseInt($('#adj_input_qty').val()) || 0;
+                let qty = parseFloat($('#adj_input_qty').val()) || 0;
                 let unit = $('#adj_input_unit').val();
 
                 let total = 0;
                 if (unit === 'strip') {
                     total = qty;
                 } else if (unit === 'box') {
-                    total = qty * currentBoxSize;
+                    total = qty * currentStripsPerBox;
                 } else if (unit === 'carton') {
-                    total = qty * currentBoxSize * (currentCartonSize || 1);
+                    total = qty * currentStripsPerBox * (currentBoxesPerCarton || 1);
                 }
                 $('#stock_adj_quantity').val(total);
             }
@@ -721,13 +857,13 @@
                 let id = $(this).data('id');
                 let op = $(this).data('op'); // 'add' or 'subtract'
                 let name = $(this).data('name');
-                currentBoxSize = parseInt($(this).data('box-size')) || 0;
-                currentCartonSize = parseInt($(this).data('carton-size')) || 0;
+                currentStripsPerBox = parseInt($(this).data('strips-per-box')) || 0;
+                currentBoxesPerCarton = parseInt($(this).data('boxes-per-carton')) || 0;
 
                 $('#stock_adj_id').val(id);
                 $('#stock_adj_op').val(op);
                 $('#stock_adj_product_name').text(name);
-                $('#adj_pack_info').html(`Packaging Pattern: <b>${currentBoxSize}</b> Strips/Box, <b>${currentCartonSize}</b> Boxes/Carton`);
+                $('#adj_pack_info').html(`Packaging Pattern: <b>${currentStripsPerBox}</b> Strips/Box, <b>${currentBoxesPerCarton}</b> Boxes/Carton`);
 
                 // Reset calc fields
                 $('#adj_input_qty').val('');

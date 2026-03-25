@@ -385,30 +385,24 @@
                     success: function (res) {
                         let p = res.product;
 
-                        // Updated Unit Logic: If product_code exists -> Nos, otherwise -> Strips
-                        let isCount = !!(p.product_code && p.product_code.trim() !== '');
-                        p.is_count = isCount;
-                        currentProductDetails = p;
-
-                        // Check for Variants in Product Name e.g. (S/M/L)
-                        let pNameVar = p.product_name ? p.product_name : '';
-                        let variantMatch = pNameVar.match(/\(([^)]*\/[^)]*)\)/);
-                        
-                        // Default sizes user requested
-                        const standardSizes = ['S', 'M', 'L', 'XL', 'XXL', '3XL'];
-                        let variants = [];
-
-                        if (variantMatch) {
-                            variants = variantMatch[1].split(/[/\,]/).map(v => v.trim());
-                        } else if (pNameVar.toLowerCase().includes('size') || pNameVar.toLowerCase().includes('collar') || pNameVar.toLowerCase().includes('cap') || pNameVar.toLowerCase().includes('splint')) {
-                            // If it matches common sized items but no specific brackets, show standard
-                            variants = standardSizes;
+                        // Dynamic Variant Parsing from product name
+                        let pNameVar = (p.product_name || '').toLowerCase();
+                        let dynamicVariants = [];
+                        let match = pNameVar.match(/\(([^)]+)\)/g);
+                        if (match) {
+                            let lastMatch = match[match.length - 1].replace('(', '').replace(')', '');
+                            if (lastMatch.includes('/')) {
+                                dynamicVariants = lastMatch.split('/').map(s => s.trim().toUpperCase());
+                            }
                         }
 
-                        if (variants.length > 0) {
+                        if (p.has_variants || dynamicVariants.length > 0) {
                             let $sizeSel = $('#sizeSelector');
                             $sizeSel.empty();
-                            variants.forEach(v => {
+                            
+                            let variantsToUse = dynamicVariants.length > 0 ? dynamicVariants : ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+                            
+                            variantsToUse.forEach(v => {
                                 $sizeSel.append(`<button type="button" class="btn btn-outline-primary size-btn px-3 py-2 fw-bold" data-size="${v}">${v}</button>`);
                             });
                             $('#variantWrapper').fadeIn(200);
@@ -417,6 +411,27 @@
                             $('#variantWrapper').hide();
                             $('#variantValue').val('');
                         }
+                        // Unit Logic: box_size empty = Nos
+                        let boxSizeStr = p.box_size || '';
+                        let isCount = boxSizeStr === "";
+                        
+                        // Fallback patterns: If not already Nos, check keywords
+                        if (!isCount) {
+                            let pName = (p.product_name || '').toLowerCase();
+                            let pPack = (p.pack || '').toLowerCase();
+                            isCount = pPack.includes('nos') || pPack.includes('count') || 
+                                     pPack.includes('pair') || pPack.includes('bottle') || 
+                                     pPack.includes('ml') || pPack.includes('gm') || 
+                                     pPack.includes('syp') || pName.includes('syp') || 
+                                     pName.includes('syrup') || pName.includes('drop') || 
+                                     pName.includes('ointment') || pName.includes('belt') ||
+                                     pName.includes('cap') || pName.includes('binder') ||
+                                     pName.includes('splint') || pName.includes('brace') ||
+                                     pName.includes('cuff') || pName.includes('walker');
+                        }
+                        
+                        currentProductDetails = p;
+                        currentProductDetails.is_count = isCount;
 
                         let $unitSelect = $('#unitSelect');
                         $unitSelect.empty();
@@ -438,7 +453,10 @@
                         let offerDiscText = (parseFloat(p.offer || 0) + '% / ' + parseFloat(p.discount || 0) + '%');
                         $('#previewOfferDisc').text(offerDiscText);
                         $('#previewHsn').text(p.hsn_code || '---');
-                        $('#previewBox').text((p.box_size || '1') + ' x ' + (p.carton_size || '1'));
+                        let packInfoText = isCount ? 
+                            `${p.units_per_strip || 1} Nos/Unit | ${p.strips_per_box || 1} Unit/Box | ${p.boxes_per_carton || 1} Box/Ctn` :
+                            `${p.units_per_strip || 1} Tab/Str | ${p.strips_per_box || 1} Str/Box | ${p.boxes_per_carton || 1} Box/Ctn`;
+                        $('#previewBox').text(packInfoText);
 
                         if (p.image) $('#previewImage').attr('src', "{{ asset('storage') }}/" + p.image);
                         else $('#previewImage').attr('src', "https://placehold.co/400x400?text=No+Photo");
@@ -466,8 +484,9 @@
 
                 let key = prodId + (variant ? '-' + variant : '');
                 let mul = 1;
-                if (unit === 'Box') mul = parseInt(currentProductDetails.box_size || 1);
-                if (unit === 'Carton') mul = parseInt(currentProductDetails.box_size || 1) * parseInt(currentProductDetails.carton_size || 1);
+                if (unit === 'Box') mul = parseInt(currentProductDetails.strips_per_box || 1);
+                else if (unit === 'Carton') mul = parseInt(currentProductDetails.strips_per_box || 1) * parseInt(currentProductDetails.boxes_per_carton || 1);
+                else if (unit === 'Nos') mul = 1 / (parseInt(currentProductDetails.units_per_strip || 1));
 
                 if (addedItems[key]) {
                     addedItems[key].qty += qty;
@@ -479,8 +498,8 @@
                         variant: variant,
                         price: parseFloat(currentProductDetails.pts),
                         qty: qty, unit: unit, multiplier: mul,
-                        box_size: currentProductDetails.box_size,
-                        carton_size: currentProductDetails.carton_size,
+                        strips_per_box: currentProductDetails.strips_per_box,
+                        boxes_per_carton: currentProductDetails.boxes_per_carton,
                         is_count: currentProductDetails.is_count
                     };
                 }
@@ -555,8 +574,8 @@
                 else {
                     let val = $(this).val();
                     let mul = 1;
-                    if (val === 'Box') mul = parseInt(item.box_size || 1);
-                    if (val === 'Carton') mul = parseInt(item.box_size || 1) * parseInt(item.carton_size || 1);
+                    if (val === 'Box') mul = parseInt(item.strips_per_box || 1);
+                    if (val === 'Carton') mul = parseInt(item.strips_per_box || 1) * parseInt(item.boxes_per_carton || 1);
                     item.unit = val;
                     item.multiplier = mul;
                 }

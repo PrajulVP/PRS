@@ -453,6 +453,32 @@
 
             var currentProductDetails = null;
 
+            function loadDistributors(prodId, retailerId, variant) {
+                let distSelect = $('#distributorSelect');
+                distSelect.empty().append('<option value="">Loading...</option>');
+
+                $.ajax({
+                    url: "{{ route('admin.retailer.product-details', ':id') }}".replace(':id', prodId),
+                    type: 'GET',
+                    data: { 
+                        retailer_id: retailerId,
+                        variant: variant
+                    },
+                    success: function (res) {
+                        distSelect.empty();
+                        if (res.distributors && res.distributors.length > 0) {
+                            res.distributors.forEach(d => {
+                                let name = d.user ? d.user.name : 'ID: ' + d.id;
+                                let stock = d.pivot ? d.pivot.stock : 0;
+                                distSelect.append(`<option value="${d.id}" data-stock-raw="${stock}">${name}</option>`);
+                            });
+                        } else {
+                            distSelect.append('<option value="">No stock available</option>');
+                        }
+                    }
+                });
+            }
+
             $('#productSelect').on('select2:select', function (e) {
                 let prodId = $(this).val();
                 let retailerId = $('#retailer_id').val();
@@ -463,7 +489,7 @@
                 }
 
                 $('#productDetailsCard').fadeIn(400);
-                $('#distributorSelect').empty().append('<option value="">Loading...</option>');
+                $('#distributorSelect').empty().append('<option value="">Select Variant First...</option>');
 
                 $.ajax({
                     url: "{{ route('admin.retailer.product-details', ':id') }}".replace(':id', prodId),
@@ -471,51 +497,69 @@
                     data: { retailer_id: retailerId },
                     success: function (res) {
                         let p = res.product;
-
-                        // Updated Unit Logic: If product_code exists -> Nos, otherwise -> Strips
-                        let isCount = !!(p.product_code && p.product_code.trim() !== '');
-                        p.is_count = isCount;
                         currentProductDetails = p;
 
-                        // Check for Variants in Product Name e.g. (S/M/L)
-                        let pNameVar = p.product_name ? p.product_name : '';
-                        let variantMatch = pNameVar.match(/\(([^)]*\/[^)]*)\)/);
-                        
-                        // Default sizes user requested
-                        const standardSizes = ['S', 'M', 'L', 'XL', 'XXL', '3XL'];
-                        let variants = [];
-
-                        if (variantMatch) {
-                            variants = variantMatch[1].split(/[/\,]/).map(v => v.trim());
-                        } else if (pNameVar.toLowerCase().includes('size') || pNameVar.toLowerCase().includes('collar') || pNameVar.toLowerCase().includes('cap') || pNameVar.toLowerCase().includes('splint')) {
-                            // If it matches common sized items but no specific brackets, show standard
-                            variants = standardSizes;
+                        // Dynamic Variant Parsing from product name
+                        let pName = (p.product_name || '').toLowerCase();
+                        let dynamicVariants = [];
+                        let match = pName.match(/\(([^)]+)\)/g);
+                        if (match) {
+                            let lastMatch = match[match.length - 1].replace('(', '').replace(')', '');
+                            if (lastMatch.includes('/')) {
+                                dynamicVariants = lastMatch.split('/').map(s => s.trim().toUpperCase());
+                            }
                         }
 
-                        if (variants.length > 0) {
+                        let hasVariants = p.has_variants || dynamicVariants.length > 0;
+
+                        if (hasVariants) {
                             let $sizeSel = $('#sizeSelector');
                             $sizeSel.empty();
-                            variants.forEach(v => {
+                            
+                            let variantsToUse = dynamicVariants.length > 0 ? dynamicVariants : ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+                            
+                            variantsToUse.forEach(v => {
                                 $sizeSel.append(`<button type="button" class="btn btn-outline-primary size-btn px-3 py-2 fw-bold" data-size="${v}">${v}</button>`);
                             });
                             $('#variantWrapper').fadeIn(200);
                             $('#variantValue').val(''); // Reset
+                            $('#distributorSelect').empty().append('<option value="">Select Size Above...</option>');
                         } else {
                             $('#variantWrapper').hide();
                             $('#variantValue').val('');
+                            loadDistributors(prodId, retailerId, null);
                         }
 
+                        // Unit Logic: box_size empty = Nos
                         let $unitSelect = $('#unitSelect');
                         $unitSelect.empty();
+                        
+                        let pPack = (p.pack || '').toLowerCase();
+                        let boxSizeStr = p.box_size || '';
+                        let isCount = boxSizeStr === "";
+                        
+                        // Fallback patterns: If not already Nos, check keywords
+                        if (!isCount) {
+                            let pName = (p.product_name || '').toLowerCase();
+                            isCount = pPack.includes('nos') || pPack.includes('count') || 
+                                     pPack.includes('pair') || pPack.includes('bottle') || 
+                                     pPack.includes('ml') || pPack.includes('gm') || 
+                                     pPack.includes('syp') || pName.includes('syp') || 
+                                     pName.includes('syrup') || pName.includes('drop') || 
+                                     pName.includes('ointment') || pName.includes('belt') ||
+                                     pName.includes('cap') || pName.includes('binder') ||
+                                     pName.includes('splint') || pName.includes('brace') ||
+                                     pName.includes('cuff') || pName.includes('walker');
+                        }
+                        
                         if (isCount) {
-                            $unitSelect.append('<option value="Nos">Nos</option>');
-                            $('#ptrLabel').text("PTR (Per Nos)");
+                            $unitSelect.append('<option value="Strips">Nos</option>');
+                            $('#ptrLabel').text(`PTR (Per Nos)`);
                         } else {
                             $unitSelect.append('<option value="Strips">Strips</option>');
                             $unitSelect.append('<option value="Box">Box</option>');
                             $unitSelect.append('<option value="Carton">Carton</option>');
-                            $unitSelect.append('<option value="Nos">Nos</option>'); // Added manual override
-                            $('#ptrLabel').text("PTR (Per Strip)");
+                            $('#ptrLabel').text(`PTR (Per Strip)`);
                         }
 
                         $('#previewName').text(p.product_name);
@@ -525,31 +569,41 @@
                         let offerDiscText = (parseFloat(p.offer || 0) + '% / ' + parseFloat(p.discount || 0) + '%');
                         $('#previewOfferDisc').text(offerDiscText);
                         $('#previewHsn').text(p.hsn_code || '---');
-                        $('#previewBox').text((p.box_size || '1') + ' x ' + (p.carton_size || '1'));
+                        
+                        // Dynamic Packaging Info
+                        let packInfoText = '';
+                        if (isCount) {
+                            packInfoText = `${p.units_per_strip || 1} Nos/Unit | ${p.strips_per_box || 1} Unit/Box | ${p.boxes_per_carton || 1} Box/Ctn`;
+                        } else {
+                            packInfoText = `${p.units_per_strip || 1} Tab/Str | ${p.strips_per_box || 1} Str/Box | ${p.boxes_per_carton || 1} Box/Ctn`;
+                        }
+                        $('#previewBox').text(packInfoText);
 
                         if (p.image) $('#previewImage').attr('src', "{{ asset('storage') }}/" + p.image);
                         else $('#previewImage').attr('src', "https://placehold.co/400x400?text=No+Photo");
-
-                        let distSelect = $('#distributorSelect');
-                        distSelect.empty();
-                        if (res.distributors && res.distributors.length > 0) {
-                            res.distributors.forEach(d => {
-                                let name = d.user ? d.user.name : 'ID: ' + d.id;
-                                let dist = d.distance ? parseFloat(d.distance).toFixed(2) : null;
-                                let stock = d.pivot ? d.pivot.stock : 0;
-                                distSelect.append(`<option value="${d.id}" data-stock-raw="${stock}" data-distance="${dist}">${name}</option>`);
-                            });
-                        } else {
-                            distSelect.append('<option value="">No stock available</option>');
-                        }
                     }
                 });
+            });
+
+            $(document).on('click', '.size-btn', function() {
+                $('.size-btn').removeClass('active');
+                $(this).addClass('active');
+                let selectedVariant = $(this).data('size');
+                $('#variantValue').val(selectedVariant);
+
+                let prodId = $('#productSelect').val();
+                let retailerId = $('#retailer_id').val();
+                if (prodId && retailerId) {
+                    loadDistributors(prodId, retailerId, selectedVariant);
+                } else {
+                    $('#distributorSelect').empty().append('<option value="">Select Product and Retailer</option>');
+                }
             });
 
             $('#btnAddItem').click(function () {
                 let prodId = $('#productSelect').val();
                 let distId = $('#distributorSelect').val();
-                let qty = parseInt($('#qtyInput').val());
+                let qty = parseFloat($('#qtyInput').val());
                 let unit = $('#unitSelect').val();
                 let variant = $('#variantWrapper').is(':visible') ? $('#variantValue').val() : null;
 
@@ -559,25 +613,29 @@
                 let distOption = $('#distributorSelect option:selected');
                 let maxStockRaw = parseInt(distOption.data('stock-raw') || 0);
 
-                if (!prodId || !distId || qty < 1) return showToast('info', 'Complete selections first');
+                if (!prodId || !distId || qty <= 0) return showToast('info', 'Complete selections first');
 
                 let distName = distOption.text();
-                let key = prodId + '-' + distId;
+                let key = prodId + '-' + distId + (variant ? '-' + variant : '');
+                
+                let stripsPerBox = parseInt(currentProductDetails.strips_per_box || 1);
+                let boxesPerCarton = parseInt(currentProductDetails.boxes_per_carton || 1);
+                
                 let mul = 1;
-                if (unit === 'Box') mul = parseInt(currentProductDetails.box_size || 1);
-                if (unit === 'Carton') mul = parseInt(currentProductDetails.box_size || 1) * parseInt(currentProductDetails.carton_size || 1);
+                if (unit === 'Box') mul = stripsPerBox;
+                else if (unit === 'Carton') mul = stripsPerBox * boxesPerCarton;
+                else if (unit === 'Nos') mul = 1 / (parseInt(currentProductDetails.units_per_strip || 1));
 
-                let totalProposedNos = qty * mul;
-                let existingQtyNos = addedItems[key] ? (addedItems[key].qty * addedItems[key].multiplier) : 0;
+                let totalProposedStrips = qty * mul;
+                let existingQtyStrips = addedItems[key] ? (addedItems[key].qty * addedItems[key].multiplier) : 0;
 
-                if ((existingQtyNos + totalProposedNos) > maxStockRaw) {
+                if ((existingQtyStrips + totalProposedStrips) > maxStockRaw) {
                     return showToast('error', `Insufficient stock. Please select another distributor.`);
                 }
 
                 if (addedItems[key]) {
                     addedItems[key].qty += qty;
-                    addedItems[key].unit = unit;
-                    addedItems[key].multiplier = mul;
+                    // Note: unit/multiplier might change, but we keep the key based on prod-dist-variant
                 } else {
                     addedItems[key] = {
                         id: prodId, distId: distId, distName: distName,
@@ -585,9 +643,11 @@
                         variant: variant,
                         price: parseFloat(currentProductDetails.ptr),
                         qty: qty, unit: unit, multiplier: mul,
-                        box_size: currentProductDetails.box_size,
-                        carton_size: currentProductDetails.carton_size,
-                        is_count: currentProductDetails.is_count,
+                        strips_per_box: stripsPerBox,
+                        boxes_per_carton: boxesPerCarton,
+                        units_per_strip: currentProductDetails.units_per_strip,
+                        has_variants: currentProductDetails.has_variants,
+                        is_count: $('#unitSelect').val() === 'Strips' && $('#unitSelect option:selected').text() === 'Nos',
                         maxStock: maxStockRaw
                     };
                 }
@@ -824,17 +884,17 @@
                 let oldMul = item.multiplier;
 
                 if ($(this).hasClass('qty-change')) {
-                    item.qty = parseInt($(this).val()) || 1;
+                    item.qty = parseFloat($(this).val()) || 1;
                 } else {
                     let val = $(this).val();
                     let mul = 1;
-                    if (val === 'Box') mul = parseInt(item.box_size || 1);
-                    if (val === 'Carton') mul = parseInt(item.box_size || 1) * parseInt(item.carton_size || 1);
+                    if (val === 'Box') mul = parseInt(item.strips_per_box || 1);
+                    if (val === 'Carton') mul = parseInt(item.strips_per_box || 1) * parseInt(item.boxes_per_carton || 1);
                     item.unit = val;
                     item.multiplier = mul;
                 }
 
-                // Stock Check
+                // Stock Check (in strips)
                 if ((item.qty * item.multiplier) > item.maxStock) {
                     showToast('error', `Insufficient stock. Please select another distributor.`);
                     item.qty = oldQty;
@@ -895,17 +955,20 @@
                 let qty = parseInt(row.find('.ai-qty').val()) || 1;
                 let unit = row.find('.ai-unit').val();
                 
+                let stripsPerBox = parseInt(p.strips_per_box || 1);
+                let boxesPerCarton = parseInt(p.boxes_per_carton || 1);
+                
                 let mul = 1;
-                if (unit === 'Box') mul = parseInt(p.box_size || 1);
-                if (unit === 'Carton') mul = parseInt(p.box_size || 1) * parseInt(p.carton_size || 1);
+                if (unit === 'Box') mul = stripsPerBox;
+                if (unit === 'Carton') mul = stripsPerBox * boxesPerCarton;
 
-                let requestedNos = qty * mul;
+                let requestedStrips = qty * mul;
                 let key = p.id + '-' + distId;
 
-                // Existing nos check
-                let existingNos = addedItems[key] ? (addedItems[key].qty * addedItems[key].multiplier) : 0;
+                // Existing strips check
+                let existingStrips = addedItems[key] ? (addedItems[key].qty * addedItems[key].multiplier) : 0;
                 
-                if ((existingNos + requestedNos) > maxStockRaw) {
+                if ((existingStrips + requestedStrips) > maxStockRaw) {
                     showToast('error', `Insufficient stock for ${p.product_name}. Max available is ${maxStockRaw}.`);
                     return;
                 }
@@ -923,8 +986,10 @@
                         qty: qty,
                         unit: unit,
                         multiplier: mul,
-                        box_size: p.box_size,
-                        carton_size: p.carton_size,
+                        strips_per_box: stripsPerBox,
+                        boxes_per_carton: boxesPerCarton,
+                        units_per_strip: p.units_per_strip,
+                        has_variants: p.has_variants,
                         is_count: unit === 'Nos',
                         maxStock: maxStockRaw
                     };
@@ -935,10 +1000,18 @@
                 showToast('success', `${p.product_name} added to order.`);
             });
 
-            $(document).on('click', '.size-btn', function() {
+            $(document).on('click', '.size-btn', function () {
                 $('.size-btn').removeClass('btn-primary text-white').addClass('btn-outline-primary');
                 $(this).removeClass('btn-outline-primary').addClass('btn-primary text-white');
-                $('#variantValue').val($(this).data('size'));
+                let variant = $(this).data('size');
+                $('#variantValue').val(variant);
+                
+                // Trigger distributor load for this variant
+                let prodId = $('#productSelect').val();
+                let retailerId = $('#retailer_id').val();
+                if (prodId && retailerId) {
+                    loadDistributors(prodId, retailerId, variant);
+                }
             });
         });
     </script>

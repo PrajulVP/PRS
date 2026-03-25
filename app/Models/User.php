@@ -171,7 +171,8 @@ class User extends Authenticatable implements JWTSubject
             } elseif ($this->hasRole('distributor') && $this->distributor) {
                 $query->where('distributor_id', $this->distributor->id)->where('status', RetailerOrder::STATUS_PROCESSING);
             } elseif ($this->hasRole('salesmanager')) {
-                $query->whereIn('status', [RetailerOrder::STATUS_PENDING, RetailerOrder::STATUS_PROCESSING]);
+                // Sales Managers no longer handle retailer approvals
+                $query->whereRaw('1 = 0');
             } elseif ($this->hasAnyRole(['admin', 'superadmin'])) {
                 // Admin should not get notified on dot icon when distributor needs to approve (processing)
                 // And we recently restricted them from pending as well in the UI.
@@ -189,7 +190,8 @@ class User extends Authenticatable implements JWTSubject
             if ($this->hasRole('salesmanager')) {
                 $query->where('status', DistributorOrder::STATUS_PENDING);
             } else {
-                $query->whereIn('status', [DistributorOrder::STATUS_PENDING, DistributorOrder::STATUS_PROCESSING]);
+                // Admin/Superadmin only see orders that have passed Sales Manager (Processing)
+                $query->where('status', DistributorOrder::STATUS_PROCESSING);
             }
             $counts['distributor_approvals'] = $query->count();
         }

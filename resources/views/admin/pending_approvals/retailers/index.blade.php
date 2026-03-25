@@ -1145,7 +1145,6 @@
                         let canApprove = false;
                         if (isFieldStaff && statusRaw === 'pending') canApprove = true;
                         if (isDistributor && statusRaw === 'processing') canApprove = true;
-                        if (isSalesManager && (statusRaw === 'pending' || statusRaw === 'processing')) canApprove = true;
                         if (isAdmin && statusRaw === 'processing') canApprove = true; // Admin only for processing (distributor level)
 
                         if (canApprove) {

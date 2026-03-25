@@ -167,31 +167,33 @@
                                     <option value="">Select Area</option>
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label class="form-label">Pincode</label>
                                 <input type="text" name="pincode" class="form-control" required>
                             </div>
-                            <div class="col-md-6">
+
+                            {{-- Dynamic Assignment Row --}}
+                            <div class="col-12">
                                 <div class="row g-3">
-                                    @if(!Auth::user()->hasRole('fieldstaff'))
+                                    @if(Auth::user()->hasAnyRole(['admin', 'superadmin']))
                                     <div class="col-md-6">
-                                        <label class="form-label fw-bold">Field Staff</label>
-                                        <select name="field_staff_id" class="form-select">
-                                            <option value="">Select Field Staff</option>
-                                            @foreach ($fieldStaffs as $fs)
-                                                <option value="{{ $fs->id }}">{{ $fs->user->name }}</option>
+                                        <label class="form-label fw-bold">Sales Manager</label>
+                                        <select name="sales_manager_id" id="create_sales_manager_id" class="form-select">
+                                            <option value="">Select Sales Manager</option>
+                                            @foreach ($salesManagers as $sm)
+                                                <option value="{{ $sm->id }}">{{ $sm->user->name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
                                     @endif
-                                    
-                                    @if(Auth::user()->hasAnyRole(['admin', 'superadmin']))
+
+                                    @if(!Auth::user()->hasRole('fieldstaff'))
                                     <div class="col-md-6">
-                                        <label class="form-label fw-bold">Sales Manager</label>
-                                        <select name="sales_manager_id" class="form-select">
-                                            <option value="">Select Sales Manager</option>
-                                            @foreach ($salesManagers as $sm)
-                                                <option value="{{ $sm->id }}">{{ $sm->user->name }}</option>
+                                        <label class="form-label fw-bold">Field Staff</label>
+                                        <select name="field_staff_id" id="create_field_staff_id" class="form-select">
+                                            <option value="">Select Field Staff</option>
+                                            @foreach ($fieldStaffs as $fs)
+                                                <option value="{{ $fs->id }}" data-sales-manager-id="{{ $fs->sales_manager_id }}">{{ $fs->user->name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -802,6 +804,41 @@
                     }
                 });
             });
+
+            // Dynamic Filtering for Sales Manager -> Field Staff (Create Modal)
+            $('#create_sales_manager_id').on('change', function() {
+                var managerId = $(this).val();
+                var fieldStaffSelect = $('#create_field_staff_id');
+                var options = fieldStaffSelect.find('option');
+
+                if (!managerId) {
+                    // If no manager selected, show all or none? 
+                    // User said "after selecting the manager the fieldstaffs under him should fetch"
+                    // So let's hide all except the default "Select Field Staff"
+                    options.each(function() {
+                        if ($(this).val() === "") $(this).show();
+                        else $(this).hide();
+                    });
+                    fieldStaffSelect.val("");
+                } else {
+                    var firstVisible = null;
+                    options.each(function() {
+                        var optionManagerId = $(this).data('sales-manager-id');
+                        if ($(this).val() === "") {
+                            $(this).show();
+                        } else if (optionManagerId == managerId) {
+                            $(this).show();
+                            if (!firstVisible) firstVisible = $(this).val();
+                        } else {
+                            $(this).hide();
+                        }
+                    });
+                    fieldStaffSelect.val(""); // Reset selection
+                }
+            });
+
+            // Initial trigger if needed
+            $('#create_sales_manager_id').trigger('change');
 
             $('#userStatusTabs button').on('click', () => setTimeout(() => table.ajax.reload(), 50));
 

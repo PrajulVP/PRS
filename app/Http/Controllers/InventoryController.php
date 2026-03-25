@@ -146,6 +146,7 @@ class InventoryController extends Controller
                         'distributor_id' => $i->distributor_id,
                         'distributor_name' => $i->distributor?->user?->name ?? 'N/A',
                         'stock' => (int) $i->stock,
+                        'variant' => $i->variant,
                         'image' => $i->product && $i->product->image ? \Illuminate\Support\Facades\Storage::disk('public')->url($i->product->image) : asset('admin/assets/images/dashboard/product-1.png'), // Placeholder
                         'batch_no' => $i->batch_no ?? '-',
                         'expiry_date' => $i->expiry_date ? (function ($date) {
@@ -163,7 +164,10 @@ class InventoryController extends Controller
                             'gst' => $i->product->gst,
                             'hsn_code' => $i->product->hsn_code,
                             'box_size' => $i->product->box_size,
-                            'carton_size' => $i->product->carton_size,
+                            'strips_per_box' => $i->product->strips_per_box,
+                            'boxes_per_carton' => $i->product->boxes_per_carton,
+                            'units_per_strip' => $i->product->units_per_strip,
+                            'has_variants' => (bool)$i->product->has_variants,
                             'description' => $i->product->description
                         ] : null
                     ];
@@ -182,7 +186,9 @@ class InventoryController extends Controller
         }
 
         // Non-AJAX view: pass products to populate the create form
-        $products = Product::select('id', 'product_name', 'product_code', 'box_size', 'carton_size')->orderBy('product_name')->get();
+        $products = Product::select('id', 'product_name', 'product_code', 'box_size', 'carton_size', 'units_per_strip', 'strips_per_box', 'boxes_per_carton', 'has_variants')
+            ->orderBy('product_name')
+            ->get();
         $distributors = [];
         /** @var \App\Models\User $authUserFiltered */
         $authUserFiltered = Auth::user();
@@ -201,8 +207,9 @@ class InventoryController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'stock' => 'required|integer|min:0',
+            'stock' => 'required|numeric|min:0',
+            'unit' => 'nullable|string',
+            'variant' => 'nullable|string',
             'batch_no' => 'required|string|max:255',
             'expiry_date' => 'required|date',
         ]);
@@ -225,19 +232,36 @@ class InventoryController extends Controller
             $distributorId = $request->distributor_id;
         }
 
+        $unit = $request->unit ?? 'Nos';
+        $qtyInput = (float)$request->stock;
+
+        // Conversion Logic
+        $multiplier = 1;
+        $normalizedUnit = strtolower($unit);
+        if ($normalizedUnit === 'box' || $normalizedUnit === 'boxes') {
+            $multiplier = (int)($product->strips_per_box ?? 1);
+        } elseif ($normalizedUnit === 'carton' || $normalizedUnit === 'cartons') {
+            $multiplier = (int)($product->boxes_per_carton ?? 1) * (int)($product->strips_per_box ?? 1);
+        } elseif ($normalizedUnit === 'nos' || $normalizedUnit === 'no' || $normalizedUnit === 'unit') {
+            $multiplier = 1 / (max(1, (int)($product->units_per_strip ?? 1)));
+        }
+
+        $finalStockAdd = ceil($qtyInput * $multiplier);
+
         $inventory = Inventory::where('product_id', $product->id)
             ->where('distributor_id', $distributorId)
             ->where('batch_no', $request->batch_no)
+            ->where('variant', $request->variant)
             ->where('expiry_date', $request->expiry_date)
             ->first();
 
         if ($inventory) {
             $previousStock = $inventory->stock;
-            $inventory->stock += $request->stock;
+            $inventory->stock += $finalStockAdd;
             $inventory->save();
 
             $changeType = 'restock';
-            $remarks = 'Restocked via inventory form';
+            $remarks = 'Restocked ' . $qtyInput . ' ' . $unit . ' via inventory form';
         } else {
             $previousStock = 0;
             $inventory = Inventory::create([
@@ -245,21 +269,22 @@ class InventoryController extends Controller
                 'product_id' => $product->id,
                 'product_name' => $product->product_name,
                 'distributor_id' => $distributorId,
-                'stock' => $request->stock,
+                'stock' => $finalStockAdd,
                 'batch_no' => $request->batch_no,
+                'variant' => $request->variant,
                 'expiry_date' => $request->expiry_date,
             ]);
             $changeType = 'initial_stock';
-            $remarks = 'Initial stock on creation';
+            $remarks = 'Initial stock ' . $qtyInput . ' ' . $unit . ' on creation';
         }
 
-        if ($request->stock > 0) {
+        if ($finalStockAdd > 0) {
             StockHistory::create([
                 'inventory_id' => $inventory->id,
                 'user_id' => Auth::id(),
                 'previous_stock' => $previousStock,
                 'new_stock' => $inventory->stock,
-                'quantity_change' => $request->stock,
+                'quantity_change' => $finalStockAdd,
                 'change_type' => $changeType,
                 'remarks' => $remarks
             ]);

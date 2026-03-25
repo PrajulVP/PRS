@@ -28,7 +28,7 @@ class PendingApprovalController extends Controller
             elseif ($user->hasPermissionToCategory('retailer_approvals', 'view')) $viewType = 'retailer';
             elseif ($user->hasRole('superadmin')) $viewType = 'distributor';
             elseif ($user->hasRole('admin')) $viewType = 'distributor';
-            elseif ($user->hasRole('salesmanager')) $viewType = 'retailer';
+            elseif ($user->hasRole('salesmanager')) $viewType = 'distributor'; // SM handles distributor approvals
             elseif ($user->hasRole('retailer')) $viewType = 'retailer';
             elseif ($user->hasRole('fieldstaff')) $viewType = 'retailer';
             else $viewType = 'none';
@@ -36,7 +36,7 @@ class PendingApprovalController extends Controller
 
         // Final Permission Check
         if ($viewType === 'retailer') {
-            if (!$user->hasPermissionToCategory('retailer_approvals', 'view') && !$user->hasRole(['superadmin', 'admin', 'salesmanager', 'distributor', 'fieldstaff', 'retailer'])) {
+            if (!$user->hasPermissionToCategory('retailer_approvals', 'view') && !$user->hasAnyRole(['superadmin', 'admin', 'distributor', 'fieldstaff', 'retailer'])) {
                 abort(403, 'Unauthorized access to retailer approvals.');
             }
         } elseif ($viewType === 'distributor') {

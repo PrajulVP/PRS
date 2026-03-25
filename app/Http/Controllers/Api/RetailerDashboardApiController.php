@@ -25,7 +25,7 @@ class RetailerDashboardApiController extends Controller
      *             @OA\Property(property="delivered_orders", type="integer", example=110),
      *             @OA\Property(property="cancelled_orders", type="integer", example=3),
      *             @OA\Property(property="rejected_orders", type="integer", example=2),
-     *             @OA\Property(property="total_loyalty_points", type="integer", example=500)
+     *             @OA\Property(property="total_loyalty_points", type="string", example="500")
      *         )
      *     ),
      *     @OA\Response(response=403, description="Unauthorized")
@@ -86,7 +86,7 @@ class RetailerDashboardApiController extends Controller
             'delivered_orders' => $deliveredOrders,
             'cancelled_orders' => $cancelledOrders,
             'rejected_orders' => $rejectedOrders,
-            'total_loyalty_points' => $totalLoyaltyPoints,
+            'total_loyalty_points' => (string)$totalLoyaltyPoints,
         ]);
     }
 
@@ -100,7 +100,7 @@ class RetailerDashboardApiController extends Controller
      *         response=200,
      *         description="Loyalty points details",
      *         @OA\JsonContent(
-     *             @OA\Property(property="total_points", type="integer", example=500),
+     *             @OA\Property(property="total_points", type="string", example="500"),
      *             @OA\Property(property="history", type="array", @OA\Items(
      *                 @OA\Property(property="order_code", type="string", example="RO-ABC123"),
      *                 @OA\Property(property="points_earned", type="integer", example=50),
@@ -143,7 +143,7 @@ class RetailerDashboardApiController extends Controller
             ->sum('loyalty_points_earned');
 
         return response()->json([
-            'total_points' => $totalLoyaltyPoints,
+            'total_points' => (string)$totalLoyaltyPoints,
             'history' => $pointsHistory
         ]);
     }

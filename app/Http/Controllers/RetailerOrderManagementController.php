@@ -45,6 +45,8 @@ class RetailerOrderManagementController extends Controller
         $retailerId = $request->get('retailer_id');
         $retailer = Retailer::find($retailerId);
 
+        $variant = $request->get('variant');
+        
         // Filter distributors by the retailer's district
         $query = Distributor::with('user');
         if ($retailer && $retailer->district_id) {
@@ -52,9 +54,12 @@ class RetailerOrderManagementController extends Controller
         }
         $allDistributors = $query->get();
 
-        // Get current stock levels for this product
+        // Get current stock levels for this product (and variant if provided)
         $stockMap = DB::table('inventories')
             ->where('product_id', $product->id)
+            ->when(!empty($variant), function($q) use ($variant) {
+                return $q->where('variant', $variant);
+            })
             ->selectRaw('distributor_id, SUM(stock) as total_stock')
             ->groupBy('distributor_id')
             ->pluck('total_stock', 'distributor_id');
@@ -74,7 +79,7 @@ class RetailerOrderManagementController extends Controller
         })->values();
 
         return response()->json([
-            'product' => $product,
+            'product' => $product->makeVisible(['box_size']), 
             'distributors' => $distributors
         ]);
     }
@@ -143,21 +148,27 @@ class RetailerOrderManagementController extends Controller
                     $unit = $itemData['unit'] ?? 'Nos';
                     $qty = (int)$itemData['quantity'];
                     
-                    // Conversion logic (to Nos/Base units)
+                    // Conversion logic using numeric fields
                     $multiplier = 1;
-                    if ($unit === 'Box') {
-                        $multiplier = (int)($product->box_size ?? 1);
-                    } elseif ($unit === 'Carton') {
-                        $multiplier = (int)($product->box_size ?? 1) * (int)($product->carton_size ?? 1);
+                    $normalizedUnit = strtolower($unit);
+                    if ($normalizedUnit === 'box') {
+                        $multiplier = (int)($product->strips_per_box ?? 1);
+                    } elseif ($normalizedUnit === 'carton') {
+                        $multiplier = (int)($product->boxes_per_carton ?? 1) * (int)($product->strips_per_box ?? 1);
+                    } elseif ($normalizedUnit === 'nos' || $normalizedUnit === 'no' || $normalizedUnit === 'unit') {
+                        $multiplier = 1 / (max(1, (int)($product->units_per_strip ?? 1)));
                     }
 
-                    $totalQtyNos = $qty * $multiplier;
+                    $totalQtyNos = ceil($qty * $multiplier);
 
                     // Availability check (In base units)
                     if ($distributor) {
                         $totalStock = DB::table('inventories')
                             ->where('distributor_id', $distributor->id)
                             ->where('product_id', $product->id)
+                            ->when(!empty($itemData['variant']), function($q) use ($itemData) {
+                                return $q->where('variant', $itemData['variant']);
+                            })
                             ->sum('stock');
 
                         if ($totalStock < $totalQtyNos) {
@@ -172,14 +183,21 @@ class RetailerOrderManagementController extends Controller
                     $gstAmount = $taxableSubtotal * ($gstRate / 100);
                     $subtotalWithGst = $taxableSubtotal + $gstAmount;
 
+                    // Append variant to product name if provided
+                    $finalProductName = $product->product_name;
+                    if (!empty($itemData['variant'])) {
+                        $finalProductName .= ' [' . $itemData['variant'] . ']';
+                    }
+
                     $order->items()->create([
                         'product_id' => $product->id,
-                        'product_name' => $product->product_name,
+                        'product_name' => $finalProductName,
                         'quantity' => $qty,
                         'free_quantity' => $itemData['free_quantity'] ?? 0,
                         'unit' => $unit,
                         'unit_price' => $price,
                         'total_amount' => $subtotalWithGst,
+                        'variant' => $itemData['variant'] ?? null,
                     ]);
 
                     $totalAmount += $subtotalWithGst;
@@ -385,6 +403,12 @@ class RetailerOrderManagementController extends Controller
                 $formattedOrders = $orders->map(function ($order) {
                     $productSummary = $order->items->map(function ($item) {
                         $pName = $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product';
+                        
+                        // If variant is stored separately but not in name, append it (for backward compatibility)
+                        if (!empty($item->variant) && strpos($pName, '[' . $item->variant . ']') === false && strpos($pName, '(' . $item->variant . ')') === false) {
+                            $pName .= ' [' . $item->variant . ']';
+                        }
+
                         if ($item->free_quantity > 0) {
                             $pName .= ' ('.$item->quantity.' + '.$item->free_quantity.' Free)';
                         }
@@ -414,14 +438,20 @@ class RetailerOrderManagementController extends Controller
                         'distributor_phone' => $order->distributor?->contact_no ?? $order->distributor?->phone ?? '',
                         'product_summary' => $productSummary,
                         'items' => $order->items->map(function ($item) {
+                            $pName = $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product';
+                            // Backward compatibility for variant display
+                            if (!empty($item->variant) && strpos($pName, '[' . $item->variant . ']') === false && strpos($pName, '(' . $item->variant . ')') === false) {
+                                $pName .= ' [' . $item->variant . ']';
+                            }
                             return [
-                                'product_name' => $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product',
+                                'product_name' => $pName,
                                 'free_quantity' => $item->free_quantity,
                                 'quantity' => $item->quantity,
                                 'unit' => $item->unit ?? 'Strips',
                                 'unit_price' => $item->unit_price,
                                 'total_amount' => $item->total_amount,
                                 'order_item_id' => $item->id,
+                                'variant' => $item->variant,
                                 'pack' => $item->product?->pack,
                                 'strip_size' => $item->product?->strip_size,
                                 'box_size' => $item->product?->box_size,
@@ -677,10 +707,13 @@ class RetailerOrderManagementController extends Controller
                         $product = $orderItem->product;
                         // Conversion Factor
                         $multiplier = 1;
-                        if ($orderItem->unit === 'Box') {
-                            $multiplier = (int)($product->box_size ?? 1);
-                        } elseif ($orderItem->unit === 'Carton') {
-                            $multiplier = (int)($product->box_size ?? 1) * (int)($product->carton_size ?? 1);
+                        $normalizedUnit = strtolower($orderItem->unit);
+                        if ($normalizedUnit === 'box') {
+                            $multiplier = (int)($product->strips_per_box ?? 1);
+                        } elseif ($normalizedUnit === 'carton') {
+                            $multiplier = (int)($product->boxes_per_carton ?? 1) * (int)($product->strips_per_box ?? 1);
+                        } elseif ($normalizedUnit === 'nos' || $normalizedUnit === 'no' || $normalizedUnit === 'unit') {
+                            $multiplier = 1 / (max(1, (int)($product->units_per_strip ?? 1)));
                         }
                         $totalAllocated = 0;
                         if ($orderItem->batches) {
@@ -738,16 +771,22 @@ class RetailerOrderManagementController extends Controller
 
                         // Conversion Factor
                         $multiplier = 1;
-                        if ($orderItem->unit === 'Box') {
-                            $multiplier = (int)($product->box_size ?? 1);
-                        } elseif ($orderItem->unit === 'Carton') {
-                            $multiplier = (int)($product->box_size ?? 1) * (int)($product->carton_size ?? 1);
+                        $normalizedUnit = strtolower($orderItem->unit);
+                        if ($normalizedUnit === 'box') {
+                            $multiplier = (int)($product->strips_per_box ?? 1);
+                        } elseif ($normalizedUnit === 'carton') {
+                            $multiplier = (int)($product->boxes_per_carton ?? 1) * (int)($product->strips_per_box ?? 1);
+                        } elseif ($normalizedUnit === 'nos' || $normalizedUnit === 'no' || $normalizedUnit === 'unit') {
+                            $multiplier = 1 / (max(1, (int)($product->units_per_strip ?? 1)));
                         }
 
                         $neededStrips = $orderItem->quantity * $multiplier;
 
                         $inventories = \App\Models\Inventory::where('distributor_id', $distributor->id)
                             ->where('product_id', $product->id)
+                            ->when(!empty($orderItem->variant), function($q) use ($orderItem) {
+                                return $q->where('variant', $orderItem->variant);
+                            })
                             ->where('stock', '>', 0)
                             ->orderBy('expiry_date', 'asc')
                             ->get();

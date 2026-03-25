@@ -155,10 +155,12 @@ class DistributorOrderApiController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             @OA\Property(property="items", type="array", @OA\Items(
-     *                 @OA\Property(property="product_id", type="integer"),
-     *                 @OA\Property(property="quantity", type="integer"),
-     *                 @OA\Property(property="unit", type="string", example="Box")
-     *             ))
+     *                 @OA\Property(property="product_id", type="integer", example=1),
+     *                 @OA\Property(property="quantity", type="integer", example=10),
+     *                 @OA\Property(property="unit", type="string", enum={"Nos", "Strips", "Box", "Carton"}, example="Box"),
+     *                 @OA\Property(property="variant", type="string", nullable=true, example="M")
+     *             )),
+     *             @OA\Property(property="distributor_id", type="integer", nullable=true, example=2)
      *         )
      *     ),
      *     @OA\Response(
@@ -191,8 +193,9 @@ class DistributorOrderApiController extends Controller
         $request->validate([
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.unit' => 'nullable|string|in:Box,Carton,Strip',
+            'items.*.quantity' => 'required|numeric|min:0.01',
+            'items.*.unit' => 'nullable|string|in:Box,Carton,Strip,Nos,no',
+            'items.*.variant' => 'nullable|string',
             'distributor_id' => 'sometimes|exists:distributors,id'
         ]);
 
@@ -235,21 +238,39 @@ class DistributorOrderApiController extends Controller
             foreach ($request->items as $itemData) {
                 $product = Product::findOrFail($itemData['product_id']);
                 $unitPrice = $product->pts;
+                $unit = $itemData['unit'] ?? 'Box';
+                $qty = (float)$itemData['quantity'];
+
+                // Conversion logic
+                $multiplier = 1;
+                $normalizedUnit = strtolower($unit);
+                if ($normalizedUnit === 'box') {
+                    $multiplier = (int)($product->strips_per_box ?? 1);
+                } elseif ($normalizedUnit === 'carton') {
+                    $multiplier = (int)($product->boxes_per_carton ?? 1) * (int)($product->strips_per_box ?? 1);
+                } elseif ($normalizedUnit === 'nos' || $normalizedUnit === 'no') {
+                    $multiplier = 1 / (max(1, (int)($product->units_per_strip ?? 1)));
+                }
+
+                $totalQtyStrips = ceil($qty * $multiplier);
+
                 $gstRate = (float)($product->gst ?? 0);
-                $taxableSubtotal = $itemData['quantity'] * $unitPrice;
+                $taxableSubtotal = $totalQtyStrips * $unitPrice;
                 $subtotalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
 
                 $order->items()->create([
                     'product_id' => $product->id,
-                    'quantity' => $itemData['quantity'],
-                    'unit' => $itemData['unit'] ?? 'Box',
-                    'price' => $unitPrice,
+                    'product_name' => $product->product_name . ($itemData['variant'] ? " [{$itemData['variant']}]" : ""),
+                    'quantity' => $qty,
+                    'unit' => $unit,
+                    'price' => (float)$unitPrice,
                     'subtotal' => $subtotalWithGst,
+                    'variant' => $itemData['variant'] ?? null,
                 ]);
 
                 $totalAmount += $subtotalWithGst;
                 $totalItems++;
-                $totalQuantity += $itemData['quantity'];
+                $totalQuantity += $totalQtyStrips;
             }
 
             $order->update([
@@ -524,19 +545,23 @@ class DistributorOrderApiController extends Controller
 
             $qty = $item->quantity;
             $unit = strtolower($item->unit);
-            $totalStrips = $qty;
+            $multiplier = 1;
 
             if ($unit === 'box') {
-                $totalStrips = $qty * ($product->box_size ?? 1);
+                $multiplier = (int)($product->strips_per_box ?? 1);
             } elseif ($unit === 'carton') {
-                $boxSize = $product->box_size ?? 1;
-                $cartonSize = $product->carton_size ?? 1;
-                $totalStrips = $qty * $boxSize * $cartonSize;
+                $multiplier = (int)($product->boxes_per_carton ?? 1) * (int)($product->strips_per_box ?? 1);
+            } elseif ($unit === 'nos' || $unit === 'no' || $unit === 'unit') {
+                $multiplier = 1 / (max(1, (int)($product->units_per_strip ?? 1)));
             }
+
+            $multiplier = (float)$multiplier;
+            $totalStrips = ceil($qty * $multiplier);
 
             $inventory = Inventory::firstOrNew([
                 'distributor_id' => $order->distributor_id,
                 'product_id' => $product->id,
+                'variant' => $item->variant,
             ]);
 
             if (!$inventory->exists) {

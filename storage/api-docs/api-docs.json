@@ -521,18 +521,36 @@
                                         "items": {
                                             "properties": {
                                                 "product_id": {
-                                                    "type": "integer"
+                                                    "type": "integer",
+                                                    "example": 1
                                                 },
                                                 "quantity": {
-                                                    "type": "integer"
+                                                    "type": "integer",
+                                                    "example": 10
                                                 },
                                                 "unit": {
                                                     "type": "string",
+                                                    "enum": [
+                                                        "Nos",
+                                                        "Strips",
+                                                        "Box",
+                                                        "Carton"
+                                                    ],
                                                     "example": "Box"
+                                                },
+                                                "variant": {
+                                                    "type": "string",
+                                                    "example": "M",
+                                                    "nullable": true
                                                 }
                                             },
                                             "type": "object"
                                         }
+                                    },
+                                    "distributor_id": {
+                                        "type": "integer",
+                                        "example": 2,
+                                        "nullable": true
                                     }
                                 },
                                 "type": "object"
@@ -1607,6 +1625,67 @@
                 ]
             }
         },
+        "/api/inventory": {
+            "post": {
+                "tags": [
+                    "Inventory"
+                ],
+                "summary": "Add product to inventory",
+                "operationId": "92df36cfb81355e2d905b7d71d541f42",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "product_id": {
+                                        "type": "integer"
+                                    },
+                                    "distributor_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "stock": {
+                                        "type": "number"
+                                    },
+                                    "unit": {
+                                        "type": "string",
+                                        "enum": [
+                                            "Nos",
+                                            "Strips",
+                                            "Box",
+                                            "Carton"
+                                        ]
+                                    },
+                                    "variant": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "batch_no": {
+                                        "type": "string"
+                                    },
+                                    "expiry_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Inventory updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/locations/districts": {
             "get": {
                 "tags": [
@@ -1977,8 +2056,8 @@
                                             "example": 2
                                         },
                                         "total_loyalty_points": {
-                                            "type": "integer",
-                                            "example": 500
+                                            "type": "string",
+                                            "example": "500"
                                         }
                                     },
                                     "type": "object"
@@ -2012,8 +2091,8 @@
                                 "schema": {
                                     "properties": {
                                         "total_points": {
-                                            "type": "integer",
-                                            "example": 500
+                                            "type": "string",
+                                            "example": "500"
                                         },
                                         "history": {
                                             "type": "array",
@@ -2111,10 +2190,16 @@
                                                     "type": "string",
                                                     "enum": [
                                                         "Nos",
+                                                        "Strips",
                                                         "Box",
                                                         "Carton"
                                                     ],
                                                     "example": "Box"
+                                                },
+                                                "variant": {
+                                                    "type": "string",
+                                                    "example": "M",
+                                                    "nullable": true
                                                 },
                                                 "distributor_id": {
                                                     "type": "integer",

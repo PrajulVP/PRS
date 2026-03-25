@@ -172,7 +172,7 @@
             </span>
           </a>
           <ul class="sidebar-submenu">
-             @if(Auth::user()->hasPermissionToCategory('retailer_approvals', 'view') || Auth::user()->hasRole('fieldstaff') || $hasApprovalRoles)
+             @if(Auth::user()->hasPermissionToCategory('retailer_approvals', 'view') || Auth::user()->hasRole('fieldstaff') || (Auth::user()->hasAnyRole(['admin', 'superadmin']) && !Auth::user()->hasRole('salesmanager')))
              <li style="position: relative;"><a href="{{ route('admin.approvals.retailer') }}">
                <span style="display: inline-flex; align-items: center; gap: 8px;">Retailers
                    <span id="badge-retailer-approvals" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; {{ $actionCounts['retailer_approvals'] > 0 ? '' : 'display: none !important;' }}">{{ $actionCounts['retailer_approvals'] }}</span>

@@ -45,7 +45,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('products/{product}/distributors', [ProductController::class, 'getDistributors']);
     Route::get('distributors/{distributorId}/products/{productId}/availability', [DistributorController::class, 'checkProductAvailability']);
     Route::get('distributor/inventory', [\App\Http\Controllers\Api\InventoryController::class, 'index']);
-    Route::apiResource('inventory', \App\Http\Controllers\Api\InventoryController::class)->only(['index', 'show']);
+    Route::apiResource('inventory', \App\Http\Controllers\Api\InventoryController::class)->only(['index', 'show', 'store']);
 
     // Distributor — Retailer Orders (orders placed to this distributor by retailers)
     Route::get('distributor/retailer-orders', [\App\Http\Controllers\Api\DistributorRetailerOrderController::class, 'index']);

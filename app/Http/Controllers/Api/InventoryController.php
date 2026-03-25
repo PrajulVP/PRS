@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Inventory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class InventoryController extends Controller
 {
@@ -135,5 +136,116 @@ class InventoryController extends Controller
         }
 
         return response()->json($inventory);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/inventory",
+     *     summary="Add product to inventory",
+     *     tags={"Inventory"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="product_id", type="integer"),
+     *             @OA\Property(property="distributor_id", type="integer", nullable=true),
+     *             @OA\Property(property="stock", type="number"),
+     *             @OA\Property(property="unit", type="string", enum={"Nos", "Strips", "Box", "Carton"}),
+     *             @OA\Property(property="variant", type="string", nullable=true),
+     *             @OA\Property(property="batch_no", type="string"),
+     *             @OA\Property(property="expiry_date", type="string", format="date")
+     *         )
+     *     ),
+     *     @OA\Response(response=201, description="Inventory updated")
+     * )
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'distributor_id' => 'nullable|exists:distributors,id',
+            'stock' => 'required|numeric|min:0',
+            'unit' => 'nullable|string',
+            'variant' => 'nullable|string',
+            'batch_no' => 'required|string|max:255',
+            'expiry_date' => 'required|date',
+        ]);
+
+        $product = \App\Models\Product::findOrFail($request->product_id);
+        $user = Auth::user();
+        $distributorId = null;
+
+        if ($user->hasRole('distributor')) {
+            $distributorId = $user->distributor->id;
+        } else {
+            if (!$request->has('distributor_id')) {
+                return response()->json(['error' => 'distributor_id is required'], 422);
+            }
+            $distributorId = $request->distributor_id;
+        }
+
+        $unit = $request->unit ?? 'Strip';
+        $qtyInput = (float)$request->stock;
+
+        // Conversion Logic
+        $multiplier = 1;
+        $normalizedUnit = strtolower($unit);
+        if ($normalizedUnit === 'box') {
+            $multiplier = (int)($product->strips_per_box ?? 1);
+        } elseif ($normalizedUnit === 'carton') {
+            $multiplier = (int)($product->boxes_per_carton ?? 1) * (int)($product->strips_per_box ?? 1);
+        } elseif ($normalizedUnit === 'nos' || $normalizedUnit === 'no' || $normalizedUnit === 'unit') {
+            $multiplier = 1 / (max(1, (int)($product->units_per_strip ?? 1)));
+        }
+
+        $finalStockAdd = ceil($qtyInput * $multiplier);
+
+        DB::beginTransaction();
+        try {
+            $inventory = Inventory::where('product_id', $product->id)
+                ->where('distributor_id', $distributorId)
+                ->where('batch_no', $request->batch_no)
+                ->where('variant', $request->variant)
+                ->where('expiry_date', $request->expiry_date)
+                ->first();
+
+            if ($inventory) {
+                $previousStock = $inventory->stock;
+                $inventory->stock += $finalStockAdd;
+                $inventory->save();
+            } else {
+                $previousStock = 0;
+                $inventory = Inventory::create([
+                    'distributor_product_code' => $product->product_code ?? 'NA-' . $product->id,
+                    'product_id' => $product->id,
+                    'product_name' => $product->product_name,
+                    'distributor_id' => $distributorId,
+                    'stock' => $finalStockAdd,
+                    'batch_no' => $request->batch_no,
+                    'variant' => $request->variant,
+                    'expiry_date' => $request->expiry_date,
+                ]);
+            }
+
+            // Record History
+            \App\Models\StockHistory::create([
+                'inventory_id' => $inventory->id,
+                'user_id' => $user->id,
+                'previous_stock' => $previousStock,
+                'new_stock' => $inventory->stock,
+                'quantity_change' => $finalStockAdd,
+                'change_type' => 'manual_api',
+                'remarks' => 'Updated via API. Unit: ' . $unit . ', Qty: ' . $qtyInput
+            ]);
+
+            DB::commit();
+            return response()->json([
+                'message' => 'Inventory updated successfully',
+                'inventory' => $inventory
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }
