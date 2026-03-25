@@ -210,18 +210,23 @@
                                 <h5 class="card-title mb-0 fw-bold"><i class="fa fa-receipt me-2"></i>Grand Total</h5>
                             </div>
                             <div class="card-body p-4">
-                                <div
-                                    class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-light-dark">
-                                    <div>
-                                        <span class="text-dark fw-bold d-block h5 mb-0 label-font">Total Value (PTR)</span>
-                                        <small class="text-muted"><i class="fa fa-info-circle text-warning"></i> GST & other
-                                            charges will be calculated on the invoice</small>
+                                <div class="mb-4 text-center">
+                                    <label class="text-muted small fw-bold text-uppercase d-block mb-2">Total Order Value (PTR)</label>
+                                    <div class="d-flex align-items-center justify-content-center gap-3">
+                                        <span id="grandTotal" class="h1 fw-bold text-primary mb-0 font-outfit" style="letter-spacing: -1px;">₹0.00</span>
                                     </div>
-                                    <span id="grandTotal" class="h3 fw-bold text-primary mb-0 font-outfit">₹0.00</span>
+                                </div>
+                                
+                                <div class="p-3 bg-light-soft rounded-3 border border-light-dark mb-4 text-center">
+                                    <small class="text-muted d-block line-height-sm">
+                                        <i class="fa fa-info-circle text-warning me-1"></i> 
+                                        GST & other charges will be calculated on the final invoice.
+                                    </small>
                                 </div>
 
                                 <button type="submit"
-                                    class="btn btn-success btn-lg w-100 py-2 fw-bold shadow-sm font-outfit btn-confirm rounded-3"
+                                    class="btn btn-success btn-lg w-100 py-3 fw-bold shadow-sm font-outfit btn-confirm rounded-3 border-0 transition-all hover-shadow"
+                                    style="background: linear-gradient(135deg, #28a745 0%, #218838 100%);"
                                     id="btnSubmitOrder" disabled>
                                     <i class="fa fa-check-circle me-2"></i> CONFIRM ORDER
                                 </button>
@@ -422,6 +427,27 @@
         .remove-btn:hover {
             transform: translateY(-1px);
             opacity: 0.9;
+        }
+
+        /* Summary Card Enhancements */
+        .bg-light-soft {
+            background-color: #f8fafc;
+        }
+        .bg-soft-success {
+            background-color: #ecfdf5;
+        }
+        .text-success {
+            color: #059669 !important;
+        }
+        .line-height-sm {
+            line-height: 1.4;
+        }
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        .hover-shadow:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+            transform: translateY(-2px);
         }
     </style>
 

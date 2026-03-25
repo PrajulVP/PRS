@@ -17,7 +17,7 @@ class OcrService
      */
     public function processInvoice(UploadedFile $file, string $type = 'admin')
     {
-        $basePath = env('OCR_API_URL', 'http://13.204.159.20');
+        $basePath = env('OCR_API_URL', 'http://3.110.97.41');
         $apiUrl = rtrim($basePath, '/') . "/{$type}";
         Log::info('OCR API Request', ['url' => $apiUrl, 'type' => $type]);
 

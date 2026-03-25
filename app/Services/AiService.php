@@ -19,7 +19,7 @@ class AiService
      */
     public function extractPrescription(UploadedFile $file)
     {
-        $basePath = env('AI_API_URL', 'http://13.204.159.20');
+        $basePath = env('AI_API_URL', 'http://3.110.97.41');
         $apiUrl = rtrim($basePath, '/') . "/extract-prescription";
         Log::info('Prescription AI API Request', ['url' => $apiUrl]);
 
@@ -112,7 +112,7 @@ class AiService
                                 'name' => $distributor->user->name ?? 'N/A',
                                 'shop_name' => $distributor->shop_name,
                                 'distance' => $distributor->distance,
-                                'stock' => $distributor->pivot->stock ?? 0,
+                                'stock' => ($distributor->pivot->stock ?? 0) . ' Strips',
                             ],
                             'has_stock' => true,
                             'quantity' => (int)$quantity,
@@ -124,11 +124,16 @@ class AiService
             }
         }
 
-        return [
+        $response = [
             'matched_items' => $matchedOptions,
-            'out_of_stock_items' => $outOfStockItems,
             'unmatched_items' => $unmatchedItems
         ];
+
+        if (!empty($outOfStockItems)) {
+            $response['out_of_stock_items'] = $outOfStockItems;
+        }
+
+        return $response;
     }
 
     protected function getAvailableDistributors($product, $retailer)

@@ -53,7 +53,7 @@ class PrescriptionApiController extends Controller
         ]);
 
         $file = $request->file('prescription');
-        $retailer = $request->retailer_id ? \App\Models\Retailer::find($request->retailer_id) : null;
+        $retailer = $request->retailer_id ? \App\Models\Retailer::where('user_id', $request->retailer_id)->first() : null;
 
         $extractedData = $this->aiService->extractPrescription($file);
         

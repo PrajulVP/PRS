@@ -121,7 +121,7 @@ class ProductController extends Controller
                 'area_id' => $d->area_id,
                 'created_at' => $d->created_at,
                 'updated_at' => $d->updated_at,
-                'stock' => $d->pivot->stock ?? 0,
+                'stock' => ($d->pivot->stock ?? 0) . ' Strips',
             ];
         });
 

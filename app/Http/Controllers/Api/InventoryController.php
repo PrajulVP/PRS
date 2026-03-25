@@ -77,6 +77,13 @@ class InventoryController extends Controller
 
         $inventory = $query->orderBy('updated_at', 'desc')->get();
 
+        $inventory->transform(function ($item) {
+            $item->stock_display = (string)$item->stock . ' Strips';
+            // Also update stock if the app expects a string with units
+            // $item->stock = (string)$item->stock . ' Strips'; 
+            return $item;
+        });
+
         return response()->json($inventory);
     }
 
