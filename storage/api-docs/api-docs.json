@@ -1846,7 +1846,7 @@
                                         "format": "binary"
                                     },
                                     "retailer_id": {
-                                        "description": "Optional retailer id for distance calculation and stock filtering",
+                                        "description": "Optional user id (from users table) of the retailer for distance calculation and stock filtering",
                                         "type": "integer"
                                     }
                                 },
@@ -1869,6 +1869,29 @@
                                         "matched_items": {
                                             "type": "array",
                                             "items": {
+                                                "properties": {
+                                                    "product": {
+                                                        "type": "object"
+                                                    },
+                                                    "distributors": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "has_stock": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "quantity": {
+                                                        "type": "integer"
+                                                    },
+                                                    "unit": {
+                                                        "type": "string"
+                                                    },
+                                                    "original_name": {
+                                                        "type": "string"
+                                                    }
+                                                },
                                                 "type": "object"
                                             }
                                         },

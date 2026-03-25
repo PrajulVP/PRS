@@ -104,22 +104,24 @@ class AiService
                         'quantity' => (int)$quantity
                     ];
                 } else {
+                    $distList = [];
                     foreach ($distributors as $distributor) {
-                        $matchedOptions[] = [
-                            'product' => $product,
-                            'distributor' => [
-                                'id' => $distributor->id,
-                                'name' => $distributor->user->name ?? 'N/A',
-                                'shop_name' => $distributor->shop_name,
-                                'distance' => $distributor->distance,
-                                'stock' => ($distributor->pivot->stock ?? 0) . ' Strips',
-                            ],
-                            'has_stock' => true,
-                            'quantity' => (int)$quantity,
-                            'unit' => $this->determineDefaultUnit($product),
-                            'original_name' => $name
+                        $distList[] = [
+                            'id' => $distributor->id,
+                            'name' => $distributor->user->name ?? 'N/A',
+                            'shop_name' => $distributor->shop_name,
+                            'distance' => $distributor->distance,
+                            'stock' => ($distributor->pivot->stock ?? 0) . ' Strips',
                         ];
                     }
+                    $matchedOptions[] = [
+                        'product' => $product,
+                        'distributors' => $distList,
+                        'has_stock' => true,
+                        'quantity' => (int)$quantity,
+                        'unit' => $this->determineDefaultUnit($product),
+                        'original_name' => $name
+                    ];
                 }
             }
         }

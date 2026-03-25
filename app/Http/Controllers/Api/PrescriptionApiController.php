@@ -38,7 +38,15 @@ class PrescriptionApiController extends Controller
      *         description="AI results with multi-match options",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="matched_items", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="matched_items", type="array", @OA\Items(
+     *                 type="object",
+     *                 @OA\Property(property="product", type="object"),
+     *                 @OA\Property(property="distributors", type="array", @OA\Items(type="object")),
+     *                 @OA\Property(property="has_stock", type="boolean"),
+     *                 @OA\Property(property="quantity", type="integer"),
+     *                 @OA\Property(property="unit", type="string"),
+     *                 @OA\Property(property="original_name", type="string")
+     *             )),
      *             @OA\Property(property="out_of_stock_items", type="array", @OA\Items(type="object")),
      *             @OA\Property(property="unmatched_items", type="array", @OA\Items(type="object"))
      *         )
