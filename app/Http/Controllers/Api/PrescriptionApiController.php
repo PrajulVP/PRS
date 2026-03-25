@@ -28,7 +28,7 @@ class PrescriptionApiController extends Controller
      *             mediaType="multipart/form-data",
      *             @OA\Schema(
      *                 @OA\Property(property="prescription", type="string", format="binary"),
-     *                 @OA\Property(property="retailer_id", type="integer", description="Optional retailer id for distance calculation and stock filtering"),
+     *                 @OA\Property(property="retailer_id", type="integer", description="Optional user id (from users table) of the retailer for distance calculation and stock filtering"),
      *                 required={"prescription"}
      *             )
      *         )
@@ -49,7 +49,7 @@ class PrescriptionApiController extends Controller
     {
         $request->validate([
             'prescription' => 'required|file|mimes:jpg,jpeg,png,pdf',
-            'retailer_id' => 'nullable|exists:retailers,id'
+            'retailer_id' => 'nullable|exists:users,id'
         ]);
 
         $file = $request->file('prescription');

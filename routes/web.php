@@ -195,9 +195,9 @@ Route::middleware(['auth'])->group(function () {
 
 Route::prefix('system')->name('system.')->group(function () {
     Route::get('swagger-generate', [SystemController::class, 'swaggerGenerate'])->name('swagger.generate');
-    Route::get('migrate', [SystemController::class, 'migrate'])->name('migrate');
-    Route::get('migrate-fresh', [SystemController::class, 'migrateFresh'])->name('migrate.fresh');
-    Route::get('migrate-fresh-seed', [SystemController::class, 'migrateFreshSeed'])->name('migrate.fresh.seed');
+    Route::post('migrate', [SystemController::class, 'migrate'])->name('migrate');
+    Route::post('migrate-fresh', [SystemController::class, 'migrateFresh'])->name('migrate.fresh');
+    Route::post('migrate-fresh-seed', [SystemController::class, 'migrateFreshSeed'])->name('migrate.fresh.seed');
     Route::get('optimize', [SystemController::class, 'optimize'])->name('optimize');
     Route::get('ocr-logs', [SystemController::class, 'getOcrLogs'])->name('ocr.logs');
 });

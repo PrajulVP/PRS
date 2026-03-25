@@ -24,8 +24,11 @@ class SystemController extends Controller
         }
     }
 
-    public function migrate()
+    public function migrate(Request $request)
     {
+        if ($request->header('X-Maintenance-Key') !== env('MAINTENANCE_KEY')) {
+             return response()->json(['status' => 'error', 'message' => 'Unauthorized key.'], 403);
+        }
         try {
             Artisan::call('migrate', ['--force' => true]);
             return response()->json([
@@ -41,8 +44,11 @@ class SystemController extends Controller
         }
     }
 
-    public function migrateFresh()
+    public function migrateFresh(Request $request)
     {
+        if ($request->header('X-Maintenance-Key') !== env('MAINTENANCE_KEY')) {
+             return response()->json(['status' => 'error', 'message' => 'Unauthorized key.'], 403);
+        }
         try {
             Artisan::call('migrate:fresh', ['--force' => true]);
             return response()->json([
@@ -58,8 +64,11 @@ class SystemController extends Controller
         }
     }
 
-    public function migrateFreshSeed()
+    public function migrateFreshSeed(Request $request)
     {
+        if ($request->header('X-Maintenance-Key') !== env('MAINTENANCE_KEY')) {
+             return response()->json(['status' => 'error', 'message' => 'Unauthorized key.'], 403);
+        }
         try {
             Artisan::call('migrate:fresh', ['--seed' => true, '--force' => true]);
             return response()->json([
