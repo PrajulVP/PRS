@@ -546,11 +546,6 @@
                                             },
                                             "type": "object"
                                         }
-                                    },
-                                    "distributor_id": {
-                                        "type": "integer",
-                                        "example": 2,
-                                        "nullable": true
                                     }
                                 },
                                 "type": "object"
@@ -783,7 +778,13 @@
                                         "has_variants": {
                                             "type": "boolean"
                                         },
-                                        "variant": {
+                                        "available_variants": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "selected_variant": {
                                             "type": "string",
                                             "nullable": true
                                         },
@@ -2462,7 +2463,13 @@
                                         "has_variants": {
                                             "type": "boolean"
                                         },
-                                        "variant": {
+                                        "available_variants": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "selected_variant": {
                                             "type": "string",
                                             "nullable": true
                                         },

@@ -2,6 +2,7 @@
 namespace App\Traits;
 
 use App\Models\Product;
+use Illuminate\Support\Facades\DB;
 
 trait CalculatesPrices
 {
@@ -32,11 +33,20 @@ trait CalculatesPrices
         $totalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
         $gstAmount = $totalWithGst - $taxableSubtotal;
 
+        // Fetch available variants from inventory (where stock exists)
+        $availableVariants = DB::table('inventories')
+            ->where('product_id', $product->id)
+            ->where('stock', '>', 0)
+            ->whereNotNull('variant')
+            ->distinct()
+            ->pluck('variant');
+
         return [
             'product_id' => $product->id,
             'product_name' => $product->product_name,
             'has_variants' => (bool)$product->has_variants,
-            'variant' => $variant,
+            'available_variants' => $availableVariants,
+            'selected_variant' => $variant,
             'input_quantity' => (float)$quantity,
             'input_unit' => $unit,
             'total_quantity_strips' => $totalQtyStrips,

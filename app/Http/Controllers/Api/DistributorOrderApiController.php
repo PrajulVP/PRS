@@ -163,8 +163,9 @@ class DistributorOrderApiController extends Controller
      *             @OA\Property(property="product_id", type="integer"),
      *             @OA\Property(property="product_name", type="string"),
      *             @OA\Property(property="has_variants", type="boolean"),
-     *             @OA\Property(property="variant", type="string", nullable=true),
-     *             @OA\Property(property="input_quantity", type="number"),
+             @OA\Property(property="available_variants", type="array", @OA\Items(type="string")),
+             @OA\Property(property="selected_variant", type="string", nullable=true),
+             @OA\Property(property="input_quantity", type="number"),
      *             @OA\Property(property="input_unit", type="string"),
      *             @OA\Property(property="total_quantity_strips", type="integer"),
      *             @OA\Property(property="unit_price", type="number"),
@@ -207,10 +208,9 @@ class DistributorOrderApiController extends Controller
      *                 @OA\Property(property="quantity", type="integer", example=10),
      *                 @OA\Property(property="unit", type="string", enum={"Nos", "Strips", "Box", "Carton"}, example="Box"),
      *                 @OA\Property(property="variant", type="string", nullable=true, example="M")
-     *             )),
-     *             @OA\Property(property="distributor_id", type="integer", nullable=true, example=2)
-     *         )
-     *     ),
+             ))
+         )
+     ),
      *     @OA\Response(
      *         response=201,
      *         description="Order placed successfully (Status: pending)",
@@ -244,7 +244,6 @@ class DistributorOrderApiController extends Controller
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit' => 'nullable|string|in:Box,Carton,Strip,Nos,no',
             'items.*.variant' => 'nullable|string',
-            'distributor_id' => 'sometimes|exists:distributors,id'
         ]);
 
         /** @var \App\Models\User $user */
@@ -256,15 +255,8 @@ class DistributorOrderApiController extends Controller
             $distributor = $user->distributor;
             $distributorId = $distributor->id;
             $salesManagerId = $distributor->sales_manager_id;
-        } elseif ($user->hasAnyRole(['admin', 'superadmin'])) {
-            if (!$request->has('distributor_id')) {
-                return response()->json(['error' => 'distributor_id is required for admin'], 422);
-            }
-            $distributor = Distributor::findOrFail($request->distributor_id);
-            $distributorId = $distributor->id;
-            $salesManagerId = $distributor->sales_manager_id;
         } else {
-            return response()->json(['error' => 'Only distributors or admins can place orders'], 403);
+            return response()->json(['error' => 'Only distributors can place orders via API'], 403);
         }
 
         DB::beginTransaction();
