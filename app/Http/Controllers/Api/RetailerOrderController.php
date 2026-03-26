@@ -107,12 +107,15 @@ class RetailerOrderController extends Controller
      *     @OA\Parameter(name="product_id", in="query", required=true, @OA\Schema(type="integer"), example=1),
      *     @OA\Parameter(name="quantity", in="query", required=true, @OA\Schema(type="number"), example=10),
      *     @OA\Parameter(name="unit", in="query", required=true, @OA\Schema(type="string", enum={"Nos", "Strips", "Box", "Carton"}), example="Box"),
+     *     @OA\Parameter(name="variant", in="query", required=false, @OA\Schema(type="string"), example="M"),
      *     @OA\Response(
      *         response=200,
      *         description="Detailed price calculation",
      *         @OA\JsonContent(
      *             @OA\Property(property="product_id", type="integer"),
      *             @OA\Property(property="product_name", type="string"),
+     *             @OA\Property(property="has_variants", type="boolean"),
+     *             @OA\Property(property="variant", type="string", nullable=true),
      *             @OA\Property(property="input_quantity", type="number"),
      *             @OA\Property(property="input_unit", type="string"),
      *             @OA\Property(property="total_quantity_strips", type="integer"),
@@ -133,10 +136,11 @@ class RetailerOrderController extends Controller
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|numeric|min:0.01',
             'unit' => 'required|string',
+            'variant' => 'nullable|string',
         ]);
 
         $product = Product::findOrFail($request->product_id);
-        $result = $this->computePriceResponse($product, $request->quantity, $request->unit, 'ptr');
+        $result = $this->computePriceResponse($product, $request->quantity, $request->unit, 'ptr', $request->variant);
 
         return response()->json($result);
     }
@@ -181,6 +185,7 @@ class RetailerOrderController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit' => 'nullable|string',
+            'items.*.variant' => 'nullable|string',
             'items.*.distributor_id' => 'nullable|exists:distributors,id',
             'notes' => 'nullable|string',
         ]);

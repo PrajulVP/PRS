@@ -756,6 +756,15 @@
                             ]
                         },
                         "example": "Box"
+                    },
+                    {
+                        "name": "variant",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "M"
                     }
                 ],
                 "responses": {
@@ -770,6 +779,13 @@
                                         },
                                         "product_name": {
                                             "type": "string"
+                                        },
+                                        "has_variants": {
+                                            "type": "boolean"
+                                        },
+                                        "variant": {
+                                            "type": "string",
+                                            "nullable": true
                                         },
                                         "input_quantity": {
                                             "type": "number"
@@ -2419,6 +2435,15 @@
                             ]
                         },
                         "example": "Box"
+                    },
+                    {
+                        "name": "variant",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "M"
                     }
                 ],
                 "responses": {
@@ -2433,6 +2458,13 @@
                                         },
                                         "product_name": {
                                             "type": "string"
+                                        },
+                                        "has_variants": {
+                                            "type": "boolean"
+                                        },
+                                        "variant": {
+                                            "type": "string",
+                                            "nullable": true
                                         },
                                         "input_quantity": {
                                             "type": "number"

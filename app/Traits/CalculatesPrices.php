@@ -8,7 +8,7 @@ trait CalculatesPrices
     /**
      * Compute detailed price breakdown for a product based on quantity and unit.
      */
-    protected function computePriceResponse(Product $product, $quantity, $unit, $priceField = 'ptr')
+    protected function computePriceResponse(Product $product, $quantity, $unit, $priceField = 'ptr', $variant = null)
     {
         $multiplier = 1;
         $normalizedUnit = strtolower($unit);
@@ -35,6 +35,8 @@ trait CalculatesPrices
         return [
             'product_id' => $product->id,
             'product_name' => $product->product_name,
+            'has_variants' => (bool)$product->has_variants,
+            'variant' => $variant,
             'input_quantity' => (float)$quantity,
             'input_unit' => $unit,
             'total_quantity_strips' => $totalQtyStrips,
