@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Distributor;
 use App\Traits\ManagesInventory;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class InventoryController extends Controller
 {
@@ -99,25 +100,57 @@ class InventoryController extends Controller
                     });
                 }
 
-                // Add Distributor Filter
-                if ($request->has('distributor_id') && !empty($request->input('distributor_id'))) {
-                    $query->where('distributor_id', $request->input('distributor_id'));
+                // Correct totals for grouped data
+                $totalData = DB::table('inventories')
+                    ->select('product_id', 'product_name')
+                    ->groupBy('product_id', 'product_name')
+                    ->get()
+                    ->count();
+
+                // Mandatory distributor selection for non-distributors
+                $user = Auth::user();
+                $roles = ['admin', 'superadmin', 'salesmanager'];
+                $isAdminRole = in_array($user->role, $roles);
+                
+                if ($isAdminRole && empty($request->input('distributor_id'))) {
+                    return response()->json([
+                        'draw' => intval($request->input('draw')),
+                        'recordsTotal' => 0,
+                        'recordsFiltered' => 0,
+                        'data' => [],
+                        'message' => 'Please select a distributor to view inventory'
+                    ]);
                 }
 
-                // Correct totals for grouped data
-                $totalData = Inventory::count();
+                $totalFiltered = (clone $query)->select('product_id', 'product_name')
+                    ->groupBy('product_id', 'product_name')
+                    ->get()
+                    ->count();
 
-                $totalFiltered = (clone $query)->get()->count();
+                // Select aggregated columns
+                $query->select(
+                    'product_id',
+                    'product_name',
+                    DB::raw('SUM(stock) as stock'),
+                    DB::raw('MAX(id) as id'),
+                    DB::raw('MAX(variant) as variant'),
+                    DB::raw('MAX(distributor_id) as distributor_id'),
+                    DB::raw('MAX(updated_at) as updated_at'),
+                    DB::raw('MAX(distributor_product_code) as distributor_product_code'),
+                    DB::raw('MAX(batch_no) as batch_no'),
+                    DB::raw('MAX(expiry_date) as expiry_date')
+                )
+                ->groupBy('product_id', 'product_name');
 
                 // ordering
                 if ($request->has('order') && !empty($request->input('order'))) {
                     $columnIndex = $request->input('order')[0]['column'];
                     $columnName = $request->input('columns')[$columnIndex]['data'];
                     $sortDirection = $request->input('order')[0]['dir'];
-                    // Use a raw order if it's the stock column to ensure SUM(stock) is ordered correctly
+                    
                     if ($columnName === 'stock') {
-                        $query->orderByRaw("SUM(stock) $sortDirection");
-                    } elseif (!empty($columnName)) {
+                        $query->orderBy('stock', $sortDirection);
+                    } elseif (!empty($columnName) && in_array($columnName, ['product_name', 'updated_at', 'distributor_product_code', 'batch_no', 'expiry_date'])) {
                         $query->orderBy($columnName, $sortDirection);
                     } else {
                         $query->orderBy('updated_at', 'desc');
@@ -129,14 +162,33 @@ class InventoryController extends Controller
                 $start = intval($request->input('start', 0));
                 $length = intval($request->input('length', 10));
 
-                // If length is -1, fetch all
-                if ($length == -1) {
-                    $items = $query->get();
-                } else {
-                    $items = $query->offset($start)->limit($length)->get();
-                }
+                $items = ($length == -1) 
+                    ? $query->with(['product', 'distributor.user'])->get() 
+                    : $query->with(['product', 'distributor.user'])->offset($start)->limit($length)->get();
 
                 $formatted = $items->map(function ($i) {
+                    // Fetch all batches for this group to show in the breakdown
+                    // We sum stock for batches with same batch_no and expiry
+                    $rawBatches = Inventory::with(['distributor.user'])
+                        ->where('product_id', $i->product_id)
+                        ->where('product_name', $i->product_name)
+                        ->orderBy('expiry_date', 'asc')
+                        ->get();
+                    
+                    $batches = $rawBatches->groupBy(function($b) {
+                        return $b->batch_no . '___' . ($b->expiry_date ? $b->expiry_date->format('Y-m-d') : 'none');
+                    })->map(function($group) {
+                        $first = $group->first();
+                        return [
+                            'id' => $first->id,
+                            'batch_no' => $first->batch_no,
+                            'stock' => (int)$group->sum('stock'),
+                            'expiry_date' => $first->expiry_date ? $first->expiry_date->format('d-m-Y') : 'N/A',
+                            'raw_expiry_date' => $first->expiry_date ? $first->expiry_date->format('Y-m-d') : null,
+                            'distributor_name' => $first->distributor?->user?->name ?? 'N/A',
+                        ];
+                    })->values();
+
                     return [
                         'id' => $i->id,
                         'distributor_product_code' => $i->distributor_product_code,
@@ -146,8 +198,26 @@ class InventoryController extends Controller
                         'distributor_name' => $i->distributor?->user?->name ?? 'N/A',
                         'stock' => (int) $i->stock,
                         'variant' => $i->variant,
-                        'updated_at' => $i->updated_at?->toIso8601String(),
-                        'image' => $i->product && $i->product->image ? \Illuminate\Support\Facades\Storage::disk('public')->url($i->product->image) : asset('admin/assets/images/dashboard/product-1.png'), // Placeholder
+                        'batches' => $batches,
+                        'product_details' => $i->product ? [
+                            'id' => $i->product->id,
+                            'product_name' => $i->product->product_name,
+                            'product_code' => $i->product->product_code,
+                            'generic_name' => $i->product->generic_name,
+                            'pack' => $i->product->pack,
+                            'mrp' => $i->product->mrp,
+                            'ptr' => $i->product->ptr,
+                            'hsn_code' => $i->product->hsn_code,
+                            'units_per_strip' => $i->product->units_per_strip ?? 1,
+                            'strips_per_box' => $i->product->strips_per_box ?? 1,
+                            'boxes_per_carton' => $i->product->boxes_per_carton ?? 1,
+                            'box_size' => $i->product->box_size,
+                            'gst' => $i->product->gst,
+                            'description' => $i->product->description,
+                            'has_variants' => (bool)$i->product->has_variants,
+                        ] : null,
+                        'updated_at' => \Carbon\Carbon::parse($i->updated_at)->toIso8601String(),
+                        'image' => $i->product && $i->product->image ? \Illuminate\Support\Facades\Storage::url($i->product->image) : asset('admin/assets/images/dashboard/product-1.png'), // Placeholder
                         'batch_no' => $i->batch_no ?? '-',
                         'raw_expiry_date' => $i->expiry_date,
                         'expiry_date' => $i->expiry_date ? (function ($date) {
@@ -157,20 +227,6 @@ class InventoryController extends Controller
                             }
                             return $parsed->format('d-m-Y');
                         })($i->expiry_date) : '-',
-                        'product_details' => $i->product ? [
-                            'generic_name' => $i->product->generic_name,
-                            'pack' => $i->product->pack,
-                            'mrp' => $i->product->mrp,
-                            'ptr' => $i->product->ptr,
-                            'gst' => $i->product->gst,
-                            'hsn_code' => $i->product->hsn_code,
-                            'box_size' => $i->product->box_size,
-                            'strips_per_box' => $i->product->strips_per_box,
-                            'boxes_per_carton' => $i->product->boxes_per_carton,
-                            'units_per_strip' => $i->product->units_per_strip,
-                            'has_variants' => (bool)$i->product->has_variants,
-                            'description' => $i->product->description
-                        ] : null
                     ];
                 });
 
@@ -273,14 +329,27 @@ class InventoryController extends Controller
         $request->validate([
             'stock' => 'required|numeric|min:0',
             'unit' => 'nullable|string',
+            'operation' => 'nullable|string|in:set,add,subtract',
             'batch_no' => 'nullable|string|max:255',
             'expiry_date' => 'nullable|date',
         ]);
 
-        $previousStock = $inventory->stock;
+        $operation = $request->input('operation', 'set');
+        $product = $inventory->product;
         
         // Convert the input stock to strips based on the selected unit
-        $newStock = $this->convertQuantityToStrips($inventory->product, $request->stock, $request->unit ?? 'Strips');
+        $inputStrips = $this->convertQuantityToStrips($product, $request->stock, $request->unit ?? 'Strips');
+        
+        $previousStock = $inventory->stock;
+        $newStock = $previousStock;
+
+        if ($operation === 'add') {
+            $newStock += $inputStrips;
+        } elseif ($operation === 'subtract') {
+            $newStock = max(0, $previousStock - $inputStrips);
+        } else {
+            $newStock = $inputStrips;
+        }
         
         $quantityChange = $newStock - $previousStock;
 

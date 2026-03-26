@@ -749,9 +749,6 @@
                         </div>
                     </div>
                     <div class="modal-footer border-0 px-4 pb-4 pt-0">
-                        <button type="button" class="btn btn-outline-danger fw-bold border-2 px-4 py-2 me-auto reject-order-btn" style="border-radius: 12px;">
-                            <i class="fa fa-times me-2"></i>Reject Order
-                        </button>
                         <button type="button" class="btn btn-link text-muted fw-bold text-decoration-none px-4" data-bs-dismiss="modal">Go Back</button>
                         <button type="submit" id="btn_approve_order" class="btn btn-primary px-5 py-2 fw-bold shadow-sm" 
                             style="border-radius: 12px; background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);">

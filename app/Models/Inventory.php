@@ -20,6 +20,10 @@ class Inventory extends Model
         'expiry_date',
     ];
 
+    protected $casts = [
+        'expiry_date' => 'date',
+    ];
+
     // Optional relationships if needed later
     public function product()
     {

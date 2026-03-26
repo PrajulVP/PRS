@@ -655,18 +655,7 @@
     <div class="modal fade" id="distributorApproveModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg overflow-hidden" style="border-radius: 20px;">
-                <div class="modal-header bg-primary text-white border-0 py-3 px-4 position-relative">
-                    <div class="d-flex align-items-center">
-                        <div class="bg-white bg-opacity-25 rounded-circle p-2 me-3">
-                            <i class="fa fa-cubes fs-4 text-white"></i>
-                        </div>
-                        <div>
-                            <h5 class="modal-title fw-bold text-white mb-0">Approve & Allocate Batches</h5>
-                            <p class="small text-white text-opacity-75 mb-0" id="approve_order_code_display"></p>
-                        </div>
-                    </div>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
+                
                 <form id="distributorApproveForm">
                     <div class="modal-body p-0">
                         <!-- Order Summary Header -->
@@ -830,9 +819,6 @@
                         </div>
                     </div>
                     <div class="modal-footer border-0 px-4 pb-4 pt-0">
-                        <button type="button" class="btn btn-outline-danger fw-bold border-2 px-4 py-2 me-auto reject-retailer-btn" style="border-radius: 12px;">
-                            <i class="fa fa-times me-2"></i>Reject Order
-                        </button>
                         <button type="button" class="btn btn-link text-muted fw-bold text-decoration-none px-4" data-bs-dismiss="modal">Go Back</button>
                         <button type="submit" class="btn btn-primary px-5 py-2 fw-bold shadow-sm" id="btnSubmitDistributorApprove" 
                             style="border-radius: 12px; background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);">
@@ -1362,6 +1348,14 @@
                 // Hide any open approval modals if they exist
                 $('#approveRetailerOrderModal').modal('hide');
                 $('#distributorApproveModal').modal('hide');
+                $('#rejectRetailerOrderModal').modal('show');
+            });
+
+            $(document).on('click', '.reject-retailer-btn', function () {
+                let orderId = $('#distributor_approve_order_id').val();
+                $('#distributorApproveModal').modal('hide');
+                
+                $('#reject_retailer_order_id').val(orderId);
                 $('#rejectRetailerOrderModal').modal('show');
             });
 
