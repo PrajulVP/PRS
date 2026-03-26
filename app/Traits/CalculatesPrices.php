@@ -41,12 +41,16 @@ trait CalculatesPrices
             ->distinct()
             ->pluck('variant');
 
+        // Dynamic Unit Logic matching the web front-end
+        $availableUnits = $this->getAvailableUnits($product);
+
         return [
             'product_id' => $product->id,
             'product_name' => $product->product_name,
             'has_variants' => (bool)$product->has_variants,
             'available_variants' => $availableVariants,
             'selected_variant' => $variant,
+            'available_units' => $availableUnits,
             'input_quantity' => (float)$quantity,
             'input_unit' => $unit,
             'total_quantity_strips' => $totalQtyStrips,
@@ -57,5 +61,40 @@ trait CalculatesPrices
             'total_amount' => round($totalWithGst, 2),
             'currency' => 'INR',
         ];
+    }
+
+    /**
+     * Helper to determine available units for a product based on its attributes and naming conventions.
+     */
+    protected function getAvailableUnits(Product $product)
+    {
+        $pPack = strtolower($product->pack ?? '');
+        $pName = strtolower($product->product_name ?? '');
+        $boxSizeStr = $product->box_size ?? '';
+        
+        $isCount = ($boxSizeStr === "");
+
+        if (!$isCount) {
+            // Check for keywords that imply the product is sold by individual count/nos
+            $keywords = [
+                'nos', 'count', 'pair', 'bottle', 'ml', 'gm', 'syp', 'syrup', 
+                'drop', 'ointment', 'belt', 'cap', 'binder', 'splint', 
+                'brace', 'cuff', 'walker'
+            ];
+            
+            foreach ($keywords as $keyword) {
+                if (str_contains($pPack, $keyword) || str_contains($pName, $keyword)) {
+                    $isCount = true;
+                    break;
+                }
+            }
+        }
+
+        if ($isCount) {
+            return ['Nos'];
+        }
+
+        // Standard medical strips/boxes/cartons pattern
+        return ['Nos', 'Strips', 'Box', 'Carton'];
     }
 }

@@ -788,6 +788,12 @@
                                             "type": "string",
                                             "nullable": true
                                         },
+                                        "available_units": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
                                         "input_quantity": {
                                             "type": "number"
                                         },
@@ -2472,6 +2478,12 @@
                                         "selected_variant": {
                                             "type": "string",
                                             "nullable": true
+                                        },
+                                        "available_units": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
                                         },
                                         "input_quantity": {
                                             "type": "number"

@@ -117,6 +117,7 @@ class RetailerOrderController extends Controller
      *             @OA\Property(property="has_variants", type="boolean"),
      *             @OA\Property(property="available_variants", type="array", @OA\Items(type="string")),
      *             @OA\Property(property="selected_variant", type="string", nullable=true),
+     *             @OA\Property(property="available_units", type="array", @OA\Items(type="string")),
      *             @OA\Property(property="input_quantity", type="number"),
      *             @OA\Property(property="input_unit", type="string"),
      *             @OA\Property(property="total_quantity_strips", type="integer"),
