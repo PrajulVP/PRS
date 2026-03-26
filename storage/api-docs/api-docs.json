@@ -1745,6 +1745,66 @@
                         "bearerAuth": []
                     }
                 ]
+            },
+            "put": {
+                "tags": [
+                    "Inventory"
+                ],
+                "summary": "Full edit of an inventory record",
+                "operationId": "91636f94041ace1aa99fb79808bd2558",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "stock": {
+                                        "type": "number",
+                                        "nullable": true
+                                    },
+                                    "unit": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "batch_no": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "expiry_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "nullable": true
+                                    },
+                                    "variant": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Record updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/inventory": {
@@ -1752,7 +1812,8 @@
                 "tags": [
                     "Inventory"
                 ],
-                "summary": "Add product to inventory",
+                "summary": "Adjust inventory stock (Add/Subtract)",
+                "description": "Finds or creates an inventory record by batch/expiry/variant and adjusts the stock. Mirroring web logic.",
                 "operationId": "92df36cfb81355e2d905b7d71d541f42",
                 "requestBody": {
                     "required": true,
@@ -1764,10 +1825,12 @@
                                         "type": "integer"
                                     },
                                     "distributor_id": {
+                                        "description": "Required for non-distributor users",
                                         "type": "integer",
                                         "nullable": true
                                     },
                                     "stock": {
+                                        "description": "Quantity to adjust",
                                         "type": "number"
                                     },
                                     "unit": {
@@ -1789,6 +1852,14 @@
                                     "expiry_date": {
                                         "type": "string",
                                         "format": "date"
+                                    },
+                                    "operation": {
+                                        "type": "string",
+                                        "default": "add",
+                                        "enum": [
+                                            "add",
+                                            "subtract"
+                                        ]
                                     }
                                 },
                                 "type": "object"
@@ -1798,7 +1869,10 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Inventory updated"
+                        "description": "Inventory updated successfully"
+                    },
+                    "400": {
+                        "description": "Invalid adjustment or insufficient stock"
                     }
                 },
                 "security": [

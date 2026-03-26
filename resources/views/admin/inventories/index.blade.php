@@ -43,6 +43,22 @@
         width: auto !important;
         display: inline-block !important;
     }
+    /* Fix for stuck loading overlay */
+    .dataTables_processing {
+        z-index: 1050 !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        border-radius: 50px !important;
+        padding: 5px 15px !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+        border: 1px solid var(--med-border) !important;
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: auto !important;
+        height: auto !important;
+        display: none; /* DataTables will show it when needed */
+    }
 </style>
 
 @section('page-body')
@@ -768,13 +784,18 @@
                         }
 
                         // Packaging info line
-                        html += `<div class="packaging-info text-muted small" style="font-size: 0.75rem;">`;
                         if (isNos) {
-                            html += `(${unitsPerStrip} Nos/Box | ${boxSize} Box/Ctn)`;
+                            if (unitsPerStrip > 1 || boxSize > 1) {
+                                html += `<div class="packaging-info text-muted small" style="font-size: 0.75rem;">`;
+                                html += `(${unitsPerStrip} Nos/Box | ${boxSize} Box/Ctn)`;
+                                html += `</div>`;
+                            }
                         } else {
+                            html += `<div class="packaging-info text-muted small" style="font-size: 0.75rem;">`;
                             html += `(${boxSize} Str/Box | ${cartonSize} Box/Ctn)`;
+                            html += `</div>`;
                         }
-                        html += `</div></div>`;
+                        html += `</div>`;
                         return html;
                     }
                 },
@@ -927,7 +948,8 @@
 
                 $('#stock_adj_id').val(id);
                 $('#stock_adj_op').val(op);
-                $('#stock_adj_product_name').text(name);
+                let cleanName = name.replace(/\s*\([^)]*\/[^)]*\)/g, '').replace(/\s*\[[^\]]*\/[^\]]*\]/g, '').trim();
+                $('#stock_adj_product_name').text(cleanName);
                 
                 let packHtml = isCount ? 
                     `Packaging: <b>${product.units_per_strip || 1} Nos/Unit</b> | <b>${currentStripsPerBox} Units/Box</b>` :

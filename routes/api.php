@@ -44,6 +44,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('distributor-orders/{id}/approve', [\App\Http\Controllers\Api\DistributorOrderApiController::class, 'approve']);
 
     Route::get('products', [ProductController::class, 'index']);
+    Route::get('products/{id}', [ProductController::class, 'show']);
     Route::get('products/{product}/distributors', [ProductController::class, 'getDistributors']);
     Route::get('distributors/{distributorId}/products/{productId}/availability', [DistributorController::class, 'checkProductAvailability']);
     Route::get('distributor/inventory', [\App\Http\Controllers\Api\InventoryController::class, 'index']);

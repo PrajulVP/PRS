@@ -57,10 +57,15 @@ trait ManagesInventory
                 }
 
                 // 3. Create initial record if it doesn't exist (for add operation)
+                $pName = $product->product_name;
+                if ($variant) {
+                    $pName .= ' [' . $variant . ']';
+                }
+
                 $inventory = Inventory::create([
                     'distributor_product_code' => $product->product_code ?? 'NA-' . $product->id,
                     'product_id' => $product->id,
-                    'product_name' => $product->product_name,
+                    'product_name' => $pName,
                     'distributor_id' => $distributorId,
                     'stock' => 0, // Will be updated below
                     'batch_no' => $batchNo,
