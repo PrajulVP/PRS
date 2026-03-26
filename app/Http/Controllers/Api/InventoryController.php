@@ -7,9 +7,12 @@ use App\Models\Inventory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Traits\ManagesInventory;
+use App\Models\Product;
 
 class InventoryController extends Controller
 {
+    use ManagesInventory;
     /**
      * @OA\Get(
      *     path="/api/distributor/inventory",
@@ -148,22 +151,25 @@ class InventoryController extends Controller
     /**
      * @OA\Post(
      *     path="/api/inventory",
-     *     summary="Add product to inventory",
+     *     summary="Adjust inventory stock (Add/Subtract)",
+     *     description="Finds or creates an inventory record by batch/expiry/variant and adjusts the stock. Mirroring web logic.",
      *     tags={"Inventory"},
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
      *             @OA\Property(property="product_id", type="integer"),
-     *             @OA\Property(property="distributor_id", type="integer", nullable=true),
-     *             @OA\Property(property="stock", type="number"),
+     *             @OA\Property(property="distributor_id", type="integer", nullable=true, description="Required for non-distributor users"),
+     *             @OA\Property(property="stock", type="number", description="Quantity to adjust"),
      *             @OA\Property(property="unit", type="string", enum={"Nos", "Strips", "Box", "Carton"}),
      *             @OA\Property(property="variant", type="string", nullable=true),
      *             @OA\Property(property="batch_no", type="string"),
-     *             @OA\Property(property="expiry_date", type="string", format="date")
+     *             @OA\Property(property="expiry_date", type="string", format="date"),
+     *             @OA\Property(property="operation", type="string", enum={"add", "subtract"}, default="add")
      *         )
      *     ),
-     *     @OA\Response(response=201, description="Inventory updated")
+     *     @OA\Response(response=201, description="Inventory updated successfully"),
+     *     @OA\Response(response=400, description="Invalid adjustment or insufficient stock")
      * )
      */
     public function store(Request $request)
@@ -171,14 +177,15 @@ class InventoryController extends Controller
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'distributor_id' => 'nullable|exists:distributors,id',
-            'stock' => 'required|numeric|min:0',
+            'stock' => 'required|numeric|min:0.01',
             'unit' => 'nullable|string',
             'variant' => 'nullable|string',
             'batch_no' => 'required|string|max:255',
             'expiry_date' => 'required|date',
+            'operation' => 'nullable|in:add,subtract'
         ]);
 
-        $product = \App\Models\Product::findOrFail($request->product_id);
+        $product = Product::findOrFail($request->product_id);
         $user = Auth::user();
         $distributorId = null;
 
@@ -191,68 +198,93 @@ class InventoryController extends Controller
             $distributorId = $request->distributor_id;
         }
 
-        $unit = $request->unit ?? 'Strip';
-        $qtyInput = (float)$request->stock;
+        $result = $this->adjustInventoryStock(
+            $distributorId,
+            $product,
+            [
+                'quantity' => $request->stock,
+                'unit' => $request->unit ?? 'Strips',
+                'batch_no' => $request->batch_no,
+                'expiry_date' => $request->expiry_date,
+                'variant' => $request->variant,
+                'operation' => $request->operation ?? 'add'
+            ]
+        );
 
-        // Conversion Logic
-        $multiplier = 1;
-        $normalizedUnit = strtolower($unit);
-        if ($normalizedUnit === 'box') {
-            $multiplier = (int)($product->strips_per_box ?? 1);
-        } elseif ($normalizedUnit === 'carton') {
-            $multiplier = (int)($product->boxes_per_carton ?? 1) * (int)($product->strips_per_box ?? 1);
-        } elseif ($normalizedUnit === 'nos' || $normalizedUnit === 'no' || $normalizedUnit === 'unit') {
-            $multiplier = 1 / (max(1, (int)($product->units_per_strip ?? 1)));
+        if (!$result['success']) {
+            return response()->json(['error' => $result['message']], 400);
         }
 
-        $finalStockAdd = ceil($qtyInput * $multiplier);
+        return response()->json([
+            'message' => $result['message'],
+            'inventory' => $result['inventory']
+        ], 201);
+    }
 
-        DB::beginTransaction();
-        try {
-            $inventory = Inventory::where('product_id', $product->id)
-                ->where('distributor_id', $distributorId)
-                ->where('batch_no', $request->batch_no)
-                ->where('variant', $request->variant)
-                ->where('expiry_date', $request->expiry_date)
-                ->first();
+    /**
+     * @OA\Put(
+     *     path="/api/inventory/{id}",
+     *     summary="Full edit of an inventory record",
+     *     tags={"Inventory"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="stock", type="number", nullable=true),
+     *             @OA\Property(property="unit", type="string", nullable=true),
+     *             @OA\Property(property="batch_no", type="string", nullable=true),
+     *             @OA\Property(property="expiry_date", type="string", format="date", nullable=true),
+     *             @OA\Property(property="variant", type="string", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Record updated")
+     * )
+     */
+    public function update(Request $request, $id)
+    {
+        $inventory = Inventory::findOrFail($id);
+        $user = Auth::user();
 
-            if ($inventory) {
-                $previousStock = $inventory->stock;
-                $inventory->stock += $finalStockAdd;
-                $inventory->save();
-            } else {
-                $previousStock = 0;
-                $inventory = Inventory::create([
-                    'distributor_product_code' => $product->product_code ?? 'NA-' . $product->id,
-                    'product_id' => $product->id,
-                    'product_name' => $product->product_name,
-                    'distributor_id' => $distributorId,
-                    'stock' => $finalStockAdd,
-                    'batch_no' => $request->batch_no,
-                    'variant' => $request->variant,
-                    'expiry_date' => $request->expiry_date,
+        if ($user->hasRole('distributor')) {
+            if ($inventory->distributor_id !== $user->distributor->id) {
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
+        }
+
+        $request->validate([
+            'stock' => 'nullable|numeric|min:0',
+            'unit' => 'nullable|string',
+            'batch_no' => 'nullable|string|max:255',
+            'expiry_date' => 'nullable|date',
+            'variant' => 'nullable|string',
+        ]);
+
+        $previousStock = $inventory->stock;
+        $updateData = $request->only(['batch_no', 'expiry_date', 'variant']);
+
+        if ($request->has('stock')) {
+            $newStock = $this->convertQuantityToStrips($inventory->product, $request->stock, $request->unit ?? 'Strips');
+            $updateData['stock'] = $newStock;
+
+            if ($newStock !== $previousStock) {
+                \App\Models\StockHistory::create([
+                    'inventory_id' => $inventory->id,
+                    'user_id' => $user->id,
+                    'previous_stock' => $previousStock,
+                    'new_stock' => $newStock,
+                    'quantity_change' => $newStock - $previousStock,
+                    'change_type' => 'manual_edit_api',
+                    'remarks' => 'Updated via API Edit'
                 ]);
             }
-
-            // Record History
-            \App\Models\StockHistory::create([
-                'inventory_id' => $inventory->id,
-                'user_id' => $user->id,
-                'previous_stock' => $previousStock,
-                'new_stock' => $inventory->stock,
-                'quantity_change' => $finalStockAdd,
-                'change_type' => 'manual_api',
-                'remarks' => 'Updated via API. Unit: ' . $unit . ', Qty: ' . $qtyInput
-            ]);
-
-            DB::commit();
-            return response()->json([
-                'message' => 'Inventory updated successfully',
-                'inventory' => $inventory
-            ], 201);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 500);
         }
+
+        $inventory->update(array_filter($updateData));
+
+        return response()->json([
+            'message' => 'Inventory updated successfully',
+            'inventory' => $inventory
+        ]);
     }
 }

@@ -10,9 +10,12 @@ use Illuminate\Support\Facades\Log;
 use App\Models\StockHistory;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Distributor;
+use App\Traits\ManagesInventory;
+use Illuminate\Support\Facades\Storage;
 
 class InventoryController extends Controller
 {
+    use ManagesInventory;
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
@@ -34,34 +37,28 @@ class InventoryController extends Controller
     public function adjustStock(Request $request, Inventory $inventory)
     {
         $request->validate([
-            'quantity' => 'required|integer|min:1',
+            'quantity' => 'required|numeric|min:0.01',
+            'unit' => 'nullable|string',
             'operation' => 'required|in:add,subtract'
         ]);
 
-        if ($request->operation === 'add') {
-            $change = $request->quantity;
-        } else {
-            if ($inventory->stock < $request->quantity) {
-                if ($request->ajax()) return response()->json(['error' => 'Not enough stock available'], 400);
-                return back()->with('error', 'Not enough stock available');
-            }
-            $change = -$request->quantity;
+        $result = $this->adjustInventoryStock(
+            $inventory->distributor_id,
+            $inventory->product,
+            [
+                'quantity' => $request->quantity,
+                'unit' => $request->unit ?? 'Strips',
+                'batch_no' => $inventory->batch_no,
+                'expiry_date' => $inventory->expiry_date,
+                'variant' => $inventory->variant,
+                'operation' => $request->operation
+            ]
+        );
+
+        if (!$result['success']) {
+            if ($request->ajax()) return response()->json(['error' => $result['message']], 400);
+            return back()->with('error', $result['message']);
         }
-
-        $previousStock = $inventory->stock;
-        $inventory->stock += $change;
-        $inventory->save();
-
-        // Record History
-        StockHistory::create([
-            'inventory_id' => $inventory->id,
-            'user_id' => Auth::id(),
-            'previous_stock' => $previousStock,
-            'new_stock' => $inventory->stock,
-            'quantity_change' => $change,
-            'change_type' => 'manual_adjustment',
-            'remarks' => $request->operation . ' ' . $request->quantity
-        ]);
 
         if ($request->ajax()) return response()->json(['success' => 'Stock updated.']);
         return back()->with('success', 'Stock updated');
@@ -120,11 +117,13 @@ class InventoryController extends Controller
                     // Use a raw order if it's the stock column to ensure SUM(stock) is ordered correctly
                     if ($columnName === 'stock') {
                         $query->orderByRaw("SUM(stock) $sortDirection");
-                    } else {
+                    } elseif (!empty($columnName)) {
                         $query->orderBy($columnName, $sortDirection);
+                    } else {
+                        $query->orderBy('updated_at', 'desc');
                     }
                 } else {
-                    $query->orderBy('id', 'desc');
+                    $query->orderBy('updated_at', 'desc');
                 }
 
                 $start = intval($request->input('start', 0));
@@ -147,8 +146,10 @@ class InventoryController extends Controller
                         'distributor_name' => $i->distributor?->user?->name ?? 'N/A',
                         'stock' => (int) $i->stock,
                         'variant' => $i->variant,
+                        'updated_at' => $i->updated_at?->toIso8601String(),
                         'image' => $i->product && $i->product->image ? \Illuminate\Support\Facades\Storage::disk('public')->url($i->product->image) : asset('admin/assets/images/dashboard/product-1.png'), // Placeholder
                         'batch_no' => $i->batch_no ?? '-',
+                        'raw_expiry_date' => $i->expiry_date,
                         'expiry_date' => $i->expiry_date ? (function ($date) {
                             $parsed = \Carbon\Carbon::parse($date);
                             if ($parsed->copy()->endOfMonth()->isSameDay($parsed)) {
@@ -232,62 +233,22 @@ class InventoryController extends Controller
             $distributorId = $request->distributor_id;
         }
 
-        $unit = $request->unit ?? 'Nos';
-        $qtyInput = (float)$request->stock;
-
-        // Conversion Logic
-        $multiplier = 1;
-        $normalizedUnit = strtolower($unit);
-        if ($normalizedUnit === 'box' || $normalizedUnit === 'boxes') {
-            $multiplier = (int)($product->strips_per_box ?? 1);
-        } elseif ($normalizedUnit === 'carton' || $normalizedUnit === 'cartons') {
-            $multiplier = (int)($product->boxes_per_carton ?? 1) * (int)($product->strips_per_box ?? 1);
-        } elseif ($normalizedUnit === 'nos' || $normalizedUnit === 'no' || $normalizedUnit === 'unit') {
-            $multiplier = 1 / (max(1, (int)($product->units_per_strip ?? 1)));
-        }
-
-        $finalStockAdd = ceil($qtyInput * $multiplier);
-
-        $inventory = Inventory::where('product_id', $product->id)
-            ->where('distributor_id', $distributorId)
-            ->where('batch_no', $request->batch_no)
-            ->where('variant', $request->variant)
-            ->where('expiry_date', $request->expiry_date)
-            ->first();
-
-        if ($inventory) {
-            $previousStock = $inventory->stock;
-            $inventory->stock += $finalStockAdd;
-            $inventory->save();
-
-            $changeType = 'restock';
-            $remarks = 'Restocked ' . $qtyInput . ' ' . $unit . ' via inventory form';
-        } else {
-            $previousStock = 0;
-            $inventory = Inventory::create([
-                'distributor_product_code' => !empty($product->product_code) ? $product->product_code : 'NA-' . $product->id,
-                'product_id' => $product->id,
-                'product_name' => $product->product_name,
-                'distributor_id' => $distributorId,
-                'stock' => $finalStockAdd,
+        $result = $this->adjustInventoryStock(
+            $distributorId,
+            $product,
+            [
+                'quantity' => $request->stock,
+                'unit' => $request->unit ?? 'Strips',
                 'batch_no' => $request->batch_no,
-                'variant' => $request->variant,
                 'expiry_date' => $request->expiry_date,
-            ]);
-            $changeType = 'initial_stock';
-            $remarks = 'Initial stock ' . $qtyInput . ' ' . $unit . ' on creation';
-        }
+                'variant' => $request->variant,
+                'operation' => 'add'
+            ]
+        );
 
-        if ($finalStockAdd > 0) {
-            StockHistory::create([
-                'inventory_id' => $inventory->id,
-                'user_id' => Auth::id(),
-                'previous_stock' => $previousStock,
-                'new_stock' => $inventory->stock,
-                'quantity_change' => $finalStockAdd,
-                'change_type' => $changeType,
-                'remarks' => $remarks
-            ]);
+        if (!$result['success']) {
+            if ($request->ajax()) return response()->json(['error' => $result['message']], 400);
+            return back()->with('error', $result['message']);
         }
 
         if ($request->ajax()) {
@@ -310,16 +271,21 @@ class InventoryController extends Controller
     public function update(Request $request, Inventory $inventory)
     {
         $request->validate([
-            'stock' => 'required|integer|min:0',
+            'stock' => 'required|numeric|min:0',
+            'unit' => 'nullable|string',
             'batch_no' => 'nullable|string|max:255',
             'expiry_date' => 'nullable|date',
         ]);
 
         $previousStock = $inventory->stock;
-        $newStock = $request->stock;
+        
+        // Convert the input stock to strips based on the selected unit
+        $newStock = $this->convertQuantityToStrips($inventory->product, $request->stock, $request->unit ?? 'Strips');
+        
         $quantityChange = $newStock - $previousStock;
 
-        $updateData = $request->only(['distributor_product_code', 'product_name', 'product_id', 'distributor_id', 'stock', 'batch_no', 'expiry_date']);
+        $updateData = $request->only(['distributor_product_code', 'product_name', 'product_id', 'distributor_id', 'batch_no', 'expiry_date']);
+        $updateData['stock'] = $newStock;
 
         // Remove empty strings so we don't accidentally wipe foreign keys if they are structurally omitted from a form
         $updateData = array_filter($updateData, function ($value) {

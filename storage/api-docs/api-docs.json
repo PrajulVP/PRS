@@ -2043,6 +2043,82 @@
                 ]
             }
         },
+        "/api/products/{id}": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Get detailed product info",
+                "description": "Returns comprehensive details for a single product, including valid units and available variants.",
+                "operationId": "c87fb2e4d617e7b36c712cad358acdb8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Product ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detailed product info",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "product_name": {
+                                            "type": "string"
+                                        },
+                                        "has_variants": {
+                                            "type": "boolean"
+                                        },
+                                        "available_variants": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "available_units": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "ptr": {
+                                            "type": "number"
+                                        },
+                                        "pts": {
+                                            "type": "number"
+                                        },
+                                        "gst": {
+                                            "type": "number"
+                                        },
+                                        "pack": {
+                                            "type": "string"
+                                        },
+                                        "generic_name": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/products": {
             "get": {
                 "tags": [

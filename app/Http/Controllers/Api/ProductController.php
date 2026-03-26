@@ -9,8 +9,73 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
+use App\Traits\CalculatesPrices;
+
 class ProductController extends Controller
 {
+    use CalculatesPrices;
+
+    /**
+     * @OA\Get(
+     *     path="/api/products/{id}",
+     *     summary="Get detailed product info",
+     *     description="Returns comprehensive details for a single product, including valid units and available variants.",
+     *     tags={"Products"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Product ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Detailed product info",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="integer"),
+     *             @OA\Property(property="product_name", type="string"),
+     *             @OA\Property(property="has_variants", type="boolean"),
+     *             @OA\Property(property="available_variants", type="array", @OA\Items(type="string")),
+     *             @OA\Property(property="available_units", type="array", @OA\Items(type="string")),
+     *             @OA\Property(property="ptr", type="number"),
+     *             @OA\Property(property="pts", type="number"),
+     *             @OA\Property(property="gst", type="number"),
+     *             @OA\Property(property="pack", type="string"),
+     *             @OA\Property(property="generic_name", type="string")
+     *         )
+     *     )
+     * )
+     */
+    public function show($id)
+    {
+        $product = Product::findOrFail($id);
+
+        $availableVariants = DB::table('inventories')
+            ->where('product_id', $product->id)
+            ->where('stock', '>', 0)
+            ->whereNotNull('variant')
+            ->distinct()
+            ->pluck('variant');
+
+        $availableUnits = $this->getAvailableUnits($product);
+
+        return response()->json([
+            'id' => $product->id,
+            'product_code' => $product->product_code,
+            'product_name' => $product->product_name,
+            'generic_name' => $product->generic_name,
+            'pack' => $product->pack,
+            'has_variants' => (bool)$product->has_variants,
+            'available_variants' => $availableVariants,
+            'available_units' => $availableUnits,
+            'ptr' => (float)$product->ptr,
+            'pts' => (float)$product->pts,
+            'gst' => (float)$product->gst,
+            'mrp' => (float)$product->mrp,
+            'image' => $product->image ? asset('storage/' . $product->image) : null,
+        ]);
+    }
     /**
      * @OA\Get(
      *     path="/api/products",

@@ -80,6 +80,7 @@
                             <table class="display table table-hover" id="inventories-table">
                                 <thead>
                                     <tr>
+                                        <th style="display:none;">Updated At</th>
                                         <th>No.</th>
 
                                         <th>Product Code</th>
@@ -269,9 +270,9 @@
                                                  unitSelect.innerHTML += '<option value="strip">Strips</option>';
                                                  totalLabel.innerText = "Converted Total (Strips)";
                                                  packInfo.innerHTML = `Packaging: <b>${unitsPerStrip} Tab/Str</b> | <b>${stripsPerBox} Str/Box</b> | <b>${boxesPerCarton} Box/Ctn</b>`;
+                                                 unitSelect.innerHTML += '<option value="box">Boxes</option>';
+                                                 unitSelect.innerHTML += '<option value="carton">Cartons</option>';
                                              }
-                                             unitSelect.innerHTML += '<option value="box">Boxes</option>';
-                                             unitSelect.innerHTML += '<option value="carton">Cartons</option>';
 
                                              // Show/Hide variant and handle dynamic parsing
                                              var variantSelect = document.getElementById('create_variant');
@@ -417,9 +418,19 @@
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Stock</label>
-                            <input type="number" name="stock" id="edit_stock" class="form-control" required>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-8">
+                                <label class="form-label">Stock Quantity</label>
+                                <input type="number" name="stock" id="edit_stock" class="form-control" required min="0" step="0.01">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Unit</label>
+                                <select name="unit" id="edit_unit" class="form-select">
+                                    <option value="strip">Strips</option>
+                                    <option value="box">Boxes</option>
+                                    <option value="carton">Cartons</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -452,12 +463,12 @@
                             <div class="col-md-8">
                                 <label class="form-label fw-bold text-muted small uppercase">Quantity to <span
                                         id="op_text_label">Update</span></label>
-                                <input type="number" id="adj_input_qty"
-                                    class="form-control form-control-lg text-center fw-bold" placeholder="0" min="1">
+                                <input type="number" name="quantity" id="adj_input_qty"
+                                    class="form-control form-control-lg text-center fw-bold" placeholder="0" min="0.01" step="0.01">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-4" id="adj_unit_container">
                                 <label class="form-label fw-bold text-muted small uppercase">Unit</label>
-                                <select id="adj_input_unit" class="form-select form-select-lg">
+                                <select name="unit" id="adj_input_unit" class="form-select form-select-lg">
                                     <option value="strip">Strips</option>
                                     <option value="box">Boxes</option>
                                     <option value="carton">Cartons</option>
@@ -468,9 +479,9 @@
                         <div class="bg-light p-3 rounded text-center">
                             <label class="form-label fw-bold text-muted small mb-1">EFFECTIVE STRIPS <span
                                     id="op_text_caps">UPDATED</span></label>
-                            <input type="number" name="quantity" id="stock_adj_quantity"
+                            <input type="number" id="stock_adj_quantity"
                                 class="form-control form-control-lg text-center bg-transparent border-0 fw-bold fs-3"
-                                value="0" readonly required>
+                                value="0" readonly>
                             <div id="adj_pack_info" class="text-info small opacity-75 mt-1"></div>
                         </div>
                     </div>
@@ -548,10 +559,12 @@
     <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
     <script>
         @php
+            /** @var \App\Models\User $user */
             $user = Auth::user();
-            $canEdit = $user->hasAnyRole(['admin', 'superadmin', 'distributor']) || $user->hasPermissionToCategory('inventories', 'edit');
-            $canDelete = $user->hasAnyRole(['admin', 'superadmin']) || $user->hasPermissionToCategory('inventories', 'delete');
-            $isDistributor = $user->hasRole('distributor');
+            $roles = ['admin', 'superadmin', 'distributor'];
+            $canEdit = in_array($user->role, $roles) || $user->hasAnyRole($roles) || $user->hasPermissionToCategory('inventories', 'edit');
+            $canDelete = in_array($user->role, ['admin', 'superadmin']) || $user->hasAnyRole(['admin', 'superadmin']) || $user->hasPermissionToCategory('inventories', 'delete');
+            $isDistributor = $user->role === 'distributor' || $user->hasRole('distributor');
         @endphp
         $(document).ready(function () {
             const canEdit = @json($canEdit);
@@ -569,8 +582,14 @@
                     dataSrc: 'data',
                     error: function (xhr, error, thrown) {
                         console.error('Inventories AJAX error:', xhr.responseText);
-                        alert('Inventories AJAX Error: ' + (xhr.status ? xhr.status + ' - ' + xhr.statusText : error));
                     }
+                },
+                drawCallback: function (settings) {
+                    // Initialize popovers after each draw
+                    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+                    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+                        return new bootstrap.Popover(popoverTriggerEl)
+                    });
                 },
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
                     "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" +
@@ -615,9 +634,15 @@
                     ]
                 },
                 order: [
-                    [2, 'desc']
+                    [0, 'desc']
                 ],
                 columns: [{
+                    data: 'updated_at',
+                    name: 'updated_at',
+                    visible: false,
+                    searchable: false
+                },
+                {
                     data: null,
                     orderable: false,
                     searchable: false,
@@ -633,23 +658,36 @@
                     data: 'product_name',
                     name: 'product_name',
                     render: function (data, type, row) {
+                        if (!data) return '-';
+                        let cleanName = data.replace(/\s*\([^)]*\/[^)]*\)/g, '').replace(/\s*\[[^\]]*\/[^\]]*\]/g, '').trim();
                         let detailJson = JSON.stringify(row.product_details).replace(/"/g, '&quot;');
+                        
                         return `
-                                                                <div class="d-flex align-items-center">
-                                                                    <a href="javascript:void(0)" class="text-primary fw-bold product-detail-link" 
-                                                                       data-name="${data}" \
-                                                                       data-details='${detailJson}'>
-                                                                       ${data}
-                                                                    </a>
-                                                                </div>
-                                                            `;
+                            <div class="product-info-cell">
+                                <a href="javascript:void(0)" class="fw-bold product-main-name product-detail-link" 
+                                   style="text-decoration: none; color: inherit; border-bottom: 1px dotted #ccc;"
+                                   data-bs-toggle="popover" 
+                                   data-bs-trigger="hover focus"
+                                   data-bs-placement="top"
+                                   title="Product Details" 
+                                   data-bs-content="${detailJson}"
+                                   data-bs-html="true"
+                                   data-name="${data}"
+                                   data-details='${detailJson}'>
+                                    ${cleanName}
+                                </a>
+                                <div class="text-muted small">${row.distributor_product_code || ''}</div>
+                            </div>
+                        `;
                     }
                 },
-                    @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
-                            data: 'distributor_name',
-                            name: 'distributor_name'
-                        },
-                    @endif{
+                    @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
+                    {
+                        data: 'distributor_name',
+                        name: 'distributor_name'
+                    },
+                    @endif
+                    {
                     data: 'batch_no',
                     name: 'batch_no'
                 },
@@ -668,7 +706,20 @@
                     data: 'stock',
                     name: 'stock',
                     render: function (data, type, row) {
-                        return `<span class="badge ${data > 0 ? 'bg-success' : 'bg-danger'}">${data}</span>`;
+                        if (!row.product_details) return data;
+                        let unitsPerStrip = row.product_details.units_per_strip || 1;
+                        let displayVal = data;
+                        
+                        let pPack = row.product_details.pack ? row.product_details.pack.toLowerCase() : '';
+                        let pName = row.product_name ? row.product_name.toLowerCase() : '';
+                        let boxSizeStr = row.product_details.box_size || '';
+                        let isNos = boxSizeStr === "" || pPack.includes('nos') || pPack.includes('count') || pPack.includes('pair');
+                        
+                        if (isNos) {
+                            displayVal = Math.round(data * unitsPerStrip);
+                        }
+
+                        return `<span class="fw-bold ${data > 0 ? 'text-success' : 'text-danger'}">${displayVal}</span>`;
                     }
                 },
                 {
@@ -681,83 +732,50 @@
 
                         let boxSize = row.product_details.strips_per_box || 0;
                         let cartonSize = row.product_details.boxes_per_carton || 0;
+                        let unitsPerStrip = row.product_details.units_per_strip || 1;
 
                         let pPack = row.product_details.pack ? row.product_details.pack.toLowerCase() : '';
                         let pName = row.product_name ? row.product_name.toLowerCase() : '';
                         let boxSizeStr = row.product_details.box_size || '';
-
-                        // Refined Unit Logic: box_size empty = Nos
-                        let isCount = boxSizeStr === "";
+                        let isNos = boxSizeStr === "" || pPack.includes('nos') || pPack.includes('count') || pPack.includes('pair');
                         
-                        // Add keyword-based detection to isCount
-                        if (!isCount) {
-                            isCount = pPack.includes('nos') || pPack.includes('count') ||
-                                pPack.includes('pair') || pPack.includes('bottle') ||
-                                pPack.includes('ml') || pPack.includes('gm') || pPack.includes('syp') ||
-                                pName.includes('syp') || pName.includes('syrup') || pName.includes('drop') || 
-                                pName.includes('ointment') || pName.includes('belt') ||
-                                pName.includes('cap') || pName.includes('binder') ||
-                                pName.includes('splint') || pName.includes('brace') ||
-                                pName.includes('cuff') || pName.includes('walker');
-                        }
-                        
-                        let baseStr = isCount ? 'Nos' : 'Str';
+                        let baseStr = isNos ? 'Nos' : 'Str';
+                        let totalQty = isNos ? Math.round(data * unitsPerStrip) : data;
 
-                        if (isCount) {
-                            // Requirement: Display just number as counts for "Nos"
-                            let countHtml = `<span class="badge bg-secondary me-1">${data} ${baseStr}</span>`;
-                            
-                            // Optional: Show conversions if relevant (boxSize > 1)
-                            if (boxSize > 1) {
-                                let remaining = data;
-                                let cartons = 0;
-                                if (cartonSize > 0) {
-                                    let stripsPerCarton = boxSize * cartonSize;
-                                    cartons = Math.floor(data / stripsPerCarton);
-                                    remaining = data % stripsPerCarton;
-                                }
-                                let boxes = Math.floor(remaining / boxSize);
-                                if (boxes > 0) countHtml += `<span class="badge bg-info text-white me-1">${boxes} Box</span>`;
-                                if (cartons > 0) countHtml += `<span class="badge bg-primary me-1">${cartons} Ctn</span>`;
+                        let html = `<div class="breakdown-container">`;
+                        
+                        if (isNos) {
+                            // Single line for Nos based
+                            html += `<div class="breakdown-main fw-bold">${totalQty} ${baseStr}</div>`;
+                        } else {
+                            // Standard breakdown for Strips
+                            let cartons = 0;
+                            let remaining = data;
+                            if (cartonSize > 0 && boxSize > 0) {
+                                let stripsPerCarton = boxSize * cartonSize;
+                                cartons = Math.floor(data / stripsPerCarton);
+                                remaining = data % stripsPerCarton;
                             }
+                            let boxes = boxSize > 0 ? Math.floor(remaining / boxSize) : 0;
+                            let strips = boxSize > 0 ? remaining % boxSize : remaining;
 
-                            countHtml += `<div class="mt-1 small text-muted" style="font-size: 0.7rem;">
-                                        (${boxSize > 0 ? boxSize : 1} ${baseStr}/Box | ${cartonSize || 0} Box/Ctn)
-                                     </div>`;
-                            return countHtml;
+                            let parts = [];
+                            if (cartons > 0) parts.push(`${cartons} Ctn`);
+                            if (boxes > 0) parts.push(`${boxes} Box`);
+                            if (strips > 0 || parts.length === 0) parts.push(`${strips} ${baseStr}`);
+                            
+                            html += `<div class="breakdown-main fw-bold">${parts.join(', ')}</div>`;
                         }
 
-                        if (boxSize <= 0) return '-';
-
-                        let stripsPerCarton = boxSize * (cartonSize || 1);
-                        let cartons = 0;
-                        let remaining = data;
-
-                        if (cartonSize > 0) {
-                            cartons = Math.floor(data / stripsPerCarton);
-                            remaining = data % stripsPerCarton;
+                        // Packaging info line
+                        html += `<div class="packaging-info text-muted small" style="font-size: 0.75rem;">`;
+                        if (isNos) {
+                            html += `(${unitsPerStrip} Nos/Box | ${boxSize} Box/Ctn)`;
+                        } else {
+                            html += `(${boxSize} Str/Box | ${cartonSize} Box/Ctn)`;
                         }
-
-                        let boxes = Math.floor(remaining / boxSize);
-                        let strips = remaining % boxSize;
-
-                        let html = '';
-                        // Requirement: Show strips counts priorily, then Box and Carton
-                        if (strips > 0 || (boxes === 0 && cartons === 0)) {
-                            html += `<span class="badge bg-secondary me-1">${strips} ${baseStr}</span>`;
-                        }
-                        if (boxes > 0) {
-                            html += `<span class="badge bg-info text-white me-1">${boxes} Box</span>`;
-                        }
-                        if (cartonSize > 0 && cartons > 0) {
-                            html += `<span class="badge bg-primary me-1">${cartons} Ctn</span>`;
-                        }
-
-                        html += `<div class="mt-1 small text-muted" style="font-size: 0.7rem;">
-                                    (${boxSize} ${baseStr}/Box | ${cartonSize || 0} Box/Ctn)
-                                 </div>`;
-
-                        return html || '0';
+                        html += `</div></div>`;
+                        return html;
                     }
                 },
                 {
@@ -773,11 +791,12 @@
                         
                         // Edit button
                         if (canEdit) {
+                            let detailsJson = JSON.stringify(row.product_details || {}).replace(/"/g, '&quot;');
                             btns += `<button type="button" class="btn btn-sm btn-info edit-btn" data-inventory='${rowData}' title="Edit Stock"><i class="fa fa-edit"></i></button>`;
                             
                             // Stock adjustment buttons
-                            btns += `<button type="button" class="btn btn-sm btn-success stock-btn" data-id="${id}" data-op="add" data-name="${row.product_name}" data-strips-per-box="${row.product_details?.strips_per_box || 0}" data-boxes-per-carton="${row.product_details?.boxes_per_carton || 0}" title="Add Stock"><i class="fa fa-plus"></i></button>`;
-                            btns += `<button type="button" class="btn btn-sm btn-warning stock-btn" data-id="${id}" data-op="subtract" data-name="${row.product_name}" data-strips-per-box="${row.product_details?.strips_per_box || 0}" data-boxes-per-carton="${row.product_details?.boxes_per_carton || 0}" title="Reduce Stock"><i class="fa fa-minus"></i></button>`;
+                            btns += `<button type="button" class="btn btn-sm btn-success stock-btn" data-id="${id}" data-op="add" data-name="${row.product_name}" data-product-details='${detailsJson}' data-strips-per-box="${row.product_details?.strips_per_box || 0}" data-boxes-per-carton="${row.product_details?.boxes_per_carton || 0}" title="Add Stock"><i class="fa fa-plus"></i></button>`;
+                            btns += `<button type="button" class="btn btn-sm btn-warning stock-btn" data-id="${id}" data-op="subtract" data-name="${row.product_name}" data-product-details='${detailsJson}' data-strips-per-box="${row.product_details?.strips_per_box || 0}" data-boxes-per-carton="${row.product_details?.boxes_per_carton || 0}" title="Reduce Stock"><i class="fa fa-minus"></i></button>`;
                         }
 
                         // Delete button
@@ -811,21 +830,38 @@
                 $('#edit_product_name').val(data.product_name);
                 $('#edit_stock').val(data.stock);
                 $('#edit_batch_no').val(data.batch_no);
-                $('#edit_expiry_date').val(data.expiry_date ? data.expiry_date.split('-').reverse().join('-') : ''); // Convert d-m-Y back to Y-m-d if needed, but wait, data format is d-m-Y in JS
-
-                // If expiry_date is d-m-Y, convert it to Y-m-d for date input
-                if (data.expiry_date && data.expiry_date.includes('-')) {
-                    let parts = data.expiry_date.split('-');
-                    if (parts[0].length === 2) {
-                        $('#edit_expiry_date').val(`${parts[2]}-${parts[1]}-${parts[0]}`);
-                    } else {
-                        $('#edit_expiry_date').val(data.expiry_date);
-                    }
+                
+                // Dynamic Unit Logic for Edit
+                let product = data.product_details || {};
+                let pPack = (product.pack || '').toLowerCase();
+                let pName = (data.product_name || '').toLowerCase();
+                let boxSizeStr = product.box_size || '';
+                let isCount = boxSizeStr === "";
+                
+                if (!isCount) {
+                    isCount = pPack.includes('nos') || pPack.includes('count') ||
+                        pPack.includes('pair') || pPack.includes('bottle') ||
+                        pPack.includes('ml') || pPack.includes('gm') || pPack.includes('syp') ||
+                        pName.includes('syp') || pName.includes('syrup') || pName.includes('drop') || 
+                        pName.includes('ointment') || pName.includes('belt') ||
+                        pName.includes('cap') || pName.includes('binder') ||
+                        pName.includes('splint') || pName.includes('brace') ||
+                        pName.includes('cuff') || pName.includes('walker');
                 }
 
+                let unitLabel = isCount ? 'Nos' : 'Strips';
+                let unitSelect = $('#edit_unit');
+                unitSelect.empty();
+                unitSelect.append(`<option value="strip" selected>${unitLabel}</option>`);
+                if (!isCount) {
+                    unitSelect.append('<option value="box">Boxes</option>');
+                    unitSelect.append('<option value="carton">Cartons</option>');
+                }
+
+                $('#edit_expiry_date').val(data.raw_expiry_date || ''); 
+
                 $('#edit_distributor_id').val(data.distributor_id);
-                // Hide dist code field if it's auto-managed or read-only in edit too
-                // But let's keep it in edit form if admin needs to fix it.
+                // Distributor Product Code
                 $('#edit_distributor_product_code').val(data.distributor_product_code);
 
                 var url = "{{ route('inventories.update', ':id') }}".replace(':id', data.id);
@@ -857,17 +893,49 @@
                 let id = $(this).data('id');
                 let op = $(this).data('op'); // 'add' or 'subtract'
                 let name = $(this).data('name');
+                let product = $(this).data('product-details') || {}; // I need to add this data attribute to the button!
+                
+                // fallback if not provided on button
                 currentStripsPerBox = parseInt($(this).data('strips-per-box')) || 0;
                 currentBoxesPerCarton = parseInt($(this).data('boxes-per-carton')) || 0;
+
+                // Logic to determine if Nos or Strips
+                let pPack = (product.pack || '').toLowerCase();
+                let pName = (name || '').toLowerCase();
+                let boxSizeStr = product.box_size || '';
+                let isCount = boxSizeStr === "";
+                
+                if (!isCount) {
+                    isCount = pPack.includes('nos') || pPack.includes('count') ||
+                        pPack.includes('pair') || pPack.includes('bottle') ||
+                        pPack.includes('ml') || pPack.includes('gm') || pPack.includes('syp') ||
+                        pName.includes('syp') || pName.includes('syrup') || pName.includes('drop') || 
+                        pName.includes('ointment') || pName.includes('belt') ||
+                        pName.includes('cap') || pName.includes('binder') ||
+                        pName.includes('splint') || pName.includes('brace') ||
+                        pName.includes('cuff') || pName.includes('walker');
+                }
+
+                let unitLabel = isCount ? 'Nos' : 'Strips';
+                let unitSelect = $('#adj_input_unit');
+                unitSelect.empty();
+                unitSelect.append(`<option value="strip">${unitLabel}</option>`);
+                if (!isCount) {
+                    unitSelect.append('<option value="box">Boxes</option>');
+                    unitSelect.append('<option value="carton">Cartons</option>');
+                }
 
                 $('#stock_adj_id').val(id);
                 $('#stock_adj_op').val(op);
                 $('#stock_adj_product_name').text(name);
-                $('#adj_pack_info').html(`Packaging Pattern: <b>${currentStripsPerBox}</b> Strips/Box, <b>${currentBoxesPerCarton}</b> Boxes/Carton`);
+                
+                let packHtml = isCount ? 
+                    `Packaging: <b>${product.units_per_strip || 1} Nos/Unit</b> | <b>${currentStripsPerBox} Units/Box</b>` :
+                    `Packaging: <b>${currentStripsPerBox} Strips/Box</b> | <b>${currentBoxesPerCarton} Box/Ctn</b>`;
+                $('#adj_pack_info').html(packHtml);
 
                 // Reset calc fields
                 $('#adj_input_qty').val('');
-                $('#adj_input_unit').val('strip');
                 $('#stock_adj_quantity').val(0);
 
                 let title, btnClass, btnText;
@@ -875,14 +943,12 @@
                     title = 'Add Stock';
                     btnText = 'Add Stock';
                     btnClass = 'btn-success';
-                    $('#op_text').text('Addition').addClass('text-success').removeClass('text-danger');
                     $('#op_text_label').text('Addition');
                     $('#op_text_caps').text('ADDED').addClass('text-success').removeClass('text-danger');
                 } else {
                     title = 'Reduce Stock';
                     btnText = 'Reduce Stock';
                     btnClass = 'btn-warning';
-                    $('#op_text').text('Reduction').addClass('text-danger').removeClass('text-success');
                     $('#op_text_label').text('Reduction');
                     $('#op_text_caps').text('REDUCED').addClass('text-danger').removeClass('text-success');
                 }

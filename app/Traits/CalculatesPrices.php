@@ -11,20 +11,8 @@ trait CalculatesPrices
      */
     protected function computePriceResponse(Product $product, $quantity, $unit, $priceField = 'ptr', $variant = null)
     {
-        $multiplier = 1;
-        $normalizedUnit = strtolower($unit);
-        
-        // Unit conversion logic matching the existing order store methods
-        if ($normalizedUnit === 'box') {
-            $multiplier = (int)($product->strips_per_box ?? 1);
-        } elseif ($normalizedUnit === 'carton') {
-            $multiplier = (int)($product->boxes_per_carton ?? 1) * (int)($product->strips_per_box ?? 1);
-        } elseif ($normalizedUnit === 'nos' || $normalizedUnit === 'no' || $normalizedUnit === 'unit') {
-            $multiplier = 1 / (max(1, (int)($product->units_per_strip ?? 1)));
-        }
-        
-        // Calculate total strips (rounded up as pharma usually sells full strips)
-        $totalQtyStrips = ceil($quantity * $multiplier);
+        // Calculate total strips using the shared conversion helper
+        $totalQtyStrips = $this->convertQuantityToStrips($product, $quantity, $unit);
         
         $price = (float)$product->$priceField;
         $gstRate = (float)($product->gst ?? 0);
@@ -66,7 +54,7 @@ trait CalculatesPrices
     /**
      * Helper to determine available units for a product based on its attributes and naming conventions.
      */
-    protected function getAvailableUnits(Product $product)
+    public function getAvailableUnits(Product $product)
     {
         $pPack = strtolower($product->pack ?? '');
         $pName = strtolower($product->product_name ?? '');
@@ -94,7 +82,26 @@ trait CalculatesPrices
             return ['Nos'];
         }
 
-        // Standard medical strips/boxes/cartons pattern
-        return ['Nos', 'Strips', 'Box', 'Carton'];
+        // Standard medical strips/boxes/cartons pattern (Excluding 'Nos' for Strips-based items as requested)
+        return ['Strips', 'Box', 'Carton'];
+    }
+
+    /**
+     * Shared helper to convert an input quantity and unit into the base 'Strips' count.
+     */
+    public function convertQuantityToStrips(Product $product, $quantity, $unit)
+    {
+        $multiplier = 1;
+        $normalizedUnit = strtolower($unit);
+        
+        if ($normalizedUnit === 'box') {
+            $multiplier = (int)($product->strips_per_box ?? 1);
+        } elseif ($normalizedUnit === 'carton') {
+            $multiplier = (int)($product->boxes_per_carton ?? 1) * (int)($product->strips_per_box ?? 1);
+        } elseif ($normalizedUnit === 'nos' || $normalizedUnit === 'no' || $normalizedUnit === 'unit') {
+            $multiplier = 1 / (max(1, (int)($product->units_per_strip ?? 1)));
+        }
+        
+        return (int)ceil($quantity * $multiplier);
     }
 }
