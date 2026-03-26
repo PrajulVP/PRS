@@ -651,10 +651,22 @@
         </div>
     </div>
 
-    {{-- Distributor Batch Selection & OCR Modal --}}
+    {{-- Distributor Batch Selection Modal --}}
     <div class="modal fade" id="distributorApproveModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-xl modal-dialog-centered">
-            <div class="modal-content shadow-lg border-0 overflow-hidden">
+            <div class="modal-content border-0 shadow-lg overflow-hidden" style="border-radius: 20px;">
+                <div class="modal-header bg-primary text-white border-0 py-3 px-4 position-relative">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-white bg-opacity-25 rounded-circle p-2 me-3">
+                            <i class="fa fa-cubes fs-4 text-white"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold text-white mb-0">Approve & Allocate Batches</h5>
+                            <p class="small text-white text-opacity-75 mb-0" id="approve_order_code_display"></p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
                 <form id="distributorApproveForm">
                     <div class="modal-body p-0">
                         <!-- Order Summary Header -->
@@ -817,11 +829,15 @@
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer bg-light border-top-0 py-3">
-                        <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-danger px-4 fw-bold reject-retailer-btn" id="btnRejectDistributor" style="margin-right: auto;">Reject Order</button>
-                        <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm"
-                            id="btnSubmitDistributorApprove">Approve & Allocate Stock</button>
+                    <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                        <button type="button" class="btn btn-outline-danger fw-bold border-2 px-4 py-2 me-auto reject-retailer-btn" style="border-radius: 12px;">
+                            <i class="fa fa-times me-2"></i>Reject Order
+                        </button>
+                        <button type="button" class="btn btn-link text-muted fw-bold text-decoration-none px-4" data-bs-dismiss="modal">Go Back</button>
+                        <button type="submit" class="btn btn-primary px-5 py-2 fw-bold shadow-sm" id="btnSubmitDistributorApprove" 
+                            style="border-radius: 12px; background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);">
+                            Finalize & Approve
+                        </button>
                     </div>
                 </form>
             </div>
@@ -857,26 +873,46 @@
     </div>
 
     {{-- Reject Retailer Order Modal --}}
-    <div class="modal fade" id="rejectRetailerOrderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="rejectRetailerOrderModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title text-white">Reject Retailer Order</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <div class="modal-content border-0 shadow-lg overflow-hidden" style="border-radius: 20px;">
+                <div class="modal-header border-0 py-3 px-4 position-relative" style="background-color: #b91c1c;">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-white bg-opacity-25 rounded-circle p-2 me-3">
+                            <i class="fa fa-times-circle fs-4 text-white"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold text-white mb-0" style="color: #ffffff !important;">Reject Order</h5>
+                            <p class="small text-white text-opacity-85 mb-0" id="reject_order_code_display" style="color: rgba(255,255,255,0.85) !important;"></p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form id="rejectRetailerOrderForm">
                     @csrf
-                    <div class="modal-body">
+                    <div class="modal-body p-4">
                         <input type="hidden" id="reject_retailer_order_id" name="order_id">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Reason for Rejection</label>
-                            <textarea class="form-control" name="rejection_reason" rows="3" required
-                                placeholder="Enter rejection reason..."></textarea>
+                        
+                        <div class="p-3 rounded-3 mb-4 d-flex align-items-start bg-danger-subtle border border-danger border-opacity-25">
+                            <i class="fa fa-exclamation-triangle text-danger mt-1 me-3"></i>
+                            <div>
+                                <h6 class="fw-bold mb-1 text-danger-emphasis">Confirm Rejection</h6>
+                                <p class="text-body-secondary small mb-0">Rejected orders cannot be processed further. Please provide a clear reason for the retailer and staff.</p>
+                            </div>
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="form-label fw-bold text-dark small text-uppercase">Reason for Rejection <span class="text-danger">*</span></label>
+                            <textarea class="form-control border-0 bg-light shadow-none" name="rejection_reason" rows="4" required
+                                placeholder="E.g., Out of stock, incorrect pricing, invalid retailer document..." 
+                                style="border-radius: 12px; resize: none;"></textarea>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-danger">Confirm Rejection</button>
+                    <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                        <button type="button" class="btn btn-link text-muted fw-bold text-decoration-none px-4" data-bs-dismiss="modal">Go Back</button>
+                        <button type="submit" class="btn px-4 py-2 fw-bold shadow-sm" style="border-radius: 10px; background-color: #b91c1c; color: #fff;">
+                            Confirm Rejection
+                        </button>
                     </div>
                 </form>
             </div>
@@ -1117,8 +1153,8 @@
                             let btnsHtml = `
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <div class="d-flex align-items-center gap-1 p-2">
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <a href="${row.invoice_url}" target="_blank" class="btn btn-sm btn-success" title="View Invoice">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="fa ${icon}"></i> &nbsp;View
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       </a>`;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="fa ${icon}"></i>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </a>`;
                             btnsHtml += `</div>`;
                             return btnsHtml;
                         }
@@ -1143,12 +1179,11 @@
 
                         // Tiered Approval Buttons
                         let canApprove = false;
-                        if (isFieldStaff && statusRaw === 'pending') canApprove = true;
-                        if (isDistributor && statusRaw === 'processing') canApprove = true;
-                        if (isAdmin && statusRaw === 'processing') canApprove = true; // Admin only for processing (distributor level)
+                        if ((isFieldStaff || isSalesManager || isAdmin) && statusRaw === 'pending') canApprove = true;
+                        if ((isDistributor || isSalesManager || isAdmin) && statusRaw === 'processing') canApprove = true;
 
                         if (canApprove) {
-                            if ((isDistributor || isAdmin) && statusRaw === 'processing') {
+                            if ((isDistributor || isAdmin || (isSalesManager && statusRaw === 'processing')) && statusRaw === 'processing') {
                                 btns += `<button class="btn btn-success btn-sm distributor-approve-btn" data-row="${rowData}" title="Approve & Allocate Batches"><i class="fa fa-check-circle"></i></button>`;
                             } else {
                                 btns += `<button class="btn btn-success btn-sm approve-retailer-btn" data-id="${row.id}" data-row="${rowData}" title="Approve"><i class="fa fa-check"></i></button>`;
@@ -1163,7 +1198,7 @@
                         // Retailer Confirmation
                         if (statusRaw === 'approved') {
                             if (isRetailer) {
-                                btns += `<button class="btn btn-primary btn-sm confirm-receipt-btn" data-id="${row.id}" title="Confirm Order"> Confirm</button>`;
+                                btns += `<button class="btn btn-primary btn-sm confirm-receipt-btn" data-id="${row.id}" title="Confirm Order"><i class="fa fa-check-square"></i></button>`;
                             }
                         }
                         btns += `</div>`;
@@ -1306,7 +1341,24 @@
             // Reject Retailer Order handler
             $(document).on('click', '.reject-retailer-btn', function () {
                 let id = $(this).data('id');
+                let tr = $(this).closest('tr');
+                if ($(tr).hasClass('child')) tr = $(tr).prev();
+                let row = table.row(tr).data();
+
+                if (!id) {
+                    // Fallback to hidden input if clicked from inside a modal that sets #approve_order_id
+                    id = $('#approve_order_id').val();
+                }
+                
+                if (!id) {
+                    showToast('error', 'Order ID not found for rejection.');
+                    return;
+                }
+
                 $('#reject_retailer_order_id').val(id);
+                $('#reject_order_code_display').text(row ? '#' + row.order_code : '');
+                $('#rejectRetailerOrderForm').find('textarea[name="rejection_reason"]').val('');
+                
                 // Hide any open approval modals if they exist
                 $('#approveRetailerOrderModal').modal('hide');
                 $('#distributorApproveModal').modal('hide');
@@ -1317,8 +1369,19 @@
                 e.preventDefault();
                 let $form = $(this);
                 let id = $('#reject_retailer_order_id').val();
-                let $btn = $form.find('button[type="submit"]');
+                let reason = $form.find('textarea[name="rejection_reason"]').val().trim();
 
+                if (!reason) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Reason Required',
+                        text: 'Please provide a valid reason for rejecting this order.',
+                        confirmButtonColor: '#dc3545'
+                    });
+                    return;
+                }
+
+                let $btn = $form.find('button[type="submit"]');
                 $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Rejecting...');
 
                 $.ajax({
@@ -1327,13 +1390,24 @@
                     data: $form.serialize(),
                     success: function (res) {
                         $('#rejectRetailerOrderModal').modal('hide');
-                        showToast('success', res.success || 'Order rejected.');
-                        table.ajax.reload(null, false);
-                        if (window.updateSidebarCounts) window.updateSidebarCounts();
-                        $form[0].reset();
+                        if (res.success || res.message) {
+                            table.ajax.reload(null, false);
+                            if (window.updateSidebarCounts) window.updateSidebarCounts();
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Order Rejected',
+                                text: res.success || res.message || 'The order has been successfully rejected.',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                            $form[0].reset();
+                        } else {
+                            Swal.fire('Error', res.error || 'Rejection failed.', 'error');
+                        }
                     },
                     error: function (xhr) {
-                        showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Rejection failed.');
+                        let err = xhr.responseJSON ? (xhr.responseJSON.error || xhr.responseJSON.message) : 'Rejection failed.';
+                        Swal.fire('Error', err, 'error');
                     },
                     complete: function () {
                         $btn.prop('disabled', false).text('Confirm Rejection');

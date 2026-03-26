@@ -102,9 +102,7 @@
     }
 
     .action-buttons .btn {
-        padding: 6px 10px !important;
-        font-size: 0.75rem !important;
-        line-height: 1 !important;
+        margin: 0 !important;
     }
 
     .modal-xl {
@@ -516,31 +514,49 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    {{-- Cancel Confirmation Modal --}}
-    <div class="modal fade" id="cancelConfirmModal" tabindex="-1" aria-hidden="true">
+    </div>    {{-- Cancel Confirmation Modal --}}
+    <div class="modal fade" id="cancelConfirmModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirm Cancellation</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                <div class="modal-header border-0 py-3 px-4 position-relative" style="background-color: #1e293b;">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-white bg-opacity-25 rounded-circle p-2 me-3">
+                            <i class="fa fa-exclamation-triangle fs-4 text-white"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold text-white mb-0" style="color: #ffffff !important;">Cancel Order</h5>
+                            <p class="small text-white text-opacity-85 mb-0" id="cancel_order_code_display" style="color: rgba(255,255,255,0.85) !important;"></p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <p class="mb-3">Are you sure you want to cancel this order? This action cannot be undone.</p>
-                    <div class="mb-3">
-                        <label class="form-label required">Cancellation Reason</label>
-                        <textarea id="cancel_reason_input" class="form-control" rows="3"
-                            placeholder="Please provide a reason for cancellation..."></textarea>
+                <div class="modal-body p-4">
+                    <div class="p-3 rounded-3 mb-4 d-flex align-items-start bg-secondary-subtle border border-secondary border-opacity-25">
+                        <i class="fa fa-info-circle text-secondary mt-1 me-3"></i>
+                        <div>
+                            <h6 class="fw-bold mb-1 text-secondary-emphasis">Are you sure?</h6>
+                            <p class="text-body-secondary small mb-0">This distributor order will be permanently cancelled. This action cannot be reversed.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-0">
+                        <label class="form-label fw-bold text-dark small text-uppercase">Cancellation Reason <span class="text-danger">*</span></label>
+                        <textarea id="cancel_reason_input" class="form-control border-0 bg-light shadow-none" rows="4" required
+                            placeholder="E.g., Stock issues, distributor request, clerical error..." 
+                            style="border-radius: 12px; resize: none;"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Keep It</button>
-                    <button type="button" class="btn btn-warning" id="confirmCancelBtn">Yes, Cancel Order</button>
+                <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                    <button type="button" class="btn btn-link text-muted fw-bold text-decoration-none px-4" data-bs-dismiss="modal">Keep Order</button>
+                    <button type="button" class="btn px-4 py-2 fw-bold shadow-sm" id="confirmCancelBtn" 
+                        style="border-radius: 10px; background-color: #1e293b; color: #fff;">
+                        Yes, Cancel Order
+                    </button>
                 </div>
             </div>
         </div>
-        {{-- Upload Invoice Modal --}}
+    </div>
+      {{-- Upload Invoice Modal --}}
         <div class="modal fade" id="uploadInvoiceModal" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content border-0 shadow-lg">
@@ -708,7 +724,7 @@
                             let code = row.order_code || 'Order';
 
                             let filename = `Invoice_${code}_${name}_${date}.${ext}`;
-                            return `<a href="${data}" download="${filename}" target="_blank" class="btn btn-sm btn-success"><i class="fa ${icon}"></i> &nbsp;Download</a>`;
+                            return `<a href="${data}" download="${filename}" target="_blank" class="btn btn-sm btn-success" title="Download Invoice"><i class="fa ${icon}"></i></a>`;
                         }
                         return '<span class="text-muted small">No Invoice</span>';
                     }
@@ -735,7 +751,7 @@
 
                         if (st === 'approved') {
                             if (isDistributor) {
-                                btns += `<button class="btn btn-primary btn-sm confirm-receipt-btn" data-id="${row.id}" title="Confirm Receipt"> Confirm</button>`;
+                                btns += `<button class="btn btn-primary btn-sm confirm-receipt-btn" data-id="${row.id}" title="Confirm Receipt"><i class="fa fa-check-square"></i></button>`;
                             }
                         }
 
@@ -1422,15 +1438,20 @@
             // Cancel Order Logic (Pending Orders)
             let cancelOrderId = null;
             $(document).on('click', '.cancel-order-btn', function () {
+                let tr = $(this).closest('tr');
+                if ($(tr).hasClass('child')) tr = $(tr).prev();
+                let row = table.row(tr).data();
+
                 cancelOrderId = $(this).data('id');
-                $('#cancel_reason_input').val(''); // Reset input
+                $('#cancel_order_code_display').text('#' + (row ? row.order_code : 'Order'));
+                $('#cancel_reason_input').val('');
                 $('#cancelConfirmModal').modal('show');
             });
 
             $('#confirmCancelBtn').click(function () {
                 if (!cancelOrderId) return;
-
                 let reason = $('#cancel_reason_input').val().trim();
+
                 if (!reason) {
                     showToast('error', 'Please provide a cancellation reason.');
                     return;

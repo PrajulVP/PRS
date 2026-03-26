@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Traits\HandlesNotifications;
 use App\Traits\OneSignalNotifications;
+use App\Traits\CalculatesPrices;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -32,7 +33,7 @@ use Illuminate\Support\Facades\Storage;
  */
 class RetailerOrderController extends Controller
 {
-    use HandlesNotifications, OneSignalNotifications;
+    use HandlesNotifications, OneSignalNotifications, CalculatesPrices;
 
     /**
      * @OA\Get(
@@ -95,6 +96,49 @@ class RetailerOrderController extends Controller
             });
 
         return response()->json($orders);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/retailer-orders/calculate-price",
+     *     summary="Calculate price for a product before placing an order",
+     *     tags={"Retailer Orders"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="product_id", in="query", required=true, @OA\Schema(type="integer"), example=1),
+     *     @OA\Parameter(name="quantity", in="query", required=true, @OA\Schema(type="number"), example=10),
+     *     @OA\Parameter(name="unit", in="query", required=true, @OA\Schema(type="string", enum={"Nos", "Strips", "Box", "Carton"}), example="Box"),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Detailed price calculation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="product_id", type="integer"),
+     *             @OA\Property(property="product_name", type="string"),
+     *             @OA\Property(property="input_quantity", type="number"),
+     *             @OA\Property(property="input_unit", type="string"),
+     *             @OA\Property(property="total_quantity_strips", type="integer"),
+     *             @OA\Property(property="unit_price", type="number"),
+     *             @OA\Property(property="taxable_amount", type="number"),
+     *             @OA\Property(property="gst_rate", type="number"),
+     *             @OA\Property(property="gst_amount", type="number"),
+     *             @OA\Property(property="total_amount", type="number"),
+     *             @OA\Property(property="currency", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Product not found")
+     * )
+     */
+    public function calculatePrice(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|numeric|min:0.01',
+            'unit' => 'required|string',
+        ]);
+
+        $product = Product::findOrFail($request->product_id);
+        $result = $this->computePriceResponse($product, $request->quantity, $request->unit, 'ptr');
+
+        return response()->json($result);
     }
 
 

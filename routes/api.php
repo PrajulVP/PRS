@@ -21,6 +21,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('user/player-id', [\App\Http\Controllers\Api\UserApiController::class, 'updatePlayerId']);
     Route::post('logout', [AuthApiController::class, 'logout']);
     Route::get('retailer-orders', [RetailerOrderController::class, 'index']);
+    Route::get('retailer-orders/calculate-price', [RetailerOrderController::class, 'calculatePrice']);
     Route::post('retailer-orders', [RetailerOrderController::class, 'store']);
     Route::post('retailer-orders/{id}/update-status', [RetailerOrderController::class, 'updateStatus']);
 
@@ -33,6 +34,7 @@ Route::middleware('auth:api')->group(function () {
 
     // Distributor Orders
     Route::get('distributor-orders', [\App\Http\Controllers\Api\DistributorOrderApiController::class, 'index']);
+    Route::get('distributor-orders/calculate-price', [\App\Http\Controllers\Api\DistributorOrderApiController::class, 'calculatePrice']);
     Route::get('distributor-orders/history', [\App\Http\Controllers\Api\DistributorOrderApiController::class, 'index']);
     Route::get('distributor-orders/{id}', [\App\Http\Controllers\Api\DistributorOrderApiController::class, 'show']);
 

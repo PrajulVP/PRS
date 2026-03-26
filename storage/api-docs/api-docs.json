@@ -716,6 +716,105 @@
                 ]
             }
         },
+        "/api/distributor-orders/calculate-price": {
+            "get": {
+                "tags": [
+                    "Distributor Orders"
+                ],
+                "summary": "Calculate price for a product before placing a distributor order",
+                "operationId": "03ecbf780e987b771763c1bef786aa81",
+                "parameters": [
+                    {
+                        "name": "product_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    },
+                    {
+                        "name": "quantity",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "number"
+                        },
+                        "example": 10
+                    },
+                    {
+                        "name": "unit",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "Nos",
+                                "Strips",
+                                "Box",
+                                "Carton"
+                            ]
+                        },
+                        "example": "Box"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detailed price calculation (PTS based)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "product_id": {
+                                            "type": "integer"
+                                        },
+                                        "product_name": {
+                                            "type": "string"
+                                        },
+                                        "input_quantity": {
+                                            "type": "number"
+                                        },
+                                        "input_unit": {
+                                            "type": "string"
+                                        },
+                                        "total_quantity_strips": {
+                                            "type": "integer"
+                                        },
+                                        "unit_price": {
+                                            "type": "number"
+                                        },
+                                        "taxable_amount": {
+                                            "type": "number"
+                                        },
+                                        "gst_rate": {
+                                            "type": "number"
+                                        },
+                                        "gst_amount": {
+                                            "type": "number"
+                                        },
+                                        "total_amount": {
+                                            "type": "number"
+                                        },
+                                        "currency": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Product not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/distributor-orders/{id}/update-status": {
             "post": {
                 "tags": [
@@ -2271,6 +2370,105 @@
                     },
                     "500": {
                         "description": "Error creating orders (e.g. insufficient stock)"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/retailer-orders/calculate-price": {
+            "get": {
+                "tags": [
+                    "Retailer Orders"
+                ],
+                "summary": "Calculate price for a product before placing an order",
+                "operationId": "1c95a5c3d52d2da690e3153b7065eab6",
+                "parameters": [
+                    {
+                        "name": "product_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    },
+                    {
+                        "name": "quantity",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "number"
+                        },
+                        "example": 10
+                    },
+                    {
+                        "name": "unit",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "Nos",
+                                "Strips",
+                                "Box",
+                                "Carton"
+                            ]
+                        },
+                        "example": "Box"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detailed price calculation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "product_id": {
+                                            "type": "integer"
+                                        },
+                                        "product_name": {
+                                            "type": "string"
+                                        },
+                                        "input_quantity": {
+                                            "type": "number"
+                                        },
+                                        "input_unit": {
+                                            "type": "string"
+                                        },
+                                        "total_quantity_strips": {
+                                            "type": "integer"
+                                        },
+                                        "unit_price": {
+                                            "type": "number"
+                                        },
+                                        "taxable_amount": {
+                                            "type": "number"
+                                        },
+                                        "gst_rate": {
+                                            "type": "number"
+                                        },
+                                        "gst_amount": {
+                                            "type": "number"
+                                        },
+                                        "total_amount": {
+                                            "type": "number"
+                                        },
+                                        "currency": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Product not found"
                     }
                 },
                 "security": [
