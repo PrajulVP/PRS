@@ -788,7 +788,7 @@
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;" id="toastContainer"></div>
 
     <!-- Loader -->
-    <div id="global-loader"
+    <div id="global-loader" class="loader-wrapper"
         style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #ffffff; z-index: 99999; display: flex; justify-content: center; align-items: center; transition: opacity 0.5s ease-out;">
         <img src="{{ asset('admin/assets/images/logo/favicon.ico') }}" width="60" alt="Loading..."
             style="width: 60px; height: auto; animation: pulse 1.5s infinite ease-in-out;">

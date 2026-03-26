@@ -43,21 +43,8 @@
         width: auto !important;
         display: inline-block !important;
     }
-    /* Fix for stuck loading overlay */
     .dataTables_processing {
-        z-index: 1050 !important;
-        background: rgba(255, 255, 255, 0.9) !important;
-        border-radius: 50px !important;
-        padding: 5px 15px !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
-        border: 1px solid var(--med-border) !important;
-        position: absolute !important;
-        top: 50% !important;
-        left: 50% !important;
-        transform: translate(-50%, -50%) !important;
-        width: auto !important;
-        height: auto !important;
-        display: none; /* DataTables will show it when needed */
+        display: none !important;
     }
 </style>
 
@@ -587,7 +574,7 @@
             const canDelete = @json($canDelete);
             const isDistributor = @json($isDistributor);
             var table = $('#inventories-table').DataTable({
-                processing: true,
+                processing: false, // Disabled to prevent stuck "pill" loader
                 serverSide: true,
                 ajax: {
                     url: "{{ route('inventories.index') }}",

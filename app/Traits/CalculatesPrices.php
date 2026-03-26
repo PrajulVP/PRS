@@ -21,13 +21,17 @@ trait CalculatesPrices
         $totalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
         $gstAmount = $totalWithGst - $taxableSubtotal;
 
-        // Fetch available variants from inventory (where stock exists)
-        $availableVariants = DB::table('inventories')
-            ->where('product_id', $product->id)
-            ->where('stock', '>', 0)
-            ->whereNotNull('variant')
-            ->distinct()
-            ->pluck('variant');
+        // Fetch available variants from product name or inventory
+        $availableVariants = $this->getAvailableVariants($product);
+        if (empty($availableVariants)) {
+            $availableVariants = DB::table('inventories')
+                ->where('product_id', $product->id)
+                ->where('stock', '>', 0)
+                ->whereNotNull('variant')
+                ->distinct()
+                ->pluck('variant')
+                ->toArray();
+        }
 
         // Dynamic Unit Logic matching the web front-end
         $availableUnits = $this->getAvailableUnits($product);
@@ -103,5 +107,24 @@ trait CalculatesPrices
         }
         
         return (int)ceil($quantity * $multiplier);
+    }
+
+    /**
+     * Helper to extract available variants from the product name string (e.g., "(S/M/L)").
+     */
+    public function getAvailableVariants(Product $product)
+    {
+        $pName = $product->product_name ?? '';
+        
+        // Match content between ( ) or [ ] that contains at least one /
+        if (preg_match('/\(([^)]*\/[^)]*)\)/', $pName, $matches) || 
+            preg_match('/\[([^\]]*\/[^\]]*)\]/', $pName, $matches)) {
+            
+            $variantString = $matches[1];
+            $variants = array_map('trim', explode('/', $variantString));
+            return array_values(array_filter($variants));
+        }
+
+        return [];
     }
 }

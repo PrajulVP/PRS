@@ -51,12 +51,8 @@ class ProductController extends Controller
     {
         $product = Product::findOrFail($id);
 
-        $availableVariants = DB::table('inventories')
-            ->where('product_id', $product->id)
-            ->where('stock', '>', 0)
-            ->whereNotNull('variant')
-            ->distinct()
-            ->pluck('variant');
+        $availableVariants = $this->getAvailableVariants($product);
+        $hasVariants = (bool)$product->has_variants || !empty($availableVariants);
 
         $availableUnits = $this->getAvailableUnits($product);
 
@@ -66,7 +62,7 @@ class ProductController extends Controller
             'product_name' => $product->product_name,
             'generic_name' => $product->generic_name,
             'pack' => $product->pack,
-            'has_variants' => (bool)$product->has_variants,
+            'has_variants' => $hasVariants,
             'available_variants' => $availableVariants,
             'available_units' => $availableUnits,
             'ptr' => (float)$product->ptr,
@@ -74,6 +70,7 @@ class ProductController extends Controller
             'gst' => (float)$product->gst,
             'mrp' => (float)$product->mrp,
             'image' => $product->image ? asset('storage/' . $product->image) : null,
+            'debug_fix_applied' => true,
         ]);
     }
     /**
