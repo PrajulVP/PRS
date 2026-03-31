@@ -14,67 +14,67 @@
         margin-left: 10px !important;
     }
 
-    /* Segmented Control for Payment Filter */
-    .segmented-control {
-        display: flex;
-        background-color: #e2e8f0;
-        border-radius: 50px;
-        padding: 4px;
-        position: relative;
-        width: 260px;
-        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
-    }
-    .segmented-control input {
-        display: none;
-    }
-    .segmented-control label {
-        flex: 1;
-        text-align: center;
-        padding: 6px 0;
-        margin: 0;
-        font-size: 0.75rem;
-        font-weight: 700;
-        color: #64748b;
-        cursor: pointer;
-        position: relative;
-        z-index: 2;
-        transition: color 0.3s ease;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    .segmented-control input:checked + label {
-        color: #0f172a;
-    }
-    #pay_paid:checked + label {
-        color: #15803d;
-    }
-    #pay_pending:checked + label {
-        color: #b45309;
-    }
-    .selection-indicator {
-        position: absolute;
-        top: 4px;
-        bottom: 4px;
-        left: 4px;
-        width: calc(33.333% - 2.66px);
-        background: #ffffff;
-        border-radius: 50px;
-        z-index: 1;
-        transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-    #pay_all:checked ~ .selection-indicator {
-        transform: translateX(0);
-        background: #ffffff;
-    }
-    #pay_paid:checked ~ .selection-indicator {
-        transform: translateX(100%);
-        background: #dcfce7;
-    }
-    #pay_pending:checked ~ .selection-indicator {
-        transform: translateX(200%);
-        background: #fef9c3;
-    }
+        /* Segmented Control for Payment Filter */
+        .segmented-control {
+            display: flex;
+            background-color: var(--med-border, #e2e8f0);
+            border-radius: 50px;
+            padding: 4px;
+            position: relative;
+            width: 260px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+        }
+        .segmented-control input {
+            display: none;
+        }
+        .segmented-control label {
+            flex: 1;
+            text-align: center;
+            padding: 6px 0;
+            margin: 0;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--med-text-muted, #64748b);
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .segmented-control input:checked + label {
+            color: var(--med-text-main, #0f172a);
+        }
+        #pay_paid:checked + label {
+            color: var(--med-paid-text, #15803d);
+        }
+        #pay_pending:checked + label {
+            color: var(--med-pending-text, #b45309);
+        }
+        .selection-indicator {
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            left: 4px;
+            width: calc(33.333% - 2.66px);
+            background: var(--med-bg-card, #ffffff);
+            border-radius: 50px;
+            z-index: 1;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        #pay_all:checked ~ .selection-indicator {
+            transform: translateX(0);
+            background: var(--med-bg-card, #ffffff);
+        }
+        #pay_paid:checked ~ .selection-indicator {
+            transform: translateX(100%);
+            background: var(--med-paid-bg, #dcfce7);
+        }
+        #pay_pending:checked ~ .selection-indicator {
+            transform: translateX(200%);
+            background: var(--med-pending-bg, #fef9c3);
+        }
 
     .dataTables_length {
         text-align: left !important;
@@ -111,24 +111,24 @@
 
     /* Premium Dropzone */
     .premium-dropzone {
-        border: 2px dashed #e2e8f0;
+        border: 2px dashed var(--med-border);
         border-radius: 12px;
         padding: 30px 20px;
         text-align: center;
-        background: #f8fafc;
+        background: var(--med-bg-body);
         cursor: pointer;
         transition: all 0.2s ease;
         position: relative;
     }
 
     .premium-dropzone:hover {
-        border-color: #3b82f6;
-        background: #eff6ff;
+        border-color: var(--med-primary);
+        background: var(--med-bg-card);
     }
 
     .premium-dropzone i {
         font-size: 2.5rem;
-        color: #3b82f6;
+        color: var(--med-primary);
         margin-bottom: 15px;
         display: block;
     }
@@ -136,7 +136,7 @@
     .premium-dropzone.has-file {
         border-style: solid;
         border-color: #10b981;
-        background: #ecfdf5;
+        background: rgba(16, 185, 129, 0.1);
     }
 
     /* --- New Order View UI Styles --- */
@@ -151,85 +151,30 @@
         top: 5px;
         bottom: 5px;
         width: 2px;
-        background: #e2e8f0;
-    }
-    .timeline-item {
-        position: relative;
-        margin-bottom: 20px;
-    }
-    .timeline-marker {
-        position: absolute;
-        left: -24px;
-        top: 4px;
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: #cbd5e1;
-        border: 2px solid #fff;
-        box-shadow: 0 0 0 2px #e2e8f0;
-        z-index: 1;
-    }
-    .timeline-item.active .timeline-marker {
-        background: #00497a;
-        box-shadow: 0 0 0 2px #00497a44;
-    }
-    .timeline-content h6 {
-        font-size: 0.85rem;
-        margin-bottom: 2px;
-        color: #1e293b;
-    }
-    .timeline-content span {
-        font-size: 0.75rem;
-        color: #64748b;
-    }
-
-    .payment-status-card {
-        border-radius: 16px;
-        padding: 16px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        height: 100%;
-    }
-    .payment-status-card.paid {
-        background: #f0fdf4;
-        border: 1px solid #dcfce7;
-    }
-    .payment-status-card.pending {
-        background: #fffbeb;
-        border: 1px solid #fef3c7;
-    }
-    .payment-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.25rem;
-    }
-    .paid .payment-icon {
-        background: #dcfce7;
-        color: #15803d;
-    }
-    .pending .payment-icon {
-        background: #fef3c7;
-        color: #b45309;
-    }
-    .payment-info h6 {
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 2px;
-        color: #64748b;
-    }
-    .payment-info p {
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin-bottom: 0;
-    }
-    .paid .payment-info p { color: #15803d; }
-    .pending .payment-info p { color: #b45309; }
+            position: absolute;
+            left: -24px;
+            top: 4px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--med-text-muted, #cbd5e1);
+            border: 2px solid var(--med-bg-card, #fff);
+            box-shadow: 0 0 0 2px var(--med-border, #e2e8f0);
+            z-index: 1;
+        }
+        .timeline-item.active .timeline-marker {
+            background: var(--med-primary, #00497a);
+            box-shadow: 0 0 0 2px rgba(0, 73, 122, 0.2);
+        }
+        .timeline-content h6 {
+            font-size: 0.85rem;
+            margin-bottom: 2px;
+            color: var(--med-text-main, #1e293b);
+        }
+        .timeline-content span {
+            font-size: 0.75rem;
+            color: var(--med-text-muted, #64748b);
+        }
     /* --- End New Order View UI Styles --- */
 </style>
 
@@ -237,7 +182,7 @@
 
     <div class="container-fluid">
         <div class="card shadow-sm border-0 rounded-3">
-            <div class="card-header bg-white border-bottom pb-0">
+            <div class="card-header border-bottom pb-0" style="background-color: var(--med-bg-card) !important;">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-primary fw-bold">Distributor Orders</h5>
                     @if(Auth::user()->hasRole('distributor'))
@@ -425,7 +370,7 @@
 
                         <div class="mb-4">
                             <label class="form-label text-muted small text-uppercase fw-bold">Distributor</label>
-                            <h5 class="mb-0 text-dark" id="edit_distributor_name"></h5>
+                            <h5 class="mb-0" style="color: var(--med-text-main);" id="edit_distributor_name"></h5>
                         </div>
 
                         <div class="mb-4">
@@ -540,7 +485,7 @@
                     </div>
                     
                     <div class="mb-0">
-                        <label class="form-label fw-bold text-dark small text-uppercase">Cancellation Reason <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold small text-uppercase" style="color: var(--med-text-main);">Cancellation Reason <span class="text-danger">*</span></label>
                         <textarea id="cancel_reason_input" class="form-control border-0 bg-light shadow-none" rows="4" required
                             placeholder="E.g., Stock issues, distributor request, clerical error..." 
                             style="border-radius: 12px; resize: none;"></textarea>
@@ -569,7 +514,7 @@
                         <input type="hidden" id="upload_invoice_order_id">
                         <div class="modal-body p-4">
                             <div class="mb-3">
-                                <label class="form-label fw-bold text-dark">Invoice Document</label>
+                                <label class="form-label fw-bold" style="color: var(--med-text-main);">Invoice Document</label>
                                 <div class="premium-dropzone" id="invoice_dropzone">
                                     <i class="fa fa-file-invoice"></i>
                                     <h5 class="fw-bold mb-1">Upload Invoice File</h5>
@@ -1277,7 +1222,7 @@
                             <div class="card h-100 border-0 shadow-sm" style="border-radius: 16px !important;">
                                 <div class="card-body">
                                     <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;"><i class="fa fa-building me-2"></i>Distributor Info</h6>
-                                    <h5 class="fw-bold text-dark mb-1">${row.name || 'N/A'}</h5>
+                                    <h5 class="fw-bold mb-1" style="color: var(--med-text-main);">${row.name || 'N/A'}</h5>
                                     <div class="d-flex align-items-center mb-1"><i class="fa fa-envelope text-muted me-2" style="width: 16px;"></i> <span class="small">${row.distributor_email || 'N/A'}</span></div>
                                     <div class="d-flex align-items-center mb-1"><i class="fa fa-phone text-muted me-2" style="width: 16px;"></i> <span class="small">${row.distributor_phone || 'N/A'}</span></div>
                                     <div class="d-flex align-items-start mb-1"><i class="fa fa-map-marker text-muted me-2 mt-1" style="width: 16px;"></i> <span class="text-wrap small">${row.distributor_address || 'N/A'}</span></div>
@@ -1290,7 +1235,7 @@
                             <div class="card h-100 border-0 shadow-sm" style="border-radius: 16px !important;">
                                 <div class="card-body">
                                     <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;"><i class="fa fa-industry me-2"></i>Company Info</h6>
-                                    <h5 class="fw-bold text-dark mb-2">PRS Company</h5>
+                                    <h5 class="fw-bold mb-2" style="color: var(--med-text-main);">PRS Company</h5>
                                     <div class="text-muted small mb-2"><i class="fa fa-user-tie me-2"></i>Sales Manager: ${row.sales_manager_name || 'N/A'}</div>
                                     <div class="d-flex align-items-center mb-1"><i class="fa fa-envelope text-muted me-2" style="width: 16px;"></i> <span class="small">info@prs.com</span></div>
                                 </div>
@@ -1304,12 +1249,12 @@
                                 <table class="table mb-0">
                                     <thead class="bg-light">
                                         <tr>
-                                            <th class="py-3 px-4" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Product</th>
-                                            <th class="py-3 px-4 text-center" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Batch/Exp</th>
-                                            <th class="py-3 px-4 text-center" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Qty</th>
-                                            <th class="py-3 px-4 text-center" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Free</th>
-                                            <th class="py-3 px-4 text-end" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Price</th>
-                                            <th class="py-3 px-4 text-end" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Total</th>
+                                            <th class="py-3 px-4" style="border-bottom: 1px solid var(--med-border) !important;">Product</th>
+                                            <th class="py-3 px-4 text-center" style="border-bottom: 1px solid var(--med-border) !important;">Batch/Exp</th>
+                                            <th class="py-3 px-4 text-center" style="border-bottom: 1px solid var(--med-border) !important;">Qty</th>
+                                            <th class="py-3 px-4 text-center" style="border-bottom: 1px solid var(--med-border) !important;">Free</th>
+                                            <th class="py-3 px-4 text-end" style="border-bottom: 1px solid var(--med-border) !important;">Price</th>
+                                            <th class="py-3 px-4 text-end" style="border-bottom: 1px solid var(--med-border) !important;">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1327,9 +1272,9 @@
                     }
 
                     detailsHtml += `
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <tr style="border-bottom: 1px solid var(--med-border);">
                             <td class="py-3 px-4">
-                                <div class="fw-bold text-dark">${name}</div>
+                                <div class="fw-bold" style="color: var(--med-text-main);">${name}</div>
                             </td>
                             <td class="py-3 px-4 text-center">${batchHtml}</td>
                             <td class="py-3 px-4 text-center"><span class="badge bg-soft-primary text-primary px-2 py-1" style="font-size: 0.75rem;">${qty} ${i.unit || ''}</span></td>
@@ -1359,7 +1304,7 @@
                         <div class="col-md-6">
                             <div class="payment-status-card ${row.payment_status === 'paid' ? 'paid' : 'pending'} shadow-sm">
                                 <div class="payment-icon">
-                                    <i class="fa ${row.payment_status === 'paid' ? 'fa-check-circle' : 'fa-clock'}"></i>
+                                    <i class="fa ${row.payment_status === 'paid' ? 'fa-check-double' : 'fa-hourglass-half'}"></i>
                                 </div>
                                 <div class="payment-info">
                                     <h6>Payment Status</h6>

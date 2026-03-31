@@ -102,8 +102,8 @@ class InventoryController extends Controller
 
                 // Correct totals for grouped data
                 $totalData = DB::table('inventories')
-                    ->select('product_id', 'product_name')
-                    ->groupBy('product_id', 'product_name')
+                    ->select('product_id')
+                    ->groupBy('product_id')
                     ->get()
                     ->count();
 
@@ -122,25 +122,24 @@ class InventoryController extends Controller
                     ]);
                 }
 
-                $totalFiltered = (clone $query)->select('product_id', 'product_name')
-                    ->groupBy('product_id', 'product_name')
+                $totalFiltered = (clone $query)->select('product_id')
+                    ->groupBy('product_id')
                     ->get()
                     ->count();
 
                 // Select aggregated columns
                 $query->select(
                     'product_id',
-                    'product_name',
+                    DB::raw('MAX(product_name) as product_name'),
                     DB::raw('SUM(stock) as stock'),
                     DB::raw('MAX(id) as id'),
-                    DB::raw('MAX(variant) as variant'),
                     DB::raw('MAX(distributor_id) as distributor_id'),
                     DB::raw('MAX(updated_at) as updated_at'),
                     DB::raw('MAX(distributor_product_code) as distributor_product_code'),
                     DB::raw('MAX(batch_no) as batch_no'),
                     DB::raw('MAX(expiry_date) as expiry_date')
                 )
-                ->groupBy('product_id', 'product_name');
+                ->groupBy('product_id');
 
                 // ordering
                 if ($request->has('order') && !empty($request->input('order'))) {
@@ -171,28 +170,26 @@ class InventoryController extends Controller
                     // We sum stock for batches with same batch_no and expiry
                     $rawBatches = Inventory::with(['distributor.user'])
                         ->where('product_id', $i->product_id)
-                        ->where('product_name', $i->product_name)
+                        ->where('distributor_id', $i->distributor_id)
                         ->orderBy('expiry_date', 'asc')
                         ->get();
                     
-                    $batches = $rawBatches->groupBy(function($b) {
-                        return $b->batch_no . '___' . ($b->expiry_date ? $b->expiry_date->format('Y-m-d') : 'none');
-                    })->map(function($group) {
-                        $first = $group->first();
+                    $batches = $rawBatches->map(function($b) {
                         return [
-                            'id' => $first->id,
-                            'batch_no' => $first->batch_no,
-                            'stock' => (int)$group->sum('stock'),
-                            'expiry_date' => $first->expiry_date ? $first->expiry_date->format('d-m-Y') : 'N/A',
-                            'raw_expiry_date' => $first->expiry_date ? $first->expiry_date->format('Y-m-d') : null,
-                            'distributor_name' => $first->distributor?->user?->name ?? 'N/A',
+                            'id' => $b->id,
+                            'batch_no' => $b->batch_no,
+                            'stock' => (int)$b->stock,
+                            'variant' => $b->variant,
+                            'expiry_date' => $b->expiry_date ? $b->expiry_date->format('d-m-Y') : 'N/A',
+                            'raw_expiry_date' => $b->expiry_date ? $b->expiry_date->format('Y-m-d') : null,
+                            'distributor_name' => $b->distributor?->user?->name ?? 'N/A',
                         ];
                     })->values();
 
                     return [
                         'id' => $i->id,
                         'distributor_product_code' => $i->distributor_product_code,
-                        'product_name' => $i->product_name,
+                        'product_name' => $i->product ? $i->product->product_name : $i->product_name,
                         'product_id' => $i->product_id,
                         'distributor_id' => $i->distributor_id,
                         'distributor_name' => $i->distributor?->user?->name ?? 'N/A',
@@ -208,10 +205,44 @@ class InventoryController extends Controller
                             'mrp' => $i->product->mrp,
                             'ptr' => $i->product->ptr,
                             'hsn_code' => $i->product->hsn_code,
-                            'units_per_strip' => $i->product->units_per_strip ?? 1,
-                            'strips_per_box' => $i->product->strips_per_box ?? 1,
-                            'boxes_per_carton' => $i->product->boxes_per_carton ?? 1,
+                            'units_per_strip' => (function($p) {
+                                $val = (string)($p->units_per_strip ?: ($p->strip_size ?: 1));
+                                if (((int)$val <= 1 || $val === "1") && $p->strip_size) $val = $p->strip_size;
+                                // For complex strings like 10x3x10, the last number is usually the units-per-strip
+                                if (str_contains($val, 'x')) {
+                                    $parts = explode('x', $val);
+                                    return (int)preg_replace('/[^0-9]/', '', end($parts));
+                                }
+                                preg_match('/[0-9]+/', $val, $m);
+                                return intval($m[0] ?? 1);
+                            })($i->product),
+                            'strips_per_box' => (function($p) {
+                                $val = (string)($p->strips_per_box ?: ($p->box_size ?: 1));
+                                if (((int)$val <= 1 || $val === "1") && $p->box_size) $val = $p->box_size;
+                                // For complex strings like 10x3x10, strips-per-box is typically the product of leading numbers
+                                if (str_contains($val, 'x')) {
+                                    $parts = explode('x', $val);
+                                    if (count($parts) > 1) {
+                                        $multiplier = 1;
+                                        // Multiply all but the last part
+                                        for ($i=0; $i < count($parts)-1; $i++) {
+                                            $multiplier *= (int)preg_replace('/[^0-9]/', '', $parts[$i]);
+                                        }
+                                        return $multiplier > 0 ? $multiplier : 1;
+                                    }
+                                }
+                                preg_match('/[0-9]+/', $val, $m);
+                                return intval($m[0] ?? 1);
+                            })($i->product),
+                            'boxes_per_carton' => (function($p) {
+                                $val = (string)($p->boxes_per_carton ?: ($p->carton_size ?: 1));
+                                if (((int)$val <= 1 || $val === "1") && $p->carton_size) $val = $p->carton_size;
+                                preg_match('/[0-9]+/', $val, $m);
+                                return intval($m[0] ?? 1);
+                            })($i->product),
+                            'strip_size' => $i->product->strip_size,
                             'box_size' => $i->product->box_size,
+                            'carton_size' => $i->product->carton_size,
                             'gst' => $i->product->gst,
                             'description' => $i->product->description,
                             'has_variants' => (bool)$i->product->has_variants,

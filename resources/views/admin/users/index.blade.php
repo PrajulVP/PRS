@@ -310,7 +310,7 @@
                 },
                 {
                     data: 'status',
-                    render: d => `<span class="badge bg-${d === 'active' ? 'success' : 'secondary'}">${d}</span>`
+                    render: d => `<span class="status-badge ${d === 'active' ? 'status-badge-active' : 'status-badge-inactive'}">${d}</span>`
                 },
                 {
                     data: 'order_count',
@@ -550,8 +550,8 @@
 
                 // Status badge
                 $('#view_status_badge')
-                    .attr('class', 'badge ' + (row.status === 'active' ? 'bg-success' : 'bg-secondary'))
-                    .text(row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : '—');
+                    .attr('class', 'status-badge ' + (row.status === 'active' ? 'status-badge-active' : 'status-badge-inactive'))
+                    .text(row.status || '—');
 
                 $('#viewUserModal').modal('show');
             });

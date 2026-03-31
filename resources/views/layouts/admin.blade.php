@@ -25,6 +25,17 @@
             /* Organic floating shadow */
             --med-shadow-glow: 0 0 20px rgba(0, 73, 122, 0.1);
             --med-glass: rgba(255, 255, 255, 0.95);
+            
+            /* Payment Status Palette - Light */
+            --med-paid-bg: #f0fdf4;
+            --med-paid-text: #15803d;
+            --med-paid-border: #dcfce7;
+            --med-pending-bg: #fffbeb;
+            --med-pending-text: #b45309;
+            --med-pending-border: #fef3c7;
+            --med-failed-bg: #fef2f2;
+            --med-failed-text: #b91c1c;
+            --med-failed-border: #fee2e2;
         }
 
         body.dark-only {
@@ -45,6 +56,17 @@
             --med-shadow-soft: 0 20px 50px -12px rgba(0, 0, 0, 0.5);
             --med-shadow-glow: 0 0 30px rgba(56, 189, 248, 0.05);
             --med-glass: rgba(18, 27, 42, 0.9);
+
+            /* Payment Status Palette - Dark */
+            --med-paid-bg: rgba(21, 128, 61, 0.15);
+            --med-paid-text: #4ade80;
+            --med-paid-border: rgba(74, 222, 128, 0.2);
+            --med-pending-bg: rgba(180, 83, 9, 0.15);
+            --med-pending-text: #fbbf24;
+            --med-pending-border: rgba(251, 191, 36, 0.2);
+            --med-failed-bg: rgba(185, 28, 28, 0.15);
+            --med-failed-text: #f87171;
+            --med-failed-border: rgba(248, 113, 113, 0.2);
         }
 
         /* === Premium Global Foundations === */
@@ -102,6 +124,18 @@
         }
 
         /* === Premium Status Badges === */
+        @keyframes status-pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6); }
+            70% { box-shadow: 0 0 0 6px rgba(74, 222, 128, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+        }
+
+        @keyframes status-pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+            70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
         .status-badge {
             padding: 6px 14px;
             border-radius: 50px;
@@ -111,69 +145,186 @@
             letter-spacing: 0.8px;
             display: inline-flex;
             align-items: center;
-            gap: 7px;
+            gap: 8px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid transparent;
+            border: 1px solid rgba(255, 255, 255, 0.15);
             cursor: pointer;
             user-select: none;
             line-height: 1.2;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            backdrop-filter: blur(4px);
         }
 
         .status-badge-active {
-            background: #10b981 !important;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
             color: #ffffff !important;
-            border-color: #059669 !important;
-        }
-
-        .status-badge-active:hover {
-            background: #059669 !important;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
         .status-badge-active::before {
             content: '';
-            width: 6px;
-            height: 6px;
-            background: #ffffff;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
-            display: inline-block;
-            box-shadow: 0 0 6px #ffffff;
+            background: #ffffff !important;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+            display: none !important; /* Hidden by default for datatables */
+            animation: status-pulse-green 2s infinite;
+        }
+
+        .status-badge-active:hover {
+            transform: translateY(-2px) scale(1.05);
+            filter: brightness(1.1);
+            box-shadow: 0 8px 15px rgba(16, 185, 129, 0.35);
         }
 
         .status-badge-inactive {
-            background: #ef4444 !important;
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
             color: #ffffff !important;
-            border-color: #dc2626 !important;
-        }
-
-        .status-badge-inactive:hover {
-            background: #dc2626 !important;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
         }
 
         .status-badge-inactive::before {
             content: '';
-            width: 6px;
-            height: 6px;
-            background: #ffffff;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
-            display: inline-block;
-            box-shadow: 0 0 6px #ffffff;
+            background: #ffffff !important;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+            display: none !important; /* Hidden by default for datatables */
+            animation: status-pulse-red 2s infinite;
         }
 
-        /* Smaller version for modals next to names */
-        .modal-body .status-badge {
-            padding: 4px 10px !important;
-            font-size: 0.65rem !important;
-            gap: 5px !important;
-            letter-spacing: 0.6px !important;
+        .status-badge-inactive:hover {
+            transform: translateY(-2px) scale(1.05);
+            filter: brightness(1.1);
+            box-shadow: 0 8px 15px rgba(239, 68, 68, 0.35);
         }
+
+        .status-badge:active {
+            transform: scale(0.95);
+        }
+
+        /* === Modal Specific Soft Badges (With Dots) === */
+        .modal-body .status-badge {
+            padding: 5px 12px !important;
+            font-size: 0.68rem !important;
+            gap: 7px !important;
+            backdrop-filter: none !important;
+            box-shadow: none !important;
+            border-radius: 6px !important;
+        }
+
         .modal-body .status-badge::before {
-            width: 5px !important;
-            height: 5px !important;
+            display: inline-block !important; /* Show dots in modals */
+        }
+
+        .modal-body .status-badge-active {
+            background: rgba(16, 185, 129, 0.1) !important;
+            color: #10b981 !important;
+            border: 1px solid rgba(16, 185, 129, 0.2) !important;
+        }
+
+        .modal-body .status-badge-active::before {
+            background: #10b981 !important; /* Colored dot for modal */
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+        }
+
+        .modal-body .status-badge-inactive {
+            background: rgba(239, 68, 68, 0.1) !important;
+            color: #ef4444 !important;
+            border: 1px solid rgba(239, 68, 68, 0.2) !important;
+        }
+
+        .modal-body .status-badge-inactive::before {
+            background: #ef4444 !important; /* Colored dot for modal */
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+        }
+
+        /* Fix for absolute positioned badges on avatars in modals */
+        .modal-body .position-relative .status-badge.position-absolute {
+            z-index: 5 !important;
+            bottom: 2px !important;
+            right: 2px !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+        }
+
+        /* === Premium Payment Status Cards === */
+        .payment-status-card {
+            border-radius: 20px !important;
+            padding: 1.25rem !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 1rem !important;
+            height: 100% !important;
+            transition: all 0.3s ease !important;
+            border: 1px solid transparent !important;
+            backdrop-filter: blur(8px) !important;
+        }
+
+        .payment-status-card.paid {
+            background: var(--med-paid-bg) !important;
+            border-color: var(--med-paid-border) !important;
+            color: var(--med-paid-text) !important;
+        }
+
+        .payment-status-card.pending {
+            background: var(--med-pending-bg) !important;
+            border-color: var(--med-pending-border) !important;
+            color: var(--med-pending-text) !important;
+        }
+
+        .payment-status-card.failed {
+            background: var(--med-failed-bg) !important;
+            border-color: var(--med-failed-border) !important;
+            color: var(--med-failed-text) !important;
+        }
+
+        .payment-icon {
+            width: 48px !important;
+            height: 48px !important;
+            border-radius: 14px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 1.4rem !important;
+            background: rgba(255, 255, 255, 0.5) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+        }
+
+        body.dark-only .payment-icon {
+            background: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .payment-info h6 {
+            font-size: 0.7rem !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+            margin-bottom: 4px !important;
+            opacity: 0.8 !important;
+            font-weight: 700 !important;
+            color: inherit !important;
+        }
+
+        .payment-info p {
+            font-size: 1.15rem !important;
+            font-weight: 800 !important;
+            margin-bottom: 0 !important;
+            color: inherit !important;
+        }
+
+        /* Support for Modal Info Cards in Dark Mode */
+        body.dark-only .modal-content .card.border-0.shadow-sm {
+            background-color: rgba(255, 255, 255, 0.03) !important;
+            border-color: rgba(255, 255, 255, 0.08) !important;
+        }
+
+        body.dark-only .modal-content .bg-light {
+            background-color: rgba(255, 255, 255, 0.03) !important;
+        }
+
+        body.dark-only .modal-content .table-responsive table thead.bg-light th {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+            color: #fff !important;
+            border-bottom-color: rgba(255, 255, 255, 0.1) !important;
         }
 
         .card-header,

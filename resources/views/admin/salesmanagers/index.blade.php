@@ -557,7 +557,7 @@
                     <div class="text-center mb-4">
                         <div class="d-inline-block position-relative mb-3">
                             ${avatarHtml}
-                            <span class="position-absolute bottom-0 end-0 status-badge ${data.user?.status === 'active' ? 'status-badge-active' : 'status-badge-inactive'}" style="border: 2px solid var(--med-bg-card); transform: scale(0.8); transform-origin: bottom right;">
+                            <span class="position-absolute status-badge ${data.user?.status === 'active' ? 'status-badge-active' : 'status-badge-inactive'}" style="border: 2px solid var(--med-bg-card); bottom: -2px; right: -2px;">
                                 ${data.user?.status}
                             </span>
                         </div>

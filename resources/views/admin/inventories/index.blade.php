@@ -1,50 +1,250 @@
 @extends('layouts.admin')
+@push('css')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
     .action-buttons {
         display: flex !important;
-        gap: 4px;
+        gap: 6px;
         align-items: center;
-    }
-
-    .action-buttons form {
-        margin-bottom: 0;
     }
 
     .action-buttons .btn {
         margin: 0 !important;
+        border-radius: 10px !important;
+        padding: 5px 12px !important;
+        font-weight: 600 !important;
     }
 
-    /* Modal sizing and table compacting */
-    .modal-xl {
-        max-width: 1140px;
+    /* Premium Inventory Filter Bar */
+    .inventory-filter-card {
+        background: var(--med-bg-card);
+        border: 1px solid var(--med-border);
+        border-radius: 20px;
+        padding: 20px;
+        margin-bottom: 25px;
+        position: relative;
+        z-index: 1050; /* Stay above prompts */
+        box-shadow: var(--med-shadow-soft);
+        transition: all 0.3s ease;
     }
 
-    #orders-table td:last-child {
-        white-space: nowrap !important;
+    .inventory-filter-card:hover {
+        box-shadow: var(--med-shadow-md);
     }
 
-    /* Preview / full content helper */
-    .preview-content {
-        display: inline-block;
-    }
-
-    .full-content {
+    .filter-label {
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--med-text-muted);
+        margin-bottom: 8px;
         display: block;
     }
 
-    .full-content.d-none {
-        display: none;
+    /* Select2 Custom Styling for Premium Look */
+    .select2-container--default .select2-selection--single {
+        background-color: var(--med-bg-body) !important;
+        border: 1px solid var(--med-border) !important;
+        border-radius: 12px !important;
+        height: 48px !important;
+        padding: 10px 15px !important;
+        transition: all 0.3s ease !important;
     }
 
-    /* Fix DataTable Length Select Arrow Issue */
-    .dataTables_length select.form-select {
-        padding-right: 2.5rem !important;
-        background-position: right 0.75rem center;
-        width: auto !important;
-        display: inline-block !important;
+    .select2-container--default .select2-selection--single:hover {
+        border-color: var(--med-primary) !important;
+        background-color: var(--med-bg-card) !important;
     }
-    .dataTables_processing {
-        display: none !important;
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: var(--med-text-main) !important;
+        font-weight: 600 !important;
+        line-height: 26px !important;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 46px !important;
+        right: 10px !important;
+    }
+
+    .select2-dropdown {
+        background-color: var(--med-bg-card) !important;
+        border: 1px solid var(--med-border) !important;
+        border-radius: 12px !important;
+        box-shadow: var(--med-shadow-md) !important;
+        overflow: hidden !important;
+        z-index: 9999 !important; /* Ensure dropdown is always on top */
+    }
+
+    .select2-results__option {
+        padding: 10px 15px !important;
+        color: var(--med-text-main) !important;
+    }
+
+    .select2-results__option--highlighted[aria-selected] {
+        background-color: var(--med-primary) !important;
+    }
+
+    /* Modern Table Header */
+    #inventories-table thead th {
+        background-color: rgba(0, 73, 122, 0.04) !important;
+        color: var(--med-text-main) !important;
+        font-weight: 700 !important;
+        text-transform: uppercase;
+        font-size: 0.75rem !important;
+        letter-spacing: 0.05em;
+        padding: 15px !important;
+        border-bottom: 1px solid var(--med-border) !important;
+    }
+
+    .selection-prompt {
+        padding: 80px 40px;
+        text-align: center;
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid var(--med-border);
+        border-radius: 40px;
+        margin: 40px auto;
+        color: var(--med-text-main);
+        backdrop-filter: blur(15px);
+        width: 100%;
+        min-width: 100%;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        z-index: 10;
+    }
+
+    body.dark-only .selection-prompt {
+        background: rgba(255, 255, 255, 0.01) !important;
+    }
+
+    .selection-prompt::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(var(--med-primary-rgb), 0.05) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .selection-prompt i {
+        font-size: 5rem;
+        background: linear-gradient(135deg, var(--med-primary) 0%, #3b82f6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 25px;
+        display: inline-block;
+        filter: drop-shadow(0 10px 15px rgba(0, 73, 122, 0.3));
+    }
+
+    .selection-prompt h4 {
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        margin-bottom: 15px;
+    }
+
+    .selection-prompt p {
+        font-size: 1.1rem;
+        opacity: 0.7;
+        line-height: 1.6;
+    }
+
+    /* Fixed DataTable White Block Issue */
+    .dataTables_wrapper, .dataTables_empty, #inventories-table, #inventories-table tbody {
+        background-color: transparent !important;
+    }
+
+    #inventories-table tr {
+        background-color: transparent !important;
+    }
+
+    #inventories-table td {
+        border-color: var(--med-border) !important;
+    }
+
+    .bg-light-soft {
+        background-color: var(--med-bg-body) !important;
+        border: 1px solid var(--med-border) !important;
+        transition: all 0.3s ease;
+    }
+
+    .bg-light-soft:focus {
+        background-color: var(--med-bg-card) !important;
+        border-color: var(--med-primary) !important;
+        box-shadow: 0 0 0 4px rgba(0, 73, 122, 0.1) !important;
+    }
+
+    /* Theme-aware Table Body */
+    #inventories-table, 
+    #inventories-table tbody, 
+    #inventories-table tr, 
+    #inventories-table td {
+        background-color: transparent !important;
+        border-color: var(--med-border) !important;
+    }
+
+    .btn-edit-premium {
+        background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+        color: white !important;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .btn-edit-premium:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        filter: brightness(1.1);
+    }
+
+    body.dark-only .dataTables_wrapper .dataTables_paginate .page-link {
+        background-color: var(--med-bg-card);
+        border-color: var(--med-border);
+        color: var(--med-text-main);
+    }
+
+    /* Minimal Operation Toggle */
+    .minimal-op-toggle {
+        background: var(--med-bg-body);
+        border: 1px solid var(--med-border);
+        padding: 4px;
+        border-radius: 50px;
+        display: inline-flex;
+        gap: 4px;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .minimal-op-toggle .btn {
+        border-radius: 40px;
+        border: none;
+        padding: 8px 24px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        color: var(--med-text-muted);
+        background: transparent;
+    }
+    .minimal-op-toggle .btn.active[data-op="add"] {
+        background: var(--med-primary);
+        color: white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    .minimal-op-toggle .btn.active[data-op="subtract"] {
+        background: #ef4444;
+        color: white;
+        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+    }
+    .minimal-op-toggle .btn:not(.active):hover {
+        background: rgba(0,0,0,0.05);
+        color: var(--med-text-main);
+    }
+    
+    .select2-container--default .select2-results__option[aria-selected=true] {
+        background-color: var(--med-bg-body) !important;
+        color: var(--med-primary) !important;
     }
 </style>
 
@@ -67,17 +267,36 @@
                             <div class="alert alert-success">{{ session('success') }}</div>
                         @endif
 
-                        <div id="distributor_filter_container" class="d-none">
-                            @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
-                                <select id="distributor_filter" class="form-select form-select-sm border-primary"
-                                    style="width: 200px; display: inline-block;">
-                                    <option value="">All Distributors</option>
-                                    @foreach($distributors as $d)
-                                        <option value="{{ $d->id }}">{{ $d->user->name }}</option>
-                                    @endforeach
-                                </select>
-                            @endif
+                        @unless(Auth::user()->hasRole('distributor'))
+                        <div class="inventory-filter-card mb-4">
+                            <div class="row align-items-end g-3">
+                                <div class="col-md-4">
+                                    <span class="filter-label"><i class="fa fa-filter me-2"></i>Select Distributor</span>
+                                    @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
+                                        <select id="distributor_filter" class="form-select select2-dist">
+                                            <option value="">Choose a Distributor...</option>
+                                            @foreach($distributors as $d)
+                                                <option value="{{ $d->id }}">{{ $d->user->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    @endif
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="d-flex flex-wrap justify-content-md-end align-items-center gap-3">
+                                        <div id="table-search-container" class="position-relative" style="min-width: 250px;">
+                                            <i class="fa fa-search position-absolute top-50 translate-middle-y ms-3 text-muted"></i>
+                                            <!-- DataTable Search will be moved here -->
+                                        </div>
+                                        <div id="table-buttons-container"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+                        @else
+                        <div class="d-flex justify-content-end align-items-center mb-4">
+                            <div id="table-buttons-container"></div>
+                        </div>
+                        @endunless
 
                         <div class="table-responsive">
                             <table class="display table table-hover" id="inventories-table">
@@ -105,50 +324,6 @@
         </div>
     </div>
 
-    <!-- Batch Management Modal -->
-    <div class="modal fade" id="batchManageModal" tabindex="-1" aria-labelledby="batchManageModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title fw-bold" id="batchManageModalLabel"><i class="fa fa-layer-group me-2"></i>Batch Breakdown & Management</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="batchManageInfo" class="mb-4">
-                        <h5 class="fw-bold product-name-display text-primary mb-1"></h5>
-                        <p class="text-muted small product-code-display mb-3"></p>
-                        
-                        <div class="card bg-light border-0">
-                            <div class="card-body p-3">
-                                <div class="row g-2" id="batchProdDetailList">
-                                    <!-- Populated dynamically -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover" id="batch-manage-table">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th>Batch No</th>
-                                    <th>Expiry Date</th>
-                                    <th>Distributor</th>
-                                    <th>Stock</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="batch-manage-body">
-                                <!-- Populated dynamically -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     {{-- Create Inventory Modal --}}
     <div class="modal fade" id="createInventoryModal" tabindex="-1" aria-labelledby="createInventoryModalLabel"
@@ -486,42 +661,25 @@
                             <input type="hidden" name="distributor_id" id="edit_distributor_id">
                         @endif
 
-                        <!-- Stock Operation Card -->
-                        <div class="stock-operation-container mb-4">
-                            <label class="form-label fw-bold small text-uppercase text-muted mb-2">Operation Type</label>
-                            <div class="premium-segmented-control">
-                                <div class="segmented-option">
-                                    <input type="radio" name="operation" id="edit_op_set" value="set" checked>
-                                    <label for="edit_op_set">
-                                        <span class="dot"></span> Overwrite
-                                    </label>
-                                </div>
-                                <div class="segmented-option">
-                                    <input type="radio" name="operation" id="edit_op_add" value="add">
-                                    <label for="edit_op_add">
-                                        <span class="plus">+</span> Add
-                                    </label>
-                                </div>
-                                <div class="segmented-option">
-                                    <input type="radio" name="operation" id="edit_op_subtract" value="subtract">
-                                    <label for="edit_op_subtract">
-                                        <span class="minus">-</span> Reduce
-                                    </label>
-                                </div>
-                                <div class="control-glider"></div>
+                        <!-- Minimal Stock Operation Toggle -->
+                        <div class="text-center mb-4">
+                            <label class="form-label fw-bold small text-uppercase text-muted d-block mb-2">Adjust Quantity</label>
+                            <div class="minimal-op-toggle">
+                                <button type="button" class="btn op-btn" data-op="subtract">
+                                    <i class="fa fa-minus me-1"></i> Reduce
+                                </button>
+                                <button type="button" class="btn op-btn active" data-op="add">
+                                    <i class="fa fa-plus me-1"></i> Increase
+                                </button>
                             </div>
-                            <div class="mt-2 text-center">
-                                <span id="edit_op_info" class="badge rounded-pill px-3 py-2 bg-soft-primary text-primary">
-                                    <i class="fa fa-info-circle me-1"></i> This will OVERWRITE current stock.
-                                </span>
-                            </div>
+                            <input type="hidden" name="operation" id="selected_op" value="add">
                         </div>
 
                         <div class="row g-3 align-items-end">
                             <div class="col-md-8">
                                 <div class="form-group mb-0">
-                                    <label class="form-label fw-bold small text-uppercase text-muted" id="edit_stock_label_text">Set Total Quantity</label>
-                                    <input type="number" name="stock" id="edit_stock" class="form-control form-control-lg" required min="0" step="0.01">
+                                    <label class="form-label fw-bold small text-uppercase text-muted" id="edit_stock_label_text">Entry Quantity</label>
+                                    <input type="number" name="stock" id="edit_stock" class="form-control form-control-lg" required min="0.01" step="0.01" placeholder="Enter amount to add/reduce">
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -553,7 +711,61 @@
             </div>
         </div>
     </div>
-    {{-- Redundant Adjustment Modal Removed --}}
+    {{-- Batch List Modal --}}
+    <div class="modal fade" id="batchListModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 28px;">
+                <div class="modal-header bg-soft-primary border-0 p-4">
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0" id="batchListProductName">Detailed Batch List</h5>
+                        <span class="text-muted smaller fw-bold text-uppercase opacity-75">Inventory Breakdown</span>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 pt-2">
+                    <div class="table-responsive rounded-4 border overflow-hidden">
+                        <table class="table table-hover mb-0" id="batchListingTable">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">Batch Number</th>
+                                    <th>Expiry</th>
+                                    <th class="text-center">Stock</th>
+                                    {{-- <th class="text-end pe-4">Actions</th> --}}
+                                </tr>
+                            </thead>
+                            <tbody id="batchListTableBody">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Close Window</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Show Product Details Modal (Replicated from Products for seamless UX) --}}
+    <div class="modal fade" id="showProductDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 28px; overflow: hidden;">
+                <div class="modal-header border-0 p-4" style="background: linear-gradient(135deg, rgba(30, 58, 138, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);">
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0 text-primary" id="detailProductName">Product Specifications</h5>
+                        <span class="text-muted smaller fw-bold text-uppercase opacity-75">Technical & Pricing Details</span>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 pt-2" id="showProductDetailBody">
+                    {{-- Load via JS --}}
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     {{-- Delete Confirmation Modal --}}
     <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
@@ -889,6 +1101,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         @php
             /** @var \App\Models\User $user */
@@ -904,6 +1117,32 @@
             const isDistributor = @json($isDistributor);
 
             // Global Helper for Segmented/Unit Logic
+            window.getMedicineType = function(pName, pData) {
+                const n = (pName || '').toUpperCase();
+                pData = pData || {};
+                const u = parseInt(String(pData.units_per_strip || pData.strip_size || 1).replace(/[^0-9]/g, '') || 1);
+                
+                // Explicit exclusions first
+                if (n.includes('KNEE CAP')) return 'Medical Supply';
+                
+                // Name-based hints for common tablets/capsules (using startsWith/includes)
+                if (n.includes('PANTO') || n.includes('PARA') || n.includes('PANTOPRAZOLE') || n.includes('PARACETAMOL')) return 'Tablet/Capsule';
+
+                // If it has a generic name or multiple units per strip, it's likely a medicine
+                if (pData.generic_name || u > 1) return 'Tablet/Capsule';
+                
+                // Boundary-aware keyword matching
+                if (/\b(TAB|CAP|TABLET|CAPSULE|TABS|CAPS)\b/i.test(n)) return 'Tablet/Capsule';
+                if (/\b(SYP|LIQ|SUSP|SYRUP|LIQUID)\b/i.test(n)) return 'Liquid/Syrup';
+                if (/\b(INJ|INJECTION)\b/i.test(n)) return 'Injection';
+                if (/\b(CRM|OINT|CREAM|OINTMENT)\b/i.test(n)) return 'Cream/Ointment';
+                if (/\b(DROP|DROPS)\b/i.test(n)) return 'Drop/Spray';
+                if (/\b(GEL)\b/i.test(n)) return 'Gel/Topical';
+                if (/\b(POW|POWDER)\b/i.test(n)) return 'Powder';
+                
+                return 'Medical Supply';
+            }
+
             window.checkIsNos = function(pName, pPack, boxSize) {
                 pName = (pName || '').toLowerCase();
                 pPack = (pPack || '').toLowerCase();
@@ -915,195 +1154,133 @@
                 return isNos;
             }
 
-            function openBatchManageModal(row) {
-                const modal = $('#batchManageModal');
-                modal.find('.product-name-display').text(row.product_name);
-                modal.find('.product-code-display').text(row.distributor_product_code);
+            window.formatStockBreakdown = function(data, productDetails, isNos, unitsPerStrip) {
+                if (!data || data <= 0) return '0';
                 
-                // Variant Handling
-                let variant = row.variant;
-                if (!variant && row.product_details) {
-                    // Try to extract from product name if empty
-                    const match = row.product_name.match(/\[(.*?)\]/);
-                    if (match) variant = match[1];
-                }
-                
-                let variantHtml = variant ? `<span class="variant-badge ms-2"><i class="fa fa-tag me-1"></i> Variant: ${variant}</span>` : '';
-                modal.find('.product-name-display').append(variantHtml);
-
-                // Populate Product Details
-                const product = row.product_details || {};
-                let detailsHtml = '';
-                const detailFields = [
-                    { label: 'Generic', value: product.generic_name },
-                    { label: 'Pack', value: product.pack },
-                    { label: 'MRP', value: product.mrp },
-                    { label: 'PTR', value: product.ptr },
-                    { label: 'HSN', value: product.hsn_code },
-                    { label: 'Units/Strip', value: product.units_per_strip },
-                    { label: 'Strips/Box', value: product.strips_per_box },
-                    { label: 'Boxes/Ctn', value: product.boxes_per_carton }
-                ];
-                
-                const isNos = window.checkIsNos(row.product_name, product.pack, product.box_size);
-                
-                detailFields.forEach(f => {
-                    // Hide packaging fields for Nos products as requested
-                    if (isNos && (f.label === 'Units/Strip' || f.label === 'Strips/Box' || f.label === 'Boxes/Ctn')) {
-                        return;
-                    }
-                    // Allow 0, "0.00", and non-empty strings
-                    if (f.value !== undefined && f.value !== null && f.value !== '') {
-                        detailsHtml += `<div class="col-md-3 col-6 mb-2">
-                            <span class="text-muted smaller d-block" style="font-size: 0.65rem; text-transform: uppercase; font-weight: 600;">${f.label}</span>
-                            <span class="fw-bold small text-dark">${f.value}</span>
-                        </div>`;
-                    }
-                });
-                $('#batchProdDetailList').html(detailsHtml || '<div class="col-12 text-muted small text-center">No additional product details</div>');
-
-                const body = $('#batch-manage-body');
-                body.empty();
-                
-                const productDetails = row.product_details || {};
-                const unitsPerStrip = productDetails.units_per_strip || 1;
-                const baseStr = isNos ? 'Nos' : 'Str';
-
-                if (row.batches && row.batches.length > 0) {
-                    row.batches.forEach(b => {
-                        let displayQty = isNos ? Math.round(b.stock * unitsPerStrip) : b.stock;
-                        let rowHtml = `<tr>
-                            <td class="fw-bold">${b.batch_no}</td>
-                            <td>${b.expiry_date}</td>
-                            <td>${b.distributor_name || 'N/A'}</td>
-                            <td class="fw-bold text-success">${displayQty} ${baseStr}</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary single-batch-edit-btn" 
-                                        data-batch='${JSON.stringify(b).replace(/"/g, '&quot;')}'
-                                        data-parent='${JSON.stringify(row).replace(/"/g, '&quot;')}'>
-                                    <i class="fa fa-edit"></i> Edit
-                                </button>
-                            </td>
-                        </tr>`;
-                        body.append(rowHtml);
-                    });
-                } else {
-                    body.append('<tr><td colspan="5" class="text-center text-muted">No batch data available.</td></tr>');
-                }
-                
-                modal.modal('show');
-            }
-
-            // Delegated click handler for viewing batches
-            $('#inventories-table').on('click', '.view-batches-btn', function(e) {
-                e.preventDefault();
-                let rowData = table.row($(this).closest('tr')).data();
-                if (rowData) {
-                    openBatchManageModal(rowData);
-                }
-            });
-
-            // Delegated click handler for editing single batch from modal
-            $('#batch-manage-body').on('click', '.single-batch-edit-btn', function() {
-                let batch = $(this).data('batch');
-                let parentRow = $(this).data('parent');
-                triggerSingleBatchEdit(batch, parentRow);
-            });
-
-            window.triggerSingleBatchEdit = function(batch, parentRow) {
-                // Close management modal
-                $('#batchManageModal').modal('hide');
-                
-                // Construct a synthetic row for the edit modal
-                const syntheticRow = {
-                    ...parentRow,
-                    id: batch.id,
-                    batch_no: batch.batch_no,
-                    expiry_date: batch.expiry_date,
-                    raw_expiry_date: batch.raw_expiry_date,
-                    stock: batch.stock // Sub-batch stock
-                };
-                
-                // Wait for modal fade out
-                setTimeout(() => {
-                    openEditModal(syntheticRow);
-                }, 400);
-            };
-
-            function generateBatchTable(batches, productDetails, isNos) {
-                if (!batches || batches.length === 0) return '<div class="text-muted">No batch data available.</div>';
-                
-                let boxSize = productDetails.strips_per_box || 0;
-                let unitsPerStrip = productDetails.units_per_strip || 1;
+                // Robustly parse sizes even if they come as strings like "10x10" or "30ml"
+                let boxSize = parseInt(productDetails.strips_per_box || productDetails.box_size || 0);
+                let cartonSize = parseInt(productDetails.boxes_per_carton || productDetails.carton_size || 0);
                 let baseStr = isNos ? 'Nos' : 'Str';
+                let totalQty = isNos ? Math.round(data * unitsPerStrip) : data;
 
-                let html = '<table class="batch-popover-table">';
-                html += '<thead><tr><th>Batch</th><th>Expiry</th><th>Stock</th></tr></thead><tbody>';
+                // Fallback to plain unit view if no clear breakdown rules exist
+                if (isNos || (boxSize <= 1 && cartonSize <= 1)) {
+                    return `${totalQty} ${baseStr}`;
+                }
+
+                let cartons = 0;
+                let remaining = data;
                 
-                batches.forEach(b => {
-                    let qty = isNos ? Math.round(b.stock * unitsPerStrip) : b.stock;
-                    html += `<tr>
-                        <td class="fw-bold">${b.batch_no}</td>
-                        <td>${b.expiry_date}</td>
-                        <td class="text-end fw-bold">${qty} ${baseStr}</td>
-                    </tr>`;
-                });
+                // Process Cartons if rule exists
+                if (cartonSize > 1 && boxSize > 0) {
+                    let stripsPerCarton = boxSize * cartonSize;
+                    cartons = Math.floor(data / stripsPerCarton);
+                    remaining = data % stripsPerCarton;
+                }
+
+                // Process Boxes if rule exists
+                let boxes = boxSize > 1 ? Math.floor(remaining / boxSize) : 0;
+                let strips = boxSize > 1 ? remaining % boxSize : remaining;
+
+                let parts = [];
+                if (cartons > 0) parts.push(`<span class="fw-bold text-dark">${cartons}</span> Ctn`);
+                if (boxes > 0) parts.push(`<span class="fw-bold text-dark">${boxes}</span> Box`);
+                if (strips > 0 || parts.length === 0) parts.push(`<span class="fw-bold text-dark">${strips}</span> ${baseStr}`);
+
+                let totalRes = parts.join(' | ');
                 
-                html += '</tbody></table>';
-                return html;
+                // Calculate total base units (Tablets/Nos)
+                const units = parseInt(unitsPerStrip) || 1;
+                const totalBaseUnits = Math.round(data * units);
+                
+                if (totalBaseUnits > 0) {
+                    const unitLabel = isNos ? 'Nos' : 'Tabs';
+                    totalRes += ` <span class="smaller text-muted" style="font-size: 0.7rem;">(${totalBaseUnits} ${unitLabel})</span>`;
+                }
+
+                return totalRes;
             }
 
             var table = $('#inventories-table').DataTable({
-                processing: false, // Disabled to prevent stuck "pill" loader
+                processing: false,
                 serverSide: true,
                 ajax: {
                     url: "{{ route('inventories.index') }}",
                     type: 'GET',
                     data: function (d) {
-                        d.distributor_id = $('#distributor_filter').val();
+                        const distFilter = $('#distributor_filter');
+                        if (distFilter.length) {
+                             d.distributor_id = distFilter.val();
+                        }
                     },
-                    data: 'data',
-                    error: function (xhr, error, thrown) {
-                        console.error('Inventories AJAX error:', xhr.responseText);
-                    }
+                    dataSrc: 'data'
                 },
                 language: {
                     emptyTable: `<div class="selection-prompt">
-                                    <i class="fa fa-hand-pointer fa-3x text-primary mb-3"></i>
-                                    <h5>Selection Required</h5>
-                                    <p class="text-muted">Please select a distributor from the filter to view their inventory.</p>
+                                    <i class="fa fa-cubes"></i>
+                                    <h4>Inventory Selection</h2>
+                                    <p>Select a pharmaceutical distributor from the filter panel above to analyze their current stock levels and inventory breakdown.</p>
                                  </div>`,
-                    zeroRecords: `<div class="text-center p-4">
-                                    <i class="fa fa-search fa-2x text-muted mb-2"></i>
-                                    <p>No matching products found for this distributor.</p>
-                                  </div>`
+                    zeroRecords: `<div class="text-center p-5">
+                                    <i class="fa fa-search fa-3x text-muted mb-3"></i>
+                                    <h5 class="fw-bold">No Products Found</h5>
+                                    <p class="text-muted">We couldn't find any products in stock for the selected distributor matching your search.</p>
+                                  </div>`,
+                    info: "Showing _START_ to _END_ of _TOTAL_ products",
+                    infoEmpty: "Showing 0 to 0 of 0 products",
+                    lengthMenu: "Show _MENU_ entries"
+                },
+                preDrawCallback: function (settings) {
+                    const distFilter = $('#distributor_filter');
+                    const hasDistributor = isDistributor || (distFilter.length && distFilter.val() !== "");
+                    
+                    if (hasDistributor) {
+                        settings.oLanguage.sEmptyTable = `<div class="selection-prompt">
+                                    <i class="fa fa-box-open"></i>
+                                    <h4>Inventory Empty</h4>
+                                    <p>No products are currently registered in this inventory. Please add products or check back later.</p>
+                                  </div>`;
+                    } else {
+                        settings.oLanguage.sEmptyTable = `<div class="selection-prompt">
+                                    <i class="fa fa-cubes"></i>
+                                    <h4>Inventory Selection</h4>
+                                    <p>Select a pharmaceutical distributor from the filter panel above to analyze their current stock levels and inventory breakdown.</p>
+                                 </div>`;
+                    }
                 },
                 drawCallback: function (settings) {
-                    // Initialize popovers after each draw
                     var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
                     var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
                         return new bootstrap.Popover(popoverTriggerEl, {
-                            sanitize: false // Allow table HTML in popover
+                            sanitize: false
                         })
                     });
-
-                    // Close other popovers when one is opened
-                    $(document).on('click', function (e) {
-                         $('[data-bs-toggle="popover"]').each(function () {
-                            if (!$(this).is(e.target) && $(this).has(e.target).length === 0 && $('.popover').has(e.target).length === 0) {
-                                $(this).popover('hide');
-                            }
-                        });
-                    });
                 },
-                dom: "<'row mb-3'<'col-sm-12'B>>" +
-                    "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" +
-                    "<'row'<'col-sm-12'tr>>" +
-                    "<'row mt-3'<'col-sm-12 col-md-5 d-flex justify-content-center justify-content-md-start align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-center justify-content-md-end align-items-center'p>>",
+                dom: "<'row'<'col-sm-12'tr>>" +
+                    "<'row mt-4 align-items-center'<'col-md-4'l><'col-md-4 text-center'i><'col-md-4'p>>",
                 initComplete: function () {
-                    var $filter = $('#distributor_filter_container');
-                    $filter.removeClass('d-none').addClass('ms-4');
-                    $('.dataTables_length').addClass('d-flex align-items-center').append($filter);
+                    // Move search box to custom container
+                    $('.dataTables_filter').hide();
+                    const $searchContainer = $('#table-search-container');
+                    if ($searchContainer.length) {
+                        const $searchInput = $('.dataTables_filter input').addClass('form-control border-0 bg-light-soft').css({
+                            'padding-left': '40px',
+                            'border-radius': '12px',
+                            'height': '48px'
+                        });
+                        $searchInput.attr('placeholder', 'Quick Search Products...');
+                        $searchContainer.append($searchInput);
+                    }
+                    
+                    // Move buttons to custom container
+                    table.buttons().container().appendTo('#table-buttons-container');
+                    
+                    // Initialize Select2
+                    $('.select2-dist').select2({
+                        placeholder: "Search & Select Distributor...",
+                        allowClear: true,
+                        width: '100%'
+                    });
                 },
                 buttons: {
                     dom: {
@@ -1168,12 +1345,13 @@
                         
                         return `
                             <div class="product-info-cell">
-                                <a href="javascript:void(0)" class="fw-bold product-main-name view-batches-btn" 
-                                   style="text-decoration: none; color: inherit; border-bottom: 1px dotted #ccc;"
-                                   title="Click to view batches & details">
-                                    ${cleanName}
-                                </a>
-                                <div class="text-muted small">${row.distributor_product_code || ''}</div>
+                                 <a href="javascript:void(0)" class="fw-bold product-main-name view-product-details text-primary" 
+                                    style="text-decoration: none;"
+                                    data-product='${JSON.stringify(row.product_details || {}).replace(/'/g, "&apos;")}'
+                                    title="View Product Technical Details">
+                                     ${cleanName}
+                                 </a>
+                                 <div class="text-muted small">${row.distributor_product_code || ''}</div>
                             </div>
                         `;
                     }
@@ -1213,85 +1391,29 @@
                     className: 'text-center',
                     render: function (data, type, row) {
                         if (!row.product_details) return '-';
-
-                        let boxSize = row.product_details.strips_per_box || 0;
-                        let cartonSize = row.product_details.boxes_per_carton || 0;
-                        let unitsPerStrip = row.product_details.units_per_strip || 1;
-
-                        let pPack = row.product_details.pack ? row.product_details.pack.toLowerCase() : '';
-                        let pName = row.product_name ? row.product_name.toLowerCase() : '';
-                        let boxSizeStr = row.product_details.box_size || '';
-                        let isNos = boxSizeStr === "" || pPack.includes('nos') || pPack.includes('count') || pPack.includes('pair');
+                        const pData = row.product_details || {};
+                        const isNos = window.checkIsNos(row.product_name, pData.pack, pData.box_size);
+                        const unitsPerStrip = pData.units_per_strip || 1;
                         
-                        let baseStr = isNos ? 'Nos' : 'Str';
-                        let totalQty = isNos ? Math.round(data * unitsPerStrip) : data;
-
-                        let html = `<div class="breakdown-container view-batches-btn" style="cursor: pointer;">`;
+                        const displayStr = window.formatStockBreakdown(data, pData, isNos, unitsPerStrip);
                         
-                        if (isNos) {
-                            html += `<div class="breakdown-main fw-bold text-primary">${totalQty} ${baseStr} <i class="fa fa-external-link-alt ms-1 small"></i></div>`;
-                        } else {
-                            let cartons = 0;
-                            let remaining = data;
-                            if (cartonSize > 0 && boxSize > 0) {
-                                let stripsPerCarton = boxSize * cartonSize;
-                                cartons = Math.floor(data / stripsPerCarton);
-                                remaining = data % stripsPerCarton;
-                            }
-                            let boxes = boxSize > 0 ? Math.floor(remaining / boxSize) : 0;
-                            let strips = boxSize > 0 ? remaining % boxSize : remaining;
-
-                            let parts = [];
-                            if (cartons > 0) parts.push(`${cartons} Ctn`);
-                            if (boxes > 0) parts.push(`${boxes} Box`);
-                            if (strips > 0 || parts.length === 0) parts.push(`${strips} ${baseStr}`);
-                            
-                            html += `<div class="breakdown-main fw-bold text-primary">${parts.join(', ')} <i class="fa fa-external-link-alt ms-1 small"></i></div>`;
-                        }
-
-                        // Packaging info line
-                        if (isNos) {
-                            if (unitsPerStrip > 1 || boxSize > 1) {
-                                html += `<div class="packaging-info text-muted small" style="font-size: 0.75rem;">`;
-                                html += `(${unitsPerStrip} Nos/Box | ${boxSize} Box/Ctn)`;
-                                html += `</div>`;
-                            }
-                        } else {
-                            html += `<div class="packaging-info text-muted small" style="font-size: 0.75rem;">`;
-                            html += `(${boxSize} Str/Box | ${cartonSize} Box/Ctn)`;
-                            html += `</div>`;
-                        }
-                        html += `</div>`;
-                        return html;
+                        return `<div class="breakdown-container view-batches-btn text-primary fw-bold" style="cursor: pointer;">
+                                    <span>${displayStr} <i class="fa fa-external-link-alt ms-1 small opacity-50"></i></span>
+                                </div>`;
                     }
                 },
                 {
-                    data: 'id',
+                    data: null,
                     orderable: false,
                     searchable: false,
-                    render: function (id, type, row) {
-                        let deleteUrl = "{{ route('inventories.destroy', ':id') }}".replace(':id', id);
-                        let csrf = "{{ csrf_token() }}";
-                        let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
-
-                        let btns = `<div class="action-buttons">`;
-                        
-                        // Edit button - Now opens Batch management modal
-                        if (canEdit) {
-                            btns += `<button type="button" class="btn btn-sm btn-teal view-batches-btn me-1 rounded-pill px-3" title="View & Manage Batches"><i class="fa fa-layer-group me-1"></i> Edit/Batches</button>`;
-                        }
-
-                        // Delete button
-                        if (canDelete) {
-                            btns += `<form id="delete-form-${id}" action="${deleteUrl}" method="POST" style="display:inline;">
-                                        <input type="hidden" name="_token" value="${csrf}">
-                                        <input type="hidden" name="_method" value="DELETE">
-                                        <button type="button" class="btn btn-sm btn-danger delete-btn" data-id="${id}" title="Remove from Stock"><i class="fa fa-trash"></i></button>
-                                    </form>`;
-                        }
-                        
-                        btns += `</div>`;
-                        return btns;
+                    className: 'text-center',
+                    render: function (data, type, row) {
+                        return `
+                            <button type="button" class="btn btn-sm btn-edit-premium px-3 view-batches-btn d-inline-flex align-items-center gap-2" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #fff; border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                                <i class="fa fa-eye small" style="color: #3b82f6;"></i>
+                                <span class="fw-bold">View</span>
+                            </button>
+                        `;
                     }
                 }
                 ]
@@ -1310,7 +1432,7 @@
             function calculateEditTotal() {
                 let qty = parseFloat($('#edit_stock').val()) || 0;
                 let unit = $('#edit_unit').val();
-                let op = $('input[name="operation"]:checked').val();
+                let op = $('#selected_op').val();
 
                 let total = 0;
                 if (unit === 'strip' || unit === 'nos') {
@@ -1391,36 +1513,164 @@
                 currentBoxesPerCarton = parseInt(product.boxes_per_carton) || 1;
                 currentUnitsPerStrip = parseInt(product.units_per_strip) || 1;
 
-                $('input[name="operation"][value="set"]').prop('checked', true).trigger('change');
-                
-                // Set stock value
-                let displayStock = isNos ? Math.round(data.stock * currentUnitsPerStrip) : data.stock;
-                $('#edit_stock').val(displayStock);
-                
+                $('#edit_stock').val('');
                 calculateEditTotal();
+                
+                // If opening edit from batch list, hide batch list first
+                $('#batchListModal').modal('hide');
                 $('#editInventoryModal').modal('show');
             }
 
-            $('#inventories-table').on('click', '.edit-btn', function () {
-                var data = $(this).data('inventory');
-                openEditModal(data);
+            $('#inventories-table').on('click', '.view-batches-btn', function () {
+                const tr = $(this).closest('tr');
+                const row = table.row(tr).data();
+                if (!row) return;
+
+                const pData = row.product_details || {};
+                const unitsPerStrip = parseInt(pData.units_per_strip || pData.strip_size || 1);
+                const medType = window.getMedicineType(row.product_name, pData);
+                const isTablet = medType === 'Tablet/Capsule';
+                
+                $('#batchListProductName').html(`${row.product_name} <span class="badge bg-soft-primary text-primary ms-2 rounded-pill" style="font-size: 0.65rem; vertical-align: middle;">${medType}</span>`);
+                
+                // Add Packaging Info as subtitle for context
+                let packParts = [];
+                if (isTablet) {
+                    packParts.push(`Tab/Str: ${pData.strip_size || pData.units_per_strip + 's'}`);
+                    packParts.push(`Str/Box: ${pData.box_size || pData.strips_per_box || 1}`);
+                    if (pData.carton_size && pData.carton_size !== '-' || (pData.boxes_per_carton > 1)) {
+                        packParts.push(`Box/Ctn: ${pData.carton_size || pData.boxes_per_carton}`);
+                    }
+                } else if (pData.pack && pData.pack !== '-') {
+                    packParts.push(`Packaging: ${pData.pack}`);
+                }
+                
+                $('#batchListModal .text-muted.smaller').text(packParts.length > 0 ? packParts.join(' | ') : 'Inventory');
+
+                const isNos = window.checkIsNos(row.product_name, pData.pack, pData.box_size);
+                const baseStr = isNos ? 'Nos' : 'Str';
+
+                // Re-init the minimal toggle to Add
+                $('.op-btn[data-op="add"]').addClass('active');
+                $('.op-btn[data-op="subtract"]').removeClass('active');
+                $('#selected_op').val('add');
+
+                let html = '';
+                row.batches.forEach(b => {
+                    const displayStr = window.formatStockBreakdown(b.stock, pData, isNos, unitsPerStrip);
+                    html += `<tr>
+                        <td class="ps-4 align-middle">
+                            <span class="fw-bold">${b.batch_no}</span>
+                            ${b.variant ? `<span class="badge bg-soft-info text-info ms-2 rounded-pill">${b.variant}</span>` : ''}
+                            <div class="smaller text-muted">${b.distributor_name}</div>
+                        </td>
+                        <td class="align-middle">${b.expiry_date}</td>
+                        <td class="text-center align-middle">
+                            <span class="badge ${b.stock > 0 ? 'bg-soft-success text-success' : 'bg-soft-danger text-danger'} rounded-pill px-3 fw-bold" style="font-size: 0.85rem; border: 1px solid rgba(0,0,0,0.05);">
+                                ${displayStr}
+                                ${isTablet ? `<span class="opacity-50 ms-1 fw-normal" style="font-size: 0.75rem;">(${unitsPerStrip}s)</span>` : ''}
+                            </span>
+                        </td>
+                        {{-- 
+                        <td class="text-end pe-4 align-middle">
+                            <button class="btn btn-sm btn-primary rounded-pill px-3 edit-single-batch d-inline-flex align-items-center gap-2" 
+                                    data-batch='${JSON.stringify({...row, ...b, product_details: pData}).replace(/'/g, "&apos;")}' title="Adjust this Batch">
+                                <i class="fa fa-pencil-alt small"></i>
+                                <span>Edit</span>
+                            </button>
+                        </td>
+                        --}}
+                    </tr>`;
+                });
+
+                $('#batchListTableBody').html(html);
+                $('#batchListModal').modal('show');
+            });
+
+            // Handle Product Technical Details click (Pricing/Packaging)
+            $(document).on('click', '.view-product-details', function(e) {
+                e.preventDefault();
+                const product = $(this).data('product');
+                if (!product) return;
+
+                const html = `
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-12">
+                            <div class="p-4 rounded-4 text-center border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(30, 58, 138, 0.03) 0%, rgba(59, 130, 246, 0.03) 100%);">
+                                <h3 class="fw-bold text-primary mb-3">${product.product_name || 'N/A'}</h3>
+                                <div class="d-flex flex-wrap justify-content-center gap-3">
+                                    <span class="badge bg-white text-dark border-0 shadow-sm px-3 py-2 rounded-pill"><i class="fa fa-tag me-1 text-primary"></i> ${product.product_code || 'N/A'}</span>
+                                    <span class="badge bg-white text-dark border-0 shadow-sm px-3 py-2 rounded-pill"><i class="fa fa-dna me-1 text-info"></i> ${product.generic_name || 'Generic N/A'}</span>
+                                    <span class="badge bg-white text-dark border-0 shadow-sm px-3 py-2 rounded-pill"><i class="fa fa-box me-1 text-warning"></i> Pack: ${product.pack || 'N/A'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-md-6 border-end">
+                            <div class="p-3 bg-white rounded-4 border-0 shadow-sm h-100">
+                                <h6 class="text-primary fw-bold mb-3 border-bottom pb-2"><i class="fa fa-cubes me-2"></i>Stock & Packaging</h6>
+                                <dl class="row mb-0 mt-2">
+                                    ${(product.pack && product.pack !== '-') ? `
+                                        <dt class="col-sm-5 text-muted small text-uppercase">Pack</dt>
+                                        <dd class="col-sm-7 fw-bold">${product.pack}</dd>
+                                    ` : ''}
+
+                                    <dt class="col-sm-5 text-muted small text-uppercase">Tablet/Strip</dt>
+                                    <dd class="col-sm-7 fw-bold">${product.units_per_strip || product.strip_size || '-'}</dd>
+
+                                    <dt class="col-sm-5 text-muted small text-uppercase">Strip / Box</dt>
+                                    <dd class="col-sm-7 fw-bold">${product.strips_per_box || product.box_size || '-'}</dd>
+
+                                    ${(product.boxes_per_carton > 1 || (product.carton_size && product.carton_size !== '-')) ? `
+                                        <dt class="col-sm-5 text-muted small text-uppercase">Box / Carton</dt>
+                                        <dd class="col-sm-7 fw-bold">${product.carton_size || product.boxes_per_carton}</dd>
+                                    ` : ''}
+
+                                    <dt class="col-sm-5 text-muted small text-uppercase">HSN</dt>
+                                    <dd class="col-sm-7 fw-bold">${product.hsn_code || '-'}</dd>
+                                </dl>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="p-3 bg-white rounded-4 border-0 shadow-sm h-100">
+                                <h6 class="text-primary fw-bold mb-3 border-bottom pb-2"><i class="fa fa-indian-rupee-sign me-2"></i>Pricing Details</h6>
+                                <dl class="row mb-0 mt-2">
+                                    <dt class="col-sm-5 text-muted small text-uppercase">MRP</dt>
+                                    <dd class="col-sm-7 fw-bold text-dark">₹${parseFloat(product.mrp || 0).toFixed(2)}</dd>
+
+                                    <dt class="col-sm-5 text-muted small text-uppercase">PTR</dt>
+                                    <dd class="col-sm-7 fw-bold text-dark">₹${parseFloat(product.ptr || 0).toFixed(2)}</dd>
+
+                                    <dt class="col-sm-5 text-muted small text-uppercase">PTS</dt>
+                                    <dd class="col-sm-7 fw-bold text-dark">₹${parseFloat(product.pts || 0).toFixed(2)}</dd>
+
+                                    <dt class="col-sm-5 text-muted small text-uppercase">Loyalty %</dt>
+                                    <dd class="col-sm-7 fw-bold text-info">${parseFloat(product.loyalty_point_percentage || 0).toFixed(2)}%</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                $('#showProductDetailBody').html(html);
+                $('#showProductDetailsModal').modal('show');
+            });
+
+            $(document).on('click', '.edit-single-batch', function() {
+                const data = $(this).data('batch');
+                window.openEditModal(data);
             });
 
             window.updateOperationUI = function(op) {
-                const info = $('#edit_op_info');
                 const label = $('#edit_stock_label_text');
                 
-                if (op === 'set') {
-                    info.html('<i class="fa fa-info-circle me-1"></i> This will <b>OVERWRITE</b> the current stock value.').removeClass('text-success text-danger').addClass('text-primary');
-                    label.text('Final Total Stock');
-                    $('#edit_conv_info').hide();
-                } else if (op === 'add') {
-                    info.html('<i class="fa fa-plus-circle me-1"></i> This will <b>ADD</b> to the existing stock.').removeClass('text-primary text-danger').addClass('text-success');
+                if (op === 'add') {
                     label.text('Quantity to Add');
                     $('#edit_conv_info').show();
                     $('#edit_stock').val('');
                 } else if (op === 'subtract') {
-                    info.html('<i class="fa fa-minus-circle me-1"></i> This will <b>REDUCE</b> the existing stock.').removeClass('text-primary text-success').addClass('text-danger');
                     label.text('Quantity to Reduce');
                     $('#edit_conv_info').show();
                     $('#edit_stock').val('');
@@ -1428,11 +1678,13 @@
                 calculateEditTotal();
             }
 
-            $('input[name="operation"]').on('change', function() {
-                updateOperationUI($(this).val());
+            $('.op-btn').on('click', function() {
+                const op = $(this).data('op');
+                $('.op-btn').removeClass('active');
+                $(this).addClass('active');
+                $('#selected_op').val(op);
+                updateOperationUI(op);
             });
-
-            $('#edit_stock, #edit_unit').on('input change', calculateEditTotal);
 
             // Delete Confirmation Handler
             let deleteFormId = null;

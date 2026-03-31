@@ -16,7 +16,7 @@
         /* Segmented Control for Payment Filter */
         .segmented-control {
             display: flex;
-            background-color: #e2e8f0;
+            background-color: var(--med-border, #e2e8f0);
             border-radius: 50px;
             padding: 4px;
             position: relative;
@@ -33,22 +33,22 @@
             margin: 0;
             font-size: 0.75rem;
             font-weight: 700;
-            color: #64748b;
+            color: var(--med-text-muted, #64748b);
             cursor: pointer;
             position: relative;
             z-index: 2;
-            transition: color 0.3s ease;
+            transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         .segmented-control input:checked + label {
-            color: #0f172a;
+            color: var(--med-text-main, #0f172a);
         }
         #pay_paid:checked + label {
-            color: #15803d;
+            color: var(--med-paid-text, #15803d);
         }
         #pay_pending:checked + label {
-            color: #b45309;
+            color: var(--med-pending-text, #b45309);
         }
         .selection-indicator {
             position: absolute;
@@ -56,7 +56,7 @@
             bottom: 4px;
             left: 4px;
             width: calc(33.333% - 2.66px);
-            background: #ffffff;
+            background: var(--med-bg-card, #ffffff);
             border-radius: 50px;
             z-index: 1;
             transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -64,15 +64,15 @@
         }
         #pay_all:checked ~ .selection-indicator {
             transform: translateX(0);
-            background: #ffffff;
+            background: var(--med-bg-card, #ffffff);
         }
         #pay_paid:checked ~ .selection-indicator {
             transform: translateX(100%);
-            background: #dcfce7;
+            background: var(--med-paid-bg, #dcfce7);
         }
         #pay_pending:checked ~ .selection-indicator {
             transform: translateX(200%);
-            background: #fef9c3;
+            background: var(--med-pending-bg, #fef9c3);
         }
 
         .dataTables_length {
@@ -135,34 +135,35 @@
 
         /* Minimal Filter Bar Styles */
         .filter-bar {
-            background: #fff;
+            background: var(--med-bg-card);
+            border: 1px solid var(--med-border);
             border-radius: 16px;
             transition: all 0.3s ease;
         }
 
         .filter-bar:hover {
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05) !important;
+            box-shadow: var(--med-shadow-soft) !important;
         }
 
         .select2-minimal + .select2-container .select2-selection--single {
-            border: 1px solid #dee2e6;
+            border: 1px solid var(--med-border);
             border-radius: 10px;
             height: 38px;
             padding-left: 5px;
-            background-color: #f8f9fa;
+            background-color: var(--med-bg-body);
             transition: all 0.2s;
         }
 
         .select2-minimal + .select2-container .select2-selection--single:hover {
-            border-color: #3b82f6;
-            background-color: #fff;
+            border-color: var(--med-primary);
+            background-color: var(--med-bg-card);
         }
 
         .select2-minimal + .select2-container--default .select2-selection--single .select2-selection__rendered {
             line-height: 36px;
             font-size: 0.8rem;
             font-weight: 500;
-            color: #475569;
+            color: var(--med-text-main);
         }
 
         .select2-minimal + .select2-container--default .select2-selection--single .select2-selection__arrow {
@@ -174,24 +175,21 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 1px solid #dee2e6;
-            background: #fff;
-            color: #64748b;
+            border: 1px solid var(--med-border);
+            background: var(--med-bg-card);
+            color: var(--med-text-muted);
             transition: all 0.2s;
             font-size: 0.8rem;
+            border-radius: 10px;
         }
 
         #btn-clear-all:hover {
-            background: #fee2e2;
-            color: #b91c1c;
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
             border-color: #fca5a5;
         }
 
         /* --- New Order View UI Styles --- */
-        .order-timeline {
-            position: relative;
-            padding-left: 30px;
-        }
         .order-timeline::before {
             content: '';
             position: absolute;
@@ -199,7 +197,7 @@
             top: 5px;
             bottom: 5px;
             width: 2px;
-            background: #e2e8f0;
+            background: var(--med-border, #e2e8f0);
         }
         .timeline-item {
             position: relative;
@@ -212,77 +210,29 @@
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            background: #cbd5e1;
-            border: 2px solid #fff;
-            box-shadow: 0 0 0 2px #e2e8f0;
+            background: var(--med-text-muted, #cbd5e1);
+            border: 2px solid var(--med-bg-card, #fff);
+            box-shadow: 0 0 0 2px var(--med-border, #e2e8f0);
             z-index: 1;
         }
         .timeline-item.active .timeline-marker {
-            background: #00497a;
-            box-shadow: 0 0 0 2px #00497a44;
+            background: var(--med-primary, #00497a);
+            box-shadow: 0 0 0 2px rgba(0, 73, 122, 0.2);
         }
         .timeline-content h6 {
             font-size: 0.85rem;
             margin-bottom: 2px;
-            color: #1e293b;
+            color: var(--med-text-main, #1e293b);
         }
         .timeline-content span {
             font-size: 0.75rem;
-            color: #64748b;
+            color: var(--med-text-muted, #64748b);
         }
-
-        .payment-status-card {
-            border-radius: 16px;
-            padding: 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            height: 100%;
-        }
-        .payment-status-card.paid {
-            background: #f0fdf4;
-            border: 1px solid #dcfce7;
-        }
-        .payment-status-card.pending {
-            background: #fffbeb;
-            border: 1px solid #fef3c7;
-        }
-        .payment-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-        }
-        .paid .payment-icon {
-            background: #dcfce7;
-            color: #15803d;
-        }
-        .pending .payment-icon {
-            background: #fef3c7;
-            color: #b45309;
-        }
-        .payment-info h6 {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 2px;
-            color: #64748b;
-        }
-        .payment-info p {
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-bottom: 0;
-        }
-        .paid .payment-info p { color: #15803d; }
-        .pending .payment-info p { color: #b45309; }
         /* --- End New Order View UI Styles --- */
     </style>
     <div class="container-fluid">
         <div class="card shadow-sm border-0 rounded-3">
-            <div class="card-header bg-white border-bottom pb-0">
+            <div class="card-header border-bottom pb-0" style="background-color: var(--med-bg-card) !important;">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-primary fw-bold">Retailer Orders</h5>
                     @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'retailer']) || Auth::user()->hasPermissionToCategory('retailer_orders', 'add'))
@@ -539,7 +489,7 @@
                     </div>
                     
                     <div class="mb-0">
-                        <label class="form-label fw-bold text-dark small text-uppercase">Cancellation Reason <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold small text-uppercase" style="color: var(--med-text-main);">Cancellation Reason <span class="text-danger">*</span></label>
                         <textarea id="cancel_reason_input" class="form-control border-0 bg-light shadow-none" rows="4" required
                             placeholder="E.g., Ordered by mistake, found better price elsewhere, stock delay..." 
                             style="border-radius: 12px; resize: none;"></textarea>
@@ -716,8 +666,8 @@
                     name: 'distributor_name',
                     render: function (data, type, row) {
                         if (!data || data === 'N/A') return '-';
-                        return `<span class="fw-bold text-dark entity-info-popover" 
-                                      style="cursor: pointer;"
+                        return `<span class="fw-bold entity-info-popover" 
+                                      style="cursor: pointer; color: var(--med-text-main);"
                                       data-bs-toggle="popover" 
                                       data-bs-trigger="hover" 
                                       data-bs-html="true"
@@ -1443,7 +1393,7 @@
                             <div class="card h-100 border-0 shadow-sm" style="border-radius: 16px !important;">
                                 <div class="card-body">
                                     <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;"><i class="fa fa-shop me-2"></i>Retailer Info</h6>
-                                    <h5 class="fw-bold text-dark mb-1">${row.retailer_shop || row.retailer_name}</h5>
+                                    <h5 class="fw-bold mb-1" style="color: var(--med-text-main);">${row.retailer_shop || row.retailer_name}</h5>
                                     ${row.retailer_shop ? `<div class="text-muted small mb-2"><i class="fa fa-user me-2"></i>${row.retailer_name}</div>` : ''}
                                     <div class="d-flex align-items-center mb-1"><i class="fa fa-phone text-muted me-2" style="width: 16px;"></i> <span class="small">${row.retailer_phone || 'N/A'}</span></div>
                                     <div class="d-flex align-items-start"><i class="fa fa-map-marker text-muted me-2 mt-1" style="width: 16px;"></i> <span class="text-wrap small">${row.retailer_address || 'N/A'}</span></div>
@@ -1454,7 +1404,7 @@
                             <div class="card h-100 border-0 shadow-sm" style="border-radius: 16px !important;">
                                 <div class="card-body">
                                     <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;"><i class="fa fa-building me-2"></i>Distributor Info</h6>
-                                    <h5 class="fw-bold text-dark mb-2">${row.distributor_name || 'N/A'}</h5>
+                                    <h5 class="fw-bold mb-2" style="color: var(--med-text-main);">${row.distributor_name || 'N/A'}</h5>
                                     <div class="d-flex align-items-center mb-1"><i class="fa fa-phone text-muted me-2" style="width: 16px;"></i> <span class="small">${row.distributor_phone || 'N/A'}</span></div>
                                 </div>
                             </div>
@@ -1467,12 +1417,12 @@
                                 <table class="table mb-0">
                                     <thead class="bg-light">
                                         <tr>
-                                            <th class="py-3 px-4" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Product</th>
-                                            <th class="py-3 px-4 text-center" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Batch/Exp</th>
-                                            <th class="py-3 px-4 text-center" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Qty</th>
-                                            <th class="py-3 px-4 text-center" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Free</th>
-                                            <th class="py-3 px-4 text-end" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Price</th>
-                                            <th class="py-3 px-4 text-end" style="background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important;">Total</th>
+                                            <th class="py-3 px-4" style="border-bottom: 1px solid var(--med-border) !important;">Product</th>
+                                            <th class="py-3 px-4 text-center" style="border-bottom: 1px solid var(--med-border) !important;">Batch/Exp</th>
+                                            <th class="py-3 px-4 text-center" style="border-bottom: 1px solid var(--med-border) !important;">Qty</th>
+                                            <th class="py-3 px-4 text-center" style="border-bottom: 1px solid var(--med-border) !important;">Free</th>
+                                            <th class="py-3 px-4 text-end" style="border-bottom: 1px solid var(--med-border) !important;">Price</th>
+                                            <th class="py-3 px-4 text-end" style="border-bottom: 1px solid var(--med-border) !important;">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1490,9 +1440,9 @@
                     }
 
                     detailsHtml += `
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <tr style="border-bottom: 1px solid var(--med-border);">
                             <td class="py-3 px-4">
-                                <div class="fw-bold text-dark">${name}</div>
+                                <div class="fw-bold" style="color: var(--med-text-main);">${name}</div>
                             </td>
                             <td class="py-3 px-4 text-center">${batchHtml}</td>
                             <td class="py-3 px-4 text-center"><span class="badge bg-soft-primary text-primary px-2 py-1" style="font-size: 0.75rem;">${qty} ${i.unit || ''}</span></td>
@@ -1522,7 +1472,7 @@
                         <div class="col-md-6">
                             <div class="payment-status-card ${row.payment_status === 'paid' ? 'paid' : 'pending'} shadow-sm">
                                 <div class="payment-icon">
-                                    <i class="fa ${row.payment_status === 'paid' ? 'fa-check-circle' : 'fa-clock'}"></i>
+                                    <i class="fa ${row.payment_status === 'paid' ? 'fa-check-double' : 'fa-hourglass-half'}"></i>
                                 </div>
                                 <div class="payment-info">
                                     <h6>Payment Status</h6>
