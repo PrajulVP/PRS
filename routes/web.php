@@ -23,6 +23,7 @@ use App\Http\Controllers\{
     DistributorOrderController,
     LoyaltyPointsController,
     SystemController,
+    ReportController,
     SidebarController
 };
 
@@ -39,6 +40,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/stats', [DashboardController::class, 'getStats'])->name('dashboard.stats');
 
     Route::prefix('dashboard-api')->name('dashboard.api.')->group(function () {
         Route::get('order-status-distribution', [DashboardController::class, 'getOrderStatusDistribution'])->name('orderStatusDistribution');
@@ -93,6 +95,12 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('field-staffs', FieldStaffController::class);
         Route::patch('field-staffs/{fieldstaff}/activate', [FieldStaffController::class, 'activate'])->name('field-staffs.activate');
         Route::patch('field-staffs/{fieldstaff}/deactivate', [FieldStaffController::class, 'deactivate'])->name('field-staffs.deactivate');
+
+        // Field Staff Specialized Management (Expenses & Leaves)
+        Route::get('field-staff/expenses', [\App\Http\Controllers\FieldStaffManagementController::class, 'expensesIndex'])->name('field-staff.expenses');
+        Route::post('field-staff/expenses/{expense}/status', [\App\Http\Controllers\FieldStaffManagementController::class, 'updateExpenseStatus'])->name('field-staff.expenses.status');
+        Route::get('field-staff/leaves', [\App\Http\Controllers\FieldStaffManagementController::class, 'leavesIndex'])->name('field-staff.leaves');
+        Route::post('field-staff/leaves/{leave}/status', [\App\Http\Controllers\FieldStaffManagementController::class, 'updateLeaveStatus'])->name('field-staff.leaves.status');
 
         Route::resource('retailers', RetailerController::class);
         Route::patch('retailers/{retailer}/activate', [RetailerController::class, 'activate'])->name('retailers.activate');
@@ -162,6 +170,20 @@ Route::middleware(['auth'])->group(function () {
         // Master settings
         Route::get('settings/general', [SettingsController::class, 'general'])->name('settings.general');
         Route::post('settings', [SettingsController::class, 'save'])->name('settings.save');
+
+        // Reports
+        Route::prefix('reports')->name('reports.')->group(function () {
+            Route::get('/', [ReportController::class, 'index'])->name('index');
+            Route::get('/orders', [ReportController::class, 'orderReports'])->name('orders');
+            Route::get('/distributors', [ReportController::class, 'distributorReports'])->name('distributors');
+            Route::get('/retailers', [ReportController::class, 'retailerReports'])->name('retailers');
+            Route::get('/products', [ReportController::class, 'productReports'])->name('products');
+            Route::get('/fieldstaffs', [ReportController::class, 'fieldStaffReports'])->name('fieldstaffs');
+            Route::get('/fieldstaffs/tracking', [ReportController::class, 'fieldStaffTracking'])->name('fieldstaff.tracking');
+            Route::get('/performance', [ReportController::class, 'performanceReports'])->name('performance');
+            Route::get('/get-staff-by-manager', [ReportController::class, 'getStaffByManager'])->name('get-staff');
+            Route::get('/export/{format}', [ReportController::class, 'downloadExport'])->name('export');
+        });
     });
 
     Route::get('/distributors/get-areas/{district}', [DistributorController::class, 'getAreas'])->name('distributors.getAreas');

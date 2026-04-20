@@ -7,7 +7,7 @@
     <title>Invoice #{{ $retailerOrder->order_code }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
         :root {
             --primary: #2563eb;
@@ -27,7 +27,7 @@
         }
 
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: 'Inter', sans-serif;
             color: var(--slate-700);
             font-size: 14px;
             line-height: 1.5;
@@ -38,20 +38,14 @@
         }
 
         .invoice-container {
-            max-width: 900px;
+            max-width: 850px;
             margin: 40px auto;
             position: relative;
         }
 
         .action-bar {
-            background: white;
-            padding: 15px 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            text-align: center;
             margin-bottom: 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
 
         @media print {
@@ -76,36 +70,24 @@
 
         .invoice-card {
             background-color: #fff;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            border-radius: 20px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
             overflow: hidden;
             border: 1px solid var(--slate-100);
         }
 
         .invoice-header {
-            background: linear-gradient(135deg, var(--slate-950) 0%, #1e1b4b 100%);
+            background-color: #0c1427;
             color: #fff;
-            padding: 50px;
-            position: relative;
-            overflow: hidden;
+            padding: 25px 40px;
         }
 
-        .invoice-header::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 300px;
-            height: 100%;
-            background: linear-gradient(225deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
-            pointer-events: none;
+        .invoice-header table {
+            width: 100%;
         }
 
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 40px;
+        .invoice-header td {
+            vertical-align: middle;
         }
 
         .logo-box img {
@@ -113,53 +95,35 @@
             height: auto;
         }
 
-        .invoice-id-box {
+        .invoice-title-wrapper {
             text-align: right;
         }
 
-        .invoice-id-box h1 {
-            font-size: 28px;
-            font-weight: 800;
-            margin: 0;
-            letter-spacing: -1px;
-            line-height: 1;
+        .invoice-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0 0 5px 0;
+            color: #fff;
+            letter-spacing: 1px;
+            text-transform: uppercase;
         }
 
-        .invoice-id-box .ref-code {
-            font-size: 16px;
+        .invoice-meta {
+            font-size: 13px;
             color: var(--slate-400);
-            margin-top: 5px;
+            line-height: 1.4;
+        }
+
+        .invoice-meta span {
+            color: var(--slate-100);
             font-weight: 500;
         }
 
-        .header-meta {
-            display: flex;
-            gap: 40px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            padding-top: 25px;
-        }
-
-        .meta-item label {
-            display: block;
+        .status-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
             font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--slate-400);
-            margin-bottom: 5px;
-            font-weight: 700;
-        }
-
-        .meta-item value {
-            font-size: 15px;
-            font-weight: 600;
-            color: #fff;
-            display: block;
-        }
-
-        .badge-status {
-            padding: 4px 12px;
-            border-radius: 6px;
-            font-size: 12px;
             font-weight: 700;
             text-transform: uppercase;
         }
@@ -175,7 +139,7 @@
         }
 
         .invoice-content {
-            padding: 50px;
+            padding: 40px;
         }
 
         .address-grid {
@@ -381,10 +345,6 @@
 <body>
     <div class="invoice-container">
         <div class="action-bar">
-            <a href="javascript:history.back()"
-                style="color: var(--slate-400); text-decoration: none; font-weight: 600;">
-                <i class="fa fa-arrow-left me-1"></i> Back
-            </a>
             <button class="btn-primary" onclick="window.print()">
                 <i class="fa fa-print"></i> Print Invoice
             </button>
@@ -392,35 +352,23 @@
 
         <div class="invoice-card">
             <div class="invoice-header">
-                <div class="header-top">
-                    <div class="logo-box">
-                        <img src="{{ asset('admin/assets/images/logo/atom-logo-main-white.png') }}" alt="PRS">
-                    </div>
-                    <div class="invoice-id-box">
-                        <h1>INVOICE</h1>
-                        <div class="ref-code">#{{ $retailerOrder->order_code }}</div>
-                    </div>
-                </div>
-
-                <div class="header-meta">
-                    <div class="meta-item">
-                        <label>Issue Date</label>
-                        <value>{{ $retailerOrder->created_at->format('d M, Y') }}</value>
-                    </div>
-                    <div class="meta-item">
-                        <label>Order Status</label>
-                        <value>{{ strtoupper($retailerOrder->status) }}</value>
-                    </div>
-                    <div class="meta-item">
-                        <label>Payment Status</label>
-                        <div style="margin-top: 5px;">
-                            <span
-                                class="badge-status {{ strtolower($retailerOrder->payment_status) == 'paid' ? 'status-paid' : 'status-pending' }}">
-                                {{ $retailerOrder->payment_status ?? 'PENDING' }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
+                <table border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td style="width: 50%;">
+                            <div class="logo-box">
+                                <img src="{{ asset('admin/assets/images/logo/atom-logo-main-white.png') }}" alt="Atomed Wellness">
+                            </div>
+                        </td>
+                        <td style="width: 50%;" class="invoice-title-wrapper">
+                            <h1 class="invoice-title">INVOICE</h1>
+                            <div class="invoice-meta">
+                                Order No: <span>#{{ $retailerOrder->order_code }}</span><br>
+                                Date: <span>{{ $retailerOrder->created_at->format('M d, Y') }}</span><br>
+                                Payment Status: <span>{{ $retailerOrder->payment_status ?? 'PENDING' }}</span>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
             </div>
 
             <div class="invoice-content">

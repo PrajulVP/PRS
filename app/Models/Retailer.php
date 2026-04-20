@@ -50,6 +50,11 @@ class Retailer extends Model
         return $this->hasMany(RetailerOrder::class);
     }
 
+    public function orders(): HasMany
+    {
+        return $this->retailerOrders();
+    }
+
     public function fieldStaff()
     {
         return $this->belongsTo(FieldStaff::class);

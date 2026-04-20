@@ -38,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // 'jwt.auth'   => \Tymon\JWTAuth\Http\Middleware\Authenticate::class, // JWT guard
             'admin'      => \App\Http\Middleware\AdminMiddleware::class, // optional view-only redirect guard
             'role'       => \App\Http\Middleware\RoleMiddleware::class,
+            'device.binding' => \App\Http\Middleware\DeviceBindingMiddleware::class,
         ]);
 
         // ✅ Prevent "jwt" cookie from being encrypted (optional)

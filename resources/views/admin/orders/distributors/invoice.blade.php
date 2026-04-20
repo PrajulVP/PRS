@@ -32,7 +32,7 @@
             background-color: #0c1427;
             /* Deep Navy from sidebar */
             color: #fff;
-            padding: 40px;
+            padding: 25px 40px;
             display: flex;
             /* works in browser print */
         }
@@ -46,7 +46,7 @@
         }
 
         .company-logo {
-            max-width: 180px;
+            max-width: 160px;
             height: auto;
         }
 
@@ -55,17 +55,18 @@
         }
 
         .invoice-title {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 700;
-            margin: 0 0 10px 0;
+            margin: 0 0 5px 0;
             color: #fff;
             letter-spacing: 1px;
             text-transform: uppercase;
         }
 
         .invoice-meta {
-            font-size: 14px;
+            font-size: 13px;
             color: #94a3b8;
+            line-height: 1.4;
         }
 
         .invoice-meta span {
@@ -342,15 +343,14 @@
                 <tr>
                     <td style="width: 50%;">
                         <img src="{{ asset('admin/assets/images/logo/atom-logo-main-white.png') }}" class="company-logo"
-                            alt="PRS Logo">
+                            alt="Atomed Wellness Logo">
                     </td>
                     <td style="width: 50%;" class="invoice-title-wrapper">
                         <h1 class="invoice-title">INVOICE</h1>
                         <div class="invoice-meta">
                             Order No: <span>#{{ $distributorOrder->order_code }}</span><br>
                             Date: <span>{{ $distributorOrder->created_at->format('F d, Y') }}</span><br>
-                            Payment Status: <span
-                                class="status-badge {{ strtolower($distributorOrder->payment_status) == 'paid' ? 'status-paid' : 'status-pending' }}">{{ ucfirst($distributorOrder->payment_status) }}</span>
+                            Payment Status: <span>{{ ucfirst($distributorOrder->payment_status) ?? 'Pending' }}</span>
                         </div>
                     </td>
                 </tr>
@@ -358,17 +358,20 @@
         </div>
 
         <div class="invoice-body">
+            @php
+                $admin = \App\Models\User::where('role', 'admin')->first();
+            @endphp
             <table class="info-section" border="0" cellpadding="0" cellspacing="0">
                 <tr>
                     <td style="padding-right: 15px;">
                         <div class="info-block">
                             <div class="info-title">Company Information</div>
                             <div class="info-content">
-                                <strong>PRS</strong>
-                                1234 Main St<br>
-                                City, State 12345<br>
-                                Email: info@prs.com<br>
-                                Phone: +1 234 567 8900
+                                <strong>Atomed Wellness</strong>
+                                {{ $admin->address ?? 'Atomed Wellness Headquarters' }}<br>
+                                {{ $admin->city ?? '' }} {{ $admin->pincode ?? '' }}<br>
+                                Email: {{ $admin->email ?? 'admin@gmail.com' }}<br>
+                                Phone: {{ $admin->contact_no ?? '+91 00000 00000' }}
                             </div>
                         </div>
                     </td>

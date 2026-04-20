@@ -106,9 +106,14 @@ class ProductController extends Controller
                     'ptr' => number_format((float)$product->ptr, 2),
                     'pts' => number_format((float)$product->pts, 2),
                     'loyalty_point_percentage' => $product->loyalty_point_percentage,
-                    'units_per_strip' => $product->units_per_strip,
-                    'strips_per_box' => $product->strips_per_box,
+                    'units_per_strip' => $product->units_per_strip ?? 1,
+                    'strips_per_box' => $product->strips_per_box ?? 1,
+                    'boxes_per_carton' => $product->boxes_per_carton ?? 1,
+                    'has_variants' => $product->has_variants,
+                    'variant_options' => $product->variant_options,
                     'boxes_per_carton' => $product->boxes_per_carton,
+                    'has_variants' => $product->has_variants,
+                    'variant_options' => $product->variant_options,
                     'actions' => null, // Actions column will be rendered by DataTables
                 ];
             });
@@ -159,6 +164,20 @@ class ProductController extends Controller
         $data['strips_per_box'] = $this->parseNumber($request->box_size);
         $data['boxes_per_carton'] = $this->parseNumber($request->carton_size);
 
+        // Process variant options
+        $variantOptions = [];
+        if ($request->filled('variant_name_1') && $request->filled('variant_values_1')) {
+            $data['has_variants'] = true;
+            $vals = array_map('trim', explode(',', $request->variant_values_1));
+            $variantOptions[trim($request->variant_name_1)] = $vals;
+
+            if ($request->filled('variant_name_2') && $request->filled('variant_values_2')) {
+                $vals2 = array_map('trim', explode(',', $request->variant_values_2));
+                $variantOptions[trim($request->variant_name_2)] = $vals2;
+            }
+        }
+        $data['variant_options'] = !empty($variantOptions) ? $variantOptions : null;
+
         Product::create($data);
 
         return redirect()->route('products.index')->with('success', 'Product created successfully.');
@@ -207,6 +226,23 @@ class ProductController extends Controller
         $data['strips_per_box'] = $this->parseNumber($request->box_size);
         $data['boxes_per_carton'] = $this->parseNumber($request->carton_size);
 
+        // Process variant options
+        $variantOptions = [];
+        if ($request->filled('variant_name_1') && $request->filled('variant_values_1')) {
+            $data['has_variants'] = true;
+            $vals = array_map('trim', explode(',', $request->variant_values_1));
+            $variantOptions[trim($request->variant_name_1)] = $vals;
+
+            if ($request->filled('variant_name_2') && $request->filled('variant_values_2')) {
+                $vals2 = array_map('trim', explode(',', $request->variant_values_2));
+                $variantOptions[trim($request->variant_name_2)] = $vals2;
+            }
+        } else {
+            // Keep current has_variants value or reset if no structured data
+            $data['has_variants'] = $request->has('has_variants') ? true : false;
+        }
+        $data['variant_options'] = !empty($variantOptions) ? $variantOptions : null;
+
         $product->update($data);
 
         return redirect()->route('products.index')->with('success', 'Product updated successfully.');
@@ -233,6 +269,8 @@ class ProductController extends Controller
             'product_name',
             'generic_name',
             'pack',
+            'sides',
+            'sizes',
             'hsn_code',
             'strip_size',
             'box_size',
@@ -289,11 +327,16 @@ class ProductController extends Controller
                 'hsn_code' => 'hsn_code',
                 'strip_size' => 'strip_size',
                 'box_size' => 'box_size',
-                'pack' => 'pack'
+                'pack' => 'pack',
+                'sides' => 'sides',
+                'side' => 'sides',
+                'sizes' => 'sizes',
+                'size' => 'sizes'
             ];
 
             $header = array_map(function ($h) use ($mapping) {
                 $clean = strtolower(trim(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $h)));
+                $clean = str_replace(' ', '_', $clean);
                 return $mapping[$clean] ?? $clean;
             }, $header);
 
@@ -370,42 +413,56 @@ class ProductController extends Controller
 
                 // has_variants detection (S/M/L patterns)
                 $hasVariants = false;
-                if (preg_match('/\([SML\/]+\)/i', $productData['product_name']) || preg_match('/(S|M|L|XL|XXL|XXXL)/i', $productData['product_name'])) {
-                     // Note: Simple detection, can be refined.
-                     if (str_contains($productData['product_name'], 'Knee cap') || str_contains($productData['product_name'], 'Ankle') || str_contains($productData['product_name'], 'Belt')) {
-                        $hasVariants = true;
-                     }
+                $variantOptions = [];
+
+                // Process Sides
+                if (!empty($productData['sides'])) {
+                    $hasVariants = true;
+                    $vals = array_map('trim', preg_split('/[,\/]/', $productData['sides']));
+                    $variantOptions['Side'] = array_filter($vals);
+                }
+
+                // Process Sizes
+                if (!empty($productData['sizes'])) {
+                    $hasVariants = true;
+                    $vals2 = array_map('trim', preg_split('/[,\/]/', $productData['sizes']));
+                    $variantOptions['Size'] = array_filter($vals2);
+                }
+
+                // Fallback: name-based detection if structured data is missing
+                if (!$hasVariants) {
+                    if (preg_match('/\([SML\/]+\)/i', $productData['product_name']) || preg_match('/(S|M|L|XL|XXL|XXXL)/i', $productData['product_name'])) {
+                        if (str_contains($productData['product_name'], 'Knee cap') || str_contains($productData['product_name'], 'Ankle') || str_contains($productData['product_name'], 'Belt')) {
+                            $hasVariants = true;
+                        }
+                    }
                 }
 
                 try {
                     // Decide if we match by name or code
                     $matchAttributes = ['product_name' => trim($productData['product_name'])];
-                    if ($productCode) {
-                        $matchAttributes['product_code'] = $productCode;
-                    }
-
                     // Create or Update
-                    Product::updateOrCreate(
-                        $matchAttributes,
+                    $p = Product::updateOrCreate(
+                        ['product_code' => $productCode],
                         [
-                            'product_code' => $productCode,
                             'product_name' => trim($productData['product_name']),
-                            'generic_name' => $productData['generic_name'] ?? null,
-                            'pack' => $productData['pack'] ?? null,
-                            'strip_size' => $productData['strip_size'] ?: null,
-                            'box_size' => $productData['box_size'] ?: null,
-                            'carton_size' => $productData['carton_size'] ?: null,
-                            'hsn_code' => $productData['hsn_code'] ?? null,
-                            'mrp' => (float)preg_replace('/[^0-9.]/', '', $productData['mrp'] ?? 0),
-                            'ptr' => (float)preg_replace('/[^0-9.]/', '', $productData['ptr'] ?? 0),
-                            'pts' => (float)preg_replace('/[^0-9.]/', '', $productData['pts'] ?? 0),
-                            'loyalty_point_percentage' => (float)preg_replace('/[^0-9.]/', '', $productData['loyalty_point_percentage'] ?? 0),
-                            'units_per_strip' => $unitsPerStrip,
-                            'strips_per_box' => $stripsPerBox,
-                            'boxes_per_carton' => $boxesPerCarton,
-                            'has_variants' => $hasVariants,
-                        ]
-                    );
+                        'generic_name' => !empty($productData['generic_name']) ? trim($productData['generic_name']) : null,
+                        'pack' => !empty($productData['pack']) ? trim($productData['pack']) : null,
+                        'strip_size' => !empty($productData['strip_size']) ? trim($productData['strip_size']) : null,
+                        'units_per_strip' => $unitsPerStrip,
+                        'box_size' => !empty($productData['box_size']) ? trim($productData['box_size']) : null,
+                        'strips_per_box' => $stripsPerBox,
+                        'carton_size' => !empty($productData['carton_size']) ? trim($productData['carton_size']) : null,
+                        'boxes_per_carton' => $boxesPerCarton,
+                        'hsn_code' => !empty($productData['hsn_code']) ? trim($productData['hsn_code']) : null,
+                        'has_variants' => $hasVariants ? 1 : 0,
+                        'variant_options' => !empty($variantOptions) ? $variantOptions : null,
+                        'mrp' => (float)$productData['mrp'],
+                        'ptr' => !empty($productData['ptr']) ? (float)$productData['ptr'] : 0,
+                        'pts' => !empty($productData['pts']) ? (float)$productData['pts'] : 0,
+                        'loyalty_point_percentage' => !empty($productData['loyalty_point_percentage']) ? (float)$productData['loyalty_point_percentage'] : 0,
+                    ]
+                );
                     $successCount++;
                 } catch (\Exception $e) {
                     $errors[] = "Row $rowCount: " . $e->getMessage();

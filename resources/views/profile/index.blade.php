@@ -389,14 +389,14 @@
                                     <div class="col-12">
                                         <label class="form-label text-muted small text-uppercase mb-1"
                                             style="font-size: 0.6rem;">Email</label>
-                                        <input type="text" class="form-control form-control-sm bg-light text-dark"
+                                        <input type="text" name="email" class="form-control form-control-sm bg-light text-dark"
                                             value="{{ $user->email }}" readonly>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label text-muted small text-uppercase mb-1"
                                             style="font-size: 0.6rem;">Phone</label>
-                                        <input type="text" class="form-control form-control-sm bg-light text-dark"
-                                            value="{{ $user->contact_no ?? $user->phone_number ?? 'N/A' }}" readonly>
+                                        <input type="text" name="contact_no" class="form-control form-control-sm bg-light text-dark"
+                                            value="{{ $user->contact_no ?? $user->phone_number ?? '' }}" readonly>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label text-muted small text-uppercase mb-1"

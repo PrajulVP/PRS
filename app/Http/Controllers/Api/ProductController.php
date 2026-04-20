@@ -116,7 +116,7 @@ class ProductController extends Controller
     /**
      * @OA\Get(
      *     path="/api/products/{product}/distributors",
-     *     summary="Get distributors for a product based on availability",
+     *     summary="Get distributors for a product based on availability and variant",
      *     tags={"Products"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
@@ -124,6 +124,13 @@ class ProductController extends Controller
      *         in="path",
      *         required=true,
      *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="variant",
+     *         in="query",
+     *         required=false,
+     *         description="Filter stock by variant (e.g. Side/Size)",
+     *         @OA\Schema(type="string")
      *     ),
      *     @OA\Response(response=200, description="List of distributors")
      * )
@@ -143,9 +150,14 @@ class ProductController extends Controller
 
         $allDistributors = $query->get();
 
+        $variant = $request->query('variant');
+
         // Get current stock levels for this product
         $stockMap = DB::table('inventories')
             ->where('product_id', $product->id)
+            ->when(!empty($variant), function($q) use ($variant) {
+                return $q->where('variant', $variant);
+            })
             ->selectRaw('distributor_id, SUM(stock) as total_stock')
             ->groupBy('distributor_id')
             ->pluck('total_stock', 'distributor_id');

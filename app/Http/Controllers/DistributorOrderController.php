@@ -17,6 +17,12 @@ use App\Traits\HandlesNotifications;
 class DistributorOrderController extends Controller
 {
     use HandlesNotifications;
+
+    public function show(DistributorOrder $distributorOrder)
+    {
+        return $this->invoice($distributorOrder);
+    }
+
     public function index(Request $request)
     {
         /** @var \App\Models\User $user */
@@ -219,7 +225,7 @@ class DistributorOrderController extends Controller
     // Create Order Page
     public function create()
     {
-        $products = Product::select('id', 'product_name', 'mrp', 'pts')->get();
+        $products = Product::select('id', 'product_name', 'mrp', 'pts', 'pack')->get();
         $distributors = collect();
         /** @var \App\Models\User $user */
         $user = Auth::user();

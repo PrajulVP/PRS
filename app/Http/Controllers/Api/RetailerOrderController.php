@@ -86,6 +86,7 @@ class RetailerOrderController extends Controller
                             'quantity'   => $item->quantity,
                             'free_quantity' => $item->free_quantity,
                             'unit'       => $item->unit ?? 'Nos',
+                            'variant'    => $item->variant,
                         ];
                     }),
                     'invoice_url'    => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
@@ -162,7 +163,8 @@ class RetailerOrderController extends Controller
      *                 @OA\Property(property="product_id", type="integer", example=1),
      *                 @OA\Property(property="quantity", type="integer", example=10),
      *                 @OA\Property(property="unit", type="string", enum={"Nos", "Strips", "Box", "Carton"}, example="Box"),
-     *                 @OA\Property(property="variant", type="string", nullable=true, example="M"),
+     *                 @OA\Property(property="side", type="string", nullable=true, example="Left"),
+     *                 @OA\Property(property="size", type="string", nullable=true, example="XL"),
      *                 @OA\Property(property="distributor_id", type="integer", nullable=true, example=2)
      *             )),
      *             @OA\Property(property="notes", type="string", nullable=true, example="Urgent order")
@@ -187,7 +189,8 @@ class RetailerOrderController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit' => 'nullable|string',
-            'items.*.variant' => 'nullable|string',
+            'items.*.side' => 'nullable|string',
+            'items.*.size' => 'nullable|string',
             'items.*.distributor_id' => 'nullable|exists:distributors,id',
             'notes' => 'nullable|string',
         ]);
@@ -252,13 +255,19 @@ class RetailerOrderController extends Controller
                         $totalStock = DB::table('inventories')
                             ->where('distributor_id', $distributor->id)
                             ->where('product_id', $product->id)
-                            ->when(!empty($itemData['variant']), function ($q) use ($itemData) {
-                                return $q->where('variant', $itemData['variant']);
+                            ->when(!empty($itemData['side']), function ($q) use ($itemData) {
+                                return $q->where('side', $itemData['side']);
+                            })
+                            ->when(!empty($itemData['size']), function ($q) use ($itemData) {
+                                return $q->where('size', $itemData['size']);
                             })
                             ->sum('stock');
 
                         if ($totalStock < $totalQtyNos) {
-                            $variantMsg = !empty($itemData['variant']) ? " (variant: {$itemData['variant']})" : "";
+                            $vMsg = [];
+                            if (!empty($itemData['side'])) $vMsg[] = "side: {$itemData['side']}";
+                            if (!empty($itemData['size'])) $vMsg[] = "size: {$itemData['size']}";
+                            $variantMsg = !empty($vMsg) ? " (" . implode(', ', $vMsg) . ")" : "";
                             throw new \Exception("Insufficient stock for product '{$product->product_name}'{$variantMsg} at selected distributor.");
                         }
                     }
@@ -270,8 +279,11 @@ class RetailerOrderController extends Controller
 
                     // Append variant to product name if provided
                     $finalProductName = $product->product_name;
-                    if (!empty($itemData['variant'])) {
-                        $finalProductName .= ' [' . $itemData['variant'] . ']';
+                    $vLabel = [];
+                    if (!empty($itemData['side'])) $vLabel[] = $itemData['side'];
+                    if (!empty($itemData['size'])) $vLabel[] = $itemData['size'];
+                    if (!empty($vLabel)) {
+                        $finalProductName .= ' [' . implode('/', $vLabel) . ']';
                     }
 
                     $order->items()->create([
@@ -282,7 +294,8 @@ class RetailerOrderController extends Controller
                         'unit' => $unit,
                         'unit_price' => $price,
                         'total_amount' => $subtotalWithGst,
-                        'variant' => $itemData['variant'] ?? null,
+                        'side' => $itemData['side'] ?? null,
+                        'size' => $itemData['size'] ?? null,
                     ]);
 
                     $totalAmount += $subtotalWithGst;

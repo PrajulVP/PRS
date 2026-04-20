@@ -27,7 +27,8 @@ trait ManagesInventory
         $unit = $data['unit'] ?? 'Strips';
         $batchNo = $data['batch_no'] ?? null;
         $expiryDate = $data['expiry_date'] ?? null;
-        $variant = $data['variant'] ?? null;
+        $side = $data['side'] ?? null;
+        $size = $data['size'] ?? null;
         $operation = $data['operation'] ?? 'add'; // add or subtract
 
         if (!$batchNo || !$expiryDate) {
@@ -47,7 +48,8 @@ trait ManagesInventory
             $inventory = Inventory::where('product_id', $product->id)
                 ->where('distributor_id', $distributorId)
                 ->where('batch_no', $batchNo)
-                ->where('variant', $variant)
+                ->where('side', $side)
+                ->where('size', $size)
                 ->where('expiry_date', $expiryDate)
                 ->first();
 
@@ -58,8 +60,11 @@ trait ManagesInventory
 
                 // 3. Create initial record if it doesn't exist (for add operation)
                 $pName = $product->product_name;
-                if ($variant) {
-                    $pName .= ' [' . $variant . ']';
+                $vLabel = [];
+                if ($side) $vLabel[] = $side;
+                if ($size) $vLabel[] = $size;
+                if (!empty($vLabel)) {
+                    $pName .= ' [' . implode('/', $vLabel) . ']';
                 }
 
                 $inventory = Inventory::create([
@@ -69,7 +74,8 @@ trait ManagesInventory
                     'distributor_id' => $distributorId,
                     'stock' => 0, // Will be updated below
                     'batch_no' => $batchNo,
-                    'variant' => $variant,
+                    'side' => $side,
+                    'size' => $size,
                     'expiry_date' => $expiryDate,
                 ]);
 

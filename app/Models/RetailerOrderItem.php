@@ -16,7 +16,8 @@ class RetailerOrderItem extends Model
         'unit',
         'unit_price',
         'total_amount',
-        'variant',
+        'side',
+        'size',
     ];
 
     public function retailerOrder(): BelongsTo

@@ -24,13 +24,12 @@ class Product extends Model
         'taxable_value',
         'gst',
         'net_amount',
-        'offer',
-        'discount',
         'loyalty_point_percentage',
         'units_per_strip',
         'strips_per_box',
         'boxes_per_carton',
         'has_variants',
+        'variant_options',
     ];
 
     protected $casts = [
@@ -41,6 +40,7 @@ class Product extends Model
         'gst' => 'decimal:2',
         'net_amount' => 'decimal:2',
         'loyalty_point_percentage' => 'decimal:2',
+        'variant_options' => 'array',
     ];
 
     // Relation with distributors via inventories

@@ -190,43 +190,53 @@
         }
 
         /* --- New Order View UI Styles --- */
+        .order-timeline {
+            position: relative;
+            padding-left: 25px;
+            margin-top: 10px;
+        }
         .order-timeline::before {
             content: '';
             position: absolute;
-            left: 11px;
+            left: 5px;
             top: 5px;
             bottom: 5px;
             width: 2px;
-            background: var(--med-border, #e2e8f0);
+            background: #e2e8f0;
         }
         .timeline-item {
             position: relative;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
         .timeline-marker {
             position: absolute;
-            left: -24px;
+            left: -25px;
             top: 4px;
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
-            background: var(--med-text-muted, #cbd5e1);
-            border: 2px solid var(--med-bg-card, #fff);
-            box-shadow: 0 0 0 2px var(--med-border, #e2e8f0);
+            background: #cbd5e1;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 2px #e2e8f0;
             z-index: 1;
+            transition: all 0.3s ease;
         }
         .timeline-item.active .timeline-marker {
             background: var(--med-primary, #00497a);
             box-shadow: 0 0 0 2px rgba(0, 73, 122, 0.2);
         }
+        .timeline-content {
+            padding-left: 10px;
+        }
         .timeline-content h6 {
             font-size: 0.85rem;
+            font-weight: 700;
             margin-bottom: 2px;
-            color: var(--med-text-main, #1e293b);
+            color: #1e293b;
         }
         .timeline-content span {
             font-size: 0.75rem;
-            color: var(--med-text-muted, #64748b);
+            color: #64748b;
         }
         /* --- End New Order View UI Styles --- */
     </style>
@@ -1385,7 +1395,7 @@
                 let row = $('#orders-table').DataTable().row(tr).data();
                 if (!row) return;
 
-                $('#modalOrderCode').text('#' + row.order_code);
+                $('#modalOrderCode').html(`#${row.order_code} <span class="badge ${row.payment_status === 'paid' ? 'bg-success' : 'bg-warning text-dark'} ms-2" style="font-size: 0.65rem; vertical-align: middle; text-transform: uppercase;">${row.payment_status || 'Pending'}</span>`);
 
                 let detailsHtml = `
                     <div class="row mb-4">
@@ -1396,7 +1406,7 @@
                                     <h5 class="fw-bold mb-1" style="color: var(--med-text-main);">${row.retailer_shop || row.retailer_name}</h5>
                                     ${row.retailer_shop ? `<div class="text-muted small mb-2"><i class="fa fa-user me-2"></i>${row.retailer_name}</div>` : ''}
                                     <div class="d-flex align-items-center mb-1"><i class="fa fa-phone text-muted me-2" style="width: 16px;"></i> <span class="small">${row.retailer_phone || 'N/A'}</span></div>
-                                    <div class="d-flex align-items-start"><i class="fa fa-map-marker text-muted me-2 mt-1" style="width: 16px;"></i> <span class="text-wrap small">${row.retailer_address || 'N/A'}</span></div>
+                                    <div class="d-flex align-items-start text-wrap"><i class="fa fa-map-marker text-muted me-2 mt-1" style="width: 16px;"></i> <span class="small" style="max-width: 200px;">${row.retailer_address || 'N/A'}</span></div>
                                 </div>
                             </div>
                         </div>
@@ -1411,21 +1421,21 @@
                         </div>
                     </div>
 
-                    <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px !important;">
+                    <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px !important; overflow: hidden;">
                         <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="table mb-0">
-                                    <thead class="bg-light">
+                                <table class="table mb-0 align-middle">
+                                    <thead style="background: rgba(var(--med-primary-rgb), 0.03); border-bottom: 2px solid var(--med-border);">
                                         <tr>
-                                            <th class="py-3 px-4" style="border-bottom: 1px solid var(--med-border) !important;">Product</th>
-                                            <th class="py-3 px-4 text-center" style="border-bottom: 1px solid var(--med-border) !important;">Batch/Exp</th>
-                                            <th class="py-3 px-4 text-center" style="border-bottom: 1px solid var(--med-border) !important;">Qty</th>
-                                            <th class="py-3 px-4 text-center" style="border-bottom: 1px solid var(--med-border) !important;">Free</th>
-                                            <th class="py-3 px-4 text-end" style="border-bottom: 1px solid var(--med-border) !important;">Price</th>
-                                            <th class="py-3 px-4 text-end" style="border-bottom: 1px solid var(--med-border) !important;">Total</th>
+                                            <th class="py-3 px-4 text-muted fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Pharmaceutical Item</th>
+                                            <th class="py-3 px-4 text-center text-muted fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Standard Batch</th>
+                                            <th class="py-3 px-4 text-center text-muted fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Order Qty</th>
+                                            <th class="py-3 px-4 text-center text-muted fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Bonus</th>
+                                            <th class="py-3 px-4 text-end text-muted fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Price (₹)</th>
+                                            <th class="py-3 px-4 text-end text-muted fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Line Total (₹)</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody class="border-0">
                 `;
 
                 (row.items || []).forEach(function (i) {
@@ -1434,33 +1444,55 @@
                     let unitPrice = parseFloat(i.unit_price || 0);
                     let totalAmt = parseFloat(i.total_amount || i.total || (i.unit_price ? (i.unit_price * qty) : 0));
 
-                    let batchHtml = '-';
+                    let batchHtml = '<span class="text-muted small">N/A</span>';
                     if (i.batches && i.batches.length > 0) {
-                        batchHtml = i.batches.map(b => `<div class="small"><span class="badge bg-soft-primary text-primary px-1 py-0 me-1" style="font-size: 0.65rem;">${b.batch_no}</span><span class="text-muted" style="font-size: 0.65rem;">${b.expiry_date}</span></div>`).join('');
+                        batchHtml = i.batches.map(b => `
+                            <div class="mb-1 last-child-mb-0">
+                                <span class="badge bg-soft-info text-info border-0 px-2 py-1" style="font-size: 0.65rem; font-weight: 700;">${b.batch_no}</span>
+                                <div class="text-muted d-block" style="font-size: 0.6rem; margin-top: 1px;">Exp: ${b.expiry_date}</div>
+                            </div>
+                        `).join('');
                     }
 
                     detailsHtml += `
-                        <tr style="border-bottom: 1px solid var(--med-border);">
+                        <tr style="border-bottom: 1px solid var(--med-border-light, #f1f5f9);">
                             <td class="py-3 px-4">
-                                <div class="fw-bold" style="color: var(--med-text-main);">${name}</div>
+                                <div class="d-flex align-items-center">
+                                    <div class="product-icon-min me-3 d-flex align-items-center justify-content-center bg-soft-primary rounded-circle" style="width: 32px; height: 32px; flex-shrink: 0;">
+                                        <i class="fa fa-pill text-primary" style="font-size: 0.8rem;"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold fs-6" style="color: var(--med-text-main); font-size: 0.85rem !important;">${name}</div>
+                                        <div class="text-muted small" style="font-size: 0.7rem;">Reference SKU: ${i.product_code || '---'}</div>
+                                    </div>
+                                </div>
                             </td>
                             <td class="py-3 px-4 text-center">${batchHtml}</td>
-                            <td class="py-3 px-4 text-center"><span class="badge bg-soft-primary text-primary px-2 py-1" style="font-size: 0.75rem;">${qty} ${i.unit || ''}</span></td>
                             <td class="py-3 px-4 text-center">
-                                ${i.free_quantity > 0 ? `<span class="badge bg-soft-success text-success px-2 py-1" style="font-size: 0.75rem;">${i.free_quantity}</span>` : '<span class="text-muted small">-</span>'}
+                                <div class="fw-bold" style="font-size: 0.9rem;">${qty}</div>
+                                <div class="text-muted small" style="font-size: 0.65rem;">${i.unit || 'Units'}</div>
                             </td>
-                            <td class="py-3 px-4 text-end small">₹${unitPrice.toFixed(2)}</td>
-                            <td class="py-3 px-4 text-end fw-bold text-primary">₹${totalAmt.toFixed(2)}</td>
+                            <td class="py-3 px-4 text-center">
+                                ${i.free_quantity > 0 ? `<div class="badge bg-soft-success text-success border-0 px-2 py-1" style="font-size: 0.75rem;">+${i.free_quantity}</div>` : '<span class="text-muted small">-</span>'}
+                            </td>
+                            <td class="py-3 px-4 text-end">
+                                <div class="text-muted small" style="font-size: 0.8rem;">${unitPrice.toFixed(2)}</div>
+                            </td>
+                            <td class="py-3 px-4 text-end">
+                                <div class="fw-bold text-primary" style="font-size: 0.9rem;">${totalAmt.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                            </td>
                         </tr>
                     `;
                 });
 
                 detailsHtml += `
                                     </tbody>
-                                    <tfoot class="bg-light">
+                                    <tfoot style="background: rgba(var(--med-primary-rgb), 0.01);">
                                         <tr>
-                                            <td colspan="5" class="text-end py-3 px-4 text-uppercase fw-bold text-muted" style="font-size: 0.75rem;">Grand Total:</td>
-                                            <td class="py-3 px-4 text-end fw-bold text-success fs-5">₹${parseFloat(row.total_amount).toFixed(2)}</td>
+                                            <td colspan="5" class="text-end py-4 px-4 text-uppercase fw-bold text-muted" style="font-size: 0.75rem; letter-spacing: 0.05em;">Financial Sum (Grand Total):</td>
+                                            <td class="py-4 px-4 text-end">
+                                                <div class="fw-bold text-success fs-4" style="letter-spacing: -0.02em;">₹${parseFloat(row.total_amount).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                                            </td>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -1468,49 +1500,47 @@
                         </div>
                     </div>
 
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="payment-status-card ${row.payment_status === 'paid' ? 'paid' : 'pending'} shadow-sm">
-                                <div class="payment-icon">
-                                    <i class="fa ${row.payment_status === 'paid' ? 'fa-check-double' : 'fa-hourglass-half'}"></i>
-                                </div>
-                                <div class="payment-info">
-                                    <h6>Payment Status</h6>
-                                    <p>${(row.payment_status || 'Pending').toUpperCase()}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card h-100 border-0 shadow-sm" style="border-radius: 16px !important;">
-                                <div class="card-body py-2">
-                                    <h6 class="text-uppercase text-muted fw-bold mb-2" style="font-size: 0.7rem; letter-spacing: 0.05em;">Order Activity</h6>
-                                    <div class="order-timeline">
-                                        <div class="timeline-item active">
+                    <div class="card border-0 shadow-sm" style="border-radius: 16px !important;">
+                        <div class="card-body py-4 px-4">
+                            <h6 class="text-uppercase text-muted fw-bold mb-4" style="font-size: 0.72rem; letter-spacing: 0.08em;"><i class="fa fa-history me-2"></i>Order Lifecycle Progress</h6>
+                            <div class="order-timeline">
+                                ${(() => {
+                                    const status = (row.status || '').toLowerCase();
+                                    const steps = [
+                                        { key: 'pending', label: 'Order Placed', desc: `Initial request at ${row.placed_at || 'N/A'}` },
+                                        { key: 'processing', label: 'Processing', desc: 'Laboratory processing' },
+                                        { key: 'approved', label: 'Approved', desc: 'Cleared for dispatch' },
+                                        { key: 'delivered', label: 'Delivered', desc: 'Fulfillment confirmed' }
+                                    ];
+
+                                    let activeIdx = 0;
+                                    if (status === 'processing') activeIdx = 1;
+                                    else if (status === 'approved') activeIdx = 2;
+                                    else if (status === 'delivered') activeIdx = 3;
+
+                                    let html = steps.map((step, idx) => `
+                                        <div class="timeline-item ${idx <= activeIdx ? 'active' : ''}">
                                             <div class="timeline-marker"></div>
                                             <div class="timeline-content">
-                                                <h6>Order Placed</h6>
-                                                <span>${row.placed_at || 'N/A'}</span>
+                                                <h6>${step.label}</h6>
+                                                <span class="small">${idx === activeIdx ? `<span class="badge bg-soft-primary text-primary border-0 p-0 me-1">Current</span> ` : ''}${step.desc}</span>
                                             </div>
                                         </div>
-                                        ${row.status === 'Delivered' ? `
+                                    `).join('');
+
+                                    if (status === 'cancelled' || status === 'rejected') {
+                                        html += `
                                             <div class="timeline-item active">
-                                                <div class="timeline-marker"></div>
+                                                <div class="timeline-marker" style="background: #ef4444 !important; border-color: #ef4444 !important; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;"></div>
                                                 <div class="timeline-content">
-                                                    <h6>Order Delivered</h6>
-                                                    <span>Completed</span>
+                                                    <h6 class="text-danger">${status.toUpperCase()}</h6>
+                                                    <span>The order process was terminated.</span>
                                                 </div>
                                             </div>
-                                        ` : `
-                                            <div class="timeline-item">
-                                                <div class="timeline-marker"></div>
-                                                <div class="timeline-content">
-                                                    <h6>Current Status</h6>
-                                                    <span>${row.status}</span>
-                                                </div>
-                                            </div>
-                                        `}
-                                    </div>
-                                </div>
+                                        `;
+                                    }
+                                    return html;
+                                })()}
                             </div>
                         </div>
                     </div>

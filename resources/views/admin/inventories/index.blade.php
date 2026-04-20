@@ -23,7 +23,7 @@
         padding: 20px;
         margin-bottom: 25px;
         position: relative;
-        z-index: 1050; /* Stay above prompts */
+        z-index: 1020; /* Lower than 1030 (standard navbar) to scroll under */
         box-shadow: var(--med-shadow-soft);
         transition: all 0.3s ease;
     }
@@ -74,7 +74,7 @@
         border-radius: 12px !important;
         box-shadow: var(--med-shadow-md) !important;
         overflow: hidden !important;
-        z-index: 9999 !important; /* Ensure dropdown is always on top */
+        z-index: 1060 !important; /* Above modals (1050) but below header (1070) */
     }
 
     .select2-results__option {
@@ -255,7 +255,7 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5><i class="fa fa-boxes me-2"></i>Stock</h5>
-                        @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'distributor']) || Auth::user()->hasPermissionToCategory('inventories', 'add'))
+                        @if(auth()->user()->hasPermissionToCategory('inventories', 'add'))
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                             data-bs-target="#createInventoryModal">
                             <i class="fa fa-plus me-1"></i>Add Product
@@ -307,6 +307,8 @@
 
                                         <th>Product Code</th>
                                         <th>Product Name</th>
+                                        <th>Side</th>
+                                        <th>Size</th>
                                         @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
                                             <th>Distributor</th>
                                         @endif
@@ -517,16 +519,28 @@
                         </script>
 
                         <div id="variant_container" class="mb-3 d-none">
-                            <label for="create_variant" class="form-label fw-bold">Size / Variant</label>
-                            <select name="variant" id="create_variant" class="form-select">
-                                <option value="">-- Select Size --</option>
-                                <option value="S">S (Small)</option>
-                                <option value="M">M (Medium)</option>
-                                <option value="L">L (Large)</option>
-                                <option value="XL">XL (Extra Large)</option>
-                                <option value="XXL">XXL</option>
-                                <option value="XXXL">XXXL</option>
-                            </select>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label for="create_side" class="form-label fw-bold">Side</label>
+                                    <select name="side" id="create_side" class="form-select">
+                                        <option value="">N/A</option>
+                                        <option value="Left">Left</option>
+                                        <option value="Right">Right</option>
+                                        <option value="Both">Both</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="create_size" class="form-label fw-bold">Size</label>
+                                    <select name="size" id="create_size" class="form-select">
+                                        <option value="">N/A</option>
+                                        <option value="S">S</option>
+                                        <option value="M">M</option>
+                                        <option value="L">L</option>
+                                        <option value="XL">XL</option>
+                                        <option value="XXL">XXL</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="row g-2 mb-3">
@@ -610,16 +624,22 @@
                         </div>
 
                         <div class="row g-3">
-                            <div class="col-md-8">
+                            <div class="col-md-6">
                                 <div class="form-group mb-3">
                                     <label class="form-label fw-bold small text-uppercase text-muted">Product Name</label>
                                     <input type="text" id="edit_product_name" class="form-control bg-light border-0 fw-bold" readonly>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group mb-3">
-                                    <label class="form-label fw-bold small text-uppercase text-muted">Variant</label>
-                                    <input type="text" id="edit_variant" class="form-control bg-light border-0 fw-bold text-primary" readonly placeholder="None">
+                                    <label class="form-label fw-bold small text-uppercase text-muted">Side</label>
+                                    <input type="text" id="edit_side" class="form-control bg-light border-0 fw-bold text-primary" readonly placeholder="N/A">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group mb-3">
+                                    <label class="form-label fw-bold small text-uppercase text-muted">Size</label>
+                                    <input type="text" id="edit_size" class="form-control bg-light border-0 fw-bold text-primary" readonly placeholder="N/A">
                                 </div>
                             </div>
                         </div>
@@ -1356,6 +1376,22 @@
                         `;
                     }
                 },
+                {
+                    data: 'side',
+                    name: 'side',
+                    render: function (data) {
+                        return data ? `<span class="badge bg-soft-primary text-primary px-3 rounded-pill">${data}</span>` : '-';
+                    },
+                    className: 'text-center'
+                },
+                {
+                    data: 'size',
+                    name: 'size',
+                    render: function (data) {
+                        return data ? `<span class="badge bg-soft-info text-info px-3 rounded-pill">${data}</span>` : '-';
+                    },
+                    className: 'text-center'
+                },
                     @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
                     {
                         data: 'distributor_name',
@@ -1482,13 +1518,8 @@
                     $('#edit_conv_row').show();
                 }
 
-                // Show Variant separately
-                let variant = data.variant;
-                if (!variant && data.product_name) {
-                    const match = data.product_name.match(/\[(.*?)\]/);
-                    if (match) variant = match[1];
-                }
-                $('#edit_variant').val(variant || 'N/A');
+                $('#edit_side').val(data.side || 'N/A');
+                $('#edit_size').val(data.size || 'N/A');
                 
                 // Dynamic Unit Logic
                 
@@ -1561,7 +1592,6 @@
                     html += `<tr>
                         <td class="ps-4 align-middle">
                             <span class="fw-bold">${b.batch_no}</span>
-                            ${b.variant ? `<span class="badge bg-soft-info text-info ms-2 rounded-pill">${b.variant}</span>` : ''}
                             <div class="smaller text-muted">${b.distributor_name}</div>
                         </td>
                         <td class="align-middle">${b.expiry_date}</td>
@@ -1639,13 +1669,13 @@
                                 <h6 class="text-primary fw-bold mb-3 border-bottom pb-2"><i class="fa fa-indian-rupee-sign me-2"></i>Pricing Details</h6>
                                 <dl class="row mb-0 mt-2">
                                     <dt class="col-sm-5 text-muted small text-uppercase">MRP</dt>
-                                    <dd class="col-sm-7 fw-bold text-dark">₹${parseFloat(product.mrp || 0).toFixed(2)}</dd>
+                                    <dd class="col-sm-7 text-dark">₹${parseFloat(product.mrp || 0).toFixed(2)}</dd>
 
                                     <dt class="col-sm-5 text-muted small text-uppercase">PTR</dt>
-                                    <dd class="col-sm-7 fw-bold text-dark">₹${parseFloat(product.ptr || 0).toFixed(2)}</dd>
+                                    <dd class="col-sm-7 text-dark">₹${parseFloat(product.ptr || 0).toFixed(2)}</dd>
 
                                     <dt class="col-sm-5 text-muted small text-uppercase">PTS</dt>
-                                    <dd class="col-sm-7 fw-bold text-dark">₹${parseFloat(product.pts || 0).toFixed(2)}</dd>
+                                    <dd class="col-sm-7 text-dark">₹${parseFloat(product.pts || 0).toFixed(2)}</dd>
 
                                     <dt class="col-sm-5 text-muted small text-uppercase">Loyalty %</dt>
                                     <dd class="col-sm-7 fw-bold text-info">${parseFloat(product.loyalty_point_percentage || 0).toFixed(2)}%</dd>

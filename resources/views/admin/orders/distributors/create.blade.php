@@ -24,7 +24,7 @@
                                     <select id="productSelect" class="form-select select2">
                                         <option value="">Search by Name or POS Code...</option>
                                         @foreach($products as $p)
-                                            <option value="{{ $p->id }}">{{ $p->product_name }} - ₹{{ $p->pts }}</option>
+                                            <option value="{{ $p->id }}">{{ $p->product_name }}{{ $p->pack ? ' ('.$p->pack.')' : '' }} - ₹{{ $p->pts }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -54,7 +54,6 @@
                                                     id="unitSelect" style="max-width: 120px; height: 48px;">
                                                     <option value="Strips">Strips</option>
                                                     <option value="Box">Box</option>
-                                                    <option value="Carton">Carton</option>
                                                     <option value="Nos">Nos</option>
                                                 </select>
                                             </div>
@@ -71,9 +70,8 @@
 
                                         {{-- Variant Wrapper - stays here for flow --}}
                                         <div class="col-md-12 my-2" id="variantWrapper" style="display: none;">
-                                            <label class="form-label fw-bold text-muted small text-uppercase mb-2">Select Size / Variant</label>
-                                            <div id="sizeSelector" class="d-flex flex-wrap gap-2">
-                                                {{-- Size buttons will be injected here --}}
+                                            <div id="variantLevelsContainer">
+                                                {{-- Dynamic variant levels will be injected here --}}
                                             </div>
                                             <input type="hidden" id="variantValue" value="">
                                         </div>
@@ -88,54 +86,34 @@
                         id="productDetailsCard" style="display: none;">
                         <div class="card-body p-4">
                             <div class="row align-items-center">
-                                <div class="col-md-3 text-center mb-3 mb-md-0">
-                                    <div class="bg-white p-3 shadow-sm border spotlight-image-wrapper rounded-3">
-                                        <img id="previewImage" src="https://placehold.co/400x400?text=No+Image"
-                                            class="img-fluid" style="max-height: 140px; width: auto; object-fit: contain;">
-                                    </div>
-                                </div>
-                                <div class="col-md-9">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <div>
-                                            <span class="badge bg-primary px-3 py-1 shadow-sm small mb-2 rounded-pill"
-                                                id="previewCode">Product Code: -</span>
-                                            <h3 id="previewName" class="fw-bold mb-1 text-dark label-font">Product Name</h3>
-                                            <p class="text-primary fw-bold small mb-3 text-uppercase font-outfit"
-                                                id="previewGeneric">Generic Name</p>
-                                        </div>
-                                        <div class="text-end">
-                                            <span class="text-muted fw-bold small text-uppercase d-block mb-1"
-                                                id="ptsLabel">PTS (Per
-                                                Unit)</span>
-                                            <span class="h3 fw-bold text-success mb-0 font-outfit">₹<span
-                                                    id="previewMrp">0.00</span></span>
-                                        </div>
-                                    </div>
-
-                                    <div class="row g-2">
-                                        <div class="col-md-4">
-                                            <div
-                                                class="p-2 border bg-light-soft text-center dark-bg-dark border-light-dark rounded-3">
-                                                <small class="text-muted d-block fw-bold text-uppercase"
-                                                    style="font-size: 0.6rem;">Offer / Disc %</small>
-                                                <span id="previewOfferDisc" class="fw-bold text-dark small mb-0">-</span>
+                                <div class="col-md-12">
+                                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+                                        <div class="mb-3 mb-md-0">
+                                            <h2 id="previewName" class="fw-extrabold mb-1 text-dark label-font tracking-tight" style="font-size: 1.75rem;">Product Name</h2>
+                                            <p class="text-primary fw-bold small mb-3 text-uppercase font-outfit letter-spacing-wider" id="previewGeneric">Generic Name</p>
+                                            
+                                            <div class="d-flex flex-wrap gap-3 mt-4" id="previewBadges">
+                                                <div class="meta-capsule" id="previewCodeCapsule">
+                                                    <i class="fa fa-tag text-primary"></i>
+                                                    <span id="previewCodeSpan">-</span>
+                                                </div>
+                                                <div class="meta-capsule" id="previewHsnCapsule">
+                                                    <i class="fa fa-file-invoice text-info"></i>
+                                                    <span id="previewHsnSpan">-</span>
+                                                </div>
+                                                <div class="meta-capsule" id="previewPackCapsule">
+                                                    <i class="fa fa-box text-warning"></i>
+                                                    <span id="previewPackSpan">-</span>
+                                                </div>
+                                                <div class="meta-capsule bg-primary text-white border-0 shadow-sm" id="previewBoxCapsule" style="display:none;">
+                                                    <i class="fa fa-layer-group text-white-50"></i>
+                                                    <span id="previewBoxSpan">-</span>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-4">
-                                            <div
-                                                class="p-2 border bg-light-soft text-center dark-bg-dark border-light-dark rounded-3">
-                                                <small class="text-muted d-block fw-bold text-uppercase"
-                                                    style="font-size: 0.6rem;">HSN</small>
-                                                <span id="previewHsn" class="fw-bold text-dark small mb-0">-</span>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div
-                                                class="p-2 border bg-light-soft text-center dark-bg-dark border-light-dark rounded-3">
-                                                <small class="text-muted d-block fw-bold text-uppercase"
-                                                    style="font-size: 0.6rem;">Packing</small>
-                                                <span id="previewBox" class="fw-bold text-dark small mb-0">-</span>
-                                            </div>
+                                        <div class="text-end py-0 px-0" style="min-width: 150px;">
+                                            <span class="text-primary fw-extrabold small text-uppercase d-block mb-2 font-outfit letter-spacing-wider" id="ptsLabel" style="opacity: 0.8;">PTS (Per Unit)</span>
+                                            <span class="text-success mb-0 font-outfit fw-extrabold display-6" style="letter-spacing: -1px;">₹<span id="previewMrp">0.00</span></span>
                                         </div>
                                     </div>
                                 </div>
@@ -286,6 +264,37 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
             transform: translateY(-2px);
         }
+        .meta-capsule {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 6px 16px;
+            border-radius: 50px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #111827;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+        }
+        .meta-capsule:hover {
+            background: #fff;
+            border-color: var(--bs-primary);
+            color: var(--bs-primary);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .meta-capsule i {
+            font-size: 1rem;
+            opacity: 1;
+        }
+        .meta-label {
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            margin-right: 2px;
+        }
 
         /* === Dark Mode Adjustments === */
         body.dark-only .text-dark {
@@ -387,6 +396,15 @@
 
     <script>
         $(document).ready(function () {
+            const isValid = (val, type) => {
+                if (!val || val === 'null' || val === null) return false;
+                let s = val.toString().toLowerCase().trim();
+                if (s === '' || s === 'n/a' || s === '---') return false;
+                if (type === 'generic' && (s === 'generic name n/a' || s === 'generic n/a')) return false;
+                if (type === 'pack' && s === 'pack n/a') return false;
+                return true;
+            };
+
             $('.select2').select2({ placeholder: "Find product...", allowClear: true });
 
             var addedItems = {};
@@ -414,17 +432,41 @@
                             }
                         }
 
-                        if (p.has_variants || dynamicVariants.length > 0) {
-                            let $sizeSel = $('#sizeSelector');
-                            $sizeSel.empty();
-                            
-                            let variantsToUse = dynamicVariants.length > 0 ? dynamicVariants : ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
-                            
-                            variantsToUse.forEach(v => {
-                                $sizeSel.append(`<button type="button" class="btn btn-outline-primary size-btn px-3 py-2 fw-bold" data-size="${v}">${v}</button>`);
-                            });
-                            $('#variantWrapper').fadeIn(200);
-                            $('#variantValue').val(''); // Reset
+                        let hasVariants = p.has_variants || dynamicVariants.length > 0 || (p.variant_options && Object.keys(p.variant_options).length > 0);
+
+                        if (hasVariants) {
+                            let $container = $('#variantLevelsContainer');
+                            $container.empty();
+                            $('#variantValue').val('');
+                            $('#variantWrapper').show();
+
+                            if (p.variant_options && Object.keys(p.variant_options).length > 0) {
+                                // Structured Variants logic (hierarchical)
+                                let levelIdx = 0;
+                                Object.keys(p.variant_options).forEach(attrName => {
+                                    let vals = p.variant_options[attrName];
+                                    let levelHtml = `
+                                        <div class="variant-level mb-3" id="levelContainer_${levelIdx}" style="${levelIdx > 0 ? 'display:none;' : ''}">
+                                            <label class="form-label fw-bold text-muted small text-uppercase mb-2">Select ${attrName}</label>
+                                            <div class="d-flex flex-wrap gap-2">
+                                                ${vals.map(v => `<button type="button" class="btn btn-outline-primary variant-btn px-3 py-2 fw-bold" data-level="${levelIdx}" data-value="${v}">${v}</button>`).join('')}
+                                            </div>
+                                        </div>`;
+                                    $container.append(levelHtml);
+                                    levelIdx++;
+                                });
+                            } else {
+                                // Fallback to name-based parsing
+                                let variantsToUse = dynamicVariants.length > 0 ? dynamicVariants : ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+                                let levelHtml = `
+                                    <div class="variant-level mb-3">
+                                        <label class="form-label fw-bold text-muted small text-uppercase mb-2">Select Size / Variant</label>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            ${variantsToUse.map(v => `<button type="button" class="btn btn-outline-primary variant-btn px-3 py-2 fw-bold" data-level="0" data-value="${v}">${v}</button>`).join('')}
+                                        </div>
+                                    </div>`;
+                                $container.append(levelHtml);
+                            }
                         } else {
                             $('#variantWrapper').hide();
                             $('#variantValue').val('');
@@ -459,31 +501,89 @@
                         } else {
                             $unitSelect.append('<option value="Strips">Strips</option>');
                             $unitSelect.append('<option value="Box">Box</option>');
-                            $unitSelect.append('<option value="Carton">Carton</option>');
-                            $unitSelect.append('<option value="Nos">Nos</option>'); // Added manual override
+                            $unitSelect.append('<option value="Nos">Nos</option>'); 
                             $('#ptsLabel').text("PTS (Per Strip)");
                         }
 
-                        $('#previewName').text(p.product_name);
-                        $('#previewMrp').text(parseFloat(p.pts || 0).toFixed(2));
-                        $('#previewGeneric').text(p.generic_name || 'Generic Name N/A');
-                        $('#previewCode').text('Product Code: ' + (p.product_code || '---'));
-                        let offerDiscText = (parseFloat(p.offer || 0) + '% / ' + parseFloat(p.discount || 0) + '%');
-                        $('#previewOfferDisc').text(offerDiscText);
-                        $('#previewHsn').text(p.hsn_code || '---');
-                        let packInfoText = isCount ? 
-                            `${p.units_per_strip || 1} Nos/Unit | ${p.strips_per_box || 1} Unit/Box | ${p.boxes_per_carton || 1} Box/Ctn` :
-                            `${p.units_per_strip || 1} Tab/Str | ${p.strips_per_box || 1} Str/Box | ${p.boxes_per_carton || 1} Box/Ctn`;
-                        $('#previewBox').text(packInfoText);
+                        let displayName = p.product_name;
+                        $('#previewName').html(displayName);
 
-                        if (p.image) $('#previewImage').attr('src', "{{ asset('storage') }}/" + p.image);
-                        else $('#previewImage').attr('src', "https://placehold.co/400x400?text=No+Photo");
+                        if (isValid(p.pack, 'pack')) {
+                            $('#previewPackSpan').text(p.pack);
+                            $('#previewPackCapsule').show();
+                        } else {
+                            $('#previewPackCapsule').hide();
+                        }
+                        
+                        $('#previewMrp').text(parseFloat(p.pts || 0).toFixed(2));
+                        
+                        if (isValid(p.generic_name, 'generic')) {
+                            $('#previewGeneric').text(p.generic_name).show();
+                        } else {
+                            $('#previewGeneric').hide();
+                        }
+
+                        if (isValid(p.product_code)) {
+                            $('#previewCodeSpan').text(p.product_code);
+                            $('#previewCodeCapsule').show();
+                        } else {
+                            $('#previewCodeCapsule').hide();
+                        }
+
+                        if (isValid(p.hsn_code)) {
+                            $('#previewHsnSpan').text(p.hsn_code);
+                            $('#previewHsnCapsule').show();
+                        } else {
+                            $('#previewHsnCapsule').hide();
+                        }
+
+                        let hasStrips = isValid(p.strip_size) || (p.units_per_strip > 1);
+                        let hasBoxes = isValid(p.box_size) || (p.strips_per_box > 1);
+
+                        if (!isCount && (hasStrips || hasBoxes)) {
+                            let packInfoText = `${p.units_per_strip || 1} Tab/Str | ${p.strips_per_box || 1} Str/Box`;
+                            $('#previewBoxSpan').text(packInfoText);
+                            $('#previewBoxCapsule').show();
+                        } else {
+                            $('#previewBoxCapsule').hide();
+                        }
                     }
                 });
             });
 
             $('#productSelect').on('select2:clear', () => {
                 $('#productDetailsCard').fadeOut(200); currentProductDetails = null;
+            });
+
+            $(document).on('click', '.variant-btn', function() {
+                let $btn = $(this);
+                let levelIdx = parseInt($btn.data('level'));
+                
+                // Toggle active class in current level
+                $btn.closest('.variant-level').find('.variant-btn').removeClass('active');
+                $btn.addClass('active');
+
+                // Hide and reset subsequent levels
+                let $allLevels = $('.variant-level');
+                $allLevels.each(function(idx) {
+                    if (idx > levelIdx) {
+                        $(this).hide().find('.variant-btn').removeClass('active');
+                    }
+                });
+
+                // Show next level if exists
+                let $nextLevel = $(`#levelContainer_${levelIdx + 1}`);
+                if ($nextLevel.length > 0) {
+                    $nextLevel.fadeIn(200);
+                    $('#variantValue').val(''); // Incomplete selection
+                } else {
+                    // Final level reached - Assemble full variant string from all active buttons
+                    let finalVariant = $('.variant-level:visible .variant-btn.active').map(function() {
+                        return $(this).data('value');
+                    }).get().join(' - '); 
+
+                    $('#variantValue').val(finalVariant);
+                }
             });
 
             $('#btnAddItem').click(function () {
@@ -503,7 +603,6 @@
                 let key = prodId + (variant ? '-' + variant : '');
                 let mul = 1;
                 if (unit === 'Box') mul = parseInt(currentProductDetails.strips_per_box || 1);
-                else if (unit === 'Carton') mul = parseInt(currentProductDetails.strips_per_box || 1) * parseInt(currentProductDetails.boxes_per_carton || 1);
                 else if (unit === 'Nos') mul = 1 / (parseInt(currentProductDetails.units_per_strip || 1));
 
                 if (addedItems[key]) {
@@ -540,38 +639,33 @@
                     let rowClass = (key === lastAddedKey) ? 'new-row' : '';
 
                     tbody.append(`
-                                                                            <tr class="${rowClass}">
-                                                                                <td class="ps-4 text-muted fw-bold small">${index++}</td>
-                                                                                <td>
-                                                                                    <div class="fw-bold text-dark font-outfit" style="max-width:250px; white-space:normal; line-height:1.2;">
-                                                                                        ${item.name} ${item.variant ? `<span class="badge bg-primary ms-1">${item.variant}</span>` : ''}
-                                                                                    </div>
-                                                                                    <input type="hidden" name="items[${key}][product_id]" value="${item.id}">
-                                                                                    ${item.variant ? `<input type="hidden" name="items[${key}][variant]" value="${item.variant}">` : ''}
-                                                                                </td>
-                                                                                <td class="text-center">
-                                                                                    <div class="input-group input-group-sm mx-auto" style="max-width: 160px;">
-                                                                                        <input type="number" class="form-control qty-change font-outfit" data-key="${key}" value="${item.qty}" name="items[${key}][quantity]" min="1" style="border-radius: 4px 0 0 4px;">
-                                                                                        <select class="form-select unit-change font-outfit bg-light-soft" data-key="${key}" name="items[${key}][unit]" style="border-radius: 0 4px 4px 0;">
-                                                                                            ${item.is_count ? `<option value="Nos" selected>Nos</option>` : `
-                                                                                            <option value="Carton" ${item.unit === 'Carton' ? 'selected' : ''}>Carton</option>
-                                                                                            <option value="Box" ${item.unit === 'Box' ? 'selected' : ''}>Box</option>
-                                                                                            <option value="Strips" ${item.unit === 'Strips' ? 'selected' : ''}>Strips</option>
-                                                                                            <option value="Nos" ${item.unit === 'Nos' ? 'selected' : ''}>Nos</option>
-                                                                                            `}
-                                                                                        </select>
-                                                                                    </div>
-                                                                                </td>
-                                                                                <td class="fw-medium">₹${item.price.toFixed(2)}</td>
-                                                                                <td class="fw-bold text-primary">₹${lineTotal.toFixed(2)}</td>
-                                                                                <td class="text-center">
-                                                                                    <button type="button" class="btn btn-danger btn-sm remove-btn mx-auto" 
-                                                                                        data-key="${key}" style="width: 38px; height: 32px;">X
-                                                                                        <i class="fa fa-trash-alt" style="font-size: 13px;"></i>
-                                                                                    </button>
-                                                                                </td>
-                                                                            </tr>
-                                                                        `);
+                        <tr class="${rowClass}">
+                            <td class="ps-4 text-muted fw-bold small">${index++}</td>
+                            <td>
+                                <div class="fw-bold text-dark font-outfit" style="max-width:250px; white-space:normal; line-height:1.2;">
+                                    ${item.name} ${item.variant ? `<span class="badge bg-primary ms-1">${item.variant}</span>` : ''}
+                                </div>
+                                <input type="hidden" name="items[${key}][product_id]" value="${item.id}">
+                                ${item.variant ? `<input type="hidden" name="items[${key}][variant]" value="${item.variant}">` : ''}
+                            </td>
+                            <td class="text-center">
+                                <div class="py-2">
+                                    <span class="fw-extrabold text-dark font-outfit h6 mb-0">${item.qty}</span>
+                                    <span class="text-muted small ms-1">${item.unit}</span>
+                                </div>
+                                <input type="hidden" name="items[${key}][quantity]" value="${item.qty}">
+                                <input type="hidden" name="items[${key}][unit]" value="${item.unit}">
+                            </td>
+                            <td class="fw-medium">₹${item.price.toFixed(2)}</td>
+                            <td class="fw-bold text-primary">₹${lineTotal.toFixed(2)}</td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-danger btn-sm remove-btn mx-auto" 
+                                    data-key="${key}" style="width: 38px; height: 32px;">X
+                                    <i class="fa fa-trash-alt" style="font-size: 13px;"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `);
                 });
 
                 if (!hasItems) {
@@ -593,7 +687,6 @@
                     let val = $(this).val();
                     let mul = 1;
                     if (val === 'Box') mul = parseInt(item.strips_per_box || 1);
-                    if (val === 'Carton') mul = parseInt(item.strips_per_box || 1) * parseInt(item.boxes_per_carton || 1);
                     item.unit = val;
                     item.multiplier = mul;
                 }

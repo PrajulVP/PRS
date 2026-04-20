@@ -15,7 +15,16 @@ class SettingsController extends Controller
         $value = Setting::getValue('loyalty_point_inr', '0');
         $cgst = Setting::getValue('cgst', '9');
         $sgst = Setting::getValue('sgst', '9');
-        return view('admin.settings.general', compact('value', 'cgst', 'sgst'));
+        
+        $geofence_radius = Setting::getValue('geofence_radius', '20');
+        $ta_rate_per_km = Setting::getValue('ta_rate_per_km', '10');
+        $da_hq_rate = Setting::getValue('da_hq_rate', '250');
+        $da_outstation_rate = Setting::getValue('da_outstation_rate', '500');
+
+        return view('admin.settings.general', compact(
+            'value', 'cgst', 'sgst', 
+            'geofence_radius', 'ta_rate_per_km', 'da_hq_rate', 'da_outstation_rate'
+        ));
     }
 
     /**
@@ -29,7 +38,7 @@ class SettingsController extends Controller
         ]);
 
         // Basic numeric validation
-        if (in_array($data['slug'], ['loyalty_point_inr', 'cgst', 'sgst'])) {
+        if (in_array($data['slug'], ['loyalty_point_inr', 'cgst', 'sgst', 'geofence_radius', 'ta_rate_per_km', 'da_hq_rate', 'da_outstation_rate'])) {
             if (!is_numeric($data['value']) || (float) $data['value'] < 0) {
                 return response()->json(['message' => 'Invalid value.'], 422);
             }
@@ -47,6 +56,18 @@ class SettingsController extends Controller
         } elseif ($data['slug'] === 'sgst') {
             $title = 'SGST Percentage';
             $desc = 'State Goods and Services Tax Percentage';
+        } elseif ($data['slug'] === 'geofence_radius') {
+            $title = 'Geo-fencing Radius';
+            $desc = 'Maximum allowed radius from customer location for punching logs (in meters).';
+        } elseif ($data['slug'] === 'ta_rate_per_km') {
+            $title = 'TA Rate per KM';
+            $desc = 'Travel Allowance rate per kilometer travelled.';
+        } elseif ($data['slug'] === 'da_hq_rate') {
+            $title = 'DA HQ Rate';
+            $desc = 'Daily Allowance rate for HQ visits.';
+        } elseif ($data['slug'] === 'da_outstation_rate') {
+            $title = 'DA Outstation Rate';
+            $desc = 'Daily Allowance rate for Outstation visits.';
         }
 
         $setting = Setting::setValue(

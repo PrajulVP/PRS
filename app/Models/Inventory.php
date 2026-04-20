@@ -16,7 +16,8 @@ class Inventory extends Model
         'distributor_id',
         'stock',
         'batch_no',
-        'variant',
+        'side',
+        'size',
         'expiry_date',
     ];
 

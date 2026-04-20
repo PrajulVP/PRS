@@ -35,7 +35,7 @@ class RetailerOrderManagementController extends Controller
         // User asked for AJAX to fetch info.
 
         // Revised: We will keep the products list for the dropdown, but minimal data.
-        $products = Product::select('id', 'product_name', 'mrp', 'ptr')->get();
+        $products = Product::select('id', 'product_name', 'mrp', 'ptr', 'pack')->get();
 
         return view('admin.orders.retailers.create', compact('retailers', 'products'));
     }
@@ -232,6 +232,11 @@ class RetailerOrderManagementController extends Controller
             DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+    public function show(RetailerOrder $retailerOrder)
+    {
+        return $this->invoice($retailerOrder);
     }
 
     // Admin/Manager: List all orders

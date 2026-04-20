@@ -47,4 +47,29 @@ class FieldStaff extends Model
     {
         return $this->hasMany(SalesTarget::class);
     }
+
+    public function retailerOrders(): HasMany
+    {
+        return $this->hasMany(RetailerOrder::class, 'fieldstaff_id');
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->retailerOrders();
+    }
+
+    public function attendanceLogs(): HasMany
+    {
+        return $this->hasMany(AttendanceLog::class, 'user_id', 'user_id');
+    }
+
+    public function visitLogs(): HasMany
+    {
+        return $this->hasMany(VisitLog::class, 'user_id', 'user_id');
+    }
+
+    public function locationLogs(): HasMany
+    {
+        return $this->hasMany(LocationLog::class, 'user_id', 'user_id');
+    }
 }

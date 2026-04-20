@@ -538,14 +538,24 @@
                                                     ],
                                                     "example": "Box"
                                                 },
-                                                "variant": {
+                                                "side": {
                                                     "type": "string",
-                                                    "example": "M",
+                                                    "example": "Left",
+                                                    "nullable": true
+                                                },
+                                                "size": {
+                                                    "type": "string",
+                                                    "example": "XL",
                                                     "nullable": true
                                                 }
                                             },
                                             "type": "object"
                                         }
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Urgent distributor order",
+                                        "nullable": true
                                     }
                                 },
                                 "type": "object"
@@ -1341,6 +1351,188 @@
                     },
                     "403": {
                         "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/field-staff/punch": {
+            "post": {
+                "tags": [
+                    "Field Staff"
+                ],
+                "summary": "Punch-in or Punch-out with GPS validation",
+                "operationId": "437fdc54d71055fbe6122cbabccb765e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "punch_in",
+                                            "punch_out"
+                                        ]
+                                    },
+                                    "latitude": {
+                                        "type": "number"
+                                    },
+                                    "longitude": {
+                                        "type": "number"
+                                    },
+                                    "is_mock": {
+                                        "description": "Detected fake GPS usage",
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Punch logged successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/field-staff/ping": {
+            "post": {
+                "tags": [
+                    "Field Staff"
+                ],
+                "summary": "Log continuous GPS location ping",
+                "operationId": "04f4953f3cfa6596212fecf030c4f8bd",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "latitude": {
+                                        "type": "number"
+                                    },
+                                    "longitude": {
+                                        "type": "number"
+                                    },
+                                    "is_mock": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Location ping saved"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/field-staff/log-visit": {
+            "post": {
+                "tags": [
+                    "Field Staff"
+                ],
+                "summary": "Log a visit to a customer",
+                "operationId": "e0b9aef5ef8d371f0799e7bd34236e8e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "customer_category": {
+                                        "type": "string",
+                                        "enum": [
+                                            "Doctor",
+                                            "Hospital",
+                                            "Retailer",
+                                            "Distributor/Wholesaler"
+                                        ]
+                                    },
+                                    "customer_name": {
+                                        "type": "string"
+                                    },
+                                    "latitude": {
+                                        "type": "number"
+                                    },
+                                    "longitude": {
+                                        "type": "number"
+                                    },
+                                    "notes": {
+                                        "type": "string"
+                                    },
+                                    "next_follow_up": {
+                                        "type": "string",
+                                        "format": "date"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Visit logged"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/field-staff/expenses": {
+            "post": {
+                "tags": [
+                    "Field Staff"
+                ],
+                "summary": "Submit an expense claim",
+                "operationId": "2e05fa5fb473ffa2137622ba2ba4e7f8",
+                "responses": {
+                    "201": {
+                        "description": "Expense submitted"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/field-staff/leaves": {
+            "post": {
+                "tags": [
+                    "Field Staff"
+                ],
+                "summary": "Request a leave or permission",
+                "operationId": "38893af842c1fe1e5c9fd999db15816b",
+                "responses": {
+                    "201": {
+                        "description": "Leave requested"
                     }
                 },
                 "security": [
@@ -2284,7 +2476,7 @@
                 "tags": [
                     "Products"
                 ],
-                "summary": "Get distributors for a product based on availability",
+                "summary": "Get distributors for a product based on availability and variant",
                 "operationId": "8cea4d67304e96a2b55c285b704ff949",
                 "parameters": [
                     {
@@ -2293,6 +2485,15 @@
                         "required": true,
                         "schema": {
                             "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "variant",
+                        "in": "query",
+                        "description": "Filter stock by variant (e.g. Side/Size)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 ],
@@ -2491,9 +2692,14 @@
                                                     ],
                                                     "example": "Box"
                                                 },
-                                                "variant": {
+                                                "side": {
                                                     "type": "string",
-                                                    "example": "M",
+                                                    "example": "Left",
+                                                    "nullable": true
+                                                },
+                                                "size": {
+                                                    "type": "string",
+                                                    "example": "XL",
                                                     "nullable": true
                                                 },
                                                 "distributor_id": {
@@ -3333,6 +3539,10 @@
         {
             "name": "Distributor Retailer Orders",
             "description": "Distributor Retailer Orders"
+        },
+        {
+            "name": "Field Staff",
+            "description": "Field Staff"
         },
         {
             "name": "Field Staff Dashboard",

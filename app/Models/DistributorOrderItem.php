@@ -16,7 +16,8 @@ class DistributorOrderItem extends Model
         'unit',
         'price',
         'subtotal',
-        'variant',
+        'side',
+        'size',
     ];
 
     public function distributorOrder(): BelongsTo

@@ -208,9 +208,11 @@ class DistributorOrderApiController extends Controller
      *                 @OA\Property(property="product_id", type="integer", example=1),
      *                 @OA\Property(property="quantity", type="integer", example=10),
      *                 @OA\Property(property="unit", type="string", enum={"Nos", "Strips", "Box", "Carton"}, example="Box"),
-     *                 @OA\Property(property="variant", type="string", nullable=true, example="M")
-             ))
-         )
+     *                 @OA\Property(property="side", type="string", nullable=true, example="Left"),
+     *                 @OA\Property(property="size", type="string", nullable=true, example="XL")
+     *             )),
+     *             @OA\Property(property="notes", type="string", nullable=true, example="Urgent distributor order")
+     *         )
      ),
      *     @OA\Response(
      *         response=201,
@@ -244,7 +246,9 @@ class DistributorOrderApiController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit' => 'nullable|string|in:Box,Carton,Strip,Nos,no',
-            'items.*.variant' => 'nullable|string',
+            'items.*.side' => 'nullable|string',
+            'items.*.size' => 'nullable|string',
+            'notes' => 'nullable|string',
         ]);
 
         /** @var \App\Models\User $user */
@@ -267,6 +271,7 @@ class DistributorOrderApiController extends Controller
                 'sales_manager_id' => $salesManagerId,
                 'status' => DistributorOrder::STATUS_PENDING,
                 'placed_at' => now(),
+                'notes' => $request->notes,
                 'total_amount' => 0,
                 'total_items' => 0,
                 'total_quantity' => 0,
@@ -301,12 +306,13 @@ class DistributorOrderApiController extends Controller
 
                 $order->items()->create([
                     'product_id' => $product->id,
-                    'product_name' => $product->product_name . ($itemData['variant'] ? " [{$itemData['variant']}]" : ""),
+                    'product_name' => $product->product_name,
                     'quantity' => $qty,
                     'unit' => $unit,
                     'price' => (float)$unitPrice,
                     'subtotal' => $subtotalWithGst,
-                    'variant' => $itemData['variant'] ?? null,
+                    'side' => $itemData['side'] ?? null,
+                    'size' => $itemData['size'] ?? null,
                 ]);
 
                 $totalAmount += $subtotalWithGst;
@@ -602,7 +608,8 @@ class DistributorOrderApiController extends Controller
             $inventory = Inventory::firstOrNew([
                 'distributor_id' => $order->distributor_id,
                 'product_id' => $product->id,
-                'variant' => $item->variant,
+                'side' => $item->side,
+                'size' => $item->size,
             ]);
 
             if (!$inventory->exists) {

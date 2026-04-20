@@ -88,10 +88,15 @@
             transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        .page-body {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+
         /* === The Floating Card Concept === */
         .card {
             background-color: var(--med-bg-card) !important;
-            border: 1px solid var(--med-border) !important;
+            border: 1px solid var(--med-border);
             box-shadow: var(--med-shadow-soft) !important;
             border-radius: 24px !important;
             /* Extra smooth corners */
@@ -370,7 +375,15 @@
         }
 
         /* === Transparent Header & Footer === */
-        .page-header,
+        .page-header {
+            position: sticky !important;
+            top: 0;
+            z-index: 1000 !important;
+            background-color: var(--med-bg-card) !important;
+            backdrop-filter: blur(10px) !important;
+            border-bottom: 1px solid var(--med-border) !important;
+        }
+
         .footer {
             background-color: transparent !important;
             backdrop-filter: none !important;
@@ -417,14 +430,11 @@
             filter: invert(1) grayscale(100%) brightness(200%);
         }
 
-        .pt-6 {
-            padding-top: 5rem !important;
-        }
 
         /* === Form Elements === */
         .form-control,
         .form-select,
-        select,
+        select,                                                 
         .select2-container * {
             font-family: 'Montserrat', sans-serif !important;
         }
@@ -921,6 +931,19 @@
             .sidebar-wrapper.close_icon {
                 transform: translateX(-100%);
             }
+
+        /* === High Visibility Utility Classes (Theme Aware) === */
+        .text-main-theme { 
+            color: var(--med-text-main) !important; 
+        }
+        .text-muted-theme { 
+            color: var(--med-text-muted) !important; 
+        }
+        .bg-card-theme { 
+            background-color: var(--med-bg-card) !important; 
+        }
+        .bg-body-theme { 
+            background-color: var(--med-bg-body) !important; 
         }
     </style>
 </head>
@@ -938,50 +961,7 @@
     <!-- Toast Container -->
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;" id="toastContainer"></div>
 
-    <!-- Loader -->
-    <div id="global-loader" class="loader-wrapper"
-        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #ffffff; z-index: 99999; display: flex; justify-content: center; align-items: center; transition: opacity 0.5s ease-out;">
-        <img src="{{ asset('admin/assets/images/logo/favicon.ico') }}" width="60" alt="Loading..."
-            style="width: 60px; height: auto; animation: pulse 1.5s infinite ease-in-out;">
-    </div>
-
-    <style>
-        @keyframes pulse {
-            0% {
-                transform: scale(0.95);
-                opacity: 0.8;
-            }
-
-            50% {
-                transform: scale(1.05);
-                opacity: 1;
-            }
-
-            100% {
-                transform: scale(0.95);
-                opacity: 0.8;
-            }
-        }
-
-        /* Apply dark background to loader immediately when body has dark-only class */
-        body.dark-only #global-loader {
-            background-color: var(--med-bg-body) !important;
-        }
-    </style>
-
-    <script>
-        window.addEventListener('load', function () {
-            setTimeout(function () {
-                var loader = document.getElementById('global-loader');
-                if (loader) {
-                    loader.style.opacity = '0';
-                    setTimeout(function () {
-                        loader.style.display = 'none';
-                    }, 500);
-                }
-            }, 500); // Optional small delay to ensure logo is seen
-        });
-    </script>
+    {{-- Removed Global Loader to prevent visual glitches --}}
 
     {{-- If authenticated as any role → show full dashboard layout --}}
     @if(Auth::guard('web')->check())
@@ -989,7 +969,7 @@
             @include('layouts.partials.header')
             <div class="page-body-wrapper">
                 @include('layouts.partials.sidebar')
-                <div class="page-body pt-6">
+                <div class="page-body">
                     {{-- @include('layouts.partials.breadcrumbs') --}}
                     @yield('page-body')
                 </div>

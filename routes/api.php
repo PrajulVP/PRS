@@ -48,7 +48,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('products/{product}/distributors', [ProductController::class, 'getDistributors']);
     Route::get('distributors/{distributorId}/products/{productId}/availability', [DistributorController::class, 'checkProductAvailability']);
     Route::get('distributor/inventory', [\App\Http\Controllers\Api\InventoryController::class, 'index']);
-    Route::apiResource('inventory', \App\Http\Controllers\Api\InventoryController::class)->only(['index', 'show', 'store']);
+    Route::apiResource('inventory', \App\Http\Controllers\Api\InventoryController::class)->only(['index', 'show']);
 
     // Distributor — Retailer Orders (orders placed to this distributor by retailers)
     Route::get('distributor/retailer-orders', [\App\Http\Controllers\Api\DistributorRetailerOrderController::class, 'index']);
@@ -92,7 +92,7 @@ Route::middleware('auth:api')->group(function () {
     });
 
     // Field Staff Dashboard & Orders
-    Route::prefix('field-staff')->group(function () {
+    Route::prefix('field-staff')->middleware(['device.binding'])->group(function () {
         Route::get('dashboard', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'index']);
         Route::get('retailers', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'getRetailers']);
         Route::post('retailers', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'storeRetailer']);
@@ -100,6 +100,13 @@ Route::middleware('auth:api')->group(function () {
         Route::get('retailer-orders', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'index']);
         Route::get('retailer-orders/{id}', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'show']);
         Route::post('retailer-orders/{id}/update-status', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'updateStatus']);
+
+        // Tracking & Actions
+        Route::post('punch', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'punch']);
+        Route::post('ping', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'pingLocation']);
+        Route::post('log-visit', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'logVisit']);
+        Route::post('expenses', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'submitExpense']);
+        Route::post('leaves', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'requestLeave']);
     });
 
     // Retailer Dashboard & Loyalty

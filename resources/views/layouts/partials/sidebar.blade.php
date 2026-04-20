@@ -54,6 +54,47 @@
         </li>
         @endif
 
+        {{-- Reports module --}}
+        @if (Auth::user()->hasPermissionToCategory('distributor_reports', 'view') || 
+             Auth::user()->hasPermissionToCategory('retailer_reports', 'view') || 
+             Auth::user()->hasPermissionToCategory('performance_reports', 'view') ||
+             Auth::user()->hasPermissionToCategory('product_reports', 'view') ||
+             Auth::user()->hasPermissionToCategory('master_order_reports', 'view'))
+        @php $isReportRoute = request()->routeIs('admin.reports.*'); @endphp
+        <li class="sidebar-main-title">
+          <div>
+            <h6>Reports</h6>
+          </div>
+        </li>
+        <li class="sidebar-list">
+          <a class="sidebar-link sidebar-title {{ $isReportRoute ? 'active' : '' }}" id="reports" href="javascript:void(0)">
+            <svg class="stroke-icon">
+              <use href="{{ $iconSprite }}#stroke-charts"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{{ $iconSprite }}#fill-charts"></use>
+            </svg><span>Reports</span>
+          </a>
+          <ul class="sidebar-submenu" style="{{ $isReportRoute ? 'display: block;' : '' }}">
+             @if(Auth::user()->hasPermissionToCategory('distributor_reports', 'view'))
+             <li><a href="{{ route('admin.reports.distributors') }}" class="{{ request()->routeIs('admin.reports.distributors') ? 'active' : '' }}">Distributor Reports</a></li>
+            @endif
+             @if(Auth::user()->hasPermissionToCategory('retailer_reports', 'view'))
+             <li><a href="{{ route('admin.reports.retailers') }}" class="{{ request()->routeIs('admin.reports.retailers') ? 'active' : '' }}">Retailer Reports</a></li>
+            @endif
+             @if(Auth::user()->hasPermissionToCategory('performance_reports', 'view'))
+             <li><a href="{{ route('admin.reports.fieldstaffs') }}" class="{{ request()->routeIs('admin.reports.fieldstaffs') ? 'active' : '' }}">Field Staff Performance</a></li>
+            @endif
+             @if(Auth::user()->hasPermissionToCategory('product_reports', 'view'))
+             <li><a href="{{ route('admin.reports.products') }}" class="{{ request()->routeIs('admin.reports.products') ? 'active' : '' }}">Product Performance</a></li>
+            @endif
+            @if(Auth::user()->hasPermissionToCategory('master_order_reports', 'view'))
+             <li><a href="{{ route('admin.reports.orders') }}" class="{{ request()->routeIs('admin.reports.orders') ? 'active' : '' }}">Master Order Analytics</a></li>
+            @endif
+          </ul>
+        </li>
+        @endif
+
         @php
         $hasOrderPerms = Auth::user()->hasPermissionToCategory('retailer_orders', 'view') ||
         Auth::user()->hasPermissionToCategory('distributor_orders', 'view') ||
@@ -121,7 +162,7 @@
         {{-- Common Orders Dropdown for Admin/Staff --}}
         @if(Auth::user()->hasRole('superadmin') || Auth::user()->hasRole('admin') || Auth::user()->hasRole('salesmanager') || Auth::user()->hasRole('fieldstaff'))
         <li class="sidebar-list" style="position: relative;">
-          <a class="sidebar-link sidebar-title" id="orders" href="#orders">
+          <a class="sidebar-link sidebar-title" id="orders" href="javascript:void(0)">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-form"></use>
             </svg>
@@ -160,7 +201,7 @@
         </li>
         <li class="sidebar-list" style="position: relative;">
           @php $totalApprovals = $actionCounts['retailer_approvals'] + $actionCounts['distributor_approvals']; @endphp
-          <a class="sidebar-link sidebar-title" id="approvals" href="#approvals">
+          <a class="sidebar-link sidebar-title" id="approvals" href="javascript:void(0)">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-user"></use>
             </svg>
@@ -186,11 +227,17 @@
                </span>
              </a></li>
             @endif
+             {{-- Field Staff Approvals --}}
+             @if ($hasApprovalRoles)
+              <li><a href="{{ route('admin.field-staff.expenses') }}">Staff Expenses</a></li>
+              <li><a href="{{ route('admin.field-staff.leaves') }}">Staff Leaves</a></li>
+             @endif
           </ul>
         </li>
 
 
         @endif
+
 
 
         @if (Auth::user()->hasAnyRole(['admin', 'superadmin']) || Auth::user()->hasPermissionToCategory('products', 'view'))
@@ -349,7 +396,7 @@
             <h6 class="lan-10">Settings</h6>
           </div>
         </li>
-        <li class="sidebar-list"><a class="sidebar-link sidebar-title -link-nav" href="#">
+        <li class="sidebar-list"><a class="sidebar-link sidebar-title -link-nav" href="javascript:void(0)">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-user"></use>
             </svg>

@@ -51,7 +51,8 @@ class InventoryController extends Controller
                 'unit' => $request->unit ?? 'Strips',
                 'batch_no' => $inventory->batch_no,
                 'expiry_date' => $inventory->expiry_date,
-                'variant' => $inventory->variant,
+                'side' => $inventory->side,
+                'size' => $inventory->size,
                 'operation' => $request->operation
             ]
         );
@@ -102,8 +103,8 @@ class InventoryController extends Controller
 
                 // Correct totals for grouped data
                 $totalData = DB::table('inventories')
-                    ->select('product_id')
-                    ->groupBy('product_id')
+                    ->select('product_id', 'side', 'size')
+                    ->groupBy('product_id', 'side', 'size')
                     ->get()
                     ->count();
 
@@ -122,8 +123,8 @@ class InventoryController extends Controller
                     ]);
                 }
 
-                $totalFiltered = (clone $query)->select('product_id')
-                    ->groupBy('product_id')
+                $totalFiltered = (clone $query)->select('product_id', 'side', 'size')
+                    ->groupBy('product_id', 'side', 'size')
                     ->get()
                     ->count();
 
@@ -135,11 +136,12 @@ class InventoryController extends Controller
                     DB::raw('MAX(id) as id'),
                     DB::raw('MAX(distributor_id) as distributor_id'),
                     DB::raw('MAX(updated_at) as updated_at'),
-                    DB::raw('MAX(distributor_product_code) as distributor_product_code'),
                     DB::raw('MAX(batch_no) as batch_no'),
-                    DB::raw('MAX(expiry_date) as expiry_date')
+                    DB::raw('MAX(expiry_date) as expiry_date'),
+                    'side',
+                    'size'
                 )
-                ->groupBy('product_id');
+                ->groupBy('product_id', 'side', 'size');
 
                 // ordering
                 if ($request->has('order') && !empty($request->input('order'))) {
@@ -171,6 +173,8 @@ class InventoryController extends Controller
                     $rawBatches = Inventory::with(['distributor.user'])
                         ->where('product_id', $i->product_id)
                         ->where('distributor_id', $i->distributor_id)
+                        ->where('side', $i->side)
+                        ->where('size', $i->size)
                         ->orderBy('expiry_date', 'asc')
                         ->get();
                     
@@ -179,7 +183,8 @@ class InventoryController extends Controller
                             'id' => $b->id,
                             'batch_no' => $b->batch_no,
                             'stock' => (int)$b->stock,
-                            'variant' => $b->variant,
+                            'side' => $b->side,
+                            'size' => $b->size,
                             'expiry_date' => $b->expiry_date ? $b->expiry_date->format('d-m-Y') : 'N/A',
                             'raw_expiry_date' => $b->expiry_date ? $b->expiry_date->format('Y-m-d') : null,
                             'distributor_name' => $b->distributor?->user?->name ?? 'N/A',
@@ -194,7 +199,8 @@ class InventoryController extends Controller
                         'distributor_id' => $i->distributor_id,
                         'distributor_name' => $i->distributor?->user?->name ?? 'N/A',
                         'stock' => (int) $i->stock,
-                        'variant' => $i->variant,
+                        'side' => $i->side,
+                        'size' => $i->size,
                         'batches' => $batches,
                         'product_details' => $i->product ? [
                             'id' => $i->product->id,
@@ -297,7 +303,8 @@ class InventoryController extends Controller
         $request->validate([
             'stock' => 'required|numeric|min:0',
             'unit' => 'nullable|string',
-            'variant' => 'nullable|string',
+            'side' => 'nullable|string',
+            'size' => 'nullable|string',
             'batch_no' => 'required|string|max:255',
             'expiry_date' => 'required|date',
         ]);
@@ -328,7 +335,8 @@ class InventoryController extends Controller
                 'unit' => $request->unit ?? 'Strips',
                 'batch_no' => $request->batch_no,
                 'expiry_date' => $request->expiry_date,
-                'variant' => $request->variant,
+                'side' => $request->side,
+                'size' => $request->size,
                 'operation' => 'add'
             ]
         );

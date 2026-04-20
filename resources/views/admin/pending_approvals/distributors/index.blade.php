@@ -224,37 +224,40 @@
             color: #22c55e;
         }
 
-        /* Order Summary Card */
+        /* Order Summary Card - Refined Light Industrial Theme */
         .order-summary-header {
-            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 12px 12px 0 0;
+            background: var(--med-bg-card);
+            color: var(--med-text-main);
+            padding: 24px 28px;
+            border-radius: 20px 20px 0 0;
             position: relative;
+            border-bottom: 1px solid var(--med-border-light);
+            border-top: 4px solid var(--med-primary);
         }
 
         .retailer-detail-item {
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 0.85rem;
-            color: #cbd5e1;
+            font-size: 0.82rem;
+            color: var(--med-text-muted);
             margin-bottom: 4px;
         }
 
         .retailer-detail-item i {
             width: 16px;
             text-align: center;
-            color: #94a3b8;
+            color: var(--med-primary);
+            opacity: 0.7;
         }
 
         /* Payment Card */
         .payment-status-card {
-            background: #ffffff;
+            background: var(--med-bg-card);
             border-radius: 12px;
             padding: 20px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--med-border-light);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -407,31 +410,31 @@
                 <div class="modal-body p-0">
                     <!-- Order Summary Header -->
                     <div class="order-summary-header">
-                        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3"
+                        <button type="button" class="btn-close position-absolute top-0 end-0 m-3"
                             data-bs-dismiss="modal" aria-label="Close"></button>
                         <div class="row align-items-center">
                             <div class="col-sm-7">
                                 <div class="d-flex align-items-center mb-2">
-                                    <span class="badge bg-soft-primary text-white me-2"
-                                        style="background: rgba(255,255,255,0.2) !important;">DETAILS</span>
-                                    <h4 class="mb-0 fw-bold text-white" id="view_order_code">--</h4>
+                                    <span class="badge bg-primary-subtle text-primary me-2 fw-bold"
+                                        style="font-size: 0.65rem; letter-spacing: 0.5px;">DETAILS</span>
+                                    <h4 class="mb-0 fw-bold text-main-theme" id="view_order_code">--</h4>
                                 </div>
                                 <div class="retailer-detail-item">
                                     <i class="fa fa-calendar"></i>
-                                    <span id="view_placed_at">--</span>
+                                    <span id="view_placed_at" class="text-muted-theme">--</span>
                                 </div>
                             </div>
                             <div class="col-sm-5 text-sm-end">
-                                <div class="text-white-50 small text-uppercase fw-bold mb-1">Distributor Information</div>
-                                <h5 class="fw-bold text-white mb-1" id="view_distributor">--</h5>
+                                <div class="text-muted-theme small text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Distributor Information</div>
+                                <h5 class="fw-bold text-main-theme mb-1" id="view_distributor">--</h5>
                                 <div class="badge bg-soft-info" id="view_status_badge">--</div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="p-4 bg-white">
-                        <h6 class="fw-bold mb-3 d-flex align-items-center">
-                            <span class="bg-light p-2 rounded me-2"><i class="fa fa-list-ul text-primary"></i></span>
+                    <div class="p-4 bg-body-theme">
+                        <h6 class="fw-bold mb-3 d-flex align-items-center text-main-theme">
+                            <span class="bg-body-theme p-2 rounded me-2"><i class="fa fa-list-ul text-primary"></i></span>
                             Order Items
                         </h6>
                         <div class="invoice-list mb-3">
@@ -443,19 +446,19 @@
                             <div id="view_items_list">
                                 <!-- Items will be populated here -->
                             </div>
-                            <div class="invoice-list-footer bg-light">
-                                <div class="me-3 text-muted">Grand Total:</div>
+                            <div class="invoice-list-footer bg-body-theme border-0">
+                                <div class="me-3 text-muted-theme">Grand Total:</div>
                                 <div class="text-primary fs-5" id="view_total">₹0</div>
                             </div>
                         </div>
 
-                        <div id="view_notes_container" class="mt-3 p-3 bg-light rounded-3 d-none">
-                            <div class="text-muted small text-uppercase fw-bold mb-1">Notes</div>
-                            <p id="view_notes" class="text-dark mb-0 small"></p>
+                        <div id="view_notes_container" class="mt-3 p-3 bg-body-theme rounded-3 d-none border border-light-subtle">
+                            <div class="text-muted-theme small text-uppercase fw-bold mb-1">Notes</div>
+                            <p id="view_notes" class="text-main-theme mb-0 small"></p>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light border-top-0">
+                <div class="modal-footer bg-card-theme border-top-0">
                     <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
@@ -470,13 +473,13 @@
                     <div class="modal-body p-0">
                         <!-- Order Summary Header -->
                         <div class="order-summary-header">
-                            <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3"
+                            <button type="button" class="btn-close position-absolute top-0 end-0 m-3"
                                 data-bs-dismiss="modal" aria-label="Close"></button>
                             <div class="row align-items-center">
                                 <div class="col-sm-7">
                                     <div class="d-flex align-items-center mb-2">
-                                        <span class="badge bg-primary me-2">ORDER</span>
-                                        <h4 class="mb-0 fw-bold text-white" id="approve_order_code_display">--</h4>
+                                        <span class="badge bg-primary-subtle text-primary me-2 fw-bold">ORDER</span>
+                                        <h4 class="mb-0 fw-bold text-main-theme" id="approve_order_code_display">--</h4>
                                     </div>
                                     <div class="retailer-detail-item">
                                         <i class="fa fa-calendar"></i>
@@ -484,9 +487,9 @@
                                     </div>
                                 </div>
                                 <div class="col-sm-5 text-sm-end">
-                                    <div class="text-white-50 small text-uppercase fw-bold mb-1">Distributor Information
+                                    <div class="text-muted-theme small text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Distributor Information
                                     </div>
-                                    <h5 class="fw-bold text-white mb-1" id="approve_distributor_display">--</h5>
+                                    <h5 class="fw-bold text-main-theme mb-1" id="approve_distributor_display">--</h5>
                                     <div class="retailer-detail-item justify-content-sm-end">
                                         <i class="fa fa-map-marker-alt"></i>
                                         <span id="approve_location_display">--</span>
@@ -495,11 +498,11 @@
                             </div>
                         </div>
 
-                        <div class="p-4 bg-white">
+                        <div class="p-4 bg-body-theme">
                             <input type="hidden" id="approve_order_id" name="order_id">
 
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="fw-bold mb-0 d-flex align-items-center">
+                                <h6 class="fw-bold mb-0 d-flex align-items-center text-main-theme">
                                     <span class="bg-primary-subtle p-2 rounded me-2"><i
                                             class="fa fa-clipboard-check text-primary"></i></span>
                                     Reviewing Order Items
@@ -515,8 +518,8 @@
                                 <div id="approve_items_list">
                                     <!-- Items will be populated here -->
                                 </div>
-                                <div class="invoice-list-footer bg-light">
-                                    <div class="me-3 text-muted">Total Estimated Value:</div>
+                                <div class="invoice-list-footer bg-body-theme border-0">
+                                    <div class="me-3 text-muted-theme">Total Estimated Value:</div>
                                     <div class="text-primary fs-5" id="approve_total_display">₹0</div>
                                 </div>
                             </div>
@@ -528,8 +531,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer bg-light border-top-0 px-4 py-3">
-                        <button type="button" class="btn btn-link link-secondary fw-bold text-decoration-none"
+                    <div class="modal-footer bg-card-theme border-top-0 px-4 py-3">
+                        <button type="button" class="btn btn-link text-muted-theme fw-bold text-decoration-none"
                             data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary px-4 py-2 fw-bold shadow">
                             <i class="fa fa-check-circle me-1"></i> Proceed to Admin Approval
@@ -569,8 +572,8 @@
                         </div>
                         
                         <div class="mb-0">
-                            <label class="form-label fw-bold text-dark small text-uppercase">Reason for Rejection <span class="text-danger">*</span></label>
-                            <textarea class="form-control border-0 bg-light shadow-none" name="reason" rows="4" required
+                            <label class="form-label fw-bold text-main-theme small text-uppercase">Reason for Rejection <span class="text-danger">*</span></label>
+                            <textarea class="form-control border-0 bg-body-theme shadow-none text-main-theme" name="reason" rows="4" required
                                 placeholder="E.g., Stock unavailable, credit limit exceeded, invalid order details..." 
                                 style="border-radius: 12px; resize: none;"></textarea>
                         </div>
@@ -594,13 +597,13 @@
                     <div class="modal-body p-0">
                         <!-- Order Summary Header -->
                         <div class="order-summary-header">
-                            <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3"
+                            <button type="button" class="btn-close position-absolute top-0 end-0 m-3"
                                 data-bs-dismiss="modal" aria-label="Close"></button>
                             <div class="row align-items-center">
                                 <div class="col-sm-7">
                                     <div class="d-flex align-items-center mb-2">
-                                        <span class="badge bg-primary me-2">DISTRIBUTION</span>
-                                        <h4 class="mb-0 fw-bold text-white" id="process_order_code_display">--</h4>
+                                        <span class="badge bg-primary-subtle text-primary me-2 fw-bold">DISTRIBUTION</span>
+                                        <h4 class="mb-0 fw-bold text-main-theme" id="process_order_code_display">--</h4>
                                     </div>
                                     <div class="retailer-detail-item">
                                         <i class="fa fa-calendar"></i>
@@ -608,9 +611,9 @@
                                     </div>
                                 </div>
                                 <div class="col-sm-5 text-sm-end">
-                                    <div class="text-white-50 small text-uppercase fw-bold mb-1">Distributor Information
+                                    <div class="text-muted-theme small text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Distributor Information
                                     </div>
-                                    <h5 class="fw-bold text-white mb-1" id="process_distributor_display">--</h5>
+                                    <h5 class="fw-bold text-main-theme mb-1" id="process_distributor_display">--</h5>
                                     <div class="retailer-detail-item justify-content-sm-end">
                                         <i class="fa fa-map-marker-alt"></i>
                                         <span id="process_location_display">--</span>
@@ -619,17 +622,17 @@
                             </div>
                         </div>
 
-                        <div class="p-4 bg-white">
+                        <div class="p-4 bg-body-theme">
                             <input type="hidden" id="process_order_id" name="order_id">
 
                             <!-- Payment Configuration Section -->
                             <div class="payment-status-card mb-4">
                                 <div>
-                                    <h6 class="mb-1 fw-bold text-dark d-flex align-items-center">
+                                    <h6 class="mb-1 fw-bold text-main-theme d-flex align-items-center">
                                         <i class="fa fa-money-check-alt text-primary me-2"></i>
                                         Settlement & Payment Status
                                     </h6>
-                                    <div class="text-muted small">Update the current payment state for this order.</div>
+                                    <div class="text-muted-theme small">Update the current payment state for this order.</div>
                                 </div>
                                 <div class="status-badge-group">
                                     <label class="status-radio-option">
@@ -646,7 +649,7 @@
                             <!-- Smart Invoice Processing Section -->
                             <div class="mb-4">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h6 class="fw-bold mb-0 d-flex align-items-center">
+                                    <h6 class="fw-bold mb-0 d-flex align-items-center text-main-theme">
                                         <span class="bg-primary-subtle p-2 rounded me-2"><i
                                                 class="fa fa-robot text-primary"></i></span>
                                         Smart Invoice Processing
@@ -1312,9 +1315,9 @@
                     row.items.forEach(item => {
                         list.append(`
                         <div class="invoice-list-row p-2">
-                            <div style="flex: 2;" class="fw-bold text-dark small ps-2">${item.product_name}</div>
+                            <div style="flex: 2;" class="fw-bold text-main-theme small ps-2">${item.product_name}</div>
                             <div style="flex: 1;" class="fw-bold text-primary text-center">${item.quantity} ${item.unit || 'Nos'}</div>
-                            <div style="flex: 1;" class="fw-bold text-dark text-end pe-3">₹${item.total_amount}</div>
+                            <div style="flex: 1;" class="fw-bold text-main-theme text-end pe-3">₹${item.total_amount}</div>
                         </div>
                                                 `);
                     });
@@ -1343,9 +1346,9 @@
                     row.items.forEach(item => {
                         list.append(`
                         <div class="invoice-list-row p-2">
-                            <div style="flex: 2;" class="fw-bold text-dark small ps-2">${item.product_name}</div>
+                            <div style="flex: 2;" class="fw-bold text-main-theme small ps-2">${item.product_name}</div>
                             <div style="flex: 1;" class="fw-bold text-primary text-center">${item.quantity} ${item.unit || 'Nos'}</div>
-                            <div style="flex: 1;" class="fw-bold text-dark text-end pe-3">₹${item.total_amount}</div>
+                            <div style="flex: 1;" class="fw-bold text-main-theme text-end pe-3">₹${item.total_amount}</div>
                         </div>
                                                 `);
                     });
@@ -1455,17 +1458,17 @@
 
                         let vRowHtml = `
                                                             <div id="v_row_${item.order_item_id}" class="invoice-list-row p-2">
-                                                                <div class="ai-col-product fw-bold text-dark small ps-2">${item.product_name}</div>
+                                                                <div class="ai-col-product fw-bold text-main-theme small ps-2">${item.product_name}</div>
                                                                 <div class="ai-col-batch">
-                                                                    <input type="text" class="form-control form-control-sm v-batch-input border-0 bg-light p-1" 
+                                                                    <input type="text" class="form-control form-control-sm v-batch-input border-0 bg-body-theme text-main-theme p-1" 
                                                                            data-id="${item.order_item_id}" placeholder="Wait AI...">
                                                                 </div>
                                                                 <div class="ai-col-expiry">
-                                                                    <input type="text" class="form-control form-control-sm v-expiry-input border-0 bg-light p-1" 
+                                                                    <input type="text" class="form-control form-control-sm v-expiry-input border-0 bg-body-theme text-main-theme p-1" 
                                                                            data-id="${item.order_item_id}" placeholder="MM/YY">
                                                                 </div>
                                                                 <div class="ai-col-qty fw-bold text-primary text-center v-qty-display" data-original-unit="${item.unit || 'Nos'}">${item.quantity} ${item.unit || 'Nos'}</div>
-                                                                <div class="ai-col-value fw-bold text-dark text-end pe-3 v-taxable-display">--</div>
+                                                                <div class="ai-col-value fw-bold text-main-theme text-end pe-3 v-taxable-display">--</div>
                                                             </div>
                                                         `;
                         vbody.append(vRowHtml);

@@ -20,13 +20,38 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        $user = Auth::user();
-        
         $period = $request->get('period', 'monthly');
+        $data = $this->calculateDashboardData($period);
+        return view('dashboard', $data);
+    }
+
+    public function getStats(Request $request)
+    {
+        $period = $request->get('period', 'monthly');
+        $data = $this->calculateDashboardData($period);
+        
+        // Return JSON with specific subsets needed for AJAX updates
+        return response()->json([
+            'period' => $data['period'],
+            'counts' => $data['counts'],
+            'retailerOrderStats' => $data['retailerOrderStats'],
+            'distributorOrderStats' => $data['distributorOrderStats'],
+            'chartData' => $data['chartData'],
+            'monthlyDistributorOrdersChart' => $data['monthlyDistributorOrdersChart'],
+            // Add other data if needed for dynamic updates
+        ]);
+    }
+
+    private function calculateDashboardData($period)
+    {
+        $user = Auth::user();
         $endDate = now();
         $startDate = now();
 
         switch ($period) {
+            case 'daily':
+                $startDate = now()->startOfDay();
+                break;
             case 'weekly':
                 $startDate = now()->subDays(6)->startOfDay();
                 break;
@@ -226,7 +251,7 @@ class DashboardController extends Controller
             $monthlyDistributorOrdersChart = $this->generateChartData($distributorOrderQuery, $period, $startDate, $endDate);
         }
 
-        return view('dashboard', compact(
+        return compact(
             'counts',
             'retailerOrderStats',
             'distributorOrderStats',
@@ -241,14 +266,32 @@ class DashboardController extends Controller
             'isTopRetailer',
             'monthlyDistributorOrdersChart',
             'period'
-        ));
+        );
     }
 
     private function generateChartData($query, $period, $startDate, $endDate)
     {
         $q = $query->clone();
         
-        if ($period === 'weekly') {
+        if ($period === 'daily') {
+            // Group by Hour (Single day)
+            $orders = $q->select(
+                DB::raw('count(id) as count'),
+                DB::raw("DATE_FORMAT(created_at, '%H:00') as label"),
+                DB::raw('HOUR(created_at) as hour')
+            )->groupBy('hour', 'label')
+                ->orderBy('hour', 'asc')
+                ->get();
+
+            $chartLabels = [];
+            $chartCounts = [];
+            for ($i = 0; $i < 24; $i++) {
+                $label = sprintf("%02d:00", $i);
+                $chartLabels[] = $label;
+                $found = $orders->firstWhere('hour', $i);
+                $chartCounts[] = $found ? $found->count : 0;
+            }
+        } elseif ($period === 'weekly') {
             // Group by Day
             $orders = $q->select(
                 DB::raw('count(id) as count'),

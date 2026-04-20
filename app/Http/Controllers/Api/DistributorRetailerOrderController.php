@@ -587,6 +587,7 @@ class DistributorRetailerOrderController extends Controller
                     $neededStrips = $orderItem->quantity * $multiplier;
                     $inventories = \App\Models\Inventory::where('distributor_id', $distributor->id)
                         ->where('product_id', $product->id)
+                        ->where('variant', $orderItem->variant)
                         ->where('stock', '>', 0)
                         ->orderBy('expiry_date', 'asc')
                         ->get();

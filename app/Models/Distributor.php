@@ -56,6 +56,11 @@ class Distributor extends Model
         return $this->hasMany(RetailerOrder::class);
     }
 
+    public function orders(): HasMany
+    {
+        return $this->retailerOrders();
+    }
+
     public function products()
     {
         return $this->belongsToMany(Product::class, 'inventories', 'distributor_id', 'product_id')->withPivot('stock');
