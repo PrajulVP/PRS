@@ -89,6 +89,25 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- HQ Radius Threshold -->
+                            <div class="col-md-6 mb-4">
+                                <div class="card border-danger shadow-sm h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-danger"><i class="fa fa-compass me-2"></i>HQ Radius Threshold</h6>
+                                        <p class="text-muted small">Maximum distance (in KM) considered as local HQ area.</p>
+                                        <form class="setting-form">
+                                            @csrf
+                                            <input type="hidden" name="slug" value="hq_radius_km">
+                                            <div class="input-group">
+                                                <input type="number" step="0.1" class="form-control" name="value" value="{{ $hq_radius_km }}" min="0">
+                                                <span class="input-group-text">KM</span>
+                                                <button type="button" class="btn btn-danger save-setting-btn">Save</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="alert alert-light border mt-2">

@@ -20,10 +20,12 @@ class SettingsController extends Controller
         $ta_rate_per_km = Setting::getValue('ta_rate_per_km', '10');
         $da_hq_rate = Setting::getValue('da_hq_rate', '250');
         $da_outstation_rate = Setting::getValue('da_outstation_rate', '500');
+        $hq_radius_km = Setting::getValue('hq_radius_km', '15');
 
         return view('admin.settings.general', compact(
             'value', 'cgst', 'sgst', 
-            'geofence_radius', 'ta_rate_per_km', 'da_hq_rate', 'da_outstation_rate'
+            'geofence_radius', 'ta_rate_per_km', 'da_hq_rate', 'da_outstation_rate',
+            'hq_radius_km'
         ));
     }
 
@@ -38,7 +40,7 @@ class SettingsController extends Controller
         ]);
 
         // Basic numeric validation
-        if (in_array($data['slug'], ['loyalty_point_inr', 'cgst', 'sgst', 'geofence_radius', 'ta_rate_per_km', 'da_hq_rate', 'da_outstation_rate'])) {
+        if (in_array($data['slug'], ['loyalty_point_inr', 'cgst', 'sgst', 'geofence_radius', 'ta_rate_per_km', 'da_hq_rate', 'da_outstation_rate', 'hq_radius_km'])) {
             if (!is_numeric($data['value']) || (float) $data['value'] < 0) {
                 return response()->json(['message' => 'Invalid value.'], 422);
             }
@@ -68,6 +70,9 @@ class SettingsController extends Controller
         } elseif ($data['slug'] === 'da_outstation_rate') {
             $title = 'DA Outstation Rate';
             $desc = 'Daily Allowance rate for Outstation visits.';
+        } elseif ($data['slug'] === 'hq_radius_km') {
+            $title = 'HQ Radius Threshold';
+            $desc = 'Maximum distance (in KM) considered as Headquarter area.';
         }
 
         $setting = Setting::setValue(

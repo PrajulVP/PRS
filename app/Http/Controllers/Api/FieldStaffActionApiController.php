@@ -169,7 +169,7 @@ class FieldStaffActionApiController extends Controller
     {
         $request->validate([
             'type' => 'required|string',
-            'amount' => 'required|numeric|min:0',
+            'amount' => 'nullable|numeric|min:0',
             'distance_km' => 'nullable|numeric|min:0',
             'is_outstation' => 'boolean',
             'expense_date' => 'required|date',
@@ -177,8 +177,31 @@ class FieldStaffActionApiController extends Controller
         ]);
 
         $user = auth('api')->user();
-        $billPath = null;
+        $type = strtoupper($request->type);
+        $amount = $request->amount ?? 0;
+        $distance = $request->distance_km ?? 0;
+        $isOutstation = $request->is_outstation ?? false;
 
+        // Auto-calculate for TA (Travel Allowance) or DA (Daily Allowance)
+        if ($type === 'TA' || $type === 'DA' || $type === 'TRAVEL' || $type === 'DAILY') {
+            $gpsDistance = LocationLog::calculateDailyDistance($user->id, $request->expense_date);
+            $distance = $gpsDistance;
+            
+            $hqRadius = (float)Setting::getValue('hq_radius_km', 15);
+            $isOutstation = ($gpsDistance > $hqRadius);
+            
+            if ($type === 'TA' || $type === 'TRAVEL') {
+                $taRate = (float)Setting::getValue('ta_rate_per_km', 2.6);
+                $amount = $isOutstation ? ($gpsDistance * $taRate) : 0;
+            } else {
+                $daRate = $isOutstation 
+                    ? (float)Setting::getValue('da_outstation_rate', 500) 
+                    : (float)Setting::getValue('da_hq_rate', 250);
+                $amount = $daRate;
+            }
+        }
+
+        $billPath = null;
         if ($request->hasFile('bill')) {
             $billPath = $request->file('bill')->store('expenses/' . $user->id, 'public');
         }
@@ -186,17 +209,27 @@ class FieldStaffActionApiController extends Controller
         $expense = Expense::create([
             'user_id' => $user->id,
             'type' => $request->type,
-            'amount' => $request->amount,
-            'distance_km' => $request->distance_km,
+            'amount' => round($amount, 2),
+            'distance_km' => round($distance, 2),
             'bill_path' => $billPath,
-            'is_outstation' => $request->is_outstation ?? false,
+            'is_outstation' => $isOutstation,
             'status' => 'pending',
             'expense_date' => $request->expense_date,
         ]);
 
+        $msg = 'Expense submitted for approval.';
+        if ($type === 'TA' || $type === 'DA') {
+            $msg = ucfirst($type) . ' auto-calculated based on GPS logs (' . round($distance, 2) . ' km).';
+        }
+
         return response()->json([
-            'message' => 'Expense submitted for approval.',
-            'expense' => $expense
+            'message' => $msg,
+            'expense' => $expense,
+            'calculation_details' => [
+                'gps_distance' => round($distance, 2),
+                'is_outstation' => $isOutstation,
+                'applied_rate' => $amount
+            ]
         ], 201);
     }
 
