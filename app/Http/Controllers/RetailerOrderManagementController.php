@@ -45,7 +45,8 @@ class RetailerOrderManagementController extends Controller
         $retailerId = $request->get('retailer_id');
         $retailer = Retailer::find($retailerId);
 
-        $variant = $request->get('variant');
+        $side = $request->get('side');
+        $size = $request->get('size');
         
         // Filter distributors by the retailer's district
         $query = Distributor::with('user');
@@ -54,11 +55,14 @@ class RetailerOrderManagementController extends Controller
         }
         $allDistributors = $query->get();
 
-        // Get current stock levels for this product (and variant if provided)
+        // Get current stock levels for this product (and specific variant if provided)
         $stockMap = DB::table('inventories')
             ->where('product_id', $product->id)
-            ->when(!empty($variant), function($q) use ($variant) {
-                return $q->where('variant', $variant);
+            ->when(!empty($side), function($q) use ($side) {
+                return $q->where('side', $side);
+            })
+            ->when(!empty($size), function($q) use ($size) {
+                return $q->where('size', $size);
             })
             ->selectRaw('distributor_id, SUM(stock) as total_stock')
             ->groupBy('distributor_id')

@@ -445,6 +445,41 @@
         $(document).ready(function () {
             let addedItems = {};
             let lastAiResponse = null; 
+            var currentProductDetails = null;
+
+            function updateDistributorStock(prodId, retailerId, side = null, size = null) {
+                let $distSelect = $('#distributorSelect');
+                let currentVal = $distSelect.val(); // Keep selection if possible
+                
+                $distSelect.prop('disabled', true);
+                
+                $.ajax({
+                    url: "{{ route('admin.retailer.product-details', ':id') }}".replace(':id', prodId),
+                    type: 'GET',
+                    data: { 
+                        retailer_id: retailerId,
+                        side: side,
+                        size: size
+                    },
+                    success: function (res) {
+                        $distSelect.empty().append('<option value="">Select Distributor (Top matches first)</option>');
+                        
+                        if (res.distributors && res.distributors.length > 0) {
+                            res.distributors.forEach(d => {
+                                let stock = d.pivot ? d.pivot.stock : 0;
+                                $distSelect.append(`<option value="${d.id}" data-stock-raw="${stock}" ${currentVal == d.id ? 'selected' : ''}>${d.shop_name || d.name}</option>`);
+                            });
+                        } else {
+                            $distSelect.append('<option value="" disabled>No stockists found for this variant in your area</option>');
+                        }
+                        
+                        $distSelect.prop('disabled', false).trigger('change');
+                    },
+                    error: function() {
+                        $distSelect.prop('disabled', false);
+                    }
+                });
+            }
             const isValid = (val, type) => {
                 if (!val || val === 'null' || val === null) return false;
                 let s = val.toString().toLowerCase().trim();
@@ -476,7 +511,7 @@
                 return opt.text;
             }
 
-            var currentProductDetails = null;
+            // var currentProductDetails = null; // Moved up
 
             $('#productSelect').on('select2:select', function (e) {
                 let prodId = $(this).val();
@@ -499,20 +534,8 @@
                     success: function (res) {
                         let p = res.product;
                         currentProductDetails = p;
-
-                        let distSelect = $('#distributorSelect');
-                        distSelect.empty().append('<option value="">Select Distributor (Top matches first)</option>');
+                        updateDistributorStock(prodId, retailerId);
                         
-                        if (res.distributors && res.distributors.length > 0) {
-                            res.distributors.forEach(d => {
-                                let stock = d.pivot ? d.pivot.stock : 0;
-                                distSelect.append(`<option value="${d.id}" data-stock-raw="${stock}">${d.shop_name || d.name}</option>`);
-                            });
-                        } else {
-                            distSelect.append('<option value="" disabled>No stockists found for this product in your area</option>');
-                        }
-
-                        // ... rest of product details logic (variants, units) ...
                         let pName = (p.product_name || '').toLowerCase();
                         let dynamicVariants = [];
                         let match = pName.match(/\(([^)]+)\)/g);
@@ -534,12 +557,22 @@
                                 let levelIdx = 0;
                                 Object.keys(p.variant_options).forEach(attrName => {
                                     let vals = p.variant_options[attrName];
-                                    $container.append(`<div class="variant-level mb-3" id="levelContainer_${levelIdx}" style="${levelIdx > 0 ? 'display:none;' : ''}"><label class="form-label fw-bold text-muted small text-uppercase mb-2">Select ${attrName}</label><div class="d-flex flex-wrap gap-2">${vals.map(v => `<button type="button" class="btn btn-outline-primary variant-btn px-3 py-2 fw-bold" data-level="${levelIdx}" data-value="${v}">${v}</button>`).join('')}</div></div>`);
+                                    $container.append(`<div class="variant-level mb-3" id="levelContainer_${levelIdx}" style="${levelIdx > 0 ? 'display:none;' : ''}" data-attr-name="${attrName}">
+                                        <label class="form-label fw-bold text-muted small text-uppercase mb-2">Select ${attrName}</label>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            ${vals.map(v => `<button type="button" class="btn btn-outline-primary variant-btn px-3 py-2 fw-bold" data-level="${levelIdx}" data-attr="${attrName}" data-value="${v}">${v}</button>`).join('')}
+                                        </div>
+                                    </div>`);
                                     levelIdx++;
                                 });
                             } else {
                                 let variantsToUse = dynamicVariants.length > 0 ? dynamicVariants : ['S', 'M', 'L', 'XL'];
-                                $container.append(`<div class="variant-level mb-3"><label class="form-label fw-bold text-muted small text-uppercase mb-2">Select Size / Variant</label><div class="d-flex flex-wrap gap-2">${variantsToUse.map(v => `<button type="button" class="btn btn-outline-primary variant-btn px-3 py-2 fw-bold" data-level="0" data-value="${v}">${v}</button>`).join('')}</div></div>`);
+                                $container.append(`<div class="variant-level mb-3" data-attr-name="Size">
+                                    <label class="form-label fw-bold text-muted small text-uppercase mb-2">Select Size / Variant</label>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        ${variantsToUse.map(v => `<button type="button" class="btn btn-outline-primary variant-btn px-3 py-2 fw-bold" data-level="0" data-attr="Size" data-value="${v}">${v}</button>`).join('')}
+                                    </div>
+                                </div>`);
                             }
                         } else {
                             $('#variantWrapper').hide();
@@ -649,25 +682,20 @@
                     }).get().join(' - '); 
 
                     $('#variantValue').val(finalVariant);
-                    $('#distributorSelect').select2('open');
-
+                    
+                    // Re-fetch stock for specific variant
+                    let side = $('.variant-btn.active[data-attr="Side"]').data('value') || null;
+                    let size = $('.variant-btn.active[data-attr="Size"]').data('value') || null;
+                    
                     let prodId = $('#productSelect').val();
                     let retailerId = $('#retailer_id').val();
-                    let distId = $('#distributorSelect').val();
                     
-                    if (prodId && retailerId && distId) {
-                        // Re-fetch product details to get correct stock for this variant if needed
-                        // Though in this system stock is often just per-product, we follow the pattern
-                        $.ajax({
-                            url: "{{ route('admin.retailer.product-details', ':id') }}".replace(':id', prodId),
-                            data: { retailer_id: retailerId, distributor_id: distId, variant: finalVariant },
-                            success: function(res) {
-                                let selDist = res.distributors.find(d => d.id == distId);
-                                let stock = selDist && selDist.pivot ? selDist.pivot.stock : 0;
-                                $('#distributorSelect option:selected').data('stock-raw', stock);
-                            }
-                        });
-                    }
+                    updateDistributorStock(prodId, retailerId, side, size);
+                    
+                    // Delay open to let stock update (optional, but smoother)
+                    setTimeout(() => {
+                        $('#distributorSelect').select2('open');
+                    }, 500);
                 }
             });
 
@@ -1119,7 +1147,7 @@
                 let prodId = $('#productSelect').val();
                 let retailerId = $('#retailer_id').val();
                 if (prodId && retailerId) {
-                    loadDistributors(prodId, retailerId, variant);
+                    updateDistributorStock(prodId, retailerId, null, variant);
                 }
             });
         });

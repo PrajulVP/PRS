@@ -289,7 +289,8 @@ class DashboardController extends Controller
             'period',
             'activeOffers',
             'myRank',
-            'totalInLocality'
+            'totalInLocality',
+            'totalLoyaltyPoints'
         );
     }
 

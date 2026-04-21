@@ -272,37 +272,57 @@
                         @endif
                     </div>
 
-                    {{-- Offers Section --}}
-                    @if(isset($activeOffers) && $activeOffers->count() > 0)
-                    <div class="row mb-4">
+                    {{-- Direct Action Section (Replacing Offers) --}}
+                    <div class="row mb-5">
                         <div class="col-12">
                             <div class="section-header-modern">
                                 <div class="dash"></div>
-                                <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.9rem; letter-spacing: 1.5px; color: var(--med-primary);">Weekly & Monthly Offers</h5>
+                                <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.9rem; letter-spacing: 1.5px; color: var(--med-primary);">Direct Ordering Actions</h5>
                             </div>
                         </div>
                         <div class="col-12">
-                            <div class="row g-3">
-                                @foreach($activeOffers as $offer)
-                                <div class="col-md-4">
-                                    <div class="card border-0 rounded-4 shadow-sm overflow-hidden h-100" style="background: linear-gradient(135deg, #fff 0%, #f0f9ff 100%); border-left: 5px solid #00497a !important;">
-                                        <div class="card-body p-4">
-                                            <div class="badge bg-primary mb-2 rounded-pill px-3 py-1" style="font-size: 10px;">{{ $offer->status == 'active' ? 'LIVE OFFER' : 'UPCOMING' }}</div>
-                                            <h6 class="fw-800 text-dark mb-2">{{ $offer->title }}</h6>
-                                            <p class="text-muted small mb-3">{{ Str::limit($offer->description, 80) }}</p>
-                                            <div class="d-flex justify-content-between align-items-center mt-auto">
-                                                <span class="small fw-bold text-primary"><i class="fa fa-calendar-alt me-1"></i> Ends {{ $offer->end_date->format('d M') }}</span>
-                                                <i data-feather="chevron-right" class="text-primary" style="width: 16px;"></i>
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="card border-0 rounded-4 shadow-sm h-100 overflow-hidden executive-metric-card cursor-pointer" 
+                                        style="background: linear-gradient(135deg, rgba(var(--med-primary-rgb), 0.05) 0%, #fff 100%);"
+                                        onclick="window.location.href='{{ route('admin.retailer.create') }}'">
+                                        <div class="card-body p-4 d-flex align-items-center gap-4">
+                                            <div class="icon-circle-lg bg-soft-primary" style="background: rgba(var(--med-primary-rgb), 0.15)">
+                                                <i data-feather="plus-circle" class="text-primary" style="width: 32px; height: 32px;"></i>
+                                            </div>
+                                            <div>
+                                                <h5 class="fw-800 mb-1" style="color: var(--med-primary);">Create Manual Order</h5>
+                                                <p class="text-muted small mb-0">Directly pick products and build your order</p>
+                                            </div>
+                                            <div class="ms-auto">
+                                                <i data-feather="arrow-right" class="text-muted" style="width: 20px;"></i>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                @endforeach
+                                <div class="col-md-6">
+                                    <div class="card border-0 rounded-4 shadow-sm h-100 overflow-hidden executive-metric-card cursor-pointer" 
+                                        style="background: linear-gradient(135deg, rgba(var(--med-primary-rgb), 0.9) 0%, var(--med-accent) 100%);"
+                                        onclick="window.location.href='{{ route('admin.retailer.create', ['action' => 'upload_prescription']) }}'">
+                                        <div class="card-body p-4 d-flex align-items-center gap-4">
+                                            <div class="icon-circle-lg bg-white bg-opacity-20">
+                                                <i data-feather="cpu" class="text-white" style="width: 32px; height: 32px; stroke-width: 2.5px;"></i>
+                                            </div>
+                                            <div>
+                                                <h5 class="fw-800 mb-1 text-white">AI Prescription Order</h5>
+                                                <p class="text-white text-opacity-75 small mb-0">Upload a request and let AI extract products</p>
+                                            </div>
+                                            <div class="ms-auto text-white">
+                                                <i data-feather="arrow-right" style="width: 20px;"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    @endif
 
+                    {{-- Restored Stats Section --}}
                     <div class="row">
                         @php
                             $stats = [
@@ -329,29 +349,6 @@
                                 </div>
                             </div>
                         @endforeach
-                    </div>
-
-                    <div class="row mt-2">
-                        <div class="col-12">
-                            <div class="section-header-modern">
-                                <div class="dash"></div>
-                                <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.9rem; letter-spacing: 1.5px; color: var(--med-primary);">Quick Actions</h5>
-                            </div>
-                        </div>
-                        <div class="col-12 mb-5 d-flex gap-4 flex-wrap">
-                            <button class="btn btn-outline-primary action-btn-premium shadow-sm d-flex align-items-center px-5" 
-                                onclick="window.location.href='{{ route('admin.retailer.create') }}'">
-                                <i data-feather="plus-circle" class="me-3" style="width: 22px; height: 22px;"></i>
-                                <span>Create New Order</span>
-                            </button>
-                            
-                            <button class="btn btn-primary action-btn-premium shadow-lg d-flex align-items-center px-5" 
-                                style="background: linear-gradient(135deg, var(--med-primary) 0%, var(--med-accent) 100%); border: none;"
-                                onclick="window.location.href='{{ route('admin.retailer.create', ['action' => 'upload_prescription']) }}'">
-                                <i data-feather="cpu" class="me-3" style="width: 22px; height: 22px; stroke-width: 2.5px;"></i>
-                                <span>Upload Prescription (AI)</span>
-                            </button>
-                        </div>
                     </div>
 
                     <div class="row">
