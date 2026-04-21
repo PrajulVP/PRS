@@ -15,6 +15,8 @@ use App\Models\DistributorOrder;
 use App\Models\FieldStaff;
 use App\Models\Retailer;
 use Illuminate\Support\Facades\DB;
+use App\Models\Offer;
+use App\Models\LoyaltySlab;
 
 class DashboardController extends Controller
 {
@@ -82,6 +84,10 @@ class DashboardController extends Controller
         $topProducts = collect();
         $totalLoyaltyPoints = 0;
         $monthlyDistributorOrdersChart = null;
+        $activeOffers = collect();
+        $myRank = null;
+        $totalInLocality = 0;
+        $isTopRetailer = false;
 
         // Role-Based Filtering
         if ($user->hasAnyRole(['superadmin', 'admin'])) {
@@ -184,11 +190,27 @@ class DashboardController extends Controller
                 // Check if this retailer is the top performer globally
                 $topR = \App\Models\Retailer::withSum(['retailerOrders as pts' => function($q){ $q->where('status', 'delivered'); }], 'loyalty_points_earned')->orderByDesc('pts')->first();
                 $isTopRetailer = ($topR && $topR->id === $retailer->id);
+
+                // Sales Rep details
+                $retailer->load('fieldStaff.user');
+                
+                // Active Offers
+                $activeOffers = Offer::active()->latest()->take(3)->get();
+
+                // Locality Ranking (Rank within the same Area based on Delivered Revenue)
+                $areaId = $retailer->area_id;
+                $localityRank = \App\Models\Retailer::where('area_id', $areaId)
+                    ->withSum(['retailerOrders as revenue' => function($q) { $q->where('status', 'delivered'); }], 'total_amount')
+                    ->get()
+                    ->sortByDesc('revenue')
+                    ->values();
+                
+                $myRank = $localityRank->search(fn($r) => $r->id === $retailer->id) + 1;
+                $totalInLocality = $localityRank->count();
             }
         }
 
-        // Initialize isTopRetailer for others
-        if(!isset($isTopRetailer)) $isTopRetailer = false;
+
 
         // 3. Counts - Product Logic
         $productCount = Product::count(); // Default for Admin, Sales Manager, Field Staff
@@ -262,10 +284,12 @@ class DashboardController extends Controller
             'topFieldStaff',
             'topProducts',
             'topDistributors',
-            'totalLoyaltyPoints',
             'isTopRetailer',
             'monthlyDistributorOrdersChart',
-            'period'
+            'period',
+            'activeOffers',
+            'myRank',
+            'totalInLocality'
         );
     }
 

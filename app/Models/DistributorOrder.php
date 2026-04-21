@@ -32,10 +32,12 @@ class DistributorOrder extends Model
         'cancellation_reason', // New field
         'payment_status', // New field
         'invoice_path',
+        'metadata',
     ];
 
     protected $casts = [
         'placed_at' => 'datetime',
+        'metadata' => 'array',
     ];
 
     protected static function boot()

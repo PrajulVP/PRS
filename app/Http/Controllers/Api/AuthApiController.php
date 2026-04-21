@@ -9,9 +9,16 @@ use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use App\Models\User;
+use App\Services\OtpService;
 
 class AuthApiController extends Controller
 {
+    protected $otpService;
+
+    public function __construct(OtpService $otpService)
+    {
+        $this->otpService = $otpService;
+    }
     /**
      * @OA\Post(
      *     path="/api/login",
@@ -80,6 +87,115 @@ class AuthApiController extends Controller
         }
 
         $user = auth('api')->user();
+
+        // Device Binding Logic for Field Staff
+        if ($user->hasRole('fieldstaff')) {
+            $deviceId = $request->header('X-Device-ID');
+            if (!$deviceId) {
+                return response()->json(['error' => 'Device ID required for Field Staff.'], 403);
+            }
+
+            if (!$user->device_uuid) {
+                // First login - bind device
+                $user->update([
+                    'device_uuid' => $deviceId,
+                    'device_bound_at' => now(),
+                ]);
+            } elseif ($user->device_uuid !== $deviceId) {
+                return response()->json(['error' => 'This account is bound to another device. Please contact admin.'], 403);
+            }
+        }
+
+        return response()->json([
+            'access_token' => $token,
+            'token_type'   => 'bearer',
+            'expires_in'   => JWTAuth::factory()->getTTL() * 60,
+            'user'         => $this->prepareUserResponse($user),
+        ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/send-otp",
+     *     summary="Send OTP to field staff",
+     *     tags={"Auth"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email"},
+     *             @OA\Property(property="email", type="string", format="email", example="staff@example.com")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="OTP sent successfully"),
+     *     @OA\Response(response=404, description="User not found or not fieldstaff")
+     * )
+     */
+    public function sendOtp(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user || !$user->hasRole('fieldstaff')) {
+            return response()->json(['error' => 'Unauthorized or account not found.'], 404);
+        }
+
+        $otp = $this->otpService->generateOtp();
+        $this->otpService->sendOtp($user, $otp);
+
+        return response()->json(['message' => 'OTP sent successfully (Check logs for mock OTP).']);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/login-otp",
+     *     summary="Login with OTP for field staff",
+     *     tags={"Auth"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email", "otp"},
+     *             @OA\Property(property="email", type="string", format="email"),
+     *             @OA\Property(property="otp", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Login successful"),
+     *     @OA\Response(response=401, description="Invalid OTP")
+     * )
+     */
+    public function loginWithOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'otp' => 'required|string',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user || !$user->hasRole('fieldstaff')) {
+            return response()->json(['error' => 'Unauthorized.'], 403);
+        }
+
+        if (!$this->otpService->verifyOtp($user, $request->otp)) {
+            return response()->json(['error' => 'Invalid or expired OTP.'], 401);
+        }
+
+        // Generate Token
+        if (!$token = auth('api')->fromUser($user)) {
+            return response()->json(['error' => 'Failed to generate token.'], 500);
+        }
+
+        // Device Binding check
+        $deviceId = $request->header('X-Device-ID');
+        if (!$deviceId) {
+            return response()->json(['error' => 'Device ID required.'], 403);
+        }
+
+        if (!$user->device_uuid) {
+            $user->update(['device_uuid' => $deviceId, 'device_bound_at' => now()]);
+        } elseif ($user->device_uuid !== $deviceId) {
+            return response()->json(['error' => 'Account bound to another device.'], 403);
+        }
 
         return response()->json([
             'access_token' => $token,

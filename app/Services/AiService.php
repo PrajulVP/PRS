@@ -64,6 +64,19 @@ class AiService
         foreach ($aiItems as $medicine) {
             $nameStr = $medicine['name'] ?? $medicine['product_name'] ?? $medicine['description'] ?? null;
             $quantity = $medicine['count'] ?? $medicine['quantity'] ?? $medicine['qty'] ?? 1;
+            
+            // Detect medication period (e.g., "30 days", "1 month")
+            $dosageStr = strtolower($medicine['dosage'] ?? $medicine['frequency'] ?? '');
+            $isChronic = false;
+            $days = 1;
+
+            if (preg_match('/(\d+)\s*(day|month)/', $dosageStr, $matches)) {
+                $val = (int)$matches[1];
+                $unit = $matches[2];
+                $days = str_contains($unit, 'month') ? $val * 30 : $val;
+                if ($days >= 30) $isChronic = true;
+            }
+
             if (!$nameStr) continue;
 
             $name = trim($nameStr);
@@ -71,16 +84,18 @@ class AiService
             // Find likely matching products (top 5)
             $matchingProducts = Product::where('product_name', 'LIKE', "%{$name}%")
                 ->orWhere('generic_name', 'LIKE', "%{$name}%")
+                ->orderByRaw("product_name LIKE 'Atom%' DESC") // Prioritize Atomed/Atomlife
                 ->take(5)
                 ->get();
-
+            
+            // ... (Secondary search logic remains)
             if ($matchingProducts->isEmpty()) {
-                // Secondary check: search by words if name is complex
                 $words = explode(' ', preg_replace('/[^a-z0-9 ]/i', ' ', $name));
                 foreach ($words as $word) {
                     if (strlen($word) > 3) {
                         $matchingProducts = Product::where('product_name', 'LIKE', "%{$word}%")
                             ->orWhere('generic_name', 'LIKE', "%{$word}%")
+                            ->orderByRaw("product_name LIKE 'Atom%' DESC")
                             ->take(5)
                             ->get();
                         if ($matchingProducts->isNotEmpty()) break;
@@ -89,19 +104,22 @@ class AiService
             }
 
             if ($matchingProducts->isEmpty()) {
-                $unmatchedItems[] = ['name' => $name, 'quantity' => (int)$quantity];
+                $unmatchedItems[] = ['name' => $name, 'quantity' => (int)$quantity, 'is_chronic' => $isChronic];
                 continue;
             }
 
             foreach ($matchingProducts as $product) {
                 $distributors = $this->getAvailableDistributors($product, $retailer);
-                
+                $isAtomed = str_starts_with(strtolower($product->product_name), 'atom');
+
                 if ($distributors->isEmpty()) {
                     $outOfStockItems[] = [
                         'product_name' => $product->product_name,
                         'generic_name' => $product->generic_name,
                         'original_name' => $name,
-                        'quantity' => (int)$quantity
+                        'quantity' => (int)$quantity,
+                        'is_chronic' => $isChronic,
+                        'is_atomed' => $isAtomed
                     ];
                 } else {
                     $distList = [];
@@ -111,7 +129,7 @@ class AiService
                             'name' => $distributor->user->name ?? 'N/A',
                             'shop_name' => $distributor->shop_name,
                             'distance' => $distributor->distance,
-                            'stock' => ($distributor->pivot->stock ?? 0) . ' Strips',
+                            'stock' => ($distributor->pivot->stock ?? 0) . ' Units',
                         ];
                     }
                     $matchedOptions[] = [
@@ -120,7 +138,10 @@ class AiService
                         'has_stock' => true,
                         'quantity' => (int)$quantity,
                         'unit' => $this->determineDefaultUnit($product),
-                        'original_name' => $name
+                        'original_name' => $name,
+                        'is_chronic' => $isChronic,
+                        'is_atomed' => $isAtomed,
+                        'matched_as' => $isAtomed ? 'Priority Brand' : 'Generic Match'
                     ];
                 }
             }
@@ -128,7 +149,8 @@ class AiService
 
         $response = [
             'matched_items' => $matchedOptions,
-            'unmatched_items' => $unmatchedItems
+            'unmatched_items' => $unmatchedItems,
+            'is_chronic_prescription' => collect($matchedOptions)->contains('is_chronic', true) || collect($unmatchedItems)->contains('is_chronic', true)
         ];
 
         if (!empty($outOfStockItems)) {
@@ -189,5 +211,39 @@ class AiService
             str_contains($pPack, 'ml') || str_contains($pPack, 'gm') || str_contains($pPack, 'syp') ||
             str_contains($pName, 'syp') || str_contains($pName, 'syrup') || str_contains($pName, 'drop') || str_contains($pName, 'ointment');
         return $isCount ? 'Nos' : 'Strips';
+    }
+    /**
+     * Send an invoice file to the external Python AI API and return the extracted data.
+     */
+    public function extractInvoice(UploadedFile $file)
+    {
+        $basePath = env('AI_API_URL', 'http://3.110.97.41');
+        $apiUrl = rtrim($basePath, '/') . "/extract-invoice";
+        Log::info('Invoice AI API Request', ['url' => $apiUrl]);
+
+        try {
+            $response = Http::timeout(60)
+                ->attach(
+                    'file',
+                    file_get_contents($file->getRealPath()),
+                    $file->getClientOriginalName()
+                )
+                ->post($apiUrl);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                Log::info('Invoice AI API Success Response', ['response' => $data]);
+                return $data;
+            }
+
+            Log::error('Invoice AI API Error Response', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Invoice AI API Exception', ['message' => $e->getMessage()]);
+            return null;
+        }
     }
 }

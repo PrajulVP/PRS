@@ -36,6 +36,11 @@
             --med-failed-bg: #fef2f2;
             --med-failed-text: #b91c1c;
             --med-failed-border: #fee2e2;
+
+            /* Login Specific */
+            --login-overlay: rgba(255, 255, 255, 0.4);
+            --login-text: #1f2937;
+            --login-muted: #6b7280;
         }
 
         body.dark-only {
@@ -67,6 +72,11 @@
             --med-failed-bg: rgba(185, 28, 28, 0.15);
             --med-failed-text: #f87171;
             --med-failed-border: rgba(248, 113, 113, 0.2);
+
+            /* Login Specific */
+            --login-overlay: rgba(10, 15, 24, 0.7);
+            --login-text: #f8fafc;
+            --login-muted: #94a3b8;
         }
 
         /* === Premium Global Foundations === */
@@ -944,6 +954,89 @@
         }
         .bg-body-theme { 
             background-color: var(--med-bg-body) !important; 
+        }
+        /* === Professional Print Optimization === */
+        @media print {
+            @page {
+                size: landscape;
+                margin: 1cm;
+            }
+
+            /* Hide Non-Essential UI for lean reports */
+            .sidebar-wrapper,
+            .page-header,
+            .footer,
+            .page-title nav,
+            .preset-filters,
+            .card-header form,
+            /* Broadest possible selectors to kill pagination and info rows */
+            .dataTables_paginate,
+            .paging_simple_numbers,
+            .pagination,
+            .dataTables_info,
+            .dataTables_length,
+            .dataTables_filter,
+            .dataTables_wrapper .row:last-child,
+            .dt-buttons,
+            .btn:not(.btn-print-only) {
+                display: none !important;
+                visibility: hidden !important;
+                height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            body {
+                background: white !important;
+                color: black !important;
+                font-size: 10pt;
+            }
+
+            .page-body {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .card {
+                box-shadow: none !important;
+                border: none !important;
+                width: 100% !important;
+            }
+
+            .table-responsive {
+                overflow: visible !important;
+            }
+
+            /* Force standard black text for everything */
+            * {
+                color: black !important;
+                background-color: transparent !important;
+                box-shadow: none !important;
+                text-shadow: none !important;
+            }
+
+            /* No symbols/icons as requested */
+            i, .fa, .icofont, .themify {
+                display: none !important;
+            }
+
+            /* Status Badges - Remove colors, keep text */
+            .badge, .status-badge {
+                border: 1px solid #ccc !important;
+                background: transparent !important;
+                color: black !important;
+                padding: 2px 5px !important;
+            }
+
+            .table thead th {
+                border-bottom: 2px solid black !important;
+                background-color: #f0f0f0 !important;
+                color: black !important;
+            }
+
+            .table td {
+                border-bottom: 1px solid #eee !important;
+            }
         }
     </style>
 </head>

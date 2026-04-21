@@ -54,25 +54,49 @@
                                         </td>
                                         <td>
                                             @if($expense->status == 'pending')
-                                                <span class="badge badge-light-warning">Pending</span>
+                                                <span class="badge badge-light-warning">Pending (FS)</span>
+                                            @elseif($expense->status == 'manager_approved')
+                                                <span class="badge badge-light-primary">Approved by Manager</span>
                                             @elseif($expense->status == 'approved')
-                                                <span class="badge badge-light-success">Approved</span>
+                                                <span class="badge badge-light-success">Fully Approved</span>
                                             @else
                                                 <span class="badge badge-light-danger">Rejected</span>
                                             @endif
                                         </td>
                                         <td class="text-center">
-                                            @if($expense->status == 'pending')
+                                            @php
+                                                $user = auth()->user();
+                                                $canApprove = false;
+                                                if ($user->hasRole('salesmanager') && $expense->status == 'pending') {
+                                                    $canApprove = true;
+                                                } elseif ($user->hasAnyRole(['admin', 'superadmin']) && ($expense->status == 'manager_approved' || $expense->status == 'pending')) {
+                                                    $canApprove = true;
+                                                }
+                                            @endphp
+
+                                            @if($canApprove)
                                                 <div class="d-flex gap-2 justify-content-center">
                                                     <form action="{{ route('admin.field-staff.expenses.status', $expense->id) }}" method="POST">
                                                         @csrf
                                                         <input type="hidden" name="status" value="approved">
-                                                        <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                                        <button type="submit" class="btn btn-sm btn-success">
+                                                            {{ $user->hasRole('salesmanager') ? 'Verify' : 'Final Approve' }}
+                                                        </button>
                                                     </form>
                                                     <button type="button" class="btn btn-sm btn-danger" onclick="rejectExpense({{ $expense->id }})">Reject</button>
                                                 </div>
                                             @else
-                                                <span class="small text-muted">Processed by<br>{{ $expense->admin->name ?? ($expense->manager->name ?? 'System') }}</span>
+                                                <span class="small text-muted">
+                                                    @if($expense->status == 'approved')
+                                                        Approved by {{ $expense->admin->name ?? 'Admin' }}
+                                                    @elseif($expense->status == 'manager_approved')
+                                                        Verified by {{ $expense->manager->name ?? 'SM' }}
+                                                    @elseif($expense->status == 'rejected')
+                                                        Rejected
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </span>
                                             @endif
                                         </td>
                                     </tr>

@@ -45,18 +45,29 @@ class FieldStaffActionApiController extends Controller
 
         $user = auth('api')->user();
 
+        // Extra security: Verify Device ID if bound
+        $deviceId = $request->header('X-Device-ID');
+        if ($user->device_uuid && $user->device_uuid !== $deviceId) {
+            return response()->json(['error' => 'Device mismatch. Use registered device.'], 403);
+        }
+
         $log = AttendanceLog::create([
             'user_id' => $user->id,
             'type' => $request->type,
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
-            'device_id' => $request->header('X-Device-ID'),
+            'device_id' => $deviceId,
             'is_mock_location' => $request->is_mock ?? false,
             'timestamp' => now(),
         ]);
 
+        $message = ucfirst(str_replace('_', ' ', $request->type)) . ' successful.';
+        if ($request->is_mock) {
+            $message .= ' (Flagged for potential mock location)';
+        }
+
         return response()->json([
-            'message' => ucfirst(str_replace('_', ' ', $request->type)) . ' successful.',
+            'message' => $message,
             'log' => $log
         ]);
     }
@@ -88,6 +99,12 @@ class FieldStaffActionApiController extends Controller
 
         $user = auth('api')->user();
 
+        // Extra security: Verify Device ID if bound
+        $deviceId = $request->header('X-Device-ID');
+        if ($user->device_uuid && $user->device_uuid !== $deviceId) {
+            return response()->json(['error' => 'Device mismatch.'], 403);
+        }
+
         $log = LocationLog::create([
             'user_id' => $user->id,
             'latitude' => $request->latitude,
@@ -96,7 +113,7 @@ class FieldStaffActionApiController extends Controller
             'timestamp' => now(),
         ]);
 
-        return response()->json(['message' => 'Ping received.', 'id' => $log->id]);
+        return response()->json(['message' => 'Ping received.', 'id' => $log->id, 'flagged' => $request->is_mock ?? false]);
     }
 
     /**
@@ -124,6 +141,7 @@ class FieldStaffActionApiController extends Controller
         $request->validate([
             'customer_category' => 'required|in:Doctor,Hospital,Retailer,Distributor/Wholesaler',
             'customer_name' => 'required|string',
+            'customer_id' => 'nullable|integer',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'notes' => 'nullable|string',
@@ -132,8 +150,28 @@ class FieldStaffActionApiController extends Controller
         ]);
 
         $user = auth('api')->user();
-        $photoPath = null;
+        
+        // Geofencing Check
+        $isFlagged = false;
+        if ($request->customer_id && $request->customer_category === 'Retailer') {
+            $retailer = \App\Models\Retailer::find($request->customer_id);
+            if ($retailer && $retailer->latitude && $retailer->longitude) {
+                $distance = $this->calculateDistance(
+                    $request->latitude, $request->longitude,
+                    $retailer->latitude, $retailer->longitude
+                );
+                
+                // radius: 10 meters (0.01 KM)
+                if ($distance > 0.01) { 
+                    return response()->json([
+                        'error' => 'Geofence violation. You must be within 10 meters of the customer location.',
+                        'current_distance' => round($distance * 1000, 2) . ' meters'
+                    ], 403);
+                }
+            }
+        }
 
+        $photoPath = null;
         if ($request->hasFile('photo')) {
             $photoPath = $request->file('photo')->store('visits/' . $user->id, 'public');
         }
@@ -142,27 +180,72 @@ class FieldStaffActionApiController extends Controller
             'user_id' => $user->id,
             'customer_category' => $request->customer_category,
             'customer_name' => $request->customer_name,
+            'customer_id' => $request->customer_id,
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
-            'check_in_at' => now(), // Assuming immediate log
+            'check_in_at' => now(), 
             'notes' => $request->notes,
             'next_follow_up_date' => $request->next_follow_up,
             'photo_path' => $photoPath,
+            'is_flagged' => $isFlagged, // Flagged if outside geofence
         ]);
 
+        $msg = 'Visit logged successfully.';
+        if ($isFlagged) {
+            $msg .= ' (Warning: Location is far from registered customer address)';
+        }
+
         return response()->json([
-            'message' => 'Visit logged successfully.',
+            'message' => $msg,
             'visit' => $visit
         ]);
+    }
+
+    private function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        $theta = $lon1 - $lon2;
+        $dist = sin(deg2rad($lat1)) * sin(deg2rad($lat2)) +  cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * cos(deg2rad($theta));
+        $dist = acos($dist);
+        $dist = rad2deg($dist);
+        $miles = $dist * 60 * 1.1515;
+        return ($miles * 1.609344); // Distance in KM
     }
 
     /**
      * @OA\Post(
      *     path="/api/field-staff/expenses",
-     *     summary="Submit an expense claim",
+     *     summary="Submit an expense claim (with Auto TA/DA calculation)",
+     *     description="Submit an expense. If type is 'TA' or 'DA', the system automatically calculates the amount based on GPS logs for the expense_date and the configured HQ radius (15km).",
      *     tags={"Field Staff"},
      *     security={{"bearerAuth":{}}},
-     *     @OA\Response(response=201, description="Expense submitted")
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"type", "expense_date"},
+     *                 @OA\Property(property="type", type="string", description="Expense type: TA, DA, Travel, food, misc, etc."),
+     *                 @OA\Property(property="expense_date", type="string", format="date", example="2023-10-27"),
+     *                 @OA\Property(property="amount", type="number", description="Optional if TA/DA (auto-calculated)"),
+     *                 @OA\Property(property="distance_km", type="number", description="Optional (auto-calculated from GPS)"),
+     *                 @OA\Property(property="is_outstation", type="boolean", description="Optional (auto-determined)"),
+     *                 @OA\Property(property="bill", type="string", format="binary", description="Invoice/Bill image/pdf")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201, 
+     *         description="Expense submitted",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="expense", type="object"),
+     *             @OA\Property(property="calculation_details", type="object",
+     *                 @OA\Property(property="gps_distance", type="number"),
+     *                 @OA\Property(property="is_outstation", type="boolean"),
+     *                 @OA\Property(property="applied_rate", type="number")
+     *             )
+     *         )
+     *     )
      * )
      */
     public function submitExpense(Request $request)

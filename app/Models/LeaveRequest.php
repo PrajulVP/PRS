@@ -18,7 +18,9 @@ class LeaveRequest extends Model
         'end_time',
         'reason',
         'status',
-        'approved_by',
+        'approved_by', // Legacy
+        'manager_id',
+        'admin_id',
     ];
 
     protected $casts = [
@@ -29,6 +31,16 @@ class LeaveRequest extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function manager()
+    {
+        return $this->belongsTo(User::class, 'manager_id');
+    }
+
+    public function admin()
+    {
+        return $this->belongsTo(User::class, 'admin_id');
     }
 
     public function approvedBy()

@@ -34,13 +34,18 @@ class ReportController extends Controller
             'total_distributor_orders' => 0,
             'total_sales_value' => 0,
             'active_retailers' => 0,
+            'pending_payments' => 0,
+            'total_visits' => 0,
+            'prescriptions_analyzed' => 0,
         ];
 
         $query = RetailerOrder::query()->whereBetween('placed_at', [$fromDate, $toDate]);
+        $distQuery = DistributorOrder::query()->whereBetween('created_at', [$fromDate, $toDate]);
 
         if ($user->hasRole('fieldstaff')) {
             $query->where('fieldstaff_id', $user->fieldStaff->id);
             $stats['active_retailers'] = Retailer::where('field_staff_id', $user->fieldStaff->id)->count();
+            $stats['total_visits'] = \App\Models\VisitLog::where('user_id', $user->id)->whereBetween('check_in_at', [$fromDate, $toDate])->count();
         } elseif ($user->hasRole('salesmanager')) {
             $query->whereHas('fieldStaff', function($q) use ($user) {
                 $q->where('sales_manager_id', $user->salesManager->id);
@@ -48,13 +53,23 @@ class ReportController extends Controller
             $stats['active_retailers'] = Retailer::whereHas('fieldStaff', function($q) use ($user) {
                 $q->where('sales_manager_id', $user->salesManager->id);
             })->count();
+            $stats['total_visits'] = \App\Models\VisitLog::whereHas('user.fieldStaff', function($q) use ($user) {
+                $q->where('sales_manager_id', $user->salesManager->id);
+            })->whereBetween('check_in_at', [$fromDate, $toDate])->count();
         } else {
             $stats['active_retailers'] = Retailer::count();
+            $stats['total_visits'] = \App\Models\VisitLog::whereBetween('check_in_at', [$fromDate, $toDate])->count();
         }
 
         $stats['total_retailer_orders'] = (clone $query)->count();
         $stats['total_sales_value'] = (clone $query)->where('status', RetailerOrder::STATUS_DELIVERED)->sum('total_amount');
-        $stats['total_distributor_orders'] = DistributorOrder::whereBetween('created_at', [$fromDate, $toDate])->count();
+        $stats['total_distributor_orders'] = $distQuery->count();
+        
+        $stats['pending_payments'] = (clone $query)->where('payment_status', '!=', 'paid')->sum('total_amount') + 
+                                     (clone $distQuery)->where('payment_status', '!=', 'paid')->sum('total_amount');
+
+        // Prescription Logs Count
+        $stats['prescriptions_analyzed'] = \App\Models\PrescriptionLog::whereBetween('created_at', [$fromDate, $toDate])->count();
 
         return view('admin.reports.index', compact('stats', 'fromDate', 'toDate'));
     }
@@ -82,6 +97,8 @@ class ReportController extends Controller
                     return [now()->subDays(7)->startOfDay(), now()->endOfDay()];
                 case 'this_month':
                     return [now()->startOfMonth(), now()->endOfMonth()];
+                case 'this_year':
+                    return [now()->startOfYear(), now()->endOfDay()];
                 default:
                     // Fallback for YYYY-MM period format if still used
                     try {
@@ -221,12 +238,6 @@ class ReportController extends Controller
                 ->addColumn('items_detail', function($row) {
                     return $row->items->map(fn($item) => "{$item->product->product_name} (x{$item->quantity})")->implode(', ');
                 })
-                ->addColumn('fulfillment_duration', function($row) {
-                    if (!$row->delivered_at) return 'Pending';
-                    $diffDays = $row->placed_at->diffInDays($row->delivered_at);
-                    $duration = $diffDays >= 1 ? $diffDays . ' ' . ($diffDays == 1 ? 'day' : 'days') : $row->placed_at->diffForHumans($row->delivered_at, true);
-                    return $duration . ' to deliver';
-                })
                 ->addColumn('total_quantity', fn($row) => $row->items->sum('quantity'))
                 ->addColumn('total_items', fn($row) => $row->items->count())
                 ->editColumn('placed_at', fn($row) => $row->placed_at->format('M d, Y H:i'))
@@ -237,7 +248,7 @@ class ReportController extends Controller
                     $tax = $items->sum(fn($i) => ($i->product->gst / 100) * ($i->product->taxable_value * $i->quantity));
                     return '₹' . number_format($tax, 2);
                 })
-                ->rawColumns(['retailer_name', 'fulfillment_duration', 'total_quantity', 'tax_summary', 'status'])
+                ->rawColumns(['retailer_name', 'total_quantity', 'tax_summary', 'status'])
                 ->make(true);
         }
 
@@ -280,8 +291,31 @@ class ReportController extends Controller
                 ->addColumn('network_size', function($dist) use ($rel) {
                     return $dist->$rel()->distinct('retailer_id')->count() . ' Retailers';
                 })
-                ->editColumn('total_sales', fn($dist) => number_format($dist->total_sales ?? 0, 2))
-                ->rawColumns(['total_sales'])
+                ->addColumn('top_products', function($dist) use ($request) {
+                    $type = $request->order_type ?? 'retailer';
+                    $orderItemModel = ($type === 'distributor') ? \App\Models\DistributorOrderItem::class : \App\Models\RetailerOrderItem::class;
+                    $orderRel = ($type === 'distributor') ? 'distributorOrder' : 'retailerOrder';
+
+                    $top = $orderItemModel::whereHas($orderRel, function($q) use ($dist, $request) {
+                        $q->where('distributor_id', $dist->id);
+                        $this->applyGlobalFilters($q, $request);
+                        $q->where('status', 'delivered');
+                    })
+                    ->select('product_id', DB::raw('SUM(quantity) as total_qty'))
+                    ->groupBy('product_id')
+                    ->orderByDesc('total_qty')
+                    ->limit(1)
+                    ->with('product')
+                    ->get();
+
+                    if ($top->isEmpty()) return '<span class="text-muted small italic">N/A</span>';
+                    
+                    return $top->map(function($item) {
+                        $name = $item->product->product_name ?? 'Unknown';
+                        return "<div class='x-small'><i class='fa fa-caret-right me-1 text-primary'></i>{$name}</div>";
+                    })->implode('');
+                })
+                ->rawColumns(['total_sales', 'top_products'])
                 ->make(true);
         }
 
@@ -317,8 +351,27 @@ class ReportController extends Controller
                     return "GST: " . ($ret->gst ?: 'N/A') . "<br>DL: " . ($ret->drug_license_no ?: 'N/A');
                 })
                 ->addColumn('field_staff', fn($ret) => $ret->fieldStaff->user->name ?? 'N/A')
-                ->editColumn('total_sales', fn($ret) => number_format($ret->total_sales ?? 0, 2))
-                ->rawColumns(['shop_details', 'regulatory'])
+                ->addColumn('top_products', function($ret) use ($request) {
+                    $top = \App\Models\RetailerOrderItem::whereHas('retailerOrder', function($q) use ($ret, $request) {
+                        $q->where('retailer_id', $ret->id);
+                        $this->applyGlobalFilters($q, $request);
+                        $q->where('status', 'delivered');
+                    })
+                    ->select('product_id', DB::raw('SUM(quantity) as total_qty'))
+                    ->groupBy('product_id')
+                    ->orderByDesc('total_qty')
+                    ->limit(1)
+                    ->with('product')
+                    ->get();
+                    
+                    if ($top->isEmpty()) return '<span class="text-muted small italic">N/A</span>';
+                    
+                    return $top->map(function($item) {
+                        $name = $item->product->product_name ?? 'Unknown';
+                        return "<div class='x-small'><i class='fa fa-caret-right me-1 text-success'></i>{$name}</div>";
+                    })->implode('');
+                })
+                ->rawColumns(['shop_details', 'regulatory', 'top_products'])
                 ->make(true);
         }
 
@@ -347,7 +400,7 @@ class ReportController extends Controller
                         ->whereHas($orderRel, function($q) use ($request) {
                             $this->applyGlobalFilters($q, $request);
                             $q->where('status', 'delivered'); 
-                        })->selectRaw('SUM(quantity)'), 
+                        })->selectRaw('COALESCE(SUM(quantity), 0)'), 
                     'total_sold'
                 )
                 ->selectSub(
@@ -355,7 +408,7 @@ class ReportController extends Controller
                         ->whereHas($orderRel, function($q) use ($request) {
                             $this->applyGlobalFilters($q, $request);
                             $q->where('status', 'delivered');
-                        })->selectRaw('SUM(free_quantity)'), 
+                        })->selectRaw('COALESCE(SUM(free_quantity), 0)'), 
                     'total_free'
                 )
                 ->selectSub(
@@ -363,7 +416,7 @@ class ReportController extends Controller
                         ->whereHas($orderRel, function($q) use ($request) {
                             $this->applyGlobalFilters($q, $request);
                             $q->where('status', 'delivered');
-                        })->selectRaw("SUM({$totalAmountCol})"), 
+                        })->selectRaw("COALESCE(SUM({$totalAmountCol}), 0)"), 
                     'total_revenue'
                 )
                 ->selectSub(
@@ -371,7 +424,7 @@ class ReportController extends Controller
                         ->whereHas($orderRel, function($q) use ($request) {
                             $this->applyGlobalFilters($q, $request);
                             $q->where('status', 'delivered');
-                        })->selectRaw("COUNT(DISTINCT {$orderIdCol})"), 
+                        })->selectRaw("COALESCE(COUNT(DISTINCT {$orderIdCol}), 0)"), 
                     'order_count'
                 );
 
@@ -447,7 +500,7 @@ class ReportController extends Controller
                     return '₹' . number_format($fs->total_revenue / $fs->total_orders, 2);
                 })
                 ->addColumn('actions', function($fs) {
-                    return '<a href="' . route('admin.reports.fieldstaff.tracking', ['user_id' => $fs->user_id]) . '" class="btn btn-sm btn-outline-info"><i class="fa fa-map-marker-alt me-1"></i>Track</a>';
+                    return '<a href="' . route('admin.reports.fieldstaff.tracking', ['user_id' => $fs->user_id]) . '" class="btn btn-sm btn-primary"><i class="fa fa-map-marker-alt me-1"></i>Track</a>';
                 })
                 ->editColumn('total_revenue', fn($fs) => '₹' . number_format($fs->total_revenue ?? 0, 2))
                 ->rawColumns(['coverage_stats', 'activity', 'actions'])
@@ -461,6 +514,145 @@ class ReportController extends Controller
         return view('admin.reports.fieldstaffs', compact('salesManagers', 'distributors', 'fieldStaffs'));
     }
 
+    public function visitReports(Request $request)
+    {
+        abort_if(!Auth::user()->hasPermissionToCategory('performance_reports', 'view'), 403);
+        if ($request->ajax()) {
+            $query = FieldStaff::with(['user', 'salesManager.user'])->select('fieldstaffs.*');
+            $this->applyGlobalFilters($query, $request);
+
+            [$f, $t] = $this->getFilterDates($request);
+
+            $query->withCount(['visitLogs as total_visits' => function($q) use ($f, $t) {
+                if ($f && $t) $q->whereBetween('check_in_at', [$f, $t]);
+            }])
+            ->withCount(['retailers as total_assigned_retailers']);
+
+            return DataTables::of($query)
+                ->addColumn('name', fn($fs) => $fs->user->name ?? 'N/A')
+                ->addColumn('coverage', function($fs) {
+                    $visitedUnique = \App\Models\VisitLog::where('user_id', $fs->user_id)
+                        ->where('customer_category', 'retailer')
+                        ->count(\DB::raw('DISTINCT customer_id'));
+                        
+                    return "{$visitedUnique} / {$fs->total_assigned_retailers} Outlets";
+                })
+                ->addColumn('productivity', function($fs) {
+                    if ($fs->total_assigned_retailers == 0) return '0%';
+                    // Use customer_id and filter by category if necessary
+                    $visitedUnique = \App\Models\VisitLog::where('user_id', $fs->user_id)
+                        ->where('customer_category', 'retailer')
+                        ->count(\DB::raw('DISTINCT customer_id'));
+                    $percent = ($visitedUnique / $fs->total_assigned_retailers) * 100;
+                    return number_format($percent, 1) . '% Coverage';
+                })
+                ->addColumn('visit_count', fn($fs) => $fs->total_visits . ' Visits')
+                ->make(true);
+        }
+
+        $salesManagers = SalesManager::with('user')->get();
+        return view('admin.reports.visits', compact('salesManagers'));
+    }
+
+    public function outstandingReports(Request $request)
+    {
+        abort_if(!Auth::user()->hasPermissionToCategory('retailer_reports', 'view'), 403);
+        if ($request->ajax()) {
+            $type = $request->order_type ?? 'retailer';
+            
+            if ($type === 'distributor') {
+                $query = Distributor::with('user')->select('distributors.*');
+                $rel = 'distributorOrders';
+            } else {
+                $query = Retailer::with(['user', 'fieldStaff.user'])->select('retailers.*');
+                $rel = 'orders';
+            }
+
+            $this->applyGlobalFilters($query, $request, null);
+
+            // Total Business
+            $query->withSum([$rel . ' as total_business'], 'total_amount');
+
+            // Outstanding (Unpaid)
+            $query->withSum([$rel . ' as total_outstanding' => function($q) {
+                $q->where('payment_status', '!=', 'paid');
+                $q->where('status', '!=', 'cancelled');
+                $q->where('status', '!=', 'rejected');
+            }], 'total_amount');
+
+            return DataTables::of($query)
+                ->addColumn('entity_name', function($row) use ($type) {
+                    if ($type === 'distributor') return $row->user->name ?? $row->name;
+                    return "<div class='fw-bold'>{$row->shop_name}</div><div class='small text-muted'>{$row->user->name}</div>";
+                })
+                ->addColumn('business', fn($row) => '₹' . number_format($row->total_business ?? 0, 2))
+                ->addColumn('outstanding', fn($row) => '₹' . number_format($row->total_outstanding ?? 0, 2))
+                ->addColumn('risk_level', function($row) {
+                    $outstanding = $row->total_outstanding ?? 0;
+                    if ($outstanding == 0) return '<span class="badge bg-light-success text-success">Clear</span>';
+                    if ($outstanding > 50000) return '<span class="badge bg-light-danger text-danger">Critical</span>';
+                    return '<span class="badge bg-light-warning text-warning">Active</span>';
+                })
+                ->rawColumns(['entity_name', 'risk_level'])
+                ->make(true);
+        }
+
+        $salesManagers = SalesManager::with('user')->get();
+        return view('admin.reports.outstanding', compact('salesManagers'));
+    }
+
+    public function targetReports(Request $request)
+    {
+        abort_if(!Auth::user()->hasPermissionToCategory('performance_reports', 'view'), 403);
+        if ($request->ajax()) {
+            $query = FieldStaff::with(['user', 'salesManager.user'])->select('fieldstaffs.*');
+            $this->applyGlobalFilters($query, $request);
+
+            [$f, $t] = $this->getFilterDates($request);
+
+            // Calculate Achievement (Delivered Orders)
+            $query->withSum(['retailerOrders as achievement' => function($q) use ($f, $t) {
+                $q->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED);
+                if ($f && $t) $q->whereBetween('placed_at', [$f, $t]);
+            }], 'total_amount');
+
+            // Calculate Target (from SalesTarget table)
+            // Note: In real app, we would filter SalesTarget by month/range. 
+            // For now, we sum targets linked to the staff.
+            $query->withSum(['salesTargets as target_amount' => function($q) {
+                // Remove invalid 'type' column check
+            }], 'amount');
+
+            return DataTables::of($query)
+                ->addColumn('name', fn($fs) => $fs->user->name ?? 'N/A')
+                ->addColumn('achievement_display', fn($fs) => '₹' . number_format($fs->achievement ?? 0, 2))
+                ->addColumn('target_display', fn($fs) => '₹' . number_format($fs->target_amount ?? 0, 2))
+                ->addColumn('variance', function($fs) {
+                    $achieved = $fs->achievement ?? 0;
+                    $target = $fs->target_amount ?? 0;
+                    if ($target == 0) return ($achieved > 0) ? '<span class="text-success small">+100% (No Target)</span>' : '<span class="text-muted small">0%</span>';
+                    
+                    $percent = ($achieved / $target) * 100;
+                    $color = ($percent >= 100) ? 'text-success' : (($percent >= 70) ? 'text-warning' : 'text-danger');
+                    return "<span class='{$color} fw-bold'>" . number_format($percent, 1) . "%</span>";
+                })
+                ->addColumn('progress_bar', function($fs) {
+                    $achieved = $fs->achievement ?? 0;
+                    $target = $fs->target_amount ?? 0;
+                    if ($target == 0) $percent = ($achieved > 0) ? 100 : 0;
+                    else $percent = min(($achieved / $target) * 100, 100);
+                    
+                    $color = ($percent >= 100) ? 'bg-success' : (($percent >= 70) ? 'bg-warning' : 'bg-danger');
+                    return '<div class="progress" style="height: 6px;"><div class="progress-bar ' . $color . '" role="progressbar" style="width: ' . $percent . '%"></div></div>';
+                })
+                ->rawColumns(['variance', 'progress_bar'])
+                ->make(true);
+        }
+
+        $salesManagers = SalesManager::with('user')->get();
+        return view('admin.reports.targets', compact('salesManagers'));
+    }
+
     public function performanceReports()
     {
         return redirect()->route('admin.reports.fieldstaffs');
@@ -469,6 +661,132 @@ class ReportController extends Controller
     /**
      * GPS Tracking & Route Path Visualization
      */
+    /**
+     * Live Monitoring Dashboard for Field Staff
+     */
+    public function monitoring()
+    {
+        abort_if(!Auth::user()->hasPermissionToCategory('performance_reports', 'view'), 403);
+        $salesManagers = SalesManager::with('user')->get();
+        return view('admin.reports.monitoring', compact('salesManagers'));
+    }
+
+    /**
+     * AJAX Endpoint for Monitoring Data
+     */
+    public function getMonitoringData(Request $request)
+    {
+        $user = Auth::user();
+        
+        // Scope staff by manager if applicable
+        $staffQuery = FieldStaff::with(['user', 'salesManager.user']);
+        $this->applyGlobalFilters($staffQuery, $request);
+        $staffUsers = $staffQuery->get();
+
+        $today = now()->toDateString();
+        $data = [];
+        $alerts = [];
+
+        foreach ($staffUsers as $fs) {
+            $fsUser = $fs->user;
+            if (!$fsUser) continue;
+
+            // 1. Get Latest Location Today
+            $lastLoc = \App\Models\LocationLog::where('user_id', $fsUser->id)
+                ->whereDate('timestamp', $today)
+                ->latest('timestamp')
+                ->first();
+
+            // 2. Get Last Attendance Action
+            $lastAttendance = \App\Models\AttendanceLog::where('user_id', $fsUser->id)
+                ->whereDate('timestamp', $today)
+                ->latest('timestamp')
+                ->first();
+
+            // 3. Visit Stats
+            $visitCount = \App\Models\VisitLog::where('user_id', $fsUser->id)
+                ->whereDate('check_in_at', $today)
+                ->count();
+
+            $ongoingVisit = \App\Models\VisitLog::where('user_id', $fsUser->id)
+                ->whereDate('check_in_at', $today)
+                ->whereNull('check_out_at')
+                ->first();
+
+            // 4. Calculate Distance
+            $distance = \App\Models\LocationLog::calculateDailyDistance($fsUser->id, $today);
+
+            // 5. Determine Status & Alerts
+            $status = 'offline';
+            $statusColor = '#95a5a6'; // Gray
+            
+            if ($lastAttendance && $lastAttendance->type === 'punch_in') {
+                $status = 'online';
+                $statusColor = '#2ecc71'; // Green
+                
+                if ($lastLoc) {
+                    $diffInMins = $lastLoc->timestamp->diffInMinutes(now());
+                    if ($diffInMins > 45) {
+                        $status = 'idle';
+                        $statusColor = '#f1c40f'; // Yellow
+                        $alerts[] = [
+                            'staff_id' => $fs->id,
+                            'staff_name' => $fsUser->name,
+                            'type' => 'inactivity',
+                            'message' => "{$fsUser->name} has been stationary for {$diffInMins} minutes.",
+                            'time' => $lastLoc->timestamp->format('H:i')
+                        ];
+                    }
+                }
+                
+                if ($ongoingVisit) {
+                    $status = 'visiting';
+                    $statusColor = '#9b59b6'; // Purple
+                }
+            }
+
+            // Check for Mock Location alerting
+            $mockAlertToday = \App\Models\LocationLog::where('user_id', $fsUser->id)
+                ->whereDate('timestamp', $today)
+                ->where('is_mock_location', true)
+                ->exists();
+
+            if ($mockAlertToday) {
+                $alerts[] = [
+                    'staff_id' => $fs->id,
+                    'staff_name' => $fsUser->name,
+                    'type' => 'mock_gps',
+                    'message' => "Possible Mock GPS usage detected for {$fsUser->name} today.",
+                    'time' => now()->format('H:i')
+                ];
+            }
+
+            $data[] = [
+                'id' => $fs->id,
+                'user_id' => $fsUser->id,
+                'name' => $fsUser->name,
+                'avatar' => $fsUser->avatar_url,
+                'manager' => $fs->salesManager->user->name ?? 'N/A',
+                'lat' => $lastLoc->latitude ?? null,
+                'lng' => $lastLoc->longitude ?? null,
+                'last_seen' => $lastLoc ? $lastLoc->timestamp->diffForHumans() : 'Never today',
+                'status' => $status,
+                'status_color' => $statusColor,
+                'stats' => [
+                    'visits' => $visitCount,
+                    'distance' => $distance . ' KM'
+                ],
+                'ongoing_visit' => $ongoingVisit ? $ongoingVisit->customer_name : null
+            ];
+        }
+
+        return response()->json([
+            'staff' => $data,
+            'alerts' => $alerts,
+            'timestamp' => now()->format('H:i:s')
+        ]);
+    }
+
     public function fieldStaffTracking(Request $request)
     {
         $userId = $request->user_id;
@@ -491,7 +809,10 @@ class ReportController extends Controller
             ->whereDate('check_in_at', $date)
             ->get();
 
-        return view('admin.reports.fieldstaff_tracking', compact('user', 'locations', 'punches', 'visits', 'date'));
+        // Calculate total distance coverd
+        $totalDistance = \App\Models\LocationLog::calculateDailyDistance($userId, $date);
+
+        return view('admin.reports.fieldstaff_tracking', compact('user', 'locations', 'punches', 'visits', 'date', 'totalDistance'));
     }
 
     public function downloadExport(Request $request, $format)

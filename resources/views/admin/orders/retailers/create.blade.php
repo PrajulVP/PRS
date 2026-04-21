@@ -81,54 +81,43 @@
                             </div>
 
                             <div class="row g-4">
-                                {{-- Row 1: Product and Distributor --}}
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold text-muted small text-uppercase mb-2">Find
-                                        Product</label>
+                                    <label class="form-label fw-bold text-muted small text-uppercase mb-2">1. Select Product</label>
                                     <select id="productSelect" class="form-select select2">
-                                        <option value="">Search Products...</option>
+                                        <option value="">Search Product...</option>
                                         @foreach($products as $p)
-                                            <option value="{{ $p->id }}">{{ $p->product_name }}{{ $p->pack ? ' ('.$p->pack.')' : '' }} - ₹{{ $p->ptr }}</option>
+                                            <option value="{{ $p->id }}">{{ $p->product_name }}{{ trim($p->pack) && $p->pack != '' ? " ($p->pack)" : "" }} - ₹{{ number_format($p->ptr, 2) }}</option>
                                         @endforeach
                                     </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold text-muted small text-uppercase mb-2">Select
-                                        Distributor</label>
-                                    <select id="distributorSelect" class="form-select select2">
+                                    <label class="form-label fw-bold text-muted small text-uppercase mb-2">2. Select Distributor</label>
+                                    <select id="distributorSelect" class="form-select select2" disabled>
                                         <option value="">Select Product First</option>
                                     </select>
                                 </div>
 
-                                {{-- Row 2: Variant, Qty and Add Button --}}
-                                <div class="col-md-12">
+                                {{-- Details & Qty --}}
+                                <div class="col-md-12" id="selectionDetails" style="display: none;">
                                     <div class="row g-3 align-items-end">
                                         <div class="col-md-12" id="variantWrapper" style="display: none;">
-                                            <div id="variantLevelsContainer">
-                                                {{-- Dynamic variant levels will be injected here --}}
-                                            </div>
+                                            <div id="variantLevelsContainer"></div>
                                             <input type="hidden" id="variantValue" value="">
                                         </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label fw-bold text-muted small text-uppercase mb-2">Quantity
-                                                & Type</label>
+                                        <div class="col-md-4 text-center mx-auto">
+                                            <label class="form-label fw-bold text-muted small text-uppercase mb-2">Build Quantity</label>
                                             <div class="input-group">
-                                                <input type="number" id="qtyInput"
-                                                    class="form-control fw-bold rounded-start" value="1" min="1">
-                                                <select
-                                                    class="form-select bg-light-soft border-start-0 font-outfit rounded-end"
-                                                    id="unitSelect" style="max-width: 130px;">
+                                                <input type="number" id="qtyInput" class="form-control fw-bold rounded-start" value="1" min="1">
+                                                <select class="form-select bg-light-soft border-start-0 font-outfit rounded-end" id="unitSelect" style="max-width: 130px;">
                                                     <option value="Strips">Strips</option>
                                                     <option value="Box">Box</option>
                                                     <option value="Nos">Nos</option>
                                                 </select>
                                             </div>
                                         </div>
-                                        <div class="col-md-3">
-                                            <button type="button"
-                                                class="btn btn-primary w-100 fw-bold shadow-sm font-outfit rounded-3 py-2"
-                                                id="btnAddItem">
-                                                <i class="fa fa-plus me-1"></i> ADD
+                                        <div class="col-md-12 text-center mt-3">
+                                            <button type="button" class="btn btn-primary px-5 fw-bold shadow-sm font-outfit rounded-3 py-2" id="btnAddItem">
+                                                <i class="fa fa-plus me-1"></i> ADD TO BUNDLE
                                             </button>
                                         </div>
                                     </div>
@@ -489,43 +478,19 @@
 
             var currentProductDetails = null;
 
-            function loadDistributors(prodId, retailerId, variant) {
-                let distSelect = $('#distributorSelect');
-                distSelect.empty().append('<option value="">Loading...</option>');
-
-                $.ajax({
-                    url: "{{ route('admin.retailer.product-details', ':id') }}".replace(':id', prodId),
-                    type: 'GET',
-                    data: { 
-                        retailer_id: retailerId,
-                        variant: variant
-                    },
-                    success: function (res) {
-                        distSelect.empty();
-                        if (res.distributors && res.distributors.length > 0) {
-                            res.distributors.forEach(d => {
-                                let name = d.user ? d.user.name : 'ID: ' + d.id;
-                                let stock = d.pivot ? d.pivot.stock : 0;
-                                distSelect.append(`<option value="${d.id}" data-stock-raw="${stock}">${name}</option>`);
-                            });
-                        } else {
-                            distSelect.append('<option value="">No stock available</option>');
-                        }
-                    }
-                });
-            }
-
             $('#productSelect').on('select2:select', function (e) {
                 let prodId = $(this).val();
                 let retailerId = $('#retailer_id').val();
+                
                 if (!retailerId) {
-                    showToast('error', 'Select a retailer first');
+                    showToast('error', 'Please select a retailer first');
                     $(this).val(null).trigger('change');
                     return;
                 }
 
-                $('#productDetailsCard').fadeIn(400);
-                $('#distributorSelect').empty().append('<option value="">Select Variant First...</option>');
+                $('#distributorSelect').prop('disabled', false).empty().append('<option value="">Loading Stockists...</option>');
+                $('#selectionDetails').hide();
+                $('#productDetailsCard').hide();
 
                 $.ajax({
                     url: "{{ route('admin.retailer.product-details', ':id') }}".replace(':id', prodId),
@@ -535,7 +500,19 @@
                         let p = res.product;
                         currentProductDetails = p;
 
-                        // Dynamic Variant Parsing from product name
+                        let distSelect = $('#distributorSelect');
+                        distSelect.empty().append('<option value="">Select Distributor (Top matches first)</option>');
+                        
+                        if (res.distributors && res.distributors.length > 0) {
+                            res.distributors.forEach(d => {
+                                let stock = d.pivot ? d.pivot.stock : 0;
+                                distSelect.append(`<option value="${d.id}" data-stock-raw="${stock}">${d.shop_name || d.name}</option>`);
+                            });
+                        } else {
+                            distSelect.append('<option value="" disabled>No stockists found for this product in your area</option>');
+                        }
+
+                        // ... rest of product details logic (variants, units) ...
                         let pName = (p.product_name || '').toLowerCase();
                         let dynamicVariants = [];
                         let match = pName.match(/\(([^)]+)\)/g);
@@ -547,81 +524,44 @@
                         }
 
                         let hasVariants = p.has_variants || dynamicVariants.length > 0 || (p.variant_options && Object.keys(p.variant_options).length > 0);
-
                         if (hasVariants) {
                             let $container = $('#variantLevelsContainer');
                             $container.empty();
                             $('#variantValue').val('');
                             $('#variantWrapper').show();
-
+                            
                             if (p.variant_options && Object.keys(p.variant_options).length > 0) {
-                                // Structured Variants logic
                                 let levelIdx = 0;
                                 Object.keys(p.variant_options).forEach(attrName => {
                                     let vals = p.variant_options[attrName];
-                                    let levelHtml = `
-                                        <div class="variant-level mb-3" id="levelContainer_${levelIdx}" style="${levelIdx > 0 ? 'display:none;' : ''}">
-                                            <label class="form-label fw-bold text-muted small text-uppercase mb-2">Select ${attrName}</label>
-                                            <div class="d-flex flex-wrap gap-2">
-                                                ${vals.map(v => `<button type="button" class="btn btn-outline-primary variant-btn px-3 py-2 fw-bold" data-level="${levelIdx}" data-value="${v}">${v}</button>`).join('')}
-                                            </div>
-                                        </div>`;
-                                    $container.append(levelHtml);
+                                    $container.append(`<div class="variant-level mb-3" id="levelContainer_${levelIdx}" style="${levelIdx > 0 ? 'display:none;' : ''}"><label class="form-label fw-bold text-muted small text-uppercase mb-2">Select ${attrName}</label><div class="d-flex flex-wrap gap-2">${vals.map(v => `<button type="button" class="btn btn-outline-primary variant-btn px-3 py-2 fw-bold" data-level="${levelIdx}" data-value="${v}">${v}</button>`).join('')}</div></div>`);
                                     levelIdx++;
                                 });
-                                $('#distributorSelect').empty().append('<option value="">Select Variant Above...</option>');
                             } else {
-                                // Fallback to name-based parsing
-                                let variantsToUse = dynamicVariants.length > 0 ? dynamicVariants : ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
-                                let levelHtml = `
-                                    <div class="variant-level mb-3">
-                                        <label class="form-label fw-bold text-muted small text-uppercase mb-2">Select Size / Variant</label>
-                                        <div class="d-flex flex-wrap gap-2">
-                                            ${variantsToUse.map(v => `<button type="button" class="btn btn-outline-primary variant-btn px-3 py-2 fw-bold" data-level="0" data-value="${v}">${v}</button>`).join('')}
-                                        </div>
-                                    </div>`;
-                                $container.append(levelHtml);
-                                $('#distributorSelect').empty().append('<option value="">Select Size Above...</option>');
+                                let variantsToUse = dynamicVariants.length > 0 ? dynamicVariants : ['S', 'M', 'L', 'XL'];
+                                $container.append(`<div class="variant-level mb-3"><label class="form-label fw-bold text-muted small text-uppercase mb-2">Select Size / Variant</label><div class="d-flex flex-wrap gap-2">${variantsToUse.map(v => `<button type="button" class="btn btn-outline-primary variant-btn px-3 py-2 fw-bold" data-level="0" data-value="${v}">${v}</button>`).join('')}</div></div>`);
                             }
                         } else {
                             $('#variantWrapper').hide();
                             $('#variantValue').val('');
-                            loadDistributors(prodId, retailerId, null);
                         }
 
-                        // Unit Logic: box_size empty = Nos
+                        // Unit Logic
                         let $unitSelect = $('#unitSelect');
                         $unitSelect.empty();
-                        
                         let pPack = (p.pack || '').toLowerCase();
-                        let boxSizeStr = p.box_size || '';
-                        let isCount = boxSizeStr === "";
-                        
-                        // Fallback patterns: If not already Nos, check keywords
-                        if (!isCount) {
-                            let pName = (p.product_name || '').toLowerCase();
-                            isCount = pPack.includes('nos') || pPack.includes('count') || 
-                                     pPack.includes('pair') || pPack.includes('bottle') || 
-                                     pPack.includes('ml') || pPack.includes('gm') || 
-                                     pPack.includes('syp') || pName.includes('syp') || 
-                                     pName.includes('syrup') || pName.includes('drop') || 
-                                     pName.includes('ointment') || pName.includes('belt') ||
-                                     pName.includes('cap') || pName.includes('binder') ||
-                                     pName.includes('splint') || pName.includes('brace') ||
-                                     pName.includes('cuff') || pName.includes('walker');
-                        }
-                        
+                        let isCount = p.box_size === "" || pPack.includes('nos') || pPack.includes('count');
                         if (isCount) {
                             $unitSelect.append('<option value="Strips">Nos</option>');
                             $('#ptrLabel').text(`PTR (Per Nos)`);
                         } else {
-                            $unitSelect.append('<option value="Strips">Strips</option>');
-                            $unitSelect.append('<option value="Box">Box</option>');
+                            $unitSelect.append('<option value="Strips">Strips</option><option value="Box">Box</option>');
                             $('#ptrLabel').text(`PTR (Per Strip)`);
                         }
 
-                        let displayName = p.product_name;
-                        $('#previewName').html(displayName);
+                        $('#previewName').html(p.product_name);
+                        $('#previewMrp').text(parseFloat(p.ptr || 0).toFixed(2));
+
 
                         if (isValid(p.pack, 'pack')) {
                             $('#previewPackSpan').text(p.pack);
@@ -664,6 +604,9 @@
                         } else {
                             $('#previewBoxCapsule').hide();
                         }
+
+                        $('#distributorSelect').prop('disabled', false).select2('open');
+                        $('#productDetailsCard').fadeIn(300);
                     }
                 });
             });
@@ -690,7 +633,6 @@
                 if ($nextLevel.length > 0) {
                     $nextLevel.fadeIn(200);
                     $('#variantValue').val(''); // Incomplete selection
-                    $('#distributorSelect').empty().append('<option value="">Continue Selection Above...</option>');
                 } else {
                     // Final level reached - Assemble full variant string from all active buttons
                     let finalVariant = $('.variant-level:visible .variant-btn.active').map(function() {
@@ -701,8 +643,20 @@
 
                     let prodId = $('#productSelect').val();
                     let retailerId = $('#retailer_id').val();
-                    if (prodId && retailerId) {
-                        loadDistributors(prodId, retailerId, finalVariant);
+                    let distId = $('#distributorSelect').val();
+                    
+                    if (prodId && retailerId && distId) {
+                        // Re-fetch product details to get correct stock for this variant if needed
+                        // Though in this system stock is often just per-product, we follow the pattern
+                        $.ajax({
+                            url: "{{ route('admin.retailer.product-details', ':id') }}".replace(':id', prodId),
+                            data: { retailer_id: retailerId, distributor_id: distId, variant: finalVariant },
+                            success: function(res) {
+                                let selDist = res.distributors.find(d => d.id == distId);
+                                let stock = selDist && selDist.pivot ? selDist.pivot.stock : 0;
+                                $('#distributorSelect option:selected').data('stock-raw', stock);
+                            }
+                        });
                     }
                 }
             });
@@ -831,7 +785,8 @@
                                 let p = item.product;
                                 let d = item.distributor;
                                 let distName = d.shop_name || d.name || 'N/A';
-                                let options = `<option value="${p.id}" selected>${p.product_name} (₹${p.ptr})</option>`;
+                                let pPack = (p.pack && p.pack.trim() !== '') ? ` (${p.pack})` : '';
+                                let options = `<option value="${p.id}" selected>${p.product_name}${pPack} (₹${p.ptr})</option>`;
                                 
                                 let distHtml = `
                                     <select class="form-select select2-ai ai-dist-select" data-pid="${p.id}">

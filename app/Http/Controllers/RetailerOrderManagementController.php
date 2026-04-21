@@ -728,7 +728,9 @@ class RetailerOrderManagementController extends Controller
                             $invId = isset($batchData['inventory_id']) ? str_replace(['"', "'"], '', $batchData['inventory_id']) : null;
 
                             $invQuery = \App\Models\Inventory::where('distributor_id', $distributor->id)
-                                ->where('product_id', $product->id);
+                                ->where('product_id', $product->id)
+                                ->where('side', $orderItem->side) // Strict Side Matching
+                                ->where('size', $orderItem->size); // Strict Size Matching
 
                             if ($invId) {
                                 $inventory = $invQuery->findOrFail($invId);
@@ -789,6 +791,8 @@ class RetailerOrderManagementController extends Controller
 
                         $inventories = \App\Models\Inventory::where('distributor_id', $distributor->id)
                             ->where('product_id', $product->id)
+                            ->where('side', $orderItem->side) // Strict Side Matching
+                            ->where('size', $orderItem->size) // Strict Size Matching
                             ->when(!empty($orderItem->variant), function($q) use ($orderItem) {
                                 return $q->where('variant', $orderItem->variant);
                             })
@@ -828,10 +832,32 @@ class RetailerOrderManagementController extends Controller
                 }
 
                 if ($request->hasFile('invoice')) {
+                    // Invoice validation
+                    if (!$request->filled('invoice_no')) {
+                        throw new \Exception('Invoice Number is required for approval.');
+                    }
+                    
+                    $invoiceNo = $request->invoice_no;
+
+                    $existsInDistOrders = \App\Models\DistributorOrder::where('distributor_id', $distributor->id)
+                        ->where('invoice_no', $invoiceNo)
+                        ->exists();
+
+                    $existsInRetailOrders = RetailerOrder::where('distributor_id', $distributor->id)
+                        ->where('invoice_no', $invoiceNo)
+                        ->where('id', '!=', $retailerOrder->id)
+                        ->exists();
+
+                    if ($existsInDistOrders || $existsInRetailOrders) {
+                        throw new \Exception("The invoice number '{$invoiceNo}' has already been used for another order by your dealership.");
+                    }
+
                     $file = $request->file('invoice');
                     $filename = 'invoice_' . $retailerOrder->id . '_' . time() . '.' . $file->getClientOriginalExtension();
                     $path = $file->storeAs('retailer_invoices', $filename, 'public');
+                    
                     $updateData['invoice_path'] = $path;
+                    $updateData['invoice_no'] = $invoiceNo; // Save invoice number
                 } else {
                     throw new \Exception('Invoice upload is strictly required for approval.');
                 }
@@ -1253,6 +1279,8 @@ class RetailerOrderManagementController extends Controller
         return view('admin.orders.retailers.invoice', compact('retailerOrder', 'cgst', 'sgst'));
     }
 
+
+
     public function uploadInvoice(Request $request, RetailerOrder $retailerOrder)
     {
         $request->validate([
@@ -1260,12 +1288,39 @@ class RetailerOrderManagementController extends Controller
         ]);
 
         if ($request->hasFile('invoice')) {
+            $file = $request->file('invoice');
+            
+            // Cross-role duplication check based on file hash
+            $fileHash = md5_file($file->getRealPath());
+            
+            $existingRetailer = RetailerOrder::where('id', '!=', $retailerOrder->id)
+                ->whereJsonContains('metadata->invoice_hash', $fileHash)
+                ->first();
+
+            $existingDistributor = DistributorOrder::whereJsonContains('metadata->invoice_hash', $fileHash)
+                ->first();
+
+            if ($existingRetailer || $existingDistributor) {
+                $code = $existingRetailer ? $existingRetailer->order_code : $existingDistributor->order_code;
+                $role = $existingRetailer ? 'Retailer' : 'Distributor';
+                return response()->json([
+                    'error' => "This invoice has already been uploaded for $role Order #$code. Duplicate uploads are not allowed across roles.",
+                    'duplicate' => true
+                ], 400);
+            }
+
             if ($retailerOrder->invoice_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($retailerOrder->invoice_path)) {
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($retailerOrder->invoice_path);
             }
 
-            $path = $request->file('invoice')->store('invoices/retailers', 'public');
+            $path = $file->store('invoices/retailers', 'public');
+            
+            // Store hash in metadata for future duplication checks
+            $metadata = $retailerOrder->metadata ?? [];
+            $metadata['invoice_hash'] = $fileHash;
+            
             $retailerOrder->invoice_path = $path;
+            $retailerOrder->metadata = $metadata;
             $retailerOrder->save();
 
             return response()->json([

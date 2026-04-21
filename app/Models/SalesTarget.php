@@ -9,11 +9,10 @@ class SalesTarget extends Model
 {
     protected $fillable = [
         'field_staff_id',
-        'retailer_id',
-        'distributor_id',
+        'month',
+        'year',
         'amount',
-        'paid_on',
-        'type',
+        'achieved_amount',
     ];
 
     public function fieldStaff(): BelongsTo

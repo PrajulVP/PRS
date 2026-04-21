@@ -24,6 +24,7 @@ use App\Http\Controllers\{
     LoyaltyPointsController,
     SystemController,
     ReportController,
+    PrescriptionAnalysisController,
     SidebarController
 };
 
@@ -128,6 +129,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('retailer/{retailerOrder}/upload-invoice', [RetailerOrderManagementController::class, 'uploadInvoice'])->name('retailer.upload-invoice');
         Route::post('retailer/{retailerOrder}/remove-invoice', [RetailerOrderManagementController::class, 'removeInvoice'])->name('retailer.remove-invoice');
         Route::post('retailer/{retailerOrder}/confirm-receipt', [RetailerOrderManagementController::class, 'confirmReceipt'])->name('retailer.confirm-receipt');
+
+        
         Route::post('retailer/{retailerOrder}/reject', [RetailerOrderManagementController::class, 'rejectOrder'])->name('retailer.reject');
 
 
@@ -180,9 +183,19 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/products', [ReportController::class, 'productReports'])->name('products');
             Route::get('/fieldstaffs', [ReportController::class, 'fieldStaffReports'])->name('fieldstaffs');
             Route::get('/fieldstaffs/tracking', [ReportController::class, 'fieldStaffTracking'])->name('fieldstaff.tracking');
+            Route::get('/monitoring', [ReportController::class, 'monitoring'])->name('monitoring');
+            Route::get('/monitoring/data', [ReportController::class, 'getMonitoringData'])->name('monitoring.data');
+            Route::get('/targets', [ReportController::class, 'targetReports'])->name('targets');
+            Route::get('/visits', [ReportController::class, 'visitReports'])->name('visits');
+            Route::get('/outstanding', [ReportController::class, 'outstandingReports'])->name('outstanding');
             Route::get('/performance', [ReportController::class, 'performanceReports'])->name('performance');
             Route::get('/get-staff-by-manager', [ReportController::class, 'getStaffByManager'])->name('get-staff');
             Route::get('/export/{format}', [ReportController::class, 'downloadExport'])->name('export');
+            
+            // Prescription & Molecule Analysis
+            Route::get('/prescribed-salts', [PrescriptionAnalysisController::class, 'prescribedSalts'])->name('prescribed-salts');
+            Route::get('/fastest-molecules', [PrescriptionAnalysisController::class, 'fastestMovingMolecules'])->name('fastest-molecules');
+            Route::get('/molecule-analytics', [PrescriptionAnalysisController::class, 'moleculeAnalytics'])->name('molecule-analytics');
         });
     });
 

@@ -510,6 +510,7 @@ class DistributorOrderController extends Controller
         $request->validate([
             'payment_status' => 'required|in:pending,paid,failed',
             'invoice' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'invoice_no' => 'required|string|max:100', // Capture invoice number
             'batches' => 'required|array',
             'batches.*' => 'required|array|min:1',
             'batches.*.*.batch_no' => 'required|string|max:255',
@@ -524,6 +525,25 @@ class DistributorOrderController extends Controller
             'batches.*.*.igst' => 'nullable|numeric|min:0',
             'batches.*.*.net_amount' => 'nullable|numeric|min:0',
         ]);
+
+        // Unique Invoice Number Check for the specific Distributor
+        $distributorId = $distributorOrder->distributor_id;
+        $invoiceNo = $request->invoice_no;
+
+        $existsInDistOrders = DistributorOrder::where('distributor_id', $distributorId)
+            ->where('invoice_no', $invoiceNo)
+            ->where('id', '!=', $distributorOrder->id)
+            ->exists();
+
+        $existsInRetailOrders = \App\Models\RetailerOrder::where('distributor_id', $distributorId)
+            ->where('invoice_no', $invoiceNo)
+            ->exists();
+
+        if ($existsInDistOrders || $existsInRetailOrders) {
+            return response()->json([
+                'error' => "The invoice number '{$invoiceNo}' has already been used for another order by this distributor."
+            ], 422);
+        }
 
         DB::beginTransaction();
         try {
@@ -560,7 +580,8 @@ class DistributorOrderController extends Controller
             $distributorOrder->update([
                 'status' => DistributorOrder::STATUS_APPROVED,
                 'payment_status' => $request->payment_status,
-                'invoice_path' => $invoicePath
+                'invoice_path' => $invoicePath,
+                'invoice_no' => $request->invoice_no // Save the invoice number
             ]);
 
             // Save Batch Details
@@ -758,17 +779,40 @@ class DistributorOrderController extends Controller
         ]);
 
         if ($request->hasFile('invoice')) {
-            // Delete old invoice if exists
+            $file = $request->file('invoice');
+            $fileHash = md5_file($file->getRealPath());
+
+            // Check retail orders for the same hash
+            $existingRetailer = \App\Models\RetailerOrder::whereJsonContains('metadata->invoice_hash', $fileHash)->first();
+            // Check dist orders for the same hash
+            $existingDistributor = DistributorOrder::where('id', '!=', $distributorOrder->id)
+                ->whereJsonContains('metadata->invoice_hash', $fileHash)
+                ->first();
+
+            if ($existingRetailer || $existingDistributor) {
+                $code = $existingRetailer ? $existingRetailer->order_code : $existingDistributor->order_code;
+                $role = $existingRetailer ? 'Retailer' : 'Distributor';
+                return response()->json([
+                    'error' => "This invoice has already been uploaded for $role Order #$code. Duplicate uploads are not allowed across roles.",
+                    'duplicate' => true
+                ], 400);
+            }
+
             if ($distributorOrder->invoice_path && Storage::disk('public')->exists($distributorOrder->invoice_path)) {
                 Storage::disk('public')->delete($distributorOrder->invoice_path);
             }
 
-            $path = $request->file('invoice')->store('invoices/distributors', 'public');
+            $path = $file->store('invoices/distributors', 'public');
+            
+            $metadata = $distributorOrder->metadata ?? [];
+            $metadata['invoice_hash'] = $fileHash;
+            
             $distributorOrder->invoice_path = $path;
+            $distributorOrder->metadata = $metadata;
             $distributorOrder->save();
 
             return response()->json([
-                'success' => 'Invoice uploaded.',
+                'success' => 'Invoice uploaded successfully!',
                 'invoice_url' => asset('storage/' . $path)
             ]);
         }
@@ -867,7 +911,9 @@ class DistributorOrderController extends Controller
                     'product_id' => $product->id,
                     'batch_no' => $batch->batch_no,
                     'expiry_date' => $batch->expiry_date,
-                    'variant' => $item->variant
+                    'variant' => $item->variant,
+                    'side' => $item->side, // Strict Side Matching
+                    'size' => $item->size  // Strict Size Matching
                 ]);
 
                 if (!$inventory->exists) {

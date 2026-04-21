@@ -39,11 +39,13 @@ class RetailerOrder extends Model
         'fieldstaff_id',
         'cancellation_reason',
         'loyalty_points_earned',
+        'metadata',
     ];
 
     protected $casts = [
         'placed_at' => 'datetime',
         'delivered_at' => 'datetime',
+        'metadata' => 'array',
     ];
 
     protected static function boot()

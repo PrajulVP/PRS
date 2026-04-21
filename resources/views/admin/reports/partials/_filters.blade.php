@@ -75,6 +75,7 @@
                         <button type="button" class="preset-btn" data-range="yesterday">Yesterday</button>
                         <button type="button" class="preset-btn" data-range="7days">Last 7 Days</button>
                         <button type="button" class="preset-btn" data-range="this_month">This Month</button>
+                        <button type="button" class="preset-btn" data-range="this_year">This Year</button>
                         <button type="button" class="preset-btn active" data-range="all">All Time</button>
                     </div>
                 </div>
@@ -804,6 +805,9 @@
                     break;
                 case 'this_month':
                     fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                    break;
+                case 'this_year':
+                    fromDate = new Date(today.getFullYear(), 0, 1);
                     break;
                 case 'all':
                     fromDate = null;

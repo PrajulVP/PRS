@@ -54,20 +54,34 @@
                                         <td><div class="small text-truncate" style="max-width: 200px;" title="{{ $leave->reason }}">{{ $leave->reason }}</div></td>
                                         <td>
                                             @if($leave->status == 'pending')
-                                                <span class="badge badge-light-warning pulsate">Pending</span>
+                                                <span class="badge badge-light-warning pulsate">Pending (FS)</span>
+                                            @elseif($leave->status == 'manager_approved')
+                                                <span class="badge badge-light-primary">Approved by Manager</span>
                                             @elseif($leave->status == 'approved')
-                                                <span class="badge badge-light-success">Approved</span>
+                                                <span class="badge badge-light-success">Fully Approved</span>
                                             @else
                                                 <span class="badge badge-light-dark">Rejected</span>
                                             @endif
                                         </td>
                                         <td class="text-center">
-                                            @if($leave->status == 'pending')
+                                            @php
+                                                $user = auth()->user();
+                                                $canApprove = false;
+                                                if ($user->hasRole('salesmanager') && $leave->status == 'pending') {
+                                                    $canApprove = true;
+                                                } elseif ($user->hasAnyRole(['admin', 'superadmin']) && ($leave->status == 'manager_approved' || $leave->status == 'pending')) {
+                                                    $canApprove = true;
+                                                }
+                                            @endphp
+
+                                            @if($canApprove)
                                                 <div class="d-flex gap-2 justify-content-center">
                                                     <form action="{{ route('admin.field-staff.leaves.status', $leave->id) }}" method="POST">
                                                         @csrf
                                                         <input type="hidden" name="status" value="approved">
-                                                        <button type="submit" class="btn btn-sm btn-outline-success">Approve</button>
+                                                        <button type="submit" class="btn btn-sm btn-outline-success">
+                                                             {{ $user->hasRole('salesmanager') ? 'Verify' : 'Final Approve' }}
+                                                        </button>
                                                     </form>
                                                     <form action="{{ route('admin.field-staff.leaves.status', $leave->id) }}" method="POST">
                                                         @csrf
@@ -76,7 +90,17 @@
                                                     </form>
                                                 </div>
                                             @else
-                                                <span class="small text-muted">Reviewed by<br>{{ $leave->approvedBy->name ?? 'Admin' }}</span>
+                                                <span class="small text-muted">
+                                                    @if($leave->status == 'approved')
+                                                        Approved by {{ $leave->admin->name ?? 'Admin' }}
+                                                    @elseif($leave->status == 'manager_approved')
+                                                        Verified by {{ $leave->manager->name ?? 'SM' }}
+                                                    @elseif($leave->status == 'rejected')
+                                                        Rejected
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </span>
                                             @endif
                                         </td>
                                     </tr>

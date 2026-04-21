@@ -21,6 +21,7 @@ class VisitLog extends Model
         'notes',
         'next_follow_up_date',
         'photo_path',
+        'is_flagged',
     ];
 
     protected $casts = [

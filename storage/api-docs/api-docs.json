@@ -1509,11 +1509,83 @@
                 "tags": [
                     "Field Staff"
                 ],
-                "summary": "Submit an expense claim",
+                "summary": "Submit an expense claim (with Auto TA/DA calculation)",
+                "description": "Submit an expense. If type is 'TA' or 'DA', the system automatically calculates the amount based on GPS logs for the expense_date and the configured HQ radius (15km).",
                 "operationId": "2e05fa5fb473ffa2137622ba2ba4e7f8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "type",
+                                    "expense_date"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "description": "Expense type: TA, DA, Travel, food, misc, etc.",
+                                        "type": "string"
+                                    },
+                                    "expense_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2023-10-27"
+                                    },
+                                    "amount": {
+                                        "description": "Optional if TA/DA (auto-calculated)",
+                                        "type": "number"
+                                    },
+                                    "distance_km": {
+                                        "description": "Optional (auto-calculated from GPS)",
+                                        "type": "number"
+                                    },
+                                    "is_outstation": {
+                                        "description": "Optional (auto-determined)",
+                                        "type": "boolean"
+                                    },
+                                    "bill": {
+                                        "description": "Invoice/Bill image/pdf",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "201": {
-                        "description": "Expense submitted"
+                        "description": "Expense submitted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "expense": {
+                                            "type": "object"
+                                        },
+                                        "calculation_details": {
+                                            "properties": {
+                                                "gps_distance": {
+                                                    "type": "number"
+                                                },
+                                                "is_outstation": {
+                                                    "type": "boolean"
+                                                },
+                                                "applied_rate": {
+                                                    "type": "number"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1549,6 +1621,23 @@
                 ],
                 "summary": "Get Field Staff dashboard summary data",
                 "operationId": "501f1fef7b1dcf9a37a3b3aef3b0c154",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Stats period",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "monthly",
+                            "enum": [
+                                "weekly",
+                                "monthly",
+                                "yearly"
+                            ]
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Dashboard data for the logged-in Field Staff"
@@ -1680,6 +1769,40 @@
                 "responses": {
                     "200": {
                         "description": "Loyalty points data"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/field-staff/performance-trend": {
+            "get": {
+                "tags": [
+                    "Field Staff Dashboard"
+                ],
+                "summary": "Get performance trend chart data for mobile",
+                "operationId": "99b3c1a69e34ef41086b328fa2c98adb",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "weekly",
+                                "monthly",
+                                "yearly"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chart labels and counts"
                     }
                 },
                 "security": [

@@ -125,7 +125,34 @@
                     render: (data) => '₹' + parseFloat(data ?? 0).toLocaleString(undefined, {minimumFractionDigits: 2})
                 }
             ],
-            dom: 'rtip',
+            dom: 'Brtip',
+            buttons: [
+                {
+                    extend: 'print',
+                    text: '<i class="fa fa-print me-1"></i> Print Report',
+                    className: 'btn btn-sm btn-info',
+                    orientation: 'landscape',
+                    pageSize: 'A4',
+                    exportOptions: { columns: ':visible' },
+                    title: 'Product Sales Analysis - ' + new Date().toLocaleDateString(),
+                    customize: function (win) {
+                        $(win.document.body).addClass('landscape');
+                        $(win.document.body).find('.dataTables_paginate, .pagination, .dataTables_info').hide();
+                    }
+                },
+                {
+                    extend: 'excel',
+                    text: '<i class="fa fa-file-excel-o me-1"></i> Excel',
+                    className: 'btn btn-sm btn-success',
+                    exportOptions: { columns: ':visible' }
+                },
+                {
+                    extend: 'csv',
+                    text: '<i class="fa fa-file-text-o me-1"></i> CSV',
+                    className: 'btn btn-sm btn-secondary',
+                    exportOptions: { columns: ':visible' }
+                }
+            ],
             pageLength: 20,
             order: [[6, 'desc']],
             language: {

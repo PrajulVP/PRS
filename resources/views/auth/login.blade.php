@@ -3,44 +3,48 @@
 @section('content')
     <!-- Background Image Container -->
     <div class="container-fluid p-0"
-        style="background-image: url('{{ asset('admin/assets/images/login/login_bg.jpg') }}'); background-size: cover; background-position: center;">
+        style="background-image: url('{{ asset('admin/assets/images/login/login_bg.jpg') }}'); background-size: cover; background-position: center; transition: all 0.4s ease;">
 
-        <!-- Light Overlay for White Theme -->
-        <div class="row m-0 bg-white bg-opacity-50 vh-100 justify-content-center align-items-center">
+        <!-- Dynamic Overlay -->
+        <div class="row m-0 vh-100 justify-content-center align-items-center" 
+             style="background: var(--login-overlay); transition: background 0.4s ease;">
 
             <div class="col-12 col-sm-8 col-md-6 col-lg-4 col-xl-3">
-                <!-- White Card -->
-                <div class="card border-0 shadow-lg rounded-4 bg-white">
+                <!-- Theme-aware Card -->
+                <div class="card border-0 shadow-lg rounded-4">
 
                     <div class="card-body p-4 p-sm-5">
 
                         <div class="text-center mb-4">
-                            <!-- Use Dark Logo for White Background -->
-                            <img src="{{ asset('admin/assets/images/logo/atom-logo.webp') }}" class="img-fluid mb-3"
-                                alt="PRS Logo" style="max-height: 60px;">
-                            <h3 class="fw-bold text-dark mb-1">Welcome Back</h3>
-                            <p class="text-muted small">Sign in to continue</p>
+                            <!-- Logo Badge (Ensures visibility regardless of theme) -->
+                            <div class="d-inline-block bg-white p-2 rounded-3 shadow-sm mb-3">
+                                <img src="{{ asset('admin/assets/images/logo/atom-logo.webp') }}" class="img-fluid"
+                                    alt="PRS Logo" style="max-height: 50px;">
+                            </div>
+                            <h3 class="fw-bold mb-1" style="color: var(--login-text);">Welcome Back</h3>
+                            <p class="small" style="color: var(--login-muted);">Sign in to continue</p>
                         </div>
 
                         <form id="login-form" method="POST" action="{{ route('login') }}" novalidate>
                             @csrf
 
                             <div class="mb-3">
-                                <label for="email" class="form-label fw-bold text-muted small">Email Address</label>
+                                <label for="email" class="form-label fw-bold small mb-2" style="color: var(--login-muted);">Email Address</label>
                                 <input id="email" type="email"
-                                    class="form-control form-control-lg bg-light border-light-subtle text-dark" name="email"
+                                    class="form-control form-control-lg border-opacity-10" name="email"
                                     value="{{ old('email') }}" placeholder="name@example.com" required autofocus>
                             </div>
 
                             <div class="mb-3">
-                                <label for="password" class="form-label fw-bold text-muted small">Password</label>
+                                <label for="password" class="form-label fw-bold small mb-2" style="color: var(--login-muted);">Password</label>
                                 <div class="input-group">
                                     <input id="password" type="password"
-                                        class="form-control form-control-lg bg-light border-light-subtle text-dark border-end-0"
+                                        class="form-control form-control-lg border-opacity-10 border-end-0"
                                         name="password" required autocomplete="current-password"
                                         placeholder="Enter password">
                                     <button type="button"
-                                        class="btn btn-lg bg-light border-light-subtle border-start-0 text-muted show-pass"
+                                        class="btn btn-lg border-opacity-10 border-start-0 text-muted show-pass bg-transparent"
+                                        style="border: 1px solid var(--med-border);"
                                         tabindex="-1" title="Show/Hide">
                                         <i class="fa fa-eye"></i>
                                     </button>
@@ -50,16 +54,16 @@
                             <div class="d-flex justify-content-between align-items-center mb-4">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-                                    <label class="form-check-label text-muted small" for="remember">
+                                    <label class="form-check-label small" for="remember" style="color: var(--login-muted);">
                                         Remember me
                                     </label>
                                 </div>
-                                <a href="#" class="text-primary text-decoration-none small hover-underline">Forgot
+                                <a href="#" class="text-primary text-decoration-none small hover-underline fw-bold">Forgot
                                     Password?</a>
                             </div>
 
                             <div class="d-grid">
-                                <button type="submit" class="btn btn-primary btn-lg shadow-sm">LOG IN</button>
+                                <button type="submit" class="btn btn-primary btn-lg shadow-sm py-3 fw-bold">LOG IN</button>
                             </div>
                         </form>
                     </div>

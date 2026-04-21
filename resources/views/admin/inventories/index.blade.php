@@ -305,7 +305,6 @@
                                         <th style="display:none;">Updated At</th>
                                         <th>No.</th>
 
-                                        <th>Product Code</th>
                                         <th>Product Name</th>
                                         <th>Side</th>
                                         <th>Size</th>
@@ -1353,15 +1352,16 @@
                     }
                 },
                 {
-                    data: 'distributor_product_code',
-                    name: 'distributor_product_code'
-                },
-                {
                     data: 'product_name',
                     name: 'product_name',
                     render: function (data, type, row) {
                         if (!data) return '-';
                         let cleanName = data.replace(/\s*\([^)]*\/[^)]*\)/g, '').replace(/\s*\[[^\]]*\/[^\]]*\]/g, '').trim();
+                        let details = row.product_details || {};
+                        let subInfo = [];
+                        if (details.product_code) subInfo.push(`<span class="badge bg-light text-dark border-0 px-2 py-0" style="font-size: 0.65rem;">${details.product_code}</span>`);
+                        if (details.generic_name) subInfo.push(details.generic_name);
+                        if (details.pack) subInfo.push(details.pack);
                         
                         return `
                             <div class="product-info-cell">
@@ -1371,7 +1371,9 @@
                                     title="View Product Technical Details">
                                      ${cleanName}
                                  </a>
-                                 <div class="text-muted small">${row.distributor_product_code || ''}</div>
+                                 <div class="text-muted d-flex align-items-center gap-2 mt-1" style="font-size: 0.72rem; opacity: 0.8;">
+                                    ${subInfo.join(' <span class="opacity-25">|</span> ')}
+                                 </div>
                             </div>
                         `;
                     }

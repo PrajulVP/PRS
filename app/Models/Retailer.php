@@ -50,6 +50,16 @@ class Retailer extends Model
         return $this->hasMany(RetailerOrder::class);
     }
 
+    public function redemptions(): HasMany
+    {
+        return $this->hasMany(LoyaltyRedemption::class);
+    }
+
+    public function patients(): HasMany
+    {
+        return $this->hasMany(Patient::class);
+    }
+
     public function orders(): HasMany
     {
         return $this->retailerOrders();

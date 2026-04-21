@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\PrescriptionApiController;
 
 //add a prefix to all routes
 Route::post('login', [AuthApiController::class, 'login']);
+Route::post('send-otp', [AuthApiController::class, 'sendOtp']);
+Route::post('login-otp', [AuthApiController::class, 'loginWithOtp']);
 
 // Location APIs wrapper (open to authenticated users)
 Route::middleware('auth:api')->group(function () {
@@ -94,6 +96,7 @@ Route::middleware('auth:api')->group(function () {
     // Field Staff Dashboard & Orders
     Route::prefix('field-staff')->middleware(['device.binding'])->group(function () {
         Route::get('dashboard', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'index']);
+        Route::get('performance-trend', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'performanceTrend']);
         Route::get('retailers', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'getRetailers']);
         Route::post('retailers', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'storeRetailer']);
         Route::get('retailers/{id}/loyalty-points', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'getRetailerLoyaltyDetails']);
@@ -105,6 +108,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('punch', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'punch']);
         Route::post('ping', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'pingLocation']);
         Route::post('log-visit', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'logVisit']);
+        Route::get('retailers/{id}/last-visit', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'getLastVisitRemark']);
         Route::post('expenses', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'submitExpense']);
         Route::post('leaves', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'requestLeave']);
     });
@@ -113,5 +117,7 @@ Route::middleware('auth:api')->group(function () {
     Route::prefix('retailer')->group(function () {
         Route::get('dashboard/statistics', [\App\Http\Controllers\Api\RetailerDashboardApiController::class, 'getStatistics']);
         Route::get('loyalty-points', [\App\Http\Controllers\Api\RetailerDashboardApiController::class, 'getLoyaltyPoints']);
+        Route::post('rate-staff', [\App\Http\Controllers\Api\RatingApiController::class, 'rateStaff']);
+        Route::get('my-ratings', [\App\Http\Controllers\Api\RatingApiController::class, 'getMyRatings']);
     });
 });

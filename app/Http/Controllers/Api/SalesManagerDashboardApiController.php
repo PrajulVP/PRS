@@ -11,6 +11,8 @@ use App\Models\DistributorOrder;
 use App\Models\Retailer;
 use App\Models\User;
 use App\Models\FieldStaff;
+use App\Models\LeaveRequest;
+use App\Models\Expense;
 use Illuminate\Support\Facades\Hash;
 use App\Traits\OneSignalNotifications;
 use App\Traits\HandlesNotifications;
@@ -682,5 +684,117 @@ class SalesManagerDashboardApiController extends Controller
         }
 
         return response()->json(['message' => "Order #{$order->order_code} approved successfully."]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/sales-manager/pending-leaves",
+     *     summary="List all pending leave requests from assigned field staff",
+     *     tags={"Sales Manager Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(response=200, description="List of pending leaves")
+     * )
+     */
+    public function getPendingLeaves()
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
+
+        $salesManager = $user->salesManager;
+        $fieldStaffUserIds = FieldStaff::where('sales_manager_id', $salesManager->id)->pluck('user_id');
+
+        $leaves = LeaveRequest::with('user')
+            ->whereIn('user_id', $fieldStaffUserIds)
+            ->where('status', 'pending')
+            ->latest()
+            ->get();
+
+        return response()->json($leaves);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/sales-manager/leaves/{id}/approve",
+     *     summary="Approve a leave request (Manager level)",
+     *     tags={"Sales Manager Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Leave approved by manager")
+     * )
+     */
+    public function approveLeave($id)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
+
+        $salesManager = $user->salesManager;
+        $fieldStaffUserIds = FieldStaff::where('sales_manager_id', $salesManager->id)->pluck('user_id');
+
+        $leave = LeaveRequest::whereIn('user_id', $fieldStaffUserIds)->findOrFail($id);
+
+        $leave->update([
+            'status' => 'manager_approved',
+            'manager_id' => $user->id
+        ]);
+
+        return response()->json(['message' => 'Leave approved and sent to Admin for final verification.']);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/sales-manager/pending-expenses",
+     *     summary="List all pending expense claims from assigned field staff",
+     *     tags={"Sales Manager Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(response=200, description="List of pending expenses")
+     * )
+     */
+    public function getPendingExpenses()
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
+
+        $salesManager = $user->salesManager;
+        $fieldStaffUserIds = FieldStaff::where('sales_manager_id', $salesManager->id)->pluck('user_id');
+
+        $expenses = Expense::with('user')
+            ->whereIn('user_id', $fieldStaffUserIds)
+            ->where('status', 'pending')
+            ->latest()
+            ->get();
+
+        return response()->json($expenses);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/sales-manager/expenses/{id}/approve",
+     *     summary="Approve an expense claim (Manager level)",
+     *     tags={"Sales Manager Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Expense approved by manager")
+     * )
+     */
+    public function approveExpense($id)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
+
+        $salesManager = $user->salesManager;
+        $fieldStaffUserIds = FieldStaff::where('sales_manager_id', $salesManager->id)->pluck('user_id');
+
+        $expense = Expense::whereIn('user_id', $fieldStaffUserIds)->findOrFail($id);
+
+        $expense->update([
+            'status' => 'manager_approved',
+            'manager_id' => $user->id
+        ]);
+
+        return response()->json(['message' => 'Expense verified and sent to Admin for final approval.']);
     }
 }

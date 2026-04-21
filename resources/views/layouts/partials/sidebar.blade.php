@@ -66,32 +66,13 @@
             <h6>Reports</h6>
           </div>
         </li>
-        <li class="sidebar-list">
-          <a class="sidebar-link sidebar-title {{ $isReportRoute ? 'active' : '' }}" id="reports" href="javascript:void(0)">
+        <li class="sidebar-list"><a class="sidebar-link sidebar-title link-nav {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}" href="{{ route('admin.reports.index') }}">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-charts"></use>
             </svg>
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-charts"></use>
-            </svg><span>Reports</span>
-          </a>
-          <ul class="sidebar-submenu" style="{{ $isReportRoute ? 'display: block;' : '' }}">
-             @if(Auth::user()->hasPermissionToCategory('distributor_reports', 'view'))
-             <li><a href="{{ route('admin.reports.distributors') }}" class="{{ request()->routeIs('admin.reports.distributors') ? 'active' : '' }}">Distributor Reports</a></li>
-            @endif
-             @if(Auth::user()->hasPermissionToCategory('retailer_reports', 'view'))
-             <li><a href="{{ route('admin.reports.retailers') }}" class="{{ request()->routeIs('admin.reports.retailers') ? 'active' : '' }}">Retailer Reports</a></li>
-            @endif
-             @if(Auth::user()->hasPermissionToCategory('performance_reports', 'view'))
-             <li><a href="{{ route('admin.reports.fieldstaffs') }}" class="{{ request()->routeIs('admin.reports.fieldstaffs') ? 'active' : '' }}">Field Staff Performance</a></li>
-            @endif
-             @if(Auth::user()->hasPermissionToCategory('product_reports', 'view'))
-             <li><a href="{{ route('admin.reports.products') }}" class="{{ request()->routeIs('admin.reports.products') ? 'active' : '' }}">Product Performance</a></li>
-            @endif
-            @if(Auth::user()->hasPermissionToCategory('master_order_reports', 'view'))
-             <li><a href="{{ route('admin.reports.orders') }}" class="{{ request()->routeIs('admin.reports.orders') ? 'active' : '' }}">Master Order Analytics</a></li>
-            @endif
-          </ul>
+            </svg><span>Master Reports</span></a>
         </li>
         @endif
 
@@ -484,7 +465,6 @@
   /* Medical Theme Sidebar - Reversed & Changed Color (Light top, Dark bottom) */
   .medical-theme-sidebar {
     /* background: linear-gradient(180deg, #20B2AA 0%, #004D40 100%) !important; */
-    /* Light Sea Green to Dark Emerald/Teal */
   }
 
   /* Ensure logo wrapper allows gradient to show through */

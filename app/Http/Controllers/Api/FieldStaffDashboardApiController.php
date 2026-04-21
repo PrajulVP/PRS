@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\RetailerOrder;
 use App\Models\Retailer;
 use App\Models\User;
+use App\Models\FieldStaff;
+use App\Models\SalesTarget;
+use App\Models\IncentiveSlab;
+use App\Models\LocationLog;
+use App\Models\VisitLog;
 
 class FieldStaffDashboardApiController extends Controller
 {
@@ -19,6 +24,13 @@ class FieldStaffDashboardApiController extends Controller
      *     summary="Get Field Staff dashboard summary data",
      *     tags={"Field Staff Dashboard"},
      *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="period",
+     *         in="query",
+     *         required=false,
+     *         description="Stats period",
+     *         @OA\Schema(type="string", enum={"weekly", "monthly", "yearly"}, default="monthly")
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Dashboard data for the logged-in Field Staff"
@@ -28,6 +40,7 @@ class FieldStaffDashboardApiController extends Controller
      */
     public function index(Request $request)
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         
         $period = $request->get('period', 'monthly');
@@ -52,19 +65,16 @@ class FieldStaffDashboardApiController extends Controller
             return response()->json(['error' => 'Only Field Staff can access this dashboard'], 403);
         }
 
-        $fieldStaffId = $user->fieldStaff->id;
+        $fieldStaff = $user->fieldStaff;
+        $fieldStaffId = $fieldStaff->id;
 
-        // Retailer Order Stats
-        $retailerOrderQuery = RetailerOrder::where(function ($q) use ($fieldStaffId) {
-            $q->where('fieldstaff_id', $fieldStaffId)
-                ->orWhereHas('retailer', function ($qr) use ($fieldStaffId) {
-                    $qr->where('field_staff_id', $fieldStaffId);
-                });
-        })->whereBetween('created_at', [$startDate, $endDate]);
+        // 1. Basic Stats
+        $retailerOrderQuery = RetailerOrder::where('fieldstaff_id', $fieldStaffId)
+            ->whereBetween('created_at', [$startDate, $endDate]);
 
         $orderStats = [
             'total' => (clone $retailerOrderQuery)->count(),
-            'pending_approval' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_PENDING)->count(), // Orders they need to interact with
+            'pending_approval' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_PENDING)->count(),
             'processing' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_PROCESSING)->count(),
             'accepted' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_APPROVED)->count(),
             'delivered' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_DELIVERED)->count(),
@@ -72,16 +82,85 @@ class FieldStaffDashboardApiController extends Controller
             'rejected' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_REJECTED)->count(),
         ];
 
-        // Counts
-        $counts = [
-            'total_retailers' => Retailer::where('field_staff_id', $fieldStaffId)->count(),
-            'actionable_orders' => $orderStats['pending_approval']
-        ];
+        // 2. Target vs Achievement (Current Month - Based on TAXABLE VALUE i.e., Excl. GST)
+        $month = now()->format('F');
+        $year = now()->year;
+        
+        $target = SalesTarget::where('field_staff_id', $fieldStaffId)
+            ->where('month', $month)
+            ->where('year', $year)
+            ->first();
+
+        // Achievement (Sum of unit_price * quantity for delivered orders this month)
+        $achievementValue = DB::table('retailer_orders')
+            ->join('retailer_order_items', 'retailer_orders.id', '=', 'retailer_order_items.retailer_order_id')
+            ->where('retailer_orders.fieldstaff_id', $fieldStaffId)
+            ->where('retailer_orders.status', RetailerOrder::STATUS_DELIVERED)
+            ->whereMonth('retailer_orders.delivered_at', now()->month)
+            ->whereYear('retailer_orders.delivered_at', now()->year)
+            ->sum(DB::raw('retailer_order_items.unit_price * retailer_order_items.quantity'));
+
+        $targetAmount = $target ? $target->amount : 0;
+        $achievementPercent = $targetAmount > 0 ? ($achievementValue / $targetAmount) * 100 : 0;
+
+        // 3. Global Ranking (Top Performers by Achievement %)
+        $allStaffStats = FieldStaff::with(['user'])->get()->map(function ($staff) use ($month, $year) {
+            $staffTarget = SalesTarget::where('field_staff_id', $staff->id)
+                ->where('month', $month)
+                ->where('year', $year)
+                ->value('amount') ?? 0;
+
+            $staffAchievementValue = DB::table('retailer_orders')
+                ->join('retailer_order_items', 'retailer_orders.id', '=', 'retailer_order_items.retailer_order_id')
+                ->where('retailer_orders.fieldstaff_id', $staff->id)
+                ->where('retailer_orders.status', RetailerOrder::STATUS_DELIVERED)
+                ->whereMonth('retailer_orders.delivered_at', now()->month)
+                ->whereYear('retailer_orders.delivered_at', now()->year)
+                ->sum(DB::raw('retailer_order_items.unit_price * retailer_order_items.quantity'));
+
+            return [
+                'id' => $staff->id,
+                'name' => $staff->user->name ?? 'N/A',
+                'achievement_percent' => $staffTarget > 0 ? ($staffAchievementValue / $staffTarget) * 100 : 0,
+                'total_sales' => $staffAchievementValue
+            ];
+        })->sortByDesc('achievement_percent')->values();
+
+        $myRank = $allStaffStats->search(fn($s) => $s['id'] === $fieldStaffId) + 1;
+
+        // 4. Outstanding Alerts
+        $outstandingAmount = RetailerOrder::where('fieldstaff_id', $fieldStaffId)
+            ->where('status', RetailerOrder::STATUS_DELIVERED)
+            ->where('payment_status', '!=', 'paid')
+            ->sum('total_amount');
+
+        // 5. Incentive Slabs Architecture
+        $slab = IncentiveSlab::where('is_active', true)
+            ->where('min_achievement_percent', '<=', $achievementPercent)
+            ->where(function ($q) use ($achievementPercent) {
+                $q->where('max_achievement_percent', '>=', $achievementPercent)
+                  ->orWhereNull('max_achievement_percent');
+            })
+            ->first();
 
         return response()->json([
             'period' => $period,
+            'summary' => [
+                'target' => number_format($targetAmount, 2, '.', ''),
+                'achievement' => number_format($achievementValue, 2, '.', ''),
+                'achievement_percent' => round($achievementPercent, 2),
+                'global_rank' => $myRank,
+                'total_staff' => $allStaffStats->count(),
+                'outstanding_dues' => number_format($outstandingAmount, 2, '.', ''),
+                'incentive_rate' => $slab ? $slab->incentive_percent . '%' : '0%',
+                'projected_incentive' => $slab ? number_format($achievementValue * ($slab->incentive_percent / 100), 2, '.', '') : '0.00'
+            ],
             'order_stats' => $orderStats,
-            'counts' => $counts,
+            'counts' => [
+                'total_retailers' => Retailer::where('field_staff_id', $fieldStaffId)->count(),
+                'actionable_orders' => $orderStats['pending_approval']
+            ],
+            'ranking_preview' => $allStaffStats->take(5) // Show top 5 for motivation
         ]);
     }
 
@@ -297,5 +376,93 @@ class FieldStaffDashboardApiController extends Controller
             DB::rollBack();
             return response()->json(['error' => 'Failed to create retailer. ' . $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/field-staff/performance-trend",
+     *     summary="Get performance trend chart data for mobile",
+     *     tags={"Field Staff Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="period", in="query", required=false, @OA\Schema(type="string", enum={"weekly", "monthly", "yearly"})),
+     *     @OA\Response(response=200, description="Chart labels and counts")
+     * )
+     */
+    public function performanceTrend(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user->hasRole('fieldstaff')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $period = $request->get('period', 'monthly');
+        $endDate = now();
+        $startDate = now();
+
+        switch ($period) {
+            case 'weekly':
+                $startDate = now()->subDays(6)->startOfDay();
+                break;
+            case 'yearly':
+                $startDate = now()->startOfYear();
+                break;
+            case 'monthly':
+            default:
+                $period = 'monthly';
+                $startDate = now()->startOfMonth();
+                break;
+        }
+
+        $fieldStaffId = $user->fieldStaff->id;
+        $query = RetailerOrder::where(function ($q) use ($fieldStaffId) {
+            $q->where('fieldstaff_id', $fieldStaffId)
+                ->orWhereHas('retailer', function ($qr) use ($fieldStaffId) {
+                    $qr->where('field_staff_id', $fieldStaffId);
+                });
+        })->whereBetween('created_at', [$startDate, $endDate]);
+
+        // Aggregate trend data
+        $trend = [];
+        if ($period === 'weekly') {
+            $orders = $query->clone()->select(
+                DB::raw('count(id) as count'),
+                DB::raw("DATE_FORMAT(created_at, '%Y-%m-%d') as label"),
+                DB::raw('DATE(created_at) as date')
+            )->groupBy('date', 'label')->orderBy('date', 'asc')->get();
+            
+            for ($d = $startDate->copy(); $d->lte($endDate); $d->addDay()) {
+                $lbl = $d->format('Y-m-d');
+                $found = $orders->firstWhere('label', $lbl);
+                $trend[] = ['label' => $d->format('D, M d'), 'count' => $found ? $found->count : 0];
+            }
+        } elseif ($period === 'yearly') {
+            $orders = $query->clone()->select(
+                DB::raw('count(id) as count'),
+                DB::raw("DATE_FORMAT(created_at, '%Y-%m') as label")
+            )->groupBy('label')->orderBy('label', 'asc')->get();
+            
+            for ($d = $startDate->copy()->startOfMonth(); $d->lte($endDate); $d->addMonth()) {
+                $lbl = $d->format('Y-m');
+                $found = $orders->firstWhere('label', $lbl);
+                $trend[] = ['label' => $d->format('M Y'), 'count' => $found ? $found->count : 0];
+            }
+        } else {
+            $orders = $query->clone()->select(
+                DB::raw('count(id) as count'),
+                DB::raw("DATE_FORMAT(created_at, '%Y-%m-%d') as label"),
+                DB::raw('DATE(created_at) as date')
+            )->groupBy('date', 'label')->orderBy('date', 'asc')->get();
+            
+            for ($d = $startDate->copy(); $d->lte($endDate); $d->addDay()) {
+                $lbl = $d->format('Y-m-d');
+                $found = $orders->firstWhere('label', $lbl);
+                $trend[] = ['label' => $d->format('d M'), 'count' => $found ? $found->count : 0];
+            }
+        }
+
+        return response()->json([
+            'period' => $period,
+            'trend' => $trend
+        ]);
     }
 }

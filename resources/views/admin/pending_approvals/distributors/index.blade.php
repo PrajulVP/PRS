@@ -646,6 +646,22 @@
                                 </div>
                             </div>
 
+                            <!-- Invoice Number Input -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-main-theme small text-uppercase">
+                                    Distributor Invoice Number <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-0"><i class="fa fa-hashtag text-muted"></i></span>
+                                    <input type="text" name="invoice_no" id="invoice_no_input" class="form-control border-0 bg-light shadow-none" 
+                                           placeholder="Enter the official invoice number from the distributor" required 
+                                           style="border-radius: 0 12px 12px 0;">
+                                </div>
+                                <div class="form-text small text-muted mt-2">
+                                    <i class="fa fa-info-circle me-1"></i> This number must be unique for this distributor.
+                                </div>
+                            </div>
+
                             <!-- Smart Invoice Processing Section -->
                             <div class="mb-4">
                                 <div class="d-flex justify-content-between align-items-center mb-3">

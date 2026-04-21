@@ -42,13 +42,9 @@
                             <thead>
                                 <tr>
                                     <th>Order Details</th>
-                                    <th>Fulfillment</th>
                                     <th>Sales Context</th>
                                     <th>Volume</th>
                                     <th class="text-end">Value</th>
-                                    @role('admin|salesmanager')
-                                    <th class="text-end">Tax Analysis</th>
-                                    @endrole
                                     <th class="text-center">Payment</th>
                                     <th class="text-center">Status</th>
                                 </tr>
@@ -92,14 +88,6 @@
                     }
                 },
                 { 
-                    data: 'fulfillment_duration', 
-                    name: 'fulfillment_duration',
-                    render: function(data) {
-                        const color = data === 'Pending' ? 'text-warning' : 'text-success';
-                        return `<span class="small ${color}"><i class="fa fa-clock-o me-1"></i>${data}</span>`;
-                    }
-                },
-                { 
                     data: 'retailer_name', 
                     name: 'retailer_name',
                     render: function(data, type, row) {
@@ -114,9 +102,6 @@
                     }
                 },
                 { data: 'total_amount', name: 'total_amount', className: 'fw-bold text-primary text-end' },
-                @role('admin|salesmanager')
-                { data: 'tax_summary', name: 'tax_summary', className: 'text-end text-muted small' },
-                @endrole
                 { 
                     data: 'payment_status', 
                     name: 'payment_status',
@@ -142,7 +127,37 @@
                     }
                 }
             ],
-            dom: 'rtip', // Hide default search/length
+            dom: 'Brtip', 
+            buttons: [
+                {
+                    extend: 'print',
+                    text: '<i class="fa fa-print me-1"></i> Print Report',
+                    className: 'btn btn-sm btn-info',
+                    orientation: 'landscape',
+                    pageSize: 'A4',
+                    exportOptions: {
+                        columns: ':visible'
+                    },
+                    title: 'Orders Report - ' + new Date().toLocaleDateString(),
+                    customize: function (win) {
+                        $(win.document.body).addClass('landscape');
+                        $(win.document.body).find('.dataTables_paginate, .pagination, .dataTables_info').hide();
+                        $(win.document.body).find('table').addClass('compact').css('font-size', 'inherit');
+                    }
+                },
+                {
+                    extend: 'excel',
+                    text: '<i class="fa fa-file-excel-o me-1"></i> Excel',
+                    className: 'btn btn-sm btn-success',
+                    exportOptions: { columns: ':visible' }
+                },
+                {
+                    extend: 'csv',
+                    text: '<i class="fa fa-file-text-o me-1"></i> CSV',
+                    className: 'btn btn-sm btn-secondary',
+                    exportOptions: { columns: ':visible' }
+                }
+            ],
             pageLength: 25,
             order: [[1, 'desc']],
             language: {
@@ -166,11 +181,18 @@
 
         $('input[name="order_type"]').on('change', function() {
             updateDynamicHeading();
+            
+            // Sales Context is index 1
+            const type = $(this).val();
+            table.column(1).visible(type === 'retailer');
+            
             table.draw();
         });
 
         // Initial update
         updateDynamicHeading();
+        const initialType = $('input[name="order_type"]:checked').val();
+        table.column(1).visible(initialType === 'retailer');
     });
 </script>
 @endpush
