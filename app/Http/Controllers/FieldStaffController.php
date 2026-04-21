@@ -222,6 +222,13 @@ class FieldStaffController extends Controller
             'pincode' => $fieldstaffData['pincode'],
         ];
 
+        if ($request->has('device_uuid')) {
+            $userUpdateData['device_uuid'] = $request->device_uuid;
+            if (empty($request->device_uuid)) {
+                $userUpdateData['device_bound_at'] = null;
+            }
+        }
+
         if ($request->filled('password')) {
             $userUpdateData['password'] = Hash::make($request->password);
         }

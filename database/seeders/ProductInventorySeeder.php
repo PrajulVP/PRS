@@ -13,33 +13,49 @@ class ProductInventorySeeder extends Seeder
     public function run(): void
     {
         $productsToSeed = [
-            20 => 100, // Wrist splint
-            1 => 500,  // Sudhneelgiri Cough Syrup (example)
-            2 => 500,  // Example 2
+            'AS-F01' => 100, // Wrist splint
         ];
 
         $distributors = \App\Models\Distributor::all();
 
-        foreach ($productsToSeed as $productId => $stockCount) {
-            $product = \App\Models\Product::find($productId);
-            if (!$product) continue;
+        foreach ($productsToSeed as $productCode => $stockCount) {
+            $product = \App\Models\Product::where('product_code', $productCode)->first();
+            if (!$product) {
+                echo "Warning: Product with code $productCode not found. Skipping...\n";
+                continue;
+            }
 
-            echo "Seeding inventory for: {$product->product_name}\n";
+            echo "Seeding inventory for: {$product->product_name} (Code: $productCode)\n";
+
+            $variants = $product->variant_options ?? [];
+            $sides = $variants['Side'] ?? [null];
+            $sizes = $variants['Size'] ?? [null];
 
             foreach ($distributors as $distributor) {
-                \Illuminate\Support\Facades\DB::table('inventories')->updateOrInsert(
-                    [
-                        'product_id' => $productId,
-                        'distributor_id' => $distributor->id
-                    ],
-                    [
-                        'distributor_product_code' => $product->product_code,
-                        'product_name' => $product->product_name,
-                        'stock' => $stockCount,
-                        'updated_at' => now(),
-                        'created_at' => now()
-                    ]
-                );
+                foreach ($sides as $side) {
+                    foreach ($sizes as $size) {
+                        // Generate a unique code for this variant combination
+                        $variantCode = $product->product_code;
+                        if ($side) $variantCode .= '-' . substr($side, 0, 1);
+                        if ($size) $variantCode .= '-' . $size;
+
+                        \Illuminate\Support\Facades\DB::table('inventories')->updateOrInsert(
+                            [
+                                'product_id' => $product->id,
+                                'distributor_id' => $distributor->id,
+                                'side' => $side,
+                                'size' => $size,
+                            ],
+                            [
+                                'distributor_product_code' => $variantCode,
+                                'product_name' => $product->product_name,
+                                'stock' => $stockCount,
+                                'updated_at' => now(),
+                                'created_at' => now()
+                            ]
+                        );
+                    }
+                }
             }
         }
     }

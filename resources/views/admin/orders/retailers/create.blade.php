@@ -605,7 +605,16 @@
                             $('#previewBoxCapsule').hide();
                         }
 
-                        $('#distributorSelect').prop('disabled', false).select2('open');
+                        if (hasVariants) {
+                            $('#selectionDetails').show();
+                            $('#variantWrapper').show();
+                        } else {
+                            $('#variantWrapper').hide();
+                            $('#selectionDetails').show(); // Still show for qty/unit/add button
+                            $('#distributorSelect').select2('open');
+                        }
+
+                        $('#distributorSelect').prop('disabled', false);
                         $('#productDetailsCard').fadeIn(300);
                     }
                 });
@@ -640,6 +649,7 @@
                     }).get().join(' - '); 
 
                     $('#variantValue').val(finalVariant);
+                    $('#distributorSelect').select2('open');
 
                     let prodId = $('#productSelect').val();
                     let retailerId = $('#retailer_id').val();
@@ -793,8 +803,22 @@
                                         <option value="${d.id}" data-stock="${d.stock}" selected>${distName} - Stock: ${d.stock}</option>
                                     </select>`;
 
+                                let variantHtml = '';
+                                if (p.variant_options && typeof p.variant_options === 'object') {
+                                    Object.keys(p.variant_options).forEach(attrName => {
+                                        let vals = p.variant_options[attrName];
+                                        variantHtml += `
+                                            <div class="col-12 ai-variant-level mt-2" data-attr="${attrName}">
+                                                <label class="text-muted small fw-bold text-uppercase mb-1 d-block">${attrName}</label>
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    ${vals.map(v => `<button type="button" class="btn btn-sm btn-outline-primary ai-variant-btn px-2 py-1 fw-bold" data-value="${v}">${v}</button>`).join('')}
+                                                </div>
+                                            </div>`;
+                                    });
+                                }
+
                                 let rowHtml = `
-                                    <div class="ai-result-row p-4 bg-white rounded-4 shadow-sm mb-3 border border-light-dark overflow-hidden transition-all hover-shadow">
+                                    <div class="ai-result-row p-4 bg-white rounded-4 shadow-sm mb-3 border border-light-dark overflow-hidden transition-all hover-shadow" data-pid="${p.id}">
                                         <div class="row g-3">
                                             <!-- Main Details -->
                                             <div class="col-lg-4 col-md-6">
@@ -813,6 +837,8 @@
                                                 <label class="text-muted small fw-bold text-uppercase mb-1 d-block"><i class="fa fa-truck me-1 text-primary"></i> Select Distributor</label>
                                                 ${distHtml}
                                             </div>
+
+                                            ${variantHtml}
                                             
                                             <!-- Action & Qty -->
                                             <div class="col-lg-2 col-md-4 col-6">
@@ -992,6 +1018,12 @@
                 });
             });
 
+            // Toggle AI variants
+            $(document).on('click', '.ai-variant-btn', function() {
+                $(this).closest('.d-flex').find('.ai-variant-btn').removeClass('active btn-primary text-white').addClass('btn-outline-primary');
+                $(this).addClass('active btn-primary text-white').removeClass('btn-outline-primary');
+            });
+
             // Handle AI Result Add Button
             $(document).on('click', '.ai-add-btn', function() {
                 let btn = $(this);
@@ -1023,8 +1055,24 @@
                 if (unit === 'Box') mul = stripsPerBox;
                 if (unit === 'Carton') mul = stripsPerBox * boxesPerCarton;
 
+                // Capture Variants from buttons
+                let variants = [];
+                row.find('.ai-variant-level').each(function() {
+                    let activeBtn = $(this).find('.ai-variant-btn.active');
+                    if (activeBtn.length > 0) {
+                        variants.push(activeBtn.data('value'));
+                    }
+                });
+                
+                // If product has variants but none selected
+                if (p.variant_options && Object.keys(p.variant_options).length > 0 && variants.length < Object.keys(p.variant_options).length) {
+                    showToast('warning', 'Please select all variants (Side/Size) for ' + p.product_name);
+                    return;
+                }
+
+                let variantStr = variants.length > 0 ? variants.join(' - ') : null;
                 let requestedStrips = qty * mul;
-                let key = p.id + '-' + distId;
+                let key = p.id + '-' + distId + (variantStr ? '-' + variantStr : '');
 
                 // Existing strips check
                 let existingStrips = addedItems[key] ? (addedItems[key].qty * addedItems[key].multiplier) : 0;
@@ -1042,7 +1090,7 @@
                         distId: distId,
                         distName: distName,
                         name: p.product_name,
-                        variant: null,
+                        variant: variantStr,
                         price: parseFloat(p.ptr),
                         qty: qty,
                         unit: unit,

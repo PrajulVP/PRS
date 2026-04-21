@@ -28,8 +28,9 @@ class AuthApiController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             required={"email","password"},
-     *             @OA\Property(property="email", type="string", format="email", example="superadmin@gmail.com"),
-     *             @OA\Property(property="password", type="string", format="password", example="12345")
+     *             @OA\Property(property="email", type="string", format="email", example="staff@example.com"),
+     *             @OA\Property(property="password", type="string", format="password", example="12345"),
+     *             @OA\Property(property="device_id", type="string", example="uuid-123-456", description="Required for Field Staff")
      *         )
      *     ),
      *     @OA\Response(
@@ -90,19 +91,23 @@ class AuthApiController extends Controller
 
         // Device Binding Logic for Field Staff
         if ($user->hasRole('fieldstaff')) {
-            $deviceId = $request->header('X-Device-ID');
+            $deviceId = $request->input('device_id') ?? $request->header('X-Device-ID');
+            
             if (!$deviceId) {
                 return response()->json(['error' => 'Device ID required for Field Staff.'], 403);
             }
 
-            if (!$user->device_uuid) {
+            if (empty($user->device_uuid)) {
                 // First login - bind device
                 $user->update([
                     'device_uuid' => $deviceId,
                     'device_bound_at' => now(),
                 ]);
             } elseif ($user->device_uuid !== $deviceId) {
-                return response()->json(['error' => 'This account is bound to another device. Please contact admin.'], 403);
+                return response()->json([
+                    'error' => 'This account is bound to another device.',
+                    'message' => 'Please contact your administrator to reset your device binding.'
+                ], 403);
             }
         }
 
@@ -156,7 +161,8 @@ class AuthApiController extends Controller
      *         @OA\JsonContent(
      *             required={"email", "otp"},
      *             @OA\Property(property="email", type="string", format="email"),
-     *             @OA\Property(property="otp", type="string")
+     *             @OA\Property(property="otp", type="string"),
+     *             @OA\Property(property="device_id", type="string", description="Required for Field Staff")
      *         )
      *     ),
      *     @OA\Response(response=200, description="Login successful"),
@@ -186,15 +192,18 @@ class AuthApiController extends Controller
         }
 
         // Device Binding check
-        $deviceId = $request->header('X-Device-ID');
+        $deviceId = $request->input('device_id') ?? $request->header('X-Device-ID');
         if (!$deviceId) {
-            return response()->json(['error' => 'Device ID required.'], 403);
+            return response()->json(['error' => 'Device ID required for Field Staff.'], 403);
         }
 
-        if (!$user->device_uuid) {
+        if (empty($user->device_uuid)) {
             $user->update(['device_uuid' => $deviceId, 'device_bound_at' => now()]);
         } elseif ($user->device_uuid !== $deviceId) {
-            return response()->json(['error' => 'Account bound to another device.'], 403);
+            return response()->json([
+                'error' => 'This account is bound to another device.',
+                'message' => 'Please contact your administrator to reset your device binding.'
+            ], 403);
         }
 
         return response()->json([

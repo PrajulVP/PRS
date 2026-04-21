@@ -255,6 +255,16 @@
                                     <option value="inactive">Inactive</option>
                                 </select>
                             </div>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label fw-bold">Device UUID (Bound Device)</label>
+                                <div class="input-group">
+                                    <input type="text" name="device_uuid" id="edit_device_uuid" class="form-control bg-light" placeholder="No device bound yet">
+                                    <button type="button" class="btn btn-outline-danger" onclick="$('#edit_device_uuid').val('')">
+                                        <i class="fa fa-refresh me-1"></i> Reset
+                                    </button>
+                                </div>
+                                <small class="text-muted">Clearing this field will allow the user to login from a new device.</small>
+                            </div>
                         </div>
                         <!-- Map Section -->
                         {{-- 
@@ -369,6 +379,16 @@
                                             <div>
                                                 <div class="text-muted small">Pincode</div>
                                                 <div class="fw-semibold" id="fs_view_pincode"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 text-dark">
+                                        <div class="d-flex align-items-start gap-2 p-3 rounded"
+                                            style="background: var(--med-bg-body);">
+                                            <i class="fa fa-mobile-alt mt-1 text-warning"></i>
+                                            <div>
+                                                <div class="text-muted small">Bound Device ID</div>
+                                                <div class="fw-semibold" id="fs_view_device">Not Bound</div>
                                             </div>
                                         </div>
                                     </div>
@@ -649,6 +669,7 @@
                         $('#fs_view_contact').text(fs.contact_no || 'N/A');
                         $('#fs_view_pincode').text(fs.pincode || 'N/A');
                         $('#fs_view_address').text(fs.address || 'N/A');
+                        $('#fs_view_device').text(fs.user.device_uuid || 'Not Bound');
                         
                         let retHtml = fs.retailers?.map(ret => {
                             let retData = JSON.stringify(ret).replace(/"/g, '&quot;');
@@ -730,6 +751,7 @@
                 $('#edit_pincode').val(data.pincode || '');
                 $('#edit_address').val(data.address || ''); // Populate address
                 $('#edit_status').val(data.user.status);
+                $('#edit_device_uuid').val(data.user.device_uuid || '');
                 $('#edit_latitude').val(data.latitude);
                 $('#edit_longitude').val(data.longitude);
                 $('#editFieldStaffForm').attr('action', "{{ route('admin.field-staffs.update', ':id') }}".replace(':id', data.id));
