@@ -6,6 +6,14 @@ $kernel->bootstrap();
 
 use Illuminate\Support\Facades\DB;
 
-$res = DB::select("SHOW CREATE TABLE distributor_order_items");
-file_put_contents('scratch/table_structure.txt', print_r($res, true));
+$tables = ['products', 'distributor_order_items', 'distributor_orders'];
+$output = "";
+
+foreach ($tables as $table) {
+    $output .= "--- $table ---\n";
+    $res = DB::select("SHOW CREATE TABLE $table");
+    $output .= print_r($res, true) . "\n\n";
+}
+
+file_put_contents('scratch/comprehensive_schema.txt', $output);
 echo "Done";

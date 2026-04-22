@@ -1,0 +1,101 @@
+--- products ---
+Array
+(
+    [0] => stdClass Object
+        (
+            [Table] => products
+            [Create Table] => CREATE TABLE `products` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_code` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `product_name` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `brand` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `image` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `generic_name` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `pack` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `strip_size` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `units_per_strip` int NOT NULL DEFAULT '1',
+  `box_size` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `strips_per_box` int NOT NULL DEFAULT '1',
+  `carton_size` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `boxes_per_carton` int NOT NULL DEFAULT '1',
+  `hsn_code` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `has_variants` tinyint(1) NOT NULL DEFAULT '0',
+  `variant_options` json DEFAULT NULL,
+  `mrp` decimal(10,2) DEFAULT NULL,
+  `ptr` decimal(10,2) DEFAULT NULL,
+  `pts` decimal(10,2) DEFAULT NULL,
+  `taxable_value` decimal(10,2) DEFAULT NULL,
+  `gst` decimal(5,2) DEFAULT NULL,
+  `net_amount` decimal(12,2) DEFAULT NULL,
+  `loyalty_point_percentage` decimal(5,2) NOT NULL DEFAULT '0.00',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        )
+
+)
+
+
+--- distributor_order_items ---
+Array
+(
+    [0] => stdClass Object
+        (
+            [Table] => distributor_order_items
+            [Create Table] => CREATE TABLE `distributor_order_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `distributor_order_id` bigint unsigned NOT NULL,
+  `product_id` bigint unsigned NOT NULL,
+  `product_name` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `quantity` int NOT NULL,
+  `free_quantity` int NOT NULL DEFAULT '0',
+  `price` decimal(10,2) NOT NULL,
+  `subtotal` decimal(10,2) NOT NULL,
+  `unit` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `side` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `size` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `distributor_order_items_distributor_order_id_foreign` (`distributor_order_id`),
+  KEY `distributor_order_items_product_id_foreign` (`product_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        )
+
+)
+
+
+--- distributor_orders ---
+Array
+(
+    [0] => stdClass Object
+        (
+            [Table] => distributor_orders
+            [Create Table] => CREATE TABLE `distributor_orders` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `order_code` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `distributor_id` bigint unsigned NOT NULL,
+  `sales_manager_id` bigint unsigned DEFAULT NULL,
+  `total_amount` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `total_items` int NOT NULL DEFAULT '0',
+  `total_quantity` int NOT NULL DEFAULT '0',
+  `status` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `payment_status` enum('pending','paid','failed') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `invoice_path` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `metadata` json DEFAULT NULL,
+  `invoice_no` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `cancellation_reason` text COLLATE utf8mb4_unicode_ci,
+  `placed_at` timestamp NULL DEFAULT NULL,
+  `delivery_notes` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `dist_order_inv_unique` (`distributor_id`,`invoice_no`),
+  KEY `distributor_orders_sales_manager_id_foreign` (`sales_manager_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        )
+
+)
+
+
