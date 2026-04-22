@@ -324,10 +324,13 @@ class DistributorOrderController extends Controller
                 $taxableAmount = $totalQtyNos * $unitPrice;
                 $itemTotalWithGst = $taxableAmount * (1 + ($gstRate / 100));
 
-                // Append variant to product name if provided
+                // Append variant info to product name if provided
                 $finalProductName = $product->product_name;
-                if (!empty($itemData['variant'])) {
-                    $finalProductName .= ' [' . $itemData['variant'] . ']';
+                $iSide = $itemData['side'] ?? null;
+                $iSize = $itemData['size'] ?? null;
+                $vInfo = array_filter([$iSide, $iSize]);
+                if (!empty($vInfo)) {
+                    $finalProductName .= ' [' . implode('/', $vInfo) . ']';
                 }
 
                 $order->items()->create([
@@ -338,7 +341,8 @@ class DistributorOrderController extends Controller
                     'unit' => $unit,
                     'price' => $unitPrice,
                     'subtotal' => $itemTotalWithGst,
-                    'variant' => $itemData['variant'] ?? null,
+                    'side' => $iSide,
+                    'size' => $iSize,
                 ]);
 
                 $totalAmount += $itemTotalWithGst;
@@ -423,15 +427,21 @@ class DistributorOrderController extends Controller
                 $newQuantity = $itemData['quantity'];
 
                 $multiplier = 1;
-                if ($unit === 'Box') {
+                $normalizedUnit = strtolower($unit);
+                if ($normalizedUnit === 'box') {
                     $multiplier = (int)($product->strips_per_box ?? 1);
-                } elseif ($unit === 'Carton') {
+                } elseif ($normalizedUnit === 'carton') {
                     $multiplier = (int)($product->boxes_per_carton ?? 1) * (int)($product->strips_per_box ?? 1);
+                } elseif ($normalizedUnit === 'nos' || $normalizedUnit === 'no' || $normalizedUnit === 'unit') {
+                    $multiplier = 1 / (max(1, (int)($product->units_per_strip ?? 1)));
                 }
 
-                $totalQtyNos = $newQuantity * $multiplier;
+                $totalQtyNos = ceil($newQuantity * $multiplier);
                 $unitPrice = (float)$product->pts;
                 $itemTotalAmount = $totalQtyNos * $unitPrice;
+
+                $iSide = $itemData['side'] ?? null;
+                $iSize = $itemData['size'] ?? null;
 
                 if ($currentOrderItem) {
                     $currentOrderItem->update([
@@ -439,6 +449,8 @@ class DistributorOrderController extends Controller
                         'unit' => $unit,
                         'price' => $unitPrice,
                         'subtotal' => $itemTotalAmount,
+                        'side' => $iSide,
+                        'size' => $iSize,
                     ]);
                     $requestItemIds[] = $currentOrderItem->id;
                 } else {
@@ -448,6 +460,8 @@ class DistributorOrderController extends Controller
                         'unit' => $unit,
                         'price' => $unitPrice,
                         'subtotal' => $itemTotalAmount,
+                        'side' => $iSide,
+                        'size' => $iSize,
                     ]);
                     $requestItemIds[] = $newItem->id;
                 }

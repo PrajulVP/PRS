@@ -592,15 +592,26 @@
 
                 let qty = parseInt($('#qtyInput').val());
                 let unit = $('#unitSelect').val();
-                let variant = $('#variantWrapper').is(':visible') ? $('#variantValue').val() : null;
+                let side = null;
+                let size = null;
+                if ($('#variantWrapper').is(':visible')) {
+                    $('.variant-level:visible').each(function() {
+                        let label = $(this).find('label').text().toLowerCase();
+                        let activeVal = $(this).find('.variant-btn.active').data('value');
+                        if (label.includes('side')) side = activeVal;
+                        else if (label.includes('size')) size = activeVal;
+                        else if (!side) side = activeVal; // Fallback to first if not labeled
+                        else if (!size) size = activeVal; // Fallback to second if not labeled
+                    });
+                }
 
-                if ($('#variantWrapper').is(':visible') && !variant) {
+                if ($('#variantWrapper').is(':visible') && !side && !size) {
                     return showToast('warning', 'Please select a size/variant first');
                 }
 
                 if (qty < 1) return;
 
-                let key = prodId + (variant ? '-' + variant : '');
+                let key = prodId + (side ? '-' + side : '') + (size ? '-' + size : '');
                 let mul = 1;
                 if (unit === 'Box') mul = parseInt(currentProductDetails.strips_per_box || 1);
                 else if (unit === 'Nos') mul = 1 / (parseInt(currentProductDetails.units_per_strip || 1));
@@ -612,7 +623,8 @@
                 } else {
                     addedItems[key] = {
                         id: prodId, name: currentProductDetails.product_name,
-                        variant: variant,
+                        side: side,
+                        size: size,
                         price: parseFloat(currentProductDetails.pts),
                         qty: qty, unit: unit, multiplier: mul,
                         strips_per_box: currentProductDetails.strips_per_box,
@@ -643,10 +655,13 @@
                             <td class="ps-4 text-muted fw-bold small">${index++}</td>
                             <td>
                                 <div class="fw-bold text-dark font-outfit" style="max-width:250px; white-space:normal; line-height:1.2;">
-                                    ${item.name} ${item.variant ? `<span class="badge bg-primary ms-1">${item.variant}</span>` : ''}
+                                    ${item.name} 
+                                    ${item.side ? `<span class="badge bg-primary ms-1">${item.side}</span>` : ''}
+                                    ${item.size ? `<span class="badge bg-info ms-1">${item.size}</span>` : ''}
                                 </div>
                                 <input type="hidden" name="items[${key}][product_id]" value="${item.id}">
-                                ${item.variant ? `<input type="hidden" name="items[${key}][variant]" value="${item.variant}">` : ''}
+                                ${item.side ? `<input type="hidden" name="items[${key}][side]" value="${item.side}">` : ''}
+                                ${item.size ? `<input type="hidden" name="items[${key}][size]" value="${item.size}">` : ''}
                             </td>
                             <td class="text-center">
                                 <div class="py-2">

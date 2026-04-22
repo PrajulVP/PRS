@@ -164,6 +164,7 @@ class RetailerOrderManagementController extends Controller
                     } elseif ($normalizedUnit === 'nos' || $normalizedUnit === 'no' || $normalizedUnit === 'unit') {
                         $multiplier = 1 / (max(1, (int)($product->units_per_strip ?? 1)));
                     }
+                    $totalQtyNos = $qty * $multiplier;
 
                     $iSide = $itemData['side'] ?? null;
                     $iSize = $itemData['size'] ?? null;
