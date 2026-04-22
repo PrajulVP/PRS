@@ -24,13 +24,7 @@ trait CalculatesPrices
         // Fetch available variants from product name or inventory
         $availableVariants = $this->getAvailableVariants($product);
         if (empty($availableVariants)) {
-            $availableVariants = DB::table('inventories')
-                ->where('product_id', $product->id)
-                ->where('stock', '>', 0)
-                ->whereNotNull('variant')
-                ->distinct()
-                ->pluck('variant')
-                ->toArray();
+            $availableVariants = [];
         }
 
         // Dynamic Unit Logic matching the web front-end

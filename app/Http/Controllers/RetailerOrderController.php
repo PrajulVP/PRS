@@ -29,9 +29,7 @@ class RetailerOrderController extends Controller
                     'order_code' => $order->order_code,
                     'product_summary' => $order->items->map(function($i) {
                          $pName = $i->product_name ?? $i->product->product_name ?? 'Product';
-                         if (!empty($i->variant) && strpos($pName, '[' . $i->variant . ']') === false && strpos($pName, '(' . $i->variant . ')') === false) {
-                             $pName .= ' [' . $i->variant . ']';
-                         }
+                         return $pName . ' (' . $i->quantity . ')';
                          return $pName . ' (' . $i->quantity . ')';
                     })->implode(', '),
                     'total_amount' => number_format($order->total_amount, 2),
@@ -39,15 +37,13 @@ class RetailerOrderController extends Controller
                     'placed_at' => $order->placed_at ? $order->placed_at->format('Y-m-d') : '-',
                     'items' => $order->items->map(function($i) {
                         $pName = $i->product_name ?? $i->product->product_name ?? 'Product';
-                        if (!empty($i->variant) && strpos($pName, '[' . $i->variant . ']') === false && strpos($pName, '(' . $i->variant . ')') === false) {
-                            $pName .= ' [' . $i->variant . ']';
-                        }
                         return [
                             'name' => $pName,
                             'qty' => $i->quantity,
                             'price' => $i->unit_price,
                             'total' => $i->total_amount,
-                            'variant' => $i->variant
+                            'side' => $i->side,
+                            'size' => $i->size
                         ];
                     }),
                     'notes' => $order->notes,
@@ -87,7 +83,6 @@ class RetailerOrderController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit' => 'nullable|string',
-            'items.*.variant' => 'nullable|string'
         ]);
 
         $retailer = Auth::user()->retailer;
@@ -136,9 +131,6 @@ class RetailerOrderController extends Controller
                 // Availability check: ensure distributor has enough total stock across all active batches
                 $available = Inventory::where('distributor_id', $distributor->id)
                     ->where('product_id', $product->id)
-                    ->when(!empty($item['variant']), function($q) use ($item) {
-                        return $q->where('variant', $item['variant']);
-                    })
                     ->where('stock', '>', 0)
                     ->sum('stock');
 
@@ -155,9 +147,6 @@ class RetailerOrderController extends Controller
                 
                 // Append variant to product name if provided
                 $finalProductName = $product->product_name;
-                if (!empty($item['variant'])) {
-                    $finalProductName .= ' [' . $item['variant'] . ']';
-                }
 
                 $order->items()->create([
                     'product_id' => $product->id,
@@ -166,7 +155,8 @@ class RetailerOrderController extends Controller
                     'unit' => $unit,
                     'price' => $price,
                     'subtotal' => $subtotalWithGst,
-                    'variant' => $item['variant'] ?? null,
+                    'side' => $item['side'] ?? null,
+                    'size' => $item['size'] ?? null,
                 ]);
 
                 $totalAmt += $subtotalWithGst;

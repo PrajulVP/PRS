@@ -126,10 +126,7 @@ class DistributorOrderController extends Controller
                     $productSummary = $order->items->map(function ($item) {
                         $pName = $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product';
                         
-                        // Backward compatibility for variant display
-                        if (!empty($item->variant) && strpos($pName, '[' . $item->variant . ']') === false && strpos($pName, '(' . $item->variant . ')') === false) {
-                            $pName .= ' [' . $item->variant . ']';
-                        }
+                        $summary = $pName . ' - ' . $item->quantity;
                         
                         $summary = $pName . ' - ' . $item->quantity;
                         if ($item->free_quantity > 0) {
@@ -158,15 +155,12 @@ class DistributorOrderController extends Controller
                         'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d H:i:s') : '-',
                         'items' => $order->items->map(function ($item) {
                             $pName = $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product';
-                            // Backward compatibility for variant display
-                            if (!empty($item->variant) && strpos($pName, '[' . $item->variant . ']') === false && strpos($pName, '(' . $item->variant . ')') === false) {
-                                $pName .= ' [' . $item->variant . ']';
-                            }
                             return [
                                 'product_id' => $item->product_id,
                                 'product_name' => $pName,
                                 'product_code' => $item->product->product_code ?? 'N/A',
-                                'variant' => $item->variant,
+                                'side' => $item->side,
+                                'size' => $item->size,
                                 'quantity' => $item->quantity,
                                 'unit_price' => $item->price,
                                 'total_amount' => $item->subtotal,
@@ -257,7 +251,6 @@ class DistributorOrderController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit' => 'nullable|string',
-            'items.*.variant' => 'nullable|string'
         ]);
 
         $distributorId = null;
@@ -925,7 +918,6 @@ class DistributorOrderController extends Controller
                     'product_id' => $product->id,
                     'batch_no' => $batch->batch_no,
                     'expiry_date' => $batch->expiry_date,
-                    'variant' => $item->variant,
                     'side' => $item->side, // Strict Side Matching
                     'size' => $item->size  // Strict Size Matching
                 ]);

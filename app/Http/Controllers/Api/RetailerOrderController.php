@@ -86,7 +86,8 @@ class RetailerOrderController extends Controller
                             'quantity'   => $item->quantity,
                             'free_quantity' => $item->free_quantity,
                             'unit'       => $item->unit ?? 'Nos',
-                            'variant'    => $item->variant,
+                            'side'       => $item->side,
+                            'size'       => $item->size,
                         ];
                     }),
                     'invoice_url'    => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
@@ -108,7 +109,8 @@ class RetailerOrderController extends Controller
      *     @OA\Parameter(name="product_id", in="query", required=true, @OA\Schema(type="integer"), example=1),
      *     @OA\Parameter(name="quantity", in="query", required=true, @OA\Schema(type="number"), example=10),
      *     @OA\Parameter(name="unit", in="query", required=true, @OA\Schema(type="string", enum={"Nos", "Strips", "Box", "Carton"}), example="Box"),
-     *     @OA\Parameter(name="variant", in="query", required=false, @OA\Schema(type="string"), example="M"),
+     *     @OA\Parameter(name="side", in="query", required=false, @OA\Schema(type="string"), example="Left"),
+     *     @OA\Parameter(name="size", in="query", required=false, @OA\Schema(type="string"), example="XL"),
      *     @OA\Response(
      *         response=200,
      *         description="Detailed price calculation",
@@ -117,7 +119,8 @@ class RetailerOrderController extends Controller
      *             @OA\Property(property="product_name", type="string"),
      *             @OA\Property(property="has_variants", type="boolean"),
      *             @OA\Property(property="available_variants", type="array", @OA\Items(type="string")),
-     *             @OA\Property(property="selected_variant", type="string", nullable=true),
+     *             @OA\Property(property="selected_side", type="string", nullable=true),
+             @OA\Property(property="selected_size", type="string", nullable=true),
      *             @OA\Property(property="available_units", type="array", @OA\Items(type="string")),
      *             @OA\Property(property="input_quantity", type="number"),
      *             @OA\Property(property="input_unit", type="string"),
@@ -139,11 +142,10 @@ class RetailerOrderController extends Controller
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|numeric|min:0.01',
             'unit' => 'required|string',
-            'variant' => 'nullable|string',
         ]);
 
         $product = Product::findOrFail($request->product_id);
-        $result = $this->computePriceResponse($product, $request->quantity, $request->unit, 'ptr', $request->variant);
+        $result = $this->computePriceResponse($product, $request->quantity, $request->unit, 'ptr');
 
         return response()->json($result);
     }
@@ -246,26 +248,16 @@ class RetailerOrderController extends Controller
 
                     $totalQtyNos = $qty * $multiplier;
                     // If multiplier resulted in float, we handle it as needed (ceil for strips if we only sell full strips)
-                    // But in pharma, usually they sell by strips. If they select Nos, it might be 10 Nos = 1 Strip.
-                    $iSide = $itemData['side'] ?? null;
-                    $iSize = $itemData['size'] ?? null;
 
                     // Stock Check
                     if ($distributor) {
                         $totalStock = DB::table('inventories')
                             ->where('distributor_id', $distributor->id)
                             ->where('product_id', $product->id)
-                            ->when(!empty($iSide), function ($q) use ($iSide) {
-                                return $q->where('side', $iSide);
-                            })
-                            ->when(!empty($iSize), function ($q) use ($iSize) {
-                                return $q->where('size', $iSize);
-                            })
                             ->sum('stock');
 
                         if ($totalStock < $totalQtyNos) {
-                            $vMsg = array_filter([$iSide, $iSize]);
-                            $variantMsg = !empty($vMsg) ? " (" . implode('/', $vMsg) . ")" : "";
+                            $variantMsg = !empty($vMsg) ? " [" . implode('/', $vMsg) . "]" : "";
                             throw new \Exception("Insufficient stock for product '{$product->product_name}'{$variantMsg} at selected distributor.");
                         }
                     }

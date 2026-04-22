@@ -424,11 +424,6 @@ class RetailerOrderManagementController extends Controller
                     $productSummary = $order->items->map(function ($item) {
                         $pName = $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product';
                         
-                        // If variant is stored separately but not in name, append it (for backward compatibility)
-                        if (!empty($item->variant) && strpos($pName, '[' . $item->variant . ']') === false && strpos($pName, '(' . $item->variant . ')') === false) {
-                            $pName .= ' [' . $item->variant . ']';
-                        }
-
                         if ($item->free_quantity > 0) {
                             $pName .= ' ('.$item->quantity.' + '.$item->free_quantity.' Free)';
                         }
@@ -459,19 +454,16 @@ class RetailerOrderManagementController extends Controller
                         'product_summary' => $productSummary,
                         'items' => $order->items->map(function ($item) {
                             $pName = $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product';
-                            // Backward compatibility for variant display
-                            if (!empty($item->variant) && strpos($pName, '[' . $item->variant . ']') === false && strpos($pName, '(' . $item->variant . ')') === false) {
-                                $pName .= ' [' . $item->variant . ']';
-                            }
                             return [
                                 'product_name' => $pName,
+                                'side' => $item->side,
+                                'size' => $item->size,
                                 'free_quantity' => $item->free_quantity,
                                 'quantity' => $item->quantity,
                                 'unit' => $item->unit ?? 'Strips',
                                 'unit_price' => $item->unit_price,
                                 'total_amount' => $item->total_amount,
                                 'order_item_id' => $item->id,
-                                'variant' => $item->variant,
                                 'pack' => $item->product?->pack,
                                 'strip_size' => $item->product?->strip_size,
                                 'box_size' => $item->product?->box_size,
@@ -808,9 +800,6 @@ class RetailerOrderManagementController extends Controller
                             ->where('product_id', $product->id)
                             ->where('side', $orderItem->side) // Strict Side Matching
                             ->where('size', $orderItem->size) // Strict Size Matching
-                            ->when(!empty($orderItem->variant), function($q) use ($orderItem) {
-                                return $q->where('variant', $orderItem->variant);
-                            })
                             ->where('stock', '>', 0)
                             ->orderBy('expiry_date', 'asc')
                             ->get();
