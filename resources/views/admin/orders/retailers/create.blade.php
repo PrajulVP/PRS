@@ -1039,9 +1039,14 @@
                             showToast('success', 'Retail Order Placed');
                             window.location.href = "{{ route('admin.retailer.index') }}";
                         } else {
-                            showToast('error', 'Update Failed');
+                            showToast('error', res.error || 'Update Failed');
                             btn.prop('disabled', false).html('<i class="fa fa-check-circle me-2"></i> CONFIRM ORDER');
                         }
+                    },
+                    error: function (xhr) {
+                        let msg = (xhr.responseJSON && xhr.responseJSON.error) ? xhr.responseJSON.error : 'Server error occurred during submission.';
+                        showToast('error', msg);
+                        btn.prop('disabled', false).html('<i class="fa fa-check-circle me-2"></i> CONFIRM ORDER');
                     }
                 });
             });

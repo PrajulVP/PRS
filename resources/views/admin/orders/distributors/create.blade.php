@@ -712,9 +712,14 @@
                             showToast('success', 'Order Placed Successfully');
                             window.location.href = "{{ route('admin.distributor-orders.index') }}";
                         } else {
-                            showToast('error', 'Error in submission');
+                            showToast('error', res.error || 'Error in submission');
                             btn.prop('disabled', false).html('<i class="fa fa-check-double me-2"></i> CONFIRM ORDER');
                         }
+                    },
+                    error: function (xhr) {
+                        let msg = (xhr.responseJSON && xhr.responseJSON.error) ? xhr.responseJSON.error : 'Server error occurred during submission.';
+                        showToast('error', msg);
+                        btn.prop('disabled', false).html('<i class="fa fa-check-double me-2"></i> CONFIRM ORDER');
                     }
                 });
             });

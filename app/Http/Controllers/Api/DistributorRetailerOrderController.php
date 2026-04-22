@@ -364,6 +364,25 @@ class DistributorRetailerOrderController extends Controller
         ]);
 
         $file = $request->file('invoice');
+        $fileHash = md5_file($file->getRealPath());
+
+        // Check for duplicates across BOTH roles
+        $existingRetailer = RetailerOrder::where('id', '!=', $retailerOrder->id)
+            ->whereJsonContains('metadata->invoice_hash', $fileHash)
+            ->first();
+        
+        $existingDistributor = \App\Models\DistributorOrder::whereJsonContains('metadata->invoice_hash', $fileHash)
+            ->first();
+
+        if ($existingRetailer || $existingDistributor) {
+            $code = $existingRetailer ? $existingRetailer->order_code : $existingDistributor->order_code;
+            $role = $existingRetailer ? 'Retailer' : 'Distributor';
+            return response()->json([
+                'error' => "Invoice already uploaded for $role Order #$code. Duplicates are not allowed.",
+                'duplicate' => true
+            ], 422);
+        }
+
         $filename = 'invoice_' . $retailerOrder->id . '_' . time() . '.' . $file->getClientOriginalExtension();
         $path = $file->storeAs('retailer_invoices', $filename, 'public');
 
@@ -495,8 +514,13 @@ class DistributorRetailerOrderController extends Controller
             ];
         }
 
-        // Always save path for manual approval later
-        $retailerOrder->update(['invoice_path' => $path]);
+        // Always save path and hash for manual approval and duplicate checks
+        $meta = $retailerOrder->metadata ?? [];
+        $meta['invoice_hash'] = $fileHash;
+        $retailerOrder->update([
+            'invoice_path' => $path,
+            'metadata' => $meta
+        ]);
 
         if ($isMatch) {
             return response()->json([

@@ -24,6 +24,9 @@ class Distributor extends Model
         'sales_manager_id', // New field
         'latitude',
         'longitude',
+        'outstanding_amount',
+        'credit_days',
+        'loyalty_points',
     ];
 
     public function user()

@@ -11,6 +11,7 @@ class LoyaltyRedemption extends Model
 
     protected $fillable = [
         'retailer_id',
+        'distributor_id',
         'loyalty_slab_id',
         'status',
         'expected_delivery_date',
@@ -25,6 +26,11 @@ class LoyaltyRedemption extends Model
     public function retailer()
     {
         return $this->belongsTo(Retailer::class);
+    }
+
+    public function distributor()
+    {
+        return $this->belongsTo(Distributor::class);
     }
 
     public function slab()

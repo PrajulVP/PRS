@@ -8,6 +8,7 @@ class Rating extends Model
 {
     protected $fillable = [
         'retailer_id',
+        'distributor_id',
         'field_staff_id',
         'rating',
         'category',
@@ -17,6 +18,11 @@ class Rating extends Model
     public function retailer()
     {
         return $this->belongsTo(Retailer::class);
+    }
+
+    public function distributor()
+    {
+        return $this->belongsTo(Distributor::class);
     }
 
     public function fieldStaff()

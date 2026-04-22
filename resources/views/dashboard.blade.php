@@ -382,6 +382,47 @@
                         <div class="dash"></div>
                         <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.9rem; letter-spacing: 1.5px; color: var(--med-primary);">Distributor Control Panel</h5>
                     </div>
+
+                    {{-- Quick Actions for Distributors --}}
+                    <div class="row mb-5">
+                        <div class="col-md-6 mb-4 mb-md-0">
+                            <div class="card border-0 rounded-4 shadow-sm h-100 overflow-hidden executive-metric-card cursor-pointer" 
+                                style="background: linear-gradient(135deg, rgba(var(--med-primary-rgb), 0.05) 0%, #fff 100%);"
+                                onclick="alert('Rating System Module Loading...')">
+                                <div class="card-body p-4 d-flex align-items-center gap-4">
+                                    <div class="icon-circle-lg bg-soft-info" style="background: rgba(14, 165, 233, 0.15)">
+                                        <i data-feather="star" class="text-info" style="width: 32px; height: 32px;"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-800 mb-1" style="color: var(--med-primary);">Rate Sales Representative</h5>
+                                        <p class="text-muted small mb-0">Provide feedback on service quality and communication</p>
+                                    </div>
+                                    <div class="ms-auto">
+                                        <i data-feather="arrow-right" class="text-muted" style="width: 20px;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-0 rounded-4 shadow-sm h-100 overflow-hidden executive-metric-card cursor-pointer" 
+                                style="background: linear-gradient(135deg, rgba(var(--med-primary-rgb), 0.9) 0%, var(--med-accent) 100%);"
+                                onclick="alert('Rewards & Schemes Module Loading...')">
+                                <div class="card-body p-4 d-flex align-items-center gap-4">
+                                    <div class="icon-circle-lg bg-white bg-opacity-20">
+                                        <i data-feather="gift" class="text-white" style="width: 32px; height: 32px; stroke-width: 2.5px;"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-800 mb-1 text-white">Rewards & Schemes</h5>
+                                        <p class="text-white text-opacity-75 small mb-0">View benefits available against your achievements</p>
+                                    </div>
+                                    <div class="ms-auto text-white">
+                                        <i data-feather="arrow-right" style="width: 20px;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row">
                         @php
                             $stats = [
@@ -407,6 +448,91 @@
                                 </div>
                             </div>
                         @endforeach
+                    </div>
+
+                    {{-- [NEW] Distributor Performance Index --}}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="section-header-modern">
+                                <div class="dash"></div>
+                                <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.8rem; letter-spacing: 1px; color: var(--med-primary);">Performance Index & Benefits</h5>
+                            </div>
+                        </div>
+                        
+                        {{-- Target vs Achievement --}}
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-0 shadow-sm premium-stats-card h-100">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <div class="p-2 bg-soft-primary rounded-circle">
+                                            <i class="fa fa-crosshairs text-primary" style="width: 16px; height: 16px;"></i>
+                                        </div>
+                                        @php 
+                                            $target = $data_extra['target'] ?? 0;
+                                            $achieved = $data_extra['achieved'] ?? 0;
+                                            $percent = $target > 0 ? round(($achieved / $target) * 100, 1) : 0;
+                                            $pColor = $percent >= 100 ? 'success' : ($percent >= 50 ? 'warning' : 'danger');
+                                        @endphp
+                                        <span class="badge bg-soft-{{ $pColor }} text-{{ $pColor }} rounded-pill">{{ $percent }}%</span>
+                                    </div>
+                                    <h6 class="text-muted small fw-700 text-uppercase mb-1">Target Achievement</h6>
+                                    <h4 class="fw-800 mb-0">₹{{ number_format($achieved, 0) }}</h4>
+                                    <p class="text-muted small mb-0 mt-1">Goal: ₹{{ number_format($target, 0) }}</p>
+                                    <div class="progress mt-3" style="height: 6px; border-radius: 10px;">
+                                        <div class="progress-bar bg-{{ $pColor }}" role="progressbar" style="width: {{ min($percent, 100) }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Average Turnaround Time --}}
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-0 shadow-sm premium-stats-card h-100">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <div class="p-2 bg-soft-info rounded-circle">
+                                            <i class="fa fa-bolt text-info" style="width: 16px; height: 16px;"></i>
+                                        </div>
+                                    </div>
+                                    <h6 class="text-muted small fw-700 text-uppercase mb-1">Turnaround Time</h6>
+                                    <h4 class="fw-800 mb-0">{{ $data_extra['avg_turnaround'] ?? 'N/A' }}</h4>
+                                    <p class="text-muted small mb-0 mt-1">Average delivery speed</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Loyalty Points --}}
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-0 shadow-sm premium-stats-card h-100" style="background: linear-gradient(135deg, #fff 0%, rgba(251, 191, 36, 0.05) 100%);">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <div class="p-2 bg-soft-warning rounded-circle">
+                                            <i class="fa fa-gem text-warning" style="width: 16px; height: 16px;"></i>
+                                        </div>
+                                    </div>
+                                    <h6 class="text-muted small fw-700 text-uppercase mb-1">Loyalty Rewards</h6>
+                                    <h4 class="fw-800 mb-0 text-warning">{{ number_format($data_extra['loyalty_points'] ?? 0) }} <span style="font-size: 13px;">Pts</span></h4>
+                                    <a href="#" class="text-decoration-none small fw-bold mt-2 d-inline-block">Redeem Gifts <i class="fa fa-arrow-right ms-1"></i></a>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Outstanding Balance --}}
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-0 shadow-sm premium-stats-card h-100">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <div class="p-2 bg-soft-danger rounded-circle">
+                                            <i class="fa fa-credit-card text-danger" style="width: 16px; height: 16px;"></i>
+                                        </div>
+                                        <span class="badge bg-soft-secondary text-secondary rounded-pill">{{ $data_extra['credit_days'] ?? 0 }} Days Credit</span>
+                                    </div>
+                                    <h6 class="text-muted small fw-700 text-uppercase mb-1">Outstanding</h6>
+                                    <h4 class="fw-800 mb-0 text-danger">₹{{ number_format($data_extra['outstanding'] ?? 0, 2) }}</h4>
+                                    <p class="text-muted small mb-0 mt-1">Pending with Company</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="row">
@@ -1027,7 +1153,16 @@
                                                     @if(!Auth::user()->hasRole('retailer'))
                                                         <td class="fw-700 text-dark" style="font-size: 12px;">{{ $order->retailer->user->name ?? 'N/A' }}</td>
                                                     @endif
-                                                    <td class="text-muted" style="font-size: 12px;">{{ $order->created_at->format('d M, Y') }}</td>
+                                                    <td class="text-muted" style="font-size: 12px;">
+                                                        <div>{{ $order->created_at->format('d M, Y') }}</div>
+                                                        @if(Auth::user()->hasRole('distributor') && isset($order->supply_chain_track))
+                                                           <div class="mt-1">
+                                                               <span class="badge bg-soft-{{ $order->supply_chain_track['color'] }} text-{{ $order->supply_chain_track['color'] }}" style="font-size: 9px; padding: 2px 6px;">
+                                                                   <i class="fa fa-truck me-1"></i>{{ $order->supply_chain_track['label'] }}
+                                                               </span>
+                                                           </div>
+                                                        @endif
+                                                    </td>
                                                     <td class="fw-800 text-dark" style="font-size: 13px;">₹{{ number_format($order->total_amount, 2) }}</td>
                                                     <td class="text-end px-4">
                                                         <span class="badge rounded-pill px-3 py-2 

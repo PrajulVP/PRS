@@ -162,6 +162,36 @@ class DashboardController extends Controller
                     ->orderByDesc('total_quantity_ordered')
                     ->take(5)
                     ->get();
+
+                // [ADD] Portal Enhancement Stats
+                $targetAchievement = $distributor->distributorTargets()
+                    ->where('month', now()->month)
+                    ->where('year', now()->year)
+                    ->first();
+                
+                $achievedAmount = RetailerOrder::where('distributor_id', $distributor->id)
+                    ->where('status', RetailerOrder::STATUS_DELIVERED)
+                    ->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year)
+                    ->sum('total_amount');
+
+                $avgMinutes = RetailerOrder::where('distributor_id', $distributor->id)
+                    ->where('status', RetailerOrder::STATUS_DELIVERED)
+                    ->whereNotNull('placed_at')
+                    ->whereNotNull('delivered_at')
+                    ->select(DB::raw('AVG(TIMESTAMPDIFF(MINUTE, placed_at, delivered_at)) as avg_time'))
+                    ->first()->avg_time;
+
+                $data_extra = [
+                    'target' => $targetAchievement ? (float)$targetAchievement->target_amount : 0,
+                    'achieved' => (float)$achievedAmount,
+                    'loyalty_points' => (float)$distributor->loyalty_points,
+                    'outstanding' => (float)$distributor->outstanding_amount,
+                    'credit_days' => (int)$distributor->credit_days,
+                    'avg_turnaround' => $this->formatMinutes($avgMinutes)
+                ];
+                
+                $tr_list = $topRetailers; // Re-assign for clarity if needed
             }
         } elseif ($user->hasRole('fieldstaff')) {
             // See retailers orders and statistics of their orders, performance to understand if they are working better or not.
@@ -259,7 +289,30 @@ class DashboardController extends Controller
         ];
 
         // 6. Recent Orders
-        $recentRetailerOrders = $retailerOrderQuery->clone()->with(['retailer.user'])->latest()->take(5)->get();
+        $recentRetailerOrders = $retailerOrderQuery->clone()
+            ->with(['retailer.user'])
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(function($order) {
+                $placedAt = $order->placed_at ?? $order->created_at;
+                $deliveredAt = $order->delivered_at;
+                
+                if ($order->status === 'delivered' && $deliveredAt) {
+                    $days = $placedAt->diffInDays($deliveredAt);
+                    $order->supply_chain_track = [
+                        'label' => $days . ' days to deliver',
+                        'color' => 'success'
+                    ];
+                } else {
+                    $days = $placedAt->diffInDays(now());
+                    $order->supply_chain_track = [
+                        'label' => $days . ' days ' . ($order->status === 'cancelled' ? 'at cancellation' : 'since ordered'),
+                        'color' => $order->status === 'cancelled' ? 'danger' : 'info'
+                    ];
+                }
+                return $order;
+            });
         $recentDistributorOrders = collect();
         if ($user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
             $recentDistributorOrders = $distributorOrderQuery->clone()->with(['distributor.user'])->latest()->take(5)->get();
@@ -290,7 +343,8 @@ class DashboardController extends Controller
             'activeOffers',
             'myRank',
             'totalInLocality',
-            'totalLoyaltyPoints'
+            'totalLoyaltyPoints',
+            'data_extra'
         );
     }
 
@@ -379,5 +433,19 @@ class DashboardController extends Controller
             'labels' => $chartLabels,
             'counts' => $chartCounts,
         ];
+    private function formatMinutes($avgMinutes)
+    {
+        if (!$avgMinutes) return 'N/A';
+
+        $hours = floor($avgMinutes / 60);
+        $minutes = $avgMinutes % 60;
+
+        if ($hours > 24) {
+            $days = floor($hours / 24);
+            $remainingHours = $hours % 24;
+            return "{$days}d {$remainingHours}h";
+        }
+
+        return "{$hours}h {$minutes}m";
     }
 }

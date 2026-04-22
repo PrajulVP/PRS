@@ -11,6 +11,7 @@ class LoyaltySlab extends Model
 
     protected $fillable = [
         'slab_name',
+        'type',
         'min_points',
         'gift_name',
         'gift_image',

@@ -8,9 +8,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\RetailerOrder;
 use App\Models\DistributorOrder;
-# [ADD] use App\Models\Retailer;
 use App\Models\Retailer;
 use App\Models\Product;
+use App\Models\DistributorTarget;
+use Carbon\Carbon;
 
 class DistributorDashboardApiController extends Controller
 {
@@ -90,13 +91,41 @@ class DistributorDashboardApiController extends Controller
             ->with(['retailer.user'])
             ->latest()
             ->take(5)
-            ->get();
+            ->get()
+            ->map(function($order) {
+                $orderArray = $order->toArray();
+                $placedAt = $order->placed_at ?? $order->created_at;
+                $deliveredAt = $order->delivered_at;
+                
+                if ($deliveredAt) {
+                    $days = $placedAt->diffInDays($deliveredAt);
+                    $orderArray['supply_chain_track'] = [
+                        'status' => 'Completed',
+                        'days' => $days,
+                        'label' => $days . ' days to deliver'
+                    ];
+                } else {
+                    $days = $placedAt->diffInDays(now());
+                    $orderArray['supply_chain_track'] = [
+                        'status' => 'In Progress',
+                        'days' => $days,
+                        'label' => $days . ' days since ordered'
+                    ];
+                }
+                return $orderArray;
+            });
 
         // 5. Chart Data
         $chartData = $this->calculateTotalOrdersOverTime($distributorId); // We leave chart data logic intact for backwards compatibility or fix as needed
 
         // 6. Top Retailers
         $topRetailers = $this->calculateTopRetailers($distributorId, $startDate, $endDate);
+
+        // 7. Target vs Achievement
+        $targetAchievement = $this->calculateTargetAchievement($distributorId);
+
+        // 8. Turnaround Time
+        $avgTurnaroundTime = $this->calculateAvgTurnaroundTime($distributorId);
 
         return response()->json([
             'period' => $period,
@@ -106,6 +135,8 @@ class DistributorDashboardApiController extends Controller
             'recent_retailer_orders' => $recentRetailerOrders,
             'chart_data' => $chartData,
             'top_retailers' => $topRetailers,
+            'target_achievement' => $targetAchievement,
+            'avg_turnaround_time' => $avgTurnaroundTime,
         ]);
     }
 
@@ -278,5 +309,60 @@ class DistributorDashboardApiController extends Controller
             
         return $query->groupBy('retailer_id')->orderByDesc('total_orders')->take(5)
             ->with('retailer.user')->get();
+    }
+
+    private function calculateTargetAchievement($distributorId)
+    {
+        $now = now();
+        $target = DistributorTarget::where('distributor_id', $distributorId)
+            ->where('month', $now->month)
+            ->where('year', $now->year)
+            ->first();
+
+        if (!$target) {
+            return [
+                'target_amount' => 0,
+                'achieved_amount' => 0,
+                'percentage' => 0,
+                'message' => 'No target set for this month'
+            ];
+        }
+
+        // Calculate achievement dynamically if needed, or use stored value
+        // For now, let's calculate from delivered orders in current month
+        $achieved = RetailerOrder::where('distributor_id', $distributorId)
+            ->where('status', RetailerOrder::STATUS_DELIVERED)
+            ->whereMonth('created_at', $now->month)
+            ->whereYear('created_at', $now->year)
+            ->sum('total_amount');
+
+        return [
+            'target_amount' => (float)$target->target_amount,
+            'achieved_amount' => (float)$achieved,
+            'percentage' => $target->target_amount > 0 ? round(($achieved / $target->target_amount) * 100, 2) : 0
+        ];
+    }
+
+    private function calculateAvgTurnaroundTime($distributorId)
+    {
+        $avgMinutes = RetailerOrder::where('distributor_id', $distributorId)
+            ->where('status', RetailerOrder::STATUS_DELIVERED)
+            ->whereNotNull('placed_at')
+            ->whereNotNull('delivered_at')
+            ->select(DB::raw('AVG(TIMESTAMPDIFF(MINUTE, placed_at, delivered_at)) as avg_time'))
+            ->first()->avg_time;
+
+        if (!$avgMinutes) return 'N/A';
+
+        $hours = floor($avgMinutes / 60);
+        $minutes = $avgMinutes % 60;
+
+        if ($hours > 24) {
+            $days = floor($hours / 24);
+            $remainingHours = $hours % 24;
+            return "{$days}d {$remainingHours}h";
+        }
+
+        return "{$hours}h {$minutes}m";
     }
 }
