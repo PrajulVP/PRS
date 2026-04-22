@@ -160,11 +160,17 @@ class AiService
         return $response;
     }
 
-    protected function getAvailableDistributors($product, $retailer)
+    protected function getAvailableDistributors($product, $retailer, $side = null, $size = null)
     {
         $allDistributors = Distributor::with('user')->get();
         $stockMap = DB::table('inventories')
             ->where('product_id', $product->id)
+            ->when(!empty($side), function($q) use ($side) {
+                return $q->where('side', $side);
+            })
+            ->when(!empty($size), function($q) use ($size) {
+                return $q->where('size', $size);
+            })
             ->selectRaw('distributor_id, SUM(stock) as total_stock')
             ->groupBy('distributor_id')
             ->pluck('total_stock', 'distributor_id');

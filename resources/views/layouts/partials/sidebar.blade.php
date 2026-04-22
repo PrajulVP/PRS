@@ -208,13 +208,38 @@
                </span>
              </a></li>
             @endif
-             {{-- Field Staff Approvals --}}
-             @if ($hasApprovalRoles)
-              <li><a href="{{ route('admin.field-staff.expenses') }}">Staff Expenses</a></li>
-              <li><a href="{{ route('admin.field-staff.leaves') }}">Staff Leaves</a></li>
-             @endif
           </ul>
         </li>
+
+        {{-- Staff Approvals Dropdown --}}
+        @if ($hasApprovalRoles)
+        <li class="sidebar-list" style="position: relative;">
+          @php $staffActionCounts = $actionCounts['staff_expenses'] + $actionCounts['staff_leaves']; @endphp
+          <a class="sidebar-link sidebar-title" id="staff-approvals" href="javascript:void(0)">
+            <svg class="stroke-icon">
+              <use href="{{ $iconSprite }}#stroke-user"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{{ $iconSprite }}#fill-user"></use>
+            </svg>
+            <span style="display: inline-flex; align-items: center; gap: 8px;">Staff Approval
+                <span id="badge-staff-approvals" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; {{ $staffActionCounts > 0 ? '' : 'display: none !important;' }}">{{ $staffActionCounts }}</span>
+            </span>
+          </a>
+          <ul class="sidebar-submenu">
+              <li><a href="{{ route('admin.field-staff.expenses') }}">
+                <span style="display: inline-flex; align-items: center; gap: 8px;">Staff Expenses
+                    <span id="badge-staff-expenses" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; {{ $actionCounts['staff_expenses'] > 0 ? '' : 'display: none !important;' }}">{{ $actionCounts['staff_expenses'] }}</span>
+                </span>
+              </a></li>
+              <li><a href="{{ route('admin.field-staff.leaves') }}">
+                <span style="display: inline-flex; align-items: center; gap: 8px;">Staff Leaves
+                    <span id="badge-staff-leaves" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; {{ $actionCounts['staff_leaves'] > 0 ? '' : 'display: none !important;' }}">{{ $actionCounts['staff_leaves'] }}</span>
+                </span>
+              </a></li>
+          </ul>
+        </li>
+        @endif
 
 
         @endif

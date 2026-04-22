@@ -35,12 +35,17 @@
                                     "email": {
                                         "type": "string",
                                         "format": "email",
-                                        "example": "superadmin@gmail.com"
+                                        "example": "staff@example.com"
                                     },
                                     "password": {
                                         "type": "string",
                                         "format": "password",
                                         "example": "12345"
+                                    },
+                                    "device_id": {
+                                        "description": "Required for Field Staff",
+                                        "type": "string",
+                                        "example": "uuid-123-456"
                                     }
                                 },
                                 "type": "object"
@@ -80,6 +85,87 @@
                     },
                     "422": {
                         "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/send-otp": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Send OTP to field staff",
+                "operationId": "f10280ddb0678b8f93fef703094bcead",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "staff@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP sent successfully"
+                    },
+                    "404": {
+                        "description": "User not found or not fieldstaff"
+                    }
+                }
+            }
+        },
+        "/api/login-otp": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login with OTP for field staff",
+                "operationId": "2aab5405e5192017ae1e4efb8b95f8b3",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "otp"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "otp": {
+                                        "type": "string"
+                                    },
+                                    "device_id": {
+                                        "description": "Required for Field Staff",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful"
+                    },
+                    "401": {
+                        "description": "Invalid OTP"
                     }
                 }
             }
@@ -2611,18 +2697,103 @@
                         }
                     },
                     {
-                        "name": "variant",
+                        "name": "side",
                         "in": "query",
-                        "description": "Filter stock by variant (e.g. Side/Size)",
+                        "description": "Filter stock by side (e.g. Left, Right, Universal)",
                         "required": false,
                         "schema": {
                             "type": "string"
+                        }
+                    },
+                    {
+                        "name": "size",
+                        "in": "query",
+                        "description": "Filter stock by size (e.g. S, M, L, XL, Universal)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "quantity",
+                        "in": "query",
+                        "description": "Filter distributors with stock greater than or equal to this quantity",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "List of distributors"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/retailer/rate-staff": {
+            "post": {
+                "tags": [
+                    "Retailer Feedback"
+                ],
+                "summary": "Submit a rating for the assigned Field Staff",
+                "operationId": "0d53f3ce5a810cfd0f43bbf152fa3805",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "rating"
+                                ],
+                                "properties": {
+                                    "rating": {
+                                        "type": "integer",
+                                        "maximum": 5,
+                                        "minimum": 1,
+                                        "example": 5
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "example": "Service"
+                                    },
+                                    "comments": {
+                                        "type": "string",
+                                        "example": "Excellent service and very responsive."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Rating submitted"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/retailer/my-ratings": {
+            "get": {
+                "tags": [
+                    "Retailer Feedback"
+                ],
+                "summary": "Get history of ratings submitted by the retailer",
+                "operationId": "318b6d0ed550349f16bf8064a5cc38e1",
+                "responses": {
+                    "200": {
+                        "description": "List of ratings"
                     }
                 },
                 "security": [
@@ -3503,6 +3674,102 @@
                 ]
             }
         },
+        "/api/sales-manager/pending-leaves": {
+            "get": {
+                "tags": [
+                    "Sales Manager Dashboard"
+                ],
+                "summary": "List all pending leave requests from assigned field staff",
+                "operationId": "ebb6cf341a572c2a8dbba0fd2e4e5065",
+                "responses": {
+                    "200": {
+                        "description": "List of pending leaves"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/sales-manager/leaves/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Sales Manager Dashboard"
+                ],
+                "summary": "Approve a leave request (Manager level)",
+                "operationId": "b23268ae4aff962713e94b439a85324f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Leave approved by manager"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/sales-manager/pending-expenses": {
+            "get": {
+                "tags": [
+                    "Sales Manager Dashboard"
+                ],
+                "summary": "List all pending expense claims from assigned field staff",
+                "operationId": "b54d8e4cbcf317b7490ad8c05200b5c7",
+                "responses": {
+                    "200": {
+                        "description": "List of pending expenses"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/sales-manager/expenses/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Sales Manager Dashboard"
+                ],
+                "summary": "Approve an expense claim (Manager level)",
+                "operationId": "71a76beded7a0291a5b46c4837825f1f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Expense approved by manager"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/user/player-id": {
             "post": {
                 "tags": [
@@ -3694,6 +3961,10 @@
         {
             "name": "Products",
             "description": "Products"
+        },
+        {
+            "name": "Retailer Feedback",
+            "description": "Retailer Feedback"
         },
         {
             "name": "Retailer Dashboard",

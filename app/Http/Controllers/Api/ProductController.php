@@ -126,11 +126,25 @@ class ProductController extends Controller
      *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Parameter(
-     *         name="variant",
+     *         name="side",
      *         in="query",
      *         required=false,
-     *         description="Filter stock by variant (e.g. Side/Size)",
+     *         description="Filter stock by side (e.g. Left, Right, Universal)",
      *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="size",
+     *         in="query",
+     *         required=false,
+     *         description="Filter stock by size (e.g. S, M, L, XL, Universal)",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="quantity",
+     *         in="query",
+     *         required=false,
+     *         description="Filter distributors with stock greater than or equal to this quantity",
+     *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Response(response=200, description="List of distributors")
      * )
@@ -150,19 +164,25 @@ class ProductController extends Controller
 
         $allDistributors = $query->get();
 
-        $variant = $request->query('variant');
+        $side = $request->query('side');
+        $size = $request->query('size');
+        $minQuantity = (int)$request->query('quantity', 0);
 
         // Get current stock levels for this product
         $stockMap = DB::table('inventories')
             ->where('product_id', $product->id)
-            ->when(!empty($variant), function($q) use ($variant) {
-                return $q->where('variant', $variant);
+            ->when(!empty($side), function($q) use ($side) {
+                return $q->where('side', $side);
+            })
+            ->when(!empty($size), function($q) use ($size) {
+                return $q->where('size', $size);
             })
             ->selectRaw('distributor_id, SUM(stock) as total_stock')
             ->groupBy('distributor_id')
+            ->having('total_stock', '>=', $minQuantity)
             ->pluck('total_stock', 'distributor_id');
 
-        // Map and filter (Only those with stock)
+        // Map and filter (Only those with enough stock)
         $distributors = $allDistributors->filter(function ($distributor) use ($stockMap) {
             return $stockMap->has($distributor->id);
         })->map(function ($distributor) use ($stockMap) {
@@ -177,13 +197,16 @@ class ProductController extends Controller
             return $d->pivot->stock ?? 0;
         })->values();
 
+        // Determine the unit (if it has strip_size, it's likely a medicine)
+        $unit = (!empty($product->strip_size) || (!empty($product->units_per_strip) && $product->units_per_strip > 1)) ? ' Strips' : ' Nos';
+
         // Final cleanup: Remove unwanted fields and relations (like 'user')
-        $formatted = $distributors->map(function ($d) {
+        $formatted = $distributors->map(function ($d) use ($unit) {
             return [
                 'id' => $d->id,
                 'user_id' => $d->user_id,
                 'sales_manager_id' => $d->sales_manager_id,
-                'name' => $d->name,
+                'name' => $d->user->name ?? $d->name,
                 'gst' => $d->gst,
                 'drug_license_no' => $d->drug_license_no,
                 'contact_no' => $d->contact_no,
@@ -195,7 +218,7 @@ class ProductController extends Controller
                 'area_id' => $d->area_id,
                 'created_at' => $d->created_at,
                 'updated_at' => $d->updated_at,
-                'stock' => ($d->pivot->stock ?? 0) . ' Strips',
+                'stock' => ($d->pivot->stock ?? 0) . $unit,
             ];
         });
 

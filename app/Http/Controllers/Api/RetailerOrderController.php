@@ -247,27 +247,25 @@ class RetailerOrderController extends Controller
                     $totalQtyNos = $qty * $multiplier;
                     // If multiplier resulted in float, we handle it as needed (ceil for strips if we only sell full strips)
                     // But in pharma, usually they sell by strips. If they select Nos, it might be 10 Nos = 1 Strip.
-                    // For now, let's keep it as is, or use ceil if we want to round up to nearest strip.
-                    $totalQtyNos = ceil($totalQtyNos); 
+                    $iSide = $itemData['side'] ?? null;
+                    $iSize = $itemData['size'] ?? null;
 
                     // Stock Check
                     if ($distributor) {
                         $totalStock = DB::table('inventories')
                             ->where('distributor_id', $distributor->id)
                             ->where('product_id', $product->id)
-                            ->when(!empty($itemData['side']), function ($q) use ($itemData) {
-                                return $q->where('side', $itemData['side']);
+                            ->when(!empty($iSide), function ($q) use ($iSide) {
+                                return $q->where('side', $iSide);
                             })
-                            ->when(!empty($itemData['size']), function ($q) use ($itemData) {
-                                return $q->where('size', $itemData['size']);
+                            ->when(!empty($iSize), function ($q) use ($iSize) {
+                                return $q->where('size', $iSize);
                             })
                             ->sum('stock');
 
                         if ($totalStock < $totalQtyNos) {
-                            $vMsg = [];
-                            if (!empty($itemData['side'])) $vMsg[] = "side: {$itemData['side']}";
-                            if (!empty($itemData['size'])) $vMsg[] = "size: {$itemData['size']}";
-                            $variantMsg = !empty($vMsg) ? " (" . implode(', ', $vMsg) . ")" : "";
+                            $vMsg = array_filter([$iSide, $iSize]);
+                            $variantMsg = !empty($vMsg) ? " (" . implode('/', $vMsg) . ")" : "";
                             throw new \Exception("Insufficient stock for product '{$product->product_name}'{$variantMsg} at selected distributor.");
                         }
                     }
@@ -279,9 +277,7 @@ class RetailerOrderController extends Controller
 
                     // Append variant to product name if provided
                     $finalProductName = $product->product_name;
-                    $vLabel = [];
-                    if (!empty($itemData['side'])) $vLabel[] = $itemData['side'];
-                    if (!empty($itemData['size'])) $vLabel[] = $itemData['size'];
+                    $vLabel = array_filter([$iSide, $iSize]);
                     if (!empty($vLabel)) {
                         $finalProductName .= ' [' . implode('/', $vLabel) . ']';
                     }
@@ -294,8 +290,8 @@ class RetailerOrderController extends Controller
                         'unit' => $unit,
                         'unit_price' => $price,
                         'total_amount' => $subtotalWithGst,
-                        'side' => $itemData['side'] ?? null,
-                        'size' => $itemData['size'] ?? null,
+                        'side' => $iSide,
+                        'size' => $iSize,
                     ]);
 
                     $totalAmount += $subtotalWithGst;

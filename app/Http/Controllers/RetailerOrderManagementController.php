@@ -47,6 +47,7 @@ class RetailerOrderManagementController extends Controller
 
         $side = $request->get('side');
         $size = $request->get('size');
+        $minQuantity = (int)$request->get('quantity', 0);
         
         // Filter distributors by the retailer's district
         $query = Distributor::with('user');
@@ -66,6 +67,7 @@ class RetailerOrderManagementController extends Controller
             })
             ->selectRaw('distributor_id, SUM(stock) as total_stock')
             ->groupBy('distributor_id')
+            ->having('total_stock', '>=', $minQuantity)
             ->pluck('total_stock', 'distributor_id');
 
         $distributors = $allDistributors->filter(function ($distributor) use ($stockMap) {
@@ -163,20 +165,26 @@ class RetailerOrderManagementController extends Controller
                         $multiplier = 1 / (max(1, (int)($product->units_per_strip ?? 1)));
                     }
 
-                    $totalQtyNos = ceil($qty * $multiplier);
+                    $iSide = $itemData['side'] ?? null;
+                    $iSize = $itemData['size'] ?? null;
 
                     // Availability check (In base units)
                     if ($distributor) {
                         $totalStock = DB::table('inventories')
                             ->where('distributor_id', $distributor->id)
                             ->where('product_id', $product->id)
-                            ->when(!empty($itemData['variant']), function($q) use ($itemData) {
-                                return $q->where('variant', $itemData['variant']);
+                            ->when(!empty($iSide), function($q) use ($iSide) {
+                                return $q->where('side', $iSide);
+                            })
+                            ->when(!empty($iSize), function($q) use ($iSize) {
+                                return $q->where('size', $iSize);
                             })
                             ->sum('stock');
 
                         if ($totalStock < $totalQtyNos) {
-                            throw new \Exception("Insufficient stock. Please select another distributor.");
+                            $vInfo = array_filter([$iSide, $iSize]);
+                            $vLabel = !empty($vInfo) ? " (".implode('/', $vInfo).")" : "";
+                            throw new \Exception("Insufficient stock for {$product->product_name}{$vLabel}. Please select another distributor.");
                         }
                     }
 
@@ -189,8 +197,9 @@ class RetailerOrderManagementController extends Controller
 
                     // Append variant to product name if provided
                     $finalProductName = $product->product_name;
-                    if (!empty($itemData['variant'])) {
-                        $finalProductName .= ' [' . $itemData['variant'] . ']';
+                    $vLabelParts = array_filter([$iSide, $iSize]);
+                    if (!empty($vLabelParts)) {
+                        $finalProductName .= ' [' . implode('/', $vLabelParts) . ']';
                     }
 
                     $order->items()->create([
@@ -201,7 +210,8 @@ class RetailerOrderManagementController extends Controller
                         'unit' => $unit,
                         'unit_price' => $price,
                         'total_amount' => $subtotalWithGst,
-                        'variant' => $itemData['variant'] ?? null,
+                        'side' => $iSide,
+                        'size' => $iSize,
                     ]);
 
                     $totalAmount += $subtotalWithGst;

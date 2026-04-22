@@ -155,6 +155,8 @@ class User extends Authenticatable implements JWTSubject
         $counts = [
             'retailer_approvals' => 0,
             'distributor_approvals' => 0,
+            'staff_expenses' => 0,
+            'staff_leaves' => 0,
             'retailer_orders' => 0,
             'distributor_orders' => 0,
             'inactive_users' => 0,
@@ -198,14 +200,39 @@ class User extends Authenticatable implements JWTSubject
             $counts['distributor_approvals'] = $query->count();
         }
 
-        // 3. Retailer Orders (Orders to confirm receipt)
+        // 3. Staff Approvals (Expenses & Leaves)
+        if ($this->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
+            $expenseQuery = \App\Models\Expense::query();
+            $leaveQuery = \App\Models\LeaveRequest::query();
+
+            if ($this->hasRole('salesmanager') && $this->salesManager) {
+                $staffIds = User::whereHas('fieldStaff', function($q) {
+                    $q->where('sales_manager_id', $this->salesManager->id);
+                })->pluck('id');
+                
+                $expenseQuery->whereIn('user_id', $staffIds)->where('status', 'pending');
+                $leaveQuery->whereIn('user_id', $staffIds)->where('status', 'pending');
+            } elseif ($this->hasAnyRole(['admin', 'superadmin'])) {
+                // Admins primarily see manager_approved for final approval
+                $expenseQuery->where('status', 'manager_approved');
+                $leaveQuery->where('status', 'manager_approved');
+            } else {
+                $expenseQuery->whereRaw('1=0');
+                $leaveQuery->whereRaw('1=0');
+            }
+            
+            $counts['staff_expenses'] = $expenseQuery->count();
+            $counts['staff_leaves'] = $leaveQuery->count();
+        }
+
+        // 4. Retailer Orders (Orders to confirm receipt)
         if ($this->hasRole('retailer') && $this->retailer) {
             $counts['retailer_orders'] = \App\Models\RetailerOrder::where('retailer_id', $this->retailer->id)
                 ->where('status', RetailerOrder::STATUS_APPROVED)
                 ->count();
         }
 
-        // 4. Inactive Users (for Activation)
+        // 5. Inactive Users (for Activation)
         if ($this->hasRole('superadmin')) {
             $counts['inactive_sales_managers'] = User::where('status', 'inactive')->where('role', 'salesmanager')->count();
             $counts['inactive_distributors'] = User::where('status', 'inactive')->where('role', 'distributor')->count();
