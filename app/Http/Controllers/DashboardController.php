@@ -88,6 +88,7 @@ class DashboardController extends Controller
         $myRank = null;
         $totalInLocality = 0;
         $isTopRetailer = false;
+        $data_extra = [];
 
         // Role-Based Filtering
         if ($user->hasAnyRole(['superadmin', 'admin'])) {

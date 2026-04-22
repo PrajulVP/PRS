@@ -1,0 +1,26 @@
+Array
+(
+    [0] => stdClass Object
+        (
+            [Table] => distributor_order_items
+            [Create Table] => CREATE TABLE `distributor_order_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `distributor_order_id` bigint unsigned NOT NULL,
+  `product_id` bigint unsigned NOT NULL,
+  `product_name` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `quantity` int NOT NULL,
+  `free_quantity` int NOT NULL DEFAULT '0',
+  `price` decimal(10,2) NOT NULL,
+  `subtotal` decimal(10,2) NOT NULL,
+  `unit` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `side` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `size` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `distributor_order_items_distributor_order_id_foreign` (`distributor_order_id`),
+  KEY `distributor_order_items_product_id_foreign` (`product_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=108 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        )
+
+)
