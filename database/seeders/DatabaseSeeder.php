@@ -37,6 +37,7 @@ class DatabaseSeeder extends Seeder
 
             // ProductSeeder::class,    // Creates general products
             // RetailerOrderSeeder::class, // Creates dummy retailer orders
+            DistributorOrderSeeder::class,
 
             // Application-wide settings
             \Database\Seeders\SettingSeeder::class,
