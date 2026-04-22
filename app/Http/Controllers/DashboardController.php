@@ -433,6 +433,8 @@ class DashboardController extends Controller
             'labels' => $chartLabels,
             'counts' => $chartCounts,
         ];
+    }
+
     private function formatMinutes($avgMinutes)
     {
         if (!$avgMinutes) return 'N/A';
