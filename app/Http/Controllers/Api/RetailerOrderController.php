@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Storage;
  *     @OA\Property(property="total_amount", type="string", example="1500.00"),
  *     @OA\Property(property="total_items", type="integer", example=3),
  *     @OA\Property(property="total_quantity", type="integer", example=12),
- *     @OA\Property(property="notes", type="string", example="Urgent delivery"),
+ *     @OA\Property(property="delivery_notes", type="string", example="Urgent delivery"),
  *     @OA\Property(property="loyalty_points_earned", type="integer", example=25),
  *     @OA\Property(property="placed_at", type="string", format="date-time", example="2023-10-25 10:00:00"),
  *     @OA\Property(property="delivered_at", type="string", format="date-time", nullable=true, example="2023-10-26 14:00:00")
@@ -78,7 +78,7 @@ class RetailerOrderController extends Controller
                     'total_amount'   => number_format($order->total_amount, 2),
                     'total_items'    => $order->total_items,
                     'total_quantity' => $order->total_quantity,
-                    'notes'          => $order->notes,
+                    'delivery_notes' => $order->delivery_notes,
                     'items'          => $order->items->map(function ($item) {
                         return [
                             'product_id' => $item->product_id,
@@ -169,7 +169,7 @@ class RetailerOrderController extends Controller
      *                 @OA\Property(property="size", type="string", nullable=true, example="XL"),
      *                 @OA\Property(property="distributor_id", type="integer", nullable=true, example=2)
      *             )),
-     *             @OA\Property(property="notes", type="string", nullable=true, example="Urgent order")
+     *             @OA\Property(property="delivery_notes", type="string", nullable=true, example="Urgent order")
      *         )
      *     ),
      *     @OA\Response(
@@ -194,7 +194,7 @@ class RetailerOrderController extends Controller
             'items.*.side' => 'nullable|string',
             'items.*.size' => 'nullable|string',
             'items.*.distributor_id' => 'nullable|exists:distributors,id',
-            'notes' => 'nullable|string',
+            'delivery_notes' => 'nullable|string',
         ]);
 
         $user = auth('api')->user();
@@ -219,7 +219,7 @@ class RetailerOrderController extends Controller
                     'fieldstaff_id' => $retailer->field_staff_id,
                     'order_code' => 'ORD-' . strtoupper(uniqid()),
                     'status' => RetailerOrder::STATUS_PENDING,
-                    'notes' => $request->notes,
+                    'delivery_notes' => $request->delivery_notes,
                     'total_amount' => 0,
                     'total_items' => 0,
                     'total_quantity' => 0,
@@ -234,6 +234,9 @@ class RetailerOrderController extends Controller
                     $product = Product::findOrFail($itemData['product_id']);
                     $unit = $itemData['unit'] ?? 'Nos';
                     $qty = (int)$itemData['quantity'];
+                    $iSide = $itemData['side'] ?? null;
+                    $iSize = $itemData['size'] ?? null;
+                    $vLabel = array_filter([$iSide, $iSize]);
 
                     // Conversion logic using numeric fields
                     $multiplier = 1;
@@ -257,7 +260,7 @@ class RetailerOrderController extends Controller
                             ->sum('stock');
 
                         if ($totalStock < $totalQtyNos) {
-                            $variantMsg = !empty($vMsg) ? " [" . implode('/', $vMsg) . "]" : "";
+                            $variantMsg = !empty($vLabel) ? " [" . implode('/', $vLabel) . "]" : "";
                             throw new \Exception("Insufficient stock for product '{$product->product_name}'{$variantMsg} at selected distributor.");
                         }
                     }
@@ -269,7 +272,6 @@ class RetailerOrderController extends Controller
 
                     // Append variant to product name if provided
                     $finalProductName = $product->product_name;
-                    $vLabel = array_filter([$iSide, $iSize]);
                     if (!empty($vLabel)) {
                         $finalProductName .= ' [' . implode('/', $vLabel) . ']';
                     }

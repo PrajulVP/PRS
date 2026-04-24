@@ -140,6 +140,7 @@
             @if($type === 'orders')
                 <tr>
                     <th>Ref Code</th>
+                    <th>Invoice No</th>
                     <th>Order Date</th>
                     <th>Retailer / Distributor</th>
                     <th class="text-right">Volume (Qty/SKU)</th>
@@ -198,6 +199,7 @@
                 <tr>
                     @if($type === 'orders')
                         <td class="fw-bold">{{ $row->order_code }}</td>
+                        <td class="fw-bold" style="color: #00497a;">{{ $row->invoice_no ?? 'N/A' }}</td>
                         <td>{{ $row->placed_at->format('M d, Y') }}</td>
                         <td>
                             <div class="fw-bold">{{ $row->retailer->user->name ?? 'N/A' }}</div>

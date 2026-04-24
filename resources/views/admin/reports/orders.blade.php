@@ -42,6 +42,7 @@
                             <thead>
                                 <tr>
                                     <th>Order Details</th>
+                                    <th>Invoice No</th>
                                     <th>Sales Context</th>
                                     <th>Volume</th>
                                     <th class="text-end">Value</th>
@@ -67,7 +68,7 @@
             ajax: {
                 url: "{{ route('admin.reports.orders') }}",
                 data: function(d) {
-                    d.order_type = $('input[name="order_type"]:checked').val();
+                    d.order_type = $('input[name="order_type"]').val();
                     d.payment_status = $('#payment_status').val();
                     d.from_date = $('#from_date').val();
                     d.to_date = $('#to_date').val();
@@ -76,6 +77,7 @@
                     d.retailer_id = $('#retailer_id').val();
                     d.fieldstaff_id = $('#fieldstaff_id').val();
                     d.status = $('#status').val();
+                    d.brand = $('#brand').val();
                     d.period = $('.preset-btn.active').data('range');
                 }
             },
@@ -85,6 +87,13 @@
                     name: 'order_code',
                     render: function(data, type, row) {
                         return `<div class="fw-bold text-dark">${data}</div><div class="small text-muted">${row.placed_at}</div>`;
+                    }
+                },
+                {
+                    data: 'invoice_no',
+                    name: 'invoice_no',
+                    render: function(data, type, row) {
+                        return data ? `<div class="fw-bold text-primary" style="font-size: 0.85rem;">${data}</div>` : `<div class="small text-muted fst-italic">N/A</div>`;
                     }
                 },
                 { 
@@ -174,25 +183,15 @@
 
         // Update Dynamic Heading based on Order Source
         function updateDynamicHeading() {
-            const type = $('input[name="order_type"]:checked').val();
+            const type = $('input[name="order_type"]').val();
             const sourceText = type === 'distributor' ? 'Distributor' : 'Retailer';
             $('#reportTableHeading').html(`<i class="fa fa-list-alt me-2"></i>Detailed <span class="text-info">${sourceText}</span> Orders Sales Records`);
         }
 
-        $('input[name="order_type"]').on('change', function() {
-            updateDynamicHeading();
-            
-            // Sales Context is index 1
-            const type = $(this).val();
-            table.column(1).visible(type === 'retailer');
-            
-            table.draw();
-        });
-
         // Initial update
         updateDynamicHeading();
-        const initialType = $('input[name="order_type"]:checked').val();
-        table.column(1).visible(initialType === 'retailer');
+        const initialType = $('input[name="order_type"]').val();
+        table.column(2).visible(initialType === 'retailer'); // retailer_name is now at index 2
     });
 </script>
 @endpush

@@ -396,10 +396,7 @@
                             </table>
                         </div>
 
-                        <div class="mb-3">
-                            <label>Notes</label>
-                            <textarea name="notes" id="edit_notes" class="form-control"></textarea>
-                        </div>
+
                         <div class="mb-3">
                             <label>Delivery Notes</label>
                             <textarea name="delivery_notes" id="edit_delivery_notes" class="form-control"></textarea>
@@ -832,7 +829,7 @@
                 $('#edit_retailer_id').val(row.retailer_id);
                 $('#edit_distributor_id').val(row.distributor_id);
                 $('#edit_status').val(row.status.toLowerCase().replace(/ /g, '_'));
-                $('#edit_notes').val(row.notes);
+
                 $('#edit_delivery_notes').val(row.delivery_notes);
 
                 editItems = {};

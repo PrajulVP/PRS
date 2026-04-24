@@ -46,7 +46,6 @@ class RetailerOrderController extends Controller
                             'size' => $i->size
                         ];
                     }),
-                    'notes' => $order->notes,
                     'delivery_notes' => $order->delivery_notes
                 ];
             });
@@ -97,7 +96,6 @@ class RetailerOrderController extends Controller
                 'distributor_id' => $distributor->id,
                 'status' => 'pending',
                 'placed_at' => now(),
-                'notes' => $request->notes,
                 'delivery_notes' => $request->delivery_notes,
                 'total_amount' => 0,
                 'total_items' => 0,

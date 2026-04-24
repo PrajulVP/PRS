@@ -25,7 +25,6 @@ class DistributorOrder extends Model
         'total_quantity',
         'status',
         'placed_at',
-        'notes',
         'delivery_notes',
         'distributor_id',
         'sales_manager_id', // New field

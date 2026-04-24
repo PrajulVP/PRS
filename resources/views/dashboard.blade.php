@@ -47,6 +47,86 @@
                         transition: all 0.3s ease !important;
                     }
 
+                    .btn-pill-compact {
+                        border-radius: 50px !important;
+                        padding: 8px 18px !important;
+                        font-weight: 800 !important;
+                        font-size: 10px !important;
+                        text-transform: uppercase;
+                        letter-spacing: 0.8px;
+                        border-width: 1.5px !important;
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                        white-space: nowrap;
+                    }
+
+                    .btn-pill-compact i {
+                        font-size: 12px;
+                    }
+
+                    .btn-pill-compact:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                    }
+
+                    .btn-pill-compact.btn-outline-primary {
+                        background: rgba(0, 73, 122, 0.05);
+                        border-color: rgba(0, 73, 122, 0.2);
+                        color: #00497a;
+                    }
+                    .btn-pill-compact.btn-outline-primary:hover {
+                        background: #00497a;
+                        color: white !important;
+                        border-color: #00497a;
+                    }
+
+                    .btn-pill-compact.btn-outline-secondary {
+                        background: rgba(139, 92, 246, 0.05);
+                        border-color: rgba(139, 92, 246, 0.2);
+                        color: #8b5cf6;
+                    }
+                    .btn-pill-compact.btn-outline-secondary:hover {
+                        background: #8b5cf6;
+                        color: white !important;
+                        border-color: #8b5cf6;
+                    }
+
+                    .btn-pill-compact.btn-outline-warning {
+                        background: rgba(245, 158, 11, 0.05);
+                        border-color: rgba(245, 158, 11, 0.2);
+                        color: #d97706;
+                    }
+                    .btn-pill-compact.btn-outline-warning:hover {
+                        background: #f59e0b;
+                        color: white !important;
+                        border-color: #f59e0b;
+                    }
+
+                    .btn-pill-compact.btn-outline-info {
+                        background: rgba(14, 165, 233, 0.05);
+                        border-color: rgba(14, 165, 233, 0.2);
+                        color: #0ea5e9;
+                    }
+                    .btn-pill-compact.btn-outline-info:hover {
+                        background: #0ea5e9;
+                        color: white !important;
+                        border-color: #0ea5e9;
+                    }
+
+                    .btn-pill-compact.btn-outline-success {
+                        background: rgba(16, 185, 129, 0.05);
+                        border-color: rgba(16, 185, 129, 0.2);
+                        color: #10b981;
+                    }
+                    .btn-pill-compact.btn-outline-success:hover {
+                        background: #10b981;
+                        color: white !important;
+                        border-color: #10b981;
+                    }
+
                     .med-widget-card {
                         background: linear-gradient(135deg, var(--med-primary) 0%, var(--med-accent) 100%) !important;
                         transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
@@ -134,6 +214,38 @@
                     }
                     .dark-only .period-btn, [data-theme="dark"] .period-btn {
                         color: #9ca3af;
+                    }
+
+                    /* Dark Mode Fixes for Pill Buttons */
+                    .dark-only .btn-pill-compact.btn-outline-primary,
+                    [data-theme="dark"] .btn-pill-compact.btn-outline-primary {
+                        background: rgba(56, 189, 248, 0.15);
+                        border-color: rgba(56, 189, 248, 0.4);
+                        color: #7dd3fc !important;
+                    }
+                    .dark-only .btn-pill-compact.btn-outline-info,
+                    [data-theme="dark"] .btn-pill-compact.btn-outline-info {
+                        background: rgba(14, 165, 233, 0.15);
+                        border-color: rgba(14, 165, 233, 0.4);
+                        color: #38bdf8 !important;
+                    }
+                    .dark-only .btn-pill-compact.btn-outline-secondary,
+                    [data-theme="dark"] .btn-pill-compact.btn-outline-secondary {
+                        background: rgba(139, 92, 246, 0.15);
+                        border-color: rgba(139, 92, 246, 0.4);
+                        color: #a78bfa !important;
+                    }
+                    .dark-only .btn-pill-compact.btn-outline-warning,
+                    [data-theme="dark"] .btn-pill-compact.btn-outline-warning {
+                        background: rgba(245, 158, 11, 0.15);
+                        border-color: rgba(245, 158, 11, 0.4);
+                        color: #fbbf24 !important;
+                    }
+                    .dark-only .btn-pill-compact.btn-outline-success,
+                    [data-theme="dark"] .btn-pill-compact.btn-outline-success {
+                        background: rgba(16, 185, 129, 0.15);
+                        border-color: rgba(16, 185, 129, 0.4);
+                        color: #34d399 !important;
                     }
 
                     /* Retailer Hero Section */
@@ -740,10 +852,10 @@
 
                             if (Auth::user()->hasAnyRole(['admin', 'superadmin'])) {
                                 $adminStats[] = ['label' => 'Field Staff', 'value' => $counts['field_staff'], 'icon' => 'users', 'color' => '#f59e0b', 'bg' => 'rgba(245, 158, 11, 0.1)', 'route' => route('admin.field-staffs.index')];
-                                $adminStats[] = ['label' => 'Sales Managers', 'value' => $counts['sales_managers'], 'icon' => 'user-check', 'color' => 'var(--med-accent)', 'bg' => 'rgba(var(--med-accent-rgb), 0.1)', 'route' => route('admin.sales-managers.index')];
+                                $adminStats[] = ['label' => 'Sales Managers', 'value' => $counts['sales_managers'], 'icon' => 'user-check', 'color' => '#0ea5e9', 'bg' => 'rgba(14, 165, 233, 0.1)', 'route' => route('admin.sales-managers.index')];
                             } elseif (Auth::user()->hasRole('salesmanager')) {
                                 $adminStats[] = ['label' => 'Field Staff', 'value' => $counts['field_staff'], 'icon' => 'users', 'color' => '#f59e0b', 'bg' => 'rgba(245, 158, 11, 0.1)', 'route' => route('admin.field-staffs.index')];
-                                $adminStats[] = ['label' => 'Products', 'value' => $counts['products'], 'icon' => 'box', 'color' => 'var(--med-accent)', 'bg' => 'rgba(var(--med-accent-rgb), 0.1)', 'route' => '#'];
+                                $adminStats[] = ['label' => 'Products', 'value' => $counts['products'], 'icon' => 'box', 'color' => '#8b5cf6', 'bg' => 'rgba(139, 92, 246, 0.1)', 'route' => '#'];
                             }
                         @endphp
 
@@ -756,6 +868,25 @@
                             </div>
                         </div>
 
+                        <!-- Brand Performance Distribution Chart (NEW) -->
+                        <div class="col-lg-7 mb-4">
+                            <div class="card p-4 border-0 shadow-sm h-100" style="border-radius: 20px;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h6 class="fw-800 text-uppercase mb-0" style="font-size: 0.8rem; letter-spacing: 1px; color: var(--med-primary);">Order Valuation Breakdown</h6>
+                                    {!! $timeSelectHtml !!}
+                                </div>
+                                <div id="valuationTrendsChart"></div>
+                            </div>
+                        </div>
+                        <div class="col-lg-5 mb-4">
+                            <div class="card p-4 border-0 shadow-sm h-100" style="border-radius: 20px;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h6 class="fw-800 text-uppercase mb-0" style="font-size: 0.8rem; letter-spacing: 1px; color: var(--med-primary);">Market Share by Brand (<span class="current-period-text">{{ ucfirst($period) }}</span>)</h6>
+                                </div>
+                                <div id="brandSalesChart"></div>
+                            </div>
+                        </div>
+
                         <!-- Product Performance -->
                         <div class="col-xl-3 col-md-6 mb-4">
                             <div class="card h-100 executive-metric-card border-0">
@@ -765,7 +896,7 @@
                                     </div>
                                     <h5 class="fw-bold mb-3">Products</h5>
                                     <p class="text-muted mb-4 small" style="line-height: 1.6;">Analyze SKU mobility and inventory velocity metrics.</p>
-                                    <a href="{{ route('admin.reports.products') }}" class="btn btn-outline-info btn-outline-pill">Analyze</a>
+                                    <a href="{{ route('admin.reports.products') }}" class="btn btn-pill-compact btn-info text-white">Analyze</a>
                                 </div>
                             </div>
                         </div>
@@ -780,7 +911,7 @@
                                     </div>
                                     <h5 class="fw-bold mb-3">Distributors</h5>
                                     <p class="text-muted mb-4 small" style="line-height: 1.6;">Analyze partner performance and dispatch statistics.</p>
-                                    <a href="{{ route('admin.reports.distributors') }}" class="btn btn-outline-secondary btn-outline-pill" style="border-color: #8b5cf6; color: #8b5cf6;">View</a>
+                                    <a href="{{ route('admin.reports.distributors') }}" class="btn btn-pill-compact btn-outline-secondary">View</a>
                                 </div>
                             </div>
                         </div>
@@ -796,7 +927,7 @@
                                     </div>
                                     <h5 class="fw-bold mb-3">Retailers</h5>
                                     <p class="text-muted mb-4 small" style="line-height: 1.6;">Track historical order data and outlet distribution.</p>
-                                    <a href="{{ route('admin.reports.retailers') }}" class="btn btn-outline-success btn-outline-pill">View</a>
+                                    <a href="{{ route('admin.reports.retailers') }}" class="btn btn-pill-compact btn-outline-success">View</a>
                                 </div>
                             </div>
                         </div>
@@ -811,7 +942,7 @@
                                     </div>
                                     <h5 class="fw-bold mb-3">Staff KPI</h5>
                                     <p class="text-muted mb-4 small" style="line-height: 1.6;">Analyze field force productivity and performance.</p>
-                                    <a href="{{ route('admin.reports.fieldstaffs') }}" class="btn btn-outline-warning btn-outline-pill">Analyze</a>
+                                    <a href="{{ route('admin.reports.fieldstaffs') }}" class="btn btn-pill-compact btn-warning text-white">Analyze</a>
                                 </div>
                             </div>
                         </div>
@@ -883,9 +1014,13 @@
                                         </div>
                                     </div>
                                     <p class="text-muted small mb-4">Staff attribution & fulfillment velocity tracking.</p>
-                                    <div class="d-flex flex-column gap-2 mt-auto">
-                                        <a href="{{ route('admin.reports.orders') }}" class="btn btn-outline-primary btn-outline-pill py-2">Retailer Master</a>
-                                        <a href="{{ route('admin.reports.orders', ['order_type' => 'distributor']) }}" class="btn btn-outline-secondary btn-outline-pill py-2">Distributor Master</a>
+                                    <div class="d-flex flex-wrap gap-2 mt-auto">
+                                        <a href="{{ route('admin.reports.orders') }}" class="btn btn-pill-compact btn-outline-primary flex-grow-1">
+                                            <i class="fa fa-shopping-basket"></i>Retailer
+                                        </a>
+                                        <a href="{{ route('admin.reports.orders', ['order_type' => 'distributor']) }}" class="btn btn-pill-compact btn-outline-secondary flex-grow-1">
+                                            <i class="fa fa-building-o"></i>Distributor
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -907,9 +1042,13 @@
                                         </div>
                                     </div>
                                     <p class="text-muted small mb-4">Monitor target achievements and field force productivity metrics.</p>
-                                    <div class="d-flex flex-column gap-2 mt-auto">
-                                        <a href="{{ route('admin.reports.targets') }}" class="btn btn-outline-warning btn-outline-pill py-2">Target vs Achievement</a>
-                                        <a href="{{ route('admin.reports.visits') }}" class="btn btn-outline-info btn-outline-pill py-2" style="border-color: #0ea5e9; color: #0ea5e9;">Visit Reports</a>
+                                    <div class="d-flex flex-wrap gap-2 mt-auto">
+                                        <a href="{{ route('admin.reports.targets') }}" class="btn btn-pill-compact btn-outline-warning flex-grow-1">
+                                            <i class="fa fa-bullseye"></i>Targets
+                                        </a>
+                                        <a href="{{ route('admin.reports.visits') }}" class="btn btn-pill-compact btn-outline-info flex-grow-1">
+                                            <i class="fa fa-map-marker"></i>Visits
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -928,7 +1067,7 @@
                             <div class="col-xl col-md-6 mb-4">
                                 <div class="card border-0 shadow-sm executive-metric-card cursor-pointer" onclick="window.location.href='{{ $stat['route'] }}'">
                                     <div class="card-body p-4 text-center">
-                                        <div class="icon-circle-lg bg-soft-primary mb-3" style="width: 60px; height: 60px; background: {{ $stat['bg'] }}">
+                                        <div class="icon-circle-lg mb-3 d-flex align-items-center justify-content-center rounded-circle" style="width: 60px; height: 60px; background-color: {{ $stat['bg'] }} !important;">
                                             <i data-feather="{{ $stat['icon'] }}" style="color: {{ $stat['color'] }}; width: 22px; height: 22px;"></i>
                                         </div>
                                         @php 
@@ -976,7 +1115,7 @@
                                                     <h4 id="stat-delivered" class="text-success fw-800 mb-0">{{ $retailerOrderStats['delivered'] }}</h4>
                                                 </div>
                                             </div>
-                                            <div id="monthlyOrdersChart"></div>
+                                            <div id="retailerOrderFlowChart"></div>
                                         </div>
                                     </div>
                                     
@@ -984,9 +1123,9 @@
                                     <div class="col-lg-6">
                                         <div class="px-2">
                                             <h6 class="text-uppercase fw-700 mb-3" style="font-size: 0.8rem; letter-spacing: 1px; color: var(--med-primary);">Distributor Orders</h6>
-                                            <div class="row text-center mb-4">
+                                            <div class="row text-center mb-5 bg-light rounded-4 p-3 mx-0">
                                                 <div class="col-4">
-                                                    <h6 class="text-muted mb-1" style="font-size: 0.75rem;">Total Request</h6>
+                                                    <h6 class="text-muted mb-1" style="font-size: 0.75rem;">Total</h6>
                                                     <h4 id="stat-total-request" class="fw-800 mb-0">{{ $distributorOrderStats['total'] }}</h4>
                                                 </div>
                                                 <div class="col-4">
@@ -1235,23 +1374,31 @@
                             // Initialize Charts
                             window.charts = {};
 
-                            // Monthly Retailer Orders
-                            if (document.querySelector("#monthlyOrdersChart")) {
-                                var monthlyOptions = {
-                                    series: [{
-                                        name: "Order Activity",
-                                        data: @json($chartData['counts'])
-                                    }],
-                                    chart: { type: 'area', height: 320, toolbar: { show: false }, zoom: { enabled: false } },
-                                    dataLabels: { enabled: false },
-                                    stroke: { curve: 'smooth', width: 3 },
-                                    xaxis: { categories: @json($chartData['labels']) },
-                                    colors: ['#00497a'],
-                                    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.6, opacityTo: 0.1, stops: [0, 90, 100] } }
-                                };
-                                window.charts.monthlyOrdersChart = new ApexCharts(document.querySelector("#monthlyOrdersChart"), monthlyOptions);
-                                window.charts.monthlyOrdersChart.render();
+                            // Chart Initialization Helper
+                            function initPulseChart(selector, name, data, categories, color) {
+                                if (document.querySelector(selector)) {
+                                    var options = {
+                                        series: [{ name: name, data: data }],
+                                        chart: { type: 'area', height: 320, toolbar: { show: false }, zoom: { enabled: false } },
+                                        dataLabels: { enabled: false },
+                                        stroke: { curve: 'smooth', width: 3 },
+                                        xaxis: { categories: categories },
+                                        colors: [color],
+                                        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.6, opacityTo: 0.1, stops: [0, 90, 100] } }
+                                    };
+                                    var chart = new ApexCharts(document.querySelector(selector), options);
+                                    chart.render();
+                                    return chart;
+                                }
+                                return null;
                             }
+
+                            // Initialize Retailer/Order Trend Charts
+                            window.charts.valuationTrendsChart = initPulseChart("#valuationTrendsChart", "Order Valuation", @json($chartData['counts']), @json($chartData['labels']), '#00497a');
+                            window.charts.retailerOrderFlowChart = initPulseChart("#retailerOrderFlowChart", "Order Activity", @json($chartData['counts']), @json($chartData['labels']), '#00497a');
+                            
+                            // Compatibility for other roles using the old ID
+                            window.charts.monthlyOrdersChart = initPulseChart("#monthlyOrdersChart", "Order Activity", @json($chartData['counts']), @json($chartData['labels']), '#00497a');
 
                             // Order Status Donut Chart
                             if (document.querySelector("#orderStatusChart")) {
@@ -1299,6 +1446,50 @@
                                     window.charts.monthlyDistOrdersChart.render();
                                 }
                             @endif
+
+                            // Brand Sales Distribution Chart
+                            @if(isset($brandSalesDistribution))
+                                if (document.querySelector("#brandSalesChart")) {
+                                    var brandValues = @json($brandSalesDistribution['values']);
+                                    var brandLabels = @json($brandSalesDistribution['labels']);
+                                    var hasBrandData = brandValues.length > 0;
+
+                                    var brandOptions = {
+                                        series: hasBrandData ? brandValues : [1],
+                                        labels: hasBrandData ? brandLabels : ['No Sales Data'],
+                                        chart: { type: 'donut', height: 320 },
+                                        colors: hasBrandData ? ['#00497a', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#0ea5e9'] : ['#e2e8f0'],
+                                        stroke: { width: 0 },
+                                        plotOptions: { 
+                                            pie: { 
+                                                donut: { 
+                                                    size: '70%',
+                                                    labels: {
+                                                        show: true,
+                                                        total: {
+                                                            show: true,
+                                                            label: 'Total Revenue',
+                                                            formatter: function (w) {
+                                                                if (!hasBrandData) return '₹0';
+                                                                return '₹' + w.globals.seriesTotals.reduce((a, b) => a + b, 0).toLocaleString(undefined, {maximumFractionDigits: 0});
+                                                            }
+                                                        }
+                                                    }
+                                                } 
+                                            } 
+                                        },
+                                        dataLabels: { enabled: false },
+                                        tooltip: { 
+                                            enabled: hasBrandData,
+                                            y: {
+                                                formatter: (val) => '₹' + val.toLocaleString()
+                                            }
+                                        }
+                                    };
+                                    window.charts.brandSalesChart = new ApexCharts(document.querySelector("#brandSalesChart"), brandOptions);
+                                    window.charts.brandSalesChart.render();
+                                }
+                            @endif
                         });
 
                         function updateDashboardPeriod(btn, period) {
@@ -1307,7 +1498,7 @@
                             btn.classList.add('active');
 
                             // Show loading state (optional but premium)
-                            const containers = ['#monthlyOrdersChart', '#orderStatusChart', '#monthlyDistOrdersChart'];
+                            const containers = ['#monthlyOrdersChart', '#orderStatusChart', '#monthlyDistOrdersChart', '#brandSalesChart'];
                             containers.forEach(selector => {
                                 const el = document.querySelector(selector);
                                 if (el) el.style.opacity = '0.5';
@@ -1317,7 +1508,19 @@
                             fetch(`{{ route('dashboard.stats') }}?period=${period}`)
                                 .then(response => response.json())
                                 .then(data => {
-                                    // 1. Update Charts
+                                    // Update Valuation Chart
+                                    if (window.charts.valuationTrendsChart && data.chartData) {
+                                        window.charts.valuationTrendsChart.updateOptions({ xaxis: { categories: data.chartData.labels } });
+                                        window.charts.valuationTrendsChart.updateSeries([{ data: data.chartData.counts }]);
+                                    }
+
+                                    // Update Retailer Flow Chart
+                                    if (window.charts.retailerOrderFlowChart && data.chartData) {
+                                        window.charts.retailerOrderFlowChart.updateOptions({ xaxis: { categories: data.chartData.labels } });
+                                        window.charts.retailerOrderFlowChart.updateSeries([{ data: data.chartData.counts }]);
+                                    }
+
+                                    // Update fallback Monthly chart
                                     if (window.charts.monthlyOrdersChart && data.chartData) {
                                         window.charts.monthlyOrdersChart.updateOptions({
                                             xaxis: { categories: data.chartData.labels }
@@ -1347,6 +1550,31 @@
                                         window.charts.monthlyDistOrdersChart.updateSeries([{
                                             data: data.monthlyDistributorOrdersChart.counts
                                         }]);
+                                    }
+
+                                    if (window.charts.brandSalesChart && data.brandSalesDistribution) {
+                                        const brandData = data.brandSalesDistribution;
+                                        const hasBrandData = brandData.values.length > 0;
+                                        window.charts.brandSalesChart.updateOptions({
+                                            labels: hasBrandData ? brandData.labels : ['No Sales Data'],
+                                            colors: hasBrandData ? ['#00497a', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#0ea5e9'] : ['#e2e8f0'],
+                                            tooltip: { enabled: hasBrandData },
+                                            plotOptions: { 
+                                                pie: { 
+                                                    donut: { 
+                                                        labels: {
+                                                            total: {
+                                                                formatter: function (w) {
+                                                                    if (!hasBrandData) return '₹0';
+                                                                    return '₹' + w.globals.seriesTotals.reduce((a, b) => a + b, 0).toLocaleString(undefined, {maximumFractionDigits: 0});
+                                                                }
+                                                            }
+                                                        }
+                                                    } 
+                                                } 
+                                            }
+                                        });
+                                        window.charts.brandSalesChart.updateSeries(hasBrandData ? brandData.values : [1]);
                                     }
 
                                     // 2. Update Stat Cards

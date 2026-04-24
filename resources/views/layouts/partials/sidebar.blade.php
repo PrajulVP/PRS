@@ -5,9 +5,13 @@
     <div class="toggle-sidebar"><i class="status_toggle middle sidebar-toggle" data-feather="grid"> </i></div>
   </div>
   <style>
+    .sidebar-wrapper .sidebar-main .sidebar-links li {
+        position: relative;
+    }
     .sidebar-wrapper .sidebar-main .sidebar-links li .according-menu {
         right: 15px !important;
-        top: 13px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
     }
   </style>
   {{-- <div class="logo-icon-wrapper"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/atom-logo-main-white.png') }}" width="170" alt=""></a></div> --}}
@@ -66,13 +70,14 @@
             <h6>Reports</h6>
           </div>
         </li>
-        <li class="sidebar-list"><a class="sidebar-link sidebar-title link-nav {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}" href="{{ route('admin.reports.index') }}">
+        <li class="sidebar-list">
+          <a class="sidebar-link sidebar-title link-nav {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}" href="{{ route('admin.reports.index') }}">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-charts"></use>
             </svg>
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-charts"></use>
-            </svg><span>Master Reports</span></a>
+            </svg><span>Executive Reports</span></a>
         </li>
         @endif
 
@@ -452,18 +457,14 @@
 
 
             {{-- General settings page --}}
-            {{-- <li class="sidebar-list">
-              <!-- <i class="fa fa-cog"></i> -->
+            <li class="sidebar-list">
               <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.settings.general') }}">
                 <svg class="stroke-icon">
-                  <use href="../../admin/assets/svg/icon-sprite.svg#stroke-form"></use>
+                  <use href="{{ $iconSprite }}#stroke-form"></use>
                 </svg>
-                <!-- <svg class="fill-icon">
-                  <use href="../../admin/assets/svg/icon-sprite.svg#fill-settings"></use>
-                </svg> -->
-                <span>General</span>
+                <span>System Config</span>
               </a>
-            </li> --}}
+            </li>
           </ul>
         </li>
 

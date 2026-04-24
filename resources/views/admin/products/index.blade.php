@@ -32,6 +32,32 @@
         width: auto !important;
         display: inline-block !important;
     }
+
+    /* Premium Detail UI Styles */
+    .product-detail-premium {
+        font-family: 'Inter', sans-serif;
+    }
+    .detail-badge {
+        background: #fff;
+        padding: 10px 24px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        border: 1px solid #eee;
+        font-weight: 600;
+        color: #333;
+        display: flex;
+        align-items: center;
+        font-size: 0.95rem;
+    }
+    .detail-badge i { color: var(--bs-primary); }
+    .detail-badge.secondary i { color: var(--bs-info); }
+    .detail-badge.success i { color: var(--bs-success); }
+    .detail-badge.danger i { color: var(--bs-danger); }
+    
+    .bg-soft-primary {
+        background-color: rgba(var(--bs-primary-rgb), 0.1);
+    }
+    .font-outfit { font-family: 'Outfit', sans-serif; }
 </style>
 
 @section('page-body')
@@ -83,6 +109,7 @@
                                         <th>PTR</th>
                                         <th>PTS</th>
                                         <th>Loyalty %</th>
+                                        <th>Brand</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -126,6 +153,16 @@
                             <div class="col-md-3">
                                 <label for="create_hsn_code" class="form-label fw-medium">HSN Code</label>
                                 <input type="text" name="hsn_code" id="create_hsn_code" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="create_brand" class="form-label fw-medium">Brand</label>
+                                <select name="brand" id="create_brand" class="form-select">
+                                    <option value="">Auto-Identify</option>
+                                    @foreach($availableBrands as $brand)
+                                        <option value="{{ $brand }}">{{ $brand }}</option>
+                                    @endforeach
+                                    <option value="Other">Other</option>
+                                </select>
                             </div>
                         </div>
 
@@ -234,6 +271,15 @@
                             <div class="col-md-3">
                                 <label for="edit_hsn_code" class="form-label fw-medium">HSN Code</label>
                                 <input type="text" name="hsn_code" id="edit_hsn_code" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="edit_brand" class="form-label fw-medium">Brand</label>
+                                <select name="brand" id="edit_brand" class="form-select">
+                                    @foreach($availableBrands as $brand)
+                                        <option value="{{ $brand }}">{{ $brand }}</option>
+                                    @endforeach
+                                    <option value="Other">Other</option>
+                                </select>
                             </div>
                         </div>
 
@@ -449,6 +495,13 @@
                     data: 'loyalty_point_percentage',
                     name: 'loyalty_point_percentage'
                 },
+                {
+                    data: 'brand',
+                    name: 'brand',
+                    render: function(data) {
+                        return data || '<span class="text-muted">N/A</span>';
+                    }
+                },
 
                 {
                     data: 'id',
@@ -542,6 +595,7 @@
                 $('#edit_pts').val(removeCommas(product.pts));
                 // Offer and discount fields removed
                 $('#edit_loyalty_point_percentage').val(product.loyalty_point_percentage);
+                $('#edit_brand').val(product.brand || '');
 
                 // Variant Options
                 $('#edit_variant_values_1').val('');
@@ -579,109 +633,85 @@
                 };
 
                 let html = `
-                    <div class="row g-3">
-                        <div class="col-md-12 mb-3">
-                            <div class="p-4 bg-light rounded text-center">
-                                <h3 class="fw-bold text-primary mb-2">${product.product_name}</h3>
-                                <div class="d-flex flex-wrap justify-content-center gap-2 text-secondary">
-                                    ${isValid(product.product_code) ? `<span class="badge bg-white text-dark border shadow-sm px-3 py-2"><i class="fa fa-tag me-1 text-primary"></i>${product.product_code}</span>` : ''}
-                                    ${isValid(product.generic_name, 'generic') ? `<span class="badge bg-white text-dark border shadow-sm px-3 py-2"><i class="fa fa-dna me-1 text-info"></i>${product.generic_name}</span>` : ''}
-                                    ${isValid(product.pack, 'pack') ? `<span class="badge bg-white text-dark border shadow-sm px-3 py-2"><i class="fa fa-box me-1 text-warning"></i>${product.pack}</span>` : ''}
-                                    ${isValid(product.hsn_code) ? `<span class="badge bg-white text-dark border shadow-sm px-3 py-2"><i class="fa fa-barcode me-1 text-success"></i>HSN: ${product.hsn_code}</span>` : ''}
-                                </div>
+                    <div class="product-detail-premium">
+                        <div class="text-center mb-5 pb-4 border-bottom">
+                            <h2 class="display-6 fw-bold text-primary text-uppercase mb-3" style="letter-spacing: 1px;">${product.product_name}</h2>
+                            <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
+                                ${isValid(product.product_code) ? `<div class="detail-badge"><i class="fa fa-tag me-2"></i>${product.product_code}</div>` : ''}
+                                ${isValid(product.pack) ? `<div class="detail-badge secondary"><i class="fa fa-box me-2"></i>${product.pack}</div>` : ''}
+                                ${isValid(product.hsn_code) ? `<div class="detail-badge success"><i class="fa fa-barcode me-2"></i>HSN: ${product.hsn_code}</div>` : ''}
+                                ${isValid(product.brand) ? `<div class="detail-badge danger"><i class="fa fa-landmark me-2"></i>${product.brand}</div>` : ''}
                             </div>
                         </div>
-                    </div>
 
-                    ${product.variant_options ? `
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-12">
-                            <div class="p-3 bg-white border rounded">
-                                <h6 class="text-primary fw-bold mb-2 small text-uppercase" style="letter-spacing: 0.5px;">Structured Variants</h6>
-                                <div class="row">
-                                    ${Object.entries(product.variant_options).map(([key, vals]) => `
-                                        <div class="col-md-6 mb-2">
-                                            <span class="text-muted small">${key}:</span>
-                                            <div class="d-flex flex-wrap gap-1 mt-1">
-                                                ${vals.map(v => `<span class="badge bg-light text-dark border-0 shadow-none small font-outfit" style="font-size: 0.8rem;">${v}</span>`).join('')}
-                                            </div>
+                        <div class="row g-4">
+                            <div class="col-md-6 border-end pe-md-4">
+                                <div class="mb-5">
+                                    <h5 class="fw-bold mb-4 text-dark border-start border-4 border-primary ps-3">Stock & Packaging</h5>
+                                    <div class="row g-4">
+                                        <div class="col-6">
+                                            <div class="text-muted small text-uppercase fw-bold mb-1">Tablet / Strip</div>
+                                            <div class="fs-4 fw-bold text-dark">${product.strip_size || 'N/A'}</div>
                                         </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    ` : ''}
-
-                    <div class="row g-4">
-                        ${(isValid(product.strip_size) || isValid(product.box_size)) ? `
-                            <div class="col-md-6 border-end">
-                                <div class="p-3 bg-white border rounded h-100">
-                                    <h6 class="text-primary fw-bold mb-3 small text-uppercase" style="letter-spacing: 0.5px;">Stock & Packaging</h6>
-                                    <div class="row g-2">
-                                        ${isValid(product.strip_size) ? `
                                         <div class="col-6">
-                                            <span class="text-muted small">Tablet/Str:</span>
-                                            <div class="fw-bold text-dark" style="font-size: 1.1rem;">${product.strip_size}</div>
-                                        </div>` : ''}
-                                        ${isValid(product.box_size) ? `
+                                            <div class="text-muted small text-uppercase fw-bold mb-1">Strip / Box</div>
+                                            <div class="fs-4 fw-bold text-dark">${product.box_size || 'N/A'}</div>
+                                        </div>
                                         <div class="col-6">
-                                            <span class="text-muted small">Str/Box:</span>
-                                            <div class="fw-bold text-dark" style="font-size: 1.1rem;">${product.box_size}</div>
+                                            <div class="text-muted small text-uppercase fw-bold mb-1">Box / Carton</div>
+                                            <div class="fs-4 fw-bold text-dark">${product.boxes_per_carton || 'N/A'}</div>
+                                        </div>
+                                        ${isValid(product.generic_name) ? `
+                                        <div class="col-12 mt-3">
+                                            <div class="text-muted small text-uppercase fw-bold mb-1">Generic Name</div>
+                                            <div class="p-3 bg-light rounded text-dark fs-6">${product.generic_name}</div>
                                         </div>` : ''}
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <h6 class="text-primary fw-bold mb-3 border-bottom pb-2 text-uppercase small" style="letter-spacing: 0.5px;">Pricing Details</h6>
-                                <div class="row g-2">
-                                    <div class="col-6">
-                                        <span class="text-muted small text-uppercase">MRP</span>
-                                        <div class="fw-bold text-dark">₹${parseFloat(product.mrp).toFixed(2)}</div>
-                                    </div>
-                                    <div class="col-6">
-                                        <span class="text-muted small text-uppercase">PTR</span>
-                                        <div class="fw-bold text-dark">₹${parseFloat(product.ptr).toFixed(2)}</div>
-                                    </div>
-                                    <div class="col-6">
-                                        <span class="text-muted small text-uppercase">PTS</span>
-                                        <div class="fw-bold text-dark">₹${parseFloat(product.pts).toFixed(2)}</div>
-                                    </div>
-                                    <div class="col-6">
-                                        <span class="text-muted small text-uppercase font-outfit">Loyalty %</span>
-                                        <div class="fw-bold text-info font-outfit">${parseFloat(product.loyalty_point_percentage || 0).toFixed(2)}%</div>
+
+                            <div class="col-md-6 ps-md-4">
+                                <div class="mb-5">
+                                    <h5 class="fw-bold mb-4 text-dark border-start border-4 border-success ps-3">Commercials</h5>
+                                    <div class="row g-4">
+                                        <div class="col-6">
+                                            <div class="text-muted small text-uppercase fw-bold mb-1">MRP</div>
+                                            <div class="fs-3 fw-bold text-success">₹${parseFloat(product.mrp).toFixed(2)}</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-muted small text-uppercase fw-bold mb-1">PTR</div>
+                                            <div class="fs-4 fw-bold text-dark">₹${parseFloat(product.ptr).toFixed(2)}</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-muted small text-uppercase fw-bold mb-1">PTS</div>
+                                            <div class="fs-4 fw-bold text-dark">₹${parseFloat(product.pts).toFixed(2)}</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-muted small text-uppercase fw-bold mb-1">Loyalty Points</div>
+                                            <div class="fs-4 fw-bold text-primary">${parseFloat(product.loyalty_point_percentage || 0).toFixed(2)}%</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        ` : `
-                            <div class="col-md-12">
-                                <div class="p-4 bg-white border rounded">
-                                <div class="p-4 bg-white border rounded">
-                                    <h6 class="text-primary fw-bold mb-3 border-bottom pb-2 text-uppercase small" style="letter-spacing: 0.5px;">Pricing Details</h6>
-                                    <div class="row g-3">
-                                        <div class="col-md-3 col-6">
-                                            <span class="text-muted small text-uppercase font-outfit">MRP</span>
-                                            <div class="fw-bold text-dark">₹${parseFloat(product.mrp).toFixed(2)}</div>
-                                        </div>
-                                        <div class="col-md-3 col-6">
-                                            <span class="text-muted small text-uppercase font-outfit">PTR</span>
-                                            <div class="fw-bold text-dark">₹${parseFloat(product.ptr).toFixed(2)}</div>
-                                        </div>
-                                        <div class="col-md-3 col-6">
-                                            <span class="text-muted small text-uppercase font-outfit">PTS</span>
-                                            <div class="fw-bold text-dark">₹${parseFloat(product.pts).toFixed(2)}</div>
-                                        </div>
-                                        <div class="col-md-3 col-6">
-                                            <span class="text-muted small text-uppercase font-outfit">Loyalty %</span>
-                                            <div class="fw-bold text-info font-outfit">
-                                                ${parseFloat(product.loyalty_point_percentage || 0).toFixed(2)}%
+                        </div>
+
+                        ${product.variant_options ? `
+                        <div class="mt-4 pt-4 border-top">
+                            <h5 class="fw-bold mb-4 text-dark border-start border-4 border-warning ps-3">Structured Variants</h5>
+                            <div class="row">
+                                ${Object.entries(product.variant_options).map(([key, vals]) => `
+                                    <div class="col-md-6 mb-3">
+                                        <div class="p-3 bg-white border rounded shadow-sm">
+                                            <div class="text-muted small text-uppercase fw-bold mb-2">${key}</div>
+                                            <div class="d-flex flex-wrap gap-2">
+                                                ${vals.map(v => `<span class="badge bg-soft-primary text-primary px-3 py-2 border">${v}</span>`).join('')}
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                </div>
+                                `).join('')}
                             </div>
-                        `}
+                        </div>
+                        ` : ''}
                     </div>
                 `;
                 // Note: We need to change the modal body structure slightly in the blade file to accommodate this if it expects a table structure.

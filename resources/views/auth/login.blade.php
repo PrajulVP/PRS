@@ -51,7 +51,7 @@
                                 </div>
                             </div>
 
-                            <div class="d-flex justify-content-between align-items-center mb-4">
+                            {{-- <div class="d-flex justify-content-between align-items-center mb-4">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
                                     <label class="form-check-label small" for="remember" style="color: var(--login-muted);">
@@ -60,7 +60,7 @@
                                 </div>
                                 <a href="#" class="text-primary text-decoration-none small hover-underline fw-bold">Forgot
                                     Password?</a>
-                            </div>
+                            </div> --}}
 
                             <div class="d-grid">
                                 <button type="submit" class="btn btn-primary btn-lg shadow-sm py-3 fw-bold">LOG IN</button>

@@ -114,7 +114,6 @@ class DistributorRetailerOrderController extends Controller
                 'invoice_url'     => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
                 'placed_at'       => $order->placed_at?->format('Y-m-d H:i:s'),
                 'delivered_at'    => $order->delivered_at?->format('Y-m-d H:i:s'),
-                'notes'           => $order->notes,
                 'delivery_notes'  => $order->delivery_notes,
                 'items'           => $order->items->map(function ($item) {
                     return [
@@ -252,7 +251,7 @@ class DistributorRetailerOrderController extends Controller
 
             'invoice_url'    => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
             'placed_at'      => $order->placed_at?->format('Y-m-d H:i:s'),
-            'notes'          => $order->notes,
+            'delivery_notes' => $order->delivery_notes,
         ]);
     }
 

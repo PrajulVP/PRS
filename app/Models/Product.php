@@ -44,6 +44,39 @@ class Product extends Model
         'variant_options' => 'array',
     ];
 
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted()
+    {
+        static::saving(function ($product) {
+            $code = strtoupper($product->product_code ?? '');
+            $name = strtoupper($product->product_name ?? '');
+
+            // Rule 1: SN- prefix -> Sudhneelgiri (Wellness/Herbal)
+            if (str_starts_with($code, 'SN-')) {
+                $product->brand = 'Sudhneelgiri';
+            }
+            // Rule 2: AS- prefix -> Atomshield (Orthopedic/Travel)
+            elseif (str_starts_with($code, 'AS-')) {
+                $product->brand = 'Atomshield';
+            }
+            // Rule 3: Medicine brand rules (Atomets)
+            // We also re-categorize from legacy names like 'Atomlife' or 'Generic' if patterns match
+            elseif (empty($product->brand) || in_array($product->brand, ['Atomlife', 'Generic', 'Other', 'NULL'])) {
+                $searchable = $code . ' ' . $name;
+                $medicinePatterns = ['ATOM', 'TOM', 'TENE', 'TELM', 'PANT', 'GLIM', 'MET', 'ACE', 'FEN', 'DICL', 'OME', 'LEVO'];
+                
+                foreach ($medicinePatterns as $pattern) {
+                    if (str_contains($searchable, $pattern)) {
+                        $product->brand = 'Atomets';
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
     // Relation with distributors via inventories
     public function distributors()
     {

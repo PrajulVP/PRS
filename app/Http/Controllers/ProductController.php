@@ -111,9 +111,8 @@ class ProductController extends Controller
                     'boxes_per_carton' => $product->boxes_per_carton ?? 1,
                     'has_variants' => $product->has_variants,
                     'variant_options' => $product->variant_options,
-                    'boxes_per_carton' => $product->boxes_per_carton,
-                    'has_variants' => $product->has_variants,
                     'variant_options' => $product->variant_options,
+                    'brand' => $product->brand, // Added Brand field
                     'actions' => null, // Actions column will be rendered by DataTables
                 ];
             });
@@ -126,7 +125,10 @@ class ProductController extends Controller
             ]);
         }
 
-        return view('admin.products.index');
+        $brandsRaw = \App\Models\Setting::getValue('product_brands', 'Atomets,Atomshield,Sudhneelgiri');
+        $availableBrands = array_map('trim', explode(',', $brandsRaw));
+
+        return view('admin.products.index', compact('availableBrands'));
     }
 
     /**
@@ -155,6 +157,7 @@ class ProductController extends Controller
             'ptr' => 'required|numeric|min:0',
             'pts' => 'required|numeric|min:0',
             'loyalty_point_percentage' => 'nullable|numeric|min:0',
+            'brand' => 'nullable|string|max:255',
         ]);
 
         $data = $request->all();
@@ -217,6 +220,7 @@ class ProductController extends Controller
             'ptr' => 'required|numeric|min:0',
             'pts' => 'required|numeric|min:0',
             'loyalty_point_percentage' => 'nullable|numeric|min:0',
+            'brand' => 'nullable|string|max:255',
         ]);
 
         $data = $request->all();

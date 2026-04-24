@@ -211,7 +211,7 @@ class DistributorOrderApiController extends Controller
      *                 @OA\Property(property="side", type="string", nullable=true, example="Left"),
      *                 @OA\Property(property="size", type="string", nullable=true, example="XL")
      *             )),
-     *             @OA\Property(property="notes", type="string", nullable=true, example="Urgent distributor order")
+     *             @OA\Property(property="delivery_notes", type="string", nullable=true, example="Urgent distributor order")
      *         )
      ),
      *     @OA\Response(
@@ -248,7 +248,7 @@ class DistributorOrderApiController extends Controller
             'items.*.unit' => 'nullable|string|in:Box,Carton,Strip,Nos,no',
             'items.*.side' => 'nullable|string',
             'items.*.size' => 'nullable|string',
-            'notes' => 'nullable|string',
+            'delivery_notes' => 'nullable|string',
         ]);
 
         /** @var \App\Models\User $user */
@@ -271,7 +271,7 @@ class DistributorOrderApiController extends Controller
                 'sales_manager_id' => $salesManagerId,
                 'status' => DistributorOrder::STATUS_PENDING,
                 'placed_at' => now(),
-                'notes' => $request->notes,
+                'delivery_notes' => $request->delivery_notes,
                 'total_amount' => 0,
                 'total_items' => 0,
                 'total_quantity' => 0,

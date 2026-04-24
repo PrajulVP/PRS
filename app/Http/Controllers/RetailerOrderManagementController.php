@@ -135,7 +135,6 @@ class RetailerOrderManagementController extends Controller
                     'fieldstaff_id' => ($user->hasRole('fieldstaff') && $user->fieldStaff) ? $user->fieldStaff->id : $retailer->field_staff_id,
                     'order_code' => 'ORD-' . strtoupper(uniqid()),
                     'status' => $request->status,
-                    'notes' => $request->notes,
                     'delivery_notes' => $request->delivery_notes,
                     'total_amount' => 0,
                     'total_items' => 0,
@@ -486,7 +485,6 @@ class RetailerOrderManagementController extends Controller
                             ];
                         }),
 
-                        'notes' => $order->notes,
                         'delivery_notes' => $order->delivery_notes,
                         'total_items' => $order->total_items,
                         'total_quantity' => $order->total_quantity,
@@ -1045,7 +1043,6 @@ class RetailerOrderManagementController extends Controller
             'retailer_id' => $request->retailer_id,
             'distributor_id' => $request->distributor_id,
             'status' => $request->status,
-            'notes' => $request->notes,
             'delivery_notes' => $request->delivery_notes,
             'delivered_at' => ($request->status === 'delivered') ? now() : null,
         ]);

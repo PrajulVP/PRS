@@ -45,6 +45,7 @@
                                 <tr>
                                     <th style="width: 50px;">No.</th>
                                     <th>Product Details</th>
+                                    <th>Brand</th>
                                     @role('admin|salesmanager')
                                     <th>Pricing Model</th>
                                     @endrole
@@ -77,6 +78,7 @@
                     d.distributor_id = $('#distributor_id').val();
                     d.fieldstaff_id = $('#fieldstaff_id').val();
                     d.retailer_id = $('#retailer_id').val();
+                    d.brand = $('#brand').val();
                     d.period = $('.preset-btn.active').data('range');
                     d.order_type = $('input[name="order_type"]:checked').val();
                 }
@@ -100,6 +102,7 @@
                         return `<div class="fw-bold">${data}</div><div class="small text-muted">${subLabel}</div>`;
                     }
                 },
+                { data: 'brand_display', name: 'brand', className: 'text-primary fw-bold small' },
                 @role('admin|salesmanager')
                 { data: 'pricing', name: 'pricing', className: 'small text-muted' },
                 @endrole

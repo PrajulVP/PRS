@@ -178,6 +178,24 @@ class ReportController extends Controller
             $query->where('payment_status', $request->payment_status); 
         }
 
+        if ($request->brand) {
+            if ($model->getConnection()->getSchemaBuilder()->hasColumn($tableName, 'brand')) {
+                $query->where('brand', $request->brand);
+            } elseif (method_exists($model, 'product')) {
+                $query->whereHas('product', function($q) use ($request) {
+                    $q->where('brand', $request->brand);
+                });
+            } elseif (method_exists($model, 'items')) {
+                $query->whereHas('items.product', function($q) use ($request) {
+                    $q->where('brand', $request->brand);
+                });
+            } elseif ($tableName === 'retailer_order_items' || $tableName === 'distributor_order_items') {
+                $query->whereHas('product', function($q) use ($request) {
+                    $q->where('brand', $request->brand);
+                });
+            }
+        }
+
         // Date Range (Only if dateColumn is provided)
         if ($dateColumn) {
             [$f, $t] = $this->getFilterDates($request);
@@ -256,8 +274,9 @@ class ReportController extends Controller
         $retailers = Retailer::with('user')->get();
         $fieldStaffs = FieldStaff::with('user')->get();
         $salesManagers = SalesManager::with('user')->get();
-
-        return view('admin.reports.orders', compact('distributors', 'retailers', 'fieldStaffs', 'salesManagers'));
+        $availableBrands = array_filter(array_map('trim', explode(',', \App\Models\Setting::getValue('product_brands') ?? '')));
+ 
+        return view('admin.reports.orders', compact('distributors', 'retailers', 'fieldStaffs', 'salesManagers', 'availableBrands'));
     }
 
     public function distributorReports(Request $request)
@@ -428,7 +447,12 @@ class ReportController extends Controller
                     'order_count'
                 );
 
+            if ($request->brand) {
+                $query->where('brand', $request->brand);
+            }
+
             return DataTables::of($query)
+                ->addColumn('brand_display', fn($prod) => $prod->brand ?: '<span class="text-muted small italic">Standard</span>')
                 ->addColumn('pricing', function($prod) {
                     if (!$this->isManagement()) return '***';
                     return "PTR: ₹" . number_format($prod->ptr, 2) . "<br>MRP: ₹" . number_format($prod->mrp, 2);
@@ -439,15 +463,63 @@ class ReportController extends Controller
                 })
                 ->editColumn('total_revenue', fn($prod) => number_format($prod->total_revenue ?? 0, 2))
                 ->editColumn('total_sold', fn($prod) => number_format($prod->total_sold ?? 0))
-                ->rawColumns(['pricing'])
+                ->rawColumns(['pricing', 'brand_display'])
                 ->make(true);
         }
 
         $salesManagers = SalesManager::with('user')->get();
         $distributors = Distributor::with('user')->get();
         $fieldStaffs = FieldStaff::with('user')->get();
+        $availableBrands = array_filter(array_map('trim', explode(',', \App\Models\Setting::getValue('product_brands') ?? '')));
 
-        return view('admin.reports.products', compact('salesManagers', 'distributors', 'fieldStaffs'));
+        return view('admin.reports.products', compact('salesManagers', 'distributors', 'fieldStaffs', 'availableBrands'));
+    }
+
+    public function brandReports(Request $request)
+    {
+        abort_if(!Auth::user()->hasPermissionToCategory('product_reports', 'view'), 403);
+        if ($request->ajax()) {
+            $type = $request->order_type ?? 'retailer';
+            $orderItemModel = ($type === 'distributor') ? \App\Models\DistributorOrderItem::class : \App\Models\RetailerOrderItem::class;
+            $orderRel = ($type === 'distributor') ? 'distributorOrder' : 'retailerOrder';
+            $totalAmountCol = ($type === 'distributor') ? 'subtotal' : 'total_amount';
+
+            $brands = array_filter(array_map('trim', explode(',', \App\Models\Setting::getValue('product_brands') ?? '')));
+            
+            $data = [];
+            foreach ($brands as $brand) {
+                $query = $orderItemModel::whereHas('product', function($q) use ($brand) {
+                    $q->where('brand', $brand);
+                })->whereHas($orderRel, function($q) use ($request) {
+                    $this->applyGlobalFilters($q, $request);
+                    $q->where('status', 'delivered');
+                });
+
+                $stats = $query->selectRaw("
+                    COUNT(DISTINCT product_id) as unique_products,
+                    SUM(quantity) as total_sold,
+                    SUM({$totalAmountCol}) as total_revenue
+                ")->first();
+
+                if ($stats->total_sold > 0) {
+                    $data[] = [
+                        'brand' => $brand,
+                        'unique_products' => $stats->unique_products,
+                        'total_sold' => $stats->total_sold,
+                        'total_revenue' => $stats->total_revenue
+                    ];
+                }
+            }
+
+            return DataTables::of(collect($data))
+                ->editColumn('total_revenue', fn($row) => number_format($row['total_revenue'], 2))
+                ->make(true);
+        }
+
+        $salesManagers = SalesManager::with('user')->get();
+        $availableBrands = array_filter(array_map('trim', explode(',', \App\Models\Setting::getValue('product_brands') ?? '')));
+
+        return view('admin.reports.brands', compact('salesManagers', 'availableBrands'));
     }
 
     public function fieldStaffReports(Request $request)
@@ -1063,11 +1135,12 @@ class ReportController extends Controller
             }
 
             if ($type === 'orders') {
-                fputcsv($file, ['Order Code', 'Date', 'Retailer', 'Distributor', 'Staff', 'Volume (Units)', 'SKUs', 'Total Revenue', 'Tax Component', 'Status', 'Fulfillment Time']);
+                fputcsv($file, ['Order Code', 'Invoice No', 'Date', 'Retailer', 'Distributor', 'Staff', 'Volume (Units)', 'SKUs', 'Total Revenue', 'Tax Component', 'Status', 'Fulfillment Time']);
                 foreach ($data as $row) {
                     $tax = $row->items->sum(fn($i) => ($i->product->gst / 100) * ($i->product->taxable_value * $i->quantity));
                     fputcsv($file, [
                         $row->order_code,
+                        $row->invoice_no ?? 'N/A',
                         $row->placed_at->format('Y-m-d H:i'),
                         $row->retailer->user->name ?? 'N/A',
                         $row->distributor->user->name ?? 'N/A',

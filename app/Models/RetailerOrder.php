@@ -30,7 +30,6 @@ class RetailerOrder extends Model
         'total_quantity',
         'status',
         'placed_at',
-        'notes',
         'delivery_notes',
         'delivered_at',
         'cancellation_reason',

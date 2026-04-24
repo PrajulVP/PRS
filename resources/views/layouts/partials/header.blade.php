@@ -45,6 +45,16 @@
     transform: translateX(3px) !important;
     /* Very slow slight movement */
   }
+
+  /* Dark mode fixes */
+  body.dark-only .profile-dropdown li:hover a span, 
+  body.dark-only .profile-dropdown li:hover a i {
+      color: var(--bs-primary) !important;
+  }
+  body.dark-only .profile-dropdown li form button.logout-btn {
+      color: #fff !important;
+      background-color: var(--bs-primary) !important;
+  }
 </style>
 <div class="page-header">
   @if(!request()->is('api.admin.login'))
@@ -257,10 +267,10 @@
                     }
                   @endphp
                   <li class="{{ $is_unread ? ($is_pending ? 'b-l-primary border-4' : 'b-l-secondary border-4') : 'notification-read' }}"
-                    style="{{ !$is_unread ? 'opacity: 0.6; background-color: #f8f9fa;' : '' }}"
+                    style="{{ !$is_unread ? 'opacity: 0.6;' : '' }}"
                     data-id="{{ $notification->id }}">
                     <a href="{{ $actionUrl }}" style="display: block; width: 100%; color: inherit; cursor: pointer; text-decoration: none;">
-                      <p class="mb-1 {{ $is_unread ? 'fw-bold text-dark' : 'text-muted' }}"
+                      <p class="mb-1 {{ $is_unread ? 'fw-bold' : 'text-muted' }}"
                         style="font-size: 0.8rem;">
                       {{ $notification->data['message'] ?? 'Notification' }}
                     </p>
@@ -304,7 +314,7 @@
                 <li>
                   <form id="logout-form" action="{{ route('admin.logout') }}" method="POST" class="d-inline">
                     @csrf
-                    <button type="submit" class="btn btn-pill btn-outline-primary btn-sm">Logout</button>
+                    <button type="submit" class="btn btn-pill btn-primary btn-sm w-100 logout-btn">Logout</button>
                   </form>
                 </li>
               </ul>

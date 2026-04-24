@@ -236,11 +236,15 @@
         .order-summary-header {
             background: var(--med-bg-card);
             color: var(--med-text-main);
-            padding: 24px 28px;
+            padding: 32px 28px 24px; /* Increased top padding to clear close button */
             border-radius: 20px 20px 0 0;
             position: relative;
             border-bottom: 1px solid var(--med-border-light);
             border-top: 4px solid var(--med-primary);
+        }
+
+        .order-summary-header .text-sm-end {
+            padding-right: 40px !important; /* Spacing for absolute close button */
         }
 
         .retailer-detail-item {

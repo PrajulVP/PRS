@@ -39,7 +39,8 @@ class DashboardController extends Controller
             'retailerOrderStats' => $data['retailerOrderStats'],
             'distributorOrderStats' => $data['distributorOrderStats'],
             'chartData' => $data['chartData'],
-            'monthlyDistributorOrdersChart' => $data['monthlyDistributorOrdersChart'],
+            'monthlyDistributorOrdersChart' => $data['monthlyDistributorOrdersChart'] ?? null,
+            'brandSalesDistribution' => $data['brandSalesDistribution'] ?? null,
             // Add other data if needed for dynamic updates
         ]);
     }
@@ -89,6 +90,7 @@ class DashboardController extends Controller
         $totalInLocality = 0;
         $isTopRetailer = false;
         $data_extra = [];
+        $brandSalesDistribution = $this->getBrandSalesDistribution($startDate, $endDate, $user);
 
         // Role-Based Filtering
         if ($user->hasAnyRole(['superadmin', 'admin'])) {
@@ -345,8 +347,32 @@ class DashboardController extends Controller
             'myRank',
             'totalInLocality',
             'totalLoyaltyPoints',
-            'data_extra'
+            'data_extra',
+            'brandSalesDistribution'
         );
+    }
+
+    private function getBrandSalesDistribution($startDate, $endDate, $user = null)
+    {
+        $query = \App\Models\RetailerOrderItem::join('products', 'retailer_order_items.product_id', '=', 'products.id')
+            ->join('retailer_orders', 'retailer_order_items.retailer_order_id', '=', 'retailer_orders.id')
+            ->where('retailer_orders.status', 'delivered')
+            ->whereBetween('retailer_orders.created_at', [$startDate, $endDate]);
+
+        if ($user && $user->hasRole('salesmanager')) {
+            $fieldStaffIds = $user->salesManager->fieldStaffs->pluck('id');
+            $query->whereIn('retailer_orders.fieldstaff_id', $fieldStaffIds);
+        }
+
+        $distribution = $query->select('products.brand', DB::raw('SUM(retailer_order_items.total_amount) as revenue'))
+            ->groupBy('products.brand')
+            ->orderByDesc('revenue')
+            ->get();
+
+        return [
+            'labels' => $distribution->pluck('brand')->map(fn($b) => $b ?: 'Standard')->toArray(),
+            'values' => $distribution->pluck('revenue')->map(fn($v) => (float)$v)->toArray(),
+        ];
     }
 
     private function generateChartData($query, $period, $startDate, $endDate)

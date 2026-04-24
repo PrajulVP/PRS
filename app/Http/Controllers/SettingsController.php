@@ -21,11 +21,12 @@ class SettingsController extends Controller
         $da_hq_rate = Setting::getValue('da_hq_rate', '250');
         $da_outstation_rate = Setting::getValue('da_outstation_rate', '500');
         $hq_radius_km = Setting::getValue('hq_radius_km', '15');
+        $product_brands = Setting::getValue('product_brands', 'Atomets,Atomshield,Sudhneelgiri');
 
         return view('admin.settings.general', compact(
             'value', 'cgst', 'sgst', 
             'geofence_radius', 'ta_rate_per_km', 'da_hq_rate', 'da_outstation_rate',
-            'hq_radius_km'
+            'hq_radius_km', 'product_brands'
         ));
     }
 
@@ -44,6 +45,10 @@ class SettingsController extends Controller
             if (!is_numeric($data['value']) || (float) $data['value'] < 0) {
                 return response()->json(['message' => 'Invalid value.'], 422);
             }
+        }
+        
+        if ($data['slug'] === 'product_brands' && empty($data['value'])) {
+             return response()->json(['message' => 'Brands list cannot be empty.'], 422);
         }
 
         $title = $data['slug'];
@@ -73,6 +78,9 @@ class SettingsController extends Controller
         } elseif ($data['slug'] === 'hq_radius_km') {
             $title = 'HQ Radius Threshold';
             $desc = 'Maximum distance (in KM) considered as Headquarter area.';
+        } elseif ($data['slug'] === 'product_brands') {
+            $title = 'Product Brands';
+            $desc = 'Comma-separated list of available product brands.';
         }
 
         $setting = Setting::setValue(

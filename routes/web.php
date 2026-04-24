@@ -181,6 +181,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/distributors', [ReportController::class, 'distributorReports'])->name('distributors');
             Route::get('/retailers', [ReportController::class, 'retailerReports'])->name('retailers');
             Route::get('/products', [ReportController::class, 'productReports'])->name('products');
+            Route::get('/brands', [ReportController::class, 'brandReports'])->name('brands');
             Route::get('/fieldstaffs', [ReportController::class, 'fieldStaffReports'])->name('fieldstaffs');
             Route::get('/fieldstaffs/tracking', [ReportController::class, 'fieldStaffTracking'])->name('fieldstaff.tracking');
             Route::get('/monitoring', [ReportController::class, 'monitoring'])->name('monitoring');

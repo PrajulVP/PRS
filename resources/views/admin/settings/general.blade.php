@@ -90,7 +90,7 @@
                                 </div>
                             </div>
 
-                            <!-- HQ Radius Threshold -->
+                             <!-- HQ Radius Threshold -->
                             <div class="col-md-6 mb-4">
                                 <div class="card border-danger shadow-sm h-100">
                                     <div class="card-body">
@@ -103,6 +103,40 @@
                                                 <input type="number" step="0.1" class="form-control" name="value" value="{{ $hq_radius_km }}" min="0">
                                                 <span class="input-group-text">KM</span>
                                                 <button type="button" class="btn btn-danger save-setting-btn">Save</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Product Brands -->
+                            <div class="col-md-12 mb-4">
+                                <div class="card border-dark shadow-sm h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-dark"><i class="fa fa-tags me-2"></i>Product Brands Master</h6>
+                                        <p class="text-muted small">Enter available brands separated by commas (e.g. Atomets, Atomshield, etc.)</p>
+                                        <form class="setting-form" id="brands_form">
+                                            @csrf
+                                            <input type="hidden" name="slug" value="product_brands">
+                                            <input type="hidden" name="value" id="brands_final_value" value="{{ $product_brands }}">
+                                            
+                                            <div class="mb-4">
+                                                <label class="form-label fw-bold">Add New Brand</label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control border-dark" id="new_brand_name" placeholder="Enter brand name (e.g. Atomed)">
+                                                    <button type="button" class="btn btn-dark" id="add_brand_btn"><i class="fa fa-plus me-2"></i>Add Brand</button>
+                                                </div>
+                                            </div>
+
+                                            <label class="form-label fw-bold">Current Active Brands</label>
+                                            <div id="brands_tag_container" class="d-flex flex-wrap gap-3 p-3 bg-light rounded border shadow-inner" style="min-height: 80px;">
+                                                <!-- Tags filled by JS -->
+                                            </div>
+                                            
+                                            <div class="mt-4 text-end">
+                                                <button type="button" class="btn btn-primary px-4 save-setting-btn" id="save_brands_btn" style="display: none;">
+                                                    <i class="fa fa-save me-2"></i>Apply Changes
+                                                </button>
                                             </div>
                                         </form>
                                     </div>
@@ -141,6 +175,82 @@
                 });
             }
 
+            // Brand Management Logic
+            let currentBrands = $('#brands_final_value').val().split(',').map(s => s.trim()).filter(s => s.length > 0);
+
+            function renderBrands() {
+                let html = '';
+                if (currentBrands.length === 0) {
+                    html = '<div class="text-muted small w-100 text-center py-2">No brands added yet.</div>';
+                } else {
+                    currentBrands.forEach((brand, index) => {
+                        html += `
+                            <div class="brand-tag-wrapper d-inline-flex align-items-center bg-white border border-primary rounded p-2 shadow-sm">
+                                <span class="fw-bold pe-2 text-primary border-end me-2"><i class="fa fa-tag me-1 small"></i>${brand}</span>
+                                <div class="d-flex gap-1">
+                                    <button type="button" class="btn btn-outline-info p-0 d-flex align-items-center justify-content-center edit-brand-btn" data-index="${index}" style="width: 25px; height: 25px;" title="Edit"><i class="fa fa-edit small"></i></button>
+                                    <button type="button" class="btn btn-outline-danger p-0 d-flex align-items-center justify-content-center delete-brand-btn" data-index="${index}" style="width: 25px; height: 25px;" title="Delete"><i class="fa fa-trash small"></i></button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                $('#brands_tag_container').html(html);
+                $('#brands_final_value').val(currentBrands.join(','));
+            }
+
+            // Initial render
+            renderBrands();
+
+            $('#add_brand_btn').on('click', function() {
+                let name = $('#new_brand_name').val().trim();
+                if (name && !currentBrands.includes(name)) {
+                    currentBrands.push(name);
+                    $('#new_brand_name').val('');
+                    $('#save_brands_btn').show();
+                    renderBrands();
+                } else if (currentBrands.includes(name)) {
+                    showToast('warning', 'Duplicate', 'This brand already exists');
+                }
+            });
+
+            $(document).on('click', '.delete-brand-btn', function() {
+                let index = $(this).data('index');
+                let name = currentBrands[index];
+                Swal.fire({
+                    title: 'Remove Brand?',
+                    text: `Are you sure you want to remove "${name}"?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    confirmButtonText: 'Yes, remove it'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        currentBrands.splice(index, 1);
+                        $('#save_brands_btn').show();
+                        renderBrands();
+                    }
+                });
+            });
+
+            $(document).on('click', '.edit-brand-btn', function() {
+                let index = $(this).data('index');
+                let oldName = currentBrands[index];
+                Swal.fire({
+                    title: 'Edit Brand Name',
+                    input: 'text',
+                    inputValue: oldName,
+                    showCancelButton: true,
+                    confirmButtonText: 'Update',
+                }).then((result) => {
+                    if (result.value && result.value.trim().length > 0) {
+                        currentBrands[index] = result.value.trim();
+                        $('#save_brands_btn').show();
+                        renderBrands();
+                    }
+                });
+            });
+
             $('.save-setting-btn').on('click', function () {
                 $('#settings-errors').hide();
                 var $btn = $(this).prop('disabled', true).text('Saving...');
@@ -166,7 +276,11 @@
                     success: function (res) {
                         Swal.close();
                         showToast('success', 'Saved', 'Setting saved successfully');
+                        if (data.includes('slug=product_brands')) {
+                            $('#save_brands_btn').hide();
+                        }
                     },
+                    // ... error handler ...
                     error: function (xhr) {
                         Swal.close();
                         var message = 'An unexpected error occurred';

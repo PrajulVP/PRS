@@ -17,22 +17,18 @@
     <script>
         $(document).ready(function() {
             function updateOrderSourceTheme() {
-                const type = $('input[name="order_type"]:checked').val();
+                const type = $('input[name="order_type"]').val();
                 const container = $('.order-source-external');
                 const heading = document.getElementById('reportTableHeading');
                 
                 if (type === 'distributor') {
-                    container.removeClass('theme-retailer').addClass('theme-distributor');
+                    if (container) container.removeClass('theme-retailer').addClass('theme-distributor');
                     if (heading) heading.innerText = 'Detailed Distributor Orders Records';
                 } else {
-                    container.removeClass('theme-distributor').addClass('theme-retailer');
+                    if (container) container.removeClass('theme-distributor').addClass('theme-retailer');
                     if (heading) heading.innerText = 'Detailed Retailer Orders Records';
                 }
             }
-
-            $('input[name="order_type"]').on('change', function() {
-                updateOrderSourceTheme();
-            });
 
             // Initial call
             updateOrderSourceTheme();
@@ -43,24 +39,7 @@
         $showSourceToggle = request()->routeIs('admin.reports.orders');
     @endphp
 
-    @if($showSourceToggle)
-        <div class="order-source-external mb-4">
-            <div class="order-source-label mb-2">
-                <i class="fa fa-filter text-primary"></i>
-                <span class="user-select-none fw-bold" style="font-size: 13px; color: #475569;">Select Order Source:</span>
-            </div>
-            <div class="order-type-segment-minimal shadow-sm">
-                <input type="radio" name="order_type" value="retailer" id="type_retailer_new" {{ ($request->order_type ?? 'retailer') == 'retailer' ? 'checked' : '' }}>
-                <label for="type_retailer_new" title="View Retailer Sales Data">
-                    <i class="fa fa-hospital-o me-2"></i> Retailer
-                </label>
-                <input type="radio" name="order_type" value="distributor" id="type_distributor_new" {{ ($request->order_type ?? '') == 'distributor' ? 'checked' : '' }}>
-                <label for="type_distributor_new" title="View Distributor/Master Sales Data">
-                    <i class="fa fa-truck me-2"></i> Distributor
-                </label>
-            </div>
-        </div>
-    @endif
+    <input type="hidden" name="order_type" value="{{ request('order_type', 'retailer') }}">
 
     <div class="card border-0 shadow-sm rounded-4 mb-4 filter-container overflow-visible">
     <div class="card-body p-0">
@@ -184,6 +163,18 @@
                             <option value="delivered" {{ ($request->status ?? '') == 'delivered' ? 'selected' : '' }}>Delivered</option>
                             <option value="cancelled" {{ ($request->status ?? '') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                             <option value="rejected" {{ ($request->status ?? '') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                        </select>
+                    </div>
+                @endif
+
+                @if(isset($availableBrands) && count($availableBrands) > 0)
+                    <div class="col-xl col-md-6">
+                        <label class="form-label fw-bold small text-muted text-uppercase mb-2"><i class="fa fa-bookmark me-1"></i>Brand</label>
+                        <select name="brand" id="brand" class="form-select form-select-sm select2-industrial">
+                            <option value="">All Brands</option>
+                            @foreach($availableBrands as $b)
+                                <option value="{{ $b }}" {{ ($request->brand ?? '') == $b ? 'selected' : '' }}>{{ $b }}</option>
+                            @endforeach
                         </select>
                     </div>
                 @endif

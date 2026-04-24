@@ -144,6 +144,11 @@
                                     </small>
                                 </div>
 
+                                <div class="mb-4">
+                                    <label class="text-muted small fw-bold text-uppercase d-block mb-2">Delivery Notes (Optional)</label>
+                                    <textarea name="delivery_notes" class="form-control" rows="2" placeholder="Any special instructions for delivery..."></textarea>
+                                </div>
+
                                 <button type="submit"
                                     class="btn btn-success btn-lg w-100 py-3 fw-bold shadow-sm font-outfit btn-confirm rounded-3 border-0 transition-all hover-shadow"
                                     style="background: linear-gradient(135deg, #28a745 0%, #218838 100%);"
