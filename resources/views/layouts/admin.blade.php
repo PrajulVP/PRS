@@ -31,7 +31,7 @@
             --med-paid-text: #15803d;
             --med-paid-border: #dcfce7;
             --med-pending-bg: #fffbeb;
-            --med-pending-text: #b45309;
+            --med-pending-text: #d97706;
             --med-pending-border: #fef3c7;
             --med-failed-bg: #fef2f2;
             --med-failed-text: #b91c1c;
@@ -149,6 +149,21 @@
             0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
             70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
             100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        /* Corporate Utility Classes */
+        .bg-body-theme { background-color: var(--med-bg-body) !important; }
+        .bg-card-theme { background-color: var(--med-bg-card) !important; }
+        .text-main-theme { color: var(--med-text-main) !important; }
+        .text-muted-theme { color: var(--med-text-muted) !important; }
+        .border-theme { border-color: var(--med-border) !important; }
+
+        body.dark-only .text-dark {
+            color: var(--med-text-main) !important;
+        }
+
+        body.dark-only .modal-body td {
+            color: var(--med-text-main) !important;
         }
 
         .status-badge {

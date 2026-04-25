@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Storage;
 
 class RetailerOrderManagementController extends Controller
 {
-    use HandlesNotifications, OneSignalNotifications;
+    use HandlesNotifications, OneSignalNotifications, \App\Traits\CalculatesPrices;
     // Create Order Page
     public function create()
     {
@@ -464,6 +464,8 @@ class RetailerOrderManagementController extends Controller
                                 'total_amount' => $item->total_amount,
                                 'order_item_id' => $item->id,
                                 'pack' => $item->product?->pack,
+                                'generic_name' => $item->product?->generic_name,
+                                'product_code' => $item->product?->product_code,
                                 'strip_size' => $item->product?->strip_size,
                                 'box_size' => $item->product?->box_size,
                                 'carton_size' => $item->product?->carton_size,
@@ -492,7 +494,8 @@ class RetailerOrderManagementController extends Controller
                         'status' => ucfirst(str_replace('_', ' ', $order->status)),
                         'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d H:i:s') : '-',
                         'payment_status' => $order->payment_status ?? 'pending',
-                        'invoice_url' => $order->invoice_path ? \Illuminate\Support\Facades\Storage::url($order->invoice_path) : null,
+                        'invoice_url' => $order->invoice_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($order->invoice_path) : null,
+                        'cancellation_reason' => $order->cancellation_reason,
                     ];
                 });
 
@@ -715,16 +718,8 @@ class RetailerOrderManagementController extends Controller
                     foreach ($itemsBatches as $allocation) {
                         $orderItem = $retailerOrder->items()->findOrFail($allocation['order_item_id']);
                         $product = $orderItem->product;
-                        // Conversion Factor
-                        $multiplier = 1;
-                        $normalizedUnit = strtolower($orderItem->unit);
-                        if ($normalizedUnit === 'box') {
-                            $multiplier = (int)($product->strips_per_box ?? 1);
-                        } elseif ($normalizedUnit === 'carton') {
-                            $multiplier = (int)($product->boxes_per_carton ?? 1) * (int)($product->strips_per_box ?? 1);
-                        } elseif ($normalizedUnit === 'nos' || $normalizedUnit === 'no' || $normalizedUnit === 'unit') {
-                            $multiplier = 1 / (max(1, (int)($product->units_per_strip ?? 1)));
-                        }
+                        // Conversion Factor using shared helper
+                        $multiplier = $this->convertQuantityToStrips($product, 1, $orderItem->unit);
                         $totalAllocated = 0;
                         if ($orderItem->batches) {
                             $orderItem->batches()->delete(); // Clear existing batches
@@ -781,16 +776,8 @@ class RetailerOrderManagementController extends Controller
                     foreach ($retailerOrder->items as $orderItem) {
                         $product = $orderItem->product;
 
-                        // Conversion Factor
-                        $multiplier = 1;
-                        $normalizedUnit = strtolower($orderItem->unit);
-                        if ($normalizedUnit === 'box') {
-                            $multiplier = (int)($product->strips_per_box ?? 1);
-                        } elseif ($normalizedUnit === 'carton') {
-                            $multiplier = (int)($product->boxes_per_carton ?? 1) * (int)($product->strips_per_box ?? 1);
-                        } elseif ($normalizedUnit === 'nos' || $normalizedUnit === 'no' || $normalizedUnit === 'unit') {
-                            $multiplier = 1 / (max(1, (int)($product->units_per_strip ?? 1)));
-                        }
+                        // Conversion Factor using shared helper
+                        $multiplier = $this->convertQuantityToStrips($product, 1, $orderItem->unit);
 
                         $neededStrips = $orderItem->quantity * $multiplier;
 
@@ -1191,6 +1178,19 @@ class RetailerOrderManagementController extends Controller
 
     public function destroy(Request $request, RetailerOrder $retailerOrder)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $isOwner = ($user->hasRole('retailer') && $retailerOrder->retailer_id === $user->retailer?->id);
+        $isAdmin = $user->hasAnyRole(['admin', 'superadmin', 'salesmanager']);
+
+        if (!$isAdmin && !$isOwner) {
+            return response()->json(['error' => 'No permission to delete orders.'], 403);
+        }
+
+        if ($isOwner && $retailerOrder->status !== RetailerOrder::STATUS_PENDING) {
+            return response()->json(['error' => 'You can only delete orders while they are pending.'], 400);
+        }
+
         try {
             $distributor = $retailerOrder->distributor;
             if ($distributor) {
@@ -1326,7 +1326,7 @@ class RetailerOrderManagementController extends Controller
 
             return response()->json([
                 'success' => 'Invoice uploaded successfully!',
-                'invoice_url' => \Illuminate\Support\Facades\Storage::url($path)
+                'invoice_url' => \Illuminate\Support\Facades\Storage::disk('public')->url($path)
             ]);
         }
 

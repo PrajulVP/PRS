@@ -3,40 +3,40 @@
 @section('page-body')
     <style>
         .nav-tabs.custom-tabs {
-            border-bottom: 2px solid #f1f5f9;
-            gap: 2rem;
+            border-bottom: none;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: var(--med-bg-body, #f8fafc);
+            border-radius: 12px;
+            display: inline-flex;
         }
         .nav-tabs.custom-tabs .nav-link {
-            border: none;
-            color: #64748b;
+            border: 1px solid transparent !important;
+            color: var(--med-text-muted, #64748b);
             font-weight: 600;
-            padding: 0.75rem 0;
-            position: relative;
+            padding: 0.5rem 1.25rem;
+            border-radius: 8px !important;
             background: none;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
         }
         .nav-tabs.custom-tabs .nav-link.active {
-            color: #00497a;
-            background: none;
-        }
-        .nav-tabs.custom-tabs .nav-link.active::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: #00497a;
+            color: var(--med-primary, #00497a) !important;
+            background: var(--med-bg-card, #ffffff) !important;
+            border-color: var(--med-border, #e2e8f0) !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
         }
         .nav-tabs.custom-tabs .nav-link:hover:not(.active) {
-            color: #475569;
-            border: none;
+            color: var(--med-text-main, #475569);
+            background: var(--med-bg-body);
+            opacity: 0.8;
+            border-color: transparent;
         }
     </style>
 
     <div class="container-fluid">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-white border-bottom-0 pb-0 d-flex justify-content-between align-items-center">
+            <div class="card-header bg-card-theme border-bottom-0 pb-0 d-flex justify-content-between align-items-center">
                 <div>
                     <h5 class="mb-3">User Management</h5>
                     <ul class="nav nav-tabs custom-tabs" id="userStatusTabs" role="tablist">
@@ -128,6 +128,10 @@
                             <label>GST (Retailer)</label>
                             <input type="text" name="gst" class="form-control">
                         </div>
+                        <div class="mb-3">
+                            <label>Profile Picture</label>
+                            <input type="file" name="profile_pic" class="form-control" accept="image/*">
+                        </div>
                     </div>
                     <div class="modal-footer"><button type="submit" class="btn btn-primary">Create</button></div>
                 </form>
@@ -157,6 +161,14 @@
                                 @foreach($roles as $r) <option value="{{ $r }}">{{ ucfirst($r) }}</option> @endforeach
                             </select>
                         </div>
+                        <div class="mb-3">
+                            <label>Profile Picture</label>
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <img id="edit_avatar_preview" src="" alt="" class="rounded-circle" style="width:50px;height:50px;object-fit:cover;display:none;">
+                                <div id="edit_avatar_initials_preview" class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width:50px;height:50px;display:none;background:#374151;"></div>
+                            </div>
+                            <input type="file" name="profile_pic" class="form-control" accept="image/*">
+                        </div>
                     </div>
                     <div class="modal-footer"><button type="submit" class="btn btn-primary">Update</button></div>
                 </form>
@@ -176,7 +188,7 @@
                 <div class="modal-body p-0">
                     {{-- Profile Header --}}
                     <div class="d-flex align-items-center gap-4 p-4"
-                        style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                        style="background: var(--med-bg-body); border-bottom: 1px solid var(--med-border);">
                         <div id="view_avatar_wrap" style="flex-shrink:0;">
                             <img id="view_avatar_img" src="" alt="" class="rounded-circle shadow"
                                 style="width:90px;height:90px;object-fit:cover;display:none;border:3px solid #fff;">
@@ -196,7 +208,7 @@
                     <div class="p-4">
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <div class="d-flex align-items-start gap-2 p-3 rounded" style="background:#f1f5f9;">
+                                <div class="d-flex align-items-start gap-2 p-3 rounded" style="background: var(--med-bg-body);">
                                     <i class="fa fa-envelope mt-1 text-primary"></i>
                                     <div>
                                         <div class="text-muted small">Email</div>
@@ -205,7 +217,7 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="d-flex align-items-start gap-2 p-3 rounded" style="background:#f1f5f9;">
+                                <div class="d-flex align-items-start gap-2 p-3 rounded" style="background: var(--med-bg-body);">
                                     <i class="fa fa-phone mt-1 text-success"></i>
                                     <div>
                                         <div class="text-muted small">Contact</div>
@@ -214,7 +226,7 @@
                                 </div>
                             </div>
                             <div class="col-12">
-                                <div class="d-flex align-items-start gap-2 p-3 rounded" style="background:#f1f5f9;">
+                                <div class="d-flex align-items-start gap-2 p-3 rounded" style="background: var(--med-bg-body);">
                                     <i class="fa fa-map-marker-alt mt-1 text-danger"></i>
                                     <div>
                                         <div class="text-muted small">Address</div>
@@ -225,7 +237,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer border-0 bg-light">
+                <div class="modal-footer border-0 bg-body-theme">
                     <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
@@ -482,6 +494,17 @@
                 $('#edit_role').val(row.role);
                 // Trigger change to update visibility of conditional fields
                 $('#edit_role').trigger('change');
+
+                // Update Avatar Preview
+                if (row.profile_image_url) {
+                    $('#edit_avatar_preview').attr('src', row.profile_image_url).show();
+                    $('#edit_avatar_initials_preview').hide();
+                } else {
+                    let initials = row.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+                    $('#edit_avatar_initials_preview').text(initials).show();
+                    $('#edit_avatar_preview').hide();
+                }
+
                 $('#editForm').attr('action', `/users/${row.id}`);
                 $('#editUserModal').modal('show');
             });

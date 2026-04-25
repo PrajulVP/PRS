@@ -16,7 +16,7 @@ use App\Traits\HandlesNotifications;
 
 class DistributorOrderController extends Controller
 {
-    use HandlesNotifications;
+    use HandlesNotifications, \App\Traits\CalculatesPrices;
 
     public function show(DistributorOrder $distributorOrder)
     {
@@ -159,6 +159,8 @@ class DistributorOrderController extends Controller
                                 'product_id' => $item->product_id,
                                 'product_name' => $pName,
                                 'product_code' => $item->product->product_code ?? 'N/A',
+                                'generic_name' => $item->product->generic_name ?? null,
+                                'pack' => $item->product->pack ?? null,
                                 'side' => $item->side,
                                 'size' => $item->size,
                                 'quantity' => $item->quantity,
@@ -184,9 +186,9 @@ class DistributorOrderController extends Controller
                             ];
                         }),
                         'delivery_notes' => $order->delivery_notes,
-                        'cancellation_reason' => $order->cancellation_reason,
-                        'invoice_url' => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
+                        'invoice_url' => $order->invoice_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($order->invoice_path) : null,
                         'payment_status' => $order->payment_status, // Added for payment status display
+                        'cancellation_reason' => $order->cancellation_reason,
                         'raw_status' => $order->status
                     ];
                 });
@@ -616,10 +618,8 @@ class DistributorOrderController extends Controller
                 }
             }
 
-            // Update Distributor Inventory
-            // This logic is now handled by confirmReceipt
-            // Add items to inventory immediately upon Admin Approval
-            $this->addOrderItemsToInventory($distributorOrder);
+            // This logic is now handled by confirmReceipt in this controller
+            // $this->addOrderItemsToInventory($distributorOrder);
 
             DB::commit();
 
@@ -742,9 +742,12 @@ class DistributorOrderController extends Controller
 
         $distributorOrder->save();
 
+        // Removed: Stock addition now only happens via confirmReceipt as per user request
+        /*
         if ($oldStatus !== 'delivered' && $newStatus === 'delivered') {
             $this->addOrderItemsToInventory($distributorOrder);
         }
+        */
 
         return response()->json(['success' => 'Status updated.']);
     }
@@ -820,7 +823,7 @@ class DistributorOrderController extends Controller
 
             return response()->json([
                 'success' => 'Invoice uploaded successfully!',
-                'invoice_url' => asset('storage/' . $path)
+                'invoice_url' => \Illuminate\Support\Facades\Storage::disk('public')->url($path)
             ]);
         }
 
@@ -829,8 +832,17 @@ class DistributorOrderController extends Controller
 
     public function destroy(distributorOrder $distributorOrder)
     {
-        if (!Auth::user()->hasAnyRole(['admin', 'superadmin'])) {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $isOwner = ($user->hasRole('distributor') && $distributorOrder->distributor_id === $user->distributor?->id);
+        $isAdmin = $user->hasAnyRole(['admin', 'superadmin']);
+
+        if (!$isAdmin && !$isOwner) {
             return response()->json(['error' => 'No permission to delete orders.'], 403);
+        }
+
+        if ($isOwner && $distributorOrder->status !== DistributorOrder::STATUS_PENDING) {
+            return response()->json(['error' => 'You can only delete orders while they are pending.'], 400);
         }
 
         $distributorOrder->items()->delete(); // Delete items first
@@ -879,7 +891,7 @@ class DistributorOrderController extends Controller
 
         return response()->json([
             'success' => 'Order approved.',
-            'invoice_url' => $path ? asset('storage/' . $path) : null
+            'invoice_url' => $path ? \Illuminate\Support\Facades\Storage::disk('public')->url($path) : null
         ]);
     }
 
@@ -905,13 +917,9 @@ class DistributorOrderController extends Controller
 
             foreach ($item->batches as $batch) {
                 $qty = $batch->quantity;
-                $totalStrips = $qty;
-
-                if ($unit === 'box') {
-                    $totalStrips = $qty * (int)($product->strips_per_box ?? 1);
-                } elseif ($unit === 'carton') {
-                    $totalStrips = $qty * (int)($product->boxes_per_carton ?? 1) * (int)($product->strips_per_box ?? 1);
-                }
+                
+                // Use shared conversion helper for accuracy (handles box, carton, nos/tablets)
+                $totalStrips = $this->convertQuantityToStrips($product, $qty, $unit);
 
                 $inventory = Inventory::firstOrNew([
                     'distributor_id' => $order->distributor_id,
@@ -970,6 +978,9 @@ class DistributorOrderController extends Controller
                 'status' => 'delivered',
                 'delivered_at' => now()
             ]);
+
+            // Add items to distributor inventory ONLY when they confirm receipt
+            $this->addOrderItemsToInventory($distributorOrder);
 
             DB::commit();
 

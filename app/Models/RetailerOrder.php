@@ -35,6 +35,7 @@ class RetailerOrder extends Model
         'cancellation_reason',
         'payment_status',
         'invoice_path',
+        'invoice_no',
         'fieldstaff_id',
         'cancellation_reason',
         'loyalty_points_earned',

@@ -94,9 +94,7 @@ class UserController extends Controller
                     'role'            => $u->role,
                     'status'          => $u->status,
                     'roles_display'   => $u->getRoleNames()->implode(', '),
-                    'profile_image_url' => $u->profile_pic
-                        ? \Illuminate\Support\Facades\Storage::url($u->profile_pic)
-                        : null,
+                    'profile_image_url' => $u->avatar_url,
                     'contact_no'      => $u->salesManager?->contact_no ?? $u->distributor?->contact_no ?? $u->retailer?->contact_no ?? $u->fieldStaff?->contact_no ?? '—',
                     'address'         => $u->salesManager?->address ?? $u->retailer?->address ?? $u->fieldStaff?->address ?? $u->distributor?->address ?? '—',
                     'distributor_id'  => $u->distributor?->id ?? $u->retailer?->distributor_id ?? $u->fieldStaff?->distributor_id,
@@ -133,16 +131,13 @@ class UserController extends Controller
 
         // However, I need to make sure I don't break "Admins cannot assign Super Admin" check.
         // And Validation.
-
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:4|confirmed',
+            'password' => 'required|string|min:8|confirmed',
             'role' => 'required|string',
-            'contact_no' => 'nullable|digits:10',
+            'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
-
-        // ... (Auth checks from original file)
 
         $userData = [
             'name' => $request->name,
@@ -154,6 +149,10 @@ class UserController extends Controller
             'address' => $request->address,
             'pincode' => $request->pincode,
         ];
+
+        if ($request->hasFile('profile_pic')) {
+            $userData['profile_pic'] = $request->file('profile_pic')->store('profile_pics', 'public');
+        }
 
         $user = User::create($userData);
         $user->assignRole($request->role);
@@ -203,24 +202,26 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
-        // Same Update logic
         $request->validate([
             'name' => 'required', 
             'email' => 'required|unique:users,email,' . $user->id, 
-            'role' => 'required',
-            'contact_no' => 'nullable|digits:10'
+            'role' => 'required|string',
+            'contact_no' => 'nullable|digits:10',
+            'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
 
-        $data = [
-            'name' => $request->name,
-            'email' => $request->email,
-            'role' => $request->role,
-            'contact_no' => $request->contact_no,
-            'address' => $request->address,
-            'pincode' => $request->pincode,
-        ];
+        $data = $request->only(['name', 'email', 'role', 'contact_no', 'address', 'pincode']);
+        
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
+        }
+
+        if ($request->hasFile('profile_pic')) {
+            // Delete old pic
+            if ($user->profile_pic) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profile_pic);
+            }
+            $data['profile_pic'] = $request->file('profile_pic')->store('profile_pics', 'public');
         }
 
         $user->update($data);

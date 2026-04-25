@@ -20,7 +20,7 @@ class ProfileController extends Controller
 
         $rules = [
             'name' => 'required|string|max:255',
-            'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
             'address' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'pincode' => 'nullable|string|max:20',

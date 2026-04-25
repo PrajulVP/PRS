@@ -209,12 +209,16 @@ class PendingApprovalController extends Controller
                             'order_item_id' => $i->id,
                             'product_id' => $i->product_id,
                             'product_name' => $i->product?->product_name ?? 'N/A',
+                            'product_code' => $i->product?->product_code,
+                            'generic_name' => $i->product?->generic_name,
                             'quantity' => $i->quantity,
                             'unit' => $i->unit ?? 'Strips',
                             'pack' => $i->product?->pack,
                             'strip_size' => $i->product?->strip_size,
                             'box_size' => $i->product?->box_size,
                             'carton_size' => $i->product?->carton_size,
+                            'side' => $i->side,
+                            'size' => $i->size,
                         ];
 
                         if ($viewType === 'distributor') {

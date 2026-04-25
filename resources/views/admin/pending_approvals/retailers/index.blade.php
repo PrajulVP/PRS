@@ -7,14 +7,15 @@
         }
 
         .dataTables_filter input {
-            width: 230px !important;
+            width: 100% !important;
+            max-width: 210px !important;
             margin-left: 10px !important;
         }
 
         /* Segmented Control for Payment Filter */
         .segmented-control {
             display: flex;
-            background-color: #e2e8f0;
+            background-color: var(--med-border, #e2e8f0);
             border-radius: 50px;
             padding: 4px;
             position: relative;
@@ -33,25 +34,25 @@
             margin: 0;
             font-size: 0.75rem;
             font-weight: 700;
-            color: #64748b;
+            color: var(--med-text-muted, #64748b);
             cursor: pointer;
             position: relative;
             z-index: 2;
-            transition: color 0.3s ease;
+            transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
         .segmented-control input:checked+label {
-            color: #0f172a;
+            color: var(--med-text-main, #0f172a);
         }
 
         #pay_paid:checked+label {
-            color: #15803d;
+            color: var(--med-paid-text, #15803d);
         }
 
         #pay_pending:checked+label {
-            color: #b45309;
+            color: var(--med-pending-text, #b45309);
         }
 
         .selection-indicator {
@@ -60,23 +61,26 @@
             bottom: 4px;
             left: 4px;
             width: calc(33.333% - 2.66px);
-            background: #ffffff;
+            background: var(--med-bg-card, #ffffff);
             border-radius: 50px;
             z-index: 1;
-            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         #pay_all:checked~.selection-indicator {
             transform: translateX(0);
+            background: var(--med-bg-card, #ffffff);
         }
 
         #pay_paid:checked~.selection-indicator {
             transform: translateX(100%);
+            background: var(--med-paid-bg, #dcfce7);
         }
 
         #pay_unpaid:checked~.selection-indicator {
             transform: translateX(200%);
+            background: var(--med-pending-bg, #fef9c3);
         }
 
         .dataTables_length {
@@ -99,6 +103,70 @@
 
         .action-buttons .btn {
             margin: 0 !important;
+        }
+
+        /* Responsive Fixes */
+        .nav-tabs {
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding-bottom: 2px;
+        }
+        .nav-tabs::-webkit-scrollbar {
+            display: none;
+        }
+        .nav-tabs .nav-item {
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 991px) {
+            .dataTables_filter label {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 0;
+            }
+            .dataTables_filter input {
+                width: 100% !important;
+                max-width: 200px;
+            }
+        }
+
+        .dataTables_filter label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+
+        .dataTables_filter input {
+            border-radius: 50px !important;
+            padding: 5px 15px !important;
+            border: 1px solid var(--med-border) !important;
+            margin-bottom: 0 !important;
+        }
+
+        @media (max-width: 767px) {
+            .dataTables_filter, .dataTables_length {
+                text-align: center !important;
+                margin-bottom: 10px;
+            }
+            .dataTables_filter input {
+                max-width: 100% !important;
+                margin-left: 0 !important;
+            }
+            .segmented-control {
+                width: 100% !important;
+                max-width: 280px;
+                margin: 10px auto !important;
+            }
+            .payment-filter-container {
+                justify-content: center !important;
+                margin: 15px 0 !important;
+            }
         }
 
         /* Modal sizing and table compacting */
@@ -130,6 +198,10 @@
             padding: 10px;
         }
 
+        body.dark-only .invoice-list {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
         .invoice-list-header {
             display: flex;
             background: #cbd5e1;
@@ -143,6 +215,11 @@
             margin-bottom: 10px;
         }
 
+        body.dark-only .invoice-list-header {
+            background: rgba(255, 255, 255, 0.05);
+            color: #94a3b8;
+        }
+
         .invoice-list-row {
             display: flex;
             background: #fff;
@@ -153,6 +230,12 @@
             align-items: center;
             border: 1px solid #e2e8f0;
             transition: all 0.2s;
+        }
+
+        body.dark-only .invoice-list-row {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.08);
+            box-shadow: none;
         }
 
         .invoice-list-row:hover {
@@ -208,6 +291,23 @@
             overflow: hidden;
         }
 
+        body.dark-only .premium-dropzone {
+            background: rgba(255, 255, 255, 0.02);
+            border-color: rgba(56, 189, 248, 0.3);
+        }
+
+        .variant-highlight {
+            font-weight: 800;
+            color: #0ea5e9;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            margin-left: 10px;
+            padding: 2px 8px;
+            background: rgba(14, 165, 233, 0.1);
+            border-radius: 6px;
+            vertical-align: middle;
+        }
+
         .premium-dropzone:hover {
             background: #eff6ff;
             border-color: #2563eb;
@@ -236,15 +336,24 @@
         .order-summary-header {
             background: var(--med-bg-card);
             color: var(--med-text-main);
-            padding: 32px 28px 24px; /* Increased top padding to clear close button */
+            padding: 12px 24px 10px;
             border-radius: 20px 20px 0 0;
             position: relative;
             border-bottom: 1px solid var(--med-border-light);
             border-top: 4px solid var(--med-primary);
         }
 
+        .order-summary-header .btn-close {
+            z-index: 1060 !important;
+        }
+
         .order-summary-header .text-sm-end {
-            padding-right: 40px !important; /* Spacing for absolute close button */
+            padding-right: 32px !important;
+        }
+
+        .bg-custom-yellow {
+            background-color: #f59e0b !important;
+            color: #ffffff !important;
         }
 
         .retailer-detail-item {
@@ -301,30 +410,30 @@
             display: block;
             padding: 8px 16px;
             border-radius: 8px;
-            background: #f1f5f9;
-            color: #64748b;
+            background: var(--med-bg-body, #f1f5f9);
+            color: var(--med-text-muted, #64748b);
             font-weight: 600;
             font-size: 0.85rem;
-            border: 1px solid transparent;
+            border: 1px solid var(--med-border, transparent);
             transition: all 0.2s;
         }
 
         .status-radio-option input:checked+.status-radio-box {
-            background: #dcfce7;
-            color: #15803d;
-            border-color: #22c55e;
-            box-shadow: 0 2px 4px rgba(34, 197, 94, 0.1);
+            background: var(--med-paid-bg, #dcfce7);
+            color: var(--med-paid-text, #15803d);
+            border-color: var(--med-paid-border, #22c55e);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         .status-radio-option input[value="pending"]:checked+.status-radio-box {
-            background: #fef9c3;
-            color: #854d0e;
-            border-color: #eab308;
+            background: var(--med-pending-bg, #fffbeb);
+            color: var(--med-pending-text, #d97706);
+            border-color: var(--med-pending-border, #fef3c7);
         }
     </style>
     <div class="container-fluid">
         <div class="card shadow-sm border-0 rounded-3">
-            <div class="card-header bg-white border-bottom pb-0">
+            <div class="card-header bg-card-theme border-bottom pb-0">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-primary fw-bold">Retailer Order Approvals</h5>
                 </div>
@@ -415,7 +524,7 @@
 
     {{-- Improved View Details Modal --}}
     <div class="modal fade" id="viewOrderModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg overflow-hidden">
                 <div class="modal-header border-0 p-0">
                     <div class="w-100 p-4 bg-card-theme"
@@ -425,9 +534,12 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <h3 class="mb-1 fw-bold text-main-theme" id="view_order_code">--</h3>
-                        <div class="d-flex gap-3 small text-muted-theme">
-                            <span><i class="fa fa-calendar me-1 text-primary"></i> <span id="view_placed_at">--</span></span>
-                            <span id="view_status"></span>
+                        <div class="d-flex align-items-center gap-3 mt-3">
+                            <span class="small text-muted-theme"><i class="fa fa-calendar me-1 text-primary"></i> <span id="view_placed_at">--</span></span>
+                            <div class="d-flex gap-2 align-items-center">
+                                <div class="badge" id="view_status_badge" style="font-size: 0.7rem; padding: 0.4em 0.8em; letter-spacing: 0.5px;">--</div>
+                                <div class="badge" id="view_payment_status_badge" style="font-size: 0.7rem; padding: 0.4em 0.8em; letter-spacing: 0.5px; border: 1px solid currentColor; background: transparent;">--</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -554,7 +666,7 @@
 
     {{-- Approve Retailer Order Modal (Simple) --}}
     <div class="modal fade" id="approveRetailerOrderModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content">
                 {{-- <div class="modal-header bg-success text-white">
                     <h5 class="modal-title text-white"><i class="fa fa-check-circle me-2"></i> Approve Retailer Order</h5>
@@ -563,7 +675,7 @@
                 <form id="approveRetailerOrderForm" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" id="approve_retailer_order_id" name="order_id">
-                    <div class="modal-body p-0">
+                    <div class="modal-body p-0 bg-card-theme">
                         <!-- Order Summary Header -->
                         <div class="order-summary-header">
                             <button type="button" class="btn-close position-absolute top-0 end-0 m-3"
@@ -585,6 +697,10 @@
                                     <div class="retailer-detail-item justify-content-sm-end">
                                         <i class="fa fa-phone"></i>
                                         <span id="retailer_approve_phone_display">--</span>
+                                    </div>
+                                    <div class="d-flex justify-content-sm-end gap-2 mt-2 align-items-center">
+                                        <div class="badge" id="approve_retailer_status_badge" style="font-size: 0.75rem; padding: 0.4em 0.8em; letter-spacing: 0.5px;">--</div>
+                                        <div class="badge" id="approve_retailer_payment_status_badge" style="font-size: 0.75rem; padding: 0.4em 0.8em; letter-spacing: 0.5px; border: 1px solid currentColor; background: transparent;">--</div>
                                     </div>
                                     <div class="retailer-detail-item justify-content-sm-end d-none"
                                         id="retailer_approve_gstin_container">
@@ -669,7 +785,7 @@
                         <div class="order-summary-header"
                              style="border-top-color: #22c55e;"> {{-- Green accent for batch allocation --}}
                             <button type="button" class="btn-close position-absolute top-0 end-0 m-3"
-                                data-bs-dismiss="modal" aria-label="Close"></button>
+                                data-bs-dismiss="modal" aria-label="Close" style="z-index: 10;"></button>
                             <div class="row align-items-center">
                                 <div class="col-sm-7">
                                     <div class="d-flex align-items-center mb-2">
@@ -687,6 +803,10 @@
                                     <div class="retailer-detail-item justify-content-sm-end">
                                         <i class="fa fa-map-marker-alt"></i>
                                         <span id="dist_approve_location_display">--</span>
+                                    </div>
+                                    <div class="d-flex justify-content-sm-end gap-2 mt-2 align-items-center">
+                                        <div class="badge" id="dist_approve_status_badge" style="font-size: 0.75rem; padding: 0.4em 0.8em; letter-spacing: 0.5px;">--</div>
+                                        <div class="badge" id="dist_approve_payment_status_badge" style="font-size: 0.75rem; padding: 0.4em 0.8em; letter-spacing: 0.5px; border: 1px solid currentColor; background: transparent;">--</div>
                                     </div>
                                 </div>
                             </div>
@@ -778,11 +898,25 @@
                                                 </div>
                                                 <div>
                                                     <small class="text-muted d-block text-uppercase fw-bold"
+                                                        style="font-size: 0.7rem;">Invoice No.</small>
+                                                    <span class="fw-bold" id="meta_invoice_no">--</span>
+                                                </div>
+                                                <div>
+                                                    <small class="text-muted d-block text-uppercase fw-bold"
                                                         style="font-size: 0.7rem;">GSTIN</small>
                                                     <span class="fw-bold" id="meta_gstin">--</span>
                                                 </div>
                                             </div>
                                         </div>
+                                    </div>
+
+                                    <!-- AI Mismatch / Duplicate Warnings -->
+                                    <div id="ai_retailer_validation_alert" class="alert alert-warning py-2 mb-3 d-none">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fa fa-exclamation-triangle me-2"></i>
+                                            <div id="ai_retailer_validation_message" class="small fw-bold"></div>
+                                        </div>
+                                    </div>
                                     </div>
 
                                 </div> <!-- Close success state here -->
@@ -965,7 +1099,7 @@
                     $('[data-bs-toggle="popover"]').popover();
                 },
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
-                    "<'row mb-3 d-flex align-items-center'<'col-md-4'l><'col-md-4 d-flex justify-content-center payment-filter-container'><'col-md-4'f>>" +
+                    "<'row mb-4 gy-3 d-flex align-items-center'<'col-12 col-lg-4'l><'col-12 col-lg-4 d-flex justify-content-lg-center payment-filter-container'><'col-12 col-lg-4 d-flex justify-content-lg-end'f>>" +
                     "<'row'<'col-sm-12'tr>>" +
                     "<'row mt-3'<'col-sm-12 col-md-5 d-flex justify-content-center justify-content-md-start align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-center justify-content-md-end align-items-center'p>>",
                 buttons: {
@@ -1112,7 +1246,7 @@
                         let bgClass = 'bg-secondary text-white';
                         let displayStatus = row.status;
 
-                        if (statusRaw === 'pending') bgClass = 'bg-warning text-dark';
+                        if (statusRaw === 'pending') bgClass = 'bg-custom-yellow text-white';
                         else if (statusRaw === 'processing') {
                             bgClass = 'bg-primary text-white';
                             displayStatus = 'Processing';
@@ -1125,7 +1259,7 @@
                         else if (statusRaw === 'cancelled') bgClass = 'bg-danger text-white';
                         else if (statusRaw === 'rejected') bgClass = 'bg-danger text-white';
 
-                        return `<span class="badge ${bgClass}">${displayStatus}</span>`;
+                        return `<span class="badge ${bgClass}" style="font-size: 0.8rem; padding: 0.5em 0.9em; font-weight: 600;">${displayStatus}</span>`;
                     }
                 },
                 {
@@ -1139,7 +1273,7 @@
                             bgClass = 'bg-success text-white';
                             displayLabel = 'Paid';
                         } else {
-                            bgClass = 'bg-warning text-dark';
+                            bgClass = 'bg-custom-yellow text-white';
                             displayLabel = 'Pending';
                         }
 
@@ -1147,7 +1281,7 @@
                         let cursorStyle = canChangePayment ? 'cursor: pointer;' : '';
                         let clickableClass = canChangePayment ? 'change-payment-status' : '';
 
-                        return `<span class="badge ${bgClass} ${clickableClass}" data-id="${row.id}" data-status="${payStatus}" style="font-size: 0.85rem; ${cursorStyle}">${displayLabel}</span>`;
+                        return `<span class="badge ${bgClass} ${clickableClass}" data-id="${row.id}" data-status="${payStatus}" style="font-size: 0.8rem; padding: 0.5em 0.9em; font-weight: 600; ${cursorStyle}">${displayLabel}</span>`;
                     }
                 },
                 {
@@ -1522,7 +1656,7 @@
                         $select.val(newStatus);
                         $select.removeClass('bg-warning bg-secondary bg-success bg-danger bg-info text-dark text-white');
                         let newClass = 'bg-secondary text-white';
-                        if (newStatus.includes('pending')) newClass = 'bg-warning text-dark';
+                        if (newStatus.includes('pending')) newClass = 'bg-custom-yellow text-white';
                         else if (newStatus.includes('approved')) newClass = 'bg-info text-white';
                         else if (newStatus.includes('delivered')) newClass = 'bg-success text-white';
                         else if (newStatus.includes('cancelled')) newClass = 'bg-danger text-white';
@@ -1563,7 +1697,7 @@
                     if (res.success) {
                         $select.removeClass('bg-warning bg-secondary bg-success bg-danger text-dark text-white');
                         let newClass = 'bg-secondary text-white';
-                        if (newStatus == 'pending') newClass = 'bg-warning text-dark';
+                        if (newStatus == 'pending') newClass = 'bg-custom-yellow text-white';
                         else if (newStatus == 'paid') newClass = 'bg-success text-white';
                         else if (newStatus == 'failed') newClass = 'bg-danger text-white';
 
@@ -1722,7 +1856,18 @@
                 // Header Info
                 $('#view_order_code').text(row.order_code);
                 $('#view_placed_at').text(row.placed_at || '--');
-                $('#view_status').html(`<span class="badge bg-soft-primary text-primary px-3" style="font-size: 0.9rem;">${row.status || 'Pending'}</span>`);
+                // Status Badge logic
+                let status = (row.status || 'pending').toLowerCase();
+                let badgeClass = 'bg-secondary text-white';
+                if (status === 'pending') badgeClass = 'bg-custom-yellow text-white';
+                else if (status === 'processing') badgeClass = 'bg-primary text-white';
+                else if (status === 'approved' || status === 'delivered') badgeClass = 'bg-success text-white';
+                else if (status === 'cancelled' || status === 'rejected') badgeClass = 'bg-danger text-white';
+                $('#view_status_badge').text(row.status || 'Pending').removeClass().addClass('badge ' + badgeClass).css('font-size', '0.7rem');
+
+                let payStatus = (row.payment_status || 'pending').toLowerCase();
+                let payBadgeClass = payStatus === 'paid' ? 'text-success' : 'text-warning';
+                $('#view_payment_status_badge').text(payStatus === 'paid' ? 'PAID' : 'UNPAID').removeClass().addClass('badge ' + payBadgeClass).css({'border': '1px solid currentColor', 'background': 'transparent', 'font-size': '0.7rem'});
 
                 // Retailer Info
                 $('#view_retailer_name').text(row.retailer_name || '--');
@@ -1743,11 +1888,20 @@
                             item.batches.map(b => `<div class="small text-muted">B: ${b.batch_no} | E: ${b.expiry_date}</div>`).join('') :
                             '<span class="text-muted small">Not Allocated</span>';
 
+                        let variantInfo = '';
+                        if (item.side || item.size) {
+                            variantInfo = `<span class="variant-highlight ms-2">${[item.side, item.size].filter(v => v).join(' / ')}</span>`;
+                        }
+
                         tbody.append(`
                                                         <tr class="align-middle">
-                                                            <td class="py-3">
-                                                                <div class="fw-bold text-main-theme">${item.product_name}</div>
-                                                                <div class="small text-muted-theme">${item.product_code || ''}</div>
+                                                            <td class="py-3 ps-4">
+                                                                <div class="fw-bold text-main-theme" style="font-size: 0.95rem;">${item.product_name}${variantInfo}</div>
+                                                                <div class="d-flex gap-2 flex-wrap mt-1">
+                                                                    ${item.generic_name ? `<span class="badge bg-light text-dark border-0 fw-normal" style="font-size: 0.65rem;">${item.generic_name}</span>` : ''}
+                                                                    ${item.pack && item.pack !== 'N/A' && item.pack !== '---' ? `<div class="small text-muted-theme opacity-75">Pack: ${item.pack}</div>` : ''}
+                                                                    ${item.product_code && item.product_code !== '---' && item.product_code !== 'N/A' ? `<div class="small text-muted-theme opacity-75">Code: ${item.product_code}</div>` : ''}
+                                                                </div>
                                                             </td>
                                                             <td class="text-main-theme">${batchInfo}</td>
                                                             <td class="text-center text-main-theme">${item.quantity} ${item.unit || 'Strips'}</td>
@@ -1780,6 +1934,19 @@
 
                     // Populate more retailer details
                     $('#retailer_approve_phone_display').text(row.retailer_phone || '--');
+
+                    let status = (row.status || 'pending').toLowerCase();
+                    let badgeClass = 'bg-secondary text-white';
+                    if (status === 'pending') badgeClass = 'bg-custom-yellow text-white';
+                    else if (status === 'processing') badgeClass = 'bg-primary text-white';
+                    else if (status === 'approved' || status === 'delivered') badgeClass = 'bg-success text-white';
+                    else if (status === 'cancelled' || status === 'rejected') badgeClass = 'bg-danger text-white';
+                    $('#approve_retailer_status_badge').text(row.status || 'Pending').removeClass().addClass('badge ' + badgeClass).css('font-size', '0.7rem');
+
+                    let payStatus = (row.payment_status || 'pending').toLowerCase();
+                    let payBadgeClass = payStatus === 'paid' ? 'text-success' : 'text-warning';
+                    $('#approve_retailer_payment_status_badge').text(payStatus === 'paid' ? 'PAID' : 'UNPAID').removeClass().addClass('badge ' + payBadgeClass).css({'border': '1px solid currentColor', 'background': 'transparent', 'font-size': '0.7rem'});
+
                     if (row.retailer_gstin) {
                         $('#retailer_approve_gstin_display').text(row.retailer_gstin);
                         $('#retailer_approve_gstin_container').removeClass('d-none');
@@ -1794,8 +1961,16 @@
                         row.items.forEach(item => {
                             list.append(`
                                 <div class="invoice-list-row">
-                                    <div style="flex: 2;" class="fw-bold text-dark">${item.product_name}</div>
-                                    <div style="flex: 1;" class="text-center text-muted small">${item.quantity} ${item.unit || 'Box'}</div>
+                                    <div style="flex: 2;" class="fw-bold text-main-theme">
+                                        ${item.product_name}
+                                        <div class="d-flex gap-2 flex-wrap mt-1">
+                                            ${(item.side || item.size) ? `<div class="small badge bg-info text-white border-0" style="font-size: 0.6rem;">${[item.side, item.size].filter(Boolean).join(' / ')}</div>` : ''}
+                                            ${item.generic_name ? `<span class="badge bg-light text-dark border-0 fw-normal" style="font-size: 0.6rem;">${item.generic_name}</span>` : ''}
+                                            ${item.pack && item.pack !== 'N/A' && item.pack !== '---' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.65rem;">P: ${item.pack}</div>` : ''}
+                                            ${item.product_code && item.product_code !== '---' && item.product_code !== 'N/A' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.65rem;">C: ${item.product_code}</div>` : ''}
+                                        </div>
+                                    </div>
+                                    <div style="flex: 1;" class="text-center text-muted-theme small">${item.quantity} ${item.unit || 'Box'}</div>
                                     <div style="flex: 1;" class="text-end fw-bold text-success">₹${item.total_amount}</div>
                                 </div>
                             `);
@@ -1902,8 +2077,21 @@
                     $('#dist_approve_retailer_display').text(row.retailer_name || '--');
                     $('#dist_approve_location_display').text(row.retailer_location || row.retailer_address || '--');
 
-                    // Reset payment status to pending
-                    $('input[name="payment_status"][value="pending"]').prop('checked', true);
+                    let status = (row.status || 'pending').toLowerCase();
+                    let badgeClass = 'bg-secondary text-white';
+                    if (status === 'pending') badgeClass = 'bg-custom-yellow text-white';
+                    else if (status === 'processing') badgeClass = 'bg-primary text-white';
+                    else if (status === 'approved' || status === 'delivered') badgeClass = 'bg-success text-white';
+                    else if (status === 'cancelled' || status === 'rejected') badgeClass = 'bg-danger text-white';
+                    $('#dist_approve_status_badge').text(row.status || 'Pending').removeClass().addClass('badge ' + badgeClass).css('font-size', '0.7rem');
+
+                    let payStatus = (row.payment_status || 'pending').toLowerCase();
+                    let payBadgeClass = payStatus === 'paid' ? 'text-success' : 'text-warning';
+                    $('#dist_approve_payment_status_badge').text(payStatus === 'paid' ? 'PAID' : 'UNPAID').removeClass().addClass('badge ' + payBadgeClass).css({'border': '1px solid currentColor', 'background': 'transparent', 'font-size': '0.7rem'});
+
+                    // Set current payment status in radio buttons
+                    $(`input[name="payment_status"][value="${payStatus}"]`).prop('checked', true);
+
 
                     let tbody = $('#batch_entry_body');
                     let vbody = $('#verification_table_body');
@@ -1961,10 +2149,15 @@
                                                                                                                                                                             `;
                         tbody.append(rowHtml);
 
+                        let vVariantInfo = '';
+                        if (item.side || item.size) {
+                            vVariantInfo = `<span class="variant-highlight ms-2">${[item.side, item.size].filter(v => v).join(' / ')}</span>`;
+                        }
+
                         // 2. Visible Verification Row (Invoiced Style)
                         let vRowHtml = `
                                                                                                                                                                                 <div id="v_row_${orderItemId}" class="invoice-list-row">
-                                                                                                                                                                                    <div class="ai-col-product fw-bold text-dark small">${item.product_name}</div>
+                                                                                                                                                                                    <div class="ai-col-product fw-bold text-dark small">${item.product_name}${vVariantInfo}</div>
                                                                                                                                                                                     <div class="ai-col-batch v-batch-display text-muted small" data-id="${orderItemId}">--</div>
                                                                                                                                                                                     <div class="ai-col-expiry v-expiry-display text-muted small" data-id="${orderItemId}">--</div>
                                                                                                                                                                                     <div class="ai-col-qty fw-bold text-primary v-qty-display" data-original-unit="${item.unit || ''}">${orderedQty} ${item.unit || ''}</div>
@@ -2042,6 +2235,8 @@
                 let formData = new FormData();
                 formData.append('invoice', file);
                 formData.append('type', 'retailer');
+                formData.append('order_id', $('#approve_order_id').val());
+                formData.append('order_type', 'retailer');
                 formData.append('_token', '{{ csrf_token() }}');
 
                 $.ajax({
@@ -2142,8 +2337,34 @@
 
                 // Update Metadata visually
                 if (data.invoice_metadata) {
-                    $('#meta_date').text(data.invoice_metadata.date || '--');
-                    $('#meta_gstin').text(data.invoice_metadata.gstin || '--');
+                    const meta = data.invoice_metadata;
+                    $('#meta_date').text(meta.date || '--');
+                    $('#meta_invoice_no').text(meta.invoice_no || '--');
+                    $('#meta_gstin').text(meta.gstin || '--');
+
+                    // Validation Logic
+                    let enteredInv = $('#retailer_invoice_no_input').val().trim().toLowerCase();
+                    let extractedInv = (meta.invoice_no || '').trim().toLowerCase();
+                    let $valAlert = $('#ai_retailer_validation_alert');
+                    let $valMsg = $('#ai_retailer_validation_message');
+                    let hasError = false;
+
+                    $valAlert.addClass('d-none').removeClass('alert-warning alert-danger');
+
+                    if (meta.is_duplicate) {
+                        $valAlert.removeClass('d-none').addClass('alert-danger');
+                        $valMsg.text('DUPLICATE INVOICE: This invoice number has already been used by this distributor.');
+                        hasError = true;
+                    } else if (enteredInv && extractedInv && !extractedInv.includes(enteredInv) && !enteredInv.includes(extractedInv)) {
+                        $valAlert.removeClass('d-none').addClass('alert-warning');
+                        $valMsg.text(`MISMATCH: Entered No. (${$('#retailer_invoice_no_input').val()}) does not match Extracted No. (${meta.invoice_no}).`);
+                    }
+
+                    if (hasError) {
+                        $('#btnSubmitDistributorApprove').prop('disabled', true);
+                    } else {
+                        $('#btnSubmitDistributorApprove').prop('disabled', false);
+                    }
                 }
 
                 $('.product-row').each(function () {
@@ -2331,6 +2552,30 @@
 
                 return identifiedCount;
             }
+            $(document).on('input', '#retailer_invoice_no_input', function() {
+                let entered = $(this).val().trim().toLowerCase();
+                let extracted = $(this).data('extracted');
+                let extractedRaw = $(this).data('extracted-raw');
+                let isDuplicate = $(this).data('is-duplicate');
+                let $valAlert = $('#ai_retailer_validation_alert');
+                let $valMsg = $('#ai_retailer_validation_message');
+                let hasError = false;
+
+                if (extracted === undefined) return;
+
+                $valAlert.addClass('d-none').removeClass('alert-warning alert-danger');
+
+                if (isDuplicate) {
+                    $valAlert.removeClass('d-none').addClass('alert-danger');
+                    $valMsg.text('DUPLICATE INVOICE: This invoice number has already been used by this distributor.');
+                    hasError = true;
+                } else if (entered && extracted && !extracted.includes(entered) && !entered.includes(extracted)) {
+                    $valAlert.removeClass('d-none').addClass('alert-warning');
+                    $valMsg.text(`MISMATCH: Entered No. (${$(this).val()}) does not match Extracted No. (${extractedRaw}).`);
+                }
+
+                $('#btnSubmitDistributorApprove').prop('disabled', hasError);
+            });
         });
     </script>
 @endpush

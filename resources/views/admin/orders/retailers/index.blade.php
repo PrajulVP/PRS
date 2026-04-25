@@ -9,8 +9,14 @@
         }
 
         .dataTables_filter input {
-            width: 230px !important;
+            width: 100% !important;
+            max-width: 210px !important;
             margin-left: 10px !important;
+        }
+
+        .bg-custom-yellow {
+            background-color: #f59e0b !important;
+            color: #ffffff !important;
         }
 
         /* Segmented Control for Payment Filter */
@@ -133,6 +139,70 @@
             padding-top: 20px !important;
         }
 
+        /* Responsive Fixes */
+        #orderStatusTabs {
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+            padding-bottom: 2px;
+        }
+        #orderStatusTabs::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
+        }
+        #orderStatusTabs .nav-item {
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 991px) {
+            .dataTables_filter label {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 0;
+            }
+            .dataTables_filter input {
+                width: 100% !important;
+                max-width: 200px;
+            }
+        }
+
+        .dataTables_filter label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+
+        .dataTables_filter input {
+            border-radius: 50px !important;
+            padding: 5px 15px !important;
+            border: 1px solid var(--med-border) !important;
+            margin-bottom: 0 !important;
+        }
+
+        @media (max-width: 767px) {
+            .dataTables_filter, .dataTables_length {
+                text-align: center !important;
+                margin-bottom: 10px;
+            }
+            .dataTables_filter input {
+                max-width: 100% !important;
+                margin-left: 0 !important;
+            }
+            .segmented-control {
+                width: 100% !important;
+                max-width: 280px;
+                margin: 10px auto !important;
+            }
+            .payment-filter-container {
+                justify-content: center !important;
+                margin: 15px 0 !important;
+            }
+        }
+
         /* Minimal Filter Bar Styles */
         .filter-bar {
             background: var(--med-bg-card);
@@ -190,54 +260,76 @@
         }
 
         /* --- New Order View UI Styles --- */
+        /* --- New Horizontal Order View UI Styles --- */
         .order-timeline {
+            display: flex;
+            justify-content: space-between;
             position: relative;
-            padding-left: 25px;
-            margin-top: 10px;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            padding-left: 0;
         }
         .order-timeline::before {
             content: '';
             position: absolute;
-            left: 5px;
-            top: 5px;
-            bottom: 5px;
-            width: 2px;
+            top: 10px;
+            left: 5%;
+            right: 5%;
+            height: 2px;
             background: #e2e8f0;
+            z-index: 0;
         }
         .timeline-item {
             position: relative;
-            margin-bottom: 25px;
+            z-index: 1;
+            flex: 1;
+            text-align: center;
+            margin-bottom: 0;
         }
         .timeline-marker {
-            position: absolute;
-            left: -25px;
-            top: 4px;
-            width: 12px;
-            height: 12px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             background: #cbd5e1;
-            border: 2px solid #fff;
+            border: 4px solid var(--med-bg-card);
             box-shadow: 0 0 0 2px #e2e8f0;
-            z-index: 1;
+            margin: 0 auto 10px;
             transition: all 0.3s ease;
         }
         .timeline-item.active .timeline-marker {
             background: var(--med-primary, #00497a);
             box-shadow: 0 0 0 2px rgba(0, 73, 122, 0.2);
+            transform: scale(1.2);
         }
         .timeline-content {
-            padding-left: 10px;
+            padding-left: 0;
         }
         .timeline-content h6 {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             font-weight: 700;
-            margin-bottom: 2px;
-            color: #1e293b;
+            margin-bottom: 4px;
+            color: var(--med-text-main);
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
         }
         .timeline-content span {
-            font-size: 0.75rem;
-            color: #64748b;
+            font-size: 0.65rem;
+            color: var(--med-text-muted);
+            display: block;
+            line-height: 1.2;
         }
+        .variant-highlight {
+            font-weight: 800;
+            color: #0ea5e9;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            margin-left: 10px;
+            padding: 2px 8px;
+            background: rgba(14, 165, 233, 0.1);
+            border-radius: 6px;
+            vertical-align: middle;
+        }
+        /* --- End New Order View UI Styles --- */
         /* --- End New Order View UI Styles --- */
     </style>
     <div class="container-fluid">
@@ -438,7 +530,7 @@
 
     {{-- Show Modal --}}
     <div class="modal fade" id="showOrderModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header border-bottom-0 pb-0">
                     <h5 class="fw-bold mb-0">Order Details <span id="modalOrderCode" class="text-primary ms-2"></span></h5>
@@ -515,7 +607,7 @@
 
     {{-- Distributor Batch Selection Modal --}}
     <div class="modal fade" id="distributorApproveModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Approve Retailer Order & Allocate Batches</h5>
@@ -590,7 +682,7 @@
             var table = $('#orders-table').DataTable({
                 order: [[7, 'desc']],
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
-                    "<'row mb-4 d-flex align-items-center'<'col-md-4'l><'col-md-4 d-flex justify-content-center payment-filter-container'><'col-md-4'f>>" +
+                    "<'row mb-4 gy-3 d-flex align-items-center'<'col-12 col-lg-4'l><'col-12 col-lg-4 d-flex justify-content-lg-center payment-filter-container'><'col-12 col-lg-4 d-flex justify-content-lg-end'f>>" +
                     "<'row'<'col-sm-12'tr>>" +
                     "<'row mt-3'<'col-sm-12 col-md-5 d-flex justify-content-center justify-content-md-start align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-center justify-content-md-end align-items-center'p>>",
                 buttons: {
@@ -716,13 +808,13 @@
                     render: function (data, type, row) {
                         let status = (data || '').toLowerCase();
                         let badgeClass = 'bg-secondary';
-                        if (status === 'pending') badgeClass = 'bg-warning text-dark';
+                        if (status === 'pending') badgeClass = 'bg-custom-yellow text-white';
                         else if (status === 'processing') badgeClass = 'bg-info text-white';
                         else if (status === 'approved') badgeClass = 'bg-primary text-white';
                         else if (status === 'delivered') badgeClass = 'bg-success text-white';
                         else if (status === 'cancelled') badgeClass = 'bg-danger text-white';
 
-                        return `<span class="badge ${badgeClass}">${data.charAt(0).toUpperCase() + data.slice(1)}</span>`;
+                        return `<span class="badge ${badgeClass}" style="font-size: 0.8rem; padding: 0.5em 0.9em; font-weight: 600;">${data.charAt(0).toUpperCase() + data.slice(1)}</span>`;
                     }
                 },
                 {
@@ -735,11 +827,11 @@
                     render: function (data, type, row) {
                         let status = (data || 'pending').toLowerCase();
                         let badgeClass = 'bg-secondary';
-                        if (status === 'paid') badgeClass = 'bg-success';
-                        else if (status === 'failed') badgeClass = 'bg-danger';
-                        else badgeClass = 'bg-warning text-dark';
+                        if (status === 'paid') badgeClass = 'bg-success text-white';
+                        else if (status === 'failed') badgeClass = 'bg-danger text-white';
+                        else badgeClass = 'bg-custom-yellow text-white';
 
-                        return `<span class="badge ${badgeClass}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
+                        return `<span class="badge ${badgeClass}" style="font-size: 0.8rem; padding: 0.5em 0.9em; font-weight: 600;">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
                     }
                 },
                 {
@@ -774,9 +866,9 @@
                             btns += `<a href="${invoiceUrl}" target="_blank" class="btn btn-dark btn-sm" title="Print Invoice"><i class="fa fa-print"></i></a>`;
                         }
 
-                        // Retailer Cancel Pending Order
+                        // Retailer Delete Pending Order
                         if (st === 'pending' && isRetailer) {
-                            btns += `<button class="btn btn-danger btn-sm cancel-order-btn" data-id="${row.id}" title="Cancel Order"><i class="fa fa-times-circle"></i></button>`;
+                            btns += `<button class="btn btn-danger btn-sm delete-order-btn" data-id="${row.id}" title="Delete Order"><i class="fa fa-trash"></i></button>`;
                         }
 
                         // Retailer Confirmation
@@ -1196,7 +1288,8 @@
                                                                                                                     Pack: ${item.pack || 'N/A'} | 
                                                                                                                     Strip Size: ${item.strip_size || 1} | 
                                                                                                                     Box Size: ${item.box_size || 1} | 
-                                                                                                                    Carton Size: ${item.carton_size || 1}
+                                                                                                                    Carton Size: ${item.carton_size || 1} |
+                                                                                                                    ${(item.side || item.size) ? `<span class="badge bg-soft-info text-info border-0 px-2" style="font-size: 0.65rem;">${[item.side, item.size].filter(Boolean).join(' / ')}</span>` : ''}
                                                                                                                 </div>
                                                                                                                 <input type="hidden" name="items[${orderItemId}][product_id]" value="${productId}">
                                                                                                             </td>
@@ -1392,44 +1485,46 @@
                 let row = $('#orders-table').DataTable().row(tr).data();
                 if (!row) return;
 
-                $('#modalOrderCode').html(`#${row.order_code} <span class="badge ${row.payment_status === 'paid' ? 'bg-success' : 'bg-warning text-dark'} ms-2" style="font-size: 0.65rem; vertical-align: middle; text-transform: uppercase;">${row.payment_status || 'Pending'}</span>`);
+                let payStatus = (row.payment_status || 'pending').toLowerCase();
+                let payBadgeClass = payStatus === 'paid' ? 'bg-success text-white' : 'bg-custom-yellow text-white';
+                $('#modalOrderCode').html(`#${row.order_code} <span class="badge ${payBadgeClass} ms-2" style="font-size: 0.75rem; vertical-align: middle; padding: 0.3em 0.7em;">${payStatus.toUpperCase()}</span>`);
 
                 let detailsHtml = `
                     <div class="row mb-4">
                         <div class="col-md-6 mb-3 mb-md-0">
-                            <div class="card h-100 border-0 shadow-sm" style="border-radius: 16px !important;">
-                                <div class="card-body">
-                                    <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;"><i class="fa fa-shop me-2"></i>Retailer Info</h6>
-                                    <h5 class="fw-bold mb-1" style="color: var(--med-text-main);">${row.retailer_shop || row.retailer_name}</h5>
-                                    ${row.retailer_shop ? `<div class="text-muted small mb-2"><i class="fa fa-user me-2"></i>${row.retailer_name}</div>` : ''}
-                                    <div class="d-flex align-items-center mb-1"><i class="fa fa-phone text-muted me-2" style="width: 16px;"></i> <span class="small">${row.retailer_phone || 'N/A'}</span></div>
-                                    <div class="d-flex align-items-start text-wrap"><i class="fa fa-map-marker text-muted me-2 mt-1" style="width: 16px;"></i> <span class="small" style="max-width: 200px;">${row.retailer_address || 'N/A'}</span></div>
+                            <div class="card h-100 border-0 shadow-sm bg-card-theme" style="border-radius: 12px !important;">
+                                <div class="card-body py-3 px-4">
+                                    <h6 class="text-uppercase text-muted-theme fw-bold mb-2" style="font-size: 0.65rem; letter-spacing: 0.05em;"><i class="fa fa-shop me-2"></i>Retailer Info</h6>
+                                    <h5 class="fw-bold mb-1 text-main-theme" style="font-size: 1.1rem;">${row.retailer_shop || row.retailer_name}</h5>
+                                    ${row.retailer_shop ? `<div class="text-muted-theme small mb-1"><i class="fa fa-user me-2"></i>${row.retailer_name}</div>` : ''}
+                                    <div class="d-flex align-items-center mb-0 text-main-theme"><i class="fa fa-phone text-muted-theme me-2" style="width: 14px; font-size: 0.8rem;"></i> <span class="small">${row.retailer_phone || 'N/A'}</span></div>
+                                    <div class="d-flex align-items-start text-wrap text-main-theme"><i class="fa fa-map-marker text-muted-theme me-2 mt-1" style="width: 14px; font-size: 0.8rem;"></i> <span class="small opacity-75" style="max-width: 250px;">${row.retailer_address || 'N/A'}</span></div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="card h-100 border-0 shadow-sm" style="border-radius: 16px !important;">
-                                <div class="card-body">
-                                    <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.7rem; letter-spacing: 0.05em;"><i class="fa fa-building me-2"></i>Distributor Info</h6>
-                                    <h5 class="fw-bold mb-2" style="color: var(--med-text-main);">${row.distributor_name || 'N/A'}</h5>
-                                    <div class="d-flex align-items-center mb-1"><i class="fa fa-phone text-muted me-2" style="width: 16px;"></i> <span class="small">${row.distributor_phone || 'N/A'}</span></div>
+                            <div class="card h-100 border-0 shadow-sm bg-card-theme" style="border-radius: 12px !important;">
+                                <div class="card-body py-3 px-4">
+                                    <h6 class="text-uppercase text-muted-theme fw-bold mb-2" style="font-size: 0.65rem; letter-spacing: 0.05em;"><i class="fa fa-building me-2"></i>Distributor Info</h6>
+                                    <h5 class="fw-bold mb-2 text-main-theme" style="font-size: 1.1rem;">${row.distributor_name || 'N/A'}</h5>
+                                    <div class="d-flex align-items-center mb-0 text-main-theme"><i class="fa fa-phone text-muted-theme me-2" style="width: 14px; font-size: 0.8rem;"></i> <span class="small">${row.distributor_phone || 'N/A'}</span></div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px !important; overflow: hidden;">
+                    <div class="card border-0 shadow-sm mb-4 bg-card-theme" style="border-radius: 16px !important; overflow: hidden;">
                         <div class="card-body p-0">
                             <div class="table-responsive">
                                 <table class="table mb-0 align-middle">
                                     <thead style="background: rgba(var(--med-primary-rgb), 0.03); border-bottom: 2px solid var(--med-border);">
                                         <tr>
-                                            <th class="py-3 px-4 text-muted fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Pharmaceutical Item</th>
-                                            <th class="py-3 px-4 text-center text-muted fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Standard Batch</th>
-                                            <th class="py-3 px-4 text-center text-muted fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Order Qty</th>
-                                            <th class="py-3 px-4 text-center text-muted fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Bonus</th>
-                                            <th class="py-3 px-4 text-end text-muted fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Price (₹)</th>
-                                            <th class="py-3 px-4 text-end text-muted fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Line Total (₹)</th>
+                                            <th class="py-3 px-4 text-muted-theme fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Pharmaceutical Item</th>
+                                            <th class="py-3 px-4 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Standard Batch</th>
+                                            <th class="py-3 px-4 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Order Qty</th>
+                                            <th class="py-3 px-4 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Bonus</th>
+                                            <th class="py-3 px-4 text-end text-muted-theme fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Price (₹)</th>
+                                            <th class="py-3 px-4 text-end text-muted-theme fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Line Total (₹)</th>
                                         </tr>
                                     </thead>
                                     <tbody class="border-0">
@@ -1451,16 +1546,22 @@
                         `).join('');
                     }
 
+                    let variantInfo = '';
+                    if (i.side || i.size) {
+                        variantInfo = `<span class="variant-highlight ms-2">${[i.side, i.size].filter(v => v).join(' / ')}</span>`;
+                    }
+
                     detailsHtml += `
                         <tr style="border-bottom: 1px solid var(--med-border-light, #f1f5f9);">
                             <td class="py-3 px-4">
                                 <div class="d-flex align-items-center">
-                                    <div class="product-icon-min me-3 d-flex align-items-center justify-content-center bg-soft-primary rounded-circle" style="width: 32px; height: 32px; flex-shrink: 0;">
-                                        <i class="fa fa-pill text-primary" style="font-size: 0.8rem;"></i>
-                                    </div>
-                                    <div>
-                                        <div class="fw-bold fs-6" style="color: var(--med-text-main); font-size: 0.85rem !important;">${name}</div>
-                                        <div class="text-muted small" style="font-size: 0.7rem;">Reference SKU: ${i.product_code || '---'}</div>
+                                    <div class="ms-0">
+                                        <div class="text-main-theme fw-bold mb-0" style="font-size: 0.95rem;">${name}${variantInfo}</div>
+                                        <div class="text-muted small mt-1">
+                                            ${i.generic_name ? `<span class="badge bg-light text-dark border-0 fw-normal me-2" style="font-size: 0.65rem;">${i.generic_name}</span>` : ''}
+                                            ${i.pack && i.pack !== 'N/A' && i.pack !== '---' ? `<span class="me-2">Pack: ${i.pack}</span>` : ''}
+                                            ${i.product_code && i.product_code !== 'N/A' && i.product_code !== '---' ? `<span>Code: ${i.product_code}</span>` : ''}
+                                        </div>
                                     </div>
                                 </div>
                             </td>
@@ -1497,9 +1598,9 @@
                         </div>
                     </div>
 
-                    <div class="card border-0 shadow-sm" style="border-radius: 16px !important;">
+                    <div class="card border-0 shadow-sm bg-card-theme" style="border-radius: 16px !important;">
                         <div class="card-body py-4 px-4">
-                            <h6 class="text-uppercase text-muted fw-bold mb-4" style="font-size: 0.72rem; letter-spacing: 0.08em;"><i class="fa fa-history me-2"></i>Order Lifecycle Progress</h6>
+                            <h6 class="text-uppercase text-muted-theme fw-bold mb-4" style="font-size: 0.72rem; letter-spacing: 0.08em;"><i class="fa fa-history me-2"></i>Order Lifecycle Progress</h6>
                             <div class="order-timeline">
                                 ${(() => {
                                     const status = (row.status || '').toLowerCase();
@@ -1531,7 +1632,7 @@
                                                 <div class="timeline-marker" style="background: #ef4444 !important; border-color: #ef4444 !important; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;"></div>
                                                 <div class="timeline-content">
                                                     <h6 class="text-danger">${status.toUpperCase()}</h6>
-                                                    <span>The order process was terminated.</span>
+                                                    <span>Reason: ${row.cancellation_reason || 'The order process was terminated.'}</span>
                                                 </div>
                                             </div>
                                         `;

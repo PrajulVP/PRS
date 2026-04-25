@@ -298,7 +298,7 @@ class DistributorOrderApiController extends Controller
                     $multiplier = 1 / (max(1, (int)($product->units_per_strip ?? 1)));
                 }
 
-                $totalQtyStrips = ceil($qty * $multiplier);
+                $totalQtyStrips = $qty * $multiplier;
 
                 $gstRate = (float)($product->gst ?? 0);
                 $taxableSubtotal = $totalQtyStrips * $unitPrice;
@@ -556,8 +556,9 @@ class DistributorOrderApiController extends Controller
             'total_quantity' => $order->total_quantity,
             'status' => $order->status,
             'payment_status' => $order->payment_status,
+            'cancellation_reason' => $order->cancellation_reason,
             'placed_at' => $order->placed_at,
-            'invoice_url' => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
+            'invoice_url' => $order->invoice_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($order->invoice_path) : null,
             'items' => $order->items->map(function ($item) {
                 return [
                     'id' => $item->id,
@@ -603,7 +604,7 @@ class DistributorOrderApiController extends Controller
             }
 
             $multiplier = (float)$multiplier;
-            $totalStrips = ceil($qty * $multiplier);
+            $totalStrips = $qty * $multiplier;
 
             $inventory = Inventory::firstOrNew([
                 'distributor_id' => $order->distributor_id,

@@ -1,15 +1,46 @@
 <!-- Page Header Start-->
 <style>
-  .notification-box {
+  .notification-box, .mode-toggle {
     position: relative;
-    display: flex;
+    display: flex !important;
     align-items: center;
     justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50% !important;
+    background-color: rgba(255, 255, 255, 0.08);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: none !important;
+    padding: 0 !important;
   }
 
-  .notification-box i {
-    width: 20px;
-    height: 20px;
+  body:not(.dark-only) .notification-box, 
+  body:not(.dark-only) .mode-toggle {
+    background-color: #f1f5f9;
+  }
+
+  .nav-menus li {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 5px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .mode-toggle.mode {
+      box-shadow: none !important;
+      background-color: rgba(255, 255, 255, 0.08) !important;
+      border-radius: 50% !important;
+      width: 42px;
+      height: 42px;
+  }
+
+  .notification-box i, .mode-toggle i {
+    width: 18px;
+    height: 18px;
   }
 
   .notification-box .badge {
@@ -109,21 +140,10 @@
                   <input class="w-100" type="search" placeholder="Search"></span></div>
             </div> --}}
           </li>
-          <li class="d-md-none d-block">
-            <div class="form search-form mb-0">
-              <div class="input-group"> <span class="input-show">
-                  <svg id="searchIcon">
-                    <use href="../../admin/assets/svg/icon-sprite.svg#search-header"></use>
-                  </svg>
-                  <div id="searchInput">
-                    <input type="search" placeholder="Search">
-                  </div>
-                </span></div>
-            </div>
-          </li>
+
 
           <li>
-            <div class="mode"><i class="moon" data-feather="moon"> </i></div>
+            <div class="mode-toggle mode"><i class="moon" data-feather="moon"></i></div>
           </li>
 
           @if(Auth::guard('web')->check() && Auth::guard('web')->user()->hasRole('retailer') && Auth::guard('web')->user()->retailer)
@@ -166,9 +186,6 @@
                 position: relative;
                 transform-style: preserve-3d;
                 flex-shrink: 0;
-              }
-
-              }
 
               @keyframes coin-shine-flip {
                 0%, 75% { transform: rotateY(0deg); filter: brightness(1) drop-shadow(0 0 2px rgba(184, 134, 11, 0.3)); }

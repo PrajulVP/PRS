@@ -34,8 +34,29 @@
                         margin: 0 auto;
                         transition: all 0.3s ease;
                     }
-                    .executive-metric-card:hover .icon-circle-lg {
-                        transform: scale(1.1);
+                    .icon-circle-md {
+                        width: 60px;
+                        height: 60px;
+                        border-radius: 18px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        transition: all 0.3s ease;
+                        flex-shrink: 0;
+                    }
+                    .executive-metric-card:hover .icon-circle-lg,
+                    .executive-metric-card:hover .icon-circle-md {
+                        transform: scale(1.05);
+                    }
+                    
+                    .action-card-compact .card-body {
+                        padding: 1.25rem !important;
+                    }
+                    .action-card-compact h5 {
+                        font-size: 1.05rem !important;
+                    }
+                    .action-card-compact p {
+                        font-size: 0.8rem !important;
                     }
 
                     .btn-outline-pill {
@@ -125,6 +146,16 @@
                         background: #10b981;
                         color: white !important;
                         border-color: #10b981;
+                    }
+
+                    .btn-pill-compact.btn-primary {
+                        background: var(--med-primary);
+                        color: white !important;
+                        border: none !important;
+                    }
+                    .btn-pill-compact.btn-primary:hover {
+                        background: var(--med-accent);
+                        transform: translateY(-2px);
                     }
 
                     .med-widget-card {
@@ -393,39 +424,39 @@
                             </div>
                         </div>
                         <div class="col-12">
-                            <div class="row g-4">
-                                <div class="col-md-6">
-                                    <div class="card border-0 rounded-4 shadow-sm h-100 overflow-hidden executive-metric-card cursor-pointer" 
+                            <div class="row g-3">
+                                <div class="col-md-5">
+                                    <div class="card border-0 rounded-4 shadow-sm h-100 overflow-hidden executive-metric-card action-card-compact cursor-pointer" 
                                         style="background: linear-gradient(135deg, rgba(var(--med-primary-rgb), 0.05) 0%, #fff 100%);"
                                         onclick="window.location.href='{{ route('admin.retailer.create') }}'">
-                                        <div class="card-body p-4 d-flex align-items-center gap-4">
-                                            <div class="icon-circle-lg bg-soft-primary" style="background: rgba(var(--med-primary-rgb), 0.15)">
-                                                <i data-feather="plus-circle" class="text-primary" style="width: 32px; height: 32px;"></i>
+                                        <div class="card-body d-flex align-items-center gap-3">
+                                            <div class="icon-circle-md" style="background: rgba(var(--med-primary-rgb), 0.1)">
+                                                <i data-feather="plus-circle" class="text-primary" style="width: 24px; height: 24px;"></i>
                                             </div>
                                             <div>
-                                                <h5 class="fw-800 mb-1" style="color: var(--med-primary);">Create Manual Order</h5>
-                                                <p class="text-muted small mb-0">Directly pick products and build your order</p>
+                                                <h5 class="fw-800 mb-0" style="color: var(--med-primary);">Create Manual Order</h5>
+                                                <p class="text-muted mb-0">Pick products and build order</p>
                                             </div>
                                             <div class="ms-auto">
-                                                <i data-feather="arrow-right" class="text-muted" style="width: 20px;"></i>
+                                                <i data-feather="arrow-right" class="text-muted" style="width: 18px;"></i>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="card border-0 rounded-4 shadow-sm h-100 overflow-hidden executive-metric-card cursor-pointer" 
+                                <div class="col-md-5">
+                                    <div class="card border-0 rounded-4 shadow-sm h-100 overflow-hidden executive-metric-card action-card-compact cursor-pointer" 
                                         style="background: linear-gradient(135deg, rgba(var(--med-primary-rgb), 0.9) 0%, var(--med-accent) 100%);"
                                         onclick="window.location.href='{{ route('admin.retailer.create', ['action' => 'upload_prescription']) }}'">
-                                        <div class="card-body p-4 d-flex align-items-center gap-4">
-                                            <div class="icon-circle-lg bg-white bg-opacity-20">
-                                                <i data-feather="cpu" class="text-white" style="width: 32px; height: 32px; stroke-width: 2.5px;"></i>
+                                        <div class="card-body d-flex align-items-center gap-3">
+                                            <div class="icon-circle-md" style="background: rgba(255, 255, 255, 0.2)">
+                                                <i data-feather="cpu" class="text-white" style="width: 24px; height: 24px; stroke-width: 2.5px;"></i>
                                             </div>
                                             <div>
-                                                <h5 class="fw-800 mb-1 text-white">AI Prescription Order</h5>
-                                                <p class="text-white text-opacity-75 small mb-0">Upload a request and let AI extract products</p>
+                                                <h5 class="fw-800 mb-0 text-white">AI Prescription Order</h5>
+                                                <p class="text-white text-opacity-75 mb-0">AI product extraction</p>
                                             </div>
                                             <div class="ms-auto text-white">
-                                                <i data-feather="arrow-right" style="width: 20px;"></i>
+                                                <i data-feather="arrow-right" style="width: 18px;"></i>
                                             </div>
                                         </div>
                                     </div>
@@ -495,45 +526,7 @@
                         <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.9rem; letter-spacing: 1.5px; color: var(--med-primary);">Distributor Control Panel</h5>
                     </div>
 
-                    {{-- Quick Actions for Distributors --}}
-                    <div class="row mb-5">
-                        <div class="col-md-6 mb-4 mb-md-0">
-                            <div class="card border-0 rounded-4 shadow-sm h-100 overflow-hidden executive-metric-card cursor-pointer" 
-                                style="background: linear-gradient(135deg, rgba(var(--med-primary-rgb), 0.05) 0%, #fff 100%);"
-                                onclick="alert('Rating System Module Loading...')">
-                                <div class="card-body p-4 d-flex align-items-center gap-4">
-                                    <div class="icon-circle-lg bg-soft-info" style="background: rgba(14, 165, 233, 0.15)">
-                                        <i data-feather="star" class="text-info" style="width: 32px; height: 32px;"></i>
-                                    </div>
-                                    <div>
-                                        <h5 class="fw-800 mb-1" style="color: var(--med-primary);">Rate Sales Representative</h5>
-                                        <p class="text-muted small mb-0">Provide feedback on service quality and communication</p>
-                                    </div>
-                                    <div class="ms-auto">
-                                        <i data-feather="arrow-right" class="text-muted" style="width: 20px;"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card border-0 rounded-4 shadow-sm h-100 overflow-hidden executive-metric-card cursor-pointer" 
-                                style="background: linear-gradient(135deg, rgba(var(--med-primary-rgb), 0.9) 0%, var(--med-accent) 100%);"
-                                onclick="alert('Rewards & Schemes Module Loading...')">
-                                <div class="card-body p-4 d-flex align-items-center gap-4">
-                                    <div class="icon-circle-lg bg-white bg-opacity-20">
-                                        <i data-feather="gift" class="text-white" style="width: 32px; height: 32px; stroke-width: 2.5px;"></i>
-                                    </div>
-                                    <div>
-                                        <h5 class="fw-800 mb-1 text-white">Rewards & Schemes</h5>
-                                        <p class="text-white text-opacity-75 small mb-0">View benefits available against your achievements</p>
-                                    </div>
-                                    <div class="ms-auto text-white">
-                                        <i data-feather="arrow-right" style="width: 20px;"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
 
                     <div class="row">
                         @php
@@ -896,7 +889,7 @@
                                     </div>
                                     <h5 class="fw-bold mb-3">Products</h5>
                                     <p class="text-muted mb-4 small" style="line-height: 1.6;">Analyze SKU mobility and inventory velocity metrics.</p>
-                                    <a href="{{ route('admin.reports.products') }}" class="btn btn-pill-compact btn-info text-white">Analyze</a>
+                                    <a href="{{ route('admin.reports.products') }}" class="btn btn-pill-compact btn-primary">Analyze</a>
                                 </div>
                             </div>
                         </div>
@@ -942,7 +935,7 @@
                                     </div>
                                     <h5 class="fw-bold mb-3">Staff KPI</h5>
                                     <p class="text-muted mb-4 small" style="line-height: 1.6;">Analyze field force productivity and performance.</p>
-                                    <a href="{{ route('admin.reports.fieldstaffs') }}" class="btn btn-pill-compact btn-warning text-white">Analyze</a>
+                                    <a href="{{ route('admin.reports.fieldstaffs') }}" class="btn btn-pill-compact btn-primary">Analyze</a>
                                 </div>
                             </div>
                         </div>

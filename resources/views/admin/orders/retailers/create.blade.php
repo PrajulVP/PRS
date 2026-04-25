@@ -80,8 +80,8 @@
                                 </div>
                             </div>
 
-                            <div class="row g-4">
-                                <div class="col-md-6">
+                            <div class="row g-3">
+                                <div class="col-lg-4 col-md-6">
                                     <label class="form-label fw-bold text-muted small text-uppercase mb-2">1. Select Product</label>
                                     <select id="productSelect" class="form-select select2">
                                         <option value="">Search Product...</option>
@@ -90,38 +90,38 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-lg-4 col-md-6">
                                     <label class="form-label fw-bold text-muted small text-uppercase mb-2">2. Select Distributor</label>
                                     <select id="distributorSelect" class="form-select select2" disabled>
                                         <option value="">Select Product First</option>
                                     </select>
                                 </div>
-
-                                {{-- Details & Qty --}}
-                                <div class="col-md-12" id="selectionDetails" style="display: none;">
-                                    <div class="row g-3 align-items-end">
-                                        <div class="col-md-12" id="variantWrapper" style="display: none;">
-                                            <div id="variantLevelsContainer"></div>
-                                            <input type="hidden" id="variantValue" value="">
-                                        </div>
-                                        <div class="col-md-4 text-center mx-auto">
-                                            <label class="form-label fw-bold text-muted small text-uppercase mb-2">Build Quantity</label>
+                                <div class="col-lg-4 col-md-12" id="selectionDetails" style="display: none;">
+                                    <div class="row g-2 align-items-end">
+                                        <div class="col-6">
+                                            <label class="form-label fw-bold text-muted small text-uppercase mb-2">Qty</label>
                                             <div class="input-group">
-                                                <input type="number" id="qtyInput" class="form-control fw-bold rounded-start" value="1" min="1">
-                                                <select class="form-select bg-light-soft border-start-0 font-outfit rounded-end" id="unitSelect" style="max-width: 130px;">
-                                                    <option value="Strips">Strips</option>
+                                                <input type="number" id="qtyInput" class="form-control fw-bold border-end-0" value="1" min="1" style="height: 48px;">
+                                                <select class="form-select fw-bold bg-light" id="unitSelect" style="height: 48px; max-width: 90px; border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                                                    <option value="Strips">Str</option>
                                                     <option value="Box">Box</option>
                                                     <option value="Nos">Nos</option>
                                                 </select>
                                             </div>
                                         </div>
-                                        <div class="col-md-12 text-center mt-3">
-                                            <button type="button" class="btn btn-primary px-5 fw-bold shadow-sm font-outfit rounded-3 py-2" id="btnAddItem">
-                                                <i class="fa fa-plus me-1"></i> ADD TO BUNDLE
+                                        <div class="col-6">
+                                            <button type="button" class="btn btn-primary w-100 fw-bold shadow-sm font-outfit rounded-3 py-2" id="btnAddItem" style="height: 48px; background: var(--med-primary);">
+                                                <i class="fa fa-plus me-1"></i> ADD
                                             </button>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+
+                            {{-- Variant Selection - Floating Bar Style --}}
+                            <div id="variantWrapper" class="mt-3 p-3 border rounded-4 bg-white shadow-sm border-primary border-opacity-10" style="display: none;">
+                                <div id="variantLevelsContainer" class="d-flex flex-wrap gap-4"></div>
+                                <input type="hidden" id="variantValue" value="">
                             </div>
                         </div>
                     </div>
@@ -452,12 +452,32 @@
             let lastAiResponse = null; 
             var currentProductDetails = null;
 
-            function updateDistributorStock(prodId, retailerId, side = null, size = null) {
+            function updateDistributorStock(prodId, retailerId, side = null, size = null, preFetchedDistributors = null) {
                 let $distSelect = $('#distributorSelect');
                 let currentVal = $distSelect.val(); // Keep selection if possible
                 
+                const renderDistributors = (distributors) => {
+                    $distSelect.empty().append('<option value="">Select Distributor (Top matches first)</option>');
+                    
+                    if (distributors && distributors.length > 0) {
+                        distributors.forEach(d => {
+                            let stock = d.pivot ? d.pivot.stock : 0;
+                            $distSelect.append(`<option value="${d.id}" data-stock-raw="${stock}" ${currentVal == d.id ? 'selected' : ''}>${d.shop_name || d.name}</option>`);
+                        });
+                    } else {
+                        $distSelect.append('<option value="" disabled>No stockists found for this variant in your area</option>');
+                    }
+                    
+                    $distSelect.prop('disabled', false).trigger('change.select2');
+                };
+
+                // Use pre-fetched data if available to avoid redundant AJAX (prevents double refresh)
+                if (preFetchedDistributors) {
+                    renderDistributors(preFetchedDistributors);
+                    return;
+                }
+
                 $distSelect.prop('disabled', true);
-                
                 $.ajax({
                     url: "{{ route('admin.retailer.product-details', ':id') }}".replace(':id', prodId),
                     type: 'GET',
@@ -467,18 +487,7 @@
                         size: size
                     },
                     success: function (res) {
-                        $distSelect.empty().append('<option value="">Select Distributor (Top matches first)</option>');
-                        
-                        if (res.distributors && res.distributors.length > 0) {
-                            res.distributors.forEach(d => {
-                                let stock = d.pivot ? d.pivot.stock : 0;
-                                $distSelect.append(`<option value="${d.id}" data-stock-raw="${stock}" ${currentVal == d.id ? 'selected' : ''}>${d.shop_name || d.name}</option>`);
-                            });
-                        } else {
-                            $distSelect.append('<option value="" disabled>No stockists found for this variant in your area</option>');
-                        }
-                        
-                        $distSelect.prop('disabled', false).trigger('change');
+                        renderDistributors(res.distributors);
                     },
                     error: function() {
                         $distSelect.prop('disabled', false);
@@ -528,7 +537,8 @@
                     return;
                 }
 
-                $('#distributorSelect').prop('disabled', false).empty().append('<option value="">Loading Stockists...</option>');
+                // Set loading state without triggering redundant change events
+                $('#distributorSelect').prop('disabled', true).empty().append('<option value="">Searching Stockists...</option>');
                 $('#selectionDetails').hide();
                 $('#productDetailsCard').hide();
 
@@ -539,7 +549,8 @@
                     success: function (res) {
                         let p = res.product;
                         currentProductDetails = p;
-                        updateDistributorStock(prodId, retailerId);
+                        // Pass pre-fetched distributors to avoid second AJAX and double refresh
+                        updateDistributorStock(prodId, retailerId, null, null, res.distributors);
                         
                         let pName = (p.product_name || '').toLowerCase();
                         let dynamicVariants = [];
@@ -562,10 +573,10 @@
                                 let levelIdx = 0;
                                 Object.keys(p.variant_options).forEach(attrName => {
                                     let vals = p.variant_options[attrName];
-                                    $container.append(`<div class="variant-level mb-3" id="levelContainer_${levelIdx}" style="${levelIdx > 0 ? 'display:none;' : ''}" data-attr-name="${attrName}">
-                                        <label class="form-label fw-bold text-muted small text-uppercase mb-2">Select ${attrName}</label>
+                                    $container.append(`<div class="variant-level" id="levelContainer_${levelIdx}" style="${levelIdx > 0 ? 'display:none;' : ''}" data-attr-name="${attrName}">
+                                        <label class="form-label fw-bold text-muted small text-uppercase mb-1" style="font-size: 0.7rem;">${attrName}</label>
                                         <div class="d-flex flex-wrap gap-2">
-                                            ${vals.map(v => `<button type="button" class="btn btn-outline-primary variant-btn px-3 py-2 fw-bold" data-level="${levelIdx}" data-attr="${attrName}" data-value="${v}">${v}</button>`).join('')}
+                                            ${vals.map(v => `<button type="button" class="btn btn-xs btn-outline-primary variant-btn px-2 py-1 fw-bold" style="font-size: 0.8rem; border-radius: 6px;" data-level="${levelIdx}" data-attr="${attrName}" data-value="${v}">${v}</button>`).join('')}
                                         </div>
                                     </div>`);
                                     levelIdx++;
@@ -584,14 +595,16 @@
                             $('#variantValue').val('');
                         }
 
-                        // Unit Logic
+                        // Unit Logic: If has code, it is a single item (No.)
                         let $unitSelect = $('#unitSelect');
                         $unitSelect.empty();
                         let pPack = (p.pack || '').toLowerCase();
-                        let isCount = p.box_size === "" || pPack.includes('nos') || pPack.includes('count');
+                        let hasCode = p.product_code && p.product_code !== '---' && p.product_code.trim() !== '';
+                        let isCount = hasCode || p.box_size === "" || pPack.includes('nos') || pPack.includes('count');
+
                         if (isCount) {
-                            $unitSelect.append('<option value="Strips">Nos</option>');
-                            $('#ptrLabel').text(`PTR (Per Nos)`);
+                            $unitSelect.append('<option value="Nos">No.</option>');
+                            $('#ptrLabel').text(`PTR (Per No.)`);
                         } else {
                             $unitSelect.append('<option value="Strips">Strips</option><option value="Box">Box</option>');
                             $('#ptrLabel').text(`PTR (Per Strip)`);
@@ -756,7 +769,7 @@
                         boxes_per_carton: boxesPerCarton,
                         units_per_strip: currentProductDetails.units_per_strip,
                         has_variants: currentProductDetails.has_variants,
-                        is_count: $('#unitSelect').val() === 'Strips' && $('#unitSelect option:selected').text() === 'Nos',
+                        is_count: $('#unitSelect').val() === 'Nos',
                         maxStock: maxStockRaw
                     };
                 }

@@ -6,13 +6,13 @@
         border-bottom: none;
         gap: 0.5rem;
         padding: 0.5rem;
-        background: #f8fafc;
+        background: var(--med-bg-body, #f8fafc);
         border-radius: 12px;
         display: inline-flex;
     }
     .nav-tabs.custom-tabs .nav-link {
         border: 1px solid transparent !important;
-        color: #64748b;
+        color: var(--med-text-muted, #64748b);
         font-weight: 600;
         padding: 0.5rem 1.25rem;
         border-radius: 8px !important;
@@ -21,14 +21,15 @@
         transition: all 0.2s ease;
     }
     .nav-tabs.custom-tabs .nav-link.active {
-        color: #00497a !important;
-        background: #ffffff !important;
-        border-color: #e2e8f0 !important;
+        color: var(--med-primary, #00497a) !important;
+        background: var(--med-bg-card, #ffffff) !important;
+        border-color: var(--med-border, #e2e8f0) !important;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
     }
     .nav-tabs.custom-tabs .nav-link:hover:not(.active) {
-        color: #475569;
-        background: #f1f5f9;
+        color: var(--med-text-main, #475569);
+        background: var(--med-bg-body);
+        opacity: 0.8;
         border-color: transparent;
     }
     .action-buttons {
@@ -317,7 +318,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6 text-dark">
+                            <div class="col-md-6">
                                 <div class="d-flex align-items-start gap-2 p-3 rounded"
                                     style="background: var(--med-bg-body);">
                                     <i class="fa fa-map-marker-alt mt-1 text-danger"></i>
@@ -403,7 +404,7 @@
     <div class="modal fade" id="quickViewModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-light border-0">
+                <div class="modal-header bg-card-theme border-0">
                     <h6 class="modal-title fw-bold"><i class="fa fa-eye me-2 text-primary"></i>Quick View</h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -517,9 +518,9 @@
                             let fsData = JSON.stringify(fs).replace(/"/g, '&quot;');
                             let title = `Email: ${fs.user.email}&#10;Contact: ${fs.contact_no || 'N/A'}`;
                             return `<tr>
-                                <td><a href="javascript:void(0)" class="fw-bold text-primary quick-view-trigger" data-type="fieldstaff" data-item='${fsData}' title="${title}">${fs.user.name}</a></td>
-                                <td>${fs.user.email}</td>
-                                <td>${fs.contact_no || 'N/A'}</td>
+                                <td class="text-main-theme"><a href="javascript:void(0)" class="fw-bold text-primary quick-view-trigger" data-type="fieldstaff" data-item='${fsData}' title="${title}">${fs.user.name}</a></td>
+                                <td class="text-main-theme">${fs.user.email}</td>
+                                <td class="text-main-theme">${fs.contact_no || 'N/A'}</td>
                                 <td><span class="status-badge ${fs.user.status === 'active' ? 'status-badge-active' : 'status-badge-inactive'}">${fs.user.status}</span></td>
                             </tr>`;
                         }).join('') || '<tr><td colspan="4">None</td></tr>';
@@ -530,10 +531,10 @@
                             let retData = JSON.stringify(ret).replace(/"/g, '&quot;');
                             let title = `Email: ${ret.user.email}&#10;Contact: ${ret.contact_no || 'N/A'}&#10;Points: ${ret.loyalty_points}`;
                             return `<tr>
-                                <td><a href="javascript:void(0)" class="fw-bold text-primary quick-view-trigger" data-type="retailer" data-item='${retData}' title="${title}">${ret.shop_name}</a></td>
-                                <td>${ret.user.name}</td>
-                                <td>${ret.user.email}</td>
-                                <td>${ret.contact_no || 'N/A'}</td>
+                                <td class="text-main-theme"><a href="javascript:void(0)" class="fw-bold text-primary quick-view-trigger" data-type="retailer" data-item='${retData}' title="${title}">${ret.shop_name}</a></td>
+                                <td class="text-main-theme">${ret.user.name}</td>
+                                <td class="text-main-theme">${ret.user.email}</td>
+                                <td class="text-main-theme">${ret.contact_no || 'N/A'}</td>
                                 <td><span class="status-badge ${ret.user.status === 'active' ? 'status-badge-active' : 'status-badge-inactive'}">${ret.user.status}</span></td>
                             </tr>`;
                         }).join('') || '<tr><td colspan="5">None</td></tr>';
@@ -555,13 +556,15 @@
 
                 let bodyHtml = `
                     <div class="text-center mb-4">
-                        <div class="d-inline-block position-relative mb-3">
+                        <div class="mb-3">
                             ${avatarHtml}
-                            <span class="position-absolute status-badge ${data.user?.status === 'active' ? 'status-badge-active' : 'status-badge-inactive'}" style="border: 2px solid var(--med-bg-card); bottom: -2px; right: -2px;">
+                        </div>
+                        <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
+                            <h5 class="fw-bold mb-0 text-main" style="font-family: 'Montserrat', sans-serif;">${name}</h5>
+                            <span class="status-badge ${data.user?.status === 'active' ? 'status-badge-active' : 'status-badge-inactive'}" style="font-size: 0.65rem; padding: 2px 8px;">
                                 ${data.user?.status}
                             </span>
                         </div>
-                        <h5 class="fw-bold mb-0 text-main" style="font-family: 'Montserrat', sans-serif;">${name}</h5>
                         ${owner}
                     </div>
                     <div class="row g-3">

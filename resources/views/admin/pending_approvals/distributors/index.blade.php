@@ -8,14 +8,15 @@
         }
 
         .dataTables_filter input {
-            width: 230px !important;
+            width: 100% !important;
+            max-width: 210px !important;
             margin-left: 10px !important;
         }
 
         /* Segmented Control for Payment Filter */
         .segmented-control {
             display: flex;
-            background-color: #e2e8f0;
+            background-color: var(--med-border, #e2e8f0);
             border-radius: 50px;
             padding: 4px;
             position: relative;
@@ -32,27 +33,27 @@
             text-align: center;
             padding: 6px 0;
             margin: 0;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 700;
-            color: #64748b;
+            color: var(--med-text-muted, #64748b);
             cursor: pointer;
             position: relative;
             z-index: 2;
-            transition: color 0.3s ease;
+            transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
         .segmented-control input:checked+label {
-            color: #0f172a;
+            color: var(--med-text-main, #0f172a);
         }
 
         #pay_paid:checked+label {
-            color: #15803d;
+            color: var(--med-paid-text, #15803d);
         }
 
         #pay_pending:checked+label {
-            color: #b45309;
+            color: var(--med-pending-text, #b45309);
         }
 
         .selection-indicator {
@@ -61,23 +62,26 @@
             bottom: 4px;
             left: 4px;
             width: calc(33.333% - 2.66px);
-            background: #ffffff;
+            background: var(--med-bg-card, #ffffff);
             border-radius: 50px;
             z-index: 1;
-            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         #pay_all:checked~.selection-indicator {
             transform: translateX(0);
+            background: var(--med-bg-card, #ffffff);
         }
 
         #pay_paid:checked~.selection-indicator {
             transform: translateX(100%);
+            background: var(--med-paid-bg, #dcfce7);
         }
 
         #pay_unpaid:checked~.selection-indicator {
             transform: translateX(200%);
+            background: var(--med-pending-bg, #fef9c3);
         }
 
         .dataTables_length {
@@ -109,11 +113,79 @@
             margin: 0 !important;
         }
 
+        /* Responsive Fixes */
+        .nav-tabs {
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding-bottom: 2px;
+        }
+        .nav-tabs::-webkit-scrollbar {
+            display: none;
+        }
+        .nav-tabs .nav-item {
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 991px) {
+            .dataTables_filter label {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 0;
+            }
+            .dataTables_filter input {
+                width: 100% !important;
+                max-width: 200px;
+            }
+        }
+
+        .dataTables_filter label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+
+        .dataTables_filter input {
+            border-radius: 50px !important;
+            padding: 5px 15px !important;
+            border: 1px solid var(--med-border) !important;
+            margin-bottom: 0 !important;
+        }
+
+        @media (max-width: 767px) {
+            .dataTables_filter, .dataTables_length {
+                text-align: center !important;
+                margin-bottom: 10px;
+            }
+            .dataTables_filter input {
+                max-width: 100% !important;
+                margin-left: 0 !important;
+            }
+            .segmented-control {
+                width: 100% !important;
+                max-width: 280px;
+                margin: 10px auto !important;
+            }
+            .payment-filter-container {
+                justify-content: center !important;
+                margin: 15px 0 !important;
+            }
+        }
+
         /* Invoice-style Item List */
         .invoice-list {
             background: #f1f5f9;
             border-radius: 12px;
             padding: 10px;
+        }
+
+        body.dark-only .invoice-list {
+            background: rgba(0, 0, 0, 0.2);
         }
 
         .invoice-list-header {
@@ -129,6 +201,11 @@
             margin-bottom: 10px;
         }
 
+        body.dark-only .invoice-list-header {
+            background: rgba(255, 255, 255, 0.05);
+            color: #94a3b8;
+        }
+
         .invoice-list-row {
             display: flex;
             background: #fff;
@@ -139,6 +216,12 @@
             align-items: center;
             border: 1px solid #e2e8f0;
             transition: all 0.2s;
+        }
+
+        body.dark-only .invoice-list-row {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.08);
+            box-shadow: none;
         }
 
         .invoice-list-row:hover {
@@ -200,6 +283,23 @@
             overflow: hidden;
         }
 
+        body.dark-only .premium-dropzone {
+            background: rgba(255, 255, 255, 0.02);
+            border-color: rgba(56, 189, 248, 0.3);
+        }
+
+        .variant-highlight {
+            font-weight: 800;
+            color: #0ea5e9;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            margin-left: 10px;
+            padding: 2px 8px;
+            background: rgba(14, 165, 233, 0.1);
+            border-radius: 6px;
+            vertical-align: middle;
+        }
+
         .premium-dropzone:hover {
             background: #eff6ff;
             border-color: #2563eb;
@@ -228,15 +328,24 @@
         .order-summary-header {
             background: var(--med-bg-card);
             color: var(--med-text-main);
-            padding: 32px 28px 24px; /* Increased top padding to clear close button */
+            padding: 12px 24px 10px;
             border-radius: 20px 20px 0 0;
             position: relative;
             border-bottom: 1px solid var(--med-border-light);
             border-top: 4px solid var(--med-primary);
         }
 
+        .order-summary-header .btn-close {
+            z-index: 1060 !important;
+        }
+
         .order-summary-header .text-sm-end {
-            padding-right: 40px !important; /* Spacing for absolute close button */
+            padding-right: 32px !important;
+        }
+
+        .bg-custom-yellow {
+            background-color: #f59e0b !important;
+            color: #ffffff !important;
         }
 
         .retailer-detail-item {
@@ -293,25 +402,25 @@
             display: block;
             padding: 8px 16px;
             border-radius: 8px;
-            background: #f1f5f9;
-            color: #64748b;
+            background: var(--med-bg-body, #f1f5f9);
+            color: var(--med-text-muted, #64748b);
             font-weight: 600;
             font-size: 0.85rem;
-            border: 1px solid transparent;
+            border: 1px solid var(--med-border, transparent);
             transition: all 0.2s;
         }
 
         .status-radio-option input:checked+.status-radio-box {
-            background: #dcfce7;
-            color: #15803d;
-            border-color: #22c55e;
-            box-shadow: 0 2px 4px rgba(34, 197, 94, 0.1);
+            background: var(--med-paid-bg, #dcfce7);
+            color: var(--med-paid-text, #15803d);
+            border-color: var(--med-paid-border, #22c55e);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         .status-radio-option input[value="pending"]:checked+.status-radio-box {
-            background: #fef9c3;
-            color: #854d0e;
-            border-color: #eab308;
+            background: var(--med-pending-bg, #fffbeb);
+            color: var(--med-pending-text, #d97706);
+            border-color: var(--med-pending-border, #fef3c7);
         }
 
         /* Custom Modal Width */
@@ -322,7 +431,7 @@
 
     <div class="container-fluid">
         <div class="card shadow-sm border-0 rounded-3">
-            <div class="card-header bg-white border-bottom pb-0">
+            <div class="card-header bg-card-theme border-bottom pb-0">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-primary fw-bold">Distributor Order Approvals</h5>
                 </div>
@@ -409,7 +518,7 @@
     </div>
 
     <div class="modal fade" id="viewOrderModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-custom-width modal-dialog-centered">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content shadow-lg border-0 overflow-hidden">
                 <div class="modal-body p-0">
                     <!-- Order Summary Header -->
@@ -430,8 +539,11 @@
                             </div>
                             <div class="col-sm-5 text-sm-end">
                                 <div class="text-muted-theme small text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Distributor Information</div>
-                                <h5 class="fw-bold text-main-theme mb-1" id="view_distributor">--</h5>
-                                <div class="badge bg-soft-info" id="view_status_badge">--</div>
+                                <h5 class="fw-bold text-main-theme mb-2" id="view_distributor">--</h5>
+                                <div class="d-flex justify-content-sm-end gap-2 align-items-center">
+                                    <div class="badge" id="view_status_badge" style="font-size: 0.7rem; padding: 0.4em 0.8em; letter-spacing: 0.5px;">--</div>
+                                    <div class="badge" id="view_payment_status_badge" style="font-size: 0.7rem; padding: 0.4em 0.8em; letter-spacing: 0.5px; border: 1px solid currentColor; background: transparent;">--</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -471,7 +583,7 @@
 
     {{-- Approve Order Modal for Sales Managers --}}
     <div class="modal fade" id="approveOrderModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-custom-width modal-dialog-centered">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content shadow-lg border-0 overflow-hidden">
                 <form id="approveOrderForm">
                     <div class="modal-body p-0">
@@ -494,6 +606,10 @@
                                     <div class="text-muted-theme small text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Distributor Information
                                     </div>
                                     <h5 class="fw-bold text-main-theme mb-1" id="approve_distributor_display">--</h5>
+                                    <div class="d-flex justify-content-sm-end gap-2 align-items-center mb-1">
+                                        <div class="badge" id="approve_status_badge" style="font-size: 0.7rem; padding: 0.4em 0.8em; letter-spacing: 0.5px;">--</div>
+                                        <div class="badge" id="approve_payment_status_badge" style="font-size: 0.7rem; padding: 0.4em 0.8em; letter-spacing: 0.5px; border: 1px solid currentColor; background: transparent;">--</div>
+                                    </div>
                                     <div class="retailer-detail-item justify-content-sm-end">
                                         <i class="fa fa-map-marker-alt"></i>
                                         <span id="approve_location_display">--</span>
@@ -602,7 +718,7 @@
                         <!-- Order Summary Header -->
                         <div class="order-summary-header">
                             <button type="button" class="btn-close position-absolute top-0 end-0 m-3"
-                                data-bs-dismiss="modal" aria-label="Close"></button>
+                                data-bs-dismiss="modal" aria-label="Close" style="z-index: 10;"></button>
                             <div class="row align-items-center">
                                 <div class="col-sm-7">
                                     <div class="d-flex align-items-center mb-2">
@@ -618,6 +734,10 @@
                                     <div class="text-muted-theme small text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Distributor Information
                                     </div>
                                     <h5 class="fw-bold text-main-theme mb-1" id="process_distributor_display">--</h5>
+                                    <div class="d-flex justify-content-sm-end gap-2 align-items-center mb-1">
+                                        <div class="badge" id="process_status_badge" style="font-size: 0.7rem; padding: 0.4em 0.8em; letter-spacing: 0.5px;">--</div>
+                                        <div class="badge" id="process_payment_status_badge" style="font-size: 0.7rem; padding: 0.4em 0.8em; letter-spacing: 0.5px; border: 1px solid currentColor; background: transparent;">--</div>
+                                    </div>
                                     <div class="retailer-detail-item justify-content-sm-end">
                                         <i class="fa fa-map-marker-alt"></i>
                                         <span id="process_location_display">--</span>
@@ -697,18 +817,30 @@
                                 <div id="automation_success_state" class="d-none">
                                     <div class="bg-light p-3 rounded-3 border mb-3">
                                         <div class="row g-3">
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <div class="text-muted small">Inv Date</div>
                                                 <div class="fw-bold text-dark" id="extract_date">--</div>
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
+                                                <div class="text-muted small">Invoice No.</div>
+                                                <div class="fw-bold text-dark" id="extract_invoice_no">--</div>
+                                            </div>
+                                            <div class="col-md-3">
                                                 <div class="text-muted small">GSTIN (Extracted)</div>
                                                 <div class="fw-bold text-dark" id="extract_gstin">--</div>
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <div class="text-muted small">Drug License</div>
                                                 <div class="fw-bold text-dark" id="extract_dl">--</div>
                                             </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- AI Mismatch / Duplicate Warnings -->
+                                    <div id="ai_validation_alert" class="alert alert-warning py-2 mb-3 d-none">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fa fa-exclamation-triangle me-2"></i>
+                                            <div id="ai_validation_message" class="small fw-bold"></div>
                                         </div>
                                     </div>
 
@@ -726,7 +858,7 @@
                                             <!-- AI data rows will be injected here -->
                                         </div>
                                         <div id="verification_table_footer" class="invoice-list-footer bg-light d-none"
-                                            style="font-size: 0.75rem;">
+                                            style="font-size: 0.7rem;">
                                             <div class="d-flex w-100 justify-content-between align-items-center">
                                                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="$('#scan_file_input').val('').click()">
                                                     <i class="fa fa-sync me-1"></i> Re-scan / Different File
@@ -843,7 +975,7 @@
     <style>
         .action-buttons .btn {
             padding: 4px 8px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
         }
 
         .alert-soft-warning {
@@ -934,7 +1066,7 @@
                     $('[data-bs-toggle="popover"]').popover();
                 },
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
-                    "<'row mb-3 d-flex align-items-center'<'col-md-4'l><'col-md-4 d-flex justify-content-center payment-filter-container'><'col-md-4'f>>" +
+                    "<'row mb-4 gy-3 d-flex align-items-center'<'col-12 col-lg-4'l><'col-12 col-lg-4 d-flex justify-content-lg-center payment-filter-container'><'col-12 col-lg-4 d-flex justify-content-lg-end'f>>" +
                     "<'row '<'col-sm-12'tr>>" +
                     "<'row mt-3 '<'col-sm-12 col-md-5 d-flex align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-end align-items-center'p>>",
                 buttons: {
@@ -1053,18 +1185,18 @@
                             let bgClass = 'bg-secondary';
                             let displayStatus = row.status;
 
-                            if (statusRaw.includes('pending')) bgClass = 'bg-warning text-dark';
+                            if (statusRaw.includes('pending')) bgClass = 'bg-custom-yellow text-white';
                             else if (statusRaw === 'processing') {
-                                bgClass = 'bg-primary';
+                                bgClass = 'bg-primary text-white';
                                 displayStatus = 'Processing';
                             } else if (statusRaw === 'approved') {
-                                bgClass = 'bg-info';
+                                bgClass = 'bg-info text-white';
                                 displayStatus = 'Approved';
-                            } else if (statusRaw.includes('delivered')) bgClass = 'bg-success';
-                            else if (statusRaw.includes('cancelled')) bgClass = 'bg-danger';
-                            else if (statusRaw.includes('rejected')) bgClass = 'bg-danger';
+                            } else if (statusRaw.includes('delivered')) bgClass = 'bg-success text-white';
+                            else if (statusRaw.includes('cancelled')) bgClass = 'bg-danger text-white';
+                            else if (statusRaw.includes('rejected')) bgClass = 'bg-danger text-white';
 
-                            return `<span class="badge ${bgClass}" style="font-size: 0.85rem;">${displayStatus}</span>`;
+                            return `<span class="badge ${bgClass}" style="font-size: 0.8rem; padding: 0.5em 0.9em; font-weight: 600;">${displayStatus}</span>`;
                         }
                     },
                     {
@@ -1074,16 +1206,16 @@
                             let bgClass = 'bg-secondary';
                             let displayLabel = payStatus.charAt(0).toUpperCase() + payStatus.slice(1);
 
-                            if (payStatus === 'paid') bgClass = 'bg-success';
+                            if (payStatus === 'paid') bgClass = 'bg-success text-white';
                             else {
-                                bgClass = 'bg-warning text-dark';
+                                bgClass = 'bg-custom-yellow text-white';
                                 displayLabel = 'Pending';
                             }
 
                             let cursorStyle = isAdmin ? 'cursor: pointer;' : '';
                             let clickableClass = isAdmin ? 'change-payment-status' : '';
 
-                            return `<span class="badge ${bgClass} ${clickableClass}" data-id="${row.id}" data-status="${payStatus}" style="font-size: 0.85rem; ${cursorStyle}">${displayLabel}</span>`;
+                            return `<span class="badge ${bgClass} ${clickableClass}" data-id="${row.id}" data-status="${payStatus}" style="font-size: 0.8rem; padding: 0.5em 0.9em; font-weight: 600; ${cursorStyle}">${displayLabel}</span>`;
                         }
                     },
                     {
@@ -1122,8 +1254,8 @@
                             // System Invoice
                             btns += `<a href="${invoiceUrl}" target="_blank" class="btn btn-dark btn-sm" title="System Invoice"><i class="fa fa-print"></i></a>`;
 
-                            // Sales Manager Actions
-                            if (isSalesManager && row.status.toLowerCase().includes('pending')) {
+                            // Sales Manager / Admin Actions
+                            if ((isSalesManager || isAdmin) && row.status.toLowerCase().includes('pending')) {
                                 btns += `<button class="btn btn-success btn-sm approve-order-btn" data-id="${row.id}" data-row="${rowData}" title="Approve"><i class="fa fa-check"></i></button>`;
                                 btns += `<button class="btn btn-danger btn-sm reject-order-btn" data-id="${row.id}" title="Reject"><i class="fa fa-times"></i></button>`;
                             }
@@ -1312,13 +1444,17 @@
 
                 // Status Badge logic
                 let status = (row.status || 'pending').toLowerCase();
-                let badgeClass = 'bg-soft-secondary';
-                if (status === 'pending') badgeClass = 'bg-warning text-dark';
+                let badgeClass = 'bg-secondary text-white';
+                if (status === 'pending') badgeClass = 'bg-custom-yellow text-white';
                 else if (status === 'processing') badgeClass = 'bg-info text-white';
                 else if (status === 'approved' || status === 'delivered') badgeClass = 'bg-success text-white';
                 else if (status === 'cancelled' || status === 'rejected') badgeClass = 'bg-danger text-white';
 
-                $('#view_status_badge').text(row.status || 'Pending').removeClass().addClass('badge ' + badgeClass);
+                $('#view_status_badge').text(row.status || 'Pending').removeClass().addClass('badge ' + badgeClass).css('font-size', '0.7rem');
+
+                let payStatus = (row.payment_status || 'pending').toLowerCase();
+                let payBadgeClass = payStatus === 'paid' ? 'text-success' : 'text-warning';
+                $('#view_payment_status_badge').text((payStatus === 'paid' ? 'PAID' : 'UNPAID')).removeClass().addClass('badge ' + payBadgeClass).css({'border': '1px solid currentColor', 'background': 'transparent', 'font-size': '0.7rem'});
 
                 // Notes visibility
                 if (row.delivery_notes && row.delivery_notes !== '-' && row.delivery_notes !== 'No notes') {
@@ -1333,9 +1469,16 @@
 
                 if (row.items && row.items.length) {
                     row.items.forEach(item => {
-                        list.append(`
+                        let variantInfo = '';
+                    if (item.side || item.size) {
+                        variantInfo = `<span class="variant-highlight ms-2">${[item.side, item.size].filter(v => v).join(' / ')}</span>`;
+                    }
+
+                    list.append(`
                         <div class="invoice-list-row p-2">
-                            <div style="flex: 2;" class="fw-bold text-main-theme small ps-2">${item.product_name}</div>
+                            <div style="flex: 2;" class="fw-bold text-main-theme small ps-2">
+                                ${item.product_name}${variantInfo}
+                            </div>
                             <div style="flex: 1;" class="fw-bold text-primary text-center">${item.quantity} ${item.unit || 'Nos'}</div>
                             <div style="flex: 1;" class="fw-bold text-main-theme text-end pe-3">₹${item.total_amount}</div>
                         </div>
@@ -1359,14 +1502,39 @@
                 $('#approve_location_display').text(row.distributor_location || '--');
                 $('#approve_total_display').text('₹' + row.total_amount);
 
+                // Status Badges
+                let status = (row.status || 'pending').toLowerCase();
+                let badgeClass = 'bg-secondary text-white';
+                if (status === 'pending') badgeClass = 'bg-custom-yellow text-white';
+                else if (status === 'processing') badgeClass = 'bg-primary text-white';
+                else if (status === 'approved' || status === 'delivered') badgeClass = 'bg-success text-white';
+                else if (status === 'cancelled' || status === 'rejected') badgeClass = 'bg-danger text-white';
+                $('#approve_status_badge').text(row.status || 'Pending').removeClass().addClass('badge ' + badgeClass).css('font-size', '0.7rem');
+
+                let payStatus = (row.payment_status || 'pending').toLowerCase();
+                let payBadgeClass = payStatus === 'paid' ? 'text-success' : 'text-warning';
+                $('#approve_payment_status_badge').text(payStatus === 'paid' ? 'PAID' : 'UNPAID').removeClass().addClass('badge ' + payBadgeClass).css({'border': '1px solid currentColor', 'background': 'transparent', 'font-size': '0.7rem'});
+
                 let list = $('#approve_items_list');
                 list.empty();
 
                 if (row.items && row.items.length) {
                     row.items.forEach(item => {
-                        list.append(`
+                        let appVariantInfo = '';
+                    if (item.side || item.size) {
+                        appVariantInfo = `<span class="variant-highlight ms-2">${[item.side, item.size].filter(v => v).join(' / ')}</span>`;
+                    }
+
+                    list.append(`
                         <div class="invoice-list-row p-2">
-                            <div style="flex: 2;" class="fw-bold text-main-theme small ps-2">${item.product_name}</div>
+                            <div style="flex: 2;" class="fw-bold text-main-theme small ps-2">
+                                ${item.product_name}${appVariantInfo}
+                                <div class="d-flex gap-2 flex-wrap mt-1">
+                                    ${item.generic_name ? `<span class="badge bg-light text-dark border-0 fw-normal" style="font-size: 0.6rem;">${item.generic_name}</span>` : ''}
+                                    ${item.pack && item.pack !== 'N/A' && item.pack !== '---' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.6rem;">P: ${item.pack}</div>` : ''}
+                                    ${item.product_code && item.product_code !== '---' && item.product_code !== 'N/A' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.6rem;">C: ${item.product_code}</div>` : ''}
+                                </div>
+                            </div>
                             <div style="flex: 1;" class="fw-bold text-primary text-center">${item.quantity} ${item.unit || 'Nos'}</div>
                             <div style="flex: 1;" class="fw-bold text-main-theme text-end pe-3">₹${item.total_amount}</div>
                         </div>
@@ -1427,8 +1595,22 @@
                 $('#process_distributor_display').text(row.distributor_name || '--');
                 $('#process_location_display').text(row.distributor_location || '--');
 
-                // Reset Payment Status toggle
-                $('input[name="payment_status"][value="pending"]').prop('checked', true);
+                // Status Badges
+                let status = (row.status || 'pending').toLowerCase();
+                let badgeClass = 'bg-secondary text-white';
+                if (status === 'pending') badgeClass = 'bg-custom-yellow text-white';
+                else if (status === 'processing') badgeClass = 'bg-primary text-white';
+                else if (status === 'approved' || status === 'delivered') badgeClass = 'bg-success text-white';
+                else if (status === 'cancelled' || status === 'rejected') badgeClass = 'bg-danger text-white';
+                $('#process_status_badge').text(row.status || 'Pending').removeClass().addClass('badge ' + badgeClass).css('font-size', '0.7rem');
+
+                let payStatus = (row.payment_status || 'pending').toLowerCase();
+                let payBadgeClass = payStatus === 'paid' ? 'text-success' : 'text-warning';
+                $('#process_payment_status_badge').text(payStatus === 'paid' ? 'PAID' : 'UNPAID').removeClass().addClass('badge ' + payBadgeClass).css({'border': '1px solid currentColor', 'background': 'transparent', 'font-size': '0.7rem'});
+
+                // Set current payment status in radio buttons
+                $(`input[name="payment_status"][value="${payStatus}"]`).prop('checked', true);
+
 
                 // Reset OCR & Automation UI States
                 $('#automation_idle_state').removeClass('d-none');
@@ -1478,7 +1660,15 @@
 
                         let vRowHtml = `
                                                             <div id="v_row_${item.order_item_id}" class="invoice-list-row p-2">
-                                                                <div class="ai-col-product fw-bold text-main-theme small ps-2">${item.product_name}</div>
+                                                                <div class="ai-col-product fw-bold text-main-theme small ps-2">
+                                                                    ${item.product_name}
+                                                                    <div class="d-flex gap-2 flex-wrap mt-1">
+                                                                        ${(item.side || item.size) ? `<div class="small badge bg-info text-white border-0" style="font-size: 0.6rem;">${[item.side, item.size].filter(Boolean).join(' / ')}</div>` : ''}
+                                                                        ${item.generic_name ? `<span class="badge bg-light text-dark border-0 fw-normal" style="font-size: 0.6rem;">${item.generic_name}</span>` : ''}
+                                                                        ${item.pack && item.pack !== 'N/A' && item.pack !== '---' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.6rem;">P: ${item.pack}</div>` : ''}
+                                                                        ${item.product_code && item.product_code !== '---' && item.product_code !== 'N/A' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.6rem;">C: ${item.product_code}</div>` : ''}
+                                                                    </div>
+                                                                </div>
                                                                 <div class="ai-col-batch">
                                                                     <input type="text" class="form-control form-control-sm v-batch-input border-0 bg-body-theme text-main-theme p-1" 
                                                                            data-id="${item.order_item_id}" placeholder="Wait AI...">
@@ -1587,6 +1777,8 @@
 
                 let formData = new FormData();
                 formData.append('invoice', file);
+                formData.append('order_id', $('#process_order_id').val());
+                formData.append('order_type', 'distributor');
                 formData.append('_token', '{{ csrf_token() }}');
 
                 $.ajax({
@@ -1644,9 +1836,41 @@
                 let identifiedCount = 0;
 
                 // Extract Overall Metadata
-                $('#extract_date').text(data.invoice_metadata ? data.invoice_metadata.date : '--');
-                $('#extract_gstin').text(data.invoice_metadata ? data.invoice_metadata.gstin : '--');
-                $('#extract_dl').text(data.invoice_metadata && data.invoice_metadata.drug_license ? data.invoice_metadata.drug_license : '--');
+                const meta = data.invoice_metadata || {};
+                $('#extract_date').text(meta.date || '--');
+                $('#extract_invoice_no').text(meta.invoice_no || '--');
+                $('#extract_gstin').text(meta.gstin || '--');
+                $('#extract_dl').text(meta.drug_license || '--');
+
+                // Validation Logic
+                let enteredInv = $('#invoice_no_input').val().trim().toLowerCase();
+                let extractedInv = (meta.invoice_no || '').trim().toLowerCase();
+                let $valAlert = $('#ai_validation_alert');
+                let $valMsg = $('#ai_validation_message');
+                let hasError = false;
+
+                $valAlert.addClass('d-none').removeClass('alert-warning alert-danger');
+
+                if (meta.is_duplicate) {
+                    $valAlert.removeClass('d-none').addClass('alert-danger');
+                    $valMsg.text('DUPLICATE INVOICE: This invoice number has already been used by this distributor.');
+                    hasError = true;
+                } else if (enteredInv && extractedInv && !extractedInv.includes(enteredInv) && !enteredInv.includes(extractedInv)) {
+                    $valAlert.removeClass('d-none').addClass('alert-warning');
+                    $valMsg.text(`MISMATCH: Entered No. (${$('#invoice_no_input').val()}) does not match Extracted No. (${meta.invoice_no}).`);
+                    hasError = true;
+                }
+
+                if (hasError) {
+                    $('#btn_approve_order').prop('disabled', true);
+                } else {
+                    $('#btn_approve_order').prop('disabled', false);
+                }
+
+                // Store for re-validation on manual input change
+                $('#invoice_no_input').data('extracted', extractedInv);
+                $('#invoice_no_input').data('extracted-raw', meta.invoice_no);
+                $('#invoice_no_input').data('is-duplicate', meta.is_duplicate);
 
                 let totalTaxable = 0;
                 let totalCgst = 0;
@@ -1872,6 +2096,31 @@
                 });
             });
 
+            $(document).on('input', '#invoice_no_input', function() {
+                let entered = $(this).val().trim().toLowerCase();
+                let extracted = $(this).data('extracted');
+                let extractedRaw = $(this).data('extracted-raw');
+                let isDuplicate = $(this).data('is-duplicate');
+                let $valAlert = $('#ai_validation_alert');
+                let $valMsg = $('#ai_validation_message');
+                let hasError = false;
+
+                if (extracted === undefined) return;
+
+                $valAlert.addClass('d-none').removeClass('alert-warning alert-danger');
+
+                if (isDuplicate) {
+                    $valAlert.removeClass('d-none').addClass('alert-danger');
+                    $valMsg.text('DUPLICATE INVOICE: This invoice number has already been used by this distributor.');
+                    hasError = true;
+                } else if (entered && extracted && !extracted.includes(entered) && !entered.includes(extracted)) {
+                    $valAlert.removeClass('d-none').addClass('alert-warning');
+                    $valMsg.text(`MISMATCH: Entered No. (${$(this).val()}) does not match Extracted No. (${extractedRaw}).`);
+                    hasError = true;
+                }
+
+                $('#btn_approve_order').prop('disabled', hasError);
+            });
         });
     </script>
 @endpush

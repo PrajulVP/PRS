@@ -476,11 +476,12 @@
                             $('#variantWrapper').hide();
                             $('#variantValue').val('');
                         }
-                        // Unit Logic: box_size empty = Nos
+                        // Unit Logic: If has code or is count-based -> No.
+                        let hasCode = p.product_code && p.product_code !== '---' && p.product_code.trim() !== '';
                         let boxSizeStr = p.box_size || '';
-                        let isCount = boxSizeStr === "";
+                        let isCount = hasCode || boxSizeStr === "";
                         
-                        // Fallback patterns: If not already Nos, check keywords
+                        // Fallback patterns: If not already No., check keywords
                         if (!isCount) {
                             let pName = (p.product_name || '').toLowerCase();
                             let pPack = (p.pack || '').toLowerCase();
@@ -501,12 +502,12 @@
                         let $unitSelect = $('#unitSelect');
                         $unitSelect.empty();
                         if (isCount) {
-                            $unitSelect.append('<option value="Nos">Nos</option>');
-                            $('#ptsLabel').text("PTS (Per Nos)");
+                            $unitSelect.append('<option value="Nos">No.</option>');
+                            $('#ptsLabel').text("PTS (Per No.)");
                         } else {
                             $unitSelect.append('<option value="Strips">Strips</option>');
                             $unitSelect.append('<option value="Box">Box</option>');
-                            $unitSelect.append('<option value="Nos">Nos</option>'); 
+                            $unitSelect.append('<option value="Nos">No.</option>'); 
                             $('#ptsLabel').text("PTS (Per Strip)");
                         }
 

@@ -638,7 +638,7 @@
                                             "type": "object"
                                         }
                                     },
-                                    "notes": {
+                                    "delivery_notes": {
                                         "type": "string",
                                         "example": "Urgent distributor order",
                                         "nullable": true
@@ -3005,7 +3005,7 @@
                                             "type": "object"
                                         }
                                     },
-                                    "notes": {
+                                    "delivery_notes": {
                                         "type": "string",
                                         "example": "Urgent order",
                                         "nullable": true
@@ -3094,13 +3094,22 @@
                         "example": "Box"
                     },
                     {
-                        "name": "variant",
+                        "name": "side",
                         "in": "query",
                         "required": false,
                         "schema": {
                             "type": "string"
                         },
-                        "example": "M"
+                        "example": "Left"
+                    },
+                    {
+                        "name": "size",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "XL"
                     }
                 ],
                 "responses": {
@@ -3125,7 +3134,11 @@
                                                 "type": "string"
                                             }
                                         },
-                                        "selected_variant": {
+                                        "selected_side": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "selected_size": {
                                             "type": "string",
                                             "nullable": true
                                         },
@@ -3874,7 +3887,7 @@
                         "type": "integer",
                         "example": 12
                     },
-                    "notes": {
+                    "delivery_notes": {
                         "type": "string",
                         "example": "Urgent delivery"
                     },

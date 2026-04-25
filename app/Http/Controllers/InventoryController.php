@@ -182,7 +182,7 @@ class InventoryController extends Controller
                         return [
                             'id' => $b->id,
                             'batch_no' => $b->batch_no,
-                            'stock' => (int)$b->stock,
+                            'stock' => $b->stock,
                             'side' => $b->side,
                             'size' => $b->size,
                             'expiry_date' => $b->expiry_date ? $b->expiry_date->format('d-m-Y') : 'N/A',
@@ -198,7 +198,7 @@ class InventoryController extends Controller
                         'product_id' => $i->product_id,
                         'distributor_id' => $i->distributor_id,
                         'distributor_name' => $i->distributor?->user?->name ?? 'N/A',
-                        'stock' => (int) $i->stock,
+                        'stock' => $i->stock,
                         'side' => $i->side,
                         'size' => $i->size,
                         'batches' => $batches,
@@ -254,7 +254,7 @@ class InventoryController extends Controller
                             'has_variants' => (bool)$i->product->has_variants,
                         ] : null,
                         'updated_at' => \Carbon\Carbon::parse($i->updated_at)->toIso8601String(),
-                        'image' => $i->product && $i->product->image ? \Illuminate\Support\Facades\Storage::url($i->product->image) : asset('admin/assets/images/dashboard/product-1.png'), // Placeholder
+                        'image' => $i->product && $i->product->image ? \Illuminate\Support\Facades\Storage::disk('public')->url($i->product->image) : asset('admin/assets/images/dashboard/product-1.png'), // Placeholder
                         'batch_no' => $i->batch_no ?? '-',
                         'raw_expiry_date' => $i->expiry_date,
                         'expiry_date' => $i->expiry_date ? (function ($date) {
@@ -376,7 +376,7 @@ class InventoryController extends Controller
         $operation = $request->input('operation', 'set');
         $product = $inventory->product;
         
-        // Convert the input stock to strips based on the selected unit
+        // Convert the input stock to strips based on the selected unit using shared helper
         $inputStrips = $this->convertQuantityToStrips($product, $request->stock, $request->unit ?? 'Strips');
         
         $previousStock = $inventory->stock;

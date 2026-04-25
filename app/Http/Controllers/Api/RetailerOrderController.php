@@ -75,6 +75,7 @@ class RetailerOrderController extends Controller
                     'distributor_name' => $order->distributor?->user?->name ?? 'N/A',
                     'status'         => $order->status,
                     'payment_status' => $order->payment_status,
+                    'cancellation_reason' => $order->cancellation_reason,
                     'total_amount'   => number_format($order->total_amount, 2),
                     'total_items'    => $order->total_items,
                     'total_quantity' => $order->total_quantity,
@@ -90,7 +91,7 @@ class RetailerOrderController extends Controller
                             'size'       => $item->size,
                         ];
                     }),
-                    'invoice_url'    => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
+                    'invoice_url'    => $order->invoice_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($order->invoice_path) : null,
                     'placed_at'      => $order->placed_at?->format('Y-m-d H:i:s'),
                     'delivered_at'   => $order->delivered_at?->format('Y-m-d H:i:s'),
                     'loyalty_points_earned' => $order->status === RetailerOrder::STATUS_DELIVERED ? (int)$order->loyalty_points_earned : 0,

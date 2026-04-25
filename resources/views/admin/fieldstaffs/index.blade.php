@@ -6,13 +6,13 @@
         border-bottom: none;
         gap: 0.5rem;
         padding: 0.5rem;
-        background: #f8fafc;
+        background: var(--med-bg-body, #f8fafc);
         border-radius: 12px;
         display: inline-flex;
     }
     .nav-tabs.custom-tabs .nav-link {
         border: 1px solid transparent !important;
-        color: #64748b;
+        color: var(--med-text-muted, #64748b);
         font-weight: 600;
         padding: 0.5rem 1.25rem;
         border-radius: 8px !important;
@@ -21,14 +21,15 @@
         transition: all 0.2s ease;
     }
     .nav-tabs.custom-tabs .nav-link.active {
-        color: #00497a !important;
-        background: #ffffff !important;
-        border-color: #e2e8f0 !important;
+        color: var(--med-primary, #00497a) !important;
+        background: var(--med-bg-card, #ffffff) !important;
+        border-color: var(--med-border, #e2e8f0) !important;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
     }
     .nav-tabs.custom-tabs .nav-link:hover:not(.active) {
-        color: #475569;
-        background: #f1f5f9;
+        color: var(--med-text-main, #475569);
+        background: var(--med-bg-body);
+        opacity: 0.8;
         border-color: transparent;
     }
     .action-buttons {
@@ -258,7 +259,7 @@
                             <div class="col-md-12 mb-3">
                                 <label class="form-label fw-bold">Device UUID (Bound Device)</label>
                                 <div class="input-group">
-                                    <input type="text" name="device_uuid" id="edit_device_uuid" class="form-control bg-light" placeholder="No device bound yet">
+                                    <input type="text" name="device_uuid" id="edit_device_uuid" class="form-control" placeholder="No device bound yet">
                                     <button type="button" class="btn btn-outline-danger" onclick="$('#edit_device_uuid').val('')">
                                         <i class="fa fa-refresh me-1"></i> Reset
                                     </button>
@@ -375,14 +376,14 @@
                                     <div class="col-md-6">
                                         <div class="d-flex align-items-start gap-2 p-3 rounded"
                                             style="background: var(--med-bg-body);">
-                                            <i class="fa fa-hashtag mt-1 text-dark"></i>
+                                            <i class="fa fa-hashtag mt-1"></i>
                                             <div>
                                                 <div class="text-muted small">Pincode</div>
                                                 <div class="fw-semibold" id="fs_view_pincode"></div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-12 text-dark">
+                                    <div class="col-12">
                                         <div class="d-flex align-items-start gap-2 p-3 rounded"
                                             style="background: var(--med-bg-body);">
                                             <i class="fa fa-mobile-alt mt-1 text-warning"></i>
@@ -392,7 +393,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-12 text-dark">
+                                    <div class="col-12">
                                         <div class="d-flex align-items-start gap-2 p-3 rounded"
                                             style="background: var(--med-bg-body);">
                                             <i class="fa fa-map-marker-alt mt-1 text-danger"></i>
@@ -439,7 +440,7 @@
     <div class="modal fade" id="quickViewModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-light border-0">
+                <div class="modal-header bg-card-theme border-0">
                     <h6 class="modal-title fw-bold"><i class="fa fa-eye me-2 text-primary"></i>Quick View</h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -702,13 +703,15 @@
 
                 let html = `
                     <div class="text-center mb-4">
-                        <div class="d-inline-block position-relative mb-3">
+                        <div class="mb-3">
                             ${avatarHtml}
-                            <span class="position-absolute status-badge ${data.user?.status === 'active' ? 'status-badge-active' : 'status-badge-inactive'}" style="border: 2px solid var(--med-bg-card); bottom: -2px; right: -2px;">
+                        </div>
+                        <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
+                            <h5 class="fw-bold mb-0 text-main" style="font-family: 'Montserrat', sans-serif;">${data.shop_name}</h5>
+                            <span class="status-badge ${data.user?.status === 'active' ? 'status-badge-active' : 'status-badge-inactive'}" style="font-size: 0.65rem; padding: 2px 8px;">
                                 ${data.user?.status}
                             </span>
                         </div>
-                        <h5 class="fw-bold mb-0 text-main" style="font-family: 'Montserrat', sans-serif;">${data.shop_name}</h5>
                         <div class="text-muted small">Owner: ${data.user?.name}</div>
                     </div>
                     <div class="row g-3">

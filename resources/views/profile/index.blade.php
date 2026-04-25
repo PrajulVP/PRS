@@ -4,22 +4,29 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-12 mx-auto">
+                @if($errors->any())
+                    <div class="alert alert-danger alert-dismissible fade show mt-3 border-0 shadow-sm" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="fa fa-exclamation-circle me-3 fs-4"></i>
+                            <div>
+                                <h6 class="alert-heading fw-bold mb-1">Please correct the following errors:</h6>
+                                <ul class="mb-0 ps-3">
+                                    @foreach($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
                 @if(session('success'))
                     <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
                         {{ session('success') }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 @endif
-                @if($errors->any())
-                    <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
-                        <ul class="mb-0">
-                            @foreach($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                @endif
+
 
                 <div class="card shadow-sm border-0 mt-3 mb-3">
                     <div class="card-body p-4">
@@ -32,7 +39,7 @@
                                         style="width: 150px; height: 150px; object-fit: cover; border: 4px solid #f8f9fa;"
                                         onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&color=FFFFFF&background={{ $user->avatar_background ?? '374151' }}';">
                                 </div>
-                                <h3 class="fw-bold text-dark mb-1">{{ $user->name }}</h3>
+                                <h3 class="fw-bold text-main-theme mb-1">{{ $user->name }}</h3>
                                 <div>
                                     <span
                                         class="badge bg-light text-primary border border-primary-subtle px-3 py-1 rounded-pill mb-3 fs-6">
@@ -42,24 +49,24 @@
 
                                 <div class="text-center mt-3 px-2 flex-grow-1 w-100">
                                     <div class="mb-2">
-                                        <label class="text-muted small text-uppercase fw-bold mb-1 d-block"
+                                        <label class="text-muted-theme small text-uppercase fw-bold mb-1 d-block"
                                             style="font-size: 0.75rem;">Member
                                             Since</label>
-                                        <div class="d-flex align-items-center justify-content-center bg-light p-2 rounded mx-auto"
+                                        <div class="d-flex align-items-center justify-content-center bg-body-theme p-2 rounded mx-auto"
                                             style="max-width: 200px;">
                                             <i class="fa fa-calendar text-info me-2 fs-6"></i>
                                             <span
-                                                class="fs-6 fw-medium text-dark">{{ $user->created_at->format('M d, Y') }}</span>
+                                                class="fs-6 fw-medium text-main-theme">{{ $user->created_at->format('M d, Y') }}</span>
                                         </div>
                                     </div>
                                     <div class="mb-2">
-                                        <label class="text-muted small text-uppercase fw-bold mb-1 d-block"
+                                        <label class="text-muted-theme small text-uppercase fw-bold mb-1 d-block"
                                             style="font-size: 0.75rem;">Status</label>
-                                        <div class="d-flex align-items-center justify-content-center bg-light p-2 rounded mx-auto"
+                                        <div class="d-flex align-items-center justify-content-center bg-body-theme p-2 rounded mx-auto"
                                             style="max-width: 200px;">
                                             <i class="fa fa-check-circle text-success me-2 fs-6"></i>
                                             <span
-                                                class="fs-6 fw-medium text-dark">{{ ucfirst($user->status ?? 'Active') }}</span>
+                                                class="fs-6 fw-medium text-main-theme">{{ ucfirst($user->status ?? 'Active') }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -81,75 +88,75 @@
                                 <div class="row g-3">
                                     <!-- Contact Information Section -->
                                     <div class="col-12 mb-1">
-                                        <h6 class="text-secondary text-uppercase fw-bold border-start border-primary border-3 ps-2 mb-2"
-                                            style="font-size: 0.8rem;">
+                                        <h6 class="text-uppercase text-muted-theme fw-bold mb-3"
+                                            style="font-size: 0.75rem; letter-spacing: 1px; border-left: 3px solid var(--med-primary); padding-left: 10px;">
                                             Contact Information</h6>
                                     </div>
 
                                     <div class="col-md-6">
-                                        <div class="p-2 bg-light rounded h-100">
-                                            <label class="text-muted small text-uppercase fw-bold mb-1"
+                                        <div class="p-2 bg-body-theme rounded h-100 border border-theme">
+                                            <label class="text-muted-theme small text-uppercase fw-bold mb-1"
                                                 style="font-size: 0.6rem;">Email</label>
                                             <div class="d-flex align-items-center">
-                                                <div class="bg-white rounded-circle shadow-sm me-2 d-flex align-items-center justify-content-center"
+                                                <div class="bg-card-theme rounded-circle shadow-sm border border-theme me-2 d-flex align-items-center justify-content-center"
                                                     style="width: 40px; height: 40px;">
                                                     <i class="fa fa-envelope text-primary fs-6"></i>
                                                 </div>
-                                                <span class="fs-6 text-dark fw-medium small">{{ $user->email }}</span>
+                                                <span class="fs-6 text-main-theme fw-medium small">{{ $user->email }}</span>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="p-2 bg-light rounded h-100">
-                                            <label class="text-muted small text-uppercase fw-bold mb-1"
+                                        <div class="p-2 bg-body-theme rounded h-100 border border-theme">
+                                            <label class="text-muted-theme small text-uppercase fw-bold mb-1"
                                                 style="font-size: 0.6rem;">Phone</label>
                                             <div class="d-flex align-items-center">
-                                                <div class="bg-white rounded-circle shadow-sm me-2 d-flex align-items-center justify-content-center"
+                                                <div class="bg-card-theme rounded-circle shadow-sm border border-theme me-2 d-flex align-items-center justify-content-center"
                                                     style="width: 40px; height: 40px;">
                                                     <i class="fa fa-phone text-success fs-6"></i>
                                                 </div>
                                                 <span
-                                                    class="fs-6 text-dark fw-medium small">{{ $user->contact_no ?? $user->phone_number ?? 'Not updated' }}</span>
+                                                    class="fs-6 text-main-theme fw-medium small">{{ $user->contact_no ?? $user->phone_number ?? 'Not updated' }}</span>
                                             </div>
                                         </div>
                                     </div>
 
                                     <!-- Location Section -->
                                     <div class="col-12 mt-3 mb-1">
-                                        <h6 class="text-secondary text-uppercase fw-bold border-start border-danger border-3 ps-2 mb-2"
-                                            style="font-size: 0.8rem;">
+                                        <h6 class="text-uppercase text-muted-theme fw-bold mb-3"
+                                            style="font-size: 0.75rem; letter-spacing: 1px; border-left: 3px solid #ef4444; padding-left: 10px;">
                                             Location Details</h6>
                                     </div>
 
                                     <div class="col-md-6">
-                                        <div class="p-2 border rounded h-100">
-                                            <label class="text-muted small text-uppercase fw-bold mb-1"
+                                        <div class="p-2 border border-theme rounded bg-body-theme h-100">
+                                            <label class="text-muted-theme small text-uppercase fw-bold mb-1"
                                                 style="font-size: 0.6rem;">City</label>
                                             <div class="d-flex align-items-center">
                                                 <i class="fa fa-map-marker text-danger me-2 fs-5"></i>
-                                                <span class="fs-6 text-dark small">{{ $user->city ?? 'Not updated' }}</span>
+                                                <span class="fs-6 text-main-theme small">{{ $user->city ?? 'Not updated' }}</span>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="p-2 border rounded h-100">
-                                            <label class="text-muted small text-uppercase fw-bold mb-1"
+                                        <div class="p-2 border border-theme rounded bg-body-theme h-100">
+                                            <label class="text-muted-theme small text-uppercase fw-bold mb-1"
                                                 style="font-size: 0.6rem;">Pincode</label>
                                             <div class="d-flex align-items-center">
                                                 <i class="fa fa-map-pin text-danger me-2 fs-5"></i>
                                                 <span
-                                                    class="fs-6 text-dark small">{{ $user->pincode ?? 'Not updated' }}</span>
+                                                    class="fs-6 text-main-theme small">{{ $user->pincode ?? 'Not updated' }}</span>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="col-12">
-                                        <div class="p-3 border rounded bg-light-subtle">
-                                            <label class="text-muted small text-uppercase fw-bold mb-1"
+                                        <div class="p-3 border border-theme rounded bg-body-theme">
+                                            <label class="text-muted-theme small text-uppercase fw-bold mb-1"
                                                 style="font-size: 0.6rem;">Full Address</label>
                                             <div class="d-flex align-items-start">
-                                                <i class="fa fa-home text-secondary me-2 mt-1 fs-5"></i>
+                                                <i class="fa fa-home text-muted-theme me-2 mt-1 fs-5"></i>
                                                 <span
-                                                    class="fs-6 text-dark lh-base small">{{ $user->address ?? 'No detailed address provided.' }}</span>
+                                                    class="fs-6 text-main-theme lh-base small">{{ $user->address ?? 'No detailed address provided.' }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -158,27 +165,27 @@
                                     @if($user->hasRole('fieldstaff'))
                                         @if($user->fathers_name || $user->mothers_name)
                                             <div class="col-12 mt-3 mb-1">
-                                                <h6 class="text-secondary text-uppercase fw-bold border-start border-warning border-3 ps-2 mb-2"
-                                                    style="font-size: 0.8rem;">
+                                                <h6 class="text-uppercase text-muted-theme fw-bold mb-3"
+                                                    style="font-size: 0.75rem; letter-spacing: 1px; border-left: 3px solid #f59e0b; padding-left: 10px;">
                                                     Personal Details</h6>
                                             </div>
                                             @if($user->fathers_name)
                                                 <div class="col-md-6">
-                                                    <div class="p-2 border rounded h-100 bg-white">
-                                                        <label class="text-muted small text-uppercase fw-bold mb-1"
+                                                    <div class="p-2 border border-theme rounded h-100 bg-body-theme">
+                                                        <label class="text-muted-theme small text-uppercase fw-bold mb-1"
                                                             style="font-size: 0.6rem;">Father's Name</label>
                                                         <span
-                                                            class="fs-6 text-dark fw-bold d-block small">{{ $user->fathers_name }}</span>
+                                                            class="fs-6 text-main-theme fw-bold d-block small">{{ $user->fathers_name }}</span>
                                                     </div>
                                                 </div>
                                             @endif
                                             @if($user->mothers_name)
                                                 <div class="col-md-6">
-                                                    <div class="p-2 border rounded h-100 bg-white">
-                                                        <label class="text-muted small text-uppercase fw-bold mb-1"
+                                                    <div class="p-2 border border-theme rounded h-100 bg-body-theme">
+                                                        <label class="text-muted-theme small text-uppercase fw-bold mb-1"
                                                             style="font-size: 0.6rem;">Mother's Name</label>
                                                         <span
-                                                            class="fs-6 text-dark fw-bold d-block small">{{ $user->mothers_name }}</span>
+                                                            class="fs-6 text-main-theme fw-bold d-block small">{{ $user->mothers_name }}</span>
                                                     </div>
                                                 </div>
                                             @endif
@@ -188,53 +195,53 @@
                                     <!-- Business Details Section -->
                                     @if($user->hasRole('retailer') || $user->hasRole('distributor'))
                                         <div class="col-12 mt-3 mb-1">
-                                            <h6 class="text-secondary text-uppercase fw-bold border-start border-success border-3 ps-2 mb-2"
-                                                style="font-size: 0.8rem;">
+                                            <h6 class="text-uppercase text-muted-theme fw-bold mb-3"
+                                                style="font-size: 0.75rem; letter-spacing: 1px; border-left: 3px solid #10b981; padding-left: 10px;">
                                                 Business Information</h6>
                                         </div>
 
                                         @if($user->hasRole('retailer') && $user->retailer)
                                             <div class="col-md-6">
-                                                <div class="p-2 border rounded h-100 bg-light-subtle">
-                                                    <label class="text-muted small text-uppercase fw-bold mb-1"
+                                                <div class="p-2 border border-theme rounded h-100 bg-body-theme">
+                                                    <label class="text-muted-theme small text-uppercase fw-bold mb-1"
                                                         style="font-size: 0.6rem;">Shop Name</label>
                                                     <span
-                                                        class="fs-6 text-dark fw-bold d-block small">{{ $user->retailer->shop_name ?? 'N/A' }}</span>
+                                                        class="fs-6 text-main-theme fw-bold d-block small">{{ $user->retailer->shop_name ?? 'N/A' }}</span>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
-                                                <div class="p-2 border rounded h-100 bg-light-subtle">
-                                                    <label class="text-muted small text-uppercase fw-bold mb-1"
+                                                <div class="p-2 border border-theme rounded h-100 bg-body-theme">
+                                                    <label class="text-muted-theme small text-uppercase fw-bold mb-1"
                                                         style="font-size: 0.6rem;">Drug License No.</label>
                                                     <span
-                                                        class="fs-6 text-dark fw-bold d-block small">{{ $user->retailer->drug_license_no ?? 'N/A' }}</span>
+                                                        class="fs-6 text-main-theme fw-bold d-block small">{{ $user->retailer->drug_license_no ?? 'N/A' }}</span>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
-                                                <div class="p-2 border rounded h-100 bg-light-subtle">
-                                                    <label class="text-muted small text-uppercase fw-bold mb-1"
+                                                <div class="p-2 border border-theme rounded h-100 bg-body-theme">
+                                                    <label class="text-muted-theme small text-uppercase fw-bold mb-1"
                                                         style="font-size: 0.6rem;">GST Number</label>
                                                     <span
-                                                        class="fs-6 text-dark fw-bold d-block small">{{ $user->retailer->gst ?? 'N/A' }}</span>
+                                                        class="fs-6 text-main-theme fw-bold d-block small">{{ $user->retailer->gst ?? 'N/A' }}</span>
                                                 </div>
                                             </div>
                                         @endif
 
                                         @if($user->hasRole('distributor') && $user->distributor)
                                             <div class="col-md-6">
-                                                <div class="p-2 border rounded h-100 bg-light-subtle">
-                                                    <label class="text-muted small text-uppercase fw-bold mb-1"
+                                                <div class="p-2 border border-theme rounded h-100 bg-body-theme">
+                                                    <label class="text-muted-theme small text-uppercase fw-bold mb-1"
                                                         style="font-size: 0.6rem;">Drug License No.</label>
                                                     <span
-                                                        class="fs-6 text-dark fw-bold d-block small">{{ $user->distributor->drug_license_no ?? 'N/A' }}</span>
+                                                        class="fs-6 text-main-theme fw-bold d-block small">{{ $user->distributor->drug_license_no ?? 'N/A' }}</span>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
-                                                <div class="p-2 border rounded h-100 bg-light-subtle">
-                                                    <label class="text-muted small text-uppercase fw-bold mb-1"
+                                                <div class="p-2 border border-theme rounded h-100 bg-body-theme">
+                                                    <label class="text-muted-theme small text-uppercase fw-bold mb-1"
                                                         style="font-size: 0.6rem;">GST Number</label>
                                                     <span
-                                                        class="fs-6 text-dark fw-bold d-block small">{{ $user->distributor->gst ?? 'N/A' }}</span>
+                                                        class="fs-6 text-main-theme fw-bold d-block small">{{ $user->distributor->gst ?? 'N/A' }}</span>
                                                 </div>
                                             </div>
                                         @endif
@@ -375,7 +382,7 @@
                                             style="width: 32px; height: 32px; cursor: pointer; border: 2px solid #e9ecef;">
                                             <i class="fa fa-camera fs-6"></i>
                                             <input type="file" name="profile_pic" id="profile_pic" class="d-none"
-                                                accept="image/*">
+                                                accept="image/*" onchange="previewProfilePic(this)">
                                         </label>
                                     </div>
                                     <p class="text-muted small mt-1 fst-italic" style="font-size: 0.6rem;">Click camera
@@ -423,8 +430,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer bg-light py-2 px-3">
-                        <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <div class="modal-footer bg-card-theme border-top border-theme py-2 px-3">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary btn-sm px-4"><i class="fa fa-save me-1"></i>
                             Save</button>
                     </div>
@@ -433,3 +440,20 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        function previewProfilePic(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.querySelector('#editProfileModal img.rounded-circle');
+                    if (img) {
+                        img.src = e.target.result;
+                    }
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+@endpush
