@@ -152,6 +152,12 @@ class DistributorController extends Controller
 
     public function update(Request $request, Distributor $distributor)
     {
+        if (!$distributor->user) {
+            $msg = 'User account missing for this Distributor. This record may be corrupted.';
+            return $request->ajax() 
+                ? response()->json(['success' => false, 'message' => $msg], 422) 
+                : redirect()->back()->with('error', $msg);
+        }
         $userData = $request->validate([
             'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
             'email' => [
@@ -265,6 +271,11 @@ class DistributorController extends Controller
             return redirect()->route('admin.distributors.index')->with('error', 'You do not have permission to change the status of this user.');
         }
 
+        if (!$distributor->user) {
+            $msg = 'User account missing for this Distributor.';
+            return request()->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : redirect()->back()->with('error', $msg);
+        }
+
         $distributor->user->status = 'active';
         $distributor->user->save();
 
@@ -285,6 +296,11 @@ class DistributorController extends Controller
                 return response()->json(['success' => false, 'message' => 'You do not have permission to change the status of this user.'], 403);
             }
             return redirect()->route('admin.distributors.index')->with('error', 'You do not have permission to change the status of this user.');
+        }
+
+        if (!$distributor->user) {
+            $msg = 'User account missing for this Distributor.';
+            return request()->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : redirect()->back()->with('error', $msg);
         }
 
         $distributor->user->status = 'inactive';

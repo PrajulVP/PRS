@@ -25,19 +25,19 @@ class DatabaseSeeder extends Seeder
             LoyaltyPermissionSeeder::class, // Missing seeder for loyalty points
 
             SuperAdminSeeder::class, // Creates superadmin and admin users
-            SalesManagerSeeder::class,
+            // SalesManagerSeeder::class,
 
             IndianPinCodeSeeder::class, // Creates districts and areas from JSON
 
-            DistributorSeeder::class,
-            FieldStaffSeeder::class,
-            RetailerSeeder::class,
-            CreateRetailerEntriesSeeder::class, // Ensure all retailer users have entries
-            ProductInventorySeeder::class,
+            // DistributorSeeder::class,
+            // FieldStaffSeeder::class,
+            // RetailerSeeder::class,
+            // CreateRetailerEntriesSeeder::class, // Ensure all retailer users have entries
+            // ProductInventorySeeder::class,
 
             // ProductSeeder::class,    // Creates general products
             // RetailerOrderSeeder::class, // Creates dummy retailer orders
-            DistributorOrderSeeder::class,
+            // DistributorOrderSeeder::class,
 
             // Application-wide settings
             \Database\Seeders\SettingSeeder::class,

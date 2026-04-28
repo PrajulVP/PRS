@@ -33,6 +33,13 @@ class IndianPinCodeSeeder extends Seeder
             return;
         }
 
+        // Sort data alphabetically by District and then Area (officeName)
+        usort($data, function ($a, $b) {
+            $districtCmp = strcasecmp($a['districtName'] ?? '', $b['districtName'] ?? '');
+            if ($districtCmp !== 0) return $districtCmp;
+            return strcasecmp($a['officeName'] ?? '', $b['officeName'] ?? '');
+        });
+
         // Disable foreign key checks to allow truncation
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         Area::truncate();

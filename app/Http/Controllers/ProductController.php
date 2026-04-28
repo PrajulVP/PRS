@@ -443,30 +443,44 @@ class ProductController extends Controller
                 }
 
                 try {
-                    // Decide if we match by name or code
-                    $matchAttributes = ['product_name' => trim($productData['product_name'])];
+                    // Smarter Matching Strategy:
+                    // 1. If code exists, match by code.
+                    // 2. If no code, match by Name + Generic Name + Pack to distinguish different products.
+                    $matchCriteria = [];
+                    if (!empty($productCode)) {
+                        $matchCriteria = ['product_code' => $productCode];
+                    } else {
+                        $matchCriteria = [
+                            'product_name' => trim($productData['product_name']),
+                            'generic_name' => !empty($productData['generic_name']) ? trim($productData['generic_name']) : null,
+                            'pack' => !empty($productData['pack']) ? trim($productData['pack']) : null
+                        ];
+                    }
+
                     // Create or Update
                     $p = Product::updateOrCreate(
-                        ['product_code' => $productCode],
+                        $matchCriteria,
                         [
+                            'product_code' => $productCode,
                             'product_name' => trim($productData['product_name']),
-                        'generic_name' => !empty($productData['generic_name']) ? trim($productData['generic_name']) : null,
-                        'pack' => !empty($productData['pack']) ? trim($productData['pack']) : null,
-                        'strip_size' => !empty($productData['strip_size']) ? trim($productData['strip_size']) : null,
-                        'units_per_strip' => $unitsPerStrip,
-                        'box_size' => !empty($productData['box_size']) ? trim($productData['box_size']) : null,
-                        'strips_per_box' => $stripsPerBox,
-                        'carton_size' => !empty($productData['carton_size']) ? trim($productData['carton_size']) : null,
-                        'boxes_per_carton' => $boxesPerCarton,
-                        'hsn_code' => !empty($productData['hsn_code']) ? trim($productData['hsn_code']) : null,
-                        'has_variants' => $hasVariants ? 1 : 0,
-                        'variant_options' => !empty($variantOptions) ? $variantOptions : null,
-                        'mrp' => (float)$productData['mrp'],
-                        'ptr' => !empty($productData['ptr']) ? (float)$productData['ptr'] : 0,
-                        'pts' => !empty($productData['pts']) ? (float)$productData['pts'] : 0,
-                        'loyalty_point_percentage' => !empty($productData['loyalty_point_percentage']) ? (float)$productData['loyalty_point_percentage'] : 0,
-                    ]
-                );
+                            'generic_name' => !empty($productData['generic_name']) ? trim($productData['generic_name']) : null,
+                            'brand' => !empty($productData['brand']) ? trim($productData['brand']) : null,
+                            'pack' => !empty($productData['pack']) ? trim($productData['pack']) : null,
+                            'strip_size' => !empty($productData['strip_size']) ? trim($productData['strip_size']) : null,
+                            'units_per_strip' => $unitsPerStrip,
+                            'box_size' => !empty($productData['box_size']) ? trim($productData['box_size']) : null,
+                            'strips_per_box' => $stripsPerBox,
+                            'carton_size' => !empty($productData['carton_size']) ? trim($productData['carton_size']) : null,
+                            'boxes_per_carton' => $boxesPerCarton,
+                            'hsn_code' => !empty($productData['hsn_code']) ? trim($productData['hsn_code']) : null,
+                            'has_variants' => $hasVariants ? 1 : 0,
+                            'variant_options' => !empty($variantOptions) ? $variantOptions : null,
+                            'mrp' => (float)$productData['mrp'],
+                            'ptr' => !empty($productData['ptr']) ? (float)$productData['ptr'] : 0,
+                            'pts' => !empty($productData['pts']) ? (float)$productData['pts'] : 0,
+                            'loyalty_point_percentage' => !empty($productData['loyalty_point_percentage']) ? (float)$productData['loyalty_point_percentage'] : 0,
+                        ]
+                    );
                     $successCount++;
                 } catch (\Exception $e) {
                     $errors[] = "Row $rowCount: " . $e->getMessage();

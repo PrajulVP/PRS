@@ -233,6 +233,12 @@ class RetailerController extends Controller
 
     public function update(Request $request, Retailer $retailer)
     {
+        if (!$retailer->user) {
+            $msg = 'User account missing for this Retailer. This record may be corrupted.';
+            return $request->ajax() 
+                ? response()->json(['success' => false, 'message' => $msg], 422) 
+                : redirect()->back()->with('error', $msg);
+        }
         $userData = $request->validate([
             'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
             'email' => [
@@ -333,6 +339,10 @@ class RetailerController extends Controller
         /** @var \App\Models\User $currentUser */
         $currentUser = Auth::user();
         if ($currentUser->hasAnyRole(['superadmin', 'admin']) || $currentUser->hasRole('salesmanager')) {
+            if (!$retailer->user) {
+                $msg = 'User account missing for this Retailer.';
+                return request()->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : redirect()->back()->with('error', $msg);
+            }
             $retailer->user->status = 'active';
             $retailer->user->save();
 
@@ -355,6 +365,10 @@ class RetailerController extends Controller
         /** @var \App\Models\User $currentUser */
         $currentUser = Auth::user();
         if ($currentUser->hasAnyRole(['superadmin', 'admin']) || $currentUser->hasRole('salesmanager')) {
+            if (!$retailer->user) {
+                $msg = 'User account missing for this Retailer.';
+                return request()->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : redirect()->back()->with('error', $msg);
+            }
             $retailer->user->status = 'inactive';
             $retailer->user->save();
 

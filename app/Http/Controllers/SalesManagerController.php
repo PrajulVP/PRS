@@ -38,7 +38,7 @@ class SalesManagerController extends Controller
                     return $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory('sales_managers', 'delete');
                 })
                 ->addColumn('pincode', function ($row) {
-                    return $row->user->pincode ?? 'N/A';
+                    return optional($row->user)->pincode ?? 'N/A';
                 })
                 ->make(true);
         }
@@ -131,6 +131,12 @@ class SalesManagerController extends Controller
 
     public function update(Request $request, SalesManager $salesManager)
     {
+        if (!$salesManager->user) {
+            $msg = 'User account missing for this Sales Manager. This record may be corrupted.';
+            return $request->ajax() 
+                ? response()->json(['success' => false, 'message' => $msg], 422) 
+                : redirect()->back()->with('error', $msg);
+        }
         $request->validate([
             'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
             'email' => [
@@ -216,6 +222,11 @@ class SalesManagerController extends Controller
             return redirect()->route('admin.sales-managers.index')->with('error', 'You do not have permission to change the status of this user.');
         }
 
+        if (!$salesManager->user) {
+            $msg = 'User account missing for this Sales Manager.';
+            return request()->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : redirect()->back()->with('error', $msg);
+        }
+
         $salesManager->user->status = 'active';
         $salesManager->user->save();
 
@@ -236,6 +247,11 @@ class SalesManagerController extends Controller
                 return response()->json(['success' => false, 'message' => 'You do not have permission to change the status of this user.'], 403);
             }
             return redirect()->route('admin.sales-managers.index')->with('error', 'You do not have permission to change the status of this user.');
+        }
+
+        if (!$salesManager->user) {
+            $msg = 'User account missing for this Sales Manager.';
+            return request()->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : redirect()->back()->with('error', $msg);
         }
 
         $salesManager->user->status = 'inactive';

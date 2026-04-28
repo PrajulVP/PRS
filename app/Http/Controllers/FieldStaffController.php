@@ -157,6 +157,13 @@ class FieldStaffController extends Controller
 
     public function update(Request $request, FieldStaff $fieldstaff)
     {
+        if (!$fieldstaff->user) {
+            $msg = 'User account missing for this Field Staff. This record may be corrupted.';
+            return $request->ajax() 
+                ? response()->json(['success' => false, 'message' => $msg], 422) 
+                : redirect()->back()->with('error', $msg);
+        }
+
         $userData = $request->validate([
             'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
             'email' => [
@@ -245,6 +252,10 @@ class FieldStaffController extends Controller
         $currentUser = Auth::user();
         
         if ($currentUser->hasAnyRole(['superadmin', 'admin'])) {
+            if (!$fieldstaff->user) {
+                $msg = 'User account missing for this Field Staff.';
+                return request()->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : redirect()->back()->with('error', $msg);
+            }
             $fieldstaff->user->status = 'active';
             $fieldstaff->user->save();
 
@@ -268,6 +279,10 @@ class FieldStaffController extends Controller
         $currentUser = Auth::user();
 
         if ($currentUser->hasAnyRole(['superadmin', 'admin'])) {
+            if (!$fieldstaff->user) {
+                $msg = 'User account missing for this Field Staff.';
+                return request()->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : redirect()->back()->with('error', $msg);
+            }
             $fieldstaff->user->status = 'inactive';
             $fieldstaff->user->save();
             
