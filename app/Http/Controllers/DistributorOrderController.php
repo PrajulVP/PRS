@@ -125,15 +125,18 @@ class DistributorOrderController extends Controller
                 $formattedOrders = $orders->map(function ($order) {
                     $productSummary = $order->items->map(function ($item) {
                         $pName = $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product';
+                        $vLabel = array_filter([$item->side, $item->size]);
+                        if (!empty($vLabel)) {
+                            $pName .= ' <span class="badge bg-soft-info text-info border-0 px-2" style="font-size: 0.65rem;">' . implode(' / ', $vLabel) . '</span>';
+                        }
                         
-                        $summary = $pName . ' - ' . $item->quantity;
+                        $summary = $pName . ' - ' . $item->quantity . ' ' . ($item->unit ?? 'Nos');
                         
-                        $summary = $pName . ' - ' . $item->quantity;
                         if ($item->free_quantity > 0) {
                             $summary .= ' + ' . $item->free_quantity . ' Free';
                         }
                         $pack = $item->product->pack ?? null;
-                        return $summary . ($pack ? ' ' . $pack : '');
+                        return $summary . ($pack ? ' (' . $pack . ')' : '');
                     })->implode('<br>');
 
                     return [
@@ -143,6 +146,8 @@ class DistributorOrderController extends Controller
                         'distributor_email' => $order->distributor?->email ?? $order->distributor?->user?->email ?? '',
                         'distributor_phone' => $order->distributor?->contact_no ?? $order->distributor?->phone ?? '',
                         'distributor_address' => trim(($order->distributor?->address ?? '') . ' ' . ($order->distributor?->pincode ?? '')),
+                        'distributor_name' => $order->distributor?->name ?? $order->distributor?->user?->name ?? 'N/A',
+                        'distributor_location' => trim(($order->distributor?->address ?? '') . ' ' . ($order->distributor?->pincode ?? '')),
                         'distributor_gst' => $order->distributor?->gst ?? '',
                         'distributor_dl' => $order->distributor?->drug_license_no ?? '',
                         'distributor_id' => $order->distributor_id,
@@ -517,7 +522,7 @@ class DistributorOrderController extends Controller
         }
 
         $request->validate([
-            'payment_status' => 'required|in:pending,paid,failed',
+            'payment_status' => 'sometimes|nullable|in:pending,paid,failed',
             'invoice' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
             'invoice_no' => 'required|string|max:100', // Capture invoice number
             'batches' => 'required|array',
@@ -586,12 +591,17 @@ class DistributorOrderController extends Controller
                 $invoicePath = $file->storeAs('invoices/distributors', $filename, 'public');
             }
 
-            $distributorOrder->update([
+            $updateData = [
                 'status' => DistributorOrder::STATUS_APPROVED,
-                'payment_status' => $request->payment_status,
                 'invoice_path' => $invoicePath,
                 'invoice_no' => $request->invoice_no // Save the invoice number
-            ]);
+            ];
+
+            if ($request->filled('payment_status')) {
+                $updateData['payment_status'] = $request->payment_status;
+            }
+
+            $distributorOrder->update($updateData);
 
             // Save Batch Details
             foreach ($request->batches as $itemId => $batches) {

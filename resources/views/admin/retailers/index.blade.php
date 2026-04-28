@@ -86,9 +86,9 @@
                                     <tr>
                                         <th>No.</th>
                                         <th>Shop Name</th>
-                                        <th>Owner Name</th>
-                                        <th>Email</th>
-                                        <th>Contact No</th>
+                                        <th>Owner</th>
+                                        <th>Sales Manager</th>
+                                        <th>Field Staff</th>
                                         <th>GST</th>
                                         <th>Drug Lic.</th>
                                         <th>District</th>
@@ -126,11 +126,11 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Owner Name</label>
-                                <input type="text" name="name" class="form-control" required>
+                                <input type="text" name="name" class="form-control" required pattern="^[a-zA-Z\s]+$" title="Owner Name should only contain letters and spaces.">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Email</label>
-                                <input type="email" name="email" class="form-control" required>
+                                <input type="email" name="email" class="form-control" required pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address with a valid domain (e.g. .com, .in)">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Password</label>
@@ -147,11 +147,11 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">GST</label>
-                                <input type="text" name="gst" class="form-control">
+                                <input type="text" name="gst" class="form-control" required pattern="^[a-zA-Z0-9]+$" title="GST must only contain letters and numbers.">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Drug License No</label>
-                                <input type="text" name="drug_license_no" class="form-control">
+                                <input type="text" name="drug_license_no" class="form-control" required pattern="^[a-zA-Z0-9\/\-]+$" title="Only letters, numbers, / and - are allowed.">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">District</label>
@@ -180,7 +180,7 @@
                                     <div class="col-md-6">
                                         <label class="form-label fw-bold">Sales Manager</label>
                                         <select name="sales_manager_id" id="create_sales_manager_id" class="form-select">
-                                            <option value="">Select Sales Manager</option>
+                                            <option value="" selected>Select Sales Manager</option>
                                             @foreach ($salesManagers as $sm)
                                                 <option value="{{ $sm->id }}">{{ $sm->user->name }}</option>
                                             @endforeach
@@ -192,7 +192,7 @@
                                     <div class="col-md-6">
                                         <label class="form-label fw-bold">Field Staff</label>
                                         <select name="field_staff_id" id="create_field_staff_id" class="form-select">
-                                            <option value="">Select Field Staff</option>
+                                            <option value="" selected>Select Field Staff</option>
                                             @foreach ($fieldStaffs as $fs)
                                                 <option value="{{ $fs->id }}" data-sales-manager-id="{{ $fs->sales_manager_id }}">{{ $fs->user->name }}</option>
                                             @endforeach
@@ -205,21 +205,6 @@
                                 <label class="form-label">Address</label>
                                 <textarea name="address" class="form-control" rows="2" required></textarea>
                             </div>
-                            {{-- 
-                            <input type="hidden" name="latitude" id="create_lat">
-                            <input type="hidden" name="longitude" id="create_long">
-                            <div class="col-12 mt-3">
-                                <div class="input-group">
-                                    <input id="create_pac-input" class="form-control" type="text"
-                                        placeholder="Search for a location">
-                                    <button type="button" class="btn btn-info"
-                                        onclick="getGeoLocation('create_lat', 'create_long', 'create')"><i
-                                            class="fa fa-map-marker"></i> Get Current Location</button>
-                                </div>
-                                <div id="create_map" style="height: 300px; width: 100%; margin-top: 10px;"></div>
-                            </div>
-                            --}}
-
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -250,11 +235,11 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Owner Name</label>
-                                <input type="text" name="name" id="edit_name" class="form-control" required>
+                                <input type="text" name="name" id="edit_name" class="form-control" required pattern="^[a-zA-Z\s]+$" title="Owner Name should only contain letters and spaces.">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Email</label>
-                                <input type="email" name="email" id="edit_email" class="form-control" required>
+                                <input type="email" name="email" id="edit_email" class="form-control" required pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address with a valid domain (e.g. .com, .in)">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Password (Leave blank to keep unchanged)</label>
@@ -271,11 +256,11 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">GST</label>
-                                <input type="text" name="gst" id="edit_gst" class="form-control">
+                                <input type="text" name="gst" id="edit_gst" class="form-control" required pattern="^[a-zA-Z0-9]+$" title="GST must only contain letters and numbers.">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Drug License No</label>
-                                <input type="text" name="drug_license_no" id="edit_drug_license_no" class="form-control">
+                                <input type="text" name="drug_license_no" id="edit_drug_license_no" class="form-control" required pattern="^[a-zA-Z0-9\/\-]+$" title="Only letters, numbers, / and - are allowed.">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">District</label>
@@ -309,20 +294,35 @@
                                 <textarea name="address" id="edit_address" class="form-control" rows="2"
                                     required></textarea>
                             </div>
-                            {{-- 
-                            <input type="hidden" name="latitude" id="edit_latitude">
-                            <input type="hidden" name="longitude" id="edit_longitude">
+
+                            {{-- Dynamic Assignment Row for Edit --}}
                             <div class="col-12 mt-3">
-                                <div class="input-group">
-                                    <input id="edit_pac-input" class="form-control" type="text"
-                                        placeholder="Search for a location">
-                                    <button type="button" class="btn btn-info"
-                                        onclick="getGeoLocation('edit_latitude', 'edit_longitude', 'edit')"><i
-                                            class="fa fa-map-marker"></i> Get Current Location</button>
+                                <div class="row g-3">
+                                    @if(Auth::user()->hasAnyRole(['admin', 'superadmin']))
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Sales Manager</label>
+                                        <select name="sales_manager_id" id="edit_sales_manager_id" class="form-select">
+                                            <option value="" selected>Select Sales Manager</option>
+                                            @foreach ($salesManagers as $sm)
+                                                <option value="{{ $sm->id }}">{{ $sm->user->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    @endif
+
+                                    @if(!Auth::user()->hasRole('fieldstaff'))
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Field Staff</label>
+                                        <select name="field_staff_id" id="edit_field_staff_id" class="form-select">
+                                            <option value="" selected>Select Field Staff</option>
+                                            @foreach ($fieldStaffs as $fs)
+                                                <option value="{{ $fs->id }}" data-sales-manager-id="{{ $fs->sales_manager_id }}">{{ $fs->user->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    @endif
                                 </div>
-                                <div id="edit_map" style="height: 300px; width: 100%; margin-top: 10px;"></div>
                             </div>
-                            --}}
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -471,11 +471,6 @@
                             </div>
 
                         </div>
-                        {{-- 
-                        <hr class="my-4">
-                        <h6 class="mb-3"><i class="fa fa-map-marker-alt me-2"></i>Location on Map</h6>
-                        <div id="show_map" style="height:300px;width:100%;border-radius:12px;border:1px solid #eee;"></div>
-                        --}}
                     </div>
                 </div>
                 <div class="modal-footer border-0" style="background: var(--med-bg-body);">
@@ -511,68 +506,34 @@
 
         function initMap() {
             const createMapDiv = document.getElementById("create_map");
-            if (!createMapDiv) return;
+            const editMapDiv = document.getElementById("edit_map");
+            const showMapDiv = document.getElementById("show_map");
+
+            if (!createMapDiv && !editMapDiv && !showMapDiv) return;
 
             const defaultLoc = { lat: 20.5937, lng: 78.9629 };
 
-            // Create Map
-            createMap = new google.maps.Map(createMapDiv, {
-                zoom: 5, center: defaultLoc, mapId: "DEMO_MAP_ID",
-            });
-            createMarker = new google.maps.marker.AdvancedMarkerElement({
-                position: defaultLoc, map: createMap, gmpDraggable: true,
-            });
-            createMarker.addListener("dragend", () => {
-                const pos = createMarker.position;
-                let lat = (typeof pos.lat === 'function') ? pos.lat() : pos.lat;
-                let lng = (typeof pos.lng === 'function') ? pos.lng() : pos.lng;
-                document.getElementById("create_lat").value = lat;
-                document.getElementById("create_long").value = lng;
-            });
+            if (createMapDiv) {
+                createMap = new google.maps.Map(createMapDiv, { center: defaultLoc, zoom: 12 });
+                createMarker = new google.maps.Marker({ position: defaultLoc, map: createMap, draggable: true });
+                google.maps.event.addListener(createMarker, 'dragend', function () {
+                    $('#create_latitude').val(createMarker.getPosition().lat());
+                    $('#create_longitude').val(createMarker.getPosition().lng());
+                });
+            }
 
-            // Edit Map
-            const editMapDiv = document.getElementById("edit_map");
             if (editMapDiv) {
-                editMap = new google.maps.Map(editMapDiv, {
-                    zoom: 5, center: defaultLoc, mapId: "DEMO_MAP_ID_EDIT",
-                });
-                editMarker = new google.maps.marker.AdvancedMarkerElement({
-                    position: defaultLoc, map: editMap, gmpDraggable: true,
-                });
-                editMarker.addListener("dragend", () => {
-                    const pos = editMarker.position;
-                    let lat = (typeof pos.lat === 'function') ? pos.lat() : pos.lat;
-                    let lng = (typeof pos.lng === 'function') ? pos.lng() : pos.lng;
-                    document.getElementById("edit_latitude").value = lat;
-                    document.getElementById("edit_longitude").value = lng;
+                editMap = new google.maps.Map(editMapDiv, { center: defaultLoc, zoom: 12 });
+                editMarker = new google.maps.Marker({ position: defaultLoc, map: editMap, draggable: true });
+                google.maps.event.addListener(editMarker, 'dragend', function () {
+                    $('#edit_latitude').val(editMarker.getPosition().lat());
+                    $('#edit_longitude').val(editMarker.getPosition().lng());
                 });
             }
 
-            // Show Map
-            const showMapDiv = document.getElementById("show_map");
             if (showMapDiv) {
-                showMap = new google.maps.Map(showMapDiv, {
-                    zoom: 5, center: defaultLoc, mapId: "DEMO_MAP_ID_SHOW",
-                });
-                showMarker = new google.maps.marker.AdvancedMarkerElement({
-                    position: defaultLoc, map: showMap,
-                });
-            }
-
-            // Autocomplete for Create
-            const createInput = document.getElementById("create_pac-input");
-            if (createInput) {
-                const createAutocomplete = new google.maps.places.Autocomplete(createInput);
-                createAutocomplete.bindTo("bounds", createMap);
-                createAutocomplete.addListener("place_changed", () => {
-                    const place = createAutocomplete.getPlace();
-                    if (!place.geometry || !place.geometry.location) return;
-                    if (place.geometry.viewport) createMap.fitBounds(place.geometry.viewport);
-                    else { createMap.setCenter(place.geometry.location); createMap.setZoom(17); }
-                    createMarker.position = place.geometry.location;
-                    document.getElementById("create_lat").value = place.geometry.location.lat();
-                    document.getElementById("create_long").value = place.geometry.location.lng();
-                });
+                showMap = new google.maps.Map(showMapDiv, { center: defaultLoc, zoom: 12 });
+                showMarker = new google.maps.Marker({ position: defaultLoc, map: showMap, draggable: false });
             }
         }
         window.initMap = initMap;
@@ -589,14 +550,25 @@
 
         function getGeoLocation(latId, longId, mapType) {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((pos) => {
-                    let lat = pos.coords.latitude, lng = pos.coords.longitude;
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    let lat = position.coords.latitude;
+                    let lng = position.coords.longitude;
                     document.getElementById(latId).value = lat;
                     document.getElementById(longId).value = lng;
-                    let p = { lat, lng };
-                    if (mapType === 'create' && createMap) { createMarker.position = p; createMap.setCenter(p); createMap.setZoom(15); }
-                    else if (mapType === 'edit' && editMap) { editMarker.position = p; editMap.setCenter(p); editMap.setZoom(15); }
-                }, (err) => alert("Error: " + err.message));
+                    let pos = { lat: lat, lng: lng };
+
+                    if (mapType === 'create' && createMap) {
+                        createMarker.setPosition(pos);
+                        createMap.setCenter(pos);
+                        createMap.setZoom(15);
+                    } else if (mapType === 'edit' && editMap) {
+                        editMarker.setPosition(pos);
+                        editMap.setCenter(pos);
+                        editMap.setZoom(15);
+                    }
+                }, function (error) {
+                    alert("Error getting location: " + error.message);
+                });
             }
         }
 
@@ -611,13 +583,13 @@
                 columns: [
                     { data: null, orderable: false, searchable: false, render: (d, t, r, m) => m.row + m.settings._iDisplayStart + 1 },
                     { data: 'shop_name', name: 'shop_name' },
-                    { data: 'user.name', name: 'user.name' },
-                    { data: 'user.email', name: 'user.email' },
-                    { data: 'contact_no', name: 'contact_no' },
+                    { data: 'user_name', name: 'user.name' },
+                    { data: 'sales_manager_name', name: 'salesManager.user.name', defaultContent: 'N/A' },
+                    { data: 'field_staff_name', name: 'fieldStaff.user.name', defaultContent: 'N/A' },
                     { data: 'gst', name: 'gst' },
                     { data: 'drug_license_no', name: 'drug_license_no' },
-                    { data: 'district_name', name: 'district_name' },
-                    { data: 'area_name', name: 'area_name' },
+                    { data: 'district_name', name: 'district.name' },
+                    { data: 'area_name', name: 'area.name' },
                     { data: 'pincode', name: 'pincode' },
                     { data: 'address', name: 'address' },
                     { 
@@ -660,7 +632,6 @@
                 }
             });
 
-            // Handlers
             $('.district-select').on('change', function () {
                 fetchAreas($(this).val(), $(this).closest('form').find('.area-select'));
             });
@@ -672,13 +643,14 @@
                 $('#edit_email').val(data.user.email);
                 $('#edit_gst').val(data.gst);
                 $('#edit_drug_license_no').val(data.drug_license_no);
-                $('#edit_contact_no').val(data.contact_no);
+                $('#edit_sales_manager_id').val(data.sales_manager_id || "").trigger('change');
+                $('#edit_field_staff_id').val(data.field_staff_id || "");
+                $('#edit_status').val(data.user.status);
                 $('#edit_pincode').val(data.pincode);
                 $('#edit_address').val(data.address);
                 $('#edit_latitude').val(data.latitude);
                 $('#edit_longitude').val(data.longitude);
                 $('#edit_district_id').val(data.district_id);
-                $('#edit_status').val(data.user?.status || '');
                 fetchAreas(data.district_id, $('#edit_area_id'), data.area_id);
                 $('#editRetailerForm').attr('action', "{{ route('admin.retailers.update', ':id') }}".replace(':id', data.id));
                 $('#editRetailerModal').modal('show');
@@ -750,27 +722,14 @@
 
             $('#retailers-table').on('click', '.status-toggle', function () {
                 let id = $(this).data('id'), status = $(this).data('status'), next = status === 'active' ? 'inactive' : 'active';
-                
-                // Frontend Permission Check
                 const canManage = @json(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']));
                 if (!canManage) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Permission Denied',
-                        text: 'You do not have permission to change the status of retailers.',
-                        confirmButtonColor: '#00497a'
-                    });
+                    Swal.fire({ icon: 'error', title: 'Permission Denied', text: 'You do not have permission to change the status of retailers.', confirmButtonColor: '#00497a' });
                     return;
                 }
 
                 Swal.fire({
-                    title: `Change Status to ${next.toUpperCase()}?`,
-                    text: `Are you sure you want to ${next} this retailer?`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#00497a',
-                    cancelButtonColor: '#ef4444',
-                    confirmButtonText: 'Yes, change it!'
+                    title: `Change Status to ${next.toUpperCase()}?`, text: `Are you sure you want to ${next} this retailer?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#00497a', cancelButtonColor: '#ef4444', confirmButtonText: 'Yes, change it!'
                 }).then((result) => {
                     if (result.isConfirmed) {
                         let url = (next === 'active' ? "{{ route('admin.retailers.activate', ':id') }}" : "{{ route('admin.retailers.deactivate', ':id') }}").replace(':id', id);
@@ -778,72 +737,45 @@
                             table.ajax.reload(null, false);
                             showToast('success', 'Status updated successfully');
                         }).fail((xhr) => {
-                            console.error('Status Toggle Error:', xhr);
                             let msg = 'Error changing user status';
-                            if (xhr.responseJSON && xhr.responseJSON.message) {
-                                msg = xhr.responseJSON.message;
-                            } else if (xhr.responseText) {
-                                try {
-                                    let err = JSON.parse(xhr.responseText);
-                                    if (err.message) msg = err.message;
-                                } catch (e) {
-                                    console.error('Error parsing responseText:', e);
-                                }
-                            }
-
-                            if (window.Swal) {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Permission Denied',
-                                    text: msg,
-                                    confirmButtonColor: '#00497a'
-                                });
-                            } else {
-                                alert('Permission Denied: ' + msg);
-                            }
+                            if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+                            Swal.fire({ icon: 'error', title: 'Permission Denied', text: msg, confirmButtonColor: '#00497a' });
                         });
                     }
                 });
             });
 
-            // Dynamic Filtering for Sales Manager -> Field Staff (Create Modal)
             $('#create_sales_manager_id').on('change', function() {
                 var managerId = $(this).val();
                 var fieldStaffSelect = $('#create_field_staff_id');
                 var options = fieldStaffSelect.find('option');
-
                 if (!managerId) {
-                    // If no manager selected, show all or none? 
-                    // User said "after selecting the manager the fieldstaffs under him should fetch"
-                    // So let's hide all except the default "Select Field Staff"
-                    options.each(function() {
-                        if ($(this).val() === "") $(this).show();
-                        else $(this).hide();
-                    });
+                    options.each(function() { if ($(this).val() === "") $(this).show(); else $(this).hide(); });
                     fieldStaffSelect.val("");
                 } else {
-                    var firstVisible = null;
                     options.each(function() {
                         var optionManagerId = $(this).data('sales-manager-id');
-                        if ($(this).val() === "") {
-                            $(this).show();
-                        } else if (optionManagerId == managerId) {
-                            $(this).show();
-                            if (!firstVisible) firstVisible = $(this).val();
-                        } else {
-                            $(this).hide();
-                        }
+                        if ($(this).val() === "" || optionManagerId == managerId) $(this).show(); else $(this).hide();
                     });
-                    fieldStaffSelect.val(""); // Reset selection
                 }
             });
 
-            // Initial trigger if needed
+            $('#edit_sales_manager_id').on('change', function() {
+                var managerId = $(this).val();
+                var fieldStaffSelect = $('#edit_field_staff_id');
+                var options = fieldStaffSelect.find('option');
+                if (!managerId) {
+                    options.each(function() { if ($(this).val() === "") $(this).show(); else $(this).hide(); });
+                } else {
+                    options.each(function() {
+                        var optionManagerId = $(this).data('sales-manager-id');
+                        if ($(this).val() === "" || optionManagerId == managerId) $(this).show(); else $(this).hide();
+                    });
+                }
+            });
+
             $('#create_sales_manager_id').trigger('change');
-
             $('#userStatusTabs button').on('click', () => setTimeout(() => table.ajax.reload(), 50));
-
-            // Modal events for Map resize
             $('.modal').on('shown.bs.modal', function() {
                 if (createMap) google.maps.event.trigger(createMap, 'resize');
                 if (editMap) google.maps.event.trigger(editMap, 'resize');

@@ -127,7 +127,7 @@ class RetailerController extends Controller
         })->get();
 
 
-        $districts = District::all();
+        $districts = District::orderBy('name', 'asc')->get();
 
         return view('admin.retailers.index', compact('distributors', 'salesManagers', 'fieldStaffs', 'districts'));
     }
@@ -135,26 +135,40 @@ class RetailerController extends Controller
     public function store(Request $request)
     {
         $userData = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:4|confirmed',
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
+            'email' => [
+                'required', 'email', 'unique:users,email',
+                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
+            ],
+            'password' => ['required', 'min:6', 'confirmed', 'regex:/^\S+$/'],
+        ], [
+            'name.regex' => 'The name must only contain letters and spaces.',
+            'email.regex' => 'The email format is invalid or has an invalid top-level domain.',
+            'password.min' => 'The password must be at least 6 characters.',
+            'password.regex' => 'The password must not contain spaces.',
         ]);
 
         $retailerData = $request->validate([
             'shop_name' => 'required|string|max:255',
-            'pincode' => 'required',
-            'gst' => 'required|unique:retailers',
-            'drug_license_no' => 'nullable|string|max:255',
+            'pincode' => ['required', 'digits:6'],
+            'gst' => ['required', 'unique:retailers', 'regex:/^[a-zA-Z0-9]+$/'],
+            'drug_license_no' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\/\-]+$/'],
             'distributor_id' => 'nullable|exists:distributors,id',
             'field_staff_id' => 'nullable|exists:fieldstaffs,id',
             'sales_manager_id' => 'nullable|exists:sales_managers,id',
             'credit_limit' => 'nullable|numeric|min:0',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
-            'contact_no' => 'required|digits:10',
-            'address' => 'required',
+            'contact_no' => ['required', 'digits:10', 'regex:/^[1-9][0-9]{9}$/'],
+            'address' => ['required', 'string'],
             'district_id' => 'required|exists:districts,id',
             'area_id' => 'required|exists:areas,id',
+        ], [
+            'contact_no.regex' => 'The contact number must not start with zero.',
+            'gst.regex' => 'The GST number must only contain letters and numbers (no symbols).',
+            'drug_license_no.required' => 'The drug license number is mandatory.',
+            'drug_license_no.regex' => 'The drug license number can only contain letters, numbers, slashes (/), and hyphens (-).',
+            'pincode.digits' => 'The pincode must be exactly 6 digits.',
         ]);
 
         $user = User::create([
@@ -220,26 +234,40 @@ class RetailerController extends Controller
     public function update(Request $request, Retailer $retailer)
     {
         $userData = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $retailer->user->id,
-            'password' => 'nullable|min:4|confirmed',
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
+            'email' => [
+                'required', 'email', 'unique:users,email,' . $retailer->user->id,
+                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
+            ],
+            'password' => ['nullable', 'min:6', 'confirmed', 'regex:/^\S+$/'],
+        ], [
+            'name.regex' => 'The name must only contain letters and spaces.',
+            'email.regex' => 'The email format is invalid or has an invalid top-level domain.',
+            'password.min' => 'The password must be at least 6 characters.',
+            'password.regex' => 'The password must not contain spaces.',
         ]);
 
         $retailerData = $request->validate([
             'shop_name' => 'required|string|max:255',
-            'pincode' => 'required',
-            'gst' => 'required|unique:retailers,gst,' . $retailer->id,
-            'drug_license_no' => 'nullable|string|max:255',
+            'pincode' => ['required', 'digits:6'],
+            'gst' => ['required', 'unique:retailers,gst,' . $retailer->id, 'regex:/^[a-zA-Z0-9]+$/'],
+            'drug_license_no' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\/\-]+$/'],
             'distributor_id' => 'nullable|exists:distributors,id',
             'field_staff_id' => 'nullable|exists:fieldstaffs,id',
             'sales_manager_id' => 'nullable|exists:sales_managers,id',
             'credit_limit' => 'nullable|numeric|min:0',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
-            'contact_no' => 'required|digits:10',
-            'address' => 'required',
+            'contact_no' => ['required', 'digits:10', 'regex:/^[1-9][0-9]{9}$/'],
+            'address' => ['required', 'string'],
             'district_id' => 'required|exists:districts,id',
             'area_id' => 'required|exists:areas,id',
+        ], [
+            'contact_no.regex' => 'The contact number must not start with zero.',
+            'gst.regex' => 'The GST number must only contain letters and numbers (no symbols).',
+            'drug_license_no.required' => 'The drug license number is mandatory.',
+            'drug_license_no.regex' => 'The drug license number can only contain letters, numbers, slashes (/), and hyphens (-).',
+            'pincode.digits' => 'The pincode must be exactly 6 digits.',
         ]);
 
         $userUpdateData = [
@@ -344,7 +372,7 @@ class RetailerController extends Controller
 
     public function getAreas($district_id)
     {
-        $areas = Area::where('district_id', $district_id)->get();
+        $areas = Area::where('district_id', $district_id)->orderBy('name', 'asc')->get();
         return response()->json($areas);
     }
 }

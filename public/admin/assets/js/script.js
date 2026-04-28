@@ -425,15 +425,17 @@
   });
   // ================== show and hide input start
   const toggle = document.getElementById("searchIcon")
-  let newinput = false
-  toggle.addEventListener("click", function () {
-    newinput = !newinput
-    if (newinput) {
-      document.getElementById("searchInput").classList.add("show")
-    } else {
-      document.getElementById("searchInput").classList.remove("show")
-    }
-  })
+  if (toggle) {
+    let newinput = false
+    toggle.addEventListener("click", function () {
+      newinput = !newinput
+      if (newinput) {
+        document.getElementById("searchInput").classList.add("show")
+      } else {
+        document.getElementById("searchInput").classList.remove("show")
+      }
+    })
+  }
   // ================ show and hide input css end 
 
 })(jQuery);

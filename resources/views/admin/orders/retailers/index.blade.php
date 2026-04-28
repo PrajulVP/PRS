@@ -21,24 +21,29 @@
 
         /* Segmented Control for Payment Filter */
         .segmented-control {
-            display: flex;
+            display: flex !important;
+            flex-direction: row !important;
             background-color: var(--med-border, #e2e8f0);
             border-radius: 50px;
             padding: 4px;
             position: relative;
-            width: 260px;
+            width: 100%;
+            max-width: 260px;
+            min-width: 220px;
             box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
         }
         .segmented-control input {
             display: none;
         }
         .segmented-control label {
-            flex: 1;
+            flex: 1 !important;
+            width: 33.33% !important;
             text-align: center;
-            padding: 6px 0;
+            padding: 8px 0;
             margin: 0;
-            font-size: 0.75rem;
-            font-weight: 700;
+            font-size: 0.7rem;
+            font-weight: 800;
             color: var(--med-text-muted, #64748b);
             cursor: pointer;
             position: relative;
@@ -46,6 +51,7 @@
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            white-space: nowrap;
         }
         .segmented-control input:checked + label {
             color: var(--med-text-main, #0f172a);
@@ -376,8 +382,8 @@
 
                 <!-- Hidden filter element to be moved into datatable wrapper -->
                 <div class="d-none" id="payment-filter-wrapper">
-                    <div class="d-flex align-items-center mb-0 ms-2">
-                        <span class="text-muted fw-bold me-3 small text-uppercase">Payment:</span>
+                    <div class="d-flex flex-column flex-sm-row align-items-center mb-0 ms-sm-2">
+                        <span class="text-muted fw-bold me-sm-3 mb-2 mb-sm-0 small text-uppercase">Payment:</span>
                         <div class="segmented-control" id="payment_status_filter_group">
                             <input type="radio" name="payment_status" id="pay_all" value="" checked>
                             <label for="pay_all">All</label>
@@ -621,16 +627,9 @@
                                 fulfill this order. Total allocated quantity must match ordered quantity.</small>
                         </div>
                         <div class="row mb-3">
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label class="form-label fw-bold">Upload Invoice (PDF, JPG, PNG)</label>
                                 <input type="file" name="invoice" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Payment Status</label>
-                                <select name="payment_status" class="form-select">
-                                    <option value="pending">Unpaid</option>
-                                    <option value="paid">Paid</option>
-                                </select>
                             </div>
                         </div>
                         <div class="table-responsive">
@@ -668,6 +667,7 @@
     <script>
         const canAcceptOrder = {{ Auth::user()->hasAnyRole(['distributor', 'admin', 'superadmin', 'manager']) ? 'true' : 'false' }};
         const canAssignFieldStaff = {{ Auth::user()->hasAnyRole(['admin', 'superadmin', 'manager', 'distributor']) ? 'true' : 'false' }};
+        const canCancelRetailerOrder = {{ (Auth::user()->hasAnyRole(['admin', 'superadmin', 'retailer']) || Auth::user()->hasPermissionToCategory('retailer_orders', 'delete')) ? 'true' : 'false' }};
         const isRetailer = {{ Auth::user()->hasRole('retailer') ? 'true' : 'false' }};
         const isAdmin = {{ Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']) ? 'true' : 'false' }};
 
@@ -682,7 +682,7 @@
             var table = $('#orders-table').DataTable({
                 order: [[7, 'desc']],
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
-                    "<'row mb-4 gy-3 d-flex align-items-center'<'col-12 col-lg-4'l><'col-12 col-lg-4 d-flex justify-content-lg-center payment-filter-container'><'col-12 col-lg-4 d-flex justify-content-lg-end'f>>" +
+                    "<'row mb-4 gy-4 d-flex align-items-center'<'col-12 col-lg-4 d-flex justify-content-center justify-content-lg-start'l><'col-12 col-lg-4 d-flex justify-content-center payment-filter-container'><'col-12 col-lg-4 d-flex justify-content-center justify-content-lg-end'f>>" +
                     "<'row'<'col-sm-12'tr>>" +
                     "<'row mt-3'<'col-sm-12 col-md-5 d-flex justify-content-center justify-content-md-start align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-center justify-content-md-end align-items-center'p>>",
                 buttons: {
@@ -807,12 +807,13 @@
                     name: 'status',
                     render: function (data, type, row) {
                         let status = (data || '').toLowerCase();
-                        let badgeClass = 'bg-secondary';
-                        if (status === 'pending') badgeClass = 'bg-custom-yellow text-white';
-                        else if (status === 'processing') badgeClass = 'bg-info text-white';
-                        else if (status === 'approved') badgeClass = 'bg-primary text-white';
+                        let badgeClass = 'bg-secondary text-white';
+                        if (status === 'pending') badgeClass = 'bg-secondary text-white';
+                        else if (status === 'processing') badgeClass = 'bg-warning text-white';
+                        else if (status === 'approved') badgeClass = 'bg-info text-white';
                         else if (status === 'delivered') badgeClass = 'bg-success text-white';
                         else if (status === 'cancelled') badgeClass = 'bg-danger text-white';
+                        else if (status === 'rejected') badgeClass = 'bg-dark-red text-white';
 
                         return `<span class="badge ${badgeClass}" style="font-size: 0.8rem; padding: 0.5em 0.9em; font-weight: 600;">${data.charAt(0).toUpperCase() + data.slice(1)}</span>`;
                     }
@@ -829,7 +830,7 @@
                         let badgeClass = 'bg-secondary';
                         if (status === 'paid') badgeClass = 'bg-success text-white';
                         else if (status === 'failed') badgeClass = 'bg-danger text-white';
-                        else badgeClass = 'bg-custom-yellow text-white';
+                        else badgeClass = 'bg-secondary text-white';
 
                         return `<span class="badge ${badgeClass}" style="font-size: 0.8rem; padding: 0.5em 0.9em; font-weight: 600;">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
                     }
@@ -866,9 +867,9 @@
                             btns += `<a href="${invoiceUrl}" target="_blank" class="btn btn-dark btn-sm" title="Print Invoice"><i class="fa fa-print"></i></a>`;
                         }
 
-                        // Retailer Delete Pending Order
-                        if (st === 'pending' && isRetailer) {
-                            btns += `<button class="btn btn-danger btn-sm delete-order-btn" data-id="${row.id}" title="Delete Order"><i class="fa fa-trash"></i></button>`;
+                        // Cancel Order (controlled by permission)
+                        if (st === 'pending' && canCancelRetailerOrder) {
+                            btns += `<button class="btn btn-danger btn-sm cancel-order-btn" data-id="${row.id}" title="Cancel Order"><i class="fa fa-times-circle"></i></button>`;
                         }
 
                         // Retailer Confirmation
@@ -926,9 +927,15 @@
 
                 editItems = {};
                 row.items.forEach(function (i) {
+                    let vInfo = [i.side, i.size].filter(v => v).join(' / ');
+                    let displayName = i.product_name || i.name;
+                    if (vInfo) displayName += ` [${vInfo}]`;
+                    
                     editItems[i.product_id] = {
                         id: i.product_id,
-                        name: i.product_name || i.name,
+                        name: displayName,
+                        side: i.side,
+                        size: i.size,
                         qty: i.quantity || i.qty,
                         price: parseFloat(i.unit_price || i.price),
                         order_item_id: i.order_item_id
@@ -975,6 +982,8 @@
                                                                                                                                                                                                             <tr>
                                                                                                                                                                                                                 <td>${item.name}
                                                                                                                                                                                                                     <input type="hidden" name="items[${id}][product_id]" value="${id}">
+                                                                                                                                                                                                                    <input type="hidden" name="items[${id}][side]" value="${item.side || ''}">
+                                                                                                                                                                                                                    <input type="hidden" name="items[${id}][size]" value="${item.size || ''}">
                                                                                                                                                                                                                     ${item.order_item_id ? `<input type="hidden" name="items[${id}][order_item_id]" value="${item.order_item_id}">` : ''}
                                                                                                                                                                                                                 </td>
                                                                                                                                                                                                                 <td>
@@ -1486,7 +1495,7 @@
                 if (!row) return;
 
                 let payStatus = (row.payment_status || 'pending').toLowerCase();
-                let payBadgeClass = payStatus === 'paid' ? 'bg-success text-white' : 'bg-custom-yellow text-white';
+                let payBadgeClass = payStatus === 'paid' ? 'bg-success text-white' : 'bg-secondary text-white';
                 $('#modalOrderCode').html(`#${row.order_code} <span class="badge ${payBadgeClass} ms-2" style="font-size: 0.75rem; vertical-align: middle; padding: 0.3em 0.7em;">${payStatus.toUpperCase()}</span>`);
 
                 let detailsHtml = `

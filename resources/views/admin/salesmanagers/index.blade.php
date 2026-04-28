@@ -184,7 +184,11 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Address</label>
-                                <textarea name="address" class="form-control"></textarea>
+                                <textarea name="address" class="form-control" required></textarea>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Pincode</label>
+                                <input type="text" name="pincode" class="form-control" required>
                             </div>
                         </div>
                     </div>
@@ -233,13 +237,17 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Contact No</label>
-                                <input type="text" name="contact_no" id="edit_contact_no" class="form-control">
+                                <input type="text" name="contact_no" id="edit_contact_no" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Pincode</label>
+                                <input type="text" name="pincode" id="edit_pincode" class="form-control" required>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Address</label>
-                                <textarea name="address" id="edit_address" class="form-control"></textarea>
+                                <textarea name="address" id="edit_address" class="form-control" required></textarea>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Status</label>
@@ -485,6 +493,7 @@
                 $('#edit_email').val(data.user?.email || '');
                 $('#edit_contact_no').val(data.contact_no);
                 $('#edit_address').val(data.address);
+                $('#edit_pincode').val(data.pincode);
                 $('#edit_status').val(data.user?.status || '');
                 $('#editSalesManagerForm').attr('action', "{{ route('admin.sales-managers.update', ':id') }}".replace(':id', data.id));
                 $('#editSalesManagerModal').modal('show');

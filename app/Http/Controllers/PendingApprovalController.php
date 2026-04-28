@@ -193,7 +193,12 @@ class PendingApprovalController extends Controller
             $formatted = collect($data)->map(function ($item) use ($viewType) {
                 // Common Order Formatting
                 $productSummary = $item->items->map(function ($i) {
-                    return ($i->product?->product_name ?? 'N/A') . ' (' . $i->quantity . ')';
+                    $name = $i->product?->product_name ?? 'N/A';
+                    $v = array_filter([$i->side, $i->size]);
+                    if (!empty($v)) {
+                        $name .= ' [' . implode('/', $v) . ']';
+                    }
+                    return $name . ' (' . $i->quantity . ')';
                 })->implode(', ');
 
                 $res = [

@@ -15,13 +15,17 @@
 
         /* Segmented Control for Payment Filter */
         .segmented-control {
-            display: flex;
+            display: flex !important;
+            flex-direction: row !important;
             background-color: var(--med-border, #e2e8f0);
             border-radius: 50px;
             padding: 4px;
             position: relative;
-            width: 260px;
+            width: 100%;
+            max-width: 260px;
+            min-width: 220px;
             box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
         }
 
         .segmented-control input {
@@ -29,12 +33,13 @@
         }
 
         .segmented-control label {
-            flex: 1;
+            flex: 1 !important;
+            width: 33.33% !important;
             text-align: center;
-            padding: 6px 0;
+            padding: 8px 0;
             margin: 0;
             font-size: 0.7rem;
-            font-weight: 700;
+            font-weight: 800;
             color: var(--med-text-muted, #64748b);
             cursor: pointer;
             position: relative;
@@ -42,6 +47,7 @@
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            white-space: nowrap;
         }
 
         .segmented-control input:checked+label {
@@ -443,8 +449,7 @@
                     </li>
                     @php
                         $user = Auth::user();
-                        $isSMorFS = $user->hasRole(['salesmanager', 'fieldstaff']);
-                        $defaultStatus = $isSMorFS ? 'pending' : 'processing';
+                        $defaultStatus = '';
                     @endphp
                     <li class="nav-item" role="presentation">
                         <button class="nav-link px-4 fw-bold text-muted" id="tab-pending" data-bs-toggle="tab"
@@ -749,24 +754,17 @@
                         <div class="p-4 bg-body-theme">
                             <input type="hidden" id="process_order_id" name="order_id">
 
-                            <!-- Payment Configuration Section -->
-                            <div class="payment-status-card mb-4">
+                            <!-- Settlement & Payment Status Information (Read-only) -->
+                            <div class="payment-status-info-card mb-4 p-3 rounded-3 bg-light border d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="mb-1 fw-bold text-main-theme d-flex align-items-center">
                                         <i class="fa fa-money-check-alt text-primary me-2"></i>
-                                        Settlement & Payment Status
+                                        Current Payment State
                                     </h6>
-                                    <div class="text-muted-theme small">Update the current payment state for this order.</div>
+                                    <div class="text-muted-theme small">Managed via the payment toggle in the order table.</div>
                                 </div>
-                                <div class="status-badge-group">
-                                    <label class="status-radio-option">
-                                        <input type="radio" name="payment_status" value="pending" checked>
-                                        <span class="status-radio-box">PENDING</span>
-                                    </label>
-                                    <label class="status-radio-option">
-                                        <input type="radio" name="payment_status" value="paid">
-                                        <span class="status-radio-box">PAID</span>
-                                    </label>
+                                <div id="process_payment_status_display_container">
+                                    {{-- Badge is updated via JS in the header --}}
                                 </div>
                             </div>
 
@@ -1185,16 +1183,16 @@
                             let bgClass = 'bg-secondary';
                             let displayStatus = row.status;
 
-                            if (statusRaw.includes('pending')) bgClass = 'bg-custom-yellow text-white';
+                            if (statusRaw.includes('pending')) bgClass = 'bg-secondary text-white';
                             else if (statusRaw === 'processing') {
-                                bgClass = 'bg-primary text-white';
+                                bgClass = 'bg-warning text-white';
                                 displayStatus = 'Processing';
                             } else if (statusRaw === 'approved') {
                                 bgClass = 'bg-info text-white';
                                 displayStatus = 'Approved';
                             } else if (statusRaw.includes('delivered')) bgClass = 'bg-success text-white';
                             else if (statusRaw.includes('cancelled')) bgClass = 'bg-danger text-white';
-                            else if (statusRaw.includes('rejected')) bgClass = 'bg-danger text-white';
+                            else if (statusRaw.includes('rejected')) bgClass = 'bg-dark-red text-white';
 
                             return `<span class="badge ${bgClass}" style="font-size: 0.8rem; padding: 0.5em 0.9em; font-weight: 600;">${displayStatus}</span>`;
                         }
@@ -1208,7 +1206,7 @@
 
                             if (payStatus === 'paid') bgClass = 'bg-success text-white';
                             else {
-                                bgClass = 'bg-custom-yellow text-white';
+                                bgClass = 'bg-secondary text-white';
                                 displayLabel = 'Pending';
                             }
 
@@ -1445,10 +1443,12 @@
                 // Status Badge logic
                 let status = (row.status || 'pending').toLowerCase();
                 let badgeClass = 'bg-secondary text-white';
-                if (status === 'pending') badgeClass = 'bg-custom-yellow text-white';
-                else if (status === 'processing') badgeClass = 'bg-info text-white';
-                else if (status === 'approved' || status === 'delivered') badgeClass = 'bg-success text-white';
-                else if (status === 'cancelled' || status === 'rejected') badgeClass = 'bg-danger text-white';
+                if (status === 'pending') badgeClass = 'bg-secondary text-white';
+                else if (status === 'processing') badgeClass = 'bg-warning text-white';
+                else if (status === 'approved') badgeClass = 'bg-info text-white';
+                else if (status === 'delivered') badgeClass = 'bg-success text-white';
+                else if (status === 'cancelled') badgeClass = 'bg-danger text-white';
+                else if (status === 'rejected') badgeClass = 'bg-dark-red text-white';
 
                 $('#view_status_badge').text(row.status || 'Pending').removeClass().addClass('badge ' + badgeClass).css('font-size', '0.7rem');
 
@@ -1505,10 +1505,12 @@
                 // Status Badges
                 let status = (row.status || 'pending').toLowerCase();
                 let badgeClass = 'bg-secondary text-white';
-                if (status === 'pending') badgeClass = 'bg-custom-yellow text-white';
-                else if (status === 'processing') badgeClass = 'bg-primary text-white';
-                else if (status === 'approved' || status === 'delivered') badgeClass = 'bg-success text-white';
-                else if (status === 'cancelled' || status === 'rejected') badgeClass = 'bg-danger text-white';
+                if (status === 'pending') badgeClass = 'bg-secondary text-white';
+                else if (status === 'processing') badgeClass = 'bg-warning text-white';
+                else if (status === 'approved') badgeClass = 'bg-info text-white';
+                else if (status === 'delivered') badgeClass = 'bg-success text-white';
+                else if (status === 'cancelled') badgeClass = 'bg-danger text-white';
+                else if (status === 'rejected') badgeClass = 'bg-dark-red text-white';
                 $('#approve_status_badge').text(row.status || 'Pending').removeClass().addClass('badge ' + badgeClass).css('font-size', '0.7rem');
 
                 let payStatus = (row.payment_status || 'pending').toLowerCase();
@@ -1598,18 +1600,17 @@
                 // Status Badges
                 let status = (row.status || 'pending').toLowerCase();
                 let badgeClass = 'bg-secondary text-white';
-                if (status === 'pending') badgeClass = 'bg-custom-yellow text-white';
-                else if (status === 'processing') badgeClass = 'bg-primary text-white';
-                else if (status === 'approved' || status === 'delivered') badgeClass = 'bg-success text-white';
-                else if (status === 'cancelled' || status === 'rejected') badgeClass = 'bg-danger text-white';
+                if (status === 'pending') badgeClass = 'bg-secondary text-white';
+                else if (status === 'processing') badgeClass = 'bg-warning text-white';
+                else if (status === 'approved') badgeClass = 'bg-info text-white';
+                else if (status === 'delivered') badgeClass = 'bg-success text-white';
+                else if (status === 'cancelled') badgeClass = 'bg-danger text-white';
+                else if (status === 'rejected') badgeClass = 'bg-dark-red text-white';
                 $('#process_status_badge').text(row.status || 'Pending').removeClass().addClass('badge ' + badgeClass).css('font-size', '0.7rem');
 
                 let payStatus = (row.payment_status || 'pending').toLowerCase();
                 let payBadgeClass = payStatus === 'paid' ? 'text-success' : 'text-warning';
                 $('#process_payment_status_badge').text(payStatus === 'paid' ? 'PAID' : 'UNPAID').removeClass().addClass('badge ' + payBadgeClass).css({'border': '1px solid currentColor', 'background': 'transparent', 'font-size': '0.7rem'});
-
-                // Set current payment status in radio buttons
-                $(`input[name="payment_status"][value="${payStatus}"]`).prop('checked', true);
 
 
                 // Reset OCR & Automation UI States

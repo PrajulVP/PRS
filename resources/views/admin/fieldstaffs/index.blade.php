@@ -256,6 +256,17 @@
                                     <option value="inactive">Inactive</option>
                                 </select>
                             </div>
+                            @if(Auth::user()->hasAnyRole(['admin', 'superadmin']))
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Sales Manager</label>
+                                <select name="sales_manager_id" id="edit_sales_manager_id" class="form-select" required>
+                                    <option value="">Select Sales Manager</option>
+                                    @foreach ($salesManagers as $sm)
+                                        <option value="{{ $sm->id }}">{{ $sm->user->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @endif
                             <div class="col-md-12 mb-3">
                                 <label class="form-label fw-bold">Device UUID (Bound Device)</label>
                                 <div class="input-group">
@@ -754,6 +765,7 @@
                 $('#edit_pincode').val(data.pincode || '');
                 $('#edit_address').val(data.address || ''); // Populate address
                 $('#edit_status').val(data.user.status);
+                $('#edit_sales_manager_id').val(data.sales_manager_id);
                 $('#edit_device_uuid').val(data.user.device_uuid || '');
                 $('#edit_latitude').val(data.latitude);
                 $('#edit_longitude').val(data.longitude);

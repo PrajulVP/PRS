@@ -122,11 +122,11 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Name</label>
-                                <input type="text" name="name" class="form-control" required>
+                                <input type="text" name="name" class="form-control" required pattern="^[a-zA-Z\s]+$" title="Name should only contain letters and spaces.">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Email</label>
-                                <input type="email" name="email" class="form-control" required>
+                                <input type="email" name="email" class="form-control" required pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address with a valid domain (e.g. .com, .in)">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Password</label>
@@ -139,11 +139,11 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">GST</label>
-                                <input type="text" name="gst" class="form-control" required>
+                                <input type="text" name="gst" class="form-control" required pattern="^[a-zA-Z0-9]+$" title="GST must only contain letters and numbers.">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Drug License No</label>
-                                <input type="text" name="drug_license_no" class="form-control">
+                                <input type="text" name="drug_license_no" class="form-control" required pattern="^[a-zA-Z0-9\/\-]+$" title="Only letters, numbers, / and - are allowed.">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Contact No</label>
@@ -222,7 +222,7 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Name</label>
-                                <input type="text" name="name" id="edit_name" class="form-control" required>
+                                <input type="text" name="name" id="edit_name" class="form-control" required pattern="^[a-zA-Z\s]+$" title="Name should only contain letters and spaces.">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Email</label>
@@ -239,11 +239,11 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">GST</label>
-                                <input type="text" name="gst" id="edit_gst" class="form-control" required>
+                                <input type="text" name="gst" id="edit_gst" class="form-control" required pattern="^[a-zA-Z0-9]+$" title="GST must only contain letters and numbers.">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Drug License No</label>
-                                <input type="text" name="drug_license_no" id="edit_drug_license_no" class="form-control">
+                                <input type="text" name="drug_license_no" id="edit_drug_license_no" class="form-control" required pattern="^[a-zA-Z0-9\/\-]+$" title="Only letters, numbers, / and - are allowed.">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Contact No</label>

@@ -99,10 +99,10 @@
                 <form action="{{ route('admin.users.store') }}" method="POST" id="createForm">
                     @csrf
                     <div class="modal-body">
-                        <div class="mb-3"><label>Name</label><input type="text" name="name" class="form-control" required>
+                        <div class="mb-3"><label>Name</label><input type="text" name="name" class="form-control" required pattern="^[a-zA-Z\s]+$" title="Name should only contain letters and spaces.">
                         </div>
                         <div class="mb-3"><label>Email</label><input type="email" name="email" class="form-control"
-                                required></div>
+                                required pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address with a valid domain (e.g. .com, .in)"></div>
                         <div class="mb-3"><label>Password</label><input type="password" name="password" class="form-control"
                                 required></div>
                         <div class="mb-3"><label>Confirm Password</label><input type="password" name="password_confirmation"
@@ -125,8 +125,24 @@
                             </select>
                         </div>
                         <div class="mb-3 d-none field-gst">
-                            <label>GST (Retailer)</label>
-                            <input type="text" name="gst" class="form-control">
+                            <label>GST (Retailer/Distributor)</label>
+                            <input type="text" name="gst" class="form-control" pattern="^[a-zA-Z0-9]+$" title="GST must only contain letters and numbers.">
+                        </div>
+                        <div class="mb-3 d-none field-drug-license">
+                            <label>Drug License No (Retailer/Distributor)</label>
+                            <input type="text" name="drug_license_no" class="form-control" pattern="^[a-zA-Z0-9\/\-]+$" title="Only letters, numbers, / and - are allowed.">
+                        </div>
+                        <div class="mb-3">
+                            <label>Contact No</label>
+                            <input type="text" name="contact_no" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label>Address</label>
+                            <textarea name="address" class="form-control" rows="2" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label>Pincode</label>
+                            <input type="text" name="pincode" class="form-control" required>
                         </div>
                         <div class="mb-3">
                             <label>Profile Picture</label>
@@ -150,9 +166,9 @@
                     @csrf @method('PUT')
                     <div class="modal-body">
                         <div class="mb-3"><label>Name</label><input type="text" name="name" id="edit_name"
-                                class="form-control" required></div>
+                                class="form-control" required pattern="^[a-zA-Z\s]+$" title="Name should only contain letters and spaces."></div>
                         <div class="mb-3"><label>Email</label><input type="email" name="email" id="edit_email"
-                                class="form-control" required></div>
+                                class="form-control" required pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address with a valid domain (e.g. .com, .in)"></div>
                         <div class="mb-3"><label>Password (blank to keep)</label><input type="password" name="password"
                                 class="form-control"></div>
                         <div class="mb-3">
@@ -160,6 +176,26 @@
                             <select name="role" id="edit_role" class="form-select role-select" required>
                                 @foreach($roles as $r) <option value="{{ $r }}">{{ ucfirst($r) }}</option> @endforeach
                             </select>
+                        </div>
+                        <div class="mb-3 d-none field-gst">
+                            <label>GST (Retailer/Distributor)</label>
+                            <input type="text" name="gst" id="edit_gst" class="form-control" pattern="^[a-zA-Z0-9]+$" title="GST must only contain letters and numbers.">
+                        </div>
+                        <div class="mb-3 d-none field-drug-license">
+                            <label>Drug License No (Retailer/Distributor)</label>
+                            <input type="text" name="drug_license_no" id="edit_drug_license_no" class="form-control" pattern="^[a-zA-Z0-9\/\-]+$" title="Only letters, numbers, / and - are allowed.">
+                        </div>
+                        <div class="mb-3">
+                            <label>Contact No</label>
+                            <input type="text" name="contact_no" id="edit_contact_no" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label>Address</label>
+                            <textarea name="address" id="edit_address" class="form-control" rows="2" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label>Pincode</label>
+                            <input type="text" name="pincode" id="edit_pincode" class="form-control" required>
                         </div>
                         <div class="mb-3">
                             <label>Profile Picture</label>
@@ -479,9 +515,15 @@
             $('.role-select').change(function () {
                 let val = $(this).val();
                 let form = $(this).closest('form');
-                form.find('.field-distributor, .field-gst').addClass('d-none');
+                form.find('.field-distributor, .field-gst, .field-drug-license').addClass('d-none');
+                form.find('.field-gst input, .field-drug-license input').prop('required', false);
+
                 if (val === 'retailer') {
-                    form.find('.field-distributor, .field-gst').removeClass('d-none');
+                    form.find('.field-distributor, .field-gst, .field-drug-license').removeClass('d-none');
+                    form.find('.field-gst input, .field-drug-license input').prop('required', true);
+                } else if (val === 'distributor') {
+                    form.find('.field-gst, .field-drug-license').removeClass('d-none');
+                    form.find('.field-gst input, .field-drug-license input').prop('required', true);
                 } else if (val === 'fieldstaff') {
                     form.find('.field-distributor').removeClass('d-none');
                 }
@@ -491,6 +533,9 @@
                 let row = $(this).data('row');
                 $('#edit_name').val(row.name);
                 $('#edit_email').val(row.email);
+                $('#edit_contact_no').val(row.contact_no || '');
+                $('#edit_address').val(row.address || '');
+                $('#edit_pincode').val(row.pincode || '');
                 $('#edit_role').val(row.role);
                 // Trigger change to update visibility of conditional fields
                 $('#edit_role').trigger('change');
@@ -504,6 +549,10 @@
                     $('#edit_avatar_initials_preview').text(initials).show();
                     $('#edit_avatar_preview').hide();
                 }
+
+                // GST and Drug License for Edit Modal
+                $('#edit_gst').val(row.gst || '');
+                $('#edit_drug_license_no').val(row.drug_license_no || '');
 
                 $('#editForm').attr('action', `/users/${row.id}`);
                 $('#editUserModal').modal('show');

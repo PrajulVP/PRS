@@ -105,47 +105,51 @@
                     }
 
                     .btn-pill-compact.btn-outline-secondary {
-                        background: rgba(139, 92, 246, 0.05);
-                        border-color: rgba(139, 92, 246, 0.2);
-                        color: #8b5cf6;
+                        background: rgba(139, 92, 246, 0.08) !important;
+                        border-color: rgba(139, 92, 246, 0.3) !important;
+                        color: #8b5cf6 !important;
                     }
                     .btn-pill-compact.btn-outline-secondary:hover {
-                        background: #8b5cf6;
-                        color: white !important;
-                        border-color: #8b5cf6;
+                        background: #8b5cf6 !important;
+                        color: #ffffff !important;
+                        border-color: #8b5cf6 !important;
+                        box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3) !important;
                     }
 
                     .btn-pill-compact.btn-outline-warning {
-                        background: rgba(245, 158, 11, 0.05);
-                        border-color: rgba(245, 158, 11, 0.2);
-                        color: #d97706;
+                        background: rgba(245, 158, 11, 0.08) !important;
+                        border-color: rgba(245, 158, 11, 0.3) !important;
+                        color: #d97706 !important;
                     }
                     .btn-pill-compact.btn-outline-warning:hover {
-                        background: #f59e0b;
-                        color: white !important;
-                        border-color: #f59e0b;
+                        background: #f59e0b !important;
+                        color: #ffffff !important;
+                        border-color: #f59e0b !important;
+                        box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3) !important;
                     }
 
                     .btn-pill-compact.btn-outline-info {
-                        background: rgba(14, 165, 233, 0.05);
-                        border-color: rgba(14, 165, 233, 0.2);
-                        color: #0ea5e9;
+                        background: rgba(14, 165, 233, 0.08) !important;
+                        border-color: rgba(14, 165, 233, 0.3) !important;
+                        color: #0ea5e9 !important;
                     }
                     .btn-pill-compact.btn-outline-info:hover {
-                        background: #0ea5e9;
-                        color: white !important;
-                        border-color: #0ea5e9;
+                        background: #0ea5e9 !important;
+                        color: #ffffff !important;
+                        border-color: #0ea5e9 !important;
+                        box-shadow: 0 8px 20px rgba(14, 165, 233, 0.3) !important;
                     }
 
                     .btn-pill-compact.btn-outline-success {
-                        background: rgba(16, 185, 129, 0.05);
-                        border-color: rgba(16, 185, 129, 0.2);
-                        color: #10b981;
+                        background: rgba(16, 185, 129, 0.08) !important;
+                        border-color: rgba(16, 185, 129, 0.3) !important;
+                        color: #10b981 !important;
                     }
                     .btn-pill-compact.btn-outline-success:hover {
-                        background: #10b981;
-                        color: white !important;
-                        border-color: #10b981;
+                        background: #10b981 !important;
+                        color: #ffffff !important;
+                        border-color: #10b981 !important;
+                        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3) !important;
                     }
 
                     .btn-pill-compact.btn-primary {
@@ -855,18 +859,20 @@
                     <!-- Executive Reports Section -->
                     <div class="row">
                         <div class="col-12">
-                            <div class="section-header-modern">
+                            <div class="section-header-modern mb-4">
                                 <div class="dash"></div>
                                 <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.9rem; letter-spacing: 1.5px; color: var(--med-primary);">Executive Dashboard Hub</h5>
+                                <div class="ms-auto">
+                                    {!! $timeSelectHtml !!}
+                                </div>
                             </div>
                         </div>
 
                         <!-- Brand Performance Distribution Chart (NEW) -->
                         <div class="col-lg-7 mb-4">
                             <div class="card p-4 border-0 shadow-sm h-100" style="border-radius: 20px;">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="mb-4">
                                     <h6 class="fw-800 text-uppercase mb-0" style="font-size: 0.8rem; letter-spacing: 1px; color: var(--med-primary);">Order Valuation Breakdown</h6>
-                                    {!! $timeSelectHtml !!}
                                 </div>
                                 <div id="valuationTrendsChart"></div>
                             </div>
@@ -889,7 +895,7 @@
                                     </div>
                                     <h5 class="fw-bold mb-3">Products</h5>
                                     <p class="text-muted mb-4 small" style="line-height: 1.6;">Analyze SKU mobility and inventory velocity metrics.</p>
-                                    <a href="{{ route('admin.reports.products') }}" class="btn btn-pill-compact btn-primary">Analyze</a>
+                                    <a href="{{ route('admin.reports.products') }}" class="btn btn-pill-compact btn-outline-info">Analyze</a>
                                 </div>
                             </div>
                         </div>
@@ -935,7 +941,7 @@
                                     </div>
                                     <h5 class="fw-bold mb-3">Staff KPI</h5>
                                     <p class="text-muted mb-4 small" style="line-height: 1.6;">Analyze field force productivity and performance.</p>
-                                    <a href="{{ route('admin.reports.fieldstaffs') }}" class="btn btn-pill-compact btn-primary">Analyze</a>
+                                    <a href="{{ route('admin.reports.fieldstaffs') }}" class="btn btn-pill-compact btn-outline-warning">Analyze</a>
                                 </div>
                             </div>
                         </div>
@@ -1007,12 +1013,12 @@
                                         </div>
                                     </div>
                                     <p class="text-muted small mb-4">Staff attribution & fulfillment velocity tracking.</p>
-                                    <div class="d-flex flex-wrap gap-2 mt-auto">
-                                        <a href="{{ route('admin.reports.orders') }}" class="btn btn-pill-compact btn-outline-primary flex-grow-1">
-                                            <i class="fa fa-shopping-basket"></i>Retailer
+                                    <div class="d-flex flex-column gap-2 mt-auto">
+                                        <a href="{{ route('admin.reports.orders') }}" class="btn btn-pill-compact btn-outline-primary w-100">
+                                            <i class="fa fa-shopping-basket me-2"></i>Retailer
                                         </a>
-                                        <a href="{{ route('admin.reports.orders', ['order_type' => 'distributor']) }}" class="btn btn-pill-compact btn-outline-secondary flex-grow-1">
-                                            <i class="fa fa-building-o"></i>Distributor
+                                        <a href="{{ route('admin.reports.orders', ['order_type' => 'distributor']) }}" class="btn btn-pill-compact btn-outline-secondary w-100">
+                                            <i class="fa fa-building-o me-2"></i>Distributor
                                         </a>
                                     </div>
                                 </div>
@@ -1035,12 +1041,12 @@
                                         </div>
                                     </div>
                                     <p class="text-muted small mb-4">Monitor target achievements and field force productivity metrics.</p>
-                                    <div class="d-flex flex-wrap gap-2 mt-auto">
-                                        <a href="{{ route('admin.reports.targets') }}" class="btn btn-pill-compact btn-outline-warning flex-grow-1">
-                                            <i class="fa fa-bullseye"></i>Targets
+                                    <div class="d-flex flex-column gap-2 mt-auto">
+                                        <a href="{{ route('admin.reports.targets') }}" class="btn btn-pill-compact btn-outline-warning w-100">
+                                            <i class="fa fa-bullseye me-2"></i>Targets
                                         </a>
-                                        <a href="{{ route('admin.reports.visits') }}" class="btn btn-pill-compact btn-outline-info flex-grow-1">
-                                            <i class="fa fa-map-marker"></i>Visits
+                                        <a href="{{ route('admin.reports.visits') }}" class="btn btn-pill-compact btn-outline-info w-100">
+                                            <i class="fa fa-map-marker me-2"></i>Visits
                                         </a>
                                     </div>
                                 </div>
@@ -1079,12 +1085,9 @@
                     <div class="row">
                         <div class="col-12">
                             <div class="card p-4 mb-4 border-0 shadow-sm" style="border-radius: 15px;">
-                                <div class="d-flex justify-content-between align-items-center mb-5 pb-3" style="border-bottom: 2px solid rgba(0, 73, 122, 0.05);">
-                                    <div>
-                                        <h5 class="fw-800 mb-1" style="color: var(--med-primary);">Order Performance Analytics</h5>
-                                        <p class="text-muted small mb-0">Visualization of fulfillment velocity and volume trends.</p>
-                                    </div>
-                                    {!! $timeSelectHtml !!}
+                                <div class="mb-5 pb-3" style="border-bottom: 2px solid rgba(0, 73, 122, 0.05);">
+                                    <h5 class="fw-800 mb-1" style="color: var(--med-primary);">Order Performance Analytics</h5>
+                                    <p class="text-muted small mb-0">Visualization of fulfillment velocity and volume trends.</p>
                                 </div>
                                 <div class="row">
                                     <!-- Retailer Orders Section -->
@@ -1414,7 +1417,15 @@
                                     stroke: { width: 0 },
                                     plotOptions: { pie: { donut: { size: '65%' } } },
                                     dataLabels: { enabled: false },
-                                    tooltip: { enabled: orderTotal > 0 }
+                                    tooltip: { enabled: orderTotal > 0 },
+                                    legend: { position: 'bottom' },
+                                    responsive: [{
+                                        breakpoint: 480,
+                                        options: {
+                                            chart: { height: 350 },
+                                            legend: { position: 'bottom' }
+                                        }
+                                    }]
                                 };
                                 window.charts.orderStatusChart = new ApexCharts(document.querySelector("#orderStatusChart"), statusOptions);
                                 window.charts.orderStatusChart.render();
@@ -1472,12 +1483,36 @@
                                             } 
                                         },
                                         dataLabels: { enabled: false },
+                                        legend: { position: 'right' },
                                         tooltip: { 
                                             enabled: hasBrandData,
                                             y: {
                                                 formatter: (val) => '₹' + val.toLocaleString()
                                             }
-                                        }
+                                        },
+                                        responsive: [{
+                                            breakpoint: 1366,
+                                            options: {
+                                                legend: { position: 'bottom' }
+                                            }
+                                        }, {
+                                            breakpoint: 480,
+                                            options: {
+                                                chart: { height: 380 },
+                                                legend: { position: 'bottom' },
+                                                plotOptions: {
+                                                    pie: {
+                                                        donut: {
+                                                            labels: {
+                                                                total: {
+                                                                    fontSize: '14px'
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }]
                                     };
                                     window.charts.brandSalesChart = new ApexCharts(document.querySelector("#brandSalesChart"), brandOptions);
                                     window.charts.brandSalesChart.render();

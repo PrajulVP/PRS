@@ -128,11 +128,15 @@
                     name: 'status',
                     className: 'text-center',
                     render: function(data) {
-                        let badgeClass = 'bg-light-primary text-primary';
-                        if (data === 'delivered') badgeClass = 'bg-light-success text-success';
-                        if (data === 'cancelled' || data === 'rejected') badgeClass = 'bg-light-danger text-danger';
-                        if (data === 'pending') badgeClass = 'bg-light-warning text-warning';
-                        return `<span class="badge ${badgeClass} text-uppercase px-2 py-1" style="font-size: 0.65rem;">${data}</span>`;
+                        let status = (data || 'pending').toLowerCase();
+                        let badgeClass = 'bg-secondary text-white'; 
+                        if (status === 'delivered') badgeClass = 'bg-success text-white';
+                        else if (status === 'cancelled') badgeClass = 'bg-danger text-white';
+                        else if (status === 'rejected') badgeClass = 'bg-dark-red text-white';
+                        else if (status === 'pending') badgeClass = 'bg-secondary text-white';
+                        else if (status === 'processing') badgeClass = 'bg-warning text-white';
+                        else if (status === 'approved') badgeClass = 'bg-info text-white';
+                        return `<span class="badge ${badgeClass} text-uppercase px-2 py-1" style="font-size: 0.65rem;">${status}</span>`;
                     }
                 }
             ],

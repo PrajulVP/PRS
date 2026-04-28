@@ -181,8 +181,35 @@
             font-weight: 600;
         }
         /* Hide Unnecessary Loading Icon (Oval) */
-        .dataTables_processing {
-            display: none !important;
+        /* Pagination and Spacing Fixes */
+        .dataTables_info {
+            padding-left: 30px !important;
+            padding-bottom: 25px !important;
+            padding-top: 25px !important;
+            color: var(--med-text-muted, #64748b) !important;
+            font-size: 0.85rem !important;
+        }
+        .dataTables_paginate {
+            padding-right: 30px !important;
+            padding-bottom: 25px !important;
+            padding-top: 25px !important;
+        }
+        .dataTables_paginate .paginate_button {
+            border: none !important;
+            border-radius: 8px !important;
+            margin: 0 2px !important;
+            background: transparent !important;
+            padding: 5px 12px !important;
+        }
+        .dataTables_paginate .paginate_button.current {
+            background: var(--med-primary, #00497a) !important;
+            color: white !important;
+            border: none !important;
+        }
+        .dataTables_paginate .paginate_button:hover {
+            background: rgba(0, 73, 122, 0.1) !important;
+            color: var(--med-primary, #00497a) !important;
+            border: none !important;
         }
     </style>
 
@@ -630,6 +657,8 @@
 
                 if ($.fn.DataTable.isDataTable('#points-table')) {
                     $('#points-table').DataTable().destroy();
+                    // Clear custom containers to prevent duplication
+                    $('#detail-table-controls .left-controls, #detail-table-controls .right-controls').empty();
                 }
 
                 $('#points-table').DataTable({

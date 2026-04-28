@@ -167,6 +167,27 @@ class RetailerOrderManagementController extends Controller
 
                     $iSide = $itemData['side'] ?? null;
                     $iSize = $itemData['size'] ?? null;
+                    $variant = $itemData['variant'] ?? null;
+
+                    // Fallback: If side/size are missing but variant is present, try to split it
+                    if ((!$iSide || !$iSize) && $variant) {
+                        if (str_contains($variant, ' - ')) {
+                            $parts = explode(' - ', $variant);
+                            if (count($parts) >= 2) {
+                                if (in_array(strtoupper(trim($parts[0])), ['LEFT', 'RIGHT'])) {
+                                    $iSide = $iSide ?: trim($parts[0]);
+                                    $iSize = $iSize ?: trim($parts[1]);
+                                } else {
+                                    $iSize = $iSize ?: trim($parts[0]);
+                                    $iSide = $iSide ?: trim($parts[1]);
+                                }
+                            }
+                        } elseif (in_array(strtoupper(trim($variant)), ['LEFT', 'RIGHT'])) {
+                            $iSide = $iSide ?: trim($variant);
+                        } else {
+                            $iSize = $iSize ?: trim($variant);
+                        }
+                    }
 
                     // Availability check (In base units)
                     if ($distributor) {
@@ -423,6 +444,11 @@ class RetailerOrderManagementController extends Controller
                     $productSummary = $order->items->map(function ($item) {
                         $pName = $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product';
                         
+                        $vLabel = array_filter([$item->side, $item->size]);
+                        if (!empty($vLabel)) {
+                            $pName .= ' <span class="badge bg-soft-info text-info border-0 px-2" style="font-size: 0.65rem;">' . implode(' / ', $vLabel) . '</span>';
+                        }
+
                         if ($item->free_quantity > 0) {
                             $pName .= ' ('.$item->quantity.' + '.$item->free_quantity.' Free)';
                         }

@@ -759,7 +759,7 @@
                     </div>
                 </div>
                 <div class="modal-footer border-0 p-4 pt-0">
-                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Close Window</button>
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -993,6 +993,49 @@
         body.dark-only .control-glider {
             background: #1e293b;
             border-color: rgba(255,255,255,0.1);
+        }
+        
+        /* Modal Dark Mode Fixes */
+        body.dark-only .modal-content {
+            background-color: #111827;
+            color: #f3f4f6;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        body.dark-only .modal-header.bg-soft-primary {
+            background-color: rgba(59, 130, 246, 0.15) !important;
+        }
+        body.dark-only .modal-header.bg-light,
+        body.dark-only .bg-light {
+            background-color: #1f2937 !important;
+        }
+        body.dark-only .table {
+            color: #d1d5db;
+        }
+        body.dark-only .table-hover tbody tr:hover {
+            background-color: rgba(255,255,255,0.03);
+            color: #fff;
+        }
+        body.dark-only .btn-light {
+            background-color: #4b5563;
+            color: #ffffff !important;
+            border: 1px solid #6b7280;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            font-weight: 600;
+        }
+        body.dark-only .btn-light:hover {
+            background-color: #6b7280;
+            color: #ffffff !important;
+            border-color: #9ca3af;
+        }
+        body.dark-only .text-muted, 
+        body.dark-only .text-muted-theme {
+            color: #9ca3af !important;
+        }
+        body.dark-only .modal-header .btn-close {
+            filter: invert(1) grayscale(1) brightness(2);
+        }
+        body.dark-only .table-responsive.border {
+            border-color: #374151 !important;
         }
         
         .smaller { font-size: 0.7rem !important; }

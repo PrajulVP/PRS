@@ -43,9 +43,12 @@ class ProfileController extends Controller
         }
 
         if ($user->hasAnyRole(['superadmin', 'admin', 'distributor'])) {
-            $rules['contact_no'] = 'nullable|string|max:20';
+            $rules['contact_no'] = ['nullable', 'digits:10', 'regex:/^[1-9][0-9]{9}$/'];
             if ($user->hasAnyRole(['superadmin', 'admin'])) {
-                $rules['email'] = 'required|email|unique:users,email,' . $user->id;
+                $rules['email'] = [
+                    'required', 'email', 'unique:users,email,' . $user->id,
+                    'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
+                ];
             }
         }
 

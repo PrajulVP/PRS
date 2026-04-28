@@ -98,7 +98,8 @@ class UserController extends Controller
                     'contact_no'      => $u->salesManager?->contact_no ?? $u->distributor?->contact_no ?? $u->retailer?->contact_no ?? $u->fieldStaff?->contact_no ?? '—',
                     'address'         => $u->salesManager?->address ?? $u->retailer?->address ?? $u->fieldStaff?->address ?? $u->distributor?->address ?? '—',
                     'distributor_id'  => $u->distributor?->id ?? $u->retailer?->distributor_id ?? $u->fieldStaff?->distributor_id,
-                    'gst'             => $u->retailer?->gst,
+                    'gst'             => $u->retailer?->gst ?? $u->distributor?->gst,
+                    'drug_license_no' => $u->retailer?->drug_license_no ?? $u->distributor?->drug_license_no,
                     'sales_manager_id' => $u->fieldStaff?->sales_manager_id,
                     'order_count'     => $orderCount,
                     'order_link'      => $orderLink,
@@ -132,11 +133,22 @@ class UserController extends Controller
         // However, I need to make sure I don't break "Admins cannot assign Super Admin" check.
         // And Validation.
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
+            'email' => [
+                'required', 'string', 'email', 'max:255', 'unique:users',
+                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
+            ],
+            'password' => ['required', 'string', 'min:6', 'regex:/^\S+$/', 'confirmed'],
             'role' => 'required|string',
             'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'contact_no' => ['required', 'digits:10', 'regex:/^[1-9][0-9]{9}$/'],
+            'address' => 'required|string',
+            'pincode' => 'required|digits:6',
+        ], [
+            'name.regex' => 'The name must only contain letters and spaces.',
+            'email.regex' => 'The email format is invalid or has an invalid top-level domain.',
+            'password.regex' => 'The password must not contain spaces.',
+            'contact_no.regex' => 'The contact number must not start with zero.',
         ]);
 
         $userData = [
@@ -158,21 +170,41 @@ class UserController extends Controller
         $user->assignRole($request->role);
 
         // Role specific
+        // Role specific
         if ($request->role === 'retailer') {
-            $request->validate(['gst' => 'required', 'distributor_id' => 'required']);
+            $request->validate([
+                'gst' => ['required', 'unique:retailers', 'regex:/^[a-zA-Z0-9]+$/'],
+                'drug_license_no' => ['required', 'string', 'regex:/^[a-zA-Z0-9\/\-]+$/'],
+                'distributor_id' => 'required|exists:distributors,id'
+            ], [
+                'gst.regex' => 'The GST number must only contain letters and numbers.',
+                'drug_license_no.required' => 'The drug license number is mandatory.',
+                'drug_license_no.regex' => 'The drug license number can only contain letters, numbers, slashes (/), and hyphens (-).',
+            ]);
             Retailer::create([
                 'user_id' => $user->id,
                 'gst' => $request->gst,
+                'drug_license_no' => $request->drug_license_no,
                 'distributor_id' => $request->distributor_id,
                 'contact_no' => $request->contact_no,
                 'address' => $request->address,
                 'pincode' => $request->pincode,
             ]);
         } elseif ($request->role === 'distributor') {
+            $request->validate([
+                'gst' => ['required', 'unique:distributors', 'regex:/^[a-zA-Z0-9]+$/'],
+                'drug_license_no' => ['required', 'string', 'regex:/^[a-zA-Z0-9\/\-]+$/'],
+            ], [
+                'gst.regex' => 'The GST number must only contain letters and numbers.',
+                'drug_license_no.required' => 'The drug license number is mandatory.',
+                'drug_license_no.regex' => 'The drug license number can only contain letters, numbers, slashes (/), and hyphens (-).',
+            ]);
             Distributor::create([
                 'user_id' => $user->id,
                 'name' => $request->name,
                 'email' => $request->email,
+                'gst' => $request->gst,
+                'drug_license_no' => $request->drug_license_no,
                 'contact_no' => $request->contact_no,
                 'address' => $request->address,
                 'pincode' => $request->pincode,
@@ -194,6 +226,7 @@ class UserController extends Controller
                 'status' => 'active',
                 'contact_no' => $request->contact_no,
                 'address' => $request->address,
+                'pincode' => $request->pincode,
             ]);
         }
 
@@ -203,11 +236,22 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $request->validate([
-            'name' => 'required', 
-            'email' => 'required|unique:users,email,' . $user->id, 
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
+            'email' => [
+                'required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id,
+                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
+            ],
+            'password' => ['nullable', 'string', 'min:6', 'regex:/^\S+$/', 'confirmed'],
             'role' => 'required|string',
-            'contact_no' => 'nullable|digits:10',
             'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'contact_no' => ['required', 'digits:10', 'regex:/^[1-9][0-9]{9}$/'],
+            'address' => 'required|string',
+            'pincode' => 'required|digits:6',
+        ], [
+            'name.regex' => 'The name must only contain letters and spaces.',
+            'email.regex' => 'The email format is invalid or has an invalid top-level domain.',
+            'password.regex' => 'The password must not contain spaces.',
+            'contact_no.regex' => 'The contact number must not start with zero.',
         ]);
 
         $data = $request->only(['name', 'email', 'role', 'contact_no', 'address', 'pincode']);
@@ -229,6 +273,8 @@ class UserController extends Controller
         // Update role specific data if it exists
         if ($user->distributor) {
             $user->distributor->update([
+                'gst' => $request->gst,
+                'drug_license_no' => $request->drug_license_no,
                 'contact_no' => $request->contact_no,
                 'address' => $request->address,
                 'pincode' => $request->pincode,
@@ -236,6 +282,8 @@ class UserController extends Controller
         }
         if ($user->retailer) {
             $user->retailer->update([
+                'gst' => $request->gst,
+                'drug_license_no' => $request->drug_license_no,
                 'contact_no' => $request->contact_no,
                 'address' => $request->address,
                 'pincode' => $request->pincode,
@@ -252,6 +300,7 @@ class UserController extends Controller
             $user->salesManager->update([
                 'contact_no' => $request->contact_no,
                 'address' => $request->address,
+                'pincode' => $request->pincode,
             ]);
         }
         $user->syncRoles([$request->role]);

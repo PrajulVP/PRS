@@ -15,6 +15,7 @@ class SalesManager extends Model
         'email',
         'contact_no',
         'address',
+        'pincode',
     ];
 
     public function user()

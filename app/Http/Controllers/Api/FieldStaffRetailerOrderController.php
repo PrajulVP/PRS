@@ -57,6 +57,9 @@ class FieldStaffRetailerOrderController extends Controller
                         'product_name' => $item->product->product_name ?? 'N/A',
                         'quantity' => $item->quantity,
                         'free_quantity' => $item->free_quantity,
+                        'unit' => $item->unit ?? 'Nos',
+                        'side' => $item->side,
+                        'size' => $item->size,
                         'price' => $item->price,
                         'subtotal' => $item->subtotal
                     ];

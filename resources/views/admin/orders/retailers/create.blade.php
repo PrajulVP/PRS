@@ -461,7 +461,15 @@
                     
                     if (distributors && distributors.length > 0) {
                         distributors.forEach(d => {
-                            let stock = d.pivot ? d.pivot.stock : 0;
+                            let stock = d.pivot ? parseFloat(d.pivot.stock) : 0;
+                            
+                            // Deduct quantity already in the bundle (cart)
+                            let variantStr = (side || size) ? [side, size].filter(Boolean).join(' - ') : null;
+                            let key = prodId + '-' + d.id + (variantStr ? '-' + variantStr : '');
+                            if (addedItems[key]) {
+                                stock -= (addedItems[key].qty * addedItems[key].multiplier);
+                            }
+                            
                             $distSelect.append(`<option value="${d.id}" data-stock-raw="${stock}" ${currentVal == d.id ? 'selected' : ''}>${d.shop_name || d.name}</option>`);
                         });
                     } else {
@@ -515,12 +523,14 @@
             function formatDistributor(opt) {
                 if (!opt.id) return opt.text;
                 let el = $(opt.element);
-                let stock = el.data('stock-raw');
+                let stockRaw = el.data('stock-raw');
                 let distance = el.data('distance');
-                if (stock !== undefined) {
+                if (stockRaw !== undefined && stockRaw !== null) {
+                    let stock = parseFloat(stockRaw);
                     let stockBadge = stock > 0 ? 'bg-success' : 'bg-danger';
                     let distText = distance ? `<small class="text-muted"><i class="fa fa-map-marker-alt"></i> ${distance}km</small>` : '';
-                    return $(`<div class="d-flex justify-content-between align-items-center"><span>${opt.text}</span><div class="ms-2">${distText} <span class="badge ${stockBadge} ms-1">${stock}</span></div></div>`);
+                    let displayStock = Math.round(stock);
+                    return $(`<div class="d-flex justify-content-between align-items-center"><span>${opt.text}</span><div class="ms-2">${distText} <span class="badge ${stockBadge} ms-1">${displayStock}</span></div></div>`);
                 }
                 return opt.text;
             }
@@ -536,6 +546,13 @@
                     $(this).val(null).trigger('change');
                     return;
                 }
+
+                // Reset variants when product changes
+                $('#variantValue').val('');
+                $('#sideValue').val('');
+                $('#sizeValue').val('');
+                $('#variantWrapper').hide();
+                $('#variantLevelsContainer').empty();
 
                 // Set loading state without triggering redundant change events
                 $('#distributorSelect').prop('disabled', true).empty().append('<option value="">Searching Stockists...</option>');
@@ -757,12 +774,16 @@
 
                 if (addedItems[key]) {
                     addedItems[key].qty += qty;
-                    // Note: unit/multiplier might change, but we keep the key based on prod-dist-variant
                 } else {
+                    let side = $('.variant-btn.active[data-attr="Side"]').data('value') || null;
+                    let size = $('.variant-btn.active[data-attr="Size"]').data('value') || null;
+
                     addedItems[key] = {
                         id: prodId, distId: distId, distName: distName,
                         name: prodFullName,
                         variant: variant,
+                        side: side,
+                        size: size,
                         price: parseFloat(currentProductDetails.ptr),
                         qty: qty, unit: unit, multiplier: mul,
                         strips_per_box: stripsPerBox,
@@ -778,6 +799,12 @@
                 $('#distributorSelect').empty().append('<option value="">Select Product First</option>').trigger('change');
                 $('#productDetailsCard').fadeOut(300);
                 $('#qtyInput').val(1);
+                
+                // Reset variants
+                $('#variantWrapper').hide();
+                $('.variant-btn').removeClass('active');
+                $('#variantValue').val('');
+                
                 currentProductDetails = null;
                 showToast('success', 'Product added to bundle');
             });
@@ -839,14 +866,16 @@
                         if (res.success && res.matched_items && res.matched_items.length > 0) {
                             res.matched_items.forEach(function (item, idx) {
                                 let p = item.product;
-                                let d = item.distributor;
+                                let d = (item.distributors && item.distributors.length > 0) ? item.distributors[0] : (item.distributor || null);
+                                if (!d) return; // Skip if no distributor info
                                 let distName = d.shop_name || d.name || 'N/A';
                                 let pPack = (p.pack && p.pack.trim() !== '') ? ` (${p.pack})` : '';
                                 let options = `<option value="${p.id}" selected>${p.product_name}${pPack} (₹${p.ptr})</option>`;
                                 
+                                let stockNum = parseFloat(d.stock) || 0;
                                 let distHtml = `
                                     <select class="form-select select2-ai ai-dist-select" data-pid="${p.id}">
-                                        <option value="${d.id}" data-stock="${d.stock}" selected>${distName} - Stock: ${d.stock}</option>
+                                        <option value="${d.id}" data-stock="${stockNum}" selected>${distName} - Stock: ${Math.round(stockNum)}</option>
                                     </select>`;
 
                                 let variantHtml = '';
@@ -979,6 +1008,8 @@
                                                             ${item.name} ${item.variant ? `<span class="badge bg-primary ms-1">${item.variant}</span>` : ''}
                                                         </div>
                                                         <input type="hidden" name="items[${key}][product_id]" value="${item.id}">
+                                                        ${item.side ? `<input type="hidden" name="items[${key}][side]" value="${item.side}">` : ''}
+                                                        ${item.size ? `<input type="hidden" name="items[${key}][size]" value="${item.size}">` : ''}
                                                         ${item.variant ? `<input type="hidden" name="items[${key}][variant]" value="${item.variant}">` : ''}
                                                         <input type="hidden" name="items[${key}][distributor_id]" value="${item.distId}">
                                                     </td>
@@ -1136,12 +1167,39 @@
                 if (addedItems[key]) {
                     addedItems[key].qty += qty;
                 } else {
+                    // Try to split variantStr if it contains ' - ' (common pattern in this UI)
+                    let side = null;
+                    let size = null;
+                    
+                    if (variantStr) {
+                        if (variantStr.includes(' - ')) {
+                            let parts = variantStr.split(' - ');
+                            // Heuristic: if first part is Left/Right, it's side
+                            if (['LEFT', 'RIGHT'].includes(parts[0].toUpperCase())) {
+                                side = parts[0];
+                                size = parts[1];
+                            } else {
+                                size = parts[0];
+                                side = parts[1];
+                            }
+                        } else {
+                            // If only one part, check if it's side
+                            if (['LEFT', 'RIGHT'].includes(variantStr.toUpperCase())) {
+                                side = variantStr;
+                            } else {
+                                size = variantStr;
+                            }
+                        }
+                    }
+
                     addedItems[key] = {
                         id: p.id,
                         distId: distId,
                         distName: distName,
                         name: p.product_name,
                         variant: variantStr,
+                        side: side,
+                        size: size,
                         price: parseFloat(p.ptr),
                         qty: qty,
                         unit: unit,

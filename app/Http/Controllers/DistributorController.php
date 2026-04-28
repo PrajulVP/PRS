@@ -60,7 +60,7 @@ class DistributorController extends Controller
                 ->make(true);
         }
 
-        $districts = District::all();
+        $districts = District::orderBy('name', 'asc')->get();
         $salesManagers = SalesManager::with('user')->get();
 
         return view('admin.distributors.index', compact('districts', 'salesManagers'));
@@ -69,23 +69,38 @@ class DistributorController extends Controller
     public function store(Request $request)
     {
         $userData = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:4|confirmed',
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
+            'email' => [
+                'required', 'email', 'unique:users,email',
+                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
+            ],
+            'password' => ['required', 'min:6', 'confirmed', 'regex:/^\S+$/'],
+        ], [
+            'name.regex' => 'The name must only contain letters and spaces.',
+            'email.regex' => 'The email format is invalid or has an invalid top-level domain.',
+            'password.min' => 'The password must be at least 6 characters.',
+            'password.regex' => 'The password must not contain spaces.',
         ]);
 
         $distributorData = $request->validate([
-            'name' => 'required|string|max:255',
-            'gst' => 'required|unique:distributors',
-            'drug_license_no' => 'nullable|string',
-            'contact_no' => 'required|digits:10',
-            'address' => 'required',
-            'pincode' => 'required',
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
+            'gst' => ['required', 'unique:distributors', 'regex:/^[a-zA-Z0-9]+$/'],
+            'drug_license_no' => ['required', 'string', 'regex:/^[a-zA-Z0-9\/\-]+$/'],
+            'contact_no' => ['required', 'digits:10', 'regex:/^[1-9][0-9]{9}$/'],
+            'address' => ['required', 'string'],
+            'pincode' => ['required', 'digits:6'],
             'district_id' => 'required|exists:districts,id',
             'area_id' => 'required|exists:areas,id',
             'sales_manager_id' => 'nullable|exists:sales_managers,id',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
+        ], [
+            'name.regex' => 'The name must only contain letters and spaces.',
+            'contact_no.regex' => 'The contact number must be 10 digits and cannot start with zero.',
+            'gst.regex' => 'The GST number must only contain letters and numbers (no symbols).',
+            'drug_license_no.required' => 'The drug license number is mandatory.',
+            'drug_license_no.regex' => 'The drug license number can only contain letters, numbers, slashes (/), and hyphens (-).',
+            'pincode.digits' => 'The pincode must be exactly 6 digits.',
         ]);
 
         $user = User::create([
@@ -138,23 +153,38 @@ class DistributorController extends Controller
     public function update(Request $request, Distributor $distributor)
     {
         $userData = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $distributor->user->id,
-            'password' => 'nullable|min:4|confirmed',
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
+            'email' => [
+                'required', 'email', 'unique:users,email,' . $distributor->user->id,
+                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
+            ],
+            'password' => ['nullable', 'min:6', 'confirmed', 'regex:/^\S+$/'],
+        ], [
+            'name.regex' => 'The name must only contain letters and spaces.',
+            'email.regex' => 'The email format is invalid or has an invalid top-level domain.',
+            'password.min' => 'The password must be at least 6 characters.',
+            'password.regex' => 'The password must not contain spaces.',
         ]);
 
         $distributorData = $request->validate([
-            'name' => 'required|string|max:255',
-            'gst' => 'required|unique:distributors,gst,' . $distributor->id,
-            'drug_license_no' => 'nullable|string',
-            'contact_no' => 'required|digits:10',
-            'address' => 'required',
-            'pincode' => 'required',
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
+            'gst' => ['required', 'unique:distributors,gst,' . $distributor->id, 'regex:/^[a-zA-Z0-9]+$/'],
+            'drug_license_no' => ['required', 'string', 'regex:/^[a-zA-Z0-9\/\-]+$/'],
+            'contact_no' => ['required', 'digits:10', 'regex:/^[1-9][0-9]{9}$/'],
+            'address' => ['required', 'string'],
+            'pincode' => ['required', 'digits:6'],
             'district_id' => 'required|exists:districts,id',
             'area_id' => 'required|exists:areas,id',
             'sales_manager_id' => 'nullable|exists:sales_managers,id',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
+        ], [
+            'name.regex' => 'The name must only contain letters and spaces.',
+            'contact_no.regex' => 'The contact number must be 10 digits and cannot start with zero.',
+            'gst.regex' => 'The GST number must only contain letters and numbers (no symbols).',
+            'drug_license_no.required' => 'The drug license number is mandatory.',
+            'drug_license_no.regex' => 'The drug license number can only contain letters, numbers, slashes (/), and hyphens (-).',
+            'pincode.digits' => 'The pincode must be exactly 6 digits.',
         ]);
 
         $userUpdateData = [
@@ -221,7 +251,7 @@ class DistributorController extends Controller
     // AJAX: Get areas for selected district
     public function getAreas(District $district)
     {
-        return response()->json($district->areas);
+        return response()->json($district->areas()->orderBy('name', 'asc')->get());
     }
 
     public function activate(Distributor $distributor)

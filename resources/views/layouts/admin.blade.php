@@ -157,6 +157,7 @@
         .text-main-theme { color: var(--med-text-main) !important; }
         .text-muted-theme { color: var(--med-text-muted) !important; }
         .border-theme { border-color: var(--med-border) !important; }
+        .bg-dark-red { background-color: #8b0000 !important; color: #ffffff !important; }
 
         body.dark-only .text-dark {
             color: var(--med-text-main) !important;
@@ -164,6 +165,75 @@
 
         body.dark-only .modal-body td {
             color: var(--med-text-main) !important;
+        }
+
+        /* Improved Dark Mode Contrast */
+        body.dark-only .btn-primary {
+            background-color: #38bdf8 !important;
+            border-color: #38bdf8 !important;
+            color: #000 !important;
+            font-weight: 800 !important;
+        }
+        body.dark-only .btn-info {
+            background-color: #0ea5e9 !important;
+            border-color: #0ea5e9 !important;
+            color: #fff !important;
+            font-weight: 800 !important;
+        }
+        body.dark-only .btn-success {
+            background-color: #22c55e !important;
+            border-color: #22c55e !important;
+            color: #fff !important;
+            font-weight: 800 !important;
+        }
+        body.dark-only .card-header h5 {
+            color: #fff !important;
+            font-weight: 800 !important;
+        }
+        body.dark-only label {
+            color: #f8fafc !important;
+            font-weight: 700 !important;
+        }
+        body.dark-only .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+
+        /* Dark Mode Form Controls */
+        body.dark-only .form-control,
+        body.dark-only .form-select,
+        body.dark-only .input-group-text {
+            background-color: #1a2234 !important;
+            border-color: rgba(56, 189, 248, 0.2) !important;
+            color: #f8fafc !important;
+        }
+
+        body.dark-only .form-control:focus,
+        body.dark-only .form-select:focus {
+            background-color: #1a2234 !important;
+            color: #fff !important;
+            border-color: #38bdf8 !important;
+            box-shadow: 0 0 0 0.25rem rgba(56, 189, 248, 0.25) !important;
+        }
+
+        /* Autofill Fix for Dark Mode */
+        body.dark-only input:-webkit-autofill,
+        body.dark-only input:-webkit-autofill:hover,
+        body.dark-only input:-webkit-autofill:focus,
+        body.dark-only textarea:-webkit-autofill,
+        body.dark-only textarea:-webkit-autofill:hover,
+        body.dark-only textarea:-webkit-autofill:focus,
+        body.dark-only select:-webkit-autofill,
+        body.dark-only select:-webkit-autofill:hover,
+        body.dark-only select:-webkit-autofill:focus {
+            -webkit-text-fill-color: #f8fafc !important;
+            -webkit-box-shadow: 0 0 0px 1000px #1a2234 inset !important;
+            transition: background-color 5000s ease-in-out 0s !important;
+        }
+
+        /* Explicitly fix password fields in dark mode */
+        body.dark-only input[type="password"] {
+            background-color: #1a2234 !important;
+            color: #f8fafc !important;
         }
 
         .status-badge {

@@ -14,13 +14,17 @@
 
         /* Segmented Control for Payment Filter */
         .segmented-control {
-            display: flex;
+            display: flex !important;
+            flex-direction: row !important;
             background-color: var(--med-border, #e2e8f0);
             border-radius: 50px;
             padding: 4px;
             position: relative;
-            width: 260px;
+            width: 100%;
+            max-width: 260px;
+            min-width: 220px;
             box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
         }
 
         .segmented-control input {
@@ -28,12 +32,13 @@
         }
 
         .segmented-control label {
-            flex: 1;
+            flex: 1 !important;
+            width: 33.33% !important;
             text-align: center;
-            padding: 6px 0;
+            padding: 8px 0;
             margin: 0;
-            font-size: 0.75rem;
-            font-weight: 700;
+            font-size: 0.7rem;
+            font-weight: 800;
             color: var(--med-text-muted, #64748b);
             cursor: pointer;
             position: relative;
@@ -41,6 +46,7 @@
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            white-space: nowrap;
         }
 
         .segmented-control input:checked+label {
@@ -446,7 +452,7 @@
                     @php
                         $user = Auth::user();
                         $isSMorFS = $user->hasRole(['salesmanager', 'fieldstaff']);
-                        $defaultStatus = $isSMorFS ? 'pending' : 'processing';
+                        $defaultStatus = ''; // Default to 'All' as requested
                     @endphp
                     <li class="nav-item" role="presentation">
                         <button class="nav-link px-4 fw-bold text-muted" id="tab-pending" data-bs-toggle="tab"
@@ -815,24 +821,17 @@
                         <div class="p-4 bg-body-theme">
                             <input type="hidden" id="approve_order_id" name="order_id">
 
-                            <!-- Payment Configuration Section -->
-                            <div class="payment-status-card mb-4">
+                            <!-- Settlement & Payment Status Information (Read-only) -->
+                            <div class="payment-status-info-card mb-4 p-3 rounded-3 bg-light border d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="mb-1 fw-bold text-main-theme d-flex align-items-center">
                                         <i class="fa fa-money-check-alt text-primary me-2"></i>
-                                        Settlement & Payment Status
+                                        Current Payment State
                                     </h6>
-                                    <div class="text-muted small">Update the current payment state for this order.</div>
+                                    <div class="text-muted small">Managed via the payment toggle in the order table.</div>
                                 </div>
-                                <div class="status-badge-group">
-                                    <label class="status-radio-option">
-                                        <input type="radio" name="payment_status" value="pending" checked>
-                                        <span class="status-radio-box">PENDING</span>
-                                    </label>
-                                    <label class="status-radio-option">
-                                        <input type="radio" name="payment_status" value="paid">
-                                        <span class="status-radio-box">PAID</span>
-                                    </label>
+                                <div id="dist_approve_payment_status_display_container">
+                                    {{-- Badge is updated via JS in the header, but we can also show a status text here if needed --}}
                                 </div>
                             </div>
 
@@ -1246,9 +1245,12 @@
                         let bgClass = 'bg-secondary text-white';
                         let displayStatus = row.status;
 
-                        if (statusRaw === 'pending') bgClass = 'bg-custom-yellow text-white';
+                        if (statusRaw === 'pending') {
+                            bgClass = 'bg-secondary text-white';
+                            displayStatus = 'Pending';
+                        }
                         else if (statusRaw === 'processing') {
-                            bgClass = 'bg-primary text-white';
+                            bgClass = 'bg-warning text-white';
                             displayStatus = 'Processing';
                         }
                         else if (statusRaw === 'approved') {
@@ -1257,7 +1259,7 @@
                         }
                         else if (statusRaw === 'delivered') bgClass = 'bg-success text-white';
                         else if (statusRaw === 'cancelled') bgClass = 'bg-danger text-white';
-                        else if (statusRaw === 'rejected') bgClass = 'bg-danger text-white';
+                        else if (statusRaw === 'rejected') bgClass = 'bg-dark-red text-white';
 
                         return `<span class="badge ${bgClass}" style="font-size: 0.8rem; padding: 0.5em 0.9em; font-weight: 600;">${displayStatus}</span>`;
                     }
@@ -1273,7 +1275,7 @@
                             bgClass = 'bg-success text-white';
                             displayLabel = 'Paid';
                         } else {
-                            bgClass = 'bg-custom-yellow text-white';
+                            bgClass = 'bg-secondary text-white';
                             displayLabel = 'Pending';
                         }
 
@@ -1656,7 +1658,8 @@
                         $select.val(newStatus);
                         $select.removeClass('bg-warning bg-secondary bg-success bg-danger bg-info text-dark text-white');
                         let newClass = 'bg-secondary text-white';
-                        if (newStatus.includes('pending')) newClass = 'bg-custom-yellow text-white';
+                        if (newStatus.includes('pending')) newClass = 'bg-secondary text-white';
+                        else if (newStatus.includes('processing')) newClass = 'bg-custom-yellow text-white';
                         else if (newStatus.includes('approved')) newClass = 'bg-info text-white';
                         else if (newStatus.includes('delivered')) newClass = 'bg-success text-white';
                         else if (newStatus.includes('cancelled')) newClass = 'bg-danger text-white';
@@ -1697,7 +1700,7 @@
                     if (res.success) {
                         $select.removeClass('bg-warning bg-secondary bg-success bg-danger text-dark text-white');
                         let newClass = 'bg-secondary text-white';
-                        if (newStatus == 'pending') newClass = 'bg-custom-yellow text-white';
+                        if (newStatus == 'pending') newClass = 'bg-secondary text-white';
                         else if (newStatus == 'paid') newClass = 'bg-success text-white';
                         else if (newStatus == 'failed') newClass = 'bg-danger text-white';
 
@@ -1859,10 +1862,12 @@
                 // Status Badge logic
                 let status = (row.status || 'pending').toLowerCase();
                 let badgeClass = 'bg-secondary text-white';
-                if (status === 'pending') badgeClass = 'bg-custom-yellow text-white';
-                else if (status === 'processing') badgeClass = 'bg-primary text-white';
-                else if (status === 'approved' || status === 'delivered') badgeClass = 'bg-success text-white';
-                else if (status === 'cancelled' || status === 'rejected') badgeClass = 'bg-danger text-white';
+                if (status === 'pending') badgeClass = 'bg-secondary text-white';
+                else if (status === 'processing') badgeClass = 'bg-warning text-white';
+                else if (status === 'approved') badgeClass = 'bg-info text-white';
+                else if (status === 'delivered') badgeClass = 'bg-success text-white';
+                else if (status === 'cancelled') badgeClass = 'bg-danger text-white';
+                else if (status === 'rejected') badgeClass = 'bg-dark-red text-white';
                 $('#view_status_badge').text(row.status || 'Pending').removeClass().addClass('badge ' + badgeClass).css('font-size', '0.7rem');
 
                 let payStatus = (row.payment_status || 'pending').toLowerCase();
@@ -1937,10 +1942,12 @@
 
                     let status = (row.status || 'pending').toLowerCase();
                     let badgeClass = 'bg-secondary text-white';
-                    if (status === 'pending') badgeClass = 'bg-custom-yellow text-white';
-                    else if (status === 'processing') badgeClass = 'bg-primary text-white';
-                    else if (status === 'approved' || status === 'delivered') badgeClass = 'bg-success text-white';
-                    else if (status === 'cancelled' || status === 'rejected') badgeClass = 'bg-danger text-white';
+                    if (status === 'pending') badgeClass = 'bg-secondary text-white';
+                    else if (status === 'processing') badgeClass = 'bg-warning text-white';
+                    else if (status === 'approved') badgeClass = 'bg-info text-white';
+                    else if (status === 'delivered') badgeClass = 'bg-success text-white';
+                    else if (status === 'cancelled') badgeClass = 'bg-danger text-white';
+                    else if (status === 'rejected') badgeClass = 'bg-dark-red text-white';
                     $('#approve_retailer_status_badge').text(row.status || 'Pending').removeClass().addClass('badge ' + badgeClass).css('font-size', '0.7rem');
 
                     let payStatus = (row.payment_status || 'pending').toLowerCase();
@@ -2003,9 +2010,10 @@
                 };
 
                 if (isAdmin) {
+                    let targetRole = (row.status || '').toLowerCase() === 'pending' ? 'field staff' : 'distributor';
                     Swal.fire({
                         title: 'Confirm Admin Approval',
-                        text: 'This order should ideally be approved by the respective distributor. Do you still want to proceed as an Admin?',
+                        text: `This order should ideally be approved by the respective ${targetRole}. Do you still want to proceed as an Admin?`,
                         icon: 'warning',
                         showCancelButton: true,
                         confirmButtonText: 'Yes, proceed',
@@ -2079,18 +2087,18 @@
 
                     let status = (row.status || 'pending').toLowerCase();
                     let badgeClass = 'bg-secondary text-white';
-                    if (status === 'pending') badgeClass = 'bg-custom-yellow text-white';
-                    else if (status === 'processing') badgeClass = 'bg-primary text-white';
-                    else if (status === 'approved' || status === 'delivered') badgeClass = 'bg-success text-white';
-                    else if (status === 'cancelled' || status === 'rejected') badgeClass = 'bg-danger text-white';
+                    if (status === 'pending') badgeClass = 'bg-secondary text-white';
+                    else if (status === 'processing') badgeClass = 'bg-warning text-white';
+                    else if (status === 'approved') badgeClass = 'bg-info text-white';
+                    else if (status === 'delivered') badgeClass = 'bg-success text-white';
+                    else if (status === 'cancelled') badgeClass = 'bg-danger text-white';
+                    else if (status === 'rejected') badgeClass = 'bg-dark-red text-white';
                     $('#dist_approve_status_badge').text(row.status || 'Pending').removeClass().addClass('badge ' + badgeClass).css('font-size', '0.7rem');
 
                     let payStatus = (row.payment_status || 'pending').toLowerCase();
                     let payBadgeClass = payStatus === 'paid' ? 'text-success' : 'text-warning';
                     $('#dist_approve_payment_status_badge').text(payStatus === 'paid' ? 'PAID' : 'UNPAID').removeClass().addClass('badge ' + payBadgeClass).css({'border': '1px solid currentColor', 'background': 'transparent', 'font-size': '0.7rem'});
 
-                    // Set current payment status in radio buttons
-                    $(`input[name="payment_status"][value="${payStatus}"]`).prop('checked', true);
 
 
                     let tbody = $('#batch_entry_body');
@@ -2171,9 +2179,10 @@
                 };
 
                 if (isAdmin) {
+                    let targetRole = (row.status || '').toLowerCase() === 'pending' ? 'field staff' : 'distributor';
                     Swal.fire({
                         title: 'Confirm Admin Approval',
-                        text: 'This order should ideally be approved by the respective distributor. Do you still want to proceed as an Admin?',
+                        text: `This order should ideally be approved by the respective ${targetRole}. Do you still want to proceed as an Admin?`,
                         icon: 'warning',
                         showCancelButton: true,
                         confirmButtonText: 'Yes, proceed',

@@ -76,67 +76,32 @@ class FieldStaffController extends Controller
         /** @var \App\Models\User $currentUser */
         $currentUser = Auth::user();
         if (!$currentUser->hasRole('salesmanager') && !$currentUser->hasRole('admin')) {
-            // Allowing admin to create too based on logic, or just salesmanager as per original? 
-            // Original: if (!Auth::user()->hasRole('salesmanager')) return error.
-            // But admin usually can too? The Role check was strict. I will keep it strict if that was the intent, 
-            // BUT the Create Form had a dropdown for Sales Manager, which implies Admin uses it? 
-            // Original create logic: `if (!Auth::user()->hasRole('salesmanager')) ...` 
-            // Wait, if I am Admin, I can't create? That seems like a bug or specific rule.
-            // However, the `create()` method in original controller fetched `salesManagers` list. 
-            // This implies someone (Admin) selects a Sales Manager.
-            // BUT `store()` had `if (!Auth::user()->hasRole('salesmanager'))`.
-            // This contradicts `create()` allowing selection.
-            // If I am Sales Manager, I don't select Sales Manager (it's me).
-            // If I am Admin, I select.
-            // Let's look at original `store` again.
-            // Line 75: `if (!Auth::user()->hasRole('salesmanager')) { return error... }`
-            // This effectively blocked Admin from creating Field Staff via store? 
-            // Or maybe Admin HAS role 'salesmanager' too? Unlikely.
-            // I suspect the original code had a bug or I misread. 
-            // Actually, looking at `create()`: it passes `salesManagers`.
-            // If I'm a SalesManager logged in, I usually only see MY staff?
-            // Line 28: `if (Auth::user()->hasRole('salesmanager')) { $query->where... }`
-            // This implies SalesManager sees only their own.
-            // Admin sees all.
-            // So Admin SHOULD be able to create.
-            // I will relax the check to allow Admin or SalesManager.
-            // But strictly following "migrate behavior", I should check if the original code really blocked Admin.
-            // Original: `if (!Auth::user()->hasRole('salesmanager'))` -> Redirect error.
-            // If this is true, Admin could NOT create. 
-            // I will assume Admin CAN create and I will fix this logic if I see it's broken, OR I'll leave it if I'm unsure. 
-            // However, the prompt says "we dont need show, create, edit blades... standard...".
-            // I will allow Admin or SalesManager. 
-            // `if (!Auth::user()->hasRole('salesmanager') && !Auth::user()->hasRole('admin'))`
-            // Also, if Admin, they validate `sales_manager_id`.
-            // If SalesManager, we force `sales_manager_id`.
         }
 
-        // I will keep the Controller logic mostly as is but fix the potential permission issue if obvious, or just copy mostly.
-        // Actually, if I look at `store`:
-        // $userData = ...
-        // $fieldstaffData = ... validate 'sales_manager_id' => 'required'.
-        // If SalesManager is logged in, they might not select it in form? 
-        // Original `create.blade.php`: Select Sales Manager (required).
-        // So even Sales Manager had to select? Or maybe Sales Manager doesn't see the dropdown?
-        // Original `create.blade.php` shows dropdown ALWAYS.
-        // So ANYONE creating had to select Sales Manager.
-        // If Auth user is Sales Manager, why select?
-        // Maybe "Sales Manager" role users can manage OTHER sales managers' staff? Unlikely.
-        // I will stick to: Admin/SalesManager can create.
-
         $userData = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:4|confirmed',
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
+            'email' => [
+                'required', 'email', 'unique:users,email',
+                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
+            ],
+            'password' => ['required', 'min:6', 'confirmed', 'regex:/^\S+$/'],
+        ], [
+            'name.regex' => 'The name must only contain letters and spaces.',
+            'email.regex' => 'The email format is invalid or has an invalid top-level domain.',
+            'password.min' => 'The password must be at least 6 characters.',
+            'password.regex' => 'The password must not contain spaces.',
         ]);
 
         $fieldstaffData = $request->validate([
-            'pincode' => 'required|string',
+            'pincode' => ['required', 'digits:6'],
             'sales_manager_id' => 'nullable|exists:sales_managers,id',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
-            'contact_no' => 'required|digits:10',
-            'address' => 'nullable|string',
+            'contact_no' => ['required', 'digits:10', 'regex:/^[1-9][0-9]{9}$/'],
+            'address' => ['required', 'string'],
+        ], [
+            'contact_no.regex' => 'The contact number must not start with zero.',
+            'pincode.digits' => 'The pincode must be exactly 6 digits.',
         ]);
 
         $user = User::create([
@@ -155,16 +120,11 @@ class FieldStaffController extends Controller
         $fieldstaff->user_id = $user->id;
         /** @var \App\Models\User $currentUser */
         $currentUser = Auth::user();
-        // If logged in user is SalesManager, do we force it?
         if ($currentUser->hasRole('salesmanager')) {
             $fieldstaff->sales_manager_id = $currentUser->salesManager->id;
-            // But the form submitted `sales_manager_id`. We override it? 
-            // Original code: `if (Auth::user()->hasRole('salesmanager')) { $fieldstaff->sales_manager_id = ... }`
-            // Yes, it overrides.
         }
         $fieldstaff->save();
 
-        // Notify Admins for approval
         /** @var \Illuminate\Database\Eloquent\Collection|\App\Models\User[] $admins */
         $admins = User::role(['admin', 'superadmin'])->get();
         foreach ($admins as $admin) {
@@ -175,7 +135,6 @@ class FieldStaffController extends Controller
             ));
         }
 
-        // OneSignal Push to Admins
         $adminIds = $admins->pluck('id')->toArray();
         if (!empty($adminIds)) {
             $this->sendOneSignalPush(
@@ -199,18 +158,29 @@ class FieldStaffController extends Controller
     public function update(Request $request, FieldStaff $fieldstaff)
     {
         $userData = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $fieldstaff->user->id,
-            'password' => 'nullable|min:4|confirmed',
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
+            'email' => [
+                'required', 'email', 'unique:users,email,' . $fieldstaff->user->id,
+                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
+            ],
+            'password' => ['nullable', 'min:6', 'confirmed', 'regex:/^\S+$/'],
+        ], [
+            'name.regex' => 'The name must only contain letters and spaces.',
+            'email.regex' => 'The email format is invalid or has an invalid top-level domain.',
+            'password.min' => 'The password must be at least 6 characters.',
+            'password.regex' => 'The password must not contain spaces.',
         ]);
 
         $fieldstaffData = $request->validate([
-            'pincode' => 'required|string',
+            'pincode' => ['required', 'digits:6'],
             'sales_manager_id' => 'nullable|exists:sales_managers,id',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
-            'contact_no' => 'required|string',
-            'address' => 'nullable|string',
+            'contact_no' => ['required', 'digits:10', 'regex:/^[1-9][0-9]{9}$/'],
+            'address' => ['required', 'string'],
+        ], [
+            'contact_no.regex' => 'The contact number must not start with zero.',
+            'pincode.digits' => 'The pincode must be exactly 6 digits.',
         ]);
 
         $userUpdateData = [
@@ -254,11 +224,7 @@ class FieldStaffController extends Controller
     public function destroy(FieldStaff $fieldstaff)
     {
         try {
-            $fieldstaff->user->delete(); // Assuming cascading or manual user deletion. Original just $fieldstaff->delete();
-            // Sticking to original $fieldstaff->delete() to minimize risk unless logic dictates.
-            // Wait, SalesManager and User controllers use user->delete().
-            // Step 193 line 180: `$fieldstaff->delete()`.
-            // I will stick to what was there but add error handling and AJAX.
+            $fieldstaff->user->delete(); 
 
             $fieldstaff->delete();
             if (request()->ajax()) {

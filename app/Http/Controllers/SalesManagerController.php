@@ -59,11 +59,20 @@ class SalesManagerController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:4|confirmed',
-            'contact_no' => 'nullable|digits:10',
-            'address' => 'nullable|string',
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
+            'email' => [
+                'required', 'string', 'email', 'max:255', 'unique:users',
+                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
+            ],
+            'password' => ['required', 'string', 'min:6', 'regex:/^\S+$/', 'confirmed'],
+            'contact_no' => ['required', 'digits:10', 'regex:/^[1-9][0-9]{9}$/'],
+            'address' => ['required', 'string'],
+            'pincode' => ['required', 'digits:6'],
+        ], [
+            'name.regex' => 'The name must only contain letters and spaces.',
+            'email.regex' => 'The email format is invalid or has an invalid top-level domain.',
+            'password.regex' => 'The password must not contain spaces.',
+            'contact_no.regex' => 'The contact number must not start with zero.',
         ]);
 
         $user = User::create([
@@ -74,6 +83,7 @@ class SalesManagerController extends Controller
             'status' => 'inactive',
             'contact_no' => $request->contact_no,
             'address' => $request->address,
+            'pincode' => $request->pincode,
         ]);
 
         $role = Role::firstOrCreate(['name' => 'salesmanager', 'guard_name' => 'web']);
@@ -85,6 +95,7 @@ class SalesManagerController extends Controller
             'email' => $user->email,
             'contact_no' => $request->contact_no,
             'address' => $request->address,
+            'pincode' => $request->pincode,
         ]);
 
         // Notify Superadmins for approval
@@ -121,11 +132,20 @@ class SalesManagerController extends Controller
     public function update(Request $request, SalesManager $salesManager)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $salesManager->user->id,
-            'password' => 'nullable|string|min:4|confirmed',
-            'contact_no' => 'nullable|digits:10',
-            'address' => 'nullable|string',
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
+            'email' => [
+                'required', 'string', 'email', 'max:255', 'unique:users,email,' . $salesManager->user->id,
+                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
+            ],
+            'password' => ['nullable', 'string', 'min:6', 'regex:/^\S+$/', 'confirmed'],
+            'contact_no' => ['required', 'digits:10', 'regex:/^[1-9][0-9]{9}$/'],
+            'address' => ['required', 'string'],
+            'pincode' => ['required', 'digits:6'],
+        ], [
+            'name.regex' => 'The name must only contain letters and spaces.',
+            'email.regex' => 'The email format is invalid or has an invalid top-level domain.',
+            'password.regex' => 'The password must not contain spaces.',
+            'contact_no.regex' => 'The contact number must not start with zero.',
         ]);
 
         $userData = [
@@ -133,6 +153,7 @@ class SalesManagerController extends Controller
             'email' => $request->email,
             'contact_no' => $request->contact_no,
             'address' => $request->address,
+            'pincode' => $request->pincode,
         ];
 
         if ($request->filled('password')) {
@@ -150,6 +171,7 @@ class SalesManagerController extends Controller
             'email' => $request->email,
             'contact_no' => $request->contact_no,
             'address' => $request->address,
+            'pincode' => $request->pincode,
         ]);
 
         if ($request->ajax()) {

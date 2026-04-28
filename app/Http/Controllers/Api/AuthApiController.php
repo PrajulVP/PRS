@@ -89,6 +89,12 @@ class AuthApiController extends Controller
 
         $user = auth('api')->user();
 
+        // Block inactive users
+        if (!in_array($user->role, ['superadmin', 'admin']) && $user->status === 'inactive') {
+            auth('api')->logout();
+            return response()->json(['error' => 'Your account is inactive. Please contact admin.'], 403);
+        }
+
         // Device Binding Logic for Field Staff
         if ($user->hasRole('fieldstaff')) {
             $deviceId = $request->input('device_id') ?? $request->header('X-Device-ID');
@@ -180,6 +186,10 @@ class AuthApiController extends Controller
 
         if (!$user || !$user->hasRole('fieldstaff')) {
             return response()->json(['error' => 'Unauthorized.'], 403);
+        }
+
+        if ($user->status === 'inactive') {
+            return response()->json(['error' => 'Your account is inactive. Please contact admin.'], 403);
         }
 
         if (!$this->otpService->verifyOtp($user, $request->otp)) {

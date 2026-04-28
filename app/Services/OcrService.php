@@ -17,7 +17,7 @@ class OcrService
      */
     public function processInvoice(UploadedFile $file, string $type = 'admin')
     {
-        $basePath = env('OCR_API_URL', 'http://43.205.121.207');
+        $basePath = env('OCR_API_URL', 'http://13.200.4.44:8001');
         $apiUrl = rtrim($basePath, '/') . "/{$type}";
         Log::info('OCR API Request', ['url' => $apiUrl, 'type' => $type]);
 
@@ -45,7 +45,7 @@ class OcrService
                 'status' => $response->status(),
                 'body' => $response->body()
             ]);
-            
+
             throw new \Exception($errorMsg);
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             Log::error('OCR API Connection Error', ['message' => $e->getMessage()]);

@@ -237,6 +237,27 @@ class RetailerOrderController extends Controller
                     $qty = (int)$itemData['quantity'];
                     $iSide = $itemData['side'] ?? null;
                     $iSize = $itemData['size'] ?? null;
+                    $variant = $itemData['variant'] ?? null;
+
+                    // Fallback: If side/size are missing but variant is present, try to split it
+                    if ((!$iSide || !$iSize) && $variant) {
+                        if (str_contains($variant, ' - ')) {
+                            $parts = explode(' - ', $variant);
+                            if (count($parts) >= 2) {
+                                if (in_array(strtoupper(trim($parts[0])), ['LEFT', 'RIGHT'])) {
+                                    $iSide = $iSide ?: trim($parts[0]);
+                                    $iSize = $iSize ?: trim($parts[1]);
+                                } else {
+                                    $iSize = $iSize ?: trim($parts[0]);
+                                    $iSide = $iSide ?: trim($parts[1]);
+                                }
+                            }
+                        } elseif (in_array(strtoupper(trim($variant)), ['LEFT', 'RIGHT'])) {
+                            $iSide = $iSide ?: trim($variant);
+                        } else {
+                            $iSize = $iSize ?: trim($variant);
+                        }
+                    }
                     $vLabel = array_filter([$iSide, $iSize]);
 
                     // Conversion logic using numeric fields

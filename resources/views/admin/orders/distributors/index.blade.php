@@ -22,24 +22,29 @@
 
         /* Segmented Control for Payment Filter */
         .segmented-control {
-            display: flex;
+            display: flex !important;
+            flex-direction: row !important;
             background-color: var(--med-border, #e2e8f0);
             border-radius: 50px;
             padding: 4px;
             position: relative;
-            width: 260px;
+            width: 100%;
+            max-width: 260px;
+            min-width: 220px;
             box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
         }
         .segmented-control input {
             display: none;
         }
         .segmented-control label {
-            flex: 1;
+            flex: 1 !important;
+            width: 33.33% !important;
             text-align: center;
-            padding: 6px 0;
+            padding: 8px 0;
             margin: 0;
-            font-size: 0.75rem;
-            font-weight: 700;
+            font-size: 0.7rem;
+            font-weight: 800;
             color: var(--med-text-muted, #64748b);
             cursor: pointer;
             position: relative;
@@ -47,6 +52,7 @@
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            white-space: nowrap;
         }
         .segmented-control input:checked + label {
             color: var(--med-text-main, #0f172a);
@@ -334,8 +340,8 @@
 
                 <!-- Hidden filter element to be moved into datatable wrapper -->
                 <div class="d-none" id="payment-filter-wrapper">
-                    <div class="d-flex align-items-center mb-0 ms-2">
-                        <span class="text-muted fw-bold me-3 small text-uppercase">Payment:</span>
+                    <div class="d-flex flex-column flex-sm-row align-items-center mb-0 ms-sm-2">
+                        <span class="text-muted fw-bold me-sm-3 mb-2 mb-sm-0 small text-uppercase">Payment:</span>
                         <div class="segmented-control" id="payment_status_filter_group">
                             <input type="radio" name="payment_status" id="pay_all" value="" checked>
                             <label for="pay_all">All</label>
@@ -654,6 +660,7 @@
     <script>
         $(document).ready(function () {
             const canDelete = {{ Auth::user()->hasAnyRole(['admin', 'superadmin']) ? 'true' : 'false' }};
+            const canCancelDistributorOrder = {{ (Auth::user()->hasAnyRole(['admin', 'superadmin', 'distributor']) || Auth::user()->hasPermissionToCategory('distributor_orders', 'delete')) ? 'true' : 'false' }};
             const isDistributor = {{ Auth::user()->hasRole('distributor') ? 'true' : 'false' }};
             const isSalesManager = {{ Auth::user()->hasRole('salesmanager') ? 'true' : 'false' }};
             const isAdmin = {{ Auth::user()->hasRole('admin') ? 'true' : 'false' }};
@@ -733,12 +740,13 @@
                     name: 'status',
                     render: function (data, type, row) {
                         let status = data.toLowerCase();
-                        let badgeClass = 'bg-secondary';
-                        if (status === 'pending') badgeClass = 'bg-custom-yellow text-white';
-                        else if (status === 'processing') badgeClass = 'bg-info text-white';
-                        else if (status === 'approved') badgeClass = 'bg-primary text-white';
+                        let badgeClass = 'bg-secondary text-white';
+                        if (status === 'pending') badgeClass = 'bg-secondary text-white';
+                        else if (status === 'processing') badgeClass = 'bg-warning text-white';
+                        else if (status === 'approved') badgeClass = 'bg-info text-white';
                         else if (status === 'delivered') badgeClass = 'bg-success text-white';
                         else if (status === 'cancelled') badgeClass = 'bg-danger text-white';
+                        else if (status === 'rejected') badgeClass = 'bg-dark-red text-white';
 
                         return `<span class="badge ${badgeClass}" style="font-size: 0.8rem; padding: 0.5em 0.9em; font-weight: 600;">${data.charAt(0).toUpperCase() + data.slice(1)}</span>`;
                     }
@@ -751,7 +759,7 @@
                         let badgeClass = 'bg-secondary';
                         if (status === 'paid') badgeClass = 'bg-success text-white';
                         else if (status === 'failed') badgeClass = 'bg-danger text-white';
-                        else badgeClass = 'bg-custom-yellow text-white';
+                        else badgeClass = 'bg-secondary text-white';
 
                         return `<span class="badge ${badgeClass}" style="font-size: 0.8rem; padding: 0.5em 0.9em; font-weight: 600;">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
                     }
@@ -809,8 +817,8 @@
                             }
                         }
 
-                        if (isDistributor && st === 'pending') {
-                            btns += `<button class="btn btn-danger btn-sm delete-order-btn" data-id="${row.id}" title="Delete Order"><i class="fa fa-trash"></i></button>`;
+                        if (st === 'pending' && canCancelDistributorOrder) {
+                            btns += `<button class="btn btn-danger btn-sm cancel-order-btn" data-id="${row.id}" title="Cancel Order"><i class="fa fa-times-circle"></i></button>`;
                         }
 
                         btns += `</div>`;
@@ -819,7 +827,7 @@
                 }
                 ],
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
-                    "<'row mb-4 gy-3 d-flex align-items-center'<'col-12 col-lg-4'l><'col-12 col-lg-4 d-flex justify-content-lg-center payment-filter-container'><'col-12 col-lg-4 d-flex justify-content-lg-end'f>>" +
+                    "<'row mb-4 gy-4 d-flex align-items-center'<'col-12 col-lg-4 d-flex justify-content-center justify-content-lg-start'l><'col-12 col-lg-4 d-flex justify-content-center payment-filter-container'><'col-12 col-lg-4 d-flex justify-content-center justify-content-lg-end'f>>" +
                     "<'row'<'col-sm-12'tr>>" +
                     "<'row mt-3'<'col-sm-12 col-md-5 d-flex justify-content-center justify-content-md-start align-items-center'i><'col-sm-12 col-md-7 d-flex justify-content-center justify-content-md-end align-items-center'p>>",
                 buttons: {
@@ -1324,7 +1332,7 @@
                 if (!row) return;
 
                 let payStatus = (row.payment_status || 'pending').toLowerCase();
-                let payBadgeClass = payStatus === 'paid' ? 'bg-success text-white' : 'bg-custom-yellow text-white';
+                let payBadgeClass = payStatus === 'paid' ? 'bg-success text-white' : 'bg-secondary text-white';
                 $('#modalOrderCode').html(`#${row.order_code} <span class="badge ${payBadgeClass} ms-2" style="font-size: 0.75rem; vertical-align: middle; padding: 0.3em 0.7em;">${payStatus.toUpperCase()}</span>`);
 
                 let detailsHtml = `

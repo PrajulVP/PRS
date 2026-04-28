@@ -19,7 +19,7 @@ class AiService
      */
     public function extractPrescription(UploadedFile $file)
     {
-        $basePath = env('AI_API_URL', 'http://43.205.121.207');
+        $basePath = env('AI_API_URL', 'http://13.200.4.44:8001');
         $apiUrl = rtrim($basePath, '/') . "/extract-prescription";
         Log::info('Prescription AI API Request', ['url' => $apiUrl]);
 
@@ -223,7 +223,7 @@ class AiService
      */
     public function extractInvoice(UploadedFile $file)
     {
-        $basePath = env('AI_API_URL', 'http://43.205.121.207');
+        $basePath = env('AI_API_URL', 'http://13.200.4.44:8001');
         $apiUrl = rtrim($basePath, '/') . "/extract-invoice";
         Log::info('Invoice AI API Request', ['url' => $apiUrl]);
 
