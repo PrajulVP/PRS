@@ -157,25 +157,22 @@ class FieldStaffController extends Controller
 
     public function update(Request $request, FieldStaff $fieldstaff)
     {
-        if (!$fieldstaff->user) {
-            $msg = 'User account missing for this Field Staff. This record may be corrupted.';
-            return $request->ajax() 
-                ? response()->json(['success' => false, 'message' => $msg], 422) 
-                : redirect()->back()->with('error', $msg);
-        }
+        $userId = $fieldstaff->user ? $fieldstaff->user->id : null;
 
         $userData = $request->validate([
             'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
             'email' => [
-                'required', 'email', 'unique:users,email,' . $fieldstaff->user->id,
+                'required', 'email', 
+                $userId ? 'unique:users,email,' . $userId : 'unique:users,email',
                 'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
             ],
-            'password' => ['nullable', 'min:6', 'confirmed', 'regex:/^\S+$/'],
+            'password' => [$userId ? 'nullable' : 'required', 'min:6', 'confirmed', 'regex:/^\S+$/'],
         ], [
             'name.regex' => 'The name must only contain letters and spaces.',
             'email.regex' => 'The email format is invalid or has an invalid top-level domain.',
             'password.min' => 'The password must be at least 6 characters.',
             'password.regex' => 'The password must not contain spaces.',
+            'password.required' => 'Password is required to repair the missing User account.',
         ]);
 
         $fieldstaffData = $request->validate([
@@ -190,38 +187,56 @@ class FieldStaffController extends Controller
             'pincode.digits' => 'The pincode must be exactly 6 digits.',
         ]);
 
-        $userUpdateData = [
-            'name' => $userData['name'],
-            'email' => $userData['email'],
-            'role' => 'fieldstaff',
-            'contact_no' => $fieldstaffData['contact_no'],
-            'address' => $fieldstaffData['address'],
-            'pincode' => $fieldstaffData['pincode'],
-        ];
+        if (!$userId) {
+            // Repair: Re-create the missing user record
+            $user = User::create([
+                'name' => $userData['name'],
+                'email' => $userData['email'],
+                'password' => Hash::make($userData['password']),
+                'role' => 'fieldstaff',
+                'status' => $request->status ?? 'inactive',
+                'contact_no' => $fieldstaffData['contact_no'],
+                'address' => $fieldstaffData['address'],
+                'pincode' => $fieldstaffData['pincode'],
+            ]);
+            $user->assignRole('fieldstaff');
+            
+            $fieldstaff->user_id = $user->id;
+            $fieldstaff->save();
+        } else {
+            // Standard update
+            $userUpdateData = [
+                'name' => $userData['name'],
+                'email' => $userData['email'],
+                'contact_no' => $fieldstaffData['contact_no'],
+                'address' => $fieldstaffData['address'],
+                'pincode' => $fieldstaffData['pincode'],
+            ];
 
-        if ($request->has('device_uuid')) {
-            $userUpdateData['device_uuid'] = $request->device_uuid;
-            if (empty($request->device_uuid)) {
-                $userUpdateData['device_bound_at'] = null;
+            if ($request->has('device_uuid')) {
+                $userUpdateData['device_uuid'] = $request->device_uuid;
+                if (empty($request->device_uuid)) {
+                    $userUpdateData['device_bound_at'] = null;
+                }
             }
-        }
 
-        if ($request->filled('password')) {
-            $userUpdateData['password'] = Hash::make($request->password);
-        }
+            if ($request->filled('password')) {
+                $userUpdateData['password'] = Hash::make($request->password);
+            }
 
-        if ($request->filled('status')) {
-            $userUpdateData['status'] = $request->status;
-        }
+            if ($request->filled('status')) {
+                $userUpdateData['status'] = $request->status;
+            }
 
-        $fieldstaff->user->update($userUpdateData);
+            $fieldstaff->user->update($userUpdateData);
+        }
 
         $fieldstaff->update($fieldstaffData);
 
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Field staff updated successfully!'
+                'message' => $userId ? 'Field staff updated successfully!' : 'Field staff record repaired and updated successfully!'
             ]);
         }
 
@@ -231,7 +246,9 @@ class FieldStaffController extends Controller
     public function destroy(FieldStaff $fieldstaff)
     {
         try {
-            $fieldstaff->user->delete(); 
+            if ($fieldstaff->user) {
+                $fieldstaff->user->delete(); 
+            }
 
             $fieldstaff->delete();
             if (request()->ajax()) {
@@ -253,7 +270,7 @@ class FieldStaffController extends Controller
         
         if ($currentUser->hasAnyRole(['superadmin', 'admin'])) {
             if (!$fieldstaff->user) {
-                $msg = 'User account missing for this Field Staff.';
+                $msg = 'Cannot activate: User account missing for this record. Please edit and save the staff to repair the account.';
                 return request()->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : redirect()->back()->with('error', $msg);
             }
             $fieldstaff->user->status = 'active';
@@ -280,7 +297,7 @@ class FieldStaffController extends Controller
 
         if ($currentUser->hasAnyRole(['superadmin', 'admin'])) {
             if (!$fieldstaff->user) {
-                $msg = 'User account missing for this Field Staff.';
+                $msg = 'Cannot deactivate: User account missing for this record.';
                 return request()->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : redirect()->back()->with('error', $msg);
             }
             $fieldstaff->user->status = 'inactive';

@@ -916,8 +916,6 @@
                                             <div id="ai_retailer_validation_message" class="small fw-bold"></div>
                                         </div>
                                     </div>
-                                    </div>
-
                                 </div> <!-- Close success state here -->
 
                                 <div id="automation_success_footer" class="d-none mt-3 pb-3 border-bottom">
