@@ -254,7 +254,7 @@ class InventoryController extends Controller
                             'has_variants' => (bool)$i->product->has_variants,
                         ] : null,
                         'updated_at' => \Carbon\Carbon::parse($i->updated_at)->toIso8601String(),
-                        'image' => $i->product && $i->product->image ? \Illuminate\Support\Facades\Storage::disk('public')->url($i->product->image) : asset('admin/assets/images/dashboard/product-1.png'), // Placeholder
+                        'image' => $i->product && $i->product->image ? asset('storage/' . $i->product->image) : asset('admin/assets/images/dashboard/product-1.png'), // Placeholder
                         'batch_no' => $i->batch_no ?? '-',
                         'raw_expiry_date' => $i->expiry_date,
                         'expiry_date' => $i->expiry_date ? (function ($date) {

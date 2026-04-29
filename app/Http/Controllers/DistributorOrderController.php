@@ -191,7 +191,7 @@ class DistributorOrderController extends Controller
                             ];
                         }),
                         'delivery_notes' => $order->delivery_notes,
-                        'invoice_url' => $order->invoice_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($order->invoice_path) : null,
+                        'invoice_url' => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
                         'payment_status' => $order->payment_status, // Added for payment status display
                         'cancellation_reason' => $order->cancellation_reason,
                         'raw_status' => $order->status
@@ -833,7 +833,7 @@ class DistributorOrderController extends Controller
 
             return response()->json([
                 'success' => 'Invoice uploaded successfully!',
-                'invoice_url' => \Illuminate\Support\Facades\Storage::disk('public')->url($path)
+                'invoice_url' => asset('storage/' . $path)
             ]);
         }
 
@@ -901,7 +901,7 @@ class DistributorOrderController extends Controller
 
         return response()->json([
             'success' => 'Order approved.',
-            'invoice_url' => $path ? \Illuminate\Support\Facades\Storage::disk('public')->url($path) : null
+            'invoice_url' => $path ? asset('storage/' . $path) : null
         ]);
     }
 

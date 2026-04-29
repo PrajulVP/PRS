@@ -255,7 +255,7 @@ class User extends Authenticatable implements JWTSubject
     public function getAvatarUrlAttribute()
     {
         if ($this->profile_pic) {
-            return \Illuminate\Support\Facades\Storage::disk('public')->url($this->profile_pic);
+            return asset('storage/' . $this->profile_pic);
         }
 
         $name = urlencode($this->name);

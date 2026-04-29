@@ -558,7 +558,7 @@ class DistributorOrderApiController extends Controller
             'payment_status' => $order->payment_status,
             'cancellation_reason' => $order->cancellation_reason,
             'placed_at' => $order->placed_at,
-            'invoice_url' => $order->invoice_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($order->invoice_path) : null,
+            'invoice_url' => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
             'items' => $order->items->map(function ($item) {
                 return [
                     'id' => $item->id,

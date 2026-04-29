@@ -112,7 +112,7 @@ class DistributorRetailerOrderController extends Controller
                 'status'          => $order->status,
                 'payment_status'  => $order->payment_status ?? 'pending',
                 'cancellation_reason' => $order->cancellation_reason,
-                'invoice_url'     => $order->invoice_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($order->invoice_path) : null,
+                'invoice_url'     => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
                 'placed_at'       => $order->placed_at?->format('Y-m-d H:i:s'),
                 'delivered_at'    => $order->delivered_at?->format('Y-m-d H:i:s'),
                 'delivery_notes'  => $order->delivery_notes,
@@ -256,7 +256,7 @@ class DistributorRetailerOrderController extends Controller
                 return $itemData;
             }),
 
-            'invoice_url'    => $order->invoice_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($order->invoice_path) : null,
+            'invoice_url'    => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
             'placed_at'      => $order->placed_at?->format('Y-m-d H:i:s'),
             'delivery_notes' => $order->delivery_notes,
         ]);

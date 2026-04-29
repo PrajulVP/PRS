@@ -257,7 +257,7 @@ class PendingApprovalController extends Controller
                     $res['distributor_gst'] = $item->distributor->gst ?? '--';
                     $res['distributor_dl'] = $item->distributor->drug_license_no ?? '--';
                     $res['payment_status'] = $item->payment_status ?? 'pending';
-                    $res['invoice_url'] = $item->invoice_path ? Storage::disk('public')->url($item->invoice_path) : null;
+                    $res['invoice_url'] = $item->invoice_path ? asset('storage/' . $item->invoice_path) : null;
                 } elseif ($viewType === 'retailer') {
                     $res['retailer_id'] = $item->retailer_id;
                     $res['distributor_id'] = $item->distributor_id;
@@ -269,7 +269,7 @@ class PendingApprovalController extends Controller
                     $res['retailer_dl'] = $item->retailer->drug_license_no ?? '--';
                     $res['retailer_location'] = $item->retailer->address ?? '--';
                     $res['payment_status'] = $item->payment_status ?? 'pending';
-                    $res['invoice_url'] = $item->invoice_path ? Storage::disk('public')->url($item->invoice_path) : null;
+                    $res['invoice_url'] = $item->invoice_path ? asset('storage/' . $item->invoice_path) : null;
                     
                     // Added distributor details for popover as well
                     $res['distributor_name'] = $item->distributor->user->name ?? ($item->distributor->name ?? 'N/A');

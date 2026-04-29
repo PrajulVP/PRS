@@ -520,7 +520,7 @@ class RetailerOrderManagementController extends Controller
                         'status' => ucfirst(str_replace('_', ' ', $order->status)),
                         'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d H:i:s') : '-',
                         'payment_status' => $order->payment_status ?? 'pending',
-                        'invoice_url' => $order->invoice_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($order->invoice_path) : null,
+                        'invoice_url' => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
                         'cancellation_reason' => $order->cancellation_reason,
                     ];
                 });
@@ -1352,7 +1352,7 @@ class RetailerOrderManagementController extends Controller
 
             return response()->json([
                 'success' => 'Invoice uploaded successfully!',
-                'invoice_url' => \Illuminate\Support\Facades\Storage::disk('public')->url($path)
+                'invoice_url' => asset('storage/' . $path)
             ]);
         }
 

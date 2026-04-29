@@ -15,7 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // ✅ Exclude CSRF ONLY for login API
         $middleware->validateCsrfTokens(except: [
-            'api/admin/login',
+            'api/*',
         ]);
 
         // ✅ Global intercept to fix rigid hosting platforms stripping Authorization
