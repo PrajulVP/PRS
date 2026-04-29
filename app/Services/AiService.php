@@ -19,9 +19,11 @@ class AiService
      */
     public function extractPrescription(UploadedFile $file)
     {
-        $basePath = env('AI_API_URL', 'http://13.200.4.44:8001');
+        $basePath = env('AI_API_URL', 'http://13.200.4.44/prs');
         $apiUrl = rtrim($basePath, '/') . "/extract-prescription";
         Log::info('Prescription AI API Request', ['url' => $apiUrl]);
+
+        
 
         try {
             $response = Http::timeout(60)
@@ -58,7 +60,6 @@ class AiService
     public function matchExtractedMedicines($aiItems, $retailer = null)
     {
         $matchedOptions = [];
-        $outOfStockItems = [];
         $unmatchedItems = [];
 
         foreach ($aiItems as $medicine) {
@@ -88,7 +89,6 @@ class AiService
                 ->take(5)
                 ->get();
             
-            // ... (Secondary search logic remains)
             if ($matchingProducts->isEmpty()) {
                 $words = explode(' ', preg_replace('/[^a-z0-9 ]/i', ' ', $name));
                 foreach ($words as $word) {
@@ -104,7 +104,12 @@ class AiService
             }
 
             if ($matchingProducts->isEmpty()) {
-                $unmatchedItems[] = ['name' => $name, 'quantity' => (int)$quantity, 'is_chronic' => $isChronic];
+                $unmatchedItems[] = [
+                    'name' => $name, 
+                    'quantity' => (int)$quantity, 
+                    'is_chronic' => $isChronic,
+                    'reason' => 'No matching molecule found in catalog'
+                ];
                 continue;
             }
 
@@ -112,52 +117,37 @@ class AiService
                 $distributors = $this->getAvailableDistributors($product, $retailer);
                 $isAtomed = str_starts_with(strtolower($product->product_name), 'atom');
 
-                if ($distributors->isEmpty()) {
-                    $outOfStockItems[] = [
-                        'product_name' => $product->product_name,
-                        'generic_name' => $product->generic_name,
-                        'original_name' => $name,
-                        'quantity' => (int)$quantity,
-                        'is_chronic' => $isChronic,
-                        'is_atomed' => $isAtomed
-                    ];
-                } else {
-                    $distList = [];
-                    foreach ($distributors as $distributor) {
-                        $distList[] = [
-                            'id' => $distributor->id,
-                            'name' => $distributor->user->name ?? 'N/A',
-                            'shop_name' => $distributor->shop_name,
-                            'distance' => $distributor->distance,
-                            'stock' => ($distributor->pivot->stock ?? 0) . ' Units',
-                        ];
-                    }
-                    $matchedOptions[] = [
-                        'product' => $product,
-                        'distributors' => $distList,
-                        'has_stock' => true,
-                        'quantity' => (int)$quantity,
-                        'unit' => $this->determineDefaultUnit($product),
-                        'original_name' => $name,
-                        'is_chronic' => $isChronic,
-                        'is_atomed' => $isAtomed,
-                        'matched_as' => $isAtomed ? 'Priority Brand' : 'Generic Match'
+                $distList = [];
+                foreach ($distributors as $distributor) {
+                    $distList[] = [
+                        'id' => $distributor->id,
+                        'name' => $distributor->user->name ?? 'N/A',
+                        'shop_name' => $distributor->shop_name,
+                        'distance' => $distributor->distance,
+                        'stock' => ($distributor->pivot->stock ?? 0) . ' Units',
                     ];
                 }
+
+                $matchedOptions[] = [
+                    'product' => $product,
+                    'distributors' => $distList,
+                    'has_stock' => !empty($distList),
+                    'quantity' => (int)$quantity,
+                    'unit' => $this->determineDefaultUnit($product),
+                    'original_name' => $name,
+                    'is_chronic' => $isChronic,
+                    'is_atomed' => $isAtomed,
+                    'matched_as' => $isAtomed ? 'Priority Brand' : 'Generic Match'
+                ];
             }
         }
 
-        $response = [
+        return [
+            'success' => true,
             'matched_items' => $matchedOptions,
             'unmatched_items' => $unmatchedItems,
             'is_chronic_prescription' => collect($matchedOptions)->contains('is_chronic', true) || collect($unmatchedItems)->contains('is_chronic', true)
         ];
-
-        if (!empty($outOfStockItems)) {
-            $response['out_of_stock_items'] = $outOfStockItems;
-        }
-
-        return $response;
     }
 
     protected function getAvailableDistributors($product, $retailer, $side = null, $size = null)
@@ -223,7 +213,7 @@ class AiService
      */
     public function extractInvoice(UploadedFile $file)
     {
-        $basePath = env('AI_API_URL', 'http://13.200.4.44:8001');
+        $basePath = env('AI_API_URL', 'http://13.200.4.44/prs');
         $apiUrl = rtrim($basePath, '/') . "/extract-invoice";
         Log::info('Invoice AI API Request', ['url' => $apiUrl]);
 

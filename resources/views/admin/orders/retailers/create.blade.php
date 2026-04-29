@@ -866,17 +866,30 @@
                         if (res.success && res.matched_items && res.matched_items.length > 0) {
                             res.matched_items.forEach(function (item, idx) {
                                 let p = item.product;
+                                let hasStock = item.has_stock;
                                 let d = (item.distributors && item.distributors.length > 0) ? item.distributors[0] : (item.distributor || null);
-                                if (!d) return; // Skip if no distributor info
-                                let distName = d.shop_name || d.name || 'N/A';
+                                
+                                let distName = d ? (d.shop_name || d.name || 'N/A') : 'No Distributor with Stock';
                                 let pPack = (p.pack && p.pack.trim() !== '') ? ` (${p.pack})` : '';
                                 let options = `<option value="${p.id}" selected>${p.product_name}${pPack} (₹${p.ptr})</option>`;
                                 
-                                let stockNum = parseFloat(d.stock) || 0;
-                                let distHtml = `
-                                    <select class="form-select select2-ai ai-dist-select" data-pid="${p.id}">
-                                        <option value="${d.id}" data-stock="${stockNum}" selected>${distName} - Stock: ${Math.round(stockNum)}</option>
-                                    </select>`;
+                                let stockNum = d ? (parseFloat(d.stock) || 0) : 0;
+                                let distHtml = '';
+                                
+                                if (hasStock) {
+                                    distHtml = `
+                                        <select class="form-select select2-ai ai-dist-select" data-pid="${p.id}">
+                                            <option value="${d.id}" data-stock="${stockNum}" selected>${distName} - Stock: ${Math.round(stockNum)}</option>
+                                        </select>`;
+                                } else {
+                                    distHtml = `
+                                        <div class="p-2 bg-soft-danger text-danger rounded-3 border border-danger border-opacity-10 small fw-bold">
+                                            <i class="fa fa-exclamation-circle me-1"></i> Not in stock with any distributor
+                                        </div>
+                                        <select class="form-select select2-ai ai-dist-select d-none" data-pid="${p.id}">
+                                            <option value="" selected>No Stock</option>
+                                        </select>`;
+                                }
 
                                 let variantHtml = '';
                                 if (p.variant_options && typeof p.variant_options === 'object') {
@@ -893,7 +906,7 @@
                                 }
 
                                 let rowHtml = `
-                                    <div class="ai-result-row p-4 bg-white rounded-4 shadow-sm mb-3 border border-light-dark overflow-hidden transition-all hover-shadow" data-pid="${p.id}">
+                                    <div class="ai-result-row p-4 bg-white rounded-4 shadow-sm mb-3 border ${hasStock ? 'border-light-dark' : 'border-danger border-opacity-25'} overflow-hidden transition-all hover-shadow" data-pid="${p.id}" style="${hasStock ? '' : 'background-color: #fffafb !important;'}">
                                         <div class="row g-3">
                                             <!-- Main Details -->
                                             <div class="col-lg-4 col-md-6">
@@ -909,7 +922,7 @@
                                                 </select>
                                             </div>
                                             <div class="col-lg-4 col-md-6">
-                                                <label class="text-muted small fw-bold text-uppercase mb-1 d-block"><i class="fa fa-truck me-1 text-primary"></i> Select Distributor</label>
+                                                <label class="text-muted small fw-bold text-uppercase mb-1 d-block"><i class="fa fa-truck me-1 text-primary"></i> Availability</label>
                                                 ${distHtml}
                                             </div>
 
@@ -918,21 +931,22 @@
                                             <!-- Action & Qty -->
                                             <div class="col-lg-2 col-md-4 col-6">
                                                 <label class="text-muted small fw-bold text-uppercase mb-1 d-block">Quantity</label>
-                                                <input type="number" class="form-control ai-qty fw-bold" value="${item.quantity}" min="1" style="height: 42px;">
+                                                <input type="number" class="form-control ai-qty fw-bold" value="${item.quantity}" min="1" style="height: 42px;" ${hasStock ? '' : 'disabled'}>
                                             </div>
                                             <div class="col-lg-2 col-md-4 col-6">
                                                 <label class="text-muted small fw-bold text-uppercase mb-1 d-block">Unit</label>
-                                                <select class="form-select ai-unit fw-medium" style="height: 42px;">
+                                                <select class="form-select ai-unit fw-medium" style="height: 42px;" ${hasStock ? '' : 'disabled'}>
                                                     <option value="Strips" ${item.unit === 'Strips' ? 'selected' : ''}>Strips</option>
                                                     <option value="Box" ${item.unit === 'Box' ? 'selected' : ''}>Box</option>
                                                     <option value="Nos" ${item.unit === 'Nos' ? 'selected' : ''}>Nos</option>
                                                 </select>
                                             </div>
                                             <div class="col-lg-8 col-md-4 col-12 d-flex align-items-end">
-                                                <button type="button" class="btn btn-primary ai-add-btn w-100 fw-bold shadow-sm" 
-                                                    style="height: 42px; border-radius: 10px; background: var(--med-primary);"
-                                                    data-idx="${idx}">
-                                                    <i class="fa fa-plus-circle me-1"></i> ADD TO CART
+                                                <button type="button" class="btn ${hasStock ? 'btn-primary' : 'btn-secondary'} ai-add-btn w-100 fw-bold shadow-sm" 
+                                                    style="height: 42px; border-radius: 10px; ${hasStock ? 'background: var(--med-primary);' : 'cursor: not-allowed;'}"
+                                                    data-idx="${idx}" ${hasStock ? '' : 'disabled'}>
+                                                    <i class="fa ${hasStock ? 'fa-plus-circle' : 'fa-times-circle'} me-1"></i> 
+                                                    ${hasStock ? 'ADD TO CART' : 'OUT OF STOCK'}
                                                 </button>
                                             </div>
                                         </div>
@@ -942,25 +956,19 @@
 
                             $('.select2-ai').select2({ width: '100%', dropdownParent: $('#aiResultsContainer') });
 
-                            // Handle Out of Stock Items
-                            if (res.out_of_stock_items && res.out_of_stock_items.length > 0) {
-                                let stockMsg = res.out_of_stock_items.map(i => `<span class="badge bg-soft-warning text-warning me-2" style="font-size: 0.85rem; border: 1px solid rgba(255,193,7,0.2);">${i.product_name} (${i.original_name})</span>`).join('');
-                                $('#unmatchedList').append(`<hr class="my-3 text-muted opacity-25"><div class="text-muted fw-bold mb-2" style="font-size: 0.95rem;"><i class="fa fa-exclamation-triangle me-1 text-warning"></i> Matched products currently NOT in stock:</div><div class="d-flex flex-wrap">${stockMsg}</div>`);
-                            }
-
                             if (res.unmatched_items && res.unmatched_items.length > 0) {
                                 let names = res.unmatched_items.map(i => `<span class="badge bg-soft-danger text-danger me-2" style="font-size: 0.9rem; border: 1px solid rgba(220,53,69,0.2);">${i.name}</span>`).join('');
-                                $('#unmatchedList').html(`<hr class="my-3 text-muted opacity-25"><div class="text-muted fw-bold mb-2" style="font-size: 0.95rem;"><i class="fa fa-info-circle me-1 text-danger"></i> Molecule(s) not found in our current product catalog:</div><div class="d-flex flex-wrap">${names}</div>`);
+                                $('#unmatchedList').html(`<hr class="my-3 text-muted opacity-25"><div class="text-muted fw-bold mb-2" style="font-size: 0.95rem;"><i class="fa fa-info-circle me-1 text-danger"></i> The following items from the prescription were NOT found in our catalog:</div><div class="d-flex flex-wrap">${names}</div>`);
                             }
                             
-                            showToast('success', `AI identified multiple options. Please review and add them.`);
+                            showToast('success', `Prescription processed successfully.`);
                         } else {
-                            resultsList.html('<div class="text-center py-3 text-muted">No items matched in our database.</div>');
+                            resultsList.html('<div class="text-center py-4 bg-light rounded-4 border"><i class="fa fa-search-minus fa-2x text-muted mb-2"></i><div class="text-muted fw-bold">No matches found for this prescription.</div><div class="text-muted small">Please check the items below or add products manually.</div></div>');
                             if (res.unmatched_items && res.unmatched_items.length > 0) {
                                 let names = res.unmatched_items.map(i => `<span class="badge bg-soft-danger text-danger me-2" style="font-size: 0.9rem; border: 1px solid rgba(220,53,69,0.2);">${i.name}</span>`).join('');
-                                $('#unmatchedList').html(`<hr class="my-3 text-muted opacity-25"><div class="text-muted fw-bold mb-2" style="font-size: 0.95rem;"><i class="fa fa-info-circle me-1 text-danger"></i> Molecule(s) not found in our current product catalog:</div><div class="d-flex flex-wrap">${names}</div>`);
+                                $('#unmatchedList').html(`<hr class="my-3 text-muted opacity-25"><div class="text-muted fw-bold mb-2" style="font-size: 0.95rem;"><i class="fa fa-info-circle me-1 text-danger"></i> Items NOT found in catalog:</div><div class="d-flex flex-wrap">${names}</div>`);
                             }
-                            showToast('error', 'AI could not find any of these items in stock.');
+                            showToast('warning', 'No products found in stock for the items in this prescription.');
                         }
                     },
                     error: function (xhr) {
