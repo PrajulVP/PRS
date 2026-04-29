@@ -152,24 +152,32 @@ class DistributorController extends Controller
 
     public function update(Request $request, Distributor $distributor)
     {
-        if (!$distributor->user) {
-            $msg = 'User account missing for this Distributor. This record may be corrupted.';
-            return $request->ajax() 
-                ? response()->json(['success' => false, 'message' => $msg], 422) 
-                : redirect()->back()->with('error', $msg);
+        // Smart Repair: If user relationship is missing, check if a user with this email already exists
+        if (!$distributor->user && $request->filled('email')) {
+            $foundUser = User::where('email', $request->email)->first();
+            if ($foundUser) {
+                $distributor->user_id = $foundUser->id;
+                $distributor->save();
+                $distributor->load('user');
+            }
         }
+
+        $userId = $distributor->user ? $distributor->user->id : null;
+
         $userData = $request->validate([
             'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
             'email' => [
-                'required', 'email', 'unique:users,email,' . $distributor->user->id,
+                'required', 'email', 
+                $userId ? 'unique:users,email,' . $userId : 'unique:users,email',
                 'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
             ],
-            'password' => ['nullable', 'min:6', 'confirmed', 'regex:/^\S+$/'],
+            'password' => [$userId ? 'nullable' : 'required', 'min:6', 'confirmed', 'regex:/^\S+$/'],
         ], [
             'name.regex' => 'The name must only contain letters and spaces.',
             'email.regex' => 'The email format is invalid or has an invalid top-level domain.',
             'password.min' => 'The password must be at least 6 characters.',
             'password.regex' => 'The password must not contain spaces.',
+            'password.required' => 'A password is required to create a new account for this distributor.',
         ]);
 
         $distributorData = $request->validate([
@@ -193,31 +201,49 @@ class DistributorController extends Controller
             'pincode.digits' => 'The pincode must be exactly 6 digits.',
         ]);
 
-        $userUpdateData = [
-            'name' => $userData['name'],
-            'email' => $userData['email'],
-            'role' => 'distributor',
-            'contact_no' => $distributorData['contact_no'],
-            'address' => $distributorData['address'],
-            'pincode' => $distributorData['pincode'],
-        ];
+        if (!$userId) {
+            // Re-create the missing user record (FoundUser logic above failed to find one)
+            $user = User::create([
+                'name' => $userData['name'],
+                'email' => $userData['email'],
+                'password' => Hash::make($userData['password']),
+                'role' => 'distributor',
+                'status' => $request->status ?? 'inactive',
+                'contact_no' => $distributorData['contact_no'],
+                'address' => $distributorData['address'],
+                'pincode' => $distributorData['pincode'],
+            ]);
+            $user->assignRole('distributor');
+            
+            $distributor->user_id = $user->id;
+            $distributor->save();
+        } else {
+            // Standard update
+            $userUpdateData = [
+                'name' => $userData['name'],
+                'email' => $userData['email'],
+                'contact_no' => $distributorData['contact_no'],
+                'address' => $distributorData['address'],
+                'pincode' => $distributorData['pincode'],
+            ];
 
-        if ($request->filled('password')) {
-            $userUpdateData['password'] = Hash::make($request->password);
+            if ($request->filled('password')) {
+                $userUpdateData['password'] = Hash::make($request->password);
+            }
+
+            if ($request->filled('status')) {
+                $userUpdateData['status'] = $request->status;
+            }
+
+            $distributor->user->update($userUpdateData);
         }
-
-        if ($request->filled('status')) {
-            $userUpdateData['status'] = $request->status;
-        }
-
-        $distributor->user->update($userUpdateData);
 
         $distributor->update($distributorData);
 
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Distributor updated successfully!'
+                'message' => $userId ? 'Distributor updated successfully!' : 'Distributor record repaired and updated successfully!'
             ]);
         }
 
@@ -227,7 +253,9 @@ class DistributorController extends Controller
     public function destroy(Distributor $distributor)
     {
         try {
-            $distributor->user->delete(); // Assuming cascading delete or similar logic. Original code just had $distributor->delete() but usually user is parent.
+            if ($distributor->user) {
+                $distributor->user->delete(); 
+            }
             // Wait, looking at Step 89 line 127: $distributor->delete();
             // But if I delete distributor, the user remains?
             // Usually we delete the user.
@@ -272,7 +300,7 @@ class DistributorController extends Controller
         }
 
         if (!$distributor->user) {
-            $msg = 'User account missing for this Distributor.';
+            $msg = 'Cannot activate: User account missing for this record. Please edit and save to repair the account.';
             return request()->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : redirect()->back()->with('error', $msg);
         }
 
@@ -299,7 +327,7 @@ class DistributorController extends Controller
         }
 
         if (!$distributor->user) {
-            $msg = 'User account missing for this Distributor.';
+            $msg = 'Cannot deactivate: User account missing for this record.';
             return request()->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : redirect()->back()->with('error', $msg);
         }
 

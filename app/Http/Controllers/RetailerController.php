@@ -233,24 +233,32 @@ class RetailerController extends Controller
 
     public function update(Request $request, Retailer $retailer)
     {
-        if (!$retailer->user) {
-            $msg = 'User account missing for this Retailer. This record may be corrupted.';
-            return $request->ajax() 
-                ? response()->json(['success' => false, 'message' => $msg], 422) 
-                : redirect()->back()->with('error', $msg);
+        // Smart Repair: If user relationship is missing, check if a user with this email already exists
+        if (!$retailer->user && $request->filled('email')) {
+            $foundUser = User::where('email', $request->email)->first();
+            if ($foundUser) {
+                $retailer->user_id = $foundUser->id;
+                $retailer->save();
+                $retailer->load('user');
+            }
         }
+
+        $userId = $retailer->user ? $retailer->user->id : null;
+
         $userData = $request->validate([
             'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
             'email' => [
-                'required', 'email', 'unique:users,email,' . $retailer->user->id,
+                'required', 'email', 
+                $userId ? 'unique:users,email,' . $userId : 'unique:users,email',
                 'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
             ],
-            'password' => ['nullable', 'min:6', 'confirmed', 'regex:/^\S+$/'],
+            'password' => [$userId ? 'nullable' : 'required', 'min:6', 'confirmed', 'regex:/^\S+$/'],
         ], [
             'name.regex' => 'The name must only contain letters and spaces.',
             'email.regex' => 'The email format is invalid or has an invalid top-level domain.',
             'password.min' => 'The password must be at least 6 characters.',
             'password.regex' => 'The password must not contain spaces.',
+            'password.required' => 'A password is required to create a new account for this retailer.',
         ]);
 
         $retailerData = $request->validate([
@@ -276,31 +284,49 @@ class RetailerController extends Controller
             'pincode.digits' => 'The pincode must be exactly 6 digits.',
         ]);
 
-        $userUpdateData = [
-            'name' => $userData['name'],
-            'email' => $userData['email'],
-            'role' => 'retailer',
-            'contact_no' => $retailerData['contact_no'],
-            'address' => $retailerData['address'],
-            'pincode' => $retailerData['pincode'],
-        ];
+        if (!$userId) {
+            // Re-create the missing user record (FoundUser logic above failed to find one)
+            $user = User::create([
+                'name' => $userData['name'],
+                'email' => $userData['email'],
+                'password' => Hash::make($userData['password']),
+                'role' => 'retailer',
+                'status' => $request->status ?? 'inactive',
+                'contact_no' => $retailerData['contact_no'],
+                'address' => $retailerData['address'],
+                'pincode' => $retailerData['pincode'],
+            ]);
+            $user->assignRole('retailer');
+            
+            $retailer->user_id = $user->id;
+            $retailer->save();
+        } else {
+            // Standard update
+            $userUpdateData = [
+                'name' => $userData['name'],
+                'email' => $userData['email'],
+                'contact_no' => $retailerData['contact_no'],
+                'address' => $retailerData['address'],
+                'pincode' => $retailerData['pincode'],
+            ];
 
-        if ($request->filled('password')) {
-            $userUpdateData['password'] = Hash::make($request->password);
+            if ($request->filled('password')) {
+                $userUpdateData['password'] = Hash::make($request->password);
+            }
+
+            if ($request->filled('status')) {
+                $userUpdateData['status'] = $request->status;
+            }
+
+            $retailer->user->update($userUpdateData);
         }
-
-        if ($request->filled('status')) {
-            $userUpdateData['status'] = $request->status;
-        }
-
-        $retailer->user->update($userUpdateData);
 
         $retailer->update(array_merge($retailerData, ['pincode' => $request->pincode]));
 
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Retailer updated successfully!'
+                'message' => $userId ? 'Retailer updated successfully!' : 'Retailer record repaired and updated successfully!'
             ]);
         }
 
@@ -310,16 +336,9 @@ class RetailerController extends Controller
     public function destroy(Retailer $retailer)
     {
         try {
-            $retailer->user->delete(); // Retailers are users. Deleting retailer usually deletes user or vice versa.
-            // Step 210 line 169: `$retailer->delete();`.
-            // I will use user->delete() for consistency if that's the pattern, or just $retailer->delete().
-            // Wait, Users table is parent. If I delete retailer child, User remains?
-            // SalesManagerController deletes user. FieldStaffController (my edit) now deletes user.
-            // RetailerController should probably delete user.
-            // But looking at line 169, it was `$retailer->delete()`.
-            // I will stick to what was there but add the AJAX wrapper.
-            // Actually, if I delete retailer, user is orphaned.
-            // I'll be safe and delete $retailer->delete() as per original code.
+            if ($retailer->user) {
+                $retailer->user->delete(); 
+            }
 
             $retailer->delete();
             if (request()->ajax()) {
@@ -340,7 +359,7 @@ class RetailerController extends Controller
         $currentUser = Auth::user();
         if ($currentUser->hasAnyRole(['superadmin', 'admin']) || $currentUser->hasRole('salesmanager')) {
             if (!$retailer->user) {
-                $msg = 'User account missing for this Retailer.';
+                $msg = 'Cannot activate: User account missing for this record. Please edit and save to repair the account.';
                 return request()->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : redirect()->back()->with('error', $msg);
             }
             $retailer->user->status = 'active';
@@ -366,7 +385,7 @@ class RetailerController extends Controller
         $currentUser = Auth::user();
         if ($currentUser->hasAnyRole(['superadmin', 'admin']) || $currentUser->hasRole('salesmanager')) {
             if (!$retailer->user) {
-                $msg = 'User account missing for this Retailer.';
+                $msg = 'Cannot deactivate: User account missing for this record.';
                 return request()->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : redirect()->back()->with('error', $msg);
             }
             $retailer->user->status = 'inactive';

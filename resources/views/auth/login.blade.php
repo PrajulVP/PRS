@@ -146,6 +146,12 @@
         .hover-underline:hover {
             text-decoration: underline !important;
         }
+
+        /* Hide browser-default password visibility toggles (Edge/IE) */
+        input::-ms-reveal,
+        input::-ms-clear {
+            display: none !important;
+        }
     </style>
 
 @endsection

@@ -3876,8 +3876,9 @@
                         "example": "pending"
                     },
                     "total_amount": {
-                        "type": "string",
-                        "example": "1500.00"
+                        "type": "number",
+                        "format": "float",
+                        "example": 1500
                     },
                     "total_items": {
                         "type": "integer",
@@ -3886,6 +3887,31 @@
                     "total_quantity": {
                         "type": "integer",
                         "example": 12
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "product_id": {
+                                    "type": "integer"
+                                },
+                                "product_name": {
+                                    "type": "string"
+                                },
+                                "quantity": {
+                                    "type": "integer"
+                                },
+                                "unit_price": {
+                                    "type": "number",
+                                    "format": "float"
+                                },
+                                "subtotal": {
+                                    "type": "number",
+                                    "format": "float"
+                                }
+                            },
+                            "type": "object"
+                        }
                     },
                     "delivery_notes": {
                         "type": "string",

@@ -157,6 +157,16 @@ class FieldStaffController extends Controller
 
     public function update(Request $request, FieldStaff $fieldstaff)
     {
+        // Smart Repair: If user relationship is missing, check if a user with this email already exists
+        if (!$fieldstaff->user && $request->filled('email')) {
+            $foundUser = User::where('email', $request->email)->first();
+            if ($foundUser) {
+                $fieldstaff->user_id = $foundUser->id;
+                $fieldstaff->save();
+                $fieldstaff->load('user');
+            }
+        }
+
         $userId = $fieldstaff->user ? $fieldstaff->user->id : null;
 
         $userData = $request->validate([
@@ -172,7 +182,7 @@ class FieldStaffController extends Controller
             'email.regex' => 'The email format is invalid or has an invalid top-level domain.',
             'password.min' => 'The password must be at least 6 characters.',
             'password.regex' => 'The password must not contain spaces.',
-            'password.required' => 'Password is required to repair the missing User account.',
+            'password.required' => 'A password is required to create a new account for this staff.',
         ]);
 
         $fieldstaffData = $request->validate([
@@ -188,7 +198,7 @@ class FieldStaffController extends Controller
         ]);
 
         if (!$userId) {
-            // Repair: Re-create the missing user record
+            // Re-create the missing user record (FoundUser logic above failed to find one)
             $user = User::create([
                 'name' => $userData['name'],
                 'email' => $userData['email'],
