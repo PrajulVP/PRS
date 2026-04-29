@@ -45,14 +45,14 @@ class SalesManagerController extends Controller
         return view('admin.salesmanagers.index');
     }
 
-    public function show(SalesManager $salesManager)
+    public function show(SalesManager $sales_manager)
     {
         // Load relationships needed for the view modal
-        $salesManager->load(['user', 'fieldStaffs.user', 'retailers.user']);
+        $sales_manager->load(['user', 'fieldStaffs.user', 'retailers.user']);
 
         return response()->json([
             'success' => true,
-            'data' => $salesManager
+            'data' => $sales_manager
         ]);
     }
 
@@ -129,9 +129,9 @@ class SalesManagerController extends Controller
         return redirect()->route('admin.sales-managers.index')->with('success', 'Sales Manager added.');
     }
 
-    public function update(Request $request, SalesManager $salesManager)
+    public function update(Request $request, SalesManager $sales_manager)
     {
-        if (!$salesManager->user) {
+        if (!$sales_manager->user) {
             $msg = 'User account missing for this Sales Manager. This record may be corrupted.';
             return $request->ajax() 
                 ? response()->json(['success' => false, 'message' => $msg], 422) 
@@ -140,7 +140,7 @@ class SalesManagerController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
             'email' => [
-                'required', 'string', 'email', 'max:255', 'unique:users,email,' . $salesManager->user->id,
+                'required', 'string', 'email', 'max:255', 'unique:users,email,' . $sales_manager->user->id,
                 'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
             ],
             'password' => ['nullable', 'string', 'min:6', 'regex:/^\S+$/', 'confirmed'],
@@ -170,9 +170,9 @@ class SalesManagerController extends Controller
             $userData['status'] = $request->status;
         }
 
-        $salesManager->user->update($userData);
+        $sales_manager->user->update($userData);
 
-        $salesManager->update([
+        $sales_manager->update([
             'name' => $request->name,
             'email' => $request->email,
             'contact_no' => $request->contact_no,
@@ -190,10 +190,10 @@ class SalesManagerController extends Controller
         return redirect()->route('admin.sales-managers.index')->with('success', 'Sales Manager updated.');
     }
 
-    public function destroy(SalesManager $salesManager)
+    public function destroy(SalesManager $sales_manager)
     {
         try {
-            $salesManager->user->delete();
+            $sales_manager->user->delete();
             if (request()->ajax()) {
                 return response()->json(['success' => true, 'message' => 'Sales Manager deleted.']);
             }
@@ -211,7 +211,7 @@ class SalesManagerController extends Controller
         }
     }
 
-    public function activate(SalesManager $salesManager)
+    public function activate(SalesManager $sales_manager)
     {
         /** @var User $currentUser */
         $currentUser = Auth::user();
@@ -222,15 +222,15 @@ class SalesManagerController extends Controller
             return redirect()->route('admin.sales-managers.index')->with('error', 'You do not have permission to change the status of this user.');
         }
 
-        if (!$salesManager->user) {
+        if (!$sales_manager->user) {
             $msg = 'User account missing for this Sales Manager.';
             return request()->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : redirect()->back()->with('error', $msg);
         }
 
-        $salesManager->user->status = 'active';
-        $salesManager->user->save();
+        $sales_manager->user->status = 'active';
+        $sales_manager->user->save();
 
-        $this->clearUserNotifications($salesManager->user->id);
+        $this->clearUserNotifications($sales_manager->user->id);
 
         if (request()->ajax()) {
             return response()->json(['success' => true, 'message' => 'Sales Manager activated.']);
@@ -238,7 +238,7 @@ class SalesManagerController extends Controller
         return redirect()->route('admin.sales-managers.index')->with('success', 'Sales Manager activated.');
     }
 
-    public function deactivate(SalesManager $salesManager)
+    public function deactivate(SalesManager $sales_manager)
     {
         /** @var User $currentUser */
         $currentUser = Auth::user();
@@ -249,13 +249,13 @@ class SalesManagerController extends Controller
             return redirect()->route('admin.sales-managers.index')->with('error', 'You do not have permission to change the status of this user.');
         }
 
-        if (!$salesManager->user) {
+        if (!$sales_manager->user) {
             $msg = 'User account missing for this Sales Manager.';
             return request()->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : redirect()->back()->with('error', $msg);
         }
 
-        $salesManager->user->status = 'inactive';
-        $salesManager->user->save();
+        $sales_manager->user->status = 'inactive';
+        $sales_manager->user->save();
 
         if (request()->ajax()) {
             return response()->json(['success' => true, 'message' => 'Sales Manager deactivated.']);

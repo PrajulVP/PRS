@@ -62,12 +62,12 @@ class FieldStaffController extends Controller
         return view('admin.fieldstaffs.index', compact('salesManagers'));
     }
 
-    public function show(FieldStaff $fieldStaff)
+    public function show(FieldStaff $field_staff)
     {
-        $fieldStaff->load(['user', 'salesManager.user', 'retailers.user']);
+        $field_staff->load(['user', 'salesManager.user', 'retailers.user']);
         return response()->json([
             'success' => true,
-            'data' => $fieldStaff
+            'data' => $field_staff
         ]);
     }
 
@@ -155,19 +155,19 @@ class FieldStaffController extends Controller
         return redirect()->route('admin.field-staffs.index')->with('success', 'Field staff added successfully and is pending approval.');
     }
 
-    public function update(Request $request, FieldStaff $fieldstaff)
+    public function update(Request $request, FieldStaff $field_staff)
     {
         // Smart Repair: If user relationship is missing, check if a user with this email already exists
-        if (!$fieldstaff->user && $request->filled('email')) {
+        if (!$field_staff->user && $request->filled('email')) {
             $foundUser = User::where('email', $request->email)->first();
             if ($foundUser) {
-                $fieldstaff->user_id = $foundUser->id;
-                $fieldstaff->save();
-                $fieldstaff->load('user');
+                $field_staff->user_id = $foundUser->id;
+                $field_staff->save();
+                $field_staff->load('user');
             }
         }
 
-        $userId = $fieldstaff->user ? $fieldstaff->user->id : null;
+        $userId = $field_staff->user ? $field_staff->user->id : null;
 
         $userData = $request->validate([
             'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
@@ -211,8 +211,8 @@ class FieldStaffController extends Controller
             ]);
             $user->assignRole('fieldstaff');
             
-            $fieldstaff->user_id = $user->id;
-            $fieldstaff->save();
+            $field_staff->user_id = $user->id;
+            $field_staff->save();
         } else {
             // Standard update
             $userUpdateData = [
@@ -238,10 +238,10 @@ class FieldStaffController extends Controller
                 $userUpdateData['status'] = $request->status;
             }
 
-            $fieldstaff->user->update($userUpdateData);
+            $field_staff->user->update($userUpdateData);
         }
 
-        $fieldstaff->update($fieldstaffData);
+        $field_staff->update($fieldstaffData);
 
         if ($request->ajax()) {
             return response()->json([
@@ -253,14 +253,14 @@ class FieldStaffController extends Controller
         return redirect()->route('admin.field-staffs.index')->with('success', 'Field staff updated successfully!');
     }
 
-    public function destroy(FieldStaff $fieldstaff)
+    public function destroy(FieldStaff $field_staff)
     {
         try {
-            if ($fieldstaff->user) {
-                $fieldstaff->user->delete(); 
+            if ($field_staff->user) {
+                $field_staff->user->delete(); 
             }
 
-            $fieldstaff->delete();
+            $field_staff->delete();
             if (request()->ajax()) {
                 return response()->json(['success' => true, 'message' => 'Field staff deleted successfully!']);
             }
@@ -273,20 +273,20 @@ class FieldStaffController extends Controller
         }
     }
 
-    public function activate(FieldStaff $fieldstaff)
+    public function activate(FieldStaff $field_staff)
     {
         /** @var \App\Models\User $currentUser */
         $currentUser = Auth::user();
         
         if ($currentUser->hasAnyRole(['superadmin', 'admin'])) {
-            if (!$fieldstaff->user) {
+            if (!$field_staff->user) {
                 $msg = 'Cannot activate: User account missing for this record. Please edit and save the staff to repair the account.';
                 return request()->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : redirect()->back()->with('error', $msg);
             }
-            $fieldstaff->user->status = 'active';
-            $fieldstaff->user->save();
+            $field_staff->user->status = 'active';
+            $field_staff->user->save();
 
-            $this->clearUserNotifications($fieldstaff->user->id);
+            $this->clearUserNotifications($field_staff->user->id);
 
             if (request()->ajax()) {
                 return response()->json(['success' => true, 'message' => 'Field staff activated successfully!']);
@@ -300,18 +300,18 @@ class FieldStaffController extends Controller
         return redirect()->route('admin.field-staffs.index')->with('error', 'You do not have permission to change the status of this user.');
     }
 
-    public function deactivate(FieldStaff $fieldstaff)
+    public function deactivate(FieldStaff $field_staff)
     {
         /** @var \App\Models\User $currentUser */
         $currentUser = Auth::user();
 
         if ($currentUser->hasAnyRole(['superadmin', 'admin'])) {
-            if (!$fieldstaff->user) {
+            if (!$field_staff->user) {
                 $msg = 'Cannot deactivate: User account missing for this record.';
                 return request()->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : redirect()->back()->with('error', $msg);
             }
-            $fieldstaff->user->status = 'inactive';
-            $fieldstaff->user->save();
+            $field_staff->user->status = 'inactive';
+            $field_staff->user->save();
             
             if (request()->ajax()) {
                 return response()->json(['success' => true, 'message' => 'Field staff deactivated successfully!']);
