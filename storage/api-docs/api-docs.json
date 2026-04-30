@@ -699,6 +699,17 @@
                                                             "quantity": {
                                                                 "type": "integer"
                                                             },
+                                                            "free_quantity": {
+                                                                "type": "integer"
+                                                            },
+                                                            "side": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            },
+                                                            "size": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            },
                                                             "price": {
                                                                 "type": "string"
                                                             },
@@ -771,6 +782,17 @@
                                                     },
                                                     "quantity": {
                                                         "type": "integer"
+                                                    },
+                                                    "free_quantity": {
+                                                        "type": "integer"
+                                                    },
+                                                    "side": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "size": {
+                                                        "type": "string",
+                                                        "nullable": true
                                                     },
                                                     "batches": {
                                                         "type": "array",
@@ -2741,7 +2763,7 @@
                 "tags": [
                     "Retailer Feedback"
                 ],
-                "summary": "Submit a rating for the assigned Field Staff",
+                "summary": "Retailer: Submit a rating for the assigned Field Staff",
                 "operationId": "0d53f3ce5a810cfd0f43bbf152fa3805",
                 "requestBody": {
                     "required": true,
@@ -2789,11 +2811,83 @@
                 "tags": [
                     "Retailer Feedback"
                 ],
-                "summary": "Get history of ratings submitted by the retailer",
+                "summary": "Retailer: Get history of ratings submitted by the retailer",
                 "operationId": "318b6d0ed550349f16bf8064a5cc38e1",
                 "responses": {
                     "200": {
                         "description": "List of ratings"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/distributor/rate-staff": {
+            "post": {
+                "tags": [
+                    "Distributor Feedback"
+                ],
+                "summary": "Distributor: Submit a rating for a Field Staff member",
+                "operationId": "72f065ea86a4bb1ef8f6f74458880879",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "field_staff_id",
+                                    "rating"
+                                ],
+                                "properties": {
+                                    "field_staff_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "rating": {
+                                        "type": "integer",
+                                        "maximum": 5,
+                                        "minimum": 1,
+                                        "example": 5
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "example": "Service"
+                                    },
+                                    "comments": {
+                                        "type": "string",
+                                        "example": "Very professional."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Rating submitted"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/distributor/rateable-staff": {
+            "get": {
+                "tags": [
+                    "Distributor Feedback"
+                ],
+                "summary": "Distributor: List field staff members in network available for rating",
+                "operationId": "ae572f57a804c90960358be65aa11fee",
+                "responses": {
+                    "200": {
+                        "description": "List of field staff"
                     }
                 },
                 "security": [
@@ -4004,6 +4098,10 @@
         {
             "name": "Retailer Feedback",
             "description": "Retailer Feedback"
+        },
+        {
+            "name": "Distributor Feedback",
+            "description": "Distributor Feedback"
         },
         {
             "name": "Retailer Dashboard",

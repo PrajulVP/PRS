@@ -197,11 +197,13 @@ class ProductController extends Controller
             return $d->pivot->stock ?? 0;
         })->values();
 
-        // Determine the unit (if it has strip_size, it's likely a medicine)
-        $unit = (!empty($product->strip_size) || (!empty($product->units_per_strip) && $product->units_per_strip > 1)) ? ' Strips' : ' Nos';
 
         // Final cleanup: Remove unwanted fields and relations (like 'user')
-        $formatted = $distributors->map(function ($d) use ($unit) {
+        $formatted = $distributors->map(function ($d) {
+            $stock = $d->pivot->stock ?? 0;
+            // Format stock: remove trailing zeros if decimal is 0, and keep as string
+            $formattedStock = (string)($stock == (int)$stock ? (int)$stock : (float)$stock);
+            
             return [
                 'id' => $d->id,
                 'user_id' => $d->user_id,
@@ -218,7 +220,7 @@ class ProductController extends Controller
                 'area_id' => $d->area_id,
                 'created_at' => $d->created_at,
                 'updated_at' => $d->updated_at,
-                'stock' => ($d->pivot->stock ?? 0) . $unit,
+                'stock' => $formattedStock,
             ];
         });
 
