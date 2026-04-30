@@ -328,12 +328,13 @@
             font-weight: 800;
             color: #0ea5e9;
             text-transform: uppercase;
-            font-size: 0.85rem;
+            font-size: 1rem;
             margin-left: 10px;
-            padding: 2px 8px;
-            background: rgba(14, 165, 233, 0.1);
+            padding: 3px 10px;
+            background: rgba(14, 165, 233, 0.12);
             border-radius: 6px;
             vertical-align: middle;
+            letter-spacing: 0.04em;
         }
         /* --- End New Order View UI Styles --- */
         /* --- End New Order View UI Styles --- */
@@ -786,17 +787,18 @@
                     orderable: false,
                     render: function (data, type, row) {
                         if (!data) return '-';
-                        let items = data.split('<br>');
+                        let items = data.split('|||');
+                        let joinedData = items.join('');
                         if (items.length > 2) {
-                            let visible = items.slice(0, 2).join('<br>');
+                            let visible = items.slice(0, 2).join('');
                             return `<div>
-                                                                                                                                                                                                                                <span class="preview-content">${visible}</span>
-                                                                                                                                                                                                                                <span class="full-content d-none">${data}</span>
-                                                                                                                                                                                                                                <br>
-                                                                                                                                                                                                                                <a href="#" class="small text-primary toggle-more-btn" onclick="event.preventDefault(); let p = $(this).parent(); if(p.find('.full-content').hasClass('d-none')){ p.find('.full-content').removeClass('d-none'); p.find('.preview-content').addClass('d-none'); $(this).text('Show Less'); } else { p.find('.full-content').addClass('d-none'); p.find('.preview-content').removeClass('d-none'); $(this).text('Read More'); }">Read More</a>
-                                                                                                                                                                                                                            </div>`;
+                                        <span class="preview-content">${visible}</span>
+                                        <span class="full-content d-none">${joinedData}</span>
+                                        <br>
+                                        <a href="#" class="small text-primary toggle-more-btn" onclick="event.preventDefault(); let p = $(this).parent(); if(p.find('.full-content').hasClass('d-none')){ p.find('.full-content').removeClass('d-none'); p.find('.preview-content').addClass('d-none'); $(this).text('Show Less'); } else { p.find('.full-content').addClass('d-none'); p.find('.preview-content').removeClass('d-none'); $(this).text('Read More'); }">Read More</a>
+                                    </div>`;
                         }
-                        return data;
+                        return joinedData;
                     }
                 },
                 {

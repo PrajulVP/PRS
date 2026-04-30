@@ -75,8 +75,8 @@ class DashboardController extends Controller
         $salesManagerQuery = \App\Models\SalesManager::query();
         $fieldStaffQuery = FieldStaff::query();
 
-        $retailerOrderQuery = RetailerOrder::query()->whereBetween('created_at', [$startDate, $endDate]);
-        $distributorOrderQuery = DistributorOrder::query()->whereBetween('created_at', [$startDate, $endDate]);
+        $retailerOrderQuery = RetailerOrder::query();
+        $distributorOrderQuery = DistributorOrder::query();
 
         // Role-Specific Metrics
         $topRetailers = collect();
@@ -329,11 +329,11 @@ class DashboardController extends Controller
         }
 
         // 7. Chart Data: Dynamic Orders based on period
-        $chartData = $this->generateChartData($retailerOrderQuery, $period, $startDate, $endDate);
+        $chartData = $this->generateChartData($retailerOrderQuery->clone()->whereBetween('created_at', [$startDate, $endDate]), $period, $startDate, $endDate);
         
         // 8. Chart Data: Monthly Distributor Orders (Admin/SM)
         if ($user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
-            $monthlyDistributorOrdersChart = $this->generateChartData($distributorOrderQuery, $period, $startDate, $endDate);
+            $monthlyDistributorOrdersChart = $this->generateChartData($distributorOrderQuery->clone()->whereBetween('created_at', [$startDate, $endDate]), $period, $startDate, $endDate);
         }
 
         return compact(

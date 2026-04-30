@@ -44,7 +44,7 @@ class DistributorRatingController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'field_staff_id' => 'required|exists:field_staffs,id',
+            'field_staff_id' => 'required|exists:fieldstaffs,id',
             'rating' => 'required|integer|min:1|max:5',
             'category' => 'required|string', // e.g., 'service', 'communication', 'response_time'
             'comments' => 'nullable|string|max:500',

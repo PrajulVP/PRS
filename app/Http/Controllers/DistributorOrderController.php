@@ -795,11 +795,36 @@ class DistributorOrderController extends Controller
     public function uploadInvoice(Request $request, distributorOrder $distributorOrder)
     {
         $request->validate([
-            'invoice' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB max
+            'invoice'    => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB max
+            'invoice_no' => 'nullable|string|max:100',
         ]);
 
         if ($request->hasFile('invoice')) {
             $file = $request->file('invoice');
+
+            // --- Invoice Number Uniqueness Check ---
+            if ($request->filled('invoice_no')) {
+                $invoiceNo    = trim($request->invoice_no);
+                $distributorId = $distributorOrder->distributor_id;
+
+                $existsInDistOrders = DistributorOrder::where('distributor_id', $distributorId)
+                    ->where('invoice_no', $invoiceNo)
+                    ->where('id', '!=', $distributorOrder->id)
+                    ->exists();
+
+                $existsInRetailOrders = \App\Models\RetailerOrder::where('distributor_id', $distributorId)
+                    ->where('invoice_no', $invoiceNo)
+                    ->exists();
+
+                if ($existsInDistOrders || $existsInRetailOrders) {
+                    return response()->json([
+                        'error'     => "Invoice number '{$invoiceNo}' has already been used for another order by this distributor. Please use a unique invoice number.",
+                        'duplicate' => true
+                    ], 422);
+                }
+            }
+
+            // --- File Hash Duplication Check ---
             $fileHash = md5_file($file->getRealPath());
 
             // Check retail orders for the same hash
@@ -813,7 +838,7 @@ class DistributorOrderController extends Controller
                 $code = $existingRetailer ? $existingRetailer->order_code : $existingDistributor->order_code;
                 $role = $existingRetailer ? 'Retailer' : 'Distributor';
                 return response()->json([
-                    'error' => "This invoice has already been uploaded for $role Order #$code. Duplicate uploads are not allowed across roles.",
+                    'error'     => "This invoice has already been uploaded for $role Order #$code. Duplicate uploads are not allowed across roles.",
                     'duplicate' => true
                 ], 400);
             }
@@ -823,16 +848,22 @@ class DistributorOrderController extends Controller
             }
 
             $path = $file->store('invoices/distributors', 'public');
-            
+
             $metadata = $distributorOrder->metadata ?? [];
             $metadata['invoice_hash'] = $fileHash;
-            
+
             $distributorOrder->invoice_path = $path;
-            $distributorOrder->metadata = $metadata;
+            $distributorOrder->metadata     = $metadata;
+
+            // Save invoice number if provided
+            if ($request->filled('invoice_no')) {
+                $distributorOrder->invoice_no = trim($request->invoice_no);
+            }
+
             $distributorOrder->save();
 
             return response()->json([
-                'success' => 'Invoice uploaded successfully!',
+                'success'     => 'Invoice uploaded successfully!',
                 'invoice_url' => asset('storage/' . $path)
             ]);
         }

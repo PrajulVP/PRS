@@ -148,11 +148,18 @@ class RetailerOrderManagementController extends Controller
 
                 // Merge identical items before processing
                 $mergedItems = collect($items)->groupBy(function($i) {
-                    return $i['product_id'] . '-' . ($i['side'] ?? '') . '-' . ($i['size'] ?? '');
+                    $side = isset($i['side']) ? trim(strtolower($i['side'])) : '';
+                    $size = isset($i['size']) ? trim(strtolower($i['size'])) : '';
+                    return $i['product_id'] . '-' . $side . '-' . $size;
                 })->map(function($group) {
                     $first = $group->first();
                     $first['quantity'] = $group->sum('quantity');
                     $first['free_quantity'] = $group->sum('free_quantity');
+
+                    // Keep normalized values for later creation
+                    $first['side'] = isset($first['side']) ? trim($first['side']) : null;
+                    $first['size'] = isset($first['size']) ? trim($first['size']) : null;
+
                     return $first;
                 });
 
@@ -452,7 +459,9 @@ class RetailerOrderManagementController extends Controller
                 $orders = $query->offset($start)->limit($length)->get();
                 $formattedOrders = $orders->map(function ($order) {
                     $groupedItems = $order->items->groupBy(function($item) {
-                        return $item->product_id . '-' . ($item->side ?? '') . '-' . ($item->size ?? '');
+                        $side = $item->side ? trim(strtolower($item->side)) : '';
+                        $size = $item->size ? trim(strtolower($item->size)) : '';
+                        return $item->product_id . '-' . $side . '-' . $size;
                     })->map(function($group) {
                         $first = $group->first();
                         return (object)[
@@ -467,7 +476,13 @@ class RetailerOrderManagementController extends Controller
                     });
 
                     $productSummary = $groupedItems->map(function ($item) {
-                        $pName = $item->product_name;
+                        $pName = $item->product ? $item->product->product_name : $item->product_name;
+                        
+                        // If the snapshotted name has brackets and we're using it as fallback, 
+                        // try to strip them to avoid double variant display
+                        if (!$item->product && str_contains($pName, '[')) {
+                            $pName = trim(explode('[', $pName)[0]);
+                        }
                         
                         $vLabel = array_filter([$item->side, $item->size]);
                         if (!empty($vLabel)) {
@@ -484,7 +499,7 @@ class RetailerOrderManagementController extends Controller
                         }
                         $summary .= '<br><span class="small">'.$item->quantity.' '.($item->unit ?? 'Nos').'</span></div>';
                         return $summary;
-                    })->implode('');
+                    })->implode('|||');
 
                     return [
                         'id' => $order->id,
@@ -1336,20 +1351,45 @@ class RetailerOrderManagementController extends Controller
     public function uploadInvoice(Request $request, RetailerOrder $retailerOrder)
     {
         $request->validate([
-            'invoice' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB max
+            'invoice'    => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB max
+            'invoice_no' => 'nullable|string|max:100',
         ]);
 
         if ($request->hasFile('invoice')) {
             $file = $request->file('invoice');
-            
-            // Cross-role duplication check based on file hash
+
+            // --- Invoice Number Uniqueness Check ---
+            if ($request->filled('invoice_no')) {
+                $invoiceNo = trim($request->invoice_no);
+                $distributor = $retailerOrder->distributor;
+
+                if ($distributor) {
+                    $existsInDistOrders = \App\Models\DistributorOrder::where('distributor_id', $distributor->id)
+                        ->where('invoice_no', $invoiceNo)
+                        ->exists();
+
+                    $existsInRetailOrders = RetailerOrder::where('id', '!=', $retailerOrder->id)
+                        ->where('distributor_id', $distributor->id)
+                        ->where('invoice_no', $invoiceNo)
+                        ->exists();
+
+                    if ($existsInDistOrders || $existsInRetailOrders) {
+                        return response()->json([
+                            'error' => "Invoice number '{$invoiceNo}' has already been used for another order by this distributor. Please use a unique invoice number.",
+                            'duplicate' => true
+                        ], 422);
+                    }
+                }
+            }
+
+            // --- File Hash Duplication Check ---
             $fileHash = md5_file($file->getRealPath());
-            
+
             $existingRetailer = RetailerOrder::where('id', '!=', $retailerOrder->id)
                 ->whereJsonContains('metadata->invoice_hash', $fileHash)
                 ->first();
 
-            $existingDistributor = DistributorOrder::whereJsonContains('metadata->invoice_hash', $fileHash)
+            $existingDistributor = \App\Models\DistributorOrder::whereJsonContains('metadata->invoice_hash', $fileHash)
                 ->first();
 
             if ($existingRetailer || $existingDistributor) {
@@ -1366,17 +1406,23 @@ class RetailerOrderManagementController extends Controller
             }
 
             $path = $file->store('invoices/retailers', 'public');
-            
+
             // Store hash in metadata for future duplication checks
             $metadata = $retailerOrder->metadata ?? [];
             $metadata['invoice_hash'] = $fileHash;
-            
+
             $retailerOrder->invoice_path = $path;
-            $retailerOrder->metadata = $metadata;
+            $retailerOrder->metadata    = $metadata;
+
+            // Save invoice number if provided
+            if ($request->filled('invoice_no')) {
+                $retailerOrder->invoice_no = trim($request->invoice_no);
+            }
+
             $retailerOrder->save();
 
             return response()->json([
-                'success' => 'Invoice uploaded successfully!',
+                'success'     => 'Invoice uploaded successfully!',
                 'invoice_url' => asset('storage/' . $path)
             ]);
         }

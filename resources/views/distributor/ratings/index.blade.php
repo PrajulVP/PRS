@@ -13,56 +13,68 @@
 
     <div class="row g-4">
         @forelse($fieldStaff as $staff)
+        @php
+            $ratingRecord  = $staff->ratings->first();
+            $currentRating = $ratingRecord ? (int)$ratingRecord->rating : 0;
+        @endphp
         <div class="col-xl-4 col-md-6">
             <div class="card shadow-sm border-0 rounded-4 overflow-hidden h-100">
                 <div class="card-body p-4">
+                    {{-- Staff Info --}}
                     <div class="d-flex align-items-center gap-3 mb-4">
-                        <div class="avatar-wrapper">
-                            <img src="{{ $staff->user->avatar_url }}" class="rounded-circle border border-2 border-white shadow-sm" width="60" height="60" alt="{{ $staff->user->name }}">
+                        <div>
+                            <img src="{{ $staff->user->avatar_url }}"
+                                 class="rounded-circle border border-2 border-white shadow-sm"
+                                 width="60" height="60" alt="{{ $staff->user->name }}">
                         </div>
                         <div>
                             <h6 class="fw-800 mb-0">{{ $staff->user->name }}</h6>
                             <span class="badge bg-soft-primary text-primary px-2 py-1 small rounded-pill">Field Staff</span>
-                            <div class="text-muted small mt-1"><i class="fa fa-phone me-1"></i> {{ $staff->user->contact_no ?? 'N/A' }}</div>
+                            <div class="text-muted small mt-1">
+                                <i class="fa fa-phone me-1"></i> {{ $staff->user->contact_no ?? 'N/A' }}
+                            </div>
                         </div>
                     </div>
 
+                    {{-- Rating Display --}}
                     <div class="rating-section">
-                        @php
-                            $ratingRecord = $staff->ratings->first(); // Get the first rating as the general rating
-                            $currentRating = $ratingRecord ? $ratingRecord->rating : 0;
-                        @endphp
-                        
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="small fw-bold text-dark">Performance Rating</span>
-                            <span class="rating-value small text-muted">{{ $currentRating > 0 ? $currentRating . '/5' : 'Not Rated' }}</span>
+                            <span class="small fw-bold">Performance Rating</span>
+                            <span class="rating-label small text-muted" id="rating-label-{{ $staff->id }}">
+                                {{ $currentRating > 0 ? $currentRating . '/5' : 'Not Rated' }}
+                            </span>
                         </div>
-                        
-                        <div class="star-rating mb-4" data-staff-id="{{ $staff->id }}" data-category="general">
+
+                        {{-- Read-only stars on the card (display only) --}}
+                        <div class="stars-display mb-3" id="stars-display-{{ $staff->id }}">
                             @for($i = 1; $i <= 5; $i++)
-                            <i class="fa fa-star star {{ $i <= $currentRating ? 'active' : '' }}" data-value="{{ $i }}" style="font-size: 1.5rem;"></i>
+                                <span class="card-star"
+                                      style="color: {{ $i <= $currentRating ? '#FFC107' : '#D0D0D0' }};
+                                             font-size: 2rem;
+                                             text-shadow: {{ $i <= $currentRating ? '0 0 4px rgba(255,193,7,0.5)' : 'none' }};">&#9733;</span>
                             @endfor
                         </div>
 
-                        <div class="feedback-display mb-3">
-                            <p class="text-muted small italic mb-0" id="feedback-text-{{ $staff->id }}">
-                                {{ $ratingRecord && $ratingRecord->comments ? '"' . $ratingRecord->comments . '"' : 'No feedback provided yet.' }}
-                            </p>
-                        </div>
+                        {{-- Feedback Text --}}
+                        <p class="text-muted small fst-italic mb-3" id="feedback-text-{{ $staff->id }}">
+                            {{ $ratingRecord && $ratingRecord->comments ? '"' . $ratingRecord->comments . '"' : 'No feedback provided yet.' }}
+                        </p>
 
-                        <button class="btn btn-primary btn-sm w-100 rounded-pill py-2 fw-bold" onclick="openCommentModal({{ $staff->id }}, '{{ $staff->user->name }}', '{{ $ratingRecord->comments ?? '' }}')">
-                            <i class="fa fa-comment me-2"></i> {{ $ratingRecord ? 'Update Feedback' : 'Add Feedback' }}
+                        {{-- Action Button --}}
+                        <button class="btn btn-primary btn-sm w-100 rounded-pill py-2 fw-bold"
+                                onclick="openFeedbackModal({{ $staff->id }}, '{{ addslashes($staff->user->name) }}', {{ $currentRating }}, '{{ addslashes($ratingRecord?->comments ?? '') }}')">
+                            <i class="fa fa-comment me-2"></i>
+                            {{ $ratingRecord ? 'Update Feedback' : 'Add Feedback' }}
                         </button>
                     </div>
+
                 </div>
             </div>
         </div>
         @empty
         <div class="col-12">
             <div class="card border-0 shadow-sm rounded-4 p-5 text-center">
-                <div class="icon-circle bg-soft-light mx-auto mb-3" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
-                    <i class="fa fa-users fs-1 text-muted"></i>
-                </div>
+                <i class="fa fa-users fa-3x text-muted mb-3"></i>
                 <h5>No Field Staff Assigned</h5>
                 <p class="text-muted">Once field staff are assigned to your orders or retailers, they will appear here for rating.</p>
             </div>
@@ -71,24 +83,43 @@
     </div>
 </div>
 
-<!-- Comment Modal -->
-<div class="modal fade" id="commentModal" tabindex="-1" aria-hidden="true">
+{{-- Feedback Modal --}}
+<div class="modal fade" id="feedbackModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">
             <div class="modal-header border-0 pb-0">
-                <h6 class="modal-title fw-800">Feedback for <span id="staffName"></span></h6>
+                <h6 class="modal-title fw-800">Feedback for <span id="modal-staff-name"></span></h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <input type="hidden" id="modalStaffId">
-                <div class="mb-3">
-                    <label class="form-label small fw-bold">Detailed Comments</label>
-                    <textarea id="staffComments" class="form-control rounded-3" rows="4" placeholder="Write your feedback here..."></textarea>
+                <input type="hidden" id="modal-staff-id">
+                <input type="hidden" id="modal-selected-rating" value="0">
+
+                {{-- Star Picker --}}
+                <div class="mb-4 text-center">
+                    <label class="form-label small fw-bold d-block mb-3">Tap to Rate</label>
+                    <div id="modal-star-picker" class="modal-star-row">
+                        <span class="modal-star" data-val="1" style="color:#D0D0D0;font-size:3.2rem;cursor:pointer;transition:transform 0.1s,color 0.1s;user-select:none;">&#9733;</span>
+                        <span class="modal-star" data-val="2" style="color:#D0D0D0;font-size:3.2rem;cursor:pointer;transition:transform 0.1s,color 0.1s;user-select:none;">&#9733;</span>
+                        <span class="modal-star" data-val="3" style="color:#D0D0D0;font-size:3.2rem;cursor:pointer;transition:transform 0.1s,color 0.1s;user-select:none;">&#9733;</span>
+                        <span class="modal-star" data-val="4" style="color:#D0D0D0;font-size:3.2rem;cursor:pointer;transition:transform 0.1s,color 0.1s;user-select:none;">&#9733;</span>
+                        <span class="modal-star" data-val="5" style="color:#D0D0D0;font-size:3.2rem;cursor:pointer;transition:transform 0.1s,color 0.1s;user-select:none;">&#9733;</span>
+                    </div>
+                    <div class="mt-2 small text-muted" id="modal-rating-text">Not rated yet</div>
+                </div>
+
+                {{-- Comments --}}
+                <div class="mb-2">
+                    <label class="form-label small fw-bold">Comments <span class="text-muted fw-normal">(optional)</span></label>
+                    <textarea id="modal-comments" class="form-control rounded-3" rows="4"
+                              placeholder="Write your feedback here..."></textarea>
                 </div>
             </div>
             <div class="modal-footer border-0">
                 <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary rounded-pill px-4" onclick="saveComments()">Save Feedback</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold" id="saveFeedbackBtn" onclick="saveFeedback()">
+                    <i class="fa fa-save me-1"></i> Save Feedback
+                </button>
             </div>
         </div>
     </div>
@@ -96,93 +127,157 @@
 
 @push('css')
 <style>
-    .star-rating {
+    /* ---- Card display stars ---- */
+    .stars-display {
         display: flex;
         gap: 4px;
+        align-items: center;
     }
-    .star-rating .star {
-        font-size: 1.2rem;
-        color: #e4e4e4;
+    .card-star {
+        font-size: 1.6rem;
+        color: #d0d0d0 !important;
+        line-height: 1;
+        display: inline-block;
+    }
+    .card-star.filled {
+        color: #FFC107 !important;
+        text-shadow: 0 0 2px rgba(255,193,7,0.4);
+    }
+
+    /* ---- Modal star picker ---- */
+    .modal-star-row {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+    }
+    .modal-star {
+        font-size: 2.6rem;
+        color: #d0d0d0 !important;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: color 0.12s ease, transform 0.1s ease;
+        line-height: 1;
+        user-select: none;
     }
-    .star-rating .star.active,
-    .star-rating .star:hover {
-        color: #ffc107;
+    .modal-star.filled,
+    .modal-star.hovered {
+        color: #FFC107 !important;
+        transform: scale(1.18);
+        text-shadow: 0 0 6px rgba(255,193,7,0.5);
     }
+
+    /* ---- Misc ---- */
     .bg-soft-primary { background-color: rgba(var(--bs-primary-rgb), 0.1); }
-    .bg-soft-light { background-color: rgba(0,0,0,0.03); }
     .fw-800 { font-weight: 800; }
+
+    .rating-labels { font-size: 0.75rem; }
 </style>
 @endpush
 
 @push('scripts')
 <script>
-$(document).ready(function() {
-    $('.star-rating .star').on('click', function() {
-        const value = $(this).data('value');
-        const container = $(this).parent();
-        const staffId = container.data('staff-id');
-        const category = container.data('category');
-        
-        // Update UI
-        container.find('.star').removeClass('active');
-        container.find('.star').each(function(index) {
-            if (index < value) $(this).addClass('active');
-        });
-        container.closest('.category-item').find('.rating-value').text(value + '/5');
+/* =========================================================
+   Feedback Modal Logic
+   ========================================================= */
+function openFeedbackModal(staffId, staffName, currentRating, existingComment) {
+    $('#modal-staff-id').val(staffId);
+    $('#modal-staff-name').text(staffName);
+    $('#modal-comments').val(existingComment);
 
-        // Save to DB
-        $.ajax({
-            url: "{{ route('distributor.staff-ratings.store') }}",
-            method: 'POST',
-            data: {
-                _token: "{{ csrf_token() }}",
-                field_staff_id: staffId,
-                rating: value,
-                category: 'general'
-            },
-            success: function(response) {
-                showToast('success', 'Rating updated!');
-            },
-            error: function(xhr) {
-                alert(xhr.responseJSON?.error || 'Something went wrong');
+    // Pre-fill stars
+    setModalRating(currentRating);
+
+    $('#feedbackModal').modal('show');
+}
+
+function setModalRating(val) {
+    $('#modal-selected-rating').val(val);
+    $('#modal-star-picker .modal-star').each(function(i) {
+        if (i < val) {
+            $(this).css({'color': '#FFC107', 'transform': 'scale(1.1)', 'text-shadow': '0 0 6px rgba(255,193,7,0.5)'});
+        } else {
+            $(this).css({'color': '#D0D0D0', 'transform': 'scale(1)', 'text-shadow': 'none'});
+        }
+    });
+    const labels = ['Not rated yet', 'Poor ⭐', 'Fair ⭐⭐', 'Good ⭐⭐⭐', 'Very Good ⭐⭐⭐⭐', 'Excellent ⭐⭐⭐⭐⭐'];
+    $('#modal-rating-text').text(val > 0 ? labels[val] + ' (' + val + '/5)' : 'Not rated yet');
+}
+
+$(document).ready(function () {
+    // Modal star hover
+    $(document).on('mouseenter', '.modal-star', function () {
+        const val = parseInt($(this).data('val'));
+        const current = parseInt($('#modal-selected-rating').val()) || 0;
+        $('#modal-star-picker .modal-star').each(function (i) {
+            if (i < val) {
+                $(this).css({'color': '#FFC107', 'transform': 'scale(1.18)', 'text-shadow': '0 0 8px rgba(255,193,7,0.6)'});
+            } else {
+                $(this).css({'color': '#D0D0D0', 'transform': 'scale(1)', 'text-shadow': 'none'});
             }
         });
     });
+    $(document).on('mouseleave', '#modal-star-picker', function () {
+        // Restore to current selected state
+        setModalRating(parseInt($('#modal-selected-rating').val()) || 0);
+    });
+
+    // Modal star click
+    $(document).on('click', '.modal-star', function () {
+        const val = parseInt($(this).data('val'));
+        setModalRating(val);
+    });
 });
 
-function openCommentModal(id, name, existingComment) {
-    $('#modalStaffId').val(id);
-    $('#staffName').text(name);
-    $('#staffComments').val(existingComment);
-    $('#commentModal').modal('show');
-}
+function saveFeedback() {
+    const staffId  = $('#modal-staff-id').val();
+    const rating   = parseInt($('#modal-selected-rating').val()) || 0;
+    const comments = $('#modal-comments').val().trim();
 
-function saveComments() {
-    const id = $('#modalStaffId').val();
-    const comments = $('#staffComments').val();
-    
-    // Get the current star rating for this staff
-    const currentRating = $(`.star-rating[data-staff-id="${id}"] .star.active`).length || 5;
+    if (rating === 0) {
+        showToast('warning', 'Please select a star rating before saving.');
+        $('#modal-star-picker .modal-star').first().addClass('shake');
+        setTimeout(() => $('#modal-star-picker .modal-star').removeClass('shake'), 500);
+        return;
+    }
+
+    const $btn = $('#saveFeedbackBtn');
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Saving...');
 
     $.ajax({
         url: "{{ route('distributor.staff-ratings.store') }}",
         method: 'POST',
         data: {
             _token: "{{ csrf_token() }}",
-            field_staff_id: id,
-            rating: currentRating,
+            field_staff_id: staffId,
+            rating: rating,
             category: 'general',
             comments: comments
         },
-        success: function(response) {
-            $('#commentModal').modal('hide');
-            $(`#feedback-text-${id}`).text(`"${comments}"`);
+        success: function (response) {
+            $('#feedbackModal').modal('hide');
+
+            // Update card display stars with inline colors
+            const starsHtml = [1,2,3,4,5].map(i =>
+                `<span class="card-star" style="color:${i <= rating ? '#FFC107' : '#D0D0D0'};font-size:2rem;text-shadow:${i <= rating ? '0 0 4px rgba(255,193,7,0.5)' : 'none'};">&#9733;</span>`
+            ).join('');
+            $(`#stars-display-${staffId}`).html(starsHtml);
+
+            // Update label
+            $(`#rating-label-${staffId}`).text(rating + '/5');
+
+            // Update feedback text
+            $(`#feedback-text-${staffId}`).text(comments ? `"${comments}"` : 'No feedback provided yet.');
+
             showToast('success', 'Feedback saved successfully!');
         },
-        error: function(xhr) {
-            alert(xhr.responseJSON?.error || 'Something went wrong');
+        error: function (xhr) {
+            let errMsg = 'Failed to save feedback.';
+            if (xhr.responseJSON) {
+                errMsg = xhr.responseJSON.message || xhr.responseJSON.error || errMsg;
+            }
+            showToast('error', errMsg);
+        },
+        complete: function () {
+            $btn.prop('disabled', false).html('<i class="fa fa-save me-1"></i> Save Feedback');
         }
     });
 }

@@ -87,19 +87,24 @@ class RetailerOrderController extends Controller
                     'total_items'    => $order->total_items,
                     'total_quantity' => $order->total_quantity,
                     'delivery_notes' => $order->delivery_notes,
-                    'items'          => $order->items->map(function ($item) {
+                    'items'          => $order->items->groupBy(function($item) {
+                        $side = $item->side ? trim(strtolower($item->side)) : '';
+                        $size = $item->size ? trim(strtolower($item->size)) : '';
+                        return $item->product_id . '-' . $side . '-' . $size;
+                    })->map(function ($group) {
+                        $item = $group->first();
                         return [
                             'product_id' => $item->product_id,
-                            'product_name' => $item->product_name ?? $item->product->product_name ?? 'N/A',
-                            'quantity'   => $item->quantity,
-                            'free_quantity' => $item->free_quantity,
+                            'product_name' => $item->product ? $item->product->product_name : $item->product_name,
+                            'quantity'   => $group->sum('quantity'),
+                            'free_quantity' => $group->sum('free_quantity'),
                             'unit'       => $item->unit ?? 'Nos',
                             'unit_price' => (float)$item->unit_price,
-                            'subtotal'   => (float)$item->total_amount,
+                            'subtotal'   => (float)$group->sum('total_amount'),
                             'side'       => $item->side,
                             'size'       => $item->size,
                         ];
-                    }),
+                    })->values(),
                     'invoice_url'    => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
                     'placed_at'      => $order->placed_at?->format('Y-m-d H:i:s'),
                     'delivered_at'   => $order->delivered_at?->format('Y-m-d H:i:s'),
@@ -242,11 +247,18 @@ class RetailerOrderController extends Controller
 
                 // Merge identical items before processing
                 $mergedItems = collect($items)->groupBy(function($i) {
-                    return $i['product_id'] . '-' . ($i['side'] ?? '') . '-' . ($i['size'] ?? '');
+                    $side = isset($i['side']) ? trim(strtolower($i['side'])) : '';
+                    $size = isset($i['size']) ? trim(strtolower($i['size'])) : '';
+                    return $i['product_id'] . '-' . $side . '-' . $size;
                 })->map(function($group) {
                     $first = $group->first();
                     $first['quantity'] = $group->sum('quantity');
                     $first['free_quantity'] = $group->sum('free_quantity');
+                    
+                    // Keep normalized values for later creation
+                    $first['side'] = isset($first['side']) ? trim($first['side']) : null;
+                    $first['size'] = isset($first['size']) ? trim($first['size']) : null;
+                    
                     return $first;
                 });
 

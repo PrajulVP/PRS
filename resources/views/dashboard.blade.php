@@ -412,6 +412,10 @@
                                         <i data-feather="award"></i>
                                         <span>Locality Rank: #{{ $myRank ?? 'N/A' }} / {{ $totalInLocality ?? '1' }}</span>
                                     </div>
+                                    <div class="profile-info-item text-warning" style="background: rgba(251, 191, 36, 0.1); border-color: rgba(251, 191, 36, 0.2);">
+                                        <i data-feather="database"></i>
+                                        <span>Loyalty Points: {{ number_format($totalLoyaltyPoints) }}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -488,12 +492,11 @@
                                 ['label' => 'Total Orders', 'value' => $retailerOrderStats['total'], 'icon' => 'shopping-cart', 'color' => 'var(--med-primary)', 'bg' => 'rgba(var(--med-primary-rgb), 0.1)', 'route' => route('retailer.orders.index')],
                                 ['label' => 'Pending', 'value' => $retailerOrderStats['pending'], 'icon' => 'clock', 'color' => '#f59e0b', 'bg' => 'rgba(245, 158, 11, 0.1)', 'route' => route('retailer.orders.index', ['status' => 'pending'])],
                                 ['label' => 'Delivered', 'value' => $retailerOrderStats['delivered'], 'icon' => 'check-circle', 'color' => '#10b981', 'bg' => 'rgba(16, 185, 129, 0.1)', 'route' => route('retailer.orders.index', ['status' => 'delivered'])],
-                                ['label' => 'Loyalty Points', 'value' => number_format($totalLoyaltyPoints), 'icon' => 'database', 'color' => '#fbbf24', 'bg' => 'rgba(251, 191, 36, 0.1)', 'route' => '#']
                             ];
                         @endphp
 
                         @foreach($stats as $stat)
-                            <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="col-xl-4 col-md-6 mb-4">
                                 <div class="card border-0 shadow-sm executive-metric-card cursor-pointer h-100" onclick="window.location.href='{{ $stat['route'] }}'">
                                     <div class="card-body p-4 text-center">
                                         <div class="icon-circle-lg bg-soft-primary mb-3" style="width: 60px; height: 60px; background: {{ $stat['bg'] }}">

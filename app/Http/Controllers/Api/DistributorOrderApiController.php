@@ -288,7 +288,24 @@ class DistributorOrderApiController extends Controller
             $totalItems = 0;
             $totalQuantity = 0;
 
-            foreach ($request->items as $itemData) {
+            // Merge identical items before processing
+            $mergedItems = collect($request->items)->groupBy(function($i) {
+                $side = isset($i['side']) ? trim(strtolower($i['side'])) : '';
+                $size = isset($i['size']) ? trim(strtolower($i['size'])) : '';
+                return $i['product_id'] . '-' . $side . '-' . $size;
+            })->map(function($group) {
+                $first = $group->first();
+                $first['quantity'] = $group->sum('quantity');
+                $first['free_quantity'] = (int)$group->sum('free_quantity');
+                
+                // Keep normalized values
+                $first['side'] = isset($first['side']) ? trim($first['side']) : null;
+                $first['size'] = isset($first['size']) ? trim($first['size']) : null;
+                
+                return $first;
+            });
+
+            foreach ($mergedItems as $itemData) {
                 $product = Product::findOrFail($itemData['product_id']);
                 $unitPrice = $product->pts;
                 $unit = $itemData['unit'] ?? 'Box';
@@ -567,19 +584,24 @@ class DistributorOrderApiController extends Controller
             'cancellation_reason' => $order->cancellation_reason,
             'placed_at' => $order->placed_at,
             'invoice_url' => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
-            'items' => $order->items->map(function ($item) {
+            'items' => $order->items->groupBy(function($item) {
+                $side = $item->side ? trim(strtolower($item->side)) : '';
+                $size = $item->size ? trim(strtolower($item->size)) : '';
+                return $item->product_id . '-' . $side . '-' . $size;
+            })->map(function ($group) {
+                $item = $group->first();
                 return [
                     'id' => $item->id,
                     'product_id' => $item->product_id,
-                    'product_name' => $item->product->product_name ?? 'N/A',
-                    'quantity' => $item->quantity,
-                    'free_quantity' => $item->free_quantity,
+                    'product_name' => $item->product->product_name ?? $item->product_name ?? 'N/A',
+                    'quantity' => $group->sum('quantity'),
+                    'free_quantity' => $group->sum('free_quantity'),
                     'unit' => $item->unit,
                     'side' => $item->side,
                     'size' => $item->size,
                     'price' => $item->price,
-                    'subtotal' => $item->subtotal,
-                    'batches' => $item->batches->map(function ($b) {
+                    'subtotal' => $group->sum('subtotal'),
+                    'batches' => $group->flatMap->batches->map(function ($b) {
                         return [
                             'batch_no' => $b->batch_no,
                             'expiry_date' => $b->expiry_date,
@@ -591,7 +613,7 @@ class DistributorOrderApiController extends Controller
                         ];
                     })
                 ];
-            })
+            })->values()
         ];
     }
 

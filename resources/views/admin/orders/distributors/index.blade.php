@@ -283,12 +283,13 @@
         font-weight: 800;
         color: #0ea5e9;
         text-transform: uppercase;
-        font-size: 0.85rem;
+        font-size: 1rem;
         margin-left: 10px;
-        padding: 2px 8px;
-        background: rgba(14, 165, 233, 0.1);
+        padding: 3px 10px;
+        background: rgba(14, 165, 233, 0.12);
         border-radius: 6px;
         vertical-align: middle;
+        letter-spacing: 0.04em;
     }
     /* --- End New Order View UI Styles --- */
 </style>

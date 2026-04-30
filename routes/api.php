@@ -61,6 +61,11 @@ Route::middleware('auth:api')->group(function () {
 
     // Distributor — Retailers List
     Route::get('distributor/retailers', [\App\Http\Controllers\Api\DistributorRetailerApiController::class, 'index']);
+    
+    // Distributor — Rating APIs
+    Route::get('distributor/rateable-staff', [\App\Http\Controllers\Api\RatingApiController::class, 'getDistributorRatingStaffList']);
+    Route::post('distributor/rate-staff', [\App\Http\Controllers\Api\RatingApiController::class, 'distributorRateStaff']);
+
     // Distributor Dashboard
     Route::prefix('distributor/dashboard')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\DistributorDashboardApiController::class, 'index']);

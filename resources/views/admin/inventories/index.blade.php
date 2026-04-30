@@ -747,6 +747,8 @@
                             <thead class="bg-light">
                                 <tr>
                                     <th class="ps-4">Batch Number</th>
+                                    <th>Side</th>
+                                    <th>Size</th>
                                     <th>Expiry</th>
                                     <th class="text-center">Stock</th>
                                     {{-- <th class="text-end pe-4">Actions</th> --}}
@@ -1636,10 +1638,16 @@
                     const displayStr = window.formatStockBreakdown(b.stock, pData, isNos, unitsPerStrip);
                     html += `<tr>
                         <td class="ps-4 align-middle">
-                            <span class="fw-bold">${b.batch_no}</span>
-                            <div class="smaller text-muted">${b.distributor_name}</div>
+                            <span class="fw-bold text-dark">${b.batch_no}</span>
+                            <div class="smaller text-muted" style="font-size: 0.65rem;">${b.distributor_name}</div>
                         </td>
-                        <td class="align-middle">${b.expiry_date}</td>
+                        <td class="align-middle">
+                            ${b.side ? `<span class="badge bg-soft-primary text-primary rounded-pill px-2" style="font-size: 0.7rem;">${b.side}</span>` : '<span class="text-muted opacity-50">-</span>'}
+                        </td>
+                        <td class="align-middle">
+                            ${b.size ? `<span class="badge bg-soft-info text-info rounded-pill px-2" style="font-size: 0.7rem;">${b.size}</span>` : '<span class="text-muted opacity-50">-</span>'}
+                        </td>
+                        <td class="align-middle fw-600 text-muted" style="font-size: 0.85rem;">${b.expiry_date}</td>
                         <td class="text-center align-middle">
                             <span class="badge ${b.stock > 0 ? 'bg-soft-success text-success' : 'bg-soft-danger text-danger'} rounded-pill px-3 fw-bold" style="font-size: 0.85rem; border: 1px solid rgba(0,0,0,0.05);">
                                 ${displayStr}

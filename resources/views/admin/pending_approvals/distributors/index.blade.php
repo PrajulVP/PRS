@@ -298,12 +298,13 @@
             font-weight: 800;
             color: #0ea5e9;
             text-transform: uppercase;
-            font-size: 0.85rem;
+            font-size: 1rem;
             margin-left: 10px;
-            padding: 2px 8px;
-            background: rgba(14, 165, 233, 0.1);
+            padding: 3px 10px;
+            background: rgba(14, 165, 233, 0.12);
             border-radius: 6px;
             vertical-align: middle;
+            letter-spacing: 0.04em;
         }
 
         .premium-dropzone:hover {
@@ -1865,7 +1866,7 @@
                     $valAlert.removeClass('d-none').addClass('alert-danger');
                     $valMsg.text('DUPLICATE INVOICE: This invoice number has already been used by this distributor.');
                     hasError = true;
-                } else if (enteredInv && extractedInv && !extractedInv.includes(enteredInv) && !enteredInv.includes(extractedInv)) {
+                } else if (enteredInv && extractedInv && enteredInv !== extractedInv) {
                     $valAlert.removeClass('d-none').addClass('alert-warning');
                     $valMsg.text(`MISMATCH: Entered No. (${$('#invoice_no_input').val()}) does not match Extracted No. (${meta.invoice_no}).`);
                     hasError = true;
@@ -2115,7 +2116,8 @@
                 let $valMsg = $('#ai_validation_message');
                 let hasError = false;
 
-                if (extracted === undefined) return;
+                // If OCR hasn't run yet, skip live validation
+                if (extracted === undefined || extracted === null) return;
 
                 $valAlert.addClass('d-none').removeClass('alert-warning alert-danger');
 
@@ -2123,7 +2125,7 @@
                     $valAlert.removeClass('d-none').addClass('alert-danger');
                     $valMsg.text('DUPLICATE INVOICE: This invoice number has already been used by this distributor.');
                     hasError = true;
-                } else if (entered && extracted && !extracted.includes(entered) && !entered.includes(extracted)) {
+                } else if (entered && extracted && entered !== extracted) {
                     $valAlert.removeClass('d-none').addClass('alert-warning');
                     $valMsg.text(`MISMATCH: Entered No. (${$(this).val()}) does not match Extracted No. (${extractedRaw}).`);
                     hasError = true;
