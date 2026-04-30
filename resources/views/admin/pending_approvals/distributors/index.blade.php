@@ -1479,7 +1479,10 @@
                             <div style="flex: 2;" class="fw-bold text-main-theme small ps-2">
                                 ${item.product_name}${variantInfo}
                             </div>
-                            <div style="flex: 1;" class="fw-bold text-primary text-center">${item.quantity} ${item.unit || 'Nos'}</div>
+                            <div style="flex: 1;" class="fw-bold text-primary text-center">
+                                ${item.quantity} ${item.unit || 'Nos'}
+                                ${item.free_quantity > 0 ? `<div class="text-success small fw-bold">+${item.free_quantity} Free</div>` : ''}
+                            </div>
                             <div style="flex: 1;" class="fw-bold text-main-theme text-end pe-3">₹${item.total_amount}</div>
                         </div>
                                                 `);
@@ -1537,7 +1540,10 @@
                                     ${item.product_code && item.product_code !== '---' && item.product_code !== 'N/A' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.6rem;">C: ${item.product_code}</div>` : ''}
                                 </div>
                             </div>
-                            <div style="flex: 1;" class="fw-bold text-primary text-center">${item.quantity} ${item.unit || 'Nos'}</div>
+                            <div style="flex: 1;" class="fw-bold text-primary text-center">
+                                ${item.quantity} ${item.unit || 'Nos'}
+                                ${item.free_quantity > 0 ? `<div class="text-success small fw-bold">+${item.free_quantity} Free</div>` : ''}
+                            </div>
                             <div style="flex: 1;" class="fw-bold text-main-theme text-end pe-3">₹${item.total_amount}</div>
                         </div>
                                                 `);
@@ -1678,7 +1684,10 @@
                                                                     <input type="text" class="form-control form-control-sm v-expiry-input border-0 bg-body-theme text-main-theme p-1" 
                                                                            data-id="${item.order_item_id}" placeholder="MM/YY">
                                                                 </div>
-                                                                <div class="ai-col-qty fw-bold text-primary text-center v-qty-display" data-original-unit="${item.unit || 'Nos'}">${item.quantity} ${item.unit || 'Nos'}</div>
+                                                                <div class="ai-col-qty fw-bold text-primary text-center v-qty-display" data-original-unit="${item.unit || 'Nos'}">
+                                                                    ${item.quantity} ${item.unit || 'Nos'}
+                                                                    ${item.free_quantity > 0 ? `<div class="text-success small fw-bold">+${item.free_quantity} Free</div>` : ''}
+                                                                </div>
                                                                 <div class="ai-col-value fw-bold text-main-theme text-end pe-3 v-taxable-display">--</div>
                                                             </div>
                                                         `;

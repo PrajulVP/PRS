@@ -641,6 +641,7 @@
                 $('#edit_shop_name').val(data.shop_name);
                 $('#edit_name').val(data.user.name);
                 $('#edit_email').val(data.user.email);
+                $('#edit_contact_no').val(data.contact_no);
                 $('#edit_gst').val(data.gst);
                 $('#edit_drug_license_no').val(data.drug_license_no);
                 $('#edit_sales_manager_id').val(data.sales_manager_id || "").trigger('change');

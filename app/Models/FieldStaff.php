@@ -72,4 +72,9 @@ class FieldStaff extends Model
     {
         return $this->hasMany(LocationLog::class, 'user_id', 'user_id');
     }
+
+    public function ratings(): HasMany
+    {
+        return $this->hasMany(Rating::class, 'field_staff_id');
+    }
 }

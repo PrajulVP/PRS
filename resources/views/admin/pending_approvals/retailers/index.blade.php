@@ -1907,7 +1907,10 @@
                                                                 </div>
                                                             </td>
                                                             <td class="text-main-theme">${batchInfo}</td>
-                                                            <td class="text-center text-main-theme">${item.quantity} ${item.unit || 'Strips'}</td>
+                                                            <td class="text-center text-main-theme">
+                                                                ${item.quantity} ${item.unit || 'Strips'}
+                                                                ${item.free_quantity > 0 ? `<div class="text-success small fw-bold">+${item.free_quantity} Free</div>` : ''}
+                                                            </td>
                                                             <td class="text-end text-main-theme">₹${parseFloat(item.unit_price).toFixed(2)}</td>
                                                             <td class="text-end fw-bold text-primary">₹${parseFloat(item.total_amount).toFixed(2)}</td>
                                                         </tr>
@@ -1975,7 +1978,10 @@
                                             ${item.product_code && item.product_code !== '---' && item.product_code !== 'N/A' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.65rem;">C: ${item.product_code}</div>` : ''}
                                         </div>
                                     </div>
-                                    <div style="flex: 1;" class="text-center text-muted-theme small">${item.quantity} ${item.unit || 'Box'}</div>
+                                    <div style="flex: 1;" class="text-center text-muted-theme small">
+                                        ${item.quantity} ${item.unit || 'Box'}
+                                        ${item.free_quantity > 0 ? `<div class="text-success fw-bold">+${item.free_quantity} Free</div>` : ''}
+                                    </div>
                                     <div style="flex: 1;" class="text-end fw-bold text-success">₹${item.total_amount}</div>
                                 </div>
                             `);
@@ -2166,7 +2172,10 @@
                                                                                                                                                                                     <div class="ai-col-product fw-bold text-dark small">${item.product_name}${vVariantInfo}</div>
                                                                                                                                                                                     <div class="ai-col-batch v-batch-display text-muted small" data-id="${orderItemId}">--</div>
                                                                                                                                                                                     <div class="ai-col-expiry v-expiry-display text-muted small" data-id="${orderItemId}">--</div>
-                                                                                                                                                                                    <div class="ai-col-qty fw-bold text-primary v-qty-display" data-original-unit="${item.unit || ''}">${orderedQty} ${item.unit || ''}</div>
+                                                                                                                                                                                    <div class="ai-col-qty fw-bold text-primary v-qty-display" data-original-unit="${item.unit || ''}">
+                                                                                                                                                                                        ${orderedQty} ${item.unit || ''}
+                                                                                                                                                                                        ${item.free_quantity > 0 ? `<div class="text-success small fw-bold">+${item.free_quantity} Free</div>` : ''}
+                                                                                                                                                                                    </div>
                                                                                                                                                                                     <div class="ai-col-value text-end small text-dark fw-bold v-taxable-display">--</div>
                                                                                                                                                                                     <div class="ai-col-value text-end small text-muted v-gst-display">--</div>
                                                                                                                                                                                     <div class="ai-col-value text-end fw-bold v-net-display">--</div>

@@ -396,10 +396,14 @@ class SalesManagerDashboardApiController extends Controller
                 'placed_at' => $order->placed_at,
                 'items' => $order->items->map(function ($item) {
                     return [
-                        'product_name' => $item->product->product_name ?? 'N/A',
+                        'product_name' => $item->product_name ?? $item->product->product_name ?? 'N/A',
                         'quantity' => $item->quantity,
-                        'price' => $item->price,
-                        'subtotal' => $item->subtotal
+                        'free_quantity' => $item->free_quantity,
+                        'unit' => $item->unit ?? 'Nos',
+                        'side' => $item->side,
+                        'size' => $item->size,
+                        'unit_price' => $item->unit_price,
+                        'total_amount' => $item->total_amount
                     ];
                 })
             ];

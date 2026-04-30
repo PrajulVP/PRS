@@ -34,4 +34,9 @@ class VisitLog extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function retailer()
+    {
+        return $this->belongsTo(Retailer::class, 'customer_id')->where('customer_category', 'retailer');
+    }
 }

@@ -42,19 +42,18 @@
                     <div class="table-responsive px-4 pb-4">
                         <table class="table table-hover w-100" id="staffReportTable">
                             <thead>
-                                <tr>
-                                    <tr>
-                                        <th style="width: 50px;">No.</th>
-                                        <th>Staff Member</th>
-                                        <th>Sales Manager</th>
-                                        <th>Coverage & Visits</th>
-                                        <th class="text-center">Activity</th>
-                                        <th class="text-center">Orders</th>
-                                        <th class="text-end">AOV</th>
-                                        <th class="text-end">Revenue</th>
-                                        <th class="text-center">Actions</th>
-                                    </tr>
-                            </thead>
+                            <tr>
+                                <th style="width: 50px;">No.</th>
+                                <th>Staff Member</th>
+                                <th>Sales Manager</th>
+                                <th>Coverage & Visits</th>
+                                <th class="text-center">Activity</th>
+                                <th class="text-center">Orders</th>
+                                <th class="text-end">AOV</th>
+                                <th class="text-end">Revenue</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
                         </table>
                     </div>
                 </div>

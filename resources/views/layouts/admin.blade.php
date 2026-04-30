@@ -1479,6 +1479,28 @@
 
         setInterval(fetchLiveNotifications, 15000); // 15 seconds
 
+        window.showToast = function(type, message) {
+            const toastContainer = document.querySelector('.toast-container') || (function() {
+                const container = document.createElement('div');
+                container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                container.style.zIndex = '9999';
+                document.body.appendChild(container);
+                return container;
+            })();
+
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type} border-0 show mb-2`;
+            toast.role = 'alert';
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            toastContainer.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        };
+
     </script>
 </body>
 

@@ -361,6 +361,18 @@
                         color: #e5e7eb;
                         border-color: rgba(255, 255, 255, 0.08);
                     }
+
+                    .retailer-info-card {
+                        background: #fff;
+                    }
+                    .dark-only .retailer-info-card,
+                    [data-theme="dark"] .retailer-info-card {
+                        background: rgba(255, 255, 255, 0.05) !important;
+                        border-color: rgba(255, 255, 255, 0.1) !important;
+                    }
+                    .dark-only .retailer-rep-name {
+                        color: #fff !important;
+                    }
                 </style>
 
                 @php 
@@ -406,13 +418,13 @@
 
                         {{-- Sales Representative Card --}}
                         @if($user->retailer->fieldStaff)
-                        <div class="d-flex align-items-center gap-3 p-3 rounded-4 bg-white shadow-sm border border-light" style="min-width: 280px;">
+                        <div class="d-flex align-items-center gap-3 p-3 rounded-4 retailer-info-card shadow-sm border border-light" style="min-width: 280px;">
                             <div class="rounded-circle bg-soft-info d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
                                 <i data-feather="user" class="text-info" style="width: 20px;"></i>
                             </div>
                             <div>
                                 <p class="text-muted small mb-0 fw-bold text-uppercase" style="font-size: 10px; letter-spacing: 0.5px;">Assigned Sales Rep</p>
-                                <h6 class="fw-800 mb-0 text-dark">{{ $user->retailer->fieldStaff->user->name }}</h6>
+                                <h6 class="fw-800 mb-0 retailer-rep-name">{{ $user->retailer->fieldStaff->user->name }}</h6>
                                 <p class="mb-0 small text-primary fw-bold"><i class="fa fa-phone me-1"></i>{{ $user->retailer->fieldStaff->user->contact_no }}</p>
                             </div>
                         </div>
@@ -474,8 +486,8 @@
                         @php
                             $stats = [
                                 ['label' => 'Total Orders', 'value' => $retailerOrderStats['total'], 'icon' => 'shopping-cart', 'color' => 'var(--med-primary)', 'bg' => 'rgba(var(--med-primary-rgb), 0.1)', 'route' => route('retailer.orders.index')],
-                                ['label' => 'Pending', 'value' => $retailerOrderStats['pending'], 'icon' => 'clock', 'color' => '#f59e0b', 'bg' => 'rgba(245, 158, 11, 0.1)', 'route' => route('retailer.orders.index')],
-                                ['label' => 'Delivered', 'value' => $retailerOrderStats['delivered'], 'icon' => 'check-circle', 'color' => '#10b981', 'bg' => 'rgba(16, 185, 129, 0.1)', 'route' => route('retailer.orders.index')],
+                                ['label' => 'Pending', 'value' => $retailerOrderStats['pending'], 'icon' => 'clock', 'color' => '#f59e0b', 'bg' => 'rgba(245, 158, 11, 0.1)', 'route' => route('retailer.orders.index', ['status' => 'pending'])],
+                                ['label' => 'Delivered', 'value' => $retailerOrderStats['delivered'], 'icon' => 'check-circle', 'color' => '#10b981', 'bg' => 'rgba(16, 185, 129, 0.1)', 'route' => route('retailer.orders.index', ['status' => 'delivered'])],
                                 ['label' => 'Loyalty Points', 'value' => number_format($totalLoyaltyPoints), 'icon' => 'database', 'color' => '#fbbf24', 'bg' => 'rgba(251, 191, 36, 0.1)', 'route' => '#']
                             ];
                         @endphp
@@ -536,9 +548,9 @@
                         @php
                             $stats = [
                                 ['label' => 'Order Volume', 'value' => $retailerOrderStats['total'], 'icon' => 'truck', 'color' => 'var(--med-primary)', 'bg' => 'rgba(var(--med-primary-rgb), 0.1)', 'route' => route('distributor.orders.index')],
-                                ['label' => 'Delivered', 'value' => $retailerOrderStats['delivered'], 'icon' => 'check-square', 'color' => '#10b981', 'bg' => 'rgba(16, 185, 129, 0.1)', 'route' => route('distributor.orders.index')],
-                                ['label' => 'Pending', 'value' => $retailerOrderStats['pending'], 'icon' => 'clock', 'color' => '#f59e0b', 'bg' => 'rgba(245, 158, 11, 0.1)', 'route' => route('distributor.orders.index')],
-                                ['label' => 'My Stock Items', 'value' => $counts['products'], 'icon' => 'layers', 'color' => 'var(--med-accent)', 'bg' => 'rgba(var(--med-accent-rgb), 0.1)', 'route' => route('products.index')]
+                                ['label' => 'Delivered', 'value' => $retailerOrderStats['delivered'], 'icon' => 'check-square', 'color' => '#10b981', 'bg' => 'rgba(16, 185, 129, 0.1)', 'route' => route('distributor.orders.index', ['status' => 'delivered'])],
+                                ['label' => 'Pending', 'value' => $retailerOrderStats['pending'], 'icon' => 'clock', 'color' => '#f59e0b', 'bg' => 'rgba(245, 158, 11, 0.1)', 'route' => route('distributor.orders.index', ['status' => 'pending'])],
+                                ['label' => 'My Orders', 'value' => $distributorOrderStats['total'], 'icon' => 'shopping-bag', 'color' => '#0ea5e9', 'bg' => 'rgba(14, 165, 233, 0.1)', 'route' => route('admin.distributor-orders.index')]
                             ];
                         @endphp
                         @foreach($stats as $stat)
@@ -610,22 +622,6 @@
                             </div>
                         </div>
 
-                        {{-- Loyalty Points --}}
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-0 shadow-sm premium-stats-card h-100" style="background: linear-gradient(135deg, #fff 0%, rgba(251, 191, 36, 0.05) 100%);">
-                                <div class="card-body p-4">
-                                    <div class="d-flex align-items-center justify-content-between mb-3">
-                                        <div class="p-2 bg-soft-warning rounded-circle">
-                                            <i class="fa fa-gem text-warning" style="width: 16px; height: 16px;"></i>
-                                        </div>
-                                    </div>
-                                    <h6 class="text-muted small fw-700 text-uppercase mb-1">Loyalty Rewards</h6>
-                                    <h4 class="fw-800 mb-0 text-warning">{{ number_format($data_extra['loyalty_points'] ?? 0) }} <span style="font-size: 13px;">Pts</span></h4>
-                                    <a href="#" class="text-decoration-none small fw-bold mt-2 d-inline-block">Redeem Gifts <i class="fa fa-arrow-right ms-1"></i></a>
-                                </div>
-                            </div>
-                        </div>
-
                         {{-- Outstanding Balance --}}
                         <div class="col-xl-3 col-md-6 mb-4">
                             <div class="card border-0 shadow-sm premium-stats-card h-100">
@@ -637,7 +633,7 @@
                                         <span class="badge bg-soft-secondary text-secondary rounded-pill">{{ $data_extra['credit_days'] ?? 0 }} Days Credit</span>
                                     </div>
                                     <h6 class="text-muted small fw-700 text-uppercase mb-1">Outstanding</h6>
-                                    <h4 class="fw-800 mb-0 text-danger">₹{{ number_format($data_extra['outstanding'] ?? 0, 2) }}</h4>
+                                    <h4 class="fw-800 mb-0 text-danger">₹{{ number_format($data_extra['outstanding'] ?? 0, 0) }}</h4>
                                     <p class="text-muted small mb-0 mt-1">Pending with Company</p>
                                 </div>
                             </div>
@@ -757,7 +753,7 @@
                                                         </td>
                                                         <td class="text-right px-4 py-3 align-middle">
                                                             <h6 class="mb-0 font-weight-bold text-success" style="font-size: 0.95rem;">
-                                                                ₹{{ number_format($tp->total_revenue, 2) }}</h6>
+                                                                ₹{{ number_format($tp->total_revenue, 0) }}</h6>
                                                         </td>
                                                     </tr>
                                                 @empty
@@ -1298,7 +1294,7 @@
                                                            </div>
                                                         @endif
                                                     </td>
-                                                    <td class="fw-800 text-dark" style="font-size: 13px;">₹{{ number_format($order->total_amount, 2) }}</td>
+                                                    <td class="fw-800 text-dark" style="font-size: 13px;">₹{{ number_format($order->total_amount, 0) }}</td>
                                                     <td class="text-end px-4">
                                                         <span class="badge rounded-pill px-3 py-2 
                                                             {{ $order->status == 'delivered' ? 'bg-soft-success text-success' : ($order->status == 'cancelled' ? 'bg-soft-danger text-danger' : ($order->status == 'approved' ? 'bg-soft-info text-info' : 'bg-soft-primary text-primary')) }}"
@@ -1343,7 +1339,7 @@
                                                     </td>
                                                     <td class="fw-700 text-dark" style="font-size: 12px;">{{ $order->distributor->user->name ?? 'N/A' }}</td>
                                                     <td class="text-muted" style="font-size: 12px;">{{ $order->created_at->format('d M, Y') }}</td>
-                                                    <td class="fw-800 text-dark" style="font-size: 13px;">₹{{ number_format($order->total_amount, 2) }}</td>
+                                                    <td class="fw-800 text-dark" style="font-size: 13px;">₹{{ number_format($order->total_amount, 0) }}</td>
                                                     <td class="text-end px-4">
                                                         <span class="badge rounded-pill px-3 py-2 
                                                             {{ $order->status == 'delivered' ? 'bg-soft-success text-success' : ($order->status == 'cancelled' ? 'bg-soft-danger text-danger' : ($order->status == 'approved' ? 'bg-soft-info text-info' : 'bg-soft-primary text-primary')) }}"

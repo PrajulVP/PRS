@@ -207,6 +207,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('distributor')->name('distributor.')->group(function () {
         Route::get('/orders', [RetailerOrderManagementController::class, 'distributorIndex'])->name('orders.index');
+        Route::get('/staff-ratings', [\App\Http\Controllers\DistributorRatingController::class, 'index'])->name('staff-ratings.index');
+        Route::post('/staff-ratings', [\App\Http\Controllers\DistributorRatingController::class, 'store'])->name('staff-ratings.store');
     });
 
     Route::prefix('fieldstaff')->name('fieldstaff.')->group(function () {

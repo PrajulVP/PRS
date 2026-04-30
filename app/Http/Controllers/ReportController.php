@@ -56,6 +56,18 @@ class ReportController extends Controller
             $stats['total_visits'] = \App\Models\VisitLog::whereHas('user.fieldStaff', function($q) use ($user) {
                 $q->where('sales_manager_id', $user->salesManager->id);
             })->whereBetween('check_in_at', [$fromDate, $toDate])->count();
+        } elseif ($user->hasRole('distributor')) {
+            $distributor = $user->distributor;
+            $query->where('distributor_id', $distributor->id);
+            $distQuery->where('distributor_id', $distributor->id);
+            
+            $stats['active_retailers'] = RetailerOrder::where('distributor_id', $distributor->id)
+                ->distinct('retailer_id')
+                ->count();
+            
+            $stats['total_visits'] = \App\Models\VisitLog::whereHas('retailer', function($q) use ($distributor) {
+                $q->where('district_id', $distributor->district_id);
+            })->whereBetween('check_in_at', [$fromDate, $toDate])->count();
         } else {
             $stats['active_retailers'] = Retailer::count();
             $stats['total_visits'] = \App\Models\VisitLog::whereBetween('check_in_at', [$fromDate, $toDate])->count();
@@ -68,8 +80,22 @@ class ReportController extends Controller
         $stats['pending_payments'] = (clone $query)->where('payment_status', '!=', 'paid')->sum('total_amount') + 
                                      (clone $distQuery)->where('payment_status', '!=', 'paid')->sum('total_amount');
 
-        // Prescription Logs Count
-        $stats['prescriptions_analyzed'] = \App\Models\PrescriptionLog::whereBetween('created_at', [$fromDate, $toDate])->count();
+        // Prescription Logs Count (Scoped)
+        $pQuery = \App\Models\PrescriptionLog::whereBetween('created_at', [$fromDate, $toDate]);
+        if ($user->hasRole('distributor')) {
+            $pQuery->whereHas('retailer', function($q) use ($user) {
+                $q->where('distributor_id', $user->distributor->id);
+            });
+        } elseif ($user->hasRole('salesmanager')) {
+            $pQuery->whereHas('retailer.fieldStaff', function($q) use ($user) {
+                $q->where('sales_manager_id', $user->salesManager->id);
+            });
+        } elseif ($user->hasRole('fieldstaff')) {
+            $pQuery->whereHas('retailer', function($q) use ($user) {
+                $q->where('field_staff_id', $user->fieldStaff->id);
+            });
+        }
+        $stats['prescriptions_analyzed'] = $pQuery->count();
 
         return view('admin.reports.index', compact('stats', 'fromDate', 'toDate'));
     }
@@ -113,7 +139,7 @@ class ReportController extends Controller
         return [null, null];
     }
 
-    protected function applyGlobalFilters($query, Request $request, $dateColumn = 'placed_at')
+    protected function applyGlobalFilters($query, Request $request, $dateColumn = null)
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
@@ -133,6 +159,23 @@ class ReportController extends Controller
             }
         } elseif ($user->hasRole('salesmanager')) {
             $managerId = $user->salesManager->id;
+        } elseif ($user->hasRole('distributor')) {
+            $distId = $user->distributor->id;
+            if ($model->getConnection()->getSchemaBuilder()->hasColumn($tableName, 'distributor_id')) {
+                $query->where($tableName . '.distributor_id', $distId);
+            } elseif ($tableName === 'retailers') {
+                $query->whereHas('orders', function($q) use ($distId) {
+                    $q->where('distributor_id', $distId);
+                });
+            } elseif ($tableName === 'fieldstaffs') {
+                $query->whereHas('retailerOrders', function($q) use ($distId) {
+                    $q->where('distributor_id', $distId);
+                });
+            } elseif ($tableName === 'visit_logs') {
+                $query->whereHas('retailer', function($q) use ($distId) {
+                    $q->where('distributor_id', $distId);
+                });
+            }
         }
 
         if ($managerId) {
@@ -166,7 +209,7 @@ class ReportController extends Controller
             $query->where('retailer_id', $request->retailer_id); 
         }
         
-        if ($request->distributor_id && $model->getConnection()->getSchemaBuilder()->hasColumn($tableName, 'distributor_id')) { 
+        if (!$user->hasRole('distributor') && $request->distributor_id && $model->getConnection()->getSchemaBuilder()->hasColumn($tableName, 'distributor_id')) { 
             $query->where('distributor_id', $request->distributor_id); 
         }
         
@@ -196,8 +239,8 @@ class ReportController extends Controller
             }
         }
 
-        // Date Range (Only if dateColumn is provided)
-        if ($dateColumn) {
+        // Date Range (Only if dateColumn is provided and exists)
+        if ($dateColumn && $model->getConnection()->getSchemaBuilder()->hasColumn($tableName, $dateColumn)) {
             [$f, $t] = $this->getFilterDates($request);
             if ($f && $t) {
                 $query->whereBetween($dateColumn, [$f, $t]);
@@ -231,7 +274,8 @@ class ReportController extends Controller
 
     public function orderReports(Request $request)
     {
-        abort_if(!Auth::user()->hasPermissionToCategory('master_order_reports', 'view'), 403);
+        $user = Auth::user();
+        abort_if(!$user->hasPermissionToCategory('master_order_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
         if ($request->ajax()) {
             $type = $request->order_type ?? 'retailer';
             
@@ -243,7 +287,8 @@ class ReportController extends Controller
                     ->select('retailer_orders.*');
             }
 
-            $this->applyGlobalFilters($query, $request, 'placed_at');
+            $dateCol = ($type === 'distributor') ? 'created_at' : 'placed_at';
+            $this->applyGlobalFilters($query, $request, $dateCol);
 
             return DataTables::of($query)
                 ->addColumn('retailer_name', function($row) use ($type) {
@@ -254,7 +299,18 @@ class ReportController extends Controller
                     return ($type === 'retailer') ? ($row->fieldStaff->user->name ?? 'N/A') : 'N/A';
                 })
                 ->addColumn('items_detail', function($row) {
-                    return $row->items->map(fn($item) => "{$item->product->product_name} (x{$item->quantity})")->implode(', ');
+                    return $row->items->groupBy(function($item) {
+                        return $item->product_id . '-' . ($item->side ?? '') . '-' . ($item->size ?? '');
+                    })->map(function($group) {
+                        $first = $group->first();
+                        $pName = $first->product->product_name ?? 'Product';
+                        $qty = $group->sum('quantity');
+                        $free = $group->sum('free_quantity');
+                        $freeTxt = $free > 0 ? " + {$free} Free" : "";
+                        $variant = array_filter([$first->side, $first->size]);
+                        $vTxt = !empty($variant) ? " [" . implode('/', $variant) . "]" : "";
+                        return "{$pName}{$vTxt} (x{$qty}{$freeTxt})";
+                    })->implode(', ');
                 })
                 ->addColumn('total_quantity', fn($row) => $row->items->sum('quantity'))
                 ->addColumn('total_items', fn($row) => $row->items->count())
@@ -281,7 +337,8 @@ class ReportController extends Controller
 
     public function distributorReports(Request $request)
     {
-        abort_if(!Auth::user()->hasPermissionToCategory('distributor_reports', 'view'), 403);
+        $user = Auth::user();
+        abort_if(!$user->hasPermissionToCategory('distributor_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
         if ($request->ajax()) {
             $query = Distributor::with('user')->select('distributors.*');
             
@@ -344,7 +401,8 @@ class ReportController extends Controller
 
     public function retailerReports(Request $request)
     {
-        abort_if(!Auth::user()->hasPermissionToCategory('retailer_reports', 'view'), 403);
+        $user = Auth::user();
+        abort_if(!$user->hasPermissionToCategory('retailer_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
         if ($request->ajax()) {
             $query = Retailer::with(['user', 'fieldStaff.user'])->select('retailers.*');
 
@@ -352,10 +410,10 @@ class ReportController extends Controller
             $this->applyGlobalFilters($query, $request, null);
 
             $query->withCount(['orders as total_orders' => function($q) use ($request) {
-                $this->applyGlobalFilters($q, $request);
+                $this->applyGlobalFilters($q, $request, 'placed_at');
             }])
             ->withSum(['orders as total_sales' => function($q) use ($request) {
-                $this->applyGlobalFilters($q, $request);
+                $this->applyGlobalFilters($q, $request, 'placed_at');
                 $q->where('status', RetailerOrder::STATUS_DELIVERED);
             }], 'total_amount');
 
@@ -373,7 +431,7 @@ class ReportController extends Controller
                 ->addColumn('top_products', function($ret) use ($request) {
                     $top = \App\Models\RetailerOrderItem::whereHas('retailerOrder', function($q) use ($ret, $request) {
                         $q->where('retailer_id', $ret->id);
-                        $this->applyGlobalFilters($q, $request);
+                        $this->applyGlobalFilters($q, $request, 'placed_at');
                         $q->where('status', 'delivered');
                     })
                     ->select('product_id', DB::raw('SUM(quantity) as total_qty'))
@@ -403,7 +461,8 @@ class ReportController extends Controller
 
     public function productReports(Request $request)
     {
-        abort_if(!Auth::user()->hasPermissionToCategory('product_reports', 'view'), 403);
+        $user = Auth::user();
+        abort_if(!$user->hasPermissionToCategory('product_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
         if ($request->ajax()) {
             $type = $request->order_type ?? 'retailer';
             $orderModel = ($type === 'distributor') ? \App\Models\DistributorOrder::class : \App\Models\RetailerOrder::class;
@@ -412,36 +471,37 @@ class ReportController extends Controller
             $orderRel = ($type === 'distributor') ? 'distributorOrder' : 'retailerOrder';
             $totalAmountCol = ($type === 'distributor') ? 'subtotal' : 'total_amount';
             $deliveredStatus = ($type === 'distributor') ? \App\Models\DistributorOrder::STATUS_DELIVERED : \App\Models\RetailerOrder::STATUS_DELIVERED;
+            $dateCol = ($type === 'distributor') ? 'created_at' : 'placed_at';
 
             $query = Product::select('products.*')
                 ->selectSub(
                     $orderItemModel::whereColumn('product_id', 'products.id')
-                        ->whereHas($orderRel, function($q) use ($request) {
-                            $this->applyGlobalFilters($q, $request);
+                        ->whereHas($orderRel, function($q) use ($request, $dateCol) {
+                            $this->applyGlobalFilters($q, $request, $dateCol);
                             $q->where('status', 'delivered'); 
                         })->selectRaw('COALESCE(SUM(quantity), 0)'), 
                     'total_sold'
                 )
                 ->selectSub(
                     $orderItemModel::whereColumn('product_id', 'products.id')
-                        ->whereHas($orderRel, function($q) use ($request) {
-                            $this->applyGlobalFilters($q, $request);
+                        ->whereHas($orderRel, function($q) use ($request, $dateCol) {
+                            $this->applyGlobalFilters($q, $request, $dateCol);
                             $q->where('status', 'delivered');
                         })->selectRaw('COALESCE(SUM(free_quantity), 0)'), 
                     'total_free'
                 )
                 ->selectSub(
                     $orderItemModel::whereColumn('product_id', 'products.id')
-                        ->whereHas($orderRel, function($q) use ($request) {
-                            $this->applyGlobalFilters($q, $request);
+                        ->whereHas($orderRel, function($q) use ($request, $dateCol) {
+                            $this->applyGlobalFilters($q, $request, $dateCol);
                             $q->where('status', 'delivered');
                         })->selectRaw("COALESCE(SUM({$totalAmountCol}), 0)"), 
                     'total_revenue'
                 )
                 ->selectSub(
                     $orderItemModel::whereColumn('product_id', 'products.id')
-                        ->whereHas($orderRel, function($q) use ($request) {
-                            $this->applyGlobalFilters($q, $request);
+                        ->whereHas($orderRel, function($q) use ($request, $dateCol) {
+                            $this->applyGlobalFilters($q, $request, $dateCol);
                             $q->where('status', 'delivered');
                         })->selectRaw("COALESCE(COUNT(DISTINCT {$orderIdCol}), 0)"), 
                     'order_count'
@@ -477,7 +537,8 @@ class ReportController extends Controller
 
     public function brandReports(Request $request)
     {
-        abort_if(!Auth::user()->hasPermissionToCategory('product_reports', 'view'), 403);
+        $user = Auth::user();
+        abort_if(!$user->hasPermissionToCategory('product_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
         if ($request->ajax()) {
             $type = $request->order_type ?? 'retailer';
             $orderItemModel = ($type === 'distributor') ? \App\Models\DistributorOrderItem::class : \App\Models\RetailerOrderItem::class;
@@ -490,8 +551,9 @@ class ReportController extends Controller
             foreach ($brands as $brand) {
                 $query = $orderItemModel::whereHas('product', function($q) use ($brand) {
                     $q->where('brand', $brand);
-                })->whereHas($orderRel, function($q) use ($request) {
-                    $this->applyGlobalFilters($q, $request);
+                })->whereHas($orderRel, function($q) use ($request, $type) {
+                    $dateCol = ($type === 'distributor') ? 'created_at' : 'placed_at';
+                    $this->applyGlobalFilters($q, $request, $dateCol);
                     $q->where('status', 'delivered');
                 });
 
@@ -524,7 +586,8 @@ class ReportController extends Controller
 
     public function fieldStaffReports(Request $request)
     {
-        abort_if(!Auth::user()->hasPermissionToCategory('performance_reports', 'view'), 403);
+        $user = Auth::user();
+        abort_if(!$user->hasPermissionToCategory('performance_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
@@ -588,7 +651,8 @@ class ReportController extends Controller
 
     public function visitReports(Request $request)
     {
-        abort_if(!Auth::user()->hasPermissionToCategory('performance_reports', 'view'), 403);
+        $user = Auth::user();
+        abort_if(!$user->hasPermissionToCategory('performance_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
         if ($request->ajax()) {
             $query = FieldStaff::with(['user', 'salesManager.user'])->select('fieldstaffs.*');
             $this->applyGlobalFilters($query, $request);
@@ -628,7 +692,8 @@ class ReportController extends Controller
 
     public function outstandingReports(Request $request)
     {
-        abort_if(!Auth::user()->hasPermissionToCategory('retailer_reports', 'view'), 403);
+        $user = Auth::user();
+        abort_if(!$user->hasPermissionToCategory('retailer_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
         if ($request->ajax()) {
             $type = $request->order_type ?? 'retailer';
             
@@ -675,25 +740,22 @@ class ReportController extends Controller
 
     public function targetReports(Request $request)
     {
-        abort_if(!Auth::user()->hasPermissionToCategory('performance_reports', 'view'), 403);
+        $user = Auth::user();
+        abort_if(!$user->hasPermissionToCategory('performance_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
+        
         if ($request->ajax()) {
+
             $query = FieldStaff::with(['user', 'salesManager.user'])->select('fieldstaffs.*');
             $this->applyGlobalFilters($query, $request);
 
             [$f, $t] = $this->getFilterDates($request);
 
-            // Calculate Achievement (Delivered Orders)
             $query->withSum(['retailerOrders as achievement' => function($q) use ($f, $t) {
                 $q->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED);
                 if ($f && $t) $q->whereBetween('placed_at', [$f, $t]);
             }], 'total_amount');
 
-            // Calculate Target (from SalesTarget table)
-            // Note: In real app, we would filter SalesTarget by month/range. 
-            // For now, we sum targets linked to the staff.
-            $query->withSum(['salesTargets as target_amount' => function($q) {
-                // Remove invalid 'type' column check
-            }], 'amount');
+            $query->withSum(['salesTargets as target_amount'], 'amount');
 
             return DataTables::of($query)
                 ->addColumn('name', fn($fs) => $fs->user->name ?? 'N/A')
@@ -738,7 +800,8 @@ class ReportController extends Controller
      */
     public function monitoring()
     {
-        abort_if(!Auth::user()->hasPermissionToCategory('performance_reports', 'view'), 403);
+        $user = Auth::user();
+        abort_if(!$user->hasPermissionToCategory('performance_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
         $salesManagers = SalesManager::with('user')->get();
         return view('admin.reports.monitoring', compact('salesManagers'));
     }

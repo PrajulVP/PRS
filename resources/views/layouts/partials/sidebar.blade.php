@@ -59,7 +59,8 @@
         @endif
 
         {{-- Reports module --}}
-        @if (Auth::user()->hasPermissionToCategory('distributor_reports', 'view') || 
+        @if (Auth::user()->hasPermissionToCategory('executive_reports', 'view') || 
+             Auth::user()->hasPermissionToCategory('distributor_reports', 'view') || 
              Auth::user()->hasPermissionToCategory('retailer_reports', 'view') || 
              Auth::user()->hasPermissionToCategory('performance_reports', 'view') ||
              Auth::user()->hasPermissionToCategory('product_reports', 'view') ||
@@ -140,6 +141,18 @@
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-form"></use>
             </svg><span>My Orders</span>
+          </a>
+        </li>
+        @endif
+        @if (Auth::user()->hasPermissionToCategory('staff_ratings', 'view'))
+        <li class="sidebar-list">
+          <a class="sidebar-link sidebar-title link-nav" href="{{ route('distributor.staff-ratings.index') }}">
+            <svg class="stroke-icon">
+              <use href="{{ $iconSprite }}#stroke-user"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{{ $iconSprite }}#fill-user"></use>
+            </svg><span>Staff Ratings</span>
           </a>
         </li>
         @endif

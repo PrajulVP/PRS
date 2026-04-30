@@ -676,8 +676,12 @@
 
             var ajaxUrl = "{{ route('admin.retailer.index') }}";
             const urlParams = new URLSearchParams(window.location.search);
-            // We'll pass retailer_id via data object in ajax call, so no need to append to Url if we want to be clean, 
-            // but let's just make sure we don't double count it.
+            
+            // Handle status from URL
+            const urlStatus = urlParams.get('status');
+            if (urlStatus) {
+                $(`#orderStatusTabs button[data-status="${urlStatus}"]`).tab('show');
+            }
 
             var table = $('#orders-table').DataTable({
                 order: [[7, 'desc']],

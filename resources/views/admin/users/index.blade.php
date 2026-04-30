@@ -198,12 +198,21 @@
                             <input type="text" name="pincode" id="edit_pincode" class="form-control" required>
                         </div>
                         <div class="mb-3">
-                            <label>Profile Picture</label>
+                            <label class="form-label fw-bold small mb-2">Profile Picture</label>
                             <div class="d-flex align-items-center gap-3 mb-2">
-                                <img id="edit_avatar_preview" src="" alt="" class="rounded-circle" style="width:50px;height:50px;object-fit:cover;display:none;">
-                                <div id="edit_avatar_initials_preview" class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width:50px;height:50px;display:none;background:#374151;"></div>
+                                <div class="position-relative">
+                                    <img id="edit_avatar_preview" src="" alt="" class="rounded-circle shadow-sm border border-2 border-white" style="width:60px;height:60px;object-fit:cover;display:none;">
+                                    <div id="edit_avatar_initials_preview" class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="width:60px;height:60px;display:none;background:#374151; font-size: 1.2rem;"></div>
+                                    <button type="button" id="btn_remove_edit_pic" class="position-absolute top-0 end-0 bg-white text-danger shadow-sm rounded-circle p-0 d-flex align-items-center justify-content-center" style="width:22px;height:22px; border: 1px solid #dee2e6; transform: translate(5px, -5px); display:none;" onclick="removeEditUserPic()">
+                                        <i class="fa fa-times" style="font-size: 11px;"></i>
+                                    </button>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <input type="file" name="profile_pic" class="form-control form-control-sm" accept="image/*" onchange="previewEditUserPic(this)">
+                                    <input type="hidden" name="remove_profile_pic" id="remove_edit_profile_pic" value="0">
+                                    <small class="text-muted" style="font-size: 0.65rem;">Recommended: Square image, max 5MB</small>
+                                </div>
                             </div>
-                            <input type="file" name="profile_pic" class="form-control" accept="image/*">
                         </div>
                     </div>
                     <div class="modal-footer"><button type="submit" class="btn btn-primary">Update</button></div>
@@ -540,14 +549,19 @@
                 // Trigger change to update visibility of conditional fields
                 $('#edit_role').trigger('change');
 
+                // Reset removal flag
+                $('#remove_edit_profile_pic').val('0');
+                
                 // Update Avatar Preview
                 if (row.profile_image_url) {
                     $('#edit_avatar_preview').attr('src', row.profile_image_url).show();
                     $('#edit_avatar_initials_preview').hide();
+                    $('#btn_remove_edit_pic').show();
                 } else {
                     let initials = row.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
                     $('#edit_avatar_initials_preview').text(initials).show();
                     $('#edit_avatar_preview').hide();
+                    $('#btn_remove_edit_pic').hide();
                 }
 
                 // GST and Drug License for Edit Modal
@@ -628,5 +642,39 @@
                 $('#viewUserModal').modal('show');
             });
         });
+
+        function previewEditUserPic(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#edit_avatar_preview').attr('src', e.target.result).show();
+                    $('#edit_avatar_initials_preview').hide();
+                    $('#btn_remove_edit_pic').show();
+                    $('#remove_edit_profile_pic').val('0');
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function removeEditUserPic() {
+            const hasNoImage = $('#edit_avatar_preview').is(':hidden') && $('#editUserModal input[type="file"]').val() === '';
+
+            if (hasNoImage) {
+                alert('No profile picture to remove.');
+                return;
+            }
+
+            if (confirm('Are you sure you want to remove this user\'s profile picture?')) {
+                $('#remove_edit_profile_pic').val('1');
+                $('#edit_avatar_preview').hide();
+                // Show initials as fallback
+                let name = $('#edit_name').val();
+                let initials = name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+                $('#edit_avatar_initials_preview').text(initials).show();
+                $('#btn_remove_edit_pic').hide();
+                // Clear file input
+                $('#editUserModal input[type="file"]').val('');
+            }
+        }
     </script>
 @endpush

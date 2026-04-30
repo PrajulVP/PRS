@@ -374,19 +374,29 @@
                                 <div class="text-center mb-3">
                                     <div class="position-relative d-inline-block">
                                         <img src="{{ $user->avatar_url }}" alt="Avatar"
+                                            id="modal_avatar_preview"
                                             class="rounded-circle shadow-sm border border-3 border-white"
-                                            style="width: 100px; height: 100px; object-fit: cover;"
+                                            style="width: 110px; height: 110px; object-fit: cover;"
                                             onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&color=FFFFFF&background={{ $user->avatar_background ?? '374151' }}';">
+                                    </div>
+                                    <div class="d-flex justify-content-center gap-2 mt-3">
                                         <label for="profile_pic"
-                                            class="position-absolute bottom-0 end-0 bg-white text-primary shadow-sm rounded-circle p-1 d-flex align-items-center justify-content-center"
-                                            style="width: 32px; height: 32px; cursor: pointer; border: 2px solid #e9ecef;">
-                                            <i class="fa fa-camera fs-6"></i>
+                                            class="btn btn-sm btn-outline-primary rounded-pill px-3 d-flex align-items-center"
+                                            style="cursor: pointer; font-size: 0.7rem; font-weight: 600;">
+                                            <i class="fa fa-camera me-1"></i> Change
                                             <input type="file" name="profile_pic" id="profile_pic" class="d-none"
                                                 accept="image/*" onchange="previewProfilePic(this)">
                                         </label>
+
+                                        <button type="button" id="btn_remove_pic" 
+                                            class="btn btn-sm btn-outline-danger rounded-pill px-3 d-flex align-items-center"
+                                            style="font-size: 0.7rem; font-weight: 600; {{ $user->profile_pic ? '' : 'display:none;' }}"
+                                            onclick="removeProfilePic()">
+                                            <i class="fa fa-trash-o me-1"></i> Remove
+                                        </button>
+                                        <input type="hidden" name="remove_profile_pic" id="remove_profile_pic" value="0">
                                     </div>
-                                    <p class="text-muted small mt-1 fst-italic" style="font-size: 0.6rem;">Click camera
-                                        icon to change</p>
+                                    <p class="text-muted small mt-2 fst-italic" style="font-size: 0.6rem;">Recommended: Square image, max 5MB</p>
                                 </div>
 
                                 <h6 class="text-muted fw-bold mb-2 small"><i class="fa fa-lock me-1"></i> Account
@@ -447,12 +457,31 @@
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const img = document.querySelector('#editProfileModal img.rounded-circle');
+                    const img = document.getElementById('modal_avatar_preview');
                     if (img) {
                         img.src = e.target.result;
+                        document.getElementById('remove_profile_pic').value = '0';
+                        document.getElementById('btn_remove_pic').style.display = 'inline-flex';
                     }
                 }
                 reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function removeProfilePic() {
+            const currentSrc = document.getElementById('modal_avatar_preview').src;
+            const hasNoImage = currentSrc.includes('ui-avatars.com') && document.getElementById('profile_pic').value === '';
+
+            if (hasNoImage) {
+                alert('No profile picture to remove. Please upload an image first.');
+                return;
+            }
+
+            if (confirm('Are you sure you want to remove your profile picture?')) {
+                document.getElementById('remove_profile_pic').value = '1';
+                document.getElementById('profile_pic').value = '';
+                document.getElementById('modal_avatar_preview').src = 'https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&color=FFFFFF&background={{ $user->avatar_background ?? '374151' }}';
+                document.getElementById('btn_remove_pic').style.display = 'none';
             }
         }
     </script>

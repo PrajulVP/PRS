@@ -5,8 +5,8 @@
 @push('styles')
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        #map { height: 600px; border-radius: 12px; z-index: 1; border: 1px solid var(--med-border); }
-        .tracking-info-card { height: 600px; overflow-y: auto; }
+        #map { height: 600px; border-radius: 12px; z-index: 1; border: 1px solid var(--med-border, #e2e8f0); }
+        .tracking-info-card { height: 600px; overflow-y: auto; background-color: transparent !important; }
         
         /* Custom Marker Pin Styling */
         .marker-pin {
@@ -77,15 +77,15 @@
         
         .legend {
             padding: 12px;
-            background: white;
-            background: rgba(255,255,255,0.95);
+            background: var(--med-bg-card, #ffffff);
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             border-radius: 12px;
             line-height: 24px;
             color: #333;
-            border: 1px solid rgba(0,0,0,0.05);
+            border: 1px solid var(--med-border, rgba(0,0,0,0.05));
             font-size: 11px;
             font-weight: 600;
+            color: var(--med-text-main, #333);
         }
         .legend i {
             width: 12px;
@@ -95,6 +95,22 @@
             margin-top: 6px;
             border-radius: 50%;
         }
+
+        /* Dark Mode Fixes */
+        .stats-card-modern {
+            background: var(--med-bg-card, #f8f9fa) !important;
+            border: 1px solid var(--med-border, #e2e8f0) !important;
+        }
+        .dark-only .stats-card-modern,
+        [data-theme="dark"] .stats-card-modern {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            color: #fff;
+        }
+        .dark-only .stats-card-modern h6,
+        [data-theme="dark"] .stats-card-modern h6 {
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
     </style>
 @endpush
 
@@ -102,8 +118,8 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-sm-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card bg-card-theme border-0 shadow-sm">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
                     <div>
                         <h5><i class="fa fa-map-marked-alt text-primary me-2"></i>Route History: {{ $user->name }}</h5>
                         <p class="mb-0 text-muted">Movement tracking for <strong>{{ \Carbon\Carbon::parse($date)->format('M d, Y') }}</strong></p>
@@ -118,25 +134,25 @@
                     <!-- Premium Stats Summary Row -->
                     <div class="row mb-4">
                         <div class="col-md-3 col-6">
-                            <div class="p-3 bg-light rounded text-center border-start border-primary border-4 shadow-sm" style="background: linear-gradient(to right, #f8f9fa, #fff) !important;">
+                            <div class="p-3 bg-card-theme rounded text-center border-start border-primary border-4 shadow-sm stats-card-modern">
                                 <h6 class="text-muted small mb-1 text-uppercase fw-700" style="letter-spacing: 0.5px;">Distance Covered</h6>
                                 <h4 class="mb-0 text-primary fw-800">{{ number_format($totalDistance ?? 0, 2) }} <span class="small fw-normal">KM</span></h4>
                             </div>
                         </div>
                         <div class="col-md-3 col-6">
-                            <div class="p-3 bg-light rounded text-center border-start border-success border-4 shadow-sm" style="background: linear-gradient(to right, #f8f9fa, #fff) !important;">
+                            <div class="p-3 bg-card-theme rounded text-center border-start border-success border-4 shadow-sm stats-card-modern">
                                 <h6 class="text-muted small mb-1 text-uppercase fw-700" style="letter-spacing: 0.5px;">Punches</h6>
                                 <h4 class="mb-0 text-success fw-800">{{ $punches->count() }}</h4>
                             </div>
                         </div>
                         <div class="col-md-3 col-6 mt-md-0 mt-3">
-                            <div class="p-3 bg-light rounded text-center border-start border-warning border-4 shadow-sm" style="background: linear-gradient(to right, #f8f9fa, #fff) !important;">
+                            <div class="p-3 bg-card-theme rounded text-center border-start border-warning border-4 shadow-sm stats-card-modern">
                                 <h6 class="text-muted small mb-1 text-uppercase fw-700" style="letter-spacing: 0.5px;">Visits Captured</h6>
                                 <h4 class="mb-0 text-warning fw-800">{{ $visits->count() }}</h4>
                             </div>
                         </div>
                         <div class="col-md-3 col-6 mt-md-0 mt-3">
-                            <div class="p-3 bg-light rounded text-center border-start border-info border-4 shadow-sm" style="background: linear-gradient(to right, #f8f9fa, #fff) !important;">
+                            <div class="p-3 bg-card-theme rounded text-center border-start border-info border-4 shadow-sm stats-card-modern">
                                 <h6 class="text-muted small mb-1 text-uppercase fw-700" style="letter-spacing: 0.5px;">Path Points</h6>
                                 <h4 class="mb-0 text-info fw-800">{{ $locations->count() }}</h4>
                             </div>
@@ -151,8 +167,8 @@
 
                         <!-- Sidebar Info Column -->
                         <div class="col-xl-4 col-lg-5">
-                            <div class="card tracking-info-card border-0 shadow-none">
-                                <div class="card-header pb-2 ps-0">
+                            <div class="card tracking-info-card border-0 shadow-none bg-transparent">
+                                <div class="card-header bg-transparent pb-2 ps-0">
                                     <h6 class="mb-0">Activity Timeline</h6>
                                 </div>
                                 <div class="card-body p-0 pt-3">
@@ -196,7 +212,7 @@
                                                             <div class="badge badge-light-danger small mt-1"><i class="fa fa-map-marker-alt me-1"></i>Geofencing Alert: Outside Area!</div>
                                                         @endif
                                                         @if($event['data']->notes)
-                                                            <div class="bg-light p-2 mt-1 rounded small italic">"{{ $event['data']->notes }}"</div>
+                                                            <div class="bg-body-theme p-2 mt-1 rounded small italic">"{{ $event['data']->notes }}"</div>
                                                         @endif
                                                         @if($event['data']->photo_path)
                                                             <div class="mt-2 text-center">

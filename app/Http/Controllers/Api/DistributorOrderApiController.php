@@ -119,6 +119,9 @@ class DistributorOrderApiController extends Controller
      *             @OA\Property(property="items", type="array", @OA\Items(
      *                 @OA\Property(property="product_name", type="string"),
      *                 @OA\Property(property="quantity", type="integer"),
+     *                 @OA\Property(property="free_quantity", type="integer"),
+     *                 @OA\Property(property="side", type="string", nullable=true),
+     *                 @OA\Property(property="size", type="string", nullable=true),
      *                 @OA\Property(property="batches", type="array", @OA\Items(
      *                     @OA\Property(property="batch_no", type="string"),
      *                     @OA\Property(property="expiry_date", type="string")
@@ -231,6 +234,9 @@ class DistributorOrderApiController extends Controller
      *                 @OA\Property(property="items", type="array", @OA\Items(
      *                     @OA\Property(property="product_name", type="string"),
      *                     @OA\Property(property="quantity", type="integer"),
+     *                     @OA\Property(property="free_quantity", type="integer"),
+     *                     @OA\Property(property="side", type="string", nullable=true),
+     *                     @OA\Property(property="size", type="string", nullable=true),
      *                     @OA\Property(property="price", type="string"),
      *                     @OA\Property(property="subtotal", type="string")
      *                 ))
@@ -245,6 +251,7 @@ class DistributorOrderApiController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|numeric|min:0.01',
+            'items.*.free_quantity' => 'nullable|integer|min:0',
             'items.*.unit' => 'nullable|string|in:Box,Carton,Strip,Nos,no',
             'items.*.side' => 'nullable|string',
             'items.*.size' => 'nullable|string',
@@ -308,6 +315,7 @@ class DistributorOrderApiController extends Controller
                     'product_id' => $product->id,
                     'product_name' => $product->product_name,
                     'quantity' => $qty,
+                    'free_quantity' => $itemData['free_quantity'] ?? 0,
                     'unit' => $unit,
                     'price' => (float)$unitPrice,
                     'subtotal' => $subtotalWithGst,
@@ -567,6 +575,8 @@ class DistributorOrderApiController extends Controller
                     'quantity' => $item->quantity,
                     'free_quantity' => $item->free_quantity,
                     'unit' => $item->unit,
+                    'side' => $item->side,
+                    'size' => $item->size,
                     'price' => $item->price,
                     'subtotal' => $item->subtotal,
                     'batches' => $item->batches->map(function ($b) {

@@ -71,7 +71,12 @@ class ProfileController extends Controller
             }
         }
 
-        if ($request->hasFile('profile_pic')) {
+        if ($request->remove_profile_pic == '1') {
+            if ($user->profile_pic) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profile_pic);
+            }
+            $user->profile_pic = null;
+        } elseif ($request->hasFile('profile_pic')) {
             if ($user->profile_pic) {
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profile_pic);
             }

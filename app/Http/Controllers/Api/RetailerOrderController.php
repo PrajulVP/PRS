@@ -240,7 +240,17 @@ class RetailerOrderController extends Controller
                 $totalItemsCount = 0;
                 $totalQuantityNos = 0;
 
-                foreach ($items as $itemData) {
+                // Merge identical items before processing
+                $mergedItems = collect($items)->groupBy(function($i) {
+                    return $i['product_id'] . '-' . ($i['side'] ?? '') . '-' . ($i['size'] ?? '');
+                })->map(function($group) {
+                    $first = $group->first();
+                    $first['quantity'] = $group->sum('quantity');
+                    $first['free_quantity'] = $group->sum('free_quantity');
+                    return $first;
+                });
+
+                foreach ($mergedItems as $itemData) {
                     $product = Product::findOrFail($itemData['product_id']);
                     $unit = $itemData['unit'] ?? 'Nos';
                     $qty = (int)$itemData['quantity'];

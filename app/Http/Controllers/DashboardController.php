@@ -135,7 +135,14 @@ class DashboardController extends Controller
             if ($distributor) {
                 $retailerOrderQuery->where('distributor_id', $distributor->id);
                 $distributorOrderQuery->where('distributor_id', $distributor->id);
+                
+                // Scope related counts
                 $retailerQuery->where('distributor_id', $distributor->id);
+                $fieldStaffQuery->whereHas('retailers', function($q) use ($distributor) {
+                    $q->where('distributor_id', $distributor->id);
+                });
+                $salesManagerQuery->where('id', $distributor->sales_manager_id);
+                $distributorQuery->where('id', $distributor->id);
 
                 $topRetailers = RetailerOrder::select('retailer_id', DB::raw('COUNT(id) as total_orders'), DB::raw('SUM(total_amount) as total_revenue'))
                     ->where('distributor_id', $distributor->id)
@@ -302,13 +309,13 @@ class DashboardController extends Controller
                 $deliveredAt = $order->delivered_at;
                 
                 if ($order->status === 'delivered' && $deliveredAt) {
-                    $days = $placedAt->diffInDays($deliveredAt);
+                    $days = (int)$placedAt->diffInDays($deliveredAt);
                     $order->supply_chain_track = [
                         'label' => $days . ' days to deliver',
                         'color' => 'success'
                     ];
                 } else {
-                    $days = $placedAt->diffInDays(now());
+                    $days = (int)$placedAt->diffInDays(now());
                     $order->supply_chain_track = [
                         'label' => $days . ' days ' . ($order->status === 'cancelled' ? 'at cancellation' : 'since ordered'),
                         'color' => $order->status === 'cancelled' ? 'danger' : 'info'

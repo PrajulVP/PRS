@@ -146,7 +146,17 @@ class RetailerOrderManagementController extends Controller
                 $totalItems = 0;
                 $totalQuantity = 0;
 
-                foreach ($items as $itemData) {
+                // Merge identical items before processing
+                $mergedItems = collect($items)->groupBy(function($i) {
+                    return $i['product_id'] . '-' . ($i['side'] ?? '') . '-' . ($i['size'] ?? '');
+                })->map(function($group) {
+                    $first = $group->first();
+                    $first['quantity'] = $group->sum('quantity');
+                    $first['free_quantity'] = $group->sum('free_quantity');
+                    return $first;
+                });
+
+                foreach ($mergedItems as $itemData) {
                     $product = Product::find($itemData['product_id']);
                     if (!$product) continue;
 
@@ -281,7 +291,7 @@ class RetailerOrderManagementController extends Controller
         $user = Auth::user();
 
         // Permission check
-        if (!$user->hasAnyRole(['admin', 'superadmin', 'salesmanager', 'retailer']) && !$user->hasPermissionToCategory('retailer_orders', 'view')) {
+        if (!$user->hasAnyRole(['admin', 'superadmin', 'salesmanager', 'retailer', 'distributor', 'fieldstaff']) && !$user->hasPermissionToCategory('retailer_orders', 'view')) {
             abort(403, 'Unauthorized action. You do not have permission to view retailer orders.');
         }
 
@@ -441,8 +451,23 @@ class RetailerOrderManagementController extends Controller
                 $length = $request->input('length', 10);
                 $orders = $query->offset($start)->limit($length)->get();
                 $formattedOrders = $orders->map(function ($order) {
-                    $productSummary = $order->items->map(function ($item) {
-                        $pName = $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product';
+                    $groupedItems = $order->items->groupBy(function($item) {
+                        return $item->product_id . '-' . ($item->side ?? '') . '-' . ($item->size ?? '');
+                    })->map(function($group) {
+                        $first = $group->first();
+                        return (object)[
+                            'product_name' => $first->product_name ?? $first->product->product_name ?? $first->name ?? 'Product',
+                            'quantity' => $group->sum('quantity'),
+                            'free_quantity' => $group->sum('free_quantity'),
+                            'unit' => $first->unit,
+                            'side' => $first->side,
+                            'size' => $first->size,
+                            'product' => $first->product
+                        ];
+                    });
+
+                    $productSummary = $groupedItems->map(function ($item) {
+                        $pName = $item->product_name;
                         
                         $vLabel = array_filter([$item->side, $item->size]);
                         if (!empty($vLabel)) {
@@ -457,7 +482,7 @@ class RetailerOrderManagementController extends Controller
                         if (!empty(trim($pBrand)) && strtoupper(trim($pBrand)) !== 'N/A') {
                             $summary .= ' <span class="text-muted small">('.$pBrand.')</span>';
                         }
-                        $summary .= '<br><span class="small">'.$item->quantity.' '.$item->unit.'</span></div>';
+                        $summary .= '<br><span class="small">'.$item->quantity.' '.($item->unit ?? 'Nos').'</span></div>';
                         return $summary;
                     })->implode('');
 

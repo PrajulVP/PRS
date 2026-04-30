@@ -260,7 +260,12 @@ class UserController extends Controller
             $data['password'] = Hash::make($request->password);
         }
 
-        if ($request->hasFile('profile_pic')) {
+        if ($request->remove_profile_pic == '1') {
+            if ($user->profile_pic) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profile_pic);
+            }
+            $data['profile_pic'] = null;
+        } elseif ($request->hasFile('profile_pic')) {
             // Delete old pic
             if ($user->profile_pic) {
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profile_pic);

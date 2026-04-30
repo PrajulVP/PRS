@@ -198,7 +198,11 @@ class PendingApprovalController extends Controller
                     if (!empty($v)) {
                         $name .= ' [' . implode('/', $v) . ']';
                     }
-                    return $name . ' (' . $i->quantity . ')';
+                    $qtyStr = $i->quantity;
+                    if ($i->free_quantity > 0) {
+                        $qtyStr .= ' + ' . $i->free_quantity . ' Free';
+                    }
+                    return $name . ' (' . $qtyStr . ')';
                 })->implode(', ');
 
                 $res = [
@@ -217,6 +221,7 @@ class PendingApprovalController extends Controller
                             'product_code' => $i->product?->product_code,
                             'generic_name' => $i->product?->generic_name,
                             'quantity' => $i->quantity,
+                            'free_quantity' => $i->free_quantity ?? 0,
                             'unit' => $i->unit ?? 'Strips',
                             'pack' => $i->product?->pack,
                             'strip_size' => $i->product?->strip_size,

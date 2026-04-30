@@ -363,9 +363,14 @@ class AuthApiController extends Controller
             }
         }
 
-        if ($request->hasFile('profile_pic')) {
+        if ($request->remove_profile_pic == '1') {
             if ($user->profile_pic) {
-                \Illuminate\Support\Facades\Storage::delete('public/' . $user->profile_pic);
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profile_pic);
+            }
+            $user->profile_pic = null;
+        } elseif ($request->hasFile('profile_pic')) {
+            if ($user->profile_pic) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profile_pic);
             }
             $path = $request->file('profile_pic')->store('profile_pics', 'public');
             $user->profile_pic = $path;
