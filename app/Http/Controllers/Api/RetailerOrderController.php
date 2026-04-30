@@ -160,9 +160,10 @@ class RetailerOrderController extends Controller
         ]);
 
         $product = Product::findOrFail($request->product_id);
-        $result = $this->computePriceResponse($product, $request->quantity, $request->unit, 'ptr');
+        $result = $this->computePriceResponse($product, $request->quantity, $request->unit, 'ptr', $request->side, $request->size);
 
         return response()->json($result);
+
     }
 
 
@@ -310,7 +311,24 @@ class RetailerOrderController extends Controller
                         $totalStock = DB::table('inventories')
                             ->where('distributor_id', $distributor->id)
                             ->where('product_id', $product->id)
+                            ->when(!empty($iSide), function($q) use ($iSide) {
+                                return $q->where(function($sq) use ($iSide) {
+                                    $sq->where('side', $iSide)
+                                       ->when(strtoupper($iSide) === 'UNIVERSAL', function($ssq) {
+                                           return $ssq->orWhereNull('side');
+                                       });
+                                });
+                            })
+                            ->when(!empty($iSize), function($q) use ($iSize) {
+                                return $q->where(function($sq) use ($iSize) {
+                                    $sq->where('size', $iSize)
+                                       ->when(strtoupper($iSize) === 'UNIVERSAL', function($ssq) {
+                                           return $ssq->orWhereNull('size');
+                                       });
+                                });
+                            })
                             ->sum('stock');
+
 
                         if ($totalStock < $totalQtyNos) {
                             $variantMsg = !empty($vLabel) ? " [" . implode('/', $vLabel) . "]" : "";

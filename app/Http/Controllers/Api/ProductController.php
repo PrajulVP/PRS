@@ -166,21 +166,45 @@ class ProductController extends Controller
 
         $side = $request->query('side');
         $size = $request->query('size');
+        $variant = $request->query('variant');
         $minQuantity = (int)$request->query('quantity', 0);
+
+        // Fallback: If side/size are missing but variant is present, try to split or match it
+        if ((empty($side) && empty($size)) && !empty($variant)) {
+            // Check if variant matches a side (Left/Right/Universal)
+            $upperVariant = strtoupper(trim($variant));
+            if (in_array($upperVariant, ['LEFT', 'RIGHT', 'UNIVERSAL'])) {
+                $side = $variant;
+            } else {
+                // Assume it's a size
+                $size = $variant;
+            }
+        }
 
         // Get current stock levels for this product
         $stockMap = DB::table('inventories')
             ->where('product_id', $product->id)
             ->when(!empty($side), function($q) use ($side) {
-                return $q->where('side', $side);
+                return $q->where(function($sq) use ($side) {
+                    $sq->where('side', $side)
+                       ->when(strtoupper($side) === 'UNIVERSAL', function($ssq) {
+                           return $ssq->orWhereNull('side');
+                       });
+                });
             })
             ->when(!empty($size), function($q) use ($size) {
-                return $q->where('size', $size);
+                return $q->where(function($sq) use ($size) {
+                    $sq->where('size', $size)
+                       ->when(strtoupper($size) === 'UNIVERSAL', function($ssq) {
+                           return $ssq->orWhereNull('size');
+                       });
+                });
             })
             ->selectRaw('distributor_id, SUM(stock) as total_stock')
             ->groupBy('distributor_id')
             ->having('total_stock', '>=', $minQuantity)
             ->pluck('total_stock', 'distributor_id');
+
 
         // Map and filter (Only those with enough stock)
         $distributors = $allDistributors->filter(function ($distributor) use ($stockMap) {

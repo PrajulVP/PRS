@@ -9,7 +9,7 @@ trait CalculatesPrices
     /**
      * Compute detailed price breakdown for a product based on quantity and unit.
      */
-    protected function computePriceResponse(Product $product, $quantity, $unit, $priceField = 'ptr', $variant = null)
+    protected function computePriceResponse(Product $product, $quantity, $unit, $priceField = 'ptr', $side = null, $size = null)
     {
         // Calculate total strips using the shared conversion helper
         $totalQtyStrips = $this->convertQuantityToStrips($product, $quantity, $unit);
@@ -21,7 +21,7 @@ trait CalculatesPrices
         $totalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
         $gstAmount = $totalWithGst - $taxableSubtotal;
 
-        // Fetch available variants from product name or inventory
+        // Fetch available variants
         $availableVariants = $this->getAvailableVariants($product);
         if (empty($availableVariants)) {
             $availableVariants = [];
@@ -35,7 +35,8 @@ trait CalculatesPrices
             'product_name' => $product->product_name,
             'has_variants' => (bool)$product->has_variants,
             'available_variants' => $availableVariants,
-            'selected_variant' => $variant,
+            'selected_side' => $side,
+            'selected_size' => $size,
             'available_units' => $availableUnits,
             'input_quantity' => (float)$quantity,
             'input_unit' => $unit,
@@ -108,6 +109,22 @@ trait CalculatesPrices
      */
     public function getAvailableVariants(Product $product)
     {
+        // 1. Try modern variant_options column first
+        if ($product->has_variants && !empty($product->variant_options)) {
+            $allValues = [];
+            foreach ($product->variant_options as $category => $values) {
+                if (is_array($values)) {
+                    foreach ($values as $val) {
+                        $allValues[] = trim($val);
+                    }
+                }
+            }
+            if (!empty($allValues)) {
+                return array_values(array_unique($allValues));
+            }
+        }
+
+        // 2. Fallback to legacy name extraction
         $pName = $product->product_name ?? '';
         
         // Match content between ( ) or [ ] that contains at least one /
@@ -121,4 +138,5 @@ trait CalculatesPrices
 
         return [];
     }
+
 }
