@@ -453,7 +453,9 @@
                     @php
                         $user = Auth::user();
                         $isSMorFS = $user->hasRole(['salesmanager', 'fieldstaff']);
-                        $defaultStatus = ''; // Default to 'All' as requested
+                        $isDistributor = $user->hasRole('distributor');
+                        // Default to 'processing' for distributors, 'all' for others
+                        $defaultStatus = $isDistributor ? 'processing' : 'all'; 
                     @endphp
                     <li class="nav-item" role="presentation">
                         <button class="nav-link px-4 fw-bold text-muted" id="tab-pending" data-bs-toggle="tab"
@@ -811,10 +813,7 @@
                                         <i class="fa fa-map-marker-alt"></i>
                                         <span id="dist_approve_location_display">--</span>
                                     </div>
-                                    <div class="d-flex justify-content-sm-end gap-2 mt-2 align-items-center">
-                                        <div class="badge" id="dist_approve_status_badge" style="font-size: 0.75rem; padding: 0.4em 0.8em; letter-spacing: 0.5px;">--</div>
-                                        <div class="badge" id="dist_approve_payment_status_badge" style="font-size: 0.75rem; padding: 0.4em 0.8em; letter-spacing: 0.5px; border: 1px solid currentColor; background: transparent;">--</div>
-                                    </div>
+                                    {{-- Badges removed as requested --}}
                                 </div>
                             </div>
                         </div>
@@ -822,17 +821,26 @@
                         <div class="p-4 bg-body-theme">
                             <input type="hidden" id="approve_order_id" name="order_id">
 
-                            <!-- Settlement & Payment Status Information (Read-only) -->
-                            <div class="payment-status-info-card mb-4 p-3 rounded-3 bg-light border d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-1 fw-bold text-main-theme d-flex align-items-center">
-                                        <i class="fa fa-money-check-alt text-primary me-2"></i>
-                                        Current Payment State
-                                    </h6>
-                                    <div class="text-muted small">Managed via the payment toggle in the order table.</div>
-                                </div>
-                                <div id="dist_approve_payment_status_display_container">
-                                    {{-- Badge is updated via JS in the header, but we can also show a status text here if needed --}}
+                            <!-- Settlement & Payment Status Information (Toggle) -->
+                            <div class="payment-status-info-card mb-4 p-3 rounded-3 bg-light border">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1 fw-bold text-main-theme d-flex align-items-center">
+                                            <i class="fa fa-money-check-alt text-primary me-2"></i>
+                                            Current Payment State
+                                        </h6>
+                                        <div class="text-muted small">Update the payment status for this order if required.</div>
+                                    </div>
+                                    <div class="status-badge-group">
+                                        <label class="status-radio-option">
+                                            <input type="radio" name="payment_status" value="paid" id="retailer_modal_pay_paid">
+                                            <span class="status-radio-box">Mark as Paid</span>
+                                        </label>
+                                        <label class="status-radio-option">
+                                            <input type="radio" name="payment_status" value="pending" id="retailer_modal_pay_pending">
+                                            <span class="status-radio-box">Still Pending</span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
 
@@ -843,9 +851,10 @@
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light border-0"><i class="fa fa-hashtag text-muted"></i></span>
-                                    <input type="text" name="invoice_no" id="retailer_invoice_no_input" class="form-control border-0 bg-light shadow-none" 
-                                           placeholder="Enter the official invoice number provided to the retailer" required 
-                                           style="border-radius: 0 12px 12px 0;">
+                                    <input type="text" name="invoice_no" id="retailer_invoice_no_input" 
+                                           class="form-control border-0 bg-light shadow-none" 
+                                           placeholder="Scan invoice below to unlock..." required readonly
+                                           style="border-top-right-radius: 12px; border-bottom-right-radius: 12px;">
                                 </div>
                                 <div class="form-text small text-muted mt-2">
                                     <i class="fa fa-info-circle me-1"></i> This number must be unique for your distributor records.
@@ -2101,8 +2110,13 @@
                     $('#dist_approve_status_badge').text(row.status || 'Pending').removeClass().addClass('badge ' + badgeClass).css('font-size', '0.7rem');
 
                     let payStatus = (row.payment_status || 'pending').toLowerCase();
-                    let payBadgeClass = payStatus === 'paid' ? 'text-success' : 'text-warning';
-                    $('#dist_approve_payment_status_badge').text(payStatus === 'paid' ? 'PAID' : 'UNPAID').removeClass().addClass('badge ' + payBadgeClass).css({'border': '1px solid currentColor', 'background': 'transparent', 'font-size': '0.7rem'});
+                    
+                    // Set modal radio buttons
+                    if (payStatus === 'paid') {
+                        $('#retailer_modal_pay_paid').prop('checked', true);
+                    } else {
+                        $('#retailer_modal_pay_pending').prop('checked', true);
+                    }
 
 
 
@@ -2242,12 +2256,16 @@
                 const file = this.files[0];
                 if (!file) return;
 
+                // Unlock the invoice number field
+                $('#retailer_invoice_no_input').prop('readonly', false).attr('placeholder', 'Enter invoice number...');
+
                 $('#ocr_dropzone').addClass('d-none'); // Hide the dropzone
                 $('#results_loading_spinner').removeClass('d-none'); // Show loading spinner
                 $('#automation_success_state').hide();
                 $('#automation_success_footer').addClass('d-none');
                 $('#automation_error_state').addClass('d-none');
                 $('#batch_allocation_table_container').addClass('d-none');
+                $('#btnSubmitDistributorApprove').prop('disabled', true); // Disable submit during OCR
 
                 let formData = new FormData();
                 formData.append('invoice', file);
@@ -2269,6 +2287,10 @@
                         }, 500);
 
                         if (res.success && res.data) {
+                            // Store data for potential Gatekeeper bypass/retry
+                            $('#retailer_invoice_no_input').data('ocr-data', res.data);
+                            $('#retailer_invoice_no_input').data('items-filled', false);
+
                             let identifiedCount = parseRetailerOCRResponse(res.data);
 
                             if (identifiedCount > 0) {
@@ -2279,16 +2301,34 @@
                                 $('#batch_allocation_table_container').removeClass('d-none'); // Show grid
                                 $('#processed_summary_text').text(`${identifiedCount} products mapped from Invoice.`);
                             } else {
+                                // If identifiedCount is 0, it might be due to a mismatch Gatekeeper
+                                let extracted = $('#retailer_invoice_no_input').data('extracted');
+                                let entered = $('#retailer_invoice_no_input').val().trim().toLowerCase();
+                                
                                 $('#automation_idle_state').hide();
                                 $('#results_loading_spinner').addClass('d-none');
-                                $('#automation_error_state').removeClass('d-none').fadeIn();
-                                $('#batch_allocation_table_container').addClass('d-none');
-                                showToast('warning', 'Mismatched Invoice: No products identified.');
+                                
+                                if (entered && extracted && !isInvoiceMatch(entered, extracted)) {
+                                    // Mismatch Gatekeeper state
+                                    $('#automation_error_state').removeClass('d-none').fadeIn();
+                                    $('#automation_error_state h5').text('Invoice Number Mismatch');
+                                    $('#automation_error_state p').text('Please enter the correct invoice number above to load and verify line items.');
+                                    $('#batch_allocation_table_container').addClass('d-none');
+                                } else {
+                                    // Actual "No products found" error
+                                    $('#automation_error_state').removeClass('d-none').fadeIn();
+                                    $('#automation_error_state h5').text('No Products Identified');
+                                    $('#automation_error_state p').text('The AI could not identify any ordered products in the uploaded invoice.');
+                                    $('#batch_allocation_table_container').addClass('d-none');
+                                    showToast('warning', 'Mismatched Invoice: No products identified.');
+                                }
+                                $('#btnSubmitDistributorApprove').prop('disabled', true); 
                             }
                         } else {
                             $('#automation_idle_state').show();
                             $('#ocr_idle_state').show();
                             showToast('error', 'OCR Failed: Invalid response from server.');
+                            $('#btnSubmitDistributorApprove').prop('disabled', false); // Re-enable on failure
                         }
                     },
                     error: function (xhr) {
@@ -2297,9 +2337,25 @@
                         $('#results_loading_spinner').addClass('d-none');
                         $('#ocr_dropzone').removeClass('d-none');
                         showToast('error', 'OCR Failed: ' + (xhr.responseJSON ? xhr.responseJSON.message : 'Processing error'));
+                        $('#btnSubmitDistributorApprove').prop('disabled', false); // Re-enable on error
                     }
                 });
             });
+
+
+            function isInvoiceMatch(entered, extracted) {
+                if (!entered || !extracted) return false;
+                entered = entered.trim().toLowerCase();
+                extracted = extracted.trim().toLowerCase();
+
+                if (entered === extracted) return true;
+
+                // Normalized match (ignore symbols like / - . and spaces)
+                let normEntered = entered.replace(/[^a-z0-9]/g, '');
+                let normExtracted = extracted.replace(/[^a-z0-9]/g, '');
+
+                return normEntered !== '' && normEntered === normExtracted;
+            }
 
 
             function parseExpiryToDate(expStr) {
@@ -2345,13 +2401,6 @@
             });
 
             function parseRetailerOCRResponse(data) {
-                let identifiedCount = 0;
-                let missingProducts = [];
-                let invoiceProducts = data.line_items || [];
-                let totalInvoiceNet = 0;
-
-                console.log('Retailer AI Invoice Items:', invoiceProducts);
-
                 // Update Metadata visually
                 if (data.invoice_metadata) {
                     const meta = data.invoice_metadata;
@@ -2361,7 +2410,16 @@
 
                     // Validation Logic
                     let enteredInv = $('#retailer_invoice_no_input').val().trim().toLowerCase();
-                    let extractedInv = (meta.invoice_no || '').trim().toLowerCase();
+                    let extractedInvRaw = (meta.invoice_no || meta.invoice_number || '').trim();
+                    let extractedInv = extractedInvRaw.toLowerCase();
+                    
+                    // Auto-fill feature: If field is empty, populate from AI
+                    if (!enteredInv && extractedInvRaw) {
+                        $('#retailer_invoice_no_input').val(extractedInvRaw).addClass('is-valid');
+                        enteredInv = extractedInv;
+                        showToast('info', 'Invoice number auto-filled from scan.');
+                    }
+                    
                     let $valAlert = $('#ai_retailer_validation_alert');
                     let $valMsg = $('#ai_retailer_validation_message');
                     let hasError = false;
@@ -2377,7 +2435,7 @@
                         $valAlert.removeClass('d-none').addClass('alert-danger');
                         $valMsg.text('DUPLICATE INVOICE: This invoice number has already been used by this distributor.');
                         hasError = true;
-                    } else if (enteredInv && extractedInv && enteredInv !== extractedInv) {
+                    } else if (enteredInv && extractedInv && !isInvoiceMatch(enteredInv, extractedInv)) {
                         $valAlert.removeClass('d-none').addClass('alert-warning');
                         $valMsg.text(`MISMATCH: Entered No. (${$('#retailer_invoice_no_input').val()}) does not match Extracted No. (${meta.invoice_no}).`);
                         hasError = true;
@@ -2385,10 +2443,30 @@
 
                     if (hasError) {
                         $('#btnSubmitDistributorApprove').prop('disabled', true);
+                        return 0; // Stop here if mismatch/duplicate
+                    } else if (!enteredInv) {
+                        // GATEKEEPER: Don't load products if number is empty
+                        $('#btnSubmitDistributorApprove').prop('disabled', true);
+                        $('#automation_error_state').removeClass('d-none').show();
+                        $('#automation_error_state h5').text('Invoice Number Required');
+                        $('#automation_error_state p').text('Please enter the invoice number from the document to verify and load the product data.');
+                        $('#batch_allocation_table_container').addClass('d-none');
+                        return 0;
                     } else {
                         $('#btnSubmitDistributorApprove').prop('disabled', false);
+                        return fillRetailerProducts(data);
                     }
                 }
+                return 0;
+            }
+
+            function fillRetailerProducts(data) {
+                let identifiedCount = 0;
+                let missingProducts = [];
+                let invoiceProducts = data.line_items || [];
+                let totalInvoiceNet = 0;
+
+                console.log('Retailer AI Invoice Items:', invoiceProducts);
 
                 $('.product-row').each(function () {
                     let container = $(this);
@@ -2573,6 +2651,7 @@
                     });
                 }
 
+                $('#retailer_invoice_no_input').data('items-filled', true);
                 return identifiedCount;
             }
             $(document).on('input', '#retailer_invoice_no_input', function() {
@@ -2593,13 +2672,43 @@
                     $valAlert.removeClass('d-none').addClass('alert-danger');
                     $valMsg.text('DUPLICATE INVOICE: This invoice number has already been used by this distributor.');
                     hasError = true;
-                } else if (entered && extracted && entered !== extracted) {
+                } else if (entered && extracted && !isInvoiceMatch(entered, extracted)) {
                     $valAlert.removeClass('d-none').addClass('alert-warning');
                     $valMsg.text(`MISMATCH: Entered No. (${$(this).val()}) does not match Extracted No. (${extractedRaw}).`);
                     hasError = true;
                 }
 
-                $('#btnSubmitDistributorApprove').prop('disabled', hasError);
+                // Gatekeeper: If it matches now and wasn't filled, fill it!
+                if (!hasError && entered && !$(this).data('items-filled')) {
+                    let ocrData = $(this).data('ocr-data');
+                    if (ocrData) {
+                        fillRetailerProducts(ocrData);
+                        
+                        // Show success UI
+                        $('#automation_error_state').addClass('d-none');
+                        $('#automation_success_state').fadeIn();
+                        $('#automation_success_footer').removeClass('d-none');
+                        $('#batch_allocation_table_container').removeClass('d-none');
+                    }
+                } else if (!entered || hasError) {
+                    // Hide products if empty or error
+                    $('#batch_allocation_table_container').addClass('d-none');
+                    $('#automation_success_state').hide();
+                    $('#automation_success_footer').addClass('d-none');
+                    
+                    if (!entered) {
+                        $('#automation_error_state').removeClass('d-none').show();
+                        $('#automation_error_state h5').text('Invoice Number Required');
+                        $('#automation_error_state p').text('Please enter the invoice number to load and verify data.');
+                    } else {
+                        $('#automation_error_state').removeClass('d-none').show();
+                        $('#automation_error_state h5').text('Invoice Number Mismatch');
+                        $('#automation_error_state p').text('The entered number does not match the AI scan. Products hidden for safety.');
+                    }
+                    $(this).data('items-filled', false);
+                }
+
+                $('#btnSubmitDistributorApprove').prop('disabled', hasError || !entered);
             });
         });
     </script>
