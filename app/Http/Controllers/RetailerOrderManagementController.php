@@ -478,26 +478,42 @@ class RetailerOrderManagementController extends Controller
                     $productSummary = $groupedItems->map(function ($item) {
                         $pName = $item->product ? $item->product->product_name : $item->product_name;
                         
-                        // If the snapshotted name has brackets and we're using it as fallback, 
-                        // try to strip them to avoid double variant display
-                        if (!$item->product && str_contains($pName, '[')) {
+                        // Clean up product name from any existing brackets to prevent duplication
+                        if (str_contains($pName, '[')) {
                             $pName = trim(explode('[', $pName)[0]);
                         }
                         
                         $vLabel = array_filter([$item->side, $item->size]);
-                        if (!empty($vLabel)) {
-                            $pName .= ' <span class="badge bg-soft-info text-info border-0 px-2" style="font-size: 0.65rem;">' . implode(' / ', $vLabel) . '</span>';
-                        }
-
-                        if ($item->free_quantity > 0) {
-                            $pName .= ' ('.$item->quantity.' + '.$item->free_quantity.' Free)';
-                        }
                         $pBrand = $item->product ? $item->product->brand : null;
-                        $summary = '<div class="mb-1"><span class="fw-bold">'.$pName.'</span>';
-                        if (!empty(trim($pBrand)) && strtoupper(trim($pBrand)) !== 'N/A') {
-                            $summary .= ' <span class="text-muted small">('.$pBrand.')</span>';
+                        
+                        $pPack = $item->product ? $item->product->pack : null;
+                        
+                        $summary = '<div class="product-summary-item mb-2" style="line-height: 1.3; min-width: 350px;">';
+                        $summary .= '<div class="d-flex align-items-center flex-nowrap gap-2" style="white-space: nowrap;">';
+                        $summary .= '<span class="fw-bold text-dark" style="font-size: 0.9rem;">'.$pName.'</span>';
+                        if (!empty(trim($pPack)) && strtoupper(trim($pPack)) !== 'N/A') {
+                            $summary .= '<span class="text-secondary small fw-bold" style="font-size: 0.75rem;">['.$pPack.']</span>';
                         }
-                        $summary .= '<br><span class="small">'.$item->quantity.' '.($item->unit ?? 'Nos').'</span></div>';
+                        if (!empty($vLabel)) {
+                            $summary .= '<span class="text-info fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">' . strtoupper(implode(' / ', $vLabel)) . '</span>';
+                        }
+                        $summary .= '</div>';
+                        
+                        $meta = [];
+                        if (!empty(trim($pBrand)) && strtoupper(trim($pBrand)) !== 'N/A') {
+                            $meta[] = '<span class="text-muted small">('.$pBrand.')</span>';
+                        }
+                        
+                        $qtyText = $item->quantity . ' ' . ($item->unit ?? 'Nos');
+                        if ($item->free_quantity > 0) {
+                            $qtyText .= ' <span class="text-success">(+ ' . $item->free_quantity . ' Free)</span>';
+                        }
+                        $meta[] = '<span class="text-primary fw-bold" style="font-size: 0.8rem;">' . $qtyText . '</span>';
+                        
+                        if (!empty($meta)) {
+                            $summary .= '<div class="d-flex align-items-center gap-2 flex-nowrap mt-1" style="white-space: nowrap;">' . implode('<span class="text-light" style="font-size: 0.8rem;">|</span>', $meta) . '</div>';
+                        }
+                        $summary .= '</div>';
                         return $summary;
                     })->implode('|||');
 

@@ -83,16 +83,16 @@
                     className: 'text-center fw-bold text-muted bg-light-soft text-danger',
                     render: (data, type, row, meta) => meta.row + meta.settings._iDisplayStart + 1
                 },
-                { data: 'entity_name', name: 'entity_name' },
-                { data: 'business', name: 'business', className: 'text-end' },
-                { data: 'outstanding', name: 'outstanding', className: 'text-end fw-bold text-danger' },
-                { data: 'risk_level', name: 'risk_level', className: 'text-center' }
+                { data: 'entity_name', name: 'entity_name', searchable: false },
+                { data: 'business', name: 'business', className: 'text-end', searchable: false },
+                { data: 'outstanding', name: 'outstanding', className: 'text-end fw-bold text-danger', searchable: false },
+                { data: 'risk_level', name: 'risk_level', className: 'text-center', searchable: false }
             ],
-            dom: 'Brtip',
+            dom: '<"row mb-3 align-items-center"<"col-sm-12 col-md-6"B><"col-sm-12 col-md-6 text-end"f>>t<"row mt-3"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
             buttons: [
                 {
                     extend: 'print',
-                    text: '<i class="fa fa-print me-1"></i> Print Report',
+                    text: '<i class="fa fa-print me-1"></i> Print',
                     className: 'btn btn-sm btn-info',
                     orientation: 'landscape',
                     pageSize: 'A4',
@@ -113,7 +113,9 @@
             pageLength: 25,
             order: [[3, 'desc']],
             language: {
-                processing: '<div class="spinner-border text-danger" role="status"></div>'
+                processing: '<div class="spinner-border text-danger" role="status"></div>',
+                search: "_INPUT_",
+                searchPlaceholder: "Search report data..."
             }
         });
 
@@ -142,6 +144,25 @@
         letter-spacing: 0.5px;
     }
     .bg-light-soft { background-color: rgba(231, 76, 60, 0.03) !important; }
+
+    /* Search Filter Styling */
+    .dataTables_filter {
+        display: inline-block;
+        margin-bottom: 0;
+    }
+    .dataTables_filter input {
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+        padding: 6px 12px;
+        width: 250px !important;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+    .dataTables_filter input:focus {
+        border-color: var(--med-primary);
+        box-shadow: 0 0 0 0.2rem rgba(var(--med-primary-rgb), 0.15);
+        outline: none;
+    }
 </style>
 @endpush
 @endsection

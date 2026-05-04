@@ -439,8 +439,23 @@
         }
 
         /* Custom Modal Width */
-        .modal-custom-width {
-            max-width: 800px !important;
+        /* Premium Error Alert Styles */
+        .approval-error-alert {
+            border-left: 5px solid #ef4444 !important;
+            background: rgba(239, 68, 68, 0.05) !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.08) !important;
+        }
+        body.dark-only .approval-error-alert {
+            background: rgba(239, 68, 68, 0.15) !important;
+            border-color: rgba(239, 68, 68, 0.3) !important;
+        }
+        body.dark-only .approval-error-alert .alert-heading {
+            color: #f87171 !important;
+        }
+        body.dark-only .approval-error-alert #retailer_approval_error_message,
+        body.dark-only .approval-error-alert #distributor_approval_error_message {
+            color: #fecaca !important;
         }
     </style>
 
@@ -522,7 +537,7 @@
                             <th>No.</th>
                             <th>Order Code</th>
                             <th>Distributor</th>
-                            <th>Summary</th>
+                            <th style="min-width: 350px;">Summary</th>
                             <th>Total</th>
                             <th>Placed At</th>
                             <th>Status</th>
@@ -784,6 +799,20 @@
 
                         <div class="p-4 bg-body-theme">
                             <input type="hidden" id="process_order_id" name="order_id">
+
+                            <!-- Action Error Alert -->
+                            <div id="distributor_approval_error_alert" class="alert alert-danger d-none mb-4 shadow-sm border-0 animate__animated animate__shakeX approval-error-alert">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3 bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; flex-shrink: 0;">
+                                        <i class="fa fa-exclamation-triangle"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="alert-heading mb-1 fw-bold text-danger">Action Required</h6>
+                                        <div id="distributor_approval_error_message" class="small fw-bold text-dark"></div>
+                                    </div>
+                                    <button type="button" class="btn-close ms-auto" onclick="$(this).closest('.alert').addClass('d-none')"></button>
+                                </div>
+                            </div>
 
                             <!-- Settlement & Payment Status Information (Toggle) -->
                             <div class="payment-status-info-card mb-4 p-3 rounded-3 bg-light border">
@@ -1126,6 +1155,7 @@
                 order: [
                     [0, 'desc']
                 ],
+                autoWidth: false,
                 drawCallback: function (settings) {
                     var api = this.api();
                     api.column(1, {
@@ -1151,27 +1181,42 @@
                     buttons: [{
                         extend: 'copy',
                         className: 'btn btn-secondary btn-sm',
-                        text: '<i class="fa fa-copy"></i> Copy'
+                        text: '<i class="fa fa-copy"></i> Copy',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
                     },
                     {
                         extend: 'csv',
                         className: 'btn btn-info btn-sm text-white',
-                        text: '<i class="fa fa-file-csv"></i> CSV'
+                        text: '<i class="fa fa-file-csv"></i> CSV',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
                     },
                     {
                         extend: 'excel',
                         className: 'btn btn-success btn-sm',
-                        text: '<i class="fa fa-file-excel"></i> Excel'
+                        text: '<i class="fa fa-file-excel"></i> Excel',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
                     },
                     {
                         extend: 'pdf',
                         className: 'btn btn-danger btn-sm',
-                        text: '<i class="fa fa-file-pdf"></i> PDF'
+                        text: '<i class="fa fa-file-pdf"></i> PDF',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
                     },
                     {
                         extend: 'print',
                         className: 'btn btn-dark btn-sm',
-                        text: '<i class="fa fa-print"></i> Print'
+                        text: '<i class="fa fa-print"></i> Print',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
                     }
                     ]
                 },
@@ -1238,21 +1283,27 @@
                     {
                         data: 'distributor_name',
                         render: function (data, type, row) {
-                            return `<span class="fw-bold text-primary" 
-                                              style="cursor: pointer;"
-                                              data-bs-toggle="popover" 
-                                              data-bs-trigger="hover" 
-                                              data-bs-html="true"
-                                              title="Distributor Details"
-                                              data-bs-content="<b>Phone:</b> ${row.distributor_phone || 'N/A'}<br><b>Email:</b> ${row.distributor_email || 'N/A'}<br><b>Address:</b> ${row.distributor_address || 'N/A'}<br><b>GST:</b> ${row.distributor_gst || 'N/A'}<br><b>DL:</b> ${row.distributor_dl || 'N/A'}">
-                                            ${data}
-                                        </span>`;
+                            if (type !== 'display') return data;
+                            return `<span class="fw-bold text-primary">${data}</span>`;
                         }
                     },
-                    { data: 'product_summary', render: d => d.length > 50 ? d.substring(0, 50) + '...' : d },
+                    {
+                        data: 'product_summary',
+                        width: '450px',
+                        render: function (data, type, row) {
+                            if (!data) return '-';
+                            let items = data.split('|||');
+                        if (type !== 'display') {
+                            return items.map(it => it.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim()).join(' | ');
+                        }
+                            let joinedData = items.join('');
+                            return items.join('');
+                        }
+                    },
                     {
                         data: 'total_amount',
-                        render: function (data) {
+                        render: function (data, type) {
+                            if (type !== 'display') return data;
                             return `<span class="fw-bold text-success">₹${data}</span>`;
                         }
                     },
@@ -1260,6 +1311,7 @@
                     {
                         data: 'status',
                         render: function (d, type, row) {
+                            if (type !== 'display') return row.status;
                             let statusRaw = row.status ? row.status.toLowerCase().replace(/ /g, '_') : '';
                             let bgClass = 'bg-secondary';
                             let displayStatus = row.status;
@@ -1281,6 +1333,7 @@
                     {
                         data: 'payment_status',
                         render: function (d, type, row) {
+                            if (type !== 'display') return row.payment_status;
                             let payStatus = row.payment_status ? row.payment_status.toLowerCase() : 'pending';
                             let bgClass = 'bg-secondary';
                             let displayLabel = payStatus.charAt(0).toUpperCase() + payStatus.slice(1);
@@ -1300,6 +1353,7 @@
                     {
                         data: null,
                         visible: isAdmin, // Only visible to Admins
+                        className: 'no-export',
                         orderable: false,
                         render: function (data, type, row) {
                             // Logic for Admins ONLY (since visible: isAdmin)
@@ -1322,6 +1376,7 @@
                     },
                     {
                         data: null,
+                        className: 'no-export',
                         orderable: false,
                         render: function (data, type, row) {
                             let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
@@ -1737,6 +1792,7 @@
                     $('#automation_error_state').addClass('d-none');
                     $('#btn_approve_order').prop('disabled', true);
                     $('#ocr_dropzone').removeClass('has-file');
+                    $('#distributor_approval_error_alert').addClass('d-none');
 
                     // Populate Expected Details (old ID mappings if still needed, but mostly moved to premium header)
                     $('#expected_order_id').text(row.order_code || '--');
@@ -2274,13 +2330,22 @@
                     processData: false,
                     contentType: false,
                     success: function (res) {
-                        $('#processOrderModal').modal('hide');
-                        table.ajax.reload(null, false);
-                        showToast('success', res.success);
-                        if (window.updateSidebarCounts) window.updateSidebarCounts();
+                        if (res.success) {
+                            $('#processOrderModal').modal('hide');
+                            table.ajax.reload(null, false);
+                            showToast('success', res.success);
+                            if (window.updateSidebarCounts) window.updateSidebarCounts();
+                        } else {
+                            $('#distributor_approval_error_message').html(res.error || 'Failed to approve order');
+                            $('#distributor_approval_error_alert').removeClass('d-none').show();
+                            $('#processOrderModal').animate({ scrollTop: 0 }, 'slow');
+                        }
                     },
                     error: function (xhr) {
-                        showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Failed to approve order');
+                        let errMsg = xhr.responseJSON ? xhr.responseJSON.error || xhr.responseJSON.message : 'Failed to approve order';
+                        $('#distributor_approval_error_message').html(errMsg);
+                        $('#distributor_approval_error_alert').removeClass('d-none').show();
+                        $('#processOrderModal').animate({ scrollTop: 0 }, 'slow');
                     },
                     complete: function () {
                         $btn.html(oldHtml).prop('disabled', false);

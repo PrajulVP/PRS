@@ -368,7 +368,7 @@
                                     <th>Distributor</th>
                                 @endif
                                 {{-- <th>Sales Manager</th> Removed --}}
-                                <th>Products</th>
+                                <th style="min-width:350px;">Products</th>
                                 {{-- <th>Items</th> --}}
                                 {{-- <th>Qty</th> --}}
                                 <th>Total</th>
@@ -675,6 +675,7 @@
                 order: [
                     [{{ Auth::user()->hasRole('distributor') ? 6 : 7 }}, 'desc']
                 ],
+                autoWidth: false,
                 ajax: {
                     url: "{{ route('admin.distributor-orders.index') }}",
                     data: function (d) {
@@ -699,40 +700,29 @@
                             data: 'name',
                             name: 'distributor.user.name',
                             render: function(data, type, row) {
-                                return `<span class="fw-bold text-primary entity-info-popover" 
-                                              style="cursor: pointer;"
-                                              data-bs-toggle="popover" 
-                                              data-bs-trigger="hover" 
-                                              data-bs-html="true"
-                                              title="Distributor Details"
-                                              data-bs-content="<b>Phone:</b> ${row.distributor_phone || 'N/A'}<br><b>Email:</b> ${row.distributor_email || 'N/A'}<br><b>Address:</b> ${row.distributor_address || 'N/A'}<br><b>GST:</b> ${row.distributor_gst || 'N/A'}<br><b>DL:</b> ${row.distributor_dl || 'N/A'}">
-                                            ${data}
-                                        </span>`;
+                                if (type !== 'display') return data;
+                                return `<span class="fw-bold text-primary">${data}</span>`;
                             }
                         }, // Distributor Name
                     @endif
                 {
                     data: 'product_summary',
                     name: 'items.product.product_name',
+                    width: '450px',
                     render: function (data, type, row) {
                         if (!data) return '-';
-                        let items = data.split('<br>');
-                        if (items.length > 2) {
-                            let visible = items.slice(0, 2).join('<br>');
-                            return `<div>
-                                                                                                                                                                                            <span class="preview-content">${visible}</span>
-                                                                                                                                                                                            <span class="full-content d-none">${data}</span>
-                                                                                                                                                                                            <br>
-                                                                                                                                                                                            <a href="#" class="small text-primary toggle-more-btn" onclick="event.preventDefault(); let p = $(this).parent(); if(p.find('.full-content').hasClass('d-none')){ p.find('.full-content').removeClass('d-none'); p.find('.preview-content').addClass('d-none'); $(this).text('Show Less'); } else { p.find('.full-content').addClass('d-none'); p.find('.preview-content').removeClass('d-none'); $(this).text('Read More'); }">Read More</a>
-                                                                                                                                                                                        </div>`;
+                        let items = data.split('|||');
+                        if (type !== 'display') {
+                            return items.map(it => it.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim()).join(' | ');
                         }
-                        return data;
+                        return items.join('');
                     }
                 },
                 {
                     data: 'total_amount',
                     name: 'total_amount',
                     render: function (data, type, row) {
+                        if (type !== 'display') return data;
                         return `<span class="fw-bold text-success">₹${data}</span>`;
                     }
                 },
@@ -740,6 +730,7 @@
                     data: 'status',
                     name: 'status',
                     render: function (data, type, row) {
+                        if (type !== 'display') return data;
                         let status = data.toLowerCase();
                         let badgeClass = 'bg-secondary text-white';
                         if (status === 'pending') badgeClass = 'bg-secondary text-white';
@@ -756,6 +747,7 @@
                     data: 'payment_status',
                     name: 'payment_status',
                     render: function (data, type, row) {
+                        if (type !== 'display') return data || 'pending';
                         let status = (data || 'pending').toLowerCase();
                         let badgeClass = 'bg-secondary';
                         if (status === 'paid') badgeClass = 'bg-success text-white';
@@ -772,6 +764,7 @@
                 {
                     data: 'invoice_url',
                     name: 'invoice_url',
+                    className: 'no-export',
                     orderable: false,
                     searchable: false,
                     render: function (data, type, row) {
@@ -794,6 +787,7 @@
                 },
                 {
                     data: 'id',
+                    className: 'no-export',
                     orderable: false,
                     searchable: false,
                     render: function (data, type, row) {
@@ -840,27 +834,42 @@
                     buttons: [{
                         extend: 'copy',
                         className: 'btn btn-secondary btn-sm',
-                        text: '<i class="fa fa-copy"></i> Copy'
+                        text: '<i class="fa fa-copy"></i> Copy',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
                     },
                     {
                         extend: 'csv',
                         className: 'btn btn-info btn-sm text-white',
-                        text: '<i class="fa fa-file-csv"></i> CSV'
+                        text: '<i class="fa fa-file-csv"></i> CSV',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
                     },
                     {
                         extend: 'excel',
                         className: 'btn btn-success btn-sm',
-                        text: '<i class="fa fa-file-excel"></i> Excel'
+                        text: '<i class="fa fa-file-excel"></i> Excel',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
                     },
                     {
                         extend: 'pdf',
                         className: 'btn btn-danger btn-sm',
-                        text: '<i class="fa fa-file-pdf"></i> PDF'
+                        text: '<i class="fa fa-file-pdf"></i> PDF',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
                     },
                     {
                         extend: 'print',
                         className: 'btn btn-dark btn-sm',
-                        text: '<i class="fa fa-print"></i> Print'
+                        text: '<i class="fa fa-print"></i> Print',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
                     }
                     ]
                 },

@@ -72,7 +72,7 @@
           </div>
         </li>
         <li class="sidebar-list">
-          <a class="sidebar-link sidebar-title link-nav {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}" href="{{ route('admin.reports.index') }}">
+          <a class="sidebar-link sidebar-title link-nav {{ request()->routeIs('admin.reports.index') ? 'active' : '' }}" href="{{ route('admin.reports.index') }}">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-charts"></use>
             </svg>
@@ -80,6 +80,17 @@
               <use href="{{ $iconSprite }}#fill-charts"></use>
             </svg><span>Executive Reports</span></a>
         </li>
+        @if (Auth::user()->hasPermissionToCategory('field_staff_reports', 'view') || Auth::user()->hasAnyRole(['admin', 'superadmin']))
+        <li class="sidebar-list">
+          <a class="sidebar-link sidebar-title link-nav {{ request()->routeIs('admin.reports.fieldstaffs') ? 'active' : '' }}" href="{{ route('admin.reports.fieldstaffs') }}">
+            <svg class="stroke-icon">
+              <use href="{{ $iconSprite }}#stroke-user"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{{ $iconSprite }}#fill-user"></use>
+            </svg><span>Field Staff Reports</span></a>
+        </li>
+        @endif
         @endif
 
         @php

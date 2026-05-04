@@ -9,7 +9,7 @@
         </div>
         <div class="d-flex gap-2">
             <button class="btn btn-primary btn-sm rounded-3 shadow-sm px-3" onclick="window.print()">
-                <i class="fa fa-print me-2"></i>Print Report
+                <i class="fa fa-print me-2"></i>Print
             </button>
         </div>
     </div>

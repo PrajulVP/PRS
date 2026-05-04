@@ -437,6 +437,24 @@
             color: var(--med-pending-text, #d97706);
             border-color: var(--med-pending-border, #fef3c7);
         }
+        /* Premium Error Alert Styles */
+        .approval-error-alert {
+            border-left: 5px solid #ef4444 !important;
+            background: rgba(239, 68, 68, 0.05) !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.08) !important;
+        }
+        body.dark-only .approval-error-alert {
+            background: rgba(239, 68, 68, 0.15) !important;
+            border-color: rgba(239, 68, 68, 0.3) !important;
+        }
+        body.dark-only .approval-error-alert .alert-heading {
+            color: #f87171 !important;
+        }
+        body.dark-only .approval-error-alert #retailer_approval_error_message,
+        body.dark-only .approval-error-alert #distributor_approval_error_message {
+            color: #fecaca !important;
+        }
     </style>
     <div class="container-fluid">
         <div class="card shadow-sm border-0 rounded-3">
@@ -515,7 +533,7 @@
                                 <th>No.</th>
                                 <th>Order Code</th>
                                 <th>Retailer</th>
-                                <th>Products</th>
+                                <th style="min-width: 350px;">Products</th>
                                 <th>Total</th>
                                 <th>Placed At</th>
                                 <th>Distributor</th>
@@ -822,6 +840,20 @@
                         <div class="p-4 bg-body-theme">
                             <input type="hidden" id="approve_order_id" name="order_id">
 
+                            <!-- Action Error Alert -->
+                            <div id="retailer_approval_error_alert" class="alert alert-danger d-none mb-4 shadow-sm border-0 animate__animated animate__shakeX approval-error-alert">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3 bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; flex-shrink: 0;">
+                                        <i class="fa fa-exclamation-triangle"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="alert-heading mb-1 fw-bold text-danger">Action Required</h6>
+                                        <div id="retailer_approval_error_message" class="small fw-bold text-dark"></div>
+                                    </div>
+                                    <button type="button" class="btn-close ms-auto" onclick="$(this).closest('.alert').addClass('d-none')"></button>
+                                </div>
+                            </div>
+
                             <!-- Settlement & Payment Status Information (Toggle) -->
                             <div class="payment-status-info-card mb-4 p-3 rounded-3 bg-light border">
                                 <div class="d-flex justify-content-between align-items-center">
@@ -1094,6 +1126,7 @@
                 order: [
                     [0, 'desc']
                 ],
+                autoWidth: false,
                 drawCallback: function (settings) {
                     var api = this.api();
                     api.column(1, {
@@ -1119,27 +1152,42 @@
                     buttons: [{
                         extend: 'copy',
                         className: 'btn btn-secondary btn-sm',
-                        text: '<i class="fa fa-copy"></i> Copy'
+                        text: '<i class="fa fa-copy"></i> Copy',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
                     },
                     {
                         extend: 'csv',
                         className: 'btn btn-info btn-sm text-white',
-                        text: '<i class="fa fa-file-csv"></i> CSV'
+                        text: '<i class="fa fa-file-csv"></i> CSV',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
                     },
                     {
                         extend: 'excel',
                         className: 'btn btn-success btn-sm',
-                        text: '<i class="fa fa-file-excel"></i> Excel'
+                        text: '<i class="fa fa-file-excel"></i> Excel',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
                     },
                     {
                         extend: 'pdf',
                         className: 'btn btn-danger btn-sm',
-                        text: '<i class="fa fa-file-pdf"></i> PDF'
+                        text: '<i class="fa fa-file-pdf"></i> PDF',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
                     },
                     {
                         extend: 'print',
                         className: 'btn btn-dark btn-sm',
-                        text: '<i class="fa fa-print"></i> Print'
+                        text: '<i class="fa fa-print"></i> Print',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
                     }
                     ]
                 },
@@ -1207,28 +1255,29 @@
                     data: 'retailer_name',
                     name: 'retailer.user.name',
                     render: function(data, type, row) {
-                        return `<span class="fw-bold text-primary" 
-                                      style="cursor: pointer;"
-                                      data-bs-toggle="popover" 
-                                      data-bs-trigger="hover" 
-                                      data-bs-html="true"
-                                      title="Retailer Details"
-                                      data-bs-content="<b>Shop:</b> ${row.retailer_name}<br><b>SM:</b> ${row.retailer_sm_name}<br><b>FS:</b> ${row.retailer_fs_name}<br><b>Phone:</b> ${row.retailer_phone}<br><b>GST:</b> ${row.retailer_gst}<br><b>DL:</b> ${row.retailer_dl}">
-                                    ${data}
-                                </span>`;
+                        if (type !== 'display') return data;
+                        return `<span class="fw-bold text-primary">${data}</span>`;
                     }
                 },
                 {
                     data: 'product_summary',
                     name: 'product_summary',
-                    render: function (d) {
-                        return d.length > 50 ? d.substring(0, 50) + '...' : d;
+                    width: '450px',
+                    render: function (data, type, row) {
+                        if (!data) return '-';
+                        let items = data.split('|||');
+                        if (type !== 'display') {
+                            return items.map(it => it.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim()).join(' | ');
+                        }
+                        let joinedData = items.join('');
+                        return items.join('');
                     }
                 },
                 {
                     data: 'total_amount',
                     name: 'total_amount',
-                    render: function(data) {
+                    render: function(data, type) {
+                        if (type !== 'display') return data;
                         return `<span class="fw-bold text-success">₹${data}</span>`;
                     }
                 },
@@ -1241,21 +1290,15 @@
                     name: 'distributor.user.name',
                     visible: isAdmin || isSalesManager,
                     render: function(data, type, row) {
-                        return `<span class="fw-bold text-primary" 
-                                      style="cursor: pointer;"
-                                      data-bs-toggle="popover" 
-                                      data-bs-trigger="hover" 
-                                      data-bs-html="true"
-                                      title="Distributor Details"
-                                      data-bs-content="<b>Phone:</b> ${row.distributor_phone || 'N/A'}<br><b>GST:</b> ${row.distributor_gst || 'N/A'}<br><b>DL:</b> ${row.distributor_dl || 'N/A'}">
-                                    ${data}
-                                </span>`;
+                        if (type !== 'display') return data;
+                        return `<span class="fw-bold text-primary">${data}</span>`;
                     }
                 },
                 {
                     data: 'status',
                     name: 'status',
                     render: function (data, type, row) {
+                        if (type !== 'display') return row.status;
                         let statusRaw = row.status ? row.status.toLowerCase().replace(/ /g, '_') : '';
                         let bgClass = 'bg-secondary text-white';
                         let displayStatus = row.status;
@@ -1283,6 +1326,7 @@
                     data: 'payment_status',
                     name: 'payment_status',
                     render: function (data, type, row) {
+                        if (type !== 'display') return row.payment_status;
                         let payStatus = row.payment_status ? row.payment_status.toLowerCase() : 'pending';
                         let bgClass, displayLabel;
 
@@ -1304,6 +1348,7 @@
                 {
                     data: null,
                     name: 'invoice',
+                    className: 'no-export',
                     orderable: false,
                     searchable: false,
                     render: function (data, type, row) {
@@ -1330,6 +1375,7 @@
                 },
                 {
                     data: null,
+                    className: 'no-export',
                     orderable: false,
                     searchable: false,
                     render: function (data, type, row) {
@@ -1458,12 +1504,16 @@
                                 showConfirmButton: false
                             });
                         } else {
-                            showToast('error', res.error || 'Failed to approve order');
+                            $('#retailer_approval_error_message').html(res.error || 'Failed to approve order');
+                            $('#retailer_approval_error_alert').removeClass('d-none').show();
+                            $('#distributorApproveModal').animate({ scrollTop: 0 }, 'slow');
                         }
                     },
                     error: function (xhr) {
                         let errMsg = xhr.responseJSON ? xhr.responseJSON.error || xhr.responseJSON.message : 'An error occurred during approval.';
-                        showToast('error', errMsg);
+                        $('#retailer_approval_error_message').html(errMsg);
+                        $('#retailer_approval_error_alert').removeClass('d-none').show();
+                        $('#distributorApproveModal').animate({ scrollTop: 0 }, 'slow');
                     },
                     complete: function () {
                         $btn.html(oldHtml).prop('disabled', false);
@@ -2130,6 +2180,7 @@
                     $('#ocr_idle_state').show();
                     $('#batch_allocation_table_container').addClass('d-none');
                     $('#scan_retailer_file_input').val(''); // Clear old file inputs
+                    $('#retailer_approval_error_alert').addClass('d-none');
 
                     $('#distributorApproveModal').modal('show');
 

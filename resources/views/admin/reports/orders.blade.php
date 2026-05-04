@@ -99,6 +99,7 @@
                 { 
                     data: 'retailer_name', 
                     name: 'retailer_name',
+                    searchable: false,
                     render: function(data, type, row) {
                         return `<div class="fw-bold" style="font-size: 0.85rem;">${data}</div><div class="small text-muted">via ${row.distributor_name}</div>`;
                     }
@@ -106,11 +107,12 @@
                 { 
                     data: 'total_quantity', 
                     name: 'total_quantity',
+                    searchable: false,
                     render: function(data, type, row) {
                         return `<div class="fw-bold">${data} Units</div><div class="small text-muted text-nowrap">${row.total_items} SKUs</div>`;
                     }
                 },
-                { data: 'total_amount', name: 'total_amount', className: 'fw-bold text-primary text-end' },
+                { data: 'total_amount', name: 'total_amount', className: 'fw-bold text-primary text-end', searchable: false },
                 { 
                     data: 'payment_status', 
                     name: 'payment_status',
@@ -140,11 +142,11 @@
                     }
                 }
             ],
-            dom: 'Brtip', 
+            dom: '<"row mb-3 align-items-center"<"col-sm-12 col-md-6"B><"col-sm-12 col-md-6 text-end"f>>t<"row mt-3"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>', 
             buttons: [
                 {
                     extend: 'print',
-                    text: '<i class="fa fa-print me-1"></i> Print Report',
+                    text: '<i class="fa fa-print me-1"></i> Print',
                     className: 'btn btn-sm btn-info',
                     orientation: 'landscape',
                     pageSize: 'A4',
@@ -174,7 +176,9 @@
             pageLength: 25,
             order: [[1, 'desc']],
             language: {
-                processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>'
+                processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
+                search: "_INPUT_",
+                searchPlaceholder: "Search report data..."
             }
         });
 
@@ -211,6 +215,25 @@
     #ordersReportTable thead th {
         font-size: 0.75rem !important;
         background-color: var(--med-bg-body) !important;
+    }
+
+    /* Search Filter Styling */
+    .dataTables_filter {
+        display: inline-block;
+        margin-bottom: 0;
+    }
+    .dataTables_filter input {
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+        padding: 6px 12px;
+        width: 250px !important;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+    .dataTables_filter input:focus {
+        border-color: var(--med-primary);
+        box-shadow: 0 0 0 0.2rem rgba(var(--med-primary-rgb), 0.15);
+        outline: none;
     }
 </style>
 @endpush

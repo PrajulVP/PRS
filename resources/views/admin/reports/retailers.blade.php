@@ -89,25 +89,26 @@
                     className: 'text-center fw-bold text-muted bg-light-soft',
                     render: (data, type, row, meta) => meta.row + meta.settings._iDisplayStart + 1
                 },
-                { data: 'shop_details', name: 'shop_details' },
+                { data: 'shop_details', name: 'shop_name' },
                 @role('admin|salesmanager')
-                { data: 'regulatory', name: 'regulatory', className: 'small text-muted' },
+                { data: 'regulatory', name: 'regulatory', className: 'small text-muted', searchable: false },
                 @endrole
-                { data: 'field_staff', name: 'field_staff' },
-                { data: 'total_orders', name: 'total_orders', className: 'text-center' },
+                { data: 'field_staff', name: 'fieldStaff.user.name' },
+                { data: 'total_orders', name: 'total_orders', className: 'text-center', searchable: false },
                 { data: 'top_products', name: 'top_products', orderable: false, searchable: false },
                 { 
                     data: 'total_sales', 
                     name: 'total_sales', 
                     className: 'fw-bold text-success text-end',
+                    searchable: false,
                     render: (data) => '₹' + parseFloat(data ?? 0).toLocaleString(undefined, {minimumFractionDigits: 2})
                 }
             ],
-            dom: 'Brtip',
+            dom: '<"row mb-3 align-items-center"<"col-sm-12 col-md-6"B><"col-sm-12 col-md-6 text-end"f>>t<"row mt-3"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
             buttons: [
                 {
                     extend: 'print',
-                    text: '<i class="fa fa-print me-1"></i> Print Report',
+                    text: '<i class="fa fa-print me-1"></i> Print',
                     className: 'btn btn-sm btn-info',
                     orientation: 'landscape',
                     pageSize: 'A4',
@@ -134,7 +135,9 @@
             pageLength: 20,
             order: [[4, 'desc']],
             language: {
-                processing: '<div class="spinner-border text-success" role="status"></div>'
+                processing: '<div class="spinner-border text-success" role="status"></div>',
+                search: "_INPUT_",
+                searchPlaceholder: "Search report data..."
             }
         });
 
@@ -156,6 +159,25 @@
         letter-spacing: 0.5px;
     }
     .bg-light-soft { background-color: rgba(var(--bs-success-rgb), 0.03) !important; }
+
+    /* Search Filter Styling */
+    .dataTables_filter {
+        display: inline-block;
+        margin-bottom: 0;
+    }
+    .dataTables_filter input {
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+        padding: 6px 12px;
+        width: 250px !important;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+    .dataTables_filter input:focus {
+        border-color: var(--med-primary);
+        box-shadow: 0 0 0 0.2rem rgba(var(--med-primary-rgb), 0.15);
+        outline: none;
+    }
 </style>
 @endpush
 @endsection

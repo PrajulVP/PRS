@@ -70,7 +70,7 @@
                         <i class="fa fa-file-pdf-o"></i> <span>PDF</span>
                     </button>
                     <button type="button" id="exportPrint" class="btn btn-export btn-print"
-                        title="Print Report">
+                        title="Print">
                         <i class="fa fa-print"></i> <span>Print</span>
                     </button>
                 </div>

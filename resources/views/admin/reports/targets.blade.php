@@ -83,19 +83,19 @@
                 },
                 { 
                     data: 'name', 
-                    name: 'name', 
+                    name: 'user.name', 
                     className: 'fw-bold'
                 },
-                { data: 'target_display', name: 'target_display', className: 'text-end' },
-                { data: 'achievement_display', name: 'achievement_display', className: 'text-end fw-bold text-primary' },
+                { data: 'target_display', name: 'target_display', className: 'text-end', searchable: false },
+                { data: 'achievement_display', name: 'achievement_display', className: 'text-end fw-bold text-primary', searchable: false },
                 { data: 'progress_bar', name: 'progress_bar', orderable: false, searchable: false },
-                { data: 'variance', name: 'variance', className: 'text-center' }
+                { data: 'variance', name: 'variance', className: 'text-center', searchable: false }
             ],
-            dom: 'Brtip',
+            dom: '<"row mb-3 align-items-center"<"col-sm-12 col-md-6"B><"col-sm-12 col-md-6 text-end"f>>t<"row mt-3"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
             buttons: [
                 {
                     extend: 'print',
-                    text: '<i class="fa fa-print me-1"></i> Print Report',
+                    text: '<i class="fa fa-print me-1"></i> Print',
                     className: 'btn btn-sm btn-info',
                     orientation: 'landscape',
                     pageSize: 'A4',
@@ -116,7 +116,9 @@
             pageLength: 25,
             order: [[3, 'desc']],
             language: {
-                processing: '<div class="spinner-border text-primary" role="status"></div>'
+                processing: '<div class="spinner-border text-primary" role="status"></div>',
+                search: "_INPUT_",
+                searchPlaceholder: "Search report data..."
             }
         });
 
@@ -138,6 +140,25 @@
         letter-spacing: 0.5px;
     }
     .bg-light-soft { background-color: rgba(0, 73, 122, 0.03) !important; }
+
+    /* Search Filter Styling */
+    .dataTables_filter {
+        display: inline-block;
+        margin-bottom: 0;
+    }
+    .dataTables_filter input {
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+        padding: 6px 12px;
+        width: 250px !important;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+    .dataTables_filter input:focus {
+        border-color: var(--med-primary);
+        box-shadow: 0 0 0 0.2rem rgba(var(--med-primary-rgb), 0.15);
+        outline: none;
+    }
 </style>
 @endpush
 @endsection

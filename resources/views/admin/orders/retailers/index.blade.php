@@ -408,7 +408,7 @@
                                 <th>Order Code</th>
                                 <th>Retailer</th>
                                 <th>Distributor</th>
-                                <th>Products</th>
+                                <th style="min-width: 350px;">Products</th>
                                 <th>Total</th>
                                 <th>Status</th>
                                 <th>Placed At</th>
@@ -686,6 +686,7 @@
 
             var table = $('#orders-table').DataTable({
                 order: [[7, 'desc']],
+                autoWidth: false,
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
                     "<'row mb-4 gy-4 d-flex align-items-center'<'col-12 col-lg-4 d-flex justify-content-center justify-content-lg-start'l><'col-12 col-lg-4 d-flex justify-content-center payment-filter-container'><'col-12 col-lg-4 d-flex justify-content-center justify-content-lg-end'f>>" +
                     "<'row'<'col-sm-12'tr>>" +
@@ -699,27 +700,42 @@
                     buttons: [{
                         extend: 'copy',
                         className: 'btn btn-secondary btn-sm',
-                        text: '<i class="fa fa-copy"></i> Copy'
+                        text: '<i class="fa fa-copy"></i> Copy',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
                     },
                     {
                         extend: 'csv',
                         className: 'btn btn-info btn-sm text-white',
-                        text: '<i class="fa fa-file-csv"></i> CSV'
+                        text: '<i class="fa fa-file-csv"></i> CSV',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
                     },
                     {
                         extend: 'excel',
                         className: 'btn btn-success btn-sm',
-                        text: '<i class="fa fa-file-excel"></i> Excel'
+                        text: '<i class="fa fa-file-excel"></i> Excel',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
                     },
                     {
                         extend: 'pdf',
                         className: 'btn btn-danger btn-sm',
-                        text: '<i class="fa fa-file-pdf"></i> PDF'
+                        text: '<i class="fa fa-file-pdf"></i> PDF',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
                     },
                     {
                         extend: 'print',
                         className: 'btn btn-dark btn-sm',
-                        text: '<i class="fa fa-print"></i> Print'
+                        text: '<i class="fa fa-print"></i> Print',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
                     }
                     ]
                 },
@@ -770,41 +786,30 @@
                     name: 'distributor_name',
                     render: function (data, type, row) {
                         if (!data || data === 'N/A') return '-';
-                        return `<span class="fw-bold entity-info-popover" 
-                                      style="cursor: pointer; color: var(--med-text-main);"
-                                      data-bs-toggle="popover" 
-                                      data-bs-trigger="hover" 
-                                      data-bs-html="true"
-                                      title="Distributor Details"
-                                      data-bs-content="<b>Phone:</b> ${row.distributor_phone || 'N/A'}<br><b>GST:</b> ${row.distributor_gst || 'N/A'}<br><b>DL:</b> ${row.distributor_dl || 'N/A'}">
-                                    ${data}
-                                </span>`;
+                        if (type !== 'display') return data;
+                        return `<span class="fw-bold" style="color: var(--med-text-main);">${data}</span>`;
                     }
                 },
                 {
                     data: 'product_summary',
                     name: 'product_summary',
+                    width: '450px',
                     orderable: false,
                     render: function (data, type, row) {
                         if (!data) return '-';
                         let items = data.split('|||');
-                        let joinedData = items.join('');
-                        if (items.length > 2) {
-                            let visible = items.slice(0, 2).join('');
-                            return `<div>
-                                        <span class="preview-content">${visible}</span>
-                                        <span class="full-content d-none">${joinedData}</span>
-                                        <br>
-                                        <a href="#" class="small text-primary toggle-more-btn" onclick="event.preventDefault(); let p = $(this).parent(); if(p.find('.full-content').hasClass('d-none')){ p.find('.full-content').removeClass('d-none'); p.find('.preview-content').addClass('d-none'); $(this).text('Show Less'); } else { p.find('.full-content').addClass('d-none'); p.find('.preview-content').removeClass('d-none'); $(this).text('Read More'); }">Read More</a>
-                                    </div>`;
+                        if (type !== 'display') {
+                            return items.map(it => it.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim()).join(' | ');
                         }
-                        return joinedData;
+                        let joinedData = items.join('');
+                        return items.join('');
                     }
                 },
                 {
                     data: 'total_amount',
                     name: 'total_amount',
-                    render: function (data) {
+                    render: function (data, type) {
+                        if (type !== 'display') return data;
                         return `<span class="fw-bold text-success">₹${data}</span>`;
                     }
                 },
@@ -812,6 +817,7 @@
                     data: 'status',
                     name: 'status',
                     render: function (data, type, row) {
+                        if (type !== 'display') return data;
                         let status = (data || '').toLowerCase();
                         let badgeClass = 'bg-secondary text-white';
                         if (status === 'pending') badgeClass = 'bg-secondary text-white';
@@ -832,6 +838,7 @@
                     data: 'payment_status',
                     name: 'payment_status',
                     render: function (data, type, row) {
+                        if (type !== 'display') return data || 'pending';
                         let status = (data || 'pending').toLowerCase();
                         let badgeClass = 'bg-secondary';
                         if (status === 'paid') badgeClass = 'bg-success text-white';
@@ -844,6 +851,7 @@
                 {
                     data: 'invoice_url',
                     name: 'invoice_url',
+                    className: 'no-export',
                     orderable: false,
                     searchable: false,
                     render: function (data, type, row) {
@@ -860,7 +868,9 @@
                 },
                 {
                     data: null,
+                    className: 'no-export',
                     orderable: false,
+                    searchable: false,
                     render: function (d, t, row) {
                         let btns = `<div class="action-buttons">`;
                         btns += `<button class="btn btn-info btn-sm view-btn" title="View Details"><i class="fa fa-eye"></i></button>`;

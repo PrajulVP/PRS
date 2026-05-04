@@ -193,17 +193,46 @@ class PendingApprovalController extends Controller
             $formatted = collect($data)->map(function ($item) use ($viewType) {
                 // Common Order Formatting
                 $productSummary = $item->items->map(function ($i) {
-                    $name = $i->product?->product_name ?? 'N/A';
-                    $v = array_filter([$i->side, $i->size]);
-                    if (!empty($v)) {
-                        $name .= ' [' . implode('/', $v) . ']';
+                    $pName = $i->product?->product_name ?? 'N/A';
+                    
+                    // Clean up product name from any existing brackets to prevent duplication
+                    if (str_contains($pName, '[')) {
+                        $pName = trim(explode('[', $pName)[0]);
                     }
-                    $qtyStr = $i->quantity;
-                    if ($i->free_quantity > 0) {
-                        $qtyStr .= ' + ' . $i->free_quantity . ' Free';
+                    
+                    $vLabel = array_filter([$i->side, $i->size]);
+                    $pBrand = $i->product?->brand ?? null;
+                    
+                    $pPack = $i->product?->pack ?? null;
+                    
+                    $summary = '<div class="product-summary-item mb-2" style="line-height: 1.3; min-width: 350px;">';
+                    $summary .= '<div class="d-flex align-items-center flex-nowrap gap-2" style="white-space: nowrap;">';
+                    $summary .= '<span class="fw-bold text-dark" style="font-size: 0.9rem;">'.$pName.'</span>';
+                    if (!empty(trim($pPack)) && strtoupper(trim($pPack)) !== 'N/A') {
+                        $summary .= '<span class="text-secondary small fw-bold" style="font-size: 0.75rem;">['.$pPack.']</span>';
                     }
-                    return $name . ' (' . $qtyStr . ')';
-                })->implode(', ');
+                    if (!empty($vLabel)) {
+                        $summary .= '<span class="text-info fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">' . strtoupper(implode(' / ', $vLabel)) . '</span>';
+                    }
+                    $summary .= '</div>';
+                    
+                    $meta = [];
+                    if (!empty(trim($pBrand)) && strtoupper(trim($pBrand)) !== 'N/A') {
+                        $meta[] = '<span class="text-muted small">('.$pBrand.')</span>';
+                    }
+                    
+                    $qtyStr = $i->quantity . ' ' . ($i->unit ?? 'Nos');
+                    if (($i->free_quantity ?? 0) > 0) {
+                        $qtyStr .= ' <span class="text-success">(+ ' . $i->free_quantity . ' Free)</span>';
+                    }
+                    $meta[] = '<span class="text-primary fw-bold" style="font-size: 0.8rem;">' . $qtyStr . '</span>';
+                    
+                    if (!empty($meta)) {
+                        $summary .= '<div class="d-flex align-items-center gap-2 flex-nowrap mt-1" style="white-space: nowrap;">' . implode('<span class="text-light" style="font-size: 0.8rem;">|</span>', $meta) . '</div>';
+                    }
+                    $summary .= '</div>';
+                    return $summary;
+                })->implode('|||');
 
                 $res = [
                     'id' => $item->id,
