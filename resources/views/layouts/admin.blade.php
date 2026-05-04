@@ -159,6 +159,12 @@
         .border-theme { border-color: var(--med-border) !important; }
         .bg-dark-red { background-color: #8b0000 !important; color: #ffffff !important; }
 
+        /* Toast Color Fallbacks */
+        .bg-error { background-color: #ef4444 !important; }
+        .bg-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; }
+        .bg-info { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important; }
+        .bg-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important; }
+
         body.dark-only .text-dark {
             color: var(--med-text-main) !important;
         }
@@ -1480,25 +1486,41 @@
         setInterval(fetchLiveNotifications, 15000); // 15 seconds
 
         window.showToast = function(type, message) {
+            if (!message || message === 'undefined') return;
+            
             const toastContainer = document.querySelector('.toast-container') || (function() {
                 const container = document.createElement('div');
-                container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-                container.style.zIndex = '9999';
+                container.className = 'toast-container position-fixed top-0 end-0 p-3';
+                container.style.zIndex = '10000';
                 document.body.appendChild(container);
                 return container;
             })();
 
             const toast = document.createElement('div');
-            toast.className = `toast align-items-center text-white bg-${type} border-0 show mb-2`;
+            // Support both 'error' and 'danger'
+            const bgClass = type === 'error' ? 'bg-error' : `bg-${type}`;
+            
+            toast.className = `toast align-items-center text-white ${bgClass} border-0 show mb-3 shadow-lg`;
+            toast.style.borderRadius = '12px';
+            toast.style.minWidth = '280px';
+            toast.style.backdropFilter = 'blur(10px)';
+            toast.style.boxShadow = '0 10px 30px rgba(0,0,0,0.15)';
             toast.role = 'alert';
+            
+            const icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'exclamation-circle' : 'info-circle');
+            
             toast.innerHTML = `
-                <div class="d-flex">
-                    <div class="toast-body">${message}</div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                <div class="d-flex p-3 align-items-center">
+                    <div class="me-3 fs-5"><i class="fa fa-${icon}"></i></div>
+                    <div class="toast-body p-0 fw-bold" style="font-size: 0.85rem; letter-spacing: 0.3px;">${message}</div>
+                    <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="toast"></button>
                 </div>
             `;
             toastContainer.appendChild(toast);
-            setTimeout(() => toast.remove(), 4000);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 500);
+            }, 5000);
         };
 
     </script>

@@ -128,9 +128,11 @@
             scrollbar-width: none;
             padding-bottom: 2px;
         }
+
         .nav-tabs::-webkit-scrollbar {
             display: none;
         }
+
         .nav-tabs .nav-item {
             flex-shrink: 0;
         }
@@ -142,6 +144,7 @@
                 gap: 10px;
                 margin-bottom: 0;
             }
+
             .dataTables_filter input {
                 width: 100% !important;
                 max-width: 200px;
@@ -164,19 +167,24 @@
         }
 
         @media (max-width: 767px) {
-            .dataTables_filter, .dataTables_length {
+
+            .dataTables_filter,
+            .dataTables_length {
                 text-align: center !important;
                 margin-bottom: 10px;
             }
+
             .dataTables_filter input {
                 max-width: 100% !important;
                 margin-left: 0 !important;
             }
+
             .segmented-control {
                 width: 100% !important;
                 max-width: 280px;
                 margin: 10px auto !important;
             }
+
             .payment-filter-container {
                 justify-content: center !important;
                 margin: 15px 0 !important;
@@ -450,15 +458,20 @@
                     </li>
                     @php
                         $user = Auth::user();
-                        $defaultStatus = '';
+                        $defaultStatus = 'all'; // Default
+                        if ($user->hasAnyRole(['admin', 'superadmin'])) {
+                            $defaultStatus = 'processing';
+                        } elseif ($user->hasRole('salesmanager')) {
+                            $defaultStatus = 'pending';
+                        }
                     @endphp
                     <li class="nav-item" role="presentation">
                         <button class="nav-link px-4 fw-bold text-muted" id="tab-pending" data-bs-toggle="tab"
                             data-status="pending" type="button" role="tab">Pending</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link px-4 fw-bold text-muted" id="tab-processing"
-                            data-bs-toggle="tab" data-status="processing" type="button" role="tab">Processing</button>
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-processing" data-bs-toggle="tab"
+                            data-status="processing" type="button" role="tab">Processing</button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link px-4 fw-bold text-muted" id="tab-approved" data-bs-toggle="tab"
@@ -505,6 +518,7 @@
                 <table class="table table-striped table-hover" id="distributor-approval-table">
                     <thead>
                         <tr>
+                            <th style="display:none;">ID</th>
                             <th>No.</th>
                             <th>Order Code</th>
                             <th>Distributor</th>
@@ -529,8 +543,8 @@
                 <div class="modal-body p-0">
                     <!-- Order Summary Header -->
                     <div class="order-summary-header">
-                        <button type="button" class="btn-close position-absolute top-0 end-0 m-3"
-                            data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
                         <div class="row align-items-center">
                             <div class="col-sm-7">
                                 <div class="d-flex align-items-center mb-2">
@@ -544,11 +558,15 @@
                                 </div>
                             </div>
                             <div class="col-sm-5 text-sm-end">
-                                <div class="text-muted-theme small text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Distributor Information</div>
+                                <div class="text-muted-theme small text-uppercase fw-bold mb-1"
+                                    style="font-size: 0.65rem; letter-spacing: 0.5px;">Distributor Information</div>
                                 <h5 class="fw-bold text-main-theme mb-2" id="view_distributor">--</h5>
                                 <div class="d-flex justify-content-sm-end gap-2 align-items-center">
-                                    <div class="badge" id="view_status_badge" style="font-size: 0.7rem; padding: 0.4em 0.8em; letter-spacing: 0.5px;">--</div>
-                                    <div class="badge" id="view_payment_status_badge" style="font-size: 0.7rem; padding: 0.4em 0.8em; letter-spacing: 0.5px; border: 1px solid currentColor; background: transparent;">--</div>
+                                    <div class="badge" id="view_status_badge"
+                                        style="font-size: 0.7rem; padding: 0.4em 0.8em; letter-spacing: 0.5px;">--</div>
+                                    <div class="badge" id="view_payment_status_badge"
+                                        style="font-size: 0.7rem; padding: 0.4em 0.8em; letter-spacing: 0.5px; border: 1px solid currentColor; background: transparent;">
+                                        --</div>
                                 </div>
                             </div>
                         </div>
@@ -574,7 +592,8 @@
                             </div>
                         </div>
 
-                        <div id="view_notes_container" class="mt-3 p-3 bg-body-theme rounded-3 d-none border border-light-subtle">
+                        <div id="view_notes_container"
+                            class="mt-3 p-3 bg-body-theme rounded-3 d-none border border-light-subtle">
                             <div class="text-muted-theme small text-uppercase fw-bold mb-1">Notes</div>
                             <p id="view_notes" class="text-main-theme mb-0 small"></p>
                         </div>
@@ -609,12 +628,16 @@
                                     </div>
                                 </div>
                                 <div class="col-sm-5 text-sm-end">
-                                    <div class="text-muted-theme small text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Distributor Information
+                                    <div class="text-muted-theme small text-uppercase fw-bold mb-1"
+                                        style="font-size: 0.65rem; letter-spacing: 0.5px;">Distributor Information
                                     </div>
                                     <h5 class="fw-bold text-main-theme mb-1" id="approve_distributor_display">--</h5>
                                     <div class="d-flex justify-content-sm-end gap-2 align-items-center mb-1">
-                                        <div class="badge" id="approve_status_badge" style="font-size: 0.7rem; padding: 0.4em 0.8em; letter-spacing: 0.5px;">--</div>
-                                        <div class="badge" id="approve_payment_status_badge" style="font-size: 0.7rem; padding: 0.4em 0.8em; letter-spacing: 0.5px; border: 1px solid currentColor; background: transparent;">--</div>
+                                        <div class="badge" id="approve_status_badge"
+                                            style="font-size: 0.7rem; padding: 0.4em 0.8em; letter-spacing: 0.5px;">--</div>
+                                        <div class="badge" id="approve_payment_status_badge"
+                                            style="font-size: 0.7rem; padding: 0.4em 0.8em; letter-spacing: 0.5px; border: 1px solid currentColor; background: transparent;">
+                                            --</div>
                                     </div>
                                     <div class="retailer-detail-item justify-content-sm-end">
                                         <i class="fa fa-map-marker-alt"></i>
@@ -679,34 +702,43 @@
                             <i class="fa fa-times-circle fs-4 text-white"></i>
                         </div>
                         <div>
-                            <h5 class="modal-title fw-bold text-white mb-0" style="color: #ffffff !important;">Reject Order</h5>
-                            <p class="small text-white text-opacity-85 mb-0" id="reject_order_code_display" style="color: rgba(255,255,255,0.85) !important;"></p>
+                            <h5 class="modal-title fw-bold text-white mb-0" style="color: #ffffff !important;">Reject Order
+                            </h5>
+                            <p class="small text-white text-opacity-85 mb-0" id="reject_order_code_display"
+                                style="color: rgba(255,255,255,0.85) !important;"></p>
                         </div>
                     </div>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
                 <form id="rejectOrderForm">
                     <div class="modal-body p-4">
                         <input type="hidden" id="reject_order_id" name="order_id">
-                        
-                        <div class="p-3 rounded-3 mb-4 d-flex align-items-start bg-danger-subtle border border-danger border-opacity-25">
+
+                        <div
+                            class="p-3 rounded-3 mb-4 d-flex align-items-start bg-danger-subtle border border-danger border-opacity-25">
                             <i class="fa fa-exclamation-triangle text-danger mt-1 me-3"></i>
                             <div>
                                 <h6 class="fw-bold mb-1 text-danger-emphasis">Confirm Rejection</h6>
-                                <p class="text-body-secondary small mb-0">This order will be marked as rejected and the distributor will be notified. This action cannot be undone.</p>
+                                <p class="text-body-secondary small mb-0">This order will be marked as rejected and the
+                                    distributor will be notified. This action cannot be undone.</p>
                             </div>
                         </div>
-                        
+
                         <div class="mb-0">
-                            <label class="form-label fw-bold text-main-theme small text-uppercase">Reason for Rejection <span class="text-danger">*</span></label>
-                            <textarea class="form-control border-0 bg-body-theme shadow-none text-main-theme" name="reason" rows="4" required
-                                placeholder="E.g., Stock unavailable, credit limit exceeded, invalid order details..." 
+                            <label class="form-label fw-bold text-main-theme small text-uppercase">Reason for Rejection
+                                <span class="text-danger">*</span></label>
+                            <textarea class="form-control border-0 bg-body-theme shadow-none text-main-theme" name="reason"
+                                rows="4" required
+                                placeholder="E.g., Stock unavailable, credit limit exceeded, invalid order details..."
                                 style="border-radius: 12px; resize: none;"></textarea>
                         </div>
                     </div>
                     <div class="modal-footer border-0 px-4 pb-4 pt-0">
-                        <button type="button" class="btn btn-link text-muted fw-bold text-decoration-none px-4" data-bs-dismiss="modal">Go Back</button>
-                        <button type="submit" class="btn px-4 py-2 fw-bold shadow-sm" style="border-radius: 10px; background-color: #b91c1c; color: #fff;">
+                        <button type="button" class="btn btn-link text-muted fw-bold text-decoration-none px-4"
+                            data-bs-dismiss="modal">Go Back</button>
+                        <button type="submit" class="btn px-4 py-2 fw-bold shadow-sm"
+                            style="border-radius: 10px; background-color: #b91c1c; color: #fff;">
                             Confirm Rejection
                         </button>
                     </div>
@@ -737,7 +769,8 @@
                                     </div>
                                 </div>
                                 <div class="col-sm-5 text-sm-end">
-                                    <div class="text-muted-theme small text-uppercase fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Distributor Information
+                                    <div class="text-muted-theme small text-uppercase fw-bold mb-1"
+                                        style="font-size: 0.65rem; letter-spacing: 0.5px;">Distributor Information
                                     </div>
                                     <h5 class="fw-bold text-main-theme mb-1" id="process_distributor_display">--</h5>
                                     {{-- Status badges removed as requested --}}
@@ -760,7 +793,8 @@
                                             <i class="fa fa-money-check-alt text-primary me-2"></i>
                                             Current Payment State
                                         </h6>
-                                        <div class="text-muted-theme small">Update the payment status for this order if required.</div>
+                                        <div class="text-muted-theme small">Update the payment status for this order if
+                                            required.</div>
                                     </div>
                                     <div class="status-badge-group">
                                         <label class="status-radio-option">
@@ -768,7 +802,8 @@
                                             <span class="status-radio-box">Mark as Paid</span>
                                         </label>
                                         <label class="status-radio-option">
-                                            <input type="radio" name="payment_status" value="pending" id="modal_pay_pending">
+                                            <input type="radio" name="payment_status" value="pending"
+                                                id="modal_pay_pending">
                                             <span class="status-radio-box">Still Pending</span>
                                         </label>
                                     </div>
@@ -781,10 +816,12 @@
                                     Distributor Invoice Number <span class="text-danger">*</span>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light border-0"><i class="fa fa-hashtag text-muted"></i></span>
-                                    <input type="text" name="invoice_no" id="invoice_no_input" class="form-control border-0 bg-light shadow-none" 
-                                           placeholder="Scan invoice below to unlock..." required readonly
-                                           style="border-radius: 0 12px 12px 0;">
+                                    <span class="input-group-text bg-light border-0"><i
+                                            class="fa fa-hashtag text-muted"></i></span>
+                                    <input type="text" name="invoice_no" id="invoice_no_input"
+                                        class="form-control border-0 bg-light shadow-none"
+                                        placeholder="Scan invoice below to unlock..." required readonly
+                                        style="border-radius: 0 12px 12px 0;">
                                 </div>
                                 <div class="form-text small text-muted mt-2">
                                     <i class="fa fa-info-circle me-1"></i> This number must be unique for this distributor.
@@ -865,7 +902,8 @@
                                         <div id="verification_table_footer" class="invoice-list-footer bg-light d-none"
                                             style="font-size: 0.7rem;">
                                             <div class="d-flex w-100 justify-content-between align-items-center">
-                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="$('#scan_file_input').val('').click()">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                    onclick="$('#scan_file_input').val('').click()">
                                                     <i class="fa fa-sync me-1"></i> Re-scan / Different File
                                                 </button>
                                                 <div class="d-flex align-items-center gap-3">
@@ -909,8 +947,9 @@
                         </div>
                     </div>
                     <div class="modal-footer border-0 px-4 pb-4 pt-0">
-                        <button type="button" class="btn btn-link text-muted fw-bold text-decoration-none px-4" data-bs-dismiss="modal">Go Back</button>
-                        <button type="submit" id="btn_approve_order" class="btn btn-primary px-5 py-2 fw-bold shadow-sm" 
+                        <button type="button" class="btn btn-link text-muted fw-bold text-decoration-none px-4"
+                            data-bs-dismiss="modal">Go Back</button>
+                        <button type="submit" id="btn_approve_order" class="btn btn-primary px-5 py-2 fw-bold shadow-sm"
                             style="border-radius: 12px; background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);">
                             Confirm & Approve Order
                         </button>
@@ -1053,7 +1092,8 @@
                         </div>
                     </div>
                     <div class="modal-footer border-0 pt-0">
-                        <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-link text-muted text-decoration-none"
+                            data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary fw-bold px-4">Update</button>
                     </div>
                 </form>
@@ -1079,16 +1119,16 @@
             $('#removeInvoiceConfirmModal').appendTo("body");
 
             const INITIAL_STATUS = "{{ $defaultStatus }}";
-            window.currentStatus = INITIAL_STATUS;
+            window.currentStatus = INITIAL_STATUS; // Will be refined in initComplete or use manual fallback if needed
             window.initialTabSelected = false;
 
             var table = $('#distributor-approval-table').DataTable({
                 order: [
-                    [5, 'desc']
+                    [0, 'desc']
                 ],
                 drawCallback: function (settings) {
                     var api = this.api();
-                    api.column(0, {
+                    api.column(1, {
                         search: 'applied',
                         order: 'applied'
                     }).nodes().each(function (cell, i) {
@@ -1145,10 +1185,11 @@
                     // This ensures the correct tab is marked active and internal state is synced
                     const $targetTab = $('#tab-' + INITIAL_STATUS);
                     if ($targetTab.length) {
+                        window.currentStatus = $targetTab.attr('data-status') || '';
                         const tabTrigger = bootstrap.Tab.getOrCreateInstance($targetTab[0]);
                         tabTrigger.show();
                     }
-                    
+
                     $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
                         $('#orderStatusTabs .nav-link').removeClass('active text-primary border-bottom-0').addClass('text-muted');
                         $(this).removeClass('text-muted').addClass('active text-primary border-bottom-0');
@@ -1169,19 +1210,24 @@
                     dataSrc: function (json) {
                         // Logic to switch active tab if current is empty and others have data
                         if (json.counts && json.data.length === 0 && !window.initialTabSelected) {
-                                if (json.counts.processing > 0) {
-                                    $('#tab-processing').tab('show');
-                                } else if (json.counts.pending > 0) {
-                                    $('#tab-pending').tab('show');
-                                } else if (json.counts.all > 0) {
-                                    $('#tab-all').tab('show');
-                                }
-                                window.initialTabSelected = true;
+                            if (json.counts.processing > 0) {
+                                $('#tab-processing').tab('show');
+                            } else if (json.counts.pending > 0) {
+                                $('#tab-pending').tab('show');
+                            } else if (json.counts.all > 0) {
+                                $('#tab-all').tab('show');
+                            }
+                            window.initialTabSelected = true;
                         }
                         return json.data;
                     }
                 },
                 columns: [
+                    {
+                        data: 'id',
+                        visible: false,
+                        searchable: false
+                    },
                     {
                         data: null,
                         defaultContent: '',
@@ -1189,24 +1235,24 @@
                         searchable: false
                     },
                     { data: 'order_code', render: (d, t, r) => d },
-                    { 
+                    {
                         data: 'distributor_name',
-                        render: function(data, type, row) {
+                        render: function (data, type, row) {
                             return `<span class="fw-bold text-primary" 
-                                          style="cursor: pointer;"
-                                          data-bs-toggle="popover" 
-                                          data-bs-trigger="hover" 
-                                          data-bs-html="true"
-                                          title="Distributor Details"
-                                          data-bs-content="<b>Phone:</b> ${row.distributor_phone || 'N/A'}<br><b>Email:</b> ${row.distributor_email || 'N/A'}<br><b>Address:</b> ${row.distributor_address || 'N/A'}<br><b>GST:</b> ${row.distributor_gst || 'N/A'}<br><b>DL:</b> ${row.distributor_dl || 'N/A'}">
-                                        ${data}
-                                    </span>`;
+                                              style="cursor: pointer;"
+                                              data-bs-toggle="popover" 
+                                              data-bs-trigger="hover" 
+                                              data-bs-html="true"
+                                              title="Distributor Details"
+                                              data-bs-content="<b>Phone:</b> ${row.distributor_phone || 'N/A'}<br><b>Email:</b> ${row.distributor_email || 'N/A'}<br><b>Address:</b> ${row.distributor_address || 'N/A'}<br><b>GST:</b> ${row.distributor_gst || 'N/A'}<br><b>DL:</b> ${row.distributor_dl || 'N/A'}">
+                                            ${data}
+                                        </span>`;
                         }
                     },
                     { data: 'product_summary', render: d => d.length > 50 ? d.substring(0, 50) + '...' : d },
-                    { 
+                    {
                         data: 'total_amount',
-                        render: function(data) {
+                        render: function (data) {
                             return `<span class="fw-bold text-success">₹${data}</span>`;
                         }
                     },
@@ -1489,7 +1535,7 @@
 
                 let payStatus = (row.payment_status || 'pending').toLowerCase();
                 let payBadgeClass = payStatus === 'paid' ? 'text-success' : 'text-warning';
-                $('#view_payment_status_badge').text((payStatus === 'paid' ? 'PAID' : 'UNPAID')).removeClass().addClass('badge ' + payBadgeClass).css({'border': '1px solid currentColor', 'background': 'transparent', 'font-size': '0.7rem'});
+                $('#view_payment_status_badge').text((payStatus === 'paid' ? 'PAID' : 'UNPAID')).removeClass().addClass('badge ' + payBadgeClass).css({ 'border': '1px solid currentColor', 'background': 'transparent', 'font-size': '0.7rem' });
 
                 // Notes visibility
                 if (row.delivery_notes && row.delivery_notes !== '-' && row.delivery_notes !== 'No notes') {
@@ -1505,22 +1551,22 @@
                 if (row.items && row.items.length) {
                     row.items.forEach(item => {
                         let variantInfo = '';
-                    if (item.side || item.size) {
-                        variantInfo = `<span class="variant-highlight ms-2">${[item.side, item.size].filter(v => v).join(' / ')}</span>`;
-                    }
+                        if (item.side || item.size) {
+                            variantInfo = `<span class="variant-highlight ms-2">${[item.side, item.size].filter(v => v).join(' / ')}</span>`;
+                        }
 
-                    list.append(`
-                        <div class="invoice-list-row p-2">
-                            <div style="flex: 2;" class="fw-bold text-main-theme small ps-2">
-                                ${item.product_name}${variantInfo}
+                        list.append(`
+                            <div class="invoice-list-row p-2">
+                                <div style="flex: 2;" class="fw-bold text-main-theme small ps-2">
+                                    ${item.product_name}${variantInfo}
+                                </div>
+                                <div style="flex: 1;" class="fw-bold text-primary text-center">
+                                    ${item.quantity} ${item.unit || 'Nos'}
+                                    ${item.free_quantity > 0 ? `<div class="text-success small fw-bold">+${item.free_quantity} Free</div>` : ''}
+                                </div>
+                                <div style="flex: 1;" class="fw-bold text-main-theme text-end pe-3">₹${item.total_amount}</div>
                             </div>
-                            <div style="flex: 1;" class="fw-bold text-primary text-center">
-                                ${item.quantity} ${item.unit || 'Nos'}
-                                ${item.free_quantity > 0 ? `<div class="text-success small fw-bold">+${item.free_quantity} Free</div>` : ''}
-                            </div>
-                            <div style="flex: 1;" class="fw-bold text-main-theme text-end pe-3">₹${item.total_amount}</div>
-                        </div>
-                                                `);
+                                                    `);
                     });
                 } else {
                     list.append('<div class="invoice-list-row justify-content-center text-muted">No items</div>');
@@ -1533,62 +1579,82 @@
                 let id = $(this).data('id');
                 let row = $(this).data('row');
 
-                $('#approve_order_id').val(id);
-                $('#approve_order_code_display').text(row.order_code);
-                $('#approve_order_date_display').text(row.placed_at ? row.placed_at.split(' ')[0] : '--');
-                $('#approve_distributor_display').text(row.distributor_name);
-                $('#approve_location_display').text(row.distributor_location || '--');
-                $('#approve_total_display').text('₹' + row.total_amount);
+                const proceed = () => {
+                    $('#approve_order_id').val(id);
+                    $('#approve_order_code_display').text(row.order_code);
+                    $('#approve_order_date_display').text(row.placed_at ? row.placed_at.split(' ')[0] : '--');
+                    $('#approve_distributor_display').text(row.distributor_name);
+                    $('#approve_location_display').text(row.distributor_location || '--');
+                    $('#approve_total_display').text('₹' + row.total_amount);
 
-                // Status Badges
-                let status = (row.status || 'pending').toLowerCase();
-                let badgeClass = 'bg-secondary text-white';
-                if (status === 'pending') badgeClass = 'bg-secondary text-white';
-                else if (status === 'processing') badgeClass = 'bg-warning text-white';
-                else if (status === 'approved') badgeClass = 'bg-info text-white';
-                else if (status === 'delivered') badgeClass = 'bg-success text-white';
-                else if (status === 'cancelled') badgeClass = 'bg-danger text-white';
-                else if (status === 'rejected') badgeClass = 'bg-dark-red text-white';
-                $('#approve_status_badge').text(row.status || 'Pending').removeClass().addClass('badge ' + badgeClass).css('font-size', '0.7rem');
+                    // Status Badges
+                    let status = (row.status || 'pending').toLowerCase();
+                    let badgeClass = 'bg-secondary text-white';
+                    if (status === 'pending') badgeClass = 'bg-secondary text-white';
+                    else if (status === 'processing') badgeClass = 'bg-warning text-white';
+                    else if (status === 'approved') badgeClass = 'bg-info text-white';
+                    else if (status === 'delivered') badgeClass = 'bg-success text-white';
+                    else if (status === 'cancelled') badgeClass = 'bg-danger text-white';
+                    else if (status === 'rejected') badgeClass = 'bg-dark-red text-white';
+                    $('#approve_status_badge').text(row.status || 'Pending').removeClass().addClass('badge ' + badgeClass).css('font-size', '0.7rem');
 
-                let payStatus = (row.payment_status || 'pending').toLowerCase();
-                let payBadgeClass = payStatus === 'paid' ? 'text-success' : 'text-warning';
-                $('#approve_payment_status_badge').text(payStatus === 'paid' ? 'PAID' : 'UNPAID').removeClass().addClass('badge ' + payBadgeClass).css({'border': '1px solid currentColor', 'background': 'transparent', 'font-size': '0.7rem'});
+                    let payStatus = (row.payment_status || 'pending').toLowerCase();
+                    let payBadgeClass = payStatus === 'paid' ? 'text-success' : 'text-warning';
+                    $('#approve_payment_status_badge').text(payStatus === 'paid' ? 'PAID' : 'UNPAID').removeClass().addClass('badge ' + payBadgeClass).css({ 'border': '1px solid currentColor', 'background': 'transparent', 'font-size': '0.7rem' });
 
-                let list = $('#approve_items_list');
-                list.empty();
+                    let list = $('#approve_items_list');
+                    list.empty();
 
-                if (row.items && row.items.length) {
-                    row.items.forEach(item => {
-                        let appVariantInfo = '';
-                    if (item.side || item.size) {
-                        appVariantInfo = `<span class="variant-highlight ms-2">${[item.side, item.size].filter(v => v).join(' / ')}</span>`;
+                    if (row.items && row.items.length) {
+                        row.items.forEach(item => {
+                            let appVariantInfo = '';
+                            if (item.side || item.size) {
+                                appVariantInfo = `<span class="variant-highlight ms-2">${[item.side, item.size].filter(v => v).join(' / ')}</span>`;
+                            }
+
+                            list.append(`
+                                <div class="invoice-list-row p-2">
+                                    <div style="flex: 2;" class="fw-bold text-main-theme small ps-2">
+                                        ${item.product_name}${appVariantInfo}
+                                        <div class="d-flex gap-2 flex-wrap mt-1">
+                                            ${item.generic_name ? `<span class="badge bg-light text-dark border-0 fw-normal" style="font-size: 0.6rem;">${item.generic_name}</span>` : ''}
+                                            ${item.pack && item.pack !== 'N/A' && item.pack !== '---' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.6rem;">P: ${item.pack}</div>` : ''}
+                                            ${item.product_code && item.product_code !== '---' && item.product_code !== 'N/A' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.6rem;">C: ${item.product_code}</div>` : ''}
+                                        </div>
+                                    </div>
+                                    <div style="flex: 1;" class="fw-bold text-primary text-center">
+                                        ${item.quantity} ${item.unit || 'Nos'}
+                                        ${item.free_quantity > 0 ? `<div class="text-success small fw-bold">+${item.free_quantity} Free</div>` : ''}
+                                    </div>
+                                    <div style="flex: 1;" class="fw-bold text-main-theme text-end pe-3">₹${item.total_amount}</div>
+                                </div>
+                            `);
+                        });
+                    } else {
+                        list.append('<div class="invoice-list-row justify-content-center text-muted">No items found</div>');
                     }
 
-                    list.append(`
-                        <div class="invoice-list-row p-2">
-                            <div style="flex: 2;" class="fw-bold text-main-theme small ps-2">
-                                ${item.product_name}${appVariantInfo}
-                                <div class="d-flex gap-2 flex-wrap mt-1">
-                                    ${item.generic_name ? `<span class="badge bg-light text-dark border-0 fw-normal" style="font-size: 0.6rem;">${item.generic_name}</span>` : ''}
-                                    ${item.pack && item.pack !== 'N/A' && item.pack !== '---' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.6rem;">P: ${item.pack}</div>` : ''}
-                                    ${item.product_code && item.product_code !== '---' && item.product_code !== 'N/A' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.6rem;">C: ${item.product_code}</div>` : ''}
-                                </div>
-                            </div>
-                            <div style="flex: 1;" class="fw-bold text-primary text-center">
-                                ${item.quantity} ${item.unit || 'Nos'}
-                                ${item.free_quantity > 0 ? `<div class="text-success small fw-bold">+${item.free_quantity} Free</div>` : ''}
-                            </div>
-                            <div style="flex: 1;" class="fw-bold text-main-theme text-end pe-3">₹${item.total_amount}</div>
-                        </div>
-                                                `);
+                    $('#approveOrderForm')[0].reset();
+                    $('#approveOrderModal').modal('show');
+                };
+
+                if (isAdmin) {
+                    Swal.fire({
+                        title: 'Confirm Admin Approval',
+                        text: "This order should ideally be approved by the respective salesmanager. Do you still want to proceed as an Admin?",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, proceed',
+                        cancelButtonText: 'No, cancel',
+                        confirmButtonColor: '#28a745'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            proceed();
+                        }
                     });
                 } else {
-                    list.append('<div class="invoice-list-row justify-content-center text-muted">No items found</div>');
+                    proceed();
                 }
-
-                $('#approveOrderForm')[0].reset();
-                $('#approveOrderModal').modal('show');
             });
 
             // Sales Manager Approve Form Submit
@@ -1629,115 +1695,135 @@
                 let id = $(this).data('id');
                 let row = $(this).closest('tr').find('.view-details-btn').data('row');
 
-                $('#process_order_id').val(id);
-                $('#processOrderForm')[0].reset();
+                const proceed = () => {
+                    $('#process_order_id').val(id);
+                    $('#processOrderForm')[0].reset();
 
-                // Populate Premium Header
-                $('#process_order_code_display').text(row.order_code || '--');
-                $('#process_order_date_display').text(row.placed_at ? row.placed_at.split(' ')[0] : '--');
-                $('#process_distributor_display').text(row.distributor_name || '--');
-                $('#process_location_display').text(row.distributor_location || '--');
+                    // Populate Premium Header
+                    $('#process_order_code_display').text(row.order_code || '--');
+                    $('#process_order_date_display').text(row.placed_at ? row.placed_at.split(' ')[0] : '--');
+                    $('#process_distributor_display').text(row.distributor_name || '--');
+                    $('#process_location_display').text(row.distributor_location || '--');
 
-                // Status Badges
-                let status = (row.status || 'pending').toLowerCase();
-                let badgeClass = 'bg-secondary text-white';
-                if (status === 'pending') badgeClass = 'bg-secondary text-white';
-                else if (status === 'processing') badgeClass = 'bg-warning text-white';
-                else if (status === 'approved') badgeClass = 'bg-info text-white';
-                else if (status === 'delivered') badgeClass = 'bg-success text-white';
-                else if (status === 'cancelled') badgeClass = 'bg-danger text-white';
-                else if (status === 'rejected') badgeClass = 'bg-dark-red text-white';
-                $('#process_status_badge').text(row.status || 'Pending').removeClass().addClass('badge ' + badgeClass).css('font-size', '0.7rem');
+                    // Status Badges
+                    let status = (row.status || 'pending').toLowerCase();
+                    let badgeClass = 'bg-secondary text-white';
+                    if (status === 'pending') badgeClass = 'bg-secondary text-white';
+                    else if (status === 'processing') badgeClass = 'bg-warning text-white';
+                    else if (status === 'approved') badgeClass = 'bg-info text-white';
+                    else if (status === 'delivered') badgeClass = 'bg-success text-white';
+                    else if (status === 'cancelled') badgeClass = 'bg-danger text-white';
+                    else if (status === 'rejected') badgeClass = 'bg-dark-red text-white';
+                    $('#process_status_badge').text(row.status || 'Pending').removeClass().addClass('badge ' + badgeClass).css('font-size', '0.7rem');
 
-                let payStatus = (row.payment_status || 'pending').toLowerCase();
-                let payBadgeClass = payStatus === 'paid' ? 'text-success' : 'text-warning';
-                $('#process_payment_status_badge').text(payStatus === 'paid' ? 'PAID' : 'UNPAID').removeClass().addClass('badge ' + payBadgeClass).css({'border': '1px solid currentColor', 'background': 'transparent', 'font-size': '0.7rem'});
+                    let payStatus = (row.payment_status || 'pending').toLowerCase();
+                    let payBadgeClass = payStatus === 'paid' ? 'text-success' : 'text-warning';
+                    $('#process_payment_status_badge').text(payStatus === 'paid' ? 'PAID' : 'UNPAID').removeClass().addClass('badge ' + payBadgeClass).css({ 'border': '1px solid currentColor', 'background': 'transparent', 'font-size': '0.7rem' });
 
-                // Set modal radio buttons
-                if (payStatus === 'paid') {
-                    $('#modal_pay_paid').prop('checked', true);
-                } else {
-                    $('#modal_pay_pending').prop('checked', true);
-                }
+                    // Set modal radio buttons
+                    if (payStatus === 'paid') {
+                        $('#modal_pay_paid').prop('checked', true);
+                    } else {
+                        $('#modal_pay_pending').prop('checked', true);
+                    }
 
 
-                // Reset OCR & Automation UI States
-                $('#automation_idle_state').removeClass('d-none');
-                $('#ocr_processing_state').addClass('d-none');
-                $('#verification_table_footer').addClass('d-none');
-                $('#scan_file_input').val('');
-                $('#automation_success_state').addClass('d-none');
-                $('#automation_error_state').addClass('d-none');
-                $('#btn_approve_order').prop('disabled', true);
-                $('#ocr_dropzone').removeClass('has-file');
+                    // Reset OCR & Automation UI States
+                    $('#automation_idle_state').removeClass('d-none');
+                    $('#ocr_processing_state').addClass('d-none');
+                    $('#verification_table_footer').addClass('d-none');
+                    $('#scan_file_input').val('');
+                    $('#automation_success_state').addClass('d-none');
+                    $('#automation_error_state').addClass('d-none');
+                    $('#btn_approve_order').prop('disabled', true);
+                    $('#ocr_dropzone').removeClass('has-file');
 
-                // Populate Expected Details (old ID mappings if still needed, but mostly moved to premium header)
-                $('#expected_order_id').text(row.order_code || '--');
-                $('#expected_date').text(row.placed_at ? row.placed_at.split(' ')[0] : '--');
-                $('#expected_gstin').text(row.distributor_gst || '--');
-                $('#verification_table_footer').addClass('d-none');
+                    // Populate Expected Details (old ID mappings if still needed, but mostly moved to premium header)
+                    $('#expected_order_id').text(row.order_code || '--');
+                    $('#expected_date').text(row.placed_at ? row.placed_at.split(' ')[0] : '--');
+                    $('#expected_gstin').text(row.distributor_gst || '--');
+                    $('#verification_table_footer').addClass('d-none');
 
-                let tbody = $('#batch_entry_body');
-                let vbody = $('#verification_table_body');
-                tbody.empty();
-                vbody.empty();
+                    let tbody = $('#batch_entry_body');
+                    let vbody = $('#verification_table_body');
+                    tbody.empty();
+                    vbody.empty();
 
-                if (row && row.items) {
-                    row.items.forEach(item => {
-                        let rowHtml = `
-                                                                                                                        <div data-item-id="${item.order_item_id}">
-                                                                                                                            <div class="d-none">
-                                                                                                                                <div class="fw-bold product-name-marker">${item.product_name}</div>
-                                                                                                                                <input type="number" name="batches[${item.order_item_id}][0][quantity]" value="${item.quantity}">
-                                                                                                                            </div>
-                                                                                                                            <div class="d-none" id="batches_for_${item.order_item_id}">
-                                                                                                                                <input type="text" name="batches[${item.order_item_id}][0][batch_no]" class="hidden-batch-val" required>
-                                                                                                                                <input type="date" name="batches[${item.order_item_id}][0][expiry_date]" class="hidden-expiry-val" required>
+                    if (row && row.items) {
+                        row.items.forEach(item => {
+                            let rowHtml = `
+                                <div data-item-id="${item.order_item_id}">
+                                    <div class="d-none">
+                                        <div class="fw-bold product-name-marker">${item.product_name}</div>
+                                        <input type="number" name="batches[${item.order_item_id}][0][quantity]" value="${item.quantity}">
+                                    </div>
+                                    <div class="d-none" id="batches_for_${item.order_item_id}">
+                                        <input type="text" name="batches[${item.order_item_id}][0][batch_no]" class="hidden-batch-val" required>
+                                        <input type="date" name="batches[${item.order_item_id}][0][expiry_date]" class="hidden-expiry-val" required>
 
-                                                                                                                                <input type="hidden" name="batches[${item.order_item_id}][0][mrp]" class="hidden-mrp-val">
-                                                                                                                                <input type="hidden" name="batches[${item.order_item_id}][0][ptr]" class="hidden-ptr-val">
-                                                                                                                                <input type="hidden" name="batches[${item.order_item_id}][0][pts]" class="hidden-pts-val">
-                                                                                                                                <input type="hidden" name="batches[${item.order_item_id}][0][taxable_value]" class="hidden-taxable-val">
-                                                                                                                                <input type="hidden" name="batches[${item.order_item_id}][0][cgst]" class="hidden-cgst-val">
-                                                                                                                                <input type="hidden" name="batches[${item.order_item_id}][0][sgst]" class="hidden-sgst-val">
-                                                                                                                                <input type="hidden" name="batches[${item.order_item_id}][0][igst]" class="hidden-igst-val">
-                                                                                                                                <input type="hidden" name="batches[${item.order_item_id}][0][net_amount]" class="hidden-net-val">
-                                                                                                                            </div>
-                                                                                                                        </div>
-                                                                                                                    `;
-                        tbody.append(rowHtml);
+                                        <input type="hidden" name="batches[${item.order_item_id}][0][mrp]" class="hidden-mrp-val">
+                                        <input type="hidden" name="batches[${item.order_item_id}][0][ptr]" class="hidden-ptr-val">
+                                        <input type="hidden" name="batches[${item.order_item_id}][0][pts]" class="hidden-pts-val">
+                                        <input type="hidden" name="batches[${item.order_item_id}][0][taxable_value]" class="hidden-taxable-val">
+                                        <input type="hidden" name="batches[${item.order_item_id}][0][cgst]" class="hidden-cgst-val">
+                                        <input type="hidden" name="batches[${item.order_item_id}][0][sgst]" class="hidden-sgst-val">
+                                        <input type="hidden" name="batches[${item.order_item_id}][0][igst]" class="hidden-igst-val">
+                                        <input type="hidden" name="batches[${item.order_item_id}][0][net_amount]" class="hidden-net-val">
+                                    </div>
+                                </div>
+                            `;
+                            tbody.append(rowHtml);
 
-                        let vRowHtml = `
-                                                            <div id="v_row_${item.order_item_id}" class="invoice-list-row p-2">
-                                                                <div class="ai-col-product fw-bold text-main-theme small ps-2">
-                                                                    ${item.product_name}
-                                                                    <div class="d-flex gap-2 flex-wrap mt-1">
-                                                                        ${(item.side || item.size) ? `<div class="small badge bg-info text-white border-0" style="font-size: 0.6rem;">${[item.side, item.size].filter(Boolean).join(' / ')}</div>` : ''}
-                                                                        ${item.generic_name ? `<span class="badge bg-light text-dark border-0 fw-normal" style="font-size: 0.6rem;">${item.generic_name}</span>` : ''}
-                                                                        ${item.pack && item.pack !== 'N/A' && item.pack !== '---' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.6rem;">P: ${item.pack}</div>` : ''}
-                                                                        ${item.product_code && item.product_code !== '---' && item.product_code !== 'N/A' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.6rem;">C: ${item.product_code}</div>` : ''}
-                                                                    </div>
-                                                                </div>
-                                                                <div class="ai-col-batch">
-                                                                    <input type="text" class="form-control form-control-sm v-batch-input border-0 bg-body-theme text-main-theme p-1" 
-                                                                           data-id="${item.order_item_id}" placeholder="Wait AI...">
-                                                                </div>
-                                                                <div class="ai-col-expiry">
-                                                                    <input type="text" class="form-control form-control-sm v-expiry-input border-0 bg-body-theme text-main-theme p-1" 
-                                                                           data-id="${item.order_item_id}" placeholder="MM/YY">
-                                                                </div>
-                                                                <div class="ai-col-qty fw-bold text-primary text-center v-qty-display" data-original-unit="${item.unit || 'Nos'}">
-                                                                    ${item.quantity} ${item.unit || 'Nos'}
-                                                                    ${item.free_quantity > 0 ? `<div class="text-success small fw-bold">+${item.free_quantity} Free</div>` : ''}
-                                                                </div>
-                                                                <div class="ai-col-value fw-bold text-main-theme text-end pe-3 v-taxable-display">--</div>
-                                                            </div>
-                                                        `;
-                        vbody.append(vRowHtml);
+                            let vRowHtml = `
+                                <div id="v_row_${item.order_item_id}" class="invoice-list-row p-2">
+                                    <div class="ai-col-product fw-bold text-main-theme small ps-2">
+                                        ${item.product_name}
+                                        <div class="d-flex gap-2 flex-wrap mt-1">
+                                            ${(item.side || item.size) ? `<div class="small badge bg-info text-white border-0" style="font-size: 0.6rem;">${[item.side, item.size].filter(Boolean).join(' / ')}</div>` : ''}
+                                            ${item.generic_name ? `<span class="badge bg-light text-dark border-0 fw-normal" style="font-size: 0.6rem;">${item.generic_name}</span>` : ''}
+                                            ${item.pack && item.pack !== 'N/A' && item.pack !== '---' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.6rem;">P: ${item.pack}</div>` : ''}
+                                            ${item.product_code && item.product_code !== '---' && item.product_code !== 'N/A' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.6rem;">C: ${item.product_code}</div>` : ''}
+                                        </div>
+                                    </div>
+                                    <div class="ai-col-batch">
+                                        <input type="text" class="form-control form-control-sm v-batch-input border-0 bg-body-theme text-main-theme p-1" 
+                                               data-id="${item.order_item_id}" placeholder="Wait AI...">
+                                    </div>
+                                    <div class="ai-col-expiry">
+                                        <input type="text" class="form-control form-control-sm v-expiry-input border-0 bg-body-theme text-main-theme p-1" 
+                                               data-id="${item.order_item_id}" placeholder="MM/YY">
+                                    </div>
+                                    <div class="ai-col-qty fw-bold text-primary text-center v-qty-display" data-original-unit="${item.unit || 'Nos'}">
+                                        ${item.quantity} ${item.unit || 'Nos'}
+                                        ${item.free_quantity > 0 ? `<div class="text-success small fw-bold">+${item.free_quantity} Free</div>` : ''}
+                                    </div>
+                                    <div class="ai-col-value fw-bold text-main-theme text-end pe-3 v-taxable-display">--</div>
+                                </div>
+                            `;
+                            vbody.append(vRowHtml);
+                        });
+                    }
+
+                    $('#processOrderModal').modal('show');
+                };
+
+                if (isAdmin) {
+                    Swal.fire({
+                        title: 'Confirm Admin Approval',
+                        text: "This order should ideally be approved by the respective distributor. Do you still want to proceed as an Admin?",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, proceed',
+                        cancelButtonText: 'No, cancel',
+                        confirmButtonColor: '#28a745'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            proceed();
+                        }
                     });
+                } else {
+                    proceed();
                 }
-
-                $('#processOrderModal').modal('show');
             });
 
             function parseExpiryToDate(expStr) {
@@ -1829,7 +1915,7 @@
 
                 // Unlock the invoice number field
                 $('#invoice_no_input').prop('readonly', false).attr('placeholder', 'Enter the official invoice number...');
-                
+
                 $('#ocr_progress_bar').css('width', '50%');
                 $('#ocr_status_text').text('AI is analyzing your invoice...');
 
@@ -1874,7 +1960,7 @@
 
                                         $('#automation_success_state').addClass('d-none');
                                         $('#automation_error_state').removeClass('d-none').hide().fadeIn(400);
-                                        
+
                                         if (entered && extracted && !isInvoiceMatch(entered, extracted)) {
                                             $('#automation_error_state h5').text('Invoice Number Mismatch');
                                             $('#automation_error_state p').text('Please enter the correct invoice number above to load and verify line items.');
@@ -1994,7 +2080,7 @@
                 console.log('Order Items to match:', items);
 
                 let missingProducts = [];
-                let invoiceProducts = data.line_items || [];
+                let invoiceProducts = [...(data.line_items || [])];
                 console.log('AI Invoice Items:', invoiceProducts);
 
                 items.forEach(item => {
@@ -2202,7 +2288,7 @@
                 });
             });
 
-            $(document).on('input', '#invoice_no_input', function() {
+            $(document).on('input', '#invoice_no_input', function () {
                 let entered = $(this).val().trim().toLowerCase();
                 let extracted = $(this).data('extracted');
                 let extractedRaw = $(this).data('extracted-raw');
@@ -2227,7 +2313,7 @@
                 }
 
                 // Gatekeeper: If it matches now and wasn't filled, fill it!
-                if (!hasError && !$(this).data('items-filled')) {
+                if (!hasError && entered && !$(this).data('items-filled')) {
                     let ocrData = $(this).data('ocr-data');
                     if (ocrData) {
                         let identifiedCount = fillDistributorProducts(ocrData);
@@ -2238,9 +2324,25 @@
                             $('#processed_summary_text').text(`${identifiedCount} items auto-filled from Invoice.`);
                         }
                     }
+                } else if (!entered || hasError) {
+                    // Hide products for safety if empty or mismatch
+                    $('#verification_table_footer').addClass('d-none');
+                    $('#automation_success_state').hide();
+                    $('#extracted_metadata_section').hide();
+
+                    if (!entered) {
+                        $('#automation_error_state').removeClass('d-none').show();
+                        $('#automation_error_state h5').text('Invoice Number Required');
+                        $('#automation_error_state p').text('Please enter the invoice number to unlock and verify data.');
+                    } else {
+                        $('#automation_error_state').removeClass('d-none').show();
+                        $('#automation_error_state h5').text('Invoice Number Mismatch');
+                        $('#automation_error_state p').text('The entered number does not match the AI scan. Products hidden for safety.');
+                    }
+                    $(this).data('items-filled', false);
                 }
 
-                $('#btn_approve_order').prop('disabled', hasError);
+                $('#btn_approve_order').prop('disabled', hasError || !entered);
             });
         });
     </script>

@@ -511,6 +511,7 @@
                     <table class="table table-striped table-hover" id="retailer-approval-table">
                         <thead>
                             <tr>
+                                <th style="display:none;">ID</th>
                                 <th>No.</th>
                                 <th>Order Code</th>
                                 <th>Retailer</th>
@@ -1091,11 +1092,11 @@
 
             var table = $('#retailer-approval-table').DataTable({
                 order: [
-                    [5, 'desc']
+                    [0, 'desc']
                 ],
                 drawCallback: function (settings) {
                     var api = this.api();
-                    api.column(0, {
+                    api.column(1, {
                         search: 'applied',
                         order: 'applied'
                     }).nodes().each(function (cell, i) {
@@ -1151,6 +1152,7 @@
                     // This ensures the correct tab is marked active and internal state is synced
                     const $targetTab = $('#tab-' + INITIAL_STATUS);
                     if ($targetTab.length) {
+                        window.currentStatus = $targetTab.attr('data-status') || '';
                         const tabTrigger = bootstrap.Tab.getOrCreateInstance($targetTab[0]);
                         tabTrigger.show();
                     }
@@ -1184,6 +1186,11 @@
                     }
                 },
                 columns: [{
+                    data: 'id',
+                    visible: false,
+                    searchable: false
+                },
+                {
                     data: null,
                     defaultContent: '',
                     orderable: false,
@@ -1609,7 +1616,11 @@
                         if (window.updateSidebarCounts) window.updateSidebarCounts();
                     },
                     error: function (xhr) {
-                        showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Update failed');
+                        let errMsg = 'Update failed';
+                        if (xhr.responseJSON) {
+                            errMsg = xhr.responseJSON.error || xhr.responseJSON.message || errMsg;
+                        }
+                        showToast('error', errMsg);
                     },
                     complete: function () {
                         $btn.prop('disabled', false).text(oldText);
@@ -1731,24 +1742,8 @@
             let currentOrderIdForInvoice = null;
             $(document).on('click', '.upload-invoice-btn', function () {
                 let id = $(this).data('id');
-                if (isAdmin) {
-                    Swal.fire({
-                        title: 'Confirm Admin Action',
-                        text: 'This invoice should ideally be uploaded by the respective distributor. Do you still want to proceed as an Admin?',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonText: 'Yes, proceed',
-                        cancelButtonText: 'No, cancel'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            currentOrderIdForInvoice = id;
-                            $('#invoice_upload_input').click();
-                        }
-                    });
-                } else {
-                    currentOrderIdForInvoice = id;
-                    $('#invoice_upload_input').click();
-                }
+                currentOrderIdForInvoice = id;
+                $('#invoice_upload_input').click();
             });
 
             $('#invoice_upload_input').change(function () {
@@ -2078,7 +2073,11 @@
                         }
                     },
                     error: function (xhr) {
-                        showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Approval failed');
+                        let errMsg = 'Approval failed';
+                        if (xhr.responseJSON) {
+                            errMsg = xhr.responseJSON.error || xhr.responseJSON.message || errMsg;
+                        }
+                        showToast('error', errMsg);
                     },
                     complete: function () {
                         $btn.html(oldHtml).prop('disabled', false);
@@ -2463,7 +2462,7 @@
             function fillRetailerProducts(data) {
                 let identifiedCount = 0;
                 let missingProducts = [];
-                let invoiceProducts = data.line_items || [];
+                let invoiceProducts = [...(data.line_items || [])];
                 let totalInvoiceNet = 0;
 
                 console.log('Retailer AI Invoice Items:', invoiceProducts);

@@ -496,7 +496,9 @@ class DistributorOrderController extends Controller
         if ($distributorOrder->status !== DistributorOrder::STATUS_PENDING) return response()->json(['error' => 'Not pending'], 400);
 
         $distributorOrder->status = DistributorOrder::STATUS_PROCESSING;
-        $distributorOrder->sales_manager_id = Auth::user()->salesManager->id;
+        if ($user->salesManager) {
+            $distributorOrder->sales_manager_id = $user->salesManager->id;
+        }
         $distributorOrder->save();
 
         // Notify Admins
