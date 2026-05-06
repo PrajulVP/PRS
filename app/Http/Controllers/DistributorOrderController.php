@@ -35,7 +35,7 @@ class DistributorOrderController extends Controller
 
         if ($request->ajax()) {
             try {
-                $query = DistributorOrder::with(['distributor.user', 'items.product', 'salesManager.user']);
+                $query = DistributorOrder::with(['distributor.user', 'items.product', 'salesManager.user', 'returnRequests']);
 
                 /** @var \App\Models\User $user */
                 $user = Auth::user();
@@ -136,30 +136,30 @@ class DistributorOrderController extends Controller
                         
                         $pPack = $item->product ? $item->product->pack : null;
                         
-                        $summary = '<div class="product-summary-item mb-2" style="line-height: 1.3; min-width: 350px;">';
-                        $summary .= '<div class="d-flex align-items-center flex-nowrap gap-2" style="white-space: nowrap;">';
-                        $summary .= '<span class="fw-bold text-dark" style="font-size: 0.9rem;">'.$pName.'</span>';
+                        $summary = '<div class="product-summary-item mb-1" style="line-height: 1.2; width: 100%;">';
+                        $summary .= '<div class="d-flex align-items-start gap-1" style="white-space: normal; word-break: break-all;">';
+                        $summary .= '<span class="fw-bold" style="color: #334155; font-size: 0.85rem;">'.$pName.'</span>';
                         if (!empty(trim($pPack)) && strtoupper(trim($pPack)) !== 'N/A') {
-                            $summary .= '<span class="text-secondary small fw-bold" style="font-size: 0.75rem;">['.$pPack.']</span>';
+                            $summary .= '<span class="small" style="color: #94a3b8; font-size: 0.7rem; white-space: nowrap;">['.$pPack.']</span>';
                         }
                         if (!empty($vLabel)) {
-                            $summary .= '<span class="text-info fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">' . strtoupper(implode(' / ', $vLabel)) . '</span>';
+                            $summary .= '<span class="badge rounded-pill" style="background: #e0f2fe; color: #0369a1; font-size: 0.65rem; padding: 2px 6px; font-weight: 700; letter-spacing: 0.3px; white-space: nowrap;">' . strtoupper(implode(' / ', $vLabel)) . '</span>';
                         }
                         $summary .= '</div>';
                         
                         $meta = [];
-                        if (!empty(trim($pBrand)) && strtoupper(trim($pBrand)) !== 'N/A') {
-                            $meta[] = '<span class="text-muted small">('.$pBrand.')</span>';
-                        }
-                        
                         $qtyText = $item->quantity . ' ' . ($item->unit ?? 'Nos');
                         if ($item->free_quantity > 0) {
-                            $qtyText .= ' <span class="text-success">(+ ' . $item->free_quantity . ' Free)</span>';
+                            $qtyText .= ' <span class="text-success" style="font-size: 0.7rem;">(+' . $item->free_quantity . ' Free)</span>';
                         }
-                        $meta[] = '<span class="text-primary fw-bold" style="font-size: 0.8rem;">' . $qtyText . '</span>';
+                        $meta[] = '<span class="text-primary fw-bold" style="font-size: 0.75rem;">' . $qtyText . '</span>';
+
+                        if (!empty(trim($pBrand)) && strtoupper(trim($pBrand)) !== 'N/A') {
+                            $meta[] = '<span class="text-muted" style="font-size: 0.75rem; opacity: 0.8;">' . $pBrand . '</span>';
+                        }
                         
                         if (!empty($meta)) {
-                            $summary .= '<div class="d-flex align-items-center gap-2 flex-nowrap mt-1" style="white-space: nowrap;">' . implode('<span class="text-light" style="font-size: 0.8rem;">|</span>', $meta) . '</div>';
+                            $summary .= '<div class="d-flex align-items-center gap-1 mt-0" style="white-space: normal; word-break: break-all;">' . implode('<span class="text-light" style="font-size: 0.7rem; margin: 0 2px;">•</span>', $meta) . '</div>';
                         }
                         $summary .= '</div>';
                         return $summary;
@@ -184,14 +184,32 @@ class DistributorOrderController extends Controller
                         'product_summary' => $productSummary,
                         'status' => ucfirst(str_replace('_', ' ', $order->status)),
                         'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d H:i:s') : '-',
-                        'items' => $order->items->map(function ($item) {
+                        'items' => $order->items->map(function ($item) use ($order) {
                             $pName = $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product';
+                            
+                            // Aggregate return requests for this specific variant
+                            $itemReturns = $order->returnRequests
+                                ->where('product_id', $item->product_id)
+                                ->where('side', $item->side)
+                                ->where('size', $item->size);
+
+                            $returnedQty = $itemReturns->where('status', 'completed')->sum('quantity');
+                            $pendingQty = $itemReturns->where('status', 'pending')->sum('quantity');
+                            $tier1Qty = $itemReturns->where('status', 'approved_tier1')->sum('quantity');
+                            
+                            // Combine pending and tier1 for "Active Request" visibility
+                            $activeRequestQty = $pendingQty + $tier1Qty;
+                            
+                            // Get the most recent return code for display if applicable
+                            $latestReturn = $itemReturns->sortByDesc('created_at')->first();
+
                             return [
                                 'product_id' => $item->product_id,
                                 'product_name' => $pName,
                                 'product_code' => $item->product->product_code ?? 'N/A',
                                 'generic_name' => $item->product->generic_name ?? null,
                                 'pack' => $item->product->pack ?? null,
+                                'brand' => $item->product->brand ?? null,
                                 'side' => $item->side,
                                 'size' => $item->size,
                                 'quantity' => $item->quantity,
@@ -200,6 +218,11 @@ class DistributorOrderController extends Controller
                                 'stock_at_time' => null, // Stock check disabled
                                 'unit' => $item->unit,
                                 'order_item_id' => $item->id,
+                                'is_returnable' => $item->product->is_returnable ?? true,
+                                'returned_qty' => (float)$returnedQty,
+                                'pending_return_qty' => (float)$activeRequestQty,
+                                'return_status' => $latestReturn ? $latestReturn->status : null,
+                                'return_code' => $latestReturn ? $latestReturn->return_code : null,
                                 'batches' => $item->batches->map(function ($b) {
                                     return [
                                         'id' => $b->id,

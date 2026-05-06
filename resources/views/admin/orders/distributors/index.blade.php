@@ -177,6 +177,17 @@
         white-space: nowrap !important;
     }
 
+    .product-col {
+        min-width: 200px !important;
+        max-width: 200px !important;
+        width: 200px !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        vertical-align: top !important;
+        line-height: 1.3 !important;
+    }
+
     .action-buttons {
         display: inline-flex !important;
         align-items: center;
@@ -292,6 +303,19 @@
         letter-spacing: 0.04em;
     }
     /* --- End New Order View UI Styles --- */
+    #submitReturnModal {
+        background: rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+    }
+    .bg-soft-success { background-color: rgba(22, 163, 74, 0.1) !important; color: #16a34a !important; }
+    .bg-soft-warning { background-color: rgba(202, 138, 4, 0.1) !important; color: #ca8a04 !important; }
+    .bg-soft-danger { background-color: rgba(220, 38, 38, 0.1) !important; color: #dc2626 !important; }
+    .bg-soft-info { background-color: rgba(8, 145, 178, 0.1) !important; color: #0891b2 !important; }
+    .bg-soft-primary { background-color: rgba(0, 73, 122, 0.1) !important; color: #00497a !important; }
+    .text-main-theme { color: var(--med-text-main, #0f172a) !important; }
+    .text-muted-theme { color: var(--med-text-muted, #64748b) !important; }
+    .bg-card-theme { background-color: var(--med-bg-card, #ffffff) !important; }
 </style>
 
 @section('page-body')
@@ -368,7 +392,7 @@
                                     <th>Distributor</th>
                                 @endif
                                 {{-- <th>Sales Manager</th> Removed --}}
-                                <th style="min-width:350px;">Products</th>
+                                <th style="width: 200px;">Products</th>
                                 {{-- <th>Items</th> --}}
                                 {{-- <th>Qty</th> --}}
                                 <th>Total</th>
@@ -545,7 +569,7 @@
 
     {{-- Show Modal --}}
     <div class="modal fade" id="showOrderModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header border-bottom-0 pb-0">
                     <h5 class="fw-bold mb-0">Order Details <span id="modalOrderCode" class="text-primary ms-2"></span></h5>
@@ -555,6 +579,9 @@
                     <!-- Dynamic content will be injected here via JS -->
                 </div>
             </div>
+        </div>
+    </div>
+
         </div>
     </div>
 
@@ -708,7 +735,7 @@
                 {
                     data: 'product_summary',
                     name: 'items.product.product_name',
-                    width: '450px',
+                    className: 'product-col',
                     render: function (data, type, row) {
                         if (!data) return '-';
                         let items = data.split('|||');
@@ -971,7 +998,7 @@
                         $('#uploadInvoiceModal').modal('hide');
                         table.ajax.reload(null, false);
                         if (window.updateSidebarCounts) window.updateSidebarCounts();
-                        showToast('success', res.success || 'Invoice uploaded successfully');
+                        // // showToast('success', res.success || 'Invoice uploaded successfully');
                     },
                     error: function (xhr) {
                         let err = 'Upload failed';
@@ -1007,7 +1034,7 @@
                         if (res.success) {
                             table.ajax.reload();
                             if (window.updateSidebarCounts) window.updateSidebarCounts();
-                            showToast('success', res.success || 'Order deleted successfully');
+                            // // showToast('success', res.success || 'Order deleted successfully');
                         } else {
                             showToast('error', res.error || 'Failed to delete order');
                         }
@@ -1048,7 +1075,7 @@
                             $('#uploadInvoiceModal').modal('hide');
                             table.ajax.reload();
                             if (window.updateSidebarCounts) window.updateSidebarCounts();
-                            showToast('success', res.success);
+                            // showToast('success', res.success);
                         } else {
                             showToast('error', res.error || 'Failed to upload invoice');
                         }
@@ -1104,7 +1131,7 @@
                             $('#createOrderModal').modal('hide');
                             table.ajax.reload();
                             if (window.updateSidebarCounts) window.updateSidebarCounts();
-                            showToast('success', res.success || res.message);
+                            // showToast('success', res.success || res.message);
                         } else {
                             showToast('error', res.error);
                         }
@@ -1241,7 +1268,7 @@
                             $('#editOrderModal').modal('hide');
                             table.ajax.reload();
                             if (window.updateSidebarCounts) window.updateSidebarCounts();
-                            showToast('success', res.success || res.message);
+                            // showToast('success', res.success || res.message);
                         } else {
                             showToast('error', res.error);
                         }
@@ -1344,43 +1371,41 @@
                 let payStatus = (row.payment_status || 'pending').toLowerCase();
                 let payBadgeClass = payStatus === 'paid' ? 'bg-success text-white' : 'bg-secondary text-white';
                 $('#modalOrderCode').html(`#${row.order_code} <span class="badge ${payBadgeClass} ms-2" style="font-size: 0.75rem; vertical-align: middle; padding: 0.3em 0.7em;">${payStatus.toUpperCase()}</span>`);
-
                 let detailsHtml = `
-                    <div class="row mb-4">
-                        <div class="col-md-6 mb-3 mb-md-0">
-                            <div class="card h-100 border-0 shadow-sm bg-card-theme" style="border-radius: 12px !important;">
-                                <div class="card-body py-3 px-4">
-                                    <h6 class="text-uppercase text-muted-theme fw-bold mb-2" style="font-size: 0.65rem; letter-spacing: 0.05em;"><i class="fa fa-building me-2"></i>Distributor Info</h6>
-                                    <h5 class="fw-bold mb-2 text-main-theme" style="font-size: 1.1rem;">${row.distributor_name || 'N/A'}</h5>
-                                    <div class="d-flex align-items-center mb-0 text-main-theme"><i class="fa fa-phone text-muted-theme me-2" style="width: 14px; font-size: 0.8rem;"></i> <span class="small">${row.distributor_phone || 'N/A'}</span></div>
-                                    <div class="d-flex align-items-start text-wrap text-main-theme"><i class="fa fa-map-marker text-muted-theme me-2 mt-1" style="width: 14px; font-size: 0.8rem;"></i> <span class="small opacity-75" style="max-width: 250px;">${row.distributor_location || 'N/A'}</span></div>
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-2 mb-md-0">
+                            <div class="card h-100 border-0 shadow-sm bg-card-theme" style="border-radius: 10px !important;">
+                                <div class="card-body py-2 px-3">
+                                    <h6 class="text-uppercase text-muted-theme fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 0.05em;"><i class="fa fa-building me-2"></i>Distributor Info</h6>
+                                    <h5 class="fw-bold mb-0 text-main-theme" style="font-size: 1rem;">${row.distributor_name || 'N/A'}</h5>
+                                    <div class="d-flex align-items-center mb-0 text-main-theme"><i class="fa fa-phone text-muted-theme me-2" style="width: 12px; font-size: 0.75rem;"></i> <span class="small" style="font-size: 0.8rem;">${row.distributor_phone || 'N/A'}</span></div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="card h-100 border-0 shadow-sm bg-card-theme" style="border-radius: 12px !important;">
-                                <div class="card-body py-3 px-4">
-                                    <h6 class="text-uppercase text-muted-theme fw-bold mb-2" style="font-size: 0.65rem; letter-spacing: 0.05em;"><i class="fa fa-industry me-2"></i>Company Info</h6>
-                                    <h5 class="fw-bold mb-2 text-main-theme" style="font-size: 1.1rem;">PRS Company</h5>
-                                    <div class="text-muted-theme small mb-0"><i class="fa fa-user-tie me-2" style="width: 14px;"></i>Sales Manager: ${row.sales_manager_name || 'N/A'}</div>
-                                    <div class="d-flex align-items-center mb-0 text-main-theme"><i class="fa fa-envelope text-muted-theme me-2" style="width: 14px; font-size: 0.8rem;"></i> <span class="small">info@prs.com</span></div>
+                            <div class="card h-100 border-0 shadow-sm bg-card-theme" style="border-radius: 10px !important;">
+                                <div class="card-body py-2 px-3">
+                                    <h6 class="text-uppercase text-muted-theme fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 0.05em;"><i class="fa fa-building-columns me-2"></i>Company Info</h6>
+                                    <h5 class="fw-bold mb-1 text-main-theme" style="font-size: 1rem;">${row.company_name || 'PRS Company'}</h5>
+                                    <div class="d-flex align-items-center mb-0 text-main-theme text-muted-theme small" style="font-size: 0.75rem;"><i class="fa fa-user me-2" style="width: 12px;"></i> Sales Manager: ${row.sales_manager_name || 'Test Manager'}</div>
+                                    <div class="d-flex align-items-center mb-0 text-main-theme"><i class="fa fa-envelope text-muted-theme me-2" style="width: 12px; font-size: 0.75rem;"></i> <span class="small" style="font-size: 0.8rem;">${row.company_email || 'info@prs.com'}</span></div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="card border-0 shadow-sm mb-4 bg-card-theme" style="border-radius: 16px !important; overflow: hidden;">
+                    <div class="card border-0 shadow-sm mb-3 bg-card-theme" style="border-radius: 12px !important; overflow: hidden;">
                         <div class="card-body p-0">
                             <div class="table-responsive">
                                 <table class="table mb-0 align-middle">
-                                    <thead style="background: rgba(var(--med-primary-rgb), 0.03); border-bottom: 2px solid var(--med-border);">
+                                    <thead style="background: rgba(var(--med-primary-rgb), 0.02); border-bottom: 1px solid var(--med-border);">
                                         <tr>
-                                            <th class="py-3 px-4 text-muted-theme fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Pharmaceutical Item</th>
-                                            <th class="py-3 px-4 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Standard Batch</th>
-                                            <th class="py-3 px-4 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Order Qty</th>
-                                            <th class="py-3 px-4 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Bonus</th>
-                                            <th class="py-3 px-4 text-end text-muted-theme fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Price (₹)</th>
-                                            <th class="py-3 px-4 text-end text-muted-theme fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Line Total (₹)</th>
+                                            <th class="py-2 px-3 text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em; width: 200px;">Pharmaceutical Item</th>
+                                            <th class="py-2 px-3 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Standard Batch</th>
+                                            <th class="py-2 px-3 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Order Qty</th>
+                                            <th class="py-2 px-3 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Bonus</th>
+                                            <th class="py-2 px-3 text-end text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Price (₹)</th>
+                                            <th class="py-2 px-3 text-end text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Total (₹)</th>
                                         </tr>
                                     </thead>
                                     <tbody class="border-0">
@@ -1396,44 +1421,47 @@
                     if (i.batches && i.batches.length > 0) {
                         batchHtml = i.batches.map(b => `
                             <div class="mb-1 last-child-mb-0">
-                                <span class="badge bg-soft-info text-info border-0 px-2 py-1" style="font-size: 0.65rem; font-weight: 700;">${b.batch_no}</span>
-                                <div class="text-muted d-block" style="font-size: 0.6rem; margin-top: 1px;">Exp: ${b.expiry_date}</div>
+                                <span class="badge bg-soft-info text-info border-0 px-2 py-1" style="font-size: 0.85rem; font-weight: 800; letter-spacing: 0.5px;">${b.batch_no}</span>
+                                <div class="text-muted d-block" style="font-size: 0.75rem; margin-top: 1px;">Exp: ${b.expiry_date}</div>
                             </div>
                         `).join('');
                     }
 
-                    let variantInfo = '';
-                    if (i.side || i.size) {
-                        variantInfo = `<span class="variant-highlight ms-2">${[i.side, i.size].filter(v => v).join(' / ')}</span>`;
-                    }
+                    let cleanedName = window.cleanProductName(pName, i.side, i.size);
+                    let variantBadge = window.renderProductVariantBadge(i);
 
-                    detailsHtml += `
-                        <tr class="border-bottom border-light-theme">
-                            <td class="py-3 px-4">
-                                <div class="d-flex align-items-center">
-                                    <div class="ms-0">
-                                        <div class="text-main-theme fw-bold mb-0" style="font-size: 0.95rem;">${pName}${variantInfo}</div>
-                                        <div class="text-muted small mt-1">
-                                            ${i.generic_name ? `<span class="badge bg-light text-dark border-0 fw-normal me-2" style="font-size: 0.65rem;">${i.generic_name}</span>` : ''}
-                                            ${i.pack && i.pack !== 'N/A' && i.pack !== '---' ? `<span class="me-2">Pack: ${i.pack}</span>` : ''}
+                        detailsHtml += `
+                        <tr style="border-bottom: 1px solid var(--med-border-light, #f1f5f9);">
+                            <td class="py-2 px-3" style="max-width: 200px;">
+                                <div class="d-flex align-items-start">
+                                    <div class="ms-0 w-100">
+                                        <div class="text-main-theme fw-bold mb-0" style="font-size: 0.9rem; white-space: normal; line-height: 1.2;">
+                                            ${cleanedName} ${variantBadge}
+                                        </div>
+                                        <div class="small text-muted-theme" style="font-size: 0.7rem;">
+                                            (${i.brand || 'Generic'}) • <span class="fw-bold text-primary">${qty} ${i.unit || 'Nos'}</span>
+                                            ${i.free_quantity > 0 ? `<span class="text-success fw-bold ms-1" style="font-size: 0.65rem;">(+${i.free_quantity} Free)</span>` : ''}
+                                        </div>
+                                        <div class="text-muted small mt-0 opacity-75 d-flex flex-wrap gap-2" style="font-size: 0.6rem;">
+                                            ${i.generic_name ? `<span>${i.generic_name}</span>` : ''}
                                             ${i.product_code && i.product_code !== 'N/A' && i.product_code !== '---' ? `<span>Code: ${i.product_code}</span>` : ''}
                                         </div>
                                     </div>
                                 </div>
                             </td>
-                            <td class="py-3 px-4 text-center">${batchHtml}</td>
-                            <td class="py-3 px-4 text-center">
-                                <div class="fw-bold" style="font-size: 0.9rem;">${qty}</div>
-                                <div class="text-muted small" style="font-size: 0.65rem;">${i.unit || 'Units'}</div>
+                            <td class="py-2 px-3 text-center">${batchHtml}</td>
+                            <td class="py-2 px-3 text-center">
+                                <div class="fw-bold" style="font-size: 0.85rem;">${qty}</div>
+                                <div class="text-muted small" style="font-size: 0.6rem;">${i.unit || 'Units'}</div>
                             </td>
-                            <td class="py-3 px-4 text-center">
-                                ${i.free_quantity > 0 ? `<div class="badge bg-soft-success text-success border-0 px-2 py-1" style="font-size: 0.75rem;">+${i.free_quantity}</div>` : '<span class="text-muted small">-</span>'}
+                            <td class="py-2 px-3 text-center">
+                                ${i.free_quantity > 0 ? `<div class="badge bg-soft-success text-success border-0 px-2 py-1" style="font-size: 0.7rem;">+${i.free_quantity}</div>` : '<span class="text-muted small">-</span>'}
                             </td>
-                            <td class="py-3 px-4 text-end">
-                                <div class="text-muted small" style="font-size: 0.8rem;">${unitPrice.toFixed(2)}</div>
+                            <td class="py-2 px-3 text-end">
+                                <div class="text-muted small" style="font-size: 0.75rem;">${unitPrice.toFixed(2)}</div>
                             </td>
-                            <td class="py-3 px-4 text-end">
-                                <div class="fw-bold text-primary" style="font-size: 0.9rem;">${totalAmt.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                             <td class="py-2 px-3 text-end">
+                                <div class="fw-bold text-primary" style="font-size: 0.85rem;">${totalAmt.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                             </td>
                         </tr>
                     `;
@@ -1443,9 +1471,9 @@
                                     </tbody>
                                     <tfoot style="background: rgba(var(--med-primary-rgb), 0.01);">
                                         <tr>
-                                            <td colspan="5" class="text-end py-4 px-4 text-uppercase fw-bold text-muted" style="font-size: 0.75rem; letter-spacing: 0.05em;">Financial Sum (Grand Total):</td>
-                                            <td class="py-4 px-4 text-end">
-                                                <div class="fw-bold text-success fs-4" style="letter-spacing: -0.02em;">₹${parseFloat(row.total_amount).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                                            <td colspan="5" class="text-end py-3 px-3 text-uppercase fw-bold text-muted" style="font-size: 0.7rem; letter-spacing: 0.05em;">Grand Total:</td>
+                                            <td class="py-3 px-3 text-end">
+                                                <div class="fw-bold text-success fs-5" style="letter-spacing: -0.02em;">₹${parseFloat(row.total_amount).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                                             </td>
                                         </tr>
                                     </tfoot>
@@ -1456,9 +1484,9 @@
 
 
 
-                    <div class="card border-0 shadow-sm bg-card-theme" style="border-radius: 16px !important;">
-                        <div class="card-body py-4 px-4">
-                            <h6 class="text-uppercase text-muted-theme fw-bold mb-4" style="font-size: 0.72rem; letter-spacing: 0.08em;"><i class="fa fa-history me-2"></i>Order Lifecycle Progress</h6>
+                    <div class="card border-0 shadow-sm bg-card-theme" style="border-radius: 12px !important;">
+                        <div class="card-body py-3 px-3">
+                            <h6 class="text-uppercase text-muted-theme fw-bold mb-3" style="font-size: 0.65rem; letter-spacing: 0.08em;"><i class="fa fa-history me-2"></i>Order Lifecycle Progress</h6>
                             <div class="order-timeline">
                                 ${(() => {
                                     const status = (row.status || '').toLowerCase();
@@ -1526,7 +1554,7 @@
                             if (res.success) {
                                 table.ajax.reload();
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                showToast('success', res.success);
+                                // // showToast('success', res.success);
                             } else showToast('error', res.error);
                         }).fail(function () {
                             showToast('error', 'Request failed');
@@ -1566,7 +1594,7 @@
                     if (res.success) {
                         table.ajax.reload();
                         if (window.updateSidebarCounts) window.updateSidebarCounts();
-                        showToast('success', res.success);
+                        // showToast('success', res.success);
                     } else showToast('error', res.error);
                 }).fail(function (xhr) {
                     $('#cancelConfirmModal').modal('hide');
@@ -1599,7 +1627,7 @@
                             if (res.success) {
                                 table.ajax.reload();
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                showToast('success', res.success);
+                                // // showToast('success', res.success);
                             } else showToast('error', res.error);
                         });
                     }
@@ -1622,7 +1650,7 @@
                             if (res.success) {
                                 table.ajax.reload();
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                showToast('success', res.success);
+                                // // showToast('success', res.success);
                             } else showToast('error', res.error);
                         });
                     }
@@ -1654,7 +1682,7 @@
                         if (res.success) {
                             table.ajax.reload();
                             if (window.updateSidebarCounts) window.updateSidebarCounts();
-                            showToast('success', res.success);
+                            // showToast('success', res.success);
                         } else showToast('error', res.error);
                     },
                     error: function (xhr) {
@@ -1695,7 +1723,7 @@
                             if (res.success) {
                                 table.ajax.reload();
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                showToast('success', res.success);
+                                // // showToast('success', res.success);
                             } else showToast('error', res.error);
                         });
                     }
@@ -1720,12 +1748,13 @@
                             if (res.success) {
                                 table.ajax.reload();
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                showToast('success', res.success);
+                                // // showToast('success', res.success);
                             } else showToast('error', res.error);
                         });
                     }
                 });
             });
+
 
         });
     </script>

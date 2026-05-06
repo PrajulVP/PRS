@@ -1469,12 +1469,70 @@
             }
         },
         "/api/field-staff/punch": {
+            "get": {
+                "tags": [
+                    "Field Staff"
+                ],
+                "summary": "Get current punch status of the field staff",
+                "operationId": "8074fbad7ab7359f0ccd322c726b9601",
+                "parameters": [
+                    {
+                        "name": "X-Device-ID",
+                        "in": "header",
+                        "description": "Unique Device identifier for binding",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Last punch status retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "enum": [
+                                                "punched_in",
+                                                "punched_out"
+                                            ]
+                                        },
+                                        "last_log": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
             "post": {
                 "tags": [
                     "Field Staff"
                 ],
                 "summary": "Punch-in or Punch-out with GPS validation",
                 "operationId": "437fdc54d71055fbe6122cbabccb765e",
+                "parameters": [
+                    {
+                        "name": "X-Device-ID",
+                        "in": "header",
+                        "description": "Unique Device identifier for binding",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -1523,6 +1581,17 @@
                 ],
                 "summary": "Log continuous GPS location ping",
                 "operationId": "04f4953f3cfa6596212fecf030c4f8bd",
+                "parameters": [
+                    {
+                        "name": "X-Device-ID",
+                        "in": "header",
+                        "description": "Unique Device identifier for binding",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -1563,6 +1632,17 @@
                 ],
                 "summary": "Log a visit to a customer",
                 "operationId": "e0b9aef5ef8d371f0799e7bd34236e8e",
+                "parameters": [
+                    {
+                        "name": "X-Device-ID",
+                        "in": "header",
+                        "description": "Unique Device identifier for binding",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -1620,6 +1700,17 @@
                 "summary": "Submit an expense claim (with Auto TA/DA calculation)",
                 "description": "Submit an expense. If type is 'TA' or 'DA', the system automatically calculates the amount based on GPS logs for the expense_date and the configured HQ radius (15km).",
                 "operationId": "2e05fa5fb473ffa2137622ba2ba4e7f8",
+                "parameters": [
+                    {
+                        "name": "X-Device-ID",
+                        "in": "header",
+                        "description": "Unique Device identifier for binding",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -1710,6 +1801,17 @@
                 ],
                 "summary": "Request a leave or permission",
                 "operationId": "38893af842c1fe1e5c9fd999db15816b",
+                "parameters": [
+                    {
+                        "name": "X-Device-ID",
+                        "in": "header",
+                        "description": "Unique Device identifier for binding",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "201": {
                         "description": "Leave requested"

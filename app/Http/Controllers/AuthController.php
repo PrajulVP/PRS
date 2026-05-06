@@ -52,10 +52,10 @@ class AuthController extends Controller
         }
 
         // Restriction: Field Staff cannot login via Web (Portal only)
-        if ($user->hasRole('fieldstaff')) {
-            return back()->withErrors(['email' => 'Field staff can only login via the mobile portal.'])
-                ->withInput();
-        }
+        // if ($user->hasRole('fieldstaff')) {
+        //     return back()->withErrors(['email' => 'Field staff can only login via the mobile portal.'])
+        //         ->withInput();
+        // }
 
         // Check password manually
         if (!\Hash::check($request->password, $user->password)) {

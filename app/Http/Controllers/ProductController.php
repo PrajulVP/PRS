@@ -112,8 +112,9 @@ class ProductController extends Controller
                     'has_variants' => $product->has_variants,
                     'variant_options' => $product->variant_options,
                     'variant_options' => $product->variant_options,
-                    'brand' => $product->brand, // Added Brand field
-                    'actions' => null, // Actions column will be rendered by DataTables
+                    'brand' => $product->brand,
+                    'is_returnable' => $product->is_returnable,
+                    'actions' => null,
                 ];
             });
 
@@ -158,6 +159,7 @@ class ProductController extends Controller
             'pts' => 'required|numeric|min:0',
             'loyalty_point_percentage' => 'nullable|numeric|min:0',
             'brand' => 'nullable|string|max:255',
+            'is_returnable' => 'nullable|boolean',
         ]);
 
         $data = $request->all();
@@ -221,6 +223,7 @@ class ProductController extends Controller
             'pts' => 'required|numeric|min:0',
             'loyalty_point_percentage' => 'nullable|numeric|min:0',
             'brand' => 'nullable|string|max:255',
+            'is_returnable' => 'nullable|boolean',
         ]);
 
         $data = $request->all();
@@ -494,6 +497,25 @@ class ProductController extends Controller
         }
 
         return redirect()->route('products.index')->with('success', "$successCount products imported successfully.");
+    }
+
+    public function toggleReturnable(Product $product)
+    {
+        $product->is_returnable = !$product->is_returnable;
+        $product->save();
+        return response()->json(['success' => true, 'is_returnable' => $product->is_returnable]);
+    }
+
+    public function bulkBrandReturnable(Request $request)
+    {
+        $request->validate([
+            'brand' => 'required|string',
+            'is_returnable' => 'required|boolean'
+        ]);
+
+        Product::where('brand', $request->brand)->update(['is_returnable' => $request->is_returnable]);
+
+        return response()->json(['success' => 'Products for brand ' . $request->brand . ' updated successfully.']);
     }
 
     private function parseNumber($string)

@@ -12,6 +12,7 @@
             --med-bg-sidebar: linear-gradient(165deg, rgb(44, 44, 44) 0%, rgb(0, 80, 133) 40%, #002b5cf5 100%);
             /* Dark slate into Deep Corporate Navy */
             --med-primary: #00497a;
+            --med-primary-rgb: 0, 73, 122;
             /* Corporate Blue */
             --med-secondary: #0067ab;
             /* Lighter Blue */
@@ -169,8 +170,9 @@
             color: var(--med-text-main) !important;
         }
 
-        body.dark-only .modal-body td {
-            color: var(--med-text-main) !important;
+        body.dark-only .modal-body td,
+        body.dark-only .modal-body .text-main-theme {
+            color: #f8fafc !important;
         }
 
         /* Improved Dark Mode Contrast */
@@ -531,6 +533,30 @@
             filter: invert(1) grayscale(100%) brightness(200%);
         }
 
+        .premium-variant-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 1px 6px;
+            background: rgba(var(--med-primary-rgb, 0, 73, 122), 0.08);
+            color: var(--med-primary);
+            border: 1px solid rgba(var(--med-primary-rgb, 0, 73, 122), 0.15);
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            transition: all 0.3s ease;
+            vertical-align: middle;
+            white-space: nowrap;
+            margin-left: 6px;
+        }
+        body.dark-only .premium-variant-badge {
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            border-color: rgba(56, 189, 248, 0.3);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
 
         /* === Form Elements === */
         .form-control,
@@ -1484,6 +1510,45 @@
         }
 
         setInterval(fetchLiveNotifications, 15000); // 15 seconds
+
+        // Global Product Detail Helpers
+        window.cleanProductName = function(name, side, size) {
+            if (!name) return '';
+            let cleaned = name;
+            const variants = [side, size].filter(v => v && v !== 'NONE' && v !== 'N/A' && v !== '---');
+            variants.forEach(v => {
+                const escapedV = v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`\\s*[\\[\\(]${escapedV}[\\]\\)]`, 'gi');
+                cleaned = cleaned.replace(regex, '');
+            });
+            // Also handle combined formats like [LEFT/L]
+            if (side && size) {
+                const combined = `${side}/${size}`;
+                const escapedC = combined.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regexC = new RegExp(`\\s*[\\[\\(]${escapedC}[\\]\\)]`, 'gi');
+                cleaned = cleaned.replace(regexC, '');
+            }
+            return cleaned.trim();
+        };
+
+        window.renderProductVariantBadge = function(item) {
+            let side = (item.side && item.side !== 'NONE' && item.side !== 'N/A' && item.side !== '---') ? item.side : '';
+            let size = (item.size && item.size !== 'NONE' && item.size !== 'N/A' && item.size !== '---') ? item.size : '';
+            let pack = (item.pack && item.pack !== 'NONE' && item.pack !== 'N/A' && item.pack !== '---') ? item.pack : '';
+            
+            let variants = [];
+            if (side || size) {
+                variants.push([side, size].filter(v => v).join(' / '));
+            }
+            if (pack) {
+                variants.push(pack);
+            }
+            
+            if (variants.length > 0) {
+                return `<span class="premium-variant-badge">${variants.join(' | ')}</span>`;
+            }
+            return '';
+        };
 
         window.showToast = function(type, message) {
             if (!message || message === 'undefined') return;

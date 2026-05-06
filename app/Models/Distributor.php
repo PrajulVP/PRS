@@ -27,6 +27,7 @@ class Distributor extends Model
         'outstanding_amount',
         'credit_days',
         'loyalty_points',
+        'credit_balance',
     ];
 
     public function user()

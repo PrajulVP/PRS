@@ -177,6 +177,7 @@
 
             // Brand Management Logic
             let currentBrands = $('#brands_final_value').val().split(',').map(s => s.trim()).filter(s => s.length > 0);
+            let returnableBrands = '{{ $returnable_brands }}'.split(',').map(s => s.trim()).filter(s => s.length > 0);
 
             function renderBrands() {
                 let html = '';
@@ -184,12 +185,21 @@
                     html = '<div class="text-muted small w-100 text-center py-2">No brands added yet.</div>';
                 } else {
                     currentBrands.forEach((brand, index) => {
+                        let isReturnable = returnableBrands.includes(brand);
                         html += `
-                            <div class="brand-tag-wrapper d-inline-flex align-items-center bg-white border border-primary rounded p-2 shadow-sm">
-                                <span class="fw-bold pe-2 text-primary border-end me-2"><i class="fa fa-tag me-1 small"></i>${brand}</span>
-                                <div class="d-flex gap-1">
-                                    <button type="button" class="btn btn-outline-info p-0 d-flex align-items-center justify-content-center edit-brand-btn" data-index="${index}" style="width: 25px; height: 25px;" title="Edit"><i class="fa fa-edit small"></i></button>
-                                    <button type="button" class="btn btn-outline-danger p-0 d-flex align-items-center justify-content-center delete-brand-btn" data-index="${index}" style="width: 25px; height: 25px;" title="Delete"><i class="fa fa-trash small"></i></button>
+                            <div class="brand-tag-wrapper d-inline-flex flex-column bg-white border border-primary rounded p-3 shadow-sm" style="min-width: 180px;">
+                                <div class="d-flex align-items-center justify-content-between mb-2 border-bottom pb-2">
+                                    <span class="fw-bold text-primary"><i class="fa fa-tag me-1 small"></i>${brand}</span>
+                                    <div class="d-flex gap-1">
+                                        <button type="button" class="btn btn-outline-info p-0 d-flex align-items-center justify-content-center edit-brand-btn" data-index="${index}" style="width: 24px; height: 24px;" title="Edit"><i class="fa fa-edit small"></i></button>
+                                        <button type="button" class="btn btn-outline-danger p-0 d-flex align-items-center justify-content-center delete-brand-btn" data-index="${index}" style="width: 24px; height: 24px;" title="Delete"><i class="fa fa-trash small"></i></button>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span class="small text-muted">Returnable</span>
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input returnable-toggle" type="checkbox" data-brand="${brand}" ${isReturnable ? 'checked' : ''}>
+                                    </div>
                                 </div>
                             </div>
                         `;
@@ -197,7 +207,53 @@
                 }
                 $('#brands_tag_container').html(html);
                 $('#brands_final_value').val(currentBrands.join(','));
+                
+                // Update hidden input for returnable_brands
+                if ($('#returnable_brands_input').length === 0) {
+                    $('#brands_form').append(`<input type="hidden" name="returnable_brands" id="returnable_brands_input" value="${returnableBrands.join(',')}">`);
+                } else {
+                    $('#returnable_brands_input').val(returnableBrands.join(','));
+                }
             }
+
+            $(document).on('change', '.returnable-toggle', function() {
+                let brand = $(this).data('brand');
+                let isChecked = $(this).is(':checked');
+                
+                if (isChecked) {
+                    if (!returnableBrands.includes(brand)) returnableBrands.push(brand);
+                } else {
+                    returnableBrands = returnableBrands.filter(b => b !== brand);
+                }
+                
+                $('#returnable_brands_input').val(returnableBrands.join(','));
+                
+                // Save this specific setting immediately via AJAX to sync products
+                $.ajax({
+                    url: '{{ route('admin.settings.save') }}',
+                    method: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        slug: 'returnable_brands',
+                        value: returnableBrands.join(',')
+                    },
+                    success: function() {
+                        // Now sync actual products
+                        $.ajax({
+                            url: '{{ route('products.bulk-brand-returnable') }}',
+                            method: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}',
+                                brand: brand,
+                                is_returnable: isChecked ? 1 : 0
+                            },
+                            success: function(res) {
+                                showToast('success', 'Sync Successful', `Products for ${brand} are now ${isChecked ? 'returnable' : 'non-returnable'}.`);
+                            }
+                        });
+                    }
+                });
+            });
 
             // Initial render
             renderBrands();

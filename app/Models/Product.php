@@ -31,6 +31,7 @@ class Product extends Model
         'boxes_per_carton',
         'has_variants',
         'variant_options',
+        'is_returnable',
     ];
 
     protected $casts = [
@@ -42,6 +43,7 @@ class Product extends Model
         'net_amount' => 'decimal:2',
         'loyalty_point_percentage' => 'decimal:2',
         'variant_options' => 'array',
+        'is_returnable' => 'boolean',
     ];
 
     /**

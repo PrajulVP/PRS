@@ -79,4 +79,9 @@ class RetailerOrder extends Model
     {
         return $this->belongsTo(FieldStaff::class, 'fieldstaff_id'); // Assuming foreign key is fieldstaff_id based on migration context
     }
+
+    public function returnRequests(): HasMany
+    {
+        return $this->hasMany(ReturnRequest::class, 'order_id')->where('order_type', 'retailer');
+    }
 }

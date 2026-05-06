@@ -22,11 +22,12 @@ class SettingsController extends Controller
         $da_outstation_rate = Setting::getValue('da_outstation_rate', '500');
         $hq_radius_km = Setting::getValue('hq_radius_km', '15');
         $product_brands = Setting::getValue('product_brands', 'Atomets,Atomshield,Sudhneelgiri');
+        $returnable_brands = Setting::getValue('returnable_brands', '');
 
         return view('admin.settings.general', compact(
             'value', 'cgst', 'sgst', 
             'geofence_radius', 'ta_rate_per_km', 'da_hq_rate', 'da_outstation_rate',
-            'hq_radius_km', 'product_brands'
+            'hq_radius_km', 'product_brands', 'returnable_brands'
         ));
     }
 
@@ -81,6 +82,9 @@ class SettingsController extends Controller
         } elseif ($data['slug'] === 'product_brands') {
             $title = 'Product Brands';
             $desc = 'Comma-separated list of available product brands.';
+        } elseif ($data['slug'] === 'returnable_brands') {
+            $title = 'Returnable Brands';
+            $desc = 'Comma-separated list of brands eligible for returns.';
         }
 
         $setting = Setting::setValue(

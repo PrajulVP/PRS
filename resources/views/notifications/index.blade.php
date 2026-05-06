@@ -60,7 +60,7 @@
                                 <tbody>
                                     @forelse($notifications as $notification)
                                         @php
-                                            $actionUrl = $notification->data['action_url'] ?? '#';
+                                            $actionUrl = $notification->data['action_url'] ?? $notification->data['url'] ?? '#';
                                             $orderCode = $notification->data['order_code'] ?? '';
                                             if ($actionUrl !== '#' && !empty($orderCode)) {
                                                 $separator = parse_url($actionUrl, PHP_URL_QUERY) ? '&' : '?';

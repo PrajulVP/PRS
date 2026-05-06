@@ -2,6 +2,11 @@
 
 @section('page-body')
     <!-- Container-fluid starts-->
+    <div class="modal fade" id="showOrderModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content"></div>
+        </div>
+    </div>
     <div class="container-fluid pt-4">
         <div class="row size-column">
             <div class="col-xxl-12 box-col-12">
@@ -445,7 +450,7 @@
                         </div>
                         <div class="col-12">
                             <div class="row g-3">
-                                <div class="col-md-5">
+                                <div class="col-md-4">
                                     <div class="card border-0 rounded-4 shadow-sm h-100 overflow-hidden executive-metric-card action-card-compact cursor-pointer" 
                                         style="background: linear-gradient(135deg, rgba(var(--med-primary-rgb), 0.05) 0%, #fff 100%);"
                                         onclick="window.location.href='{{ route('admin.retailer.create') }}'">
@@ -463,7 +468,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-5">
+                                <div class="col-md-4">
                                     <div class="card border-0 rounded-4 shadow-sm h-100 overflow-hidden executive-metric-card action-card-compact cursor-pointer" 
                                         style="background: linear-gradient(135deg, rgba(var(--med-primary-rgb), 0.9) 0%, var(--med-accent) 100%);"
                                         onclick="window.location.href='{{ route('admin.retailer.create', ['action' => 'upload_prescription']) }}'">
@@ -474,6 +479,24 @@
                                             <div>
                                                 <h5 class="fw-800 mb-0 text-white">AI Prescription Order</h5>
                                                 <p class="text-white text-opacity-75 mb-0">AI product extraction</p>
+                                            </div>
+                                            <div class="ms-auto text-white">
+                                                <i data-feather="arrow-right" style="width: 18px;"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card border-0 rounded-4 shadow-sm h-100 overflow-hidden executive-metric-card action-card-compact cursor-pointer" 
+                                        style="background: linear-gradient(135deg, #ef4444 0%, #7f1d1d 100%);"
+                                        onclick="window.location.href='{{ route('retailer.orders.index', ['status' => 'delivered']) }}'">
+                                        <div class="card-body d-flex align-items-center gap-3">
+                                            <div class="icon-circle-md" style="background: rgba(255, 255, 255, 0.2)">
+                                                <i data-feather="rotate-ccw" class="text-white" style="width: 24px; height: 24px; stroke-width: 2.5px;"></i>
+                                            </div>
+                                            <div>
+                                                <h5 class="fw-800 mb-0 text-white">Return Products</h5>
+                                                <p class="text-white text-opacity-75 mb-0">Initiate a return request</p>
                                             </div>
                                             <div class="ms-auto text-white">
                                                 <i data-feather="arrow-right" style="width: 18px;"></i>
@@ -543,6 +566,45 @@
                     <div class="section-header-modern">
                         <div class="dash"></div>
                         <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.9rem; letter-spacing: 1.5px; color: var(--med-primary);">Distributor Control Panel</h5>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="card border-0 rounded-4 shadow-sm h-100 overflow-hidden executive-metric-card action-card-compact cursor-pointer" 
+                                style="background: linear-gradient(135deg, rgba(var(--med-primary-rgb), 0.05) 0%, #fff 100%);"
+                                onclick="window.location.href='{{ route('admin.distributor-orders.create') }}'">
+                                <div class="card-body d-flex align-items-center gap-3">
+                                    <div class="icon-circle-md" style="background: rgba(var(--med-primary-rgb), 0.1)">
+                                        <i data-feather="plus-circle" class="text-primary" style="width: 24px; height: 24px;"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-800 mb-0" style="color: var(--med-primary);">Stock Order</h5>
+                                        <p class="text-muted mb-0">Order stock from company</p>
+                                    </div>
+                                    <div class="ms-auto">
+                                        <i data-feather="arrow-right" class="text-muted" style="width: 18px;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-0 rounded-4 shadow-sm h-100 overflow-hidden executive-metric-card action-card-compact cursor-pointer" 
+                                style="background: linear-gradient(135deg, #ef4444 0%, #7f1d1d 100%);"
+                                onclick="window.location.href='{{ route('distributor.orders.index', ['status' => 'delivered']) }}'">
+                                <div class="card-body d-flex align-items-center gap-3">
+                                    <div class="icon-circle-md" style="background: rgba(255, 255, 255, 0.2)">
+                                        <i data-feather="rotate-ccw" class="text-white" style="width: 24px; height: 24px; stroke-width: 2.5px;"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-800 mb-0 text-white">Manage Returns</h5>
+                                        <p class="text-white text-opacity-75 mb-0">Handle customer returns</p>
+                                    </div>
+                                    <div class="ms-auto text-white">
+                                        <i data-feather="arrow-right" style="width: 18px;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
 

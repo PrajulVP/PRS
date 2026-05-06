@@ -13,6 +13,7 @@ use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use App\Models\User;
 
 class FieldStaffActionApiController extends Controller
 {
@@ -30,6 +31,13 @@ class FieldStaffActionApiController extends Controller
      *             @OA\Property(property="longitude", type="number"),
      *             @OA\Property(property="is_mock", type="boolean", description="Detected fake GPS usage")
      *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="X-Device-ID",
+     *         in="header",
+     *         required=true,
+     *         description="Unique Device identifier for binding",
+     *         @OA\Schema(type="string")
      *     ),
      *     @OA\Response(response=200, description="Punch logged successfully")
      * )
@@ -73,6 +81,49 @@ class FieldStaffActionApiController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/field-staff/punch",
+     *     summary="Get current punch status of the field staff",
+     *     tags={"Field Staff"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="X-Device-ID",
+     *         in="header",
+     *         required=true,
+     *         description="Unique Device identifier for binding",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Last punch status retrieved",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", enum={"punched_in", "punched_out"}),
+     *             @OA\Property(property="last_log", type="object")
+     *         )
+     *     )
+     * )
+     */
+    public function getPunchStatus(Request $request)
+    {
+        $user = auth('api')->user();
+        
+        // Device Binding Security
+        $deviceId = $request->header('X-Device-ID');
+        if ($user->device_uuid && $user->device_uuid !== $deviceId) {
+            return response()->json(['error' => 'Device mismatch.'], 403);
+        }
+
+        $lastPunch = AttendanceLog::where('user_id', $user->id)
+            ->orderBy('timestamp', 'desc')
+            ->first();
+
+        return response()->json([
+            'status' => $lastPunch ? ($lastPunch->type === 'punch_in' ? 'punched_in' : 'punched_out') : 'punched_out',
+            'last_log' => $lastPunch
+        ]);
+    }
+
+    /**
      * @OA\Post(
      *     path="/api/field-staff/ping",
      *     summary="Log continuous GPS location ping",
@@ -85,6 +136,13 @@ class FieldStaffActionApiController extends Controller
      *             @OA\Property(property="longitude", type="number"),
      *             @OA\Property(property="is_mock", type="boolean")
      *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="X-Device-ID",
+     *         in="header",
+     *         required=true,
+     *         description="Unique Device identifier for binding",
+     *         @OA\Schema(type="string")
      *     ),
      *     @OA\Response(response=200, description="Location ping saved")
      * )
@@ -133,6 +191,13 @@ class FieldStaffActionApiController extends Controller
      *             @OA\Property(property="next_follow_up", type="string", format="date")
      *         )
      *     ),
+     *     @OA\Parameter(
+     *         name="X-Device-ID",
+     *         in="header",
+     *         required=true,
+     *         description="Unique Device identifier for binding",
+     *         @OA\Schema(type="string")
+     *     ),
      *     @OA\Response(response=200, description="Visit logged")
      * )
      */
@@ -150,6 +215,12 @@ class FieldStaffActionApiController extends Controller
         ]);
 
         $user = auth('api')->user();
+
+        // Extra security: Verify Device ID if bound
+        $deviceId = $request->header('X-Device-ID');
+        if ($user->device_uuid && $user->device_uuid !== $deviceId) {
+            return response()->json(['error' => 'Device mismatch. Use registered device.'], 403);
+        }
         
         // Geofencing Check
         $isFlagged = false;
@@ -218,6 +289,13 @@ class FieldStaffActionApiController extends Controller
      *     description="Submit an expense. If type is 'TA' or 'DA', the system automatically calculates the amount based on GPS logs for the expense_date and the configured HQ radius (15km).",
      *     tags={"Field Staff"},
      *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="X-Device-ID",
+     *         in="header",
+     *         required=true,
+     *         description="Unique Device identifier for binding",
+     *         @OA\Schema(type="string")
+     *     ),
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\MediaType(
@@ -260,6 +338,12 @@ class FieldStaffActionApiController extends Controller
         ]);
 
         $user = auth('api')->user();
+
+        // Extra security: Verify Device ID if bound
+        $deviceId = $request->header('X-Device-ID');
+        if ($user->device_uuid && $user->device_uuid !== $deviceId) {
+            return response()->json(['error' => 'Device mismatch. Use registered device.'], 403);
+        }
         $type = strtoupper($request->type);
         $amount = $request->amount ?? 0;
         $distance = $request->distance_km ?? 0;
@@ -322,6 +406,13 @@ class FieldStaffActionApiController extends Controller
      *     summary="Request a leave or permission",
      *     tags={"Field Staff"},
      *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="X-Device-ID",
+     *         in="header",
+     *         required=true,
+     *         description="Unique Device identifier for binding",
+     *         @OA\Schema(type="string")
+     *     ),
      *     @OA\Response(response=201, description="Leave requested")
      * )
      */
@@ -335,6 +426,12 @@ class FieldStaffActionApiController extends Controller
         ]);
 
         $user = auth('api')->user();
+
+        // Extra security: Verify Device ID if bound
+        $deviceId = $request->header('X-Device-ID');
+        if ($user->device_uuid && $user->device_uuid !== $deviceId) {
+            return response()->json(['error' => 'Device mismatch. Use registered device.'], 403);
+        }
 
         $leave = LeaveRequest::create([
             'user_id' => $user->id,

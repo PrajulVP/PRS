@@ -25,7 +25,8 @@ use App\Http\Controllers\{
     SystemController,
     ReportController,
     PrescriptionAnalysisController,
-    SidebarController
+    SidebarController,
+    ReturnController
 };
 
 Route::get('/', function () {
@@ -58,6 +59,8 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('areas', AreaController::class);
     Route::get('products/download-template', [ProductController::class, 'downloadTemplate'])->name('products.download-template');
     Route::post('products/import', [ProductController::class, 'import'])->name('products.import');
+    Route::post('products/{product}/toggle-returnable', [ProductController::class, 'toggleReturnable'])->name('products.toggle-returnable');
+    Route::post('products/bulk-brand-returnable', [ProductController::class, 'bulkBrandReturnable'])->name('products.bulk-brand-returnable');
     Route::resource('products', ProductController::class);
     Route::post('inventories/{inventory}/adjust-stock', [InventoryController::class, 'adjustStock'])->name('inventories.adjust-stock');
     Route::resource('inventories', InventoryController::class);
@@ -170,6 +173,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('loyalty-points/{retailer}/summary', [LoyaltyPointsController::class, 'getSummary'])->name('loyalty-points.summary');
         Route::get('loyalty-points/get-field-staffs-by-manager', [LoyaltyPointsController::class, 'getFieldStaffByManager'])->name('loyalty-points.field-staffs-by-manager');
 
+        // Returns & Credits
+        Route::prefix('returns')->name('returns.')->group(function () {
+            Route::get('/', [ReturnController::class, 'index'])->name('index');
+            Route::post('/', [ReturnController::class, 'store'])->name('store');
+            Route::post('/{returnRequest}/approve', [ReturnController::class, 'approve'])->name('approve');
+            Route::post('/{returnRequest}/reject', [ReturnController::class, 'reject'])->name('reject');
+            Route::get('/search-order', [ReturnController::class, 'searchOrder'])->name('search-order');
+        });
+
         // Master settings
         Route::get('settings/general', [SettingsController::class, 'general'])->name('settings.general');
         Route::post('settings', [SettingsController::class, 'save'])->name('settings.save');
@@ -232,11 +244,6 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::prefix('system')->name('system.')->group(function () {
-    Route::get('swagger-generate', [SystemController::class, 'swaggerGenerate'])->name('swagger.generate');
-    Route::match(['get', 'post'], 'migrate', [SystemController::class, 'migrate'])->name('migrate');
-    Route::match(['get', 'post'], 'migrate-fresh', [SystemController::class, 'migrateFresh'])->name('migrate.fresh');
-    Route::match(['get', 'post'], 'migrate-fresh-seed', [SystemController::class, 'migrateFreshSeed'])->name('migrate.fresh.seed');
-    Route::get('optimize', [SystemController::class, 'optimize'])->name('optimize');
-    Route::get('ocr-logs', [SystemController::class, 'getOcrLogs'])->name('ocr.logs');
+    Route::get('/logs', [SystemController::class, 'logs'])->name('logs');
+    Route::get('/db-status', [SystemController::class, 'dbStatus'])->name('db-status');
 });
-

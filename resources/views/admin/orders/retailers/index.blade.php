@@ -118,6 +118,17 @@
             white-space: nowrap !important;
         }
 
+        .product-col {
+            min-width: 200px !important;
+            max-width: 200px !important;
+            width: 200px !important;
+            white-space: normal !important;
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+            vertical-align: top !important;
+            line-height: 1.3 !important;
+        }
+
         /* Preview / full content helper */
         .preview-content {
             display: inline-block;
@@ -338,7 +349,20 @@
         }
         /* --- End New Order View UI Styles --- */
         /* --- End New Order View UI Styles --- */
-    </style>
+        #submitReturnModal {
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+        .bg-soft-success { background-color: rgba(22, 163, 74, 0.1) !important; color: #16a34a !important; }
+        .bg-soft-warning { background-color: rgba(202, 138, 4, 0.1) !important; color: #ca8a04 !important; }
+        .bg-soft-danger { background-color: rgba(220, 38, 38, 0.1) !important; color: #dc2626 !important; }
+        .bg-soft-info { background-color: rgba(8, 145, 178, 0.1) !important; color: #0891b2 !important; }
+        .bg-soft-primary { background-color: rgba(0, 73, 122, 0.1) !important; color: #00497a !important; }
+        .text-main-theme { color: var(--med-text-main, #0f172a) !important; }
+        .text-muted-theme { color: var(--med-text-muted, #64748b) !important; }
+        .bg-card-theme { background-color: var(--med-bg-card, #ffffff) !important; }
+</style>
     <div class="container-fluid">
         <div class="card shadow-sm border-0 rounded-3">
             <div class="card-header border-bottom pb-0" style="background-color: var(--med-bg-card) !important;">
@@ -408,7 +432,7 @@
                                 <th>Order Code</th>
                                 <th>Retailer</th>
                                 <th>Distributor</th>
-                                <th style="min-width: 350px;">Products</th>
+                                <th style="width: 200px;">Products</th>
                                 <th>Total</th>
                                 <th>Status</th>
                                 <th>Placed At</th>
@@ -537,7 +561,7 @@
 
     {{-- Show Modal --}}
     <div class="modal fade" id="showOrderModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header border-bottom-0 pb-0">
                     <h5 class="fw-bold mb-0">Order Details <span id="modalOrderCode" class="text-primary ms-2"></span></h5>
@@ -546,6 +570,49 @@
                 <div class="modal-body pt-3" id="showOrderContent">
                     <!-- Dynamic content will be injected here -->
                 </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Submit Return Modal --}}
+    <div class="modal fade" id="submitReturnModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow" style="border-radius: 20px;">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Return Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="submitReturnForm">
+                    <div class="modal-body">
+                        <input type="hidden" name="order_id" id="return_order_id">
+                        <input type="hidden" name="product_id" id="return_product_id">
+                        
+                        <div class="mb-3">
+                            <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Product</label>
+                            <div id="return_product_name" class="fw-bold text-main-theme"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Return Quantity (<span id="return_unit_text">Nos</span>)</label>
+                            <input type="number" name="quantity" id="return_qty_input" class="form-control" step="0.01" required min="0.01">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Reason for Return</label>
+                            <textarea name="reason" class="form-control" rows="3" required placeholder="E.g., Damaged product, Expired..."></textarea>
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="form-label fw-bold">Upload Images (Proof)</label>
+                            <input type="file" name="images[]" id="return_images_input" class="form-control" accept="image/*" required multiple>
+                            <div id="image_preview_container" class="mt-2 d-flex flex-wrap gap-2"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary px-4">Submit Return</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -793,7 +860,7 @@
                 {
                     data: 'product_summary',
                     name: 'product_summary',
-                    width: '450px',
+                    className: 'product-col',
                     orderable: false,
                     render: function (data, type, row) {
                         if (!data) return '-';
@@ -1104,7 +1171,7 @@
                         if (res.success) {
                             table.ajax.reload();
                             if (window.updateSidebarCounts) window.updateSidebarCounts();
-                            showToast('success', res.success || 'Order deleted');
+                            // // showToast('success', res.success || 'Order deleted');
                         } else {
                             showToast('error', res.error || 'Failed to delete order');
                         }
@@ -1199,7 +1266,8 @@
                             if (res.success) {
                                 table.ajax.reload();
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                showToast('success', res.success || 'Cancellation requested');
+                                // // showToast('success', res.success || 'Cancellation requested');
+                                table.ajax.reload(null, false);
                             } else showToast('error', res.error || 'Failed to request cancellation');
                         }).fail(function () {
                             showToast('error', 'Request failed');
@@ -1224,7 +1292,8 @@
                             if (res.success) {
                                 table.ajax.reload();
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                showToast('success', res.success || 'Cancellation approved');
+                                // // showToast('success', res.success || 'Cancellation approved');
+                                table.ajax.reload(null, false);
                             } else showToast('error', res.error || 'Failed to approve cancellation');
                         }).fail(function () {
                             showToast('error', 'Request failed');
@@ -1251,7 +1320,7 @@
                             if (res.success) {
                                 table.ajax.reload(null, false);
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                showToast('success', res.success);
+                                // // showToast('success', res.success);
                                 if (res.new_points) {
                                     $('.notification-box .badge').text(parseFloat(res.new_points).toFixed(2));
                                 }
@@ -1429,7 +1498,7 @@
                             $('#distributorApproveModal').modal('hide');
                             table.ajax.reload(null, false);
                             if (window.updateSidebarCounts) window.updateSidebarCounts();
-                            showToast('success', res.success);
+                            // showToast('success', res.success);
                         } else {
                             showToast('error', res.error || 'Failed to approve order');
                         }
@@ -1460,7 +1529,8 @@
                             if (res.success) {
                                 table.ajax.reload();
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                showToast('success', res.success || 'Order approved successfully.');
+                                // // showToast('success', res.success || 'Order approved successfully.');
+                                table.ajax.reload(null, false);
                             } else {
                                 showToast('error', res.error || 'Error accepting order');
                             }
@@ -1492,7 +1562,8 @@
                         $('#assignFieldStaffModal').modal('hide');
                         table.ajax.reload();
                         if (window.updateSidebarCounts) window.updateSidebarCounts();
-                        showToast('success', 'Field Staff assigned successfully');
+                        // // showToast('success', 'Field Staff assigned successfully');
+                        table.ajax.reload(null, false);
                     } else {
                         showToast('error', res.error || 'Failed to assign field staff');
                     }
@@ -1515,41 +1586,40 @@
                 $('#modalOrderCode').html(`#${row.order_code} <span class="badge ${payBadgeClass} ms-2" style="font-size: 0.75rem; vertical-align: middle; padding: 0.3em 0.7em;">${payStatus.toUpperCase()}</span>`);
 
                 let detailsHtml = `
-                    <div class="row mb-4">
-                        <div class="col-md-6 mb-3 mb-md-0">
-                            <div class="card h-100 border-0 shadow-sm bg-card-theme" style="border-radius: 12px !important;">
-                                <div class="card-body py-3 px-4">
-                                    <h6 class="text-uppercase text-muted-theme fw-bold mb-2" style="font-size: 0.65rem; letter-spacing: 0.05em;"><i class="fa fa-shop me-2"></i>Retailer Info</h6>
-                                    <h5 class="fw-bold mb-1 text-main-theme" style="font-size: 1.1rem;">${row.retailer_shop || row.retailer_name}</h5>
-                                    ${row.retailer_shop ? `<div class="text-muted-theme small mb-1"><i class="fa fa-user me-2"></i>${row.retailer_name}</div>` : ''}
-                                    <div class="d-flex align-items-center mb-0 text-main-theme"><i class="fa fa-phone text-muted-theme me-2" style="width: 14px; font-size: 0.8rem;"></i> <span class="small">${row.retailer_phone || 'N/A'}</span></div>
-                                    <div class="d-flex align-items-start text-wrap text-main-theme"><i class="fa fa-map-marker text-muted-theme me-2 mt-1" style="width: 14px; font-size: 0.8rem;"></i> <span class="small opacity-75" style="max-width: 250px;">${row.retailer_address || 'N/A'}</span></div>
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-2 mb-md-0">
+                            <div class="card h-100 border-0 shadow-sm bg-card-theme" style="border-radius: 10px !important;">
+                                <div class="card-body py-2 px-3">
+                                    <h6 class="text-uppercase text-muted-theme fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 0.05em;"><i class="fa fa-shop me-2"></i>Retailer Info</h6>
+                                    <h5 class="fw-bold mb-0 text-main-theme" style="font-size: 1rem;">${row.retailer_shop || row.retailer_name}</h5>
+                                    ${row.retailer_shop ? `<div class="text-muted-theme small mb-0" style="font-size: 0.75rem;"><i class="fa fa-user me-2"></i>${row.retailer_name}</div>` : ''}
+                                    <div class="d-flex align-items-center mb-0 text-main-theme"><i class="fa fa-phone text-muted-theme me-2" style="width: 12px; font-size: 0.75rem;"></i> <span class="small" style="font-size: 0.8rem;">${row.retailer_phone || 'N/A'}</span></div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="card h-100 border-0 shadow-sm bg-card-theme" style="border-radius: 12px !important;">
-                                <div class="card-body py-3 px-4">
-                                    <h6 class="text-uppercase text-muted-theme fw-bold mb-2" style="font-size: 0.65rem; letter-spacing: 0.05em;"><i class="fa fa-building me-2"></i>Distributor Info</h6>
-                                    <h5 class="fw-bold mb-2 text-main-theme" style="font-size: 1.1rem;">${row.distributor_name || 'N/A'}</h5>
-                                    <div class="d-flex align-items-center mb-0 text-main-theme"><i class="fa fa-phone text-muted-theme me-2" style="width: 14px; font-size: 0.8rem;"></i> <span class="small">${row.distributor_phone || 'N/A'}</span></div>
+                            <div class="card h-100 border-0 shadow-sm bg-card-theme" style="border-radius: 10px !important;">
+                                <div class="card-body py-2 px-3">
+                                    <h6 class="text-uppercase text-muted-theme fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 0.05em;"><i class="fa fa-building me-2"></i>Distributor Info</h6>
+                                    <h5 class="fw-bold mb-0 text-main-theme" style="font-size: 1rem;">${row.distributor_name || 'N/A'}</h5>
+                                    <div class="d-flex align-items-center mb-0 text-main-theme"><i class="fa fa-phone text-muted-theme me-2" style="width: 12px; font-size: 0.75rem;"></i> <span class="small" style="font-size: 0.8rem;">${row.distributor_phone || 'N/A'}</span></div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="card border-0 shadow-sm mb-4 bg-card-theme" style="border-radius: 16px !important; overflow: hidden;">
+                    <div class="card border-0 shadow-sm mb-3 bg-card-theme" style="border-radius: 12px !important; overflow: hidden;">
                         <div class="card-body p-0">
                             <div class="table-responsive">
                                 <table class="table mb-0 align-middle">
-                                    <thead style="background: rgba(var(--med-primary-rgb), 0.03); border-bottom: 2px solid var(--med-border);">
+                                    <thead style="background: rgba(var(--med-primary-rgb), 0.02); border-bottom: 1px solid var(--med-border);">
                                         <tr>
-                                            <th class="py-3 px-4 text-muted-theme fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Pharmaceutical Item</th>
-                                            <th class="py-3 px-4 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Standard Batch</th>
-                                            <th class="py-3 px-4 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Order Qty</th>
-                                            <th class="py-3 px-4 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Bonus</th>
-                                            <th class="py-3 px-4 text-end text-muted-theme fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Price (₹)</th>
-                                            <th class="py-3 px-4 text-end text-muted-theme fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.1em;">Line Total (₹)</th>
+                                            <th class="py-2 px-3 text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em; width: 200px;">Pharmaceutical Item</th>
+                                            <th class="py-2 px-3 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Standard Batch</th>
+                                            <th class="py-2 px-3 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Order Qty</th>
+                                            <th class="py-2 px-3 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Bonus</th>
+                                            <th class="py-2 px-3 text-end text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Price (₹)</th>
+                                            <th class="py-2 px-3 text-end text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Total (₹)</th>
                                         </tr>
                                     </thead>
                                     <tbody class="border-0">
@@ -1565,45 +1635,48 @@
                     if (i.batches && i.batches.length > 0) {
                         batchHtml = i.batches.map(b => `
                             <div class="mb-1 last-child-mb-0">
-                                <span class="badge bg-soft-info text-info border-0 px-2 py-1" style="font-size: 0.65rem; font-weight: 700;">${b.batch_no}</span>
-                                <div class="text-muted d-block" style="font-size: 0.6rem; margin-top: 1px;">Exp: ${b.expiry_date}</div>
+                                <span class="badge bg-soft-info text-info border-0 px-2 py-1" style="font-size: 0.85rem; font-weight: 800; letter-spacing: 0.5px;">${b.batch_no}</span>
+                                <div class="text-muted d-block" style="font-size: 0.75rem; margin-top: 1px;">Exp: ${b.expiry_date}</div>
                             </div>
                         `).join('');
                     }
 
-                    let variantInfo = '';
-                    if (i.side || i.size) {
-                        variantInfo = `<span class="variant-highlight ms-2">${[i.side, i.size].filter(v => v).join(' / ')}</span>`;
-                    }
+                    let cleanedName = window.cleanProductName(name, i.side, i.size);
+                    let variantBadge = window.renderProductVariantBadge(i);
 
-                    detailsHtml += `
+                        detailsHtml += `
                         <tr style="border-bottom: 1px solid var(--med-border-light, #f1f5f9);">
-                            <td class="py-3 px-4">
-                                <div class="d-flex align-items-center">
-                                    <div class="ms-0">
-                                        <div class="text-main-theme fw-bold mb-0" style="font-size: 0.95rem;">${name}${variantInfo}</div>
-                                        <div class="text-muted small mt-1">
-                                            ${i.generic_name ? `<span class="badge bg-light text-dark border-0 fw-normal me-2" style="font-size: 0.65rem;">${i.generic_name}</span>` : ''}
-                                            ${i.pack && i.pack !== 'N/A' && i.pack !== '---' ? `<span class="me-2">Pack: ${i.pack}</span>` : ''}
+                            <td class="py-2 px-3" style="max-width: 200px;">
+                                <div class="d-flex align-items-start">
+                                    <div class="ms-0 w-100">
+                                        <div class="text-main-theme fw-bold mb-0" style="font-size: 0.9rem; white-space: normal; line-height: 1.2;">
+                                            ${cleanedName} ${variantBadge}
+                                        </div>
+                                        <div class="small text-muted-theme" style="font-size: 0.7rem;">
+                                            (${i.brand || 'Generic'}) • <span class="fw-bold text-primary">${qty} ${i.unit || 'Nos'}</span>
+                                            ${i.free_quantity > 0 ? `<span class="text-success fw-bold ms-1" style="font-size: 0.65rem;">(+${i.free_quantity} Free)</span>` : ''}
+                                        </div>
+                                        <div class="text-muted small mt-0 opacity-75 d-flex flex-wrap gap-2" style="font-size: 0.6rem;">
+                                            ${i.generic_name ? `<span>${i.generic_name}</span>` : ''}
                                             ${i.product_code && i.product_code !== 'N/A' && i.product_code !== '---' ? `<span>Code: ${i.product_code}</span>` : ''}
                                         </div>
                                     </div>
                                 </div>
                             </td>
-                            <td class="py-3 px-4 text-center">${batchHtml}</td>
-                            <td class="py-3 px-4 text-center">
-                                <div class="fw-bold" style="font-size: 0.9rem;">${qty}</div>
-                                <div class="text-muted small" style="font-size: 0.65rem;">${i.unit || 'Units'}</div>
+                            <td class="py-2 px-3 text-center">${batchHtml}</td>
+                            <td class="py-2 px-3 text-center">
+                                <div class="fw-bold" style="font-size: 0.85rem;">${qty}</div>
+                                <div class="text-muted small" style="font-size: 0.6rem;">${i.unit || 'Units'}</div>
                             </td>
-                            <td class="py-3 px-4 text-center">
-                                ${i.free_quantity > 0 ? `<div class="badge bg-soft-success text-success border-0 px-2 py-1" style="font-size: 0.75rem;">+${i.free_quantity}</div>` : '<span class="text-muted small">-</span>'}
+                            <td class="py-2 px-3 text-center">
+                                ${i.free_quantity > 0 ? `<div class="badge bg-soft-success text-success border-0 px-2 py-1" style="font-size: 0.7rem;">+${i.free_quantity}</div>` : '<span class="text-muted small">-</span>'}
                             </td>
-                            <td class="py-3 px-4 text-end">
-                                <div class="text-muted small" style="font-size: 0.8rem;">${unitPrice.toFixed(2)}</div>
+                            <td class="py-2 px-3 text-end">
+                                <div class="text-muted small" style="font-size: 0.75rem;">${unitPrice.toFixed(2)}</div>
                             </td>
-                            <td class="py-3 px-4 text-end">
-                                <div class="fw-bold text-primary" style="font-size: 0.9rem;">${totalAmt.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-                            </td>
+                             <td class="py-2 px-3 text-end">
+                                <div class="fw-bold text-primary" style="font-size: 0.85rem;">${totalAmt.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+ </td>
                         </tr>
                     `;
                 });
@@ -1612,9 +1685,9 @@
                                     </tbody>
                                     <tfoot style="background: rgba(var(--med-primary-rgb), 0.01);">
                                         <tr>
-                                            <td colspan="5" class="text-end py-4 px-4 text-uppercase fw-bold text-muted" style="font-size: 0.75rem; letter-spacing: 0.05em;">Financial Sum (Grand Total):</td>
-                                            <td class="py-4 px-4 text-end">
-                                                <div class="fw-bold text-success fs-4" style="letter-spacing: -0.02em;">₹${parseFloat(row.total_amount).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                                            <td colspan="5" class="text-end py-3 px-3 text-uppercase fw-bold text-muted" style="font-size: 0.7rem; letter-spacing: 0.05em;">Grand Total:</td>
+                                            <td class="py-3 px-3 text-end">
+                                                <div class="fw-bold text-success fs-5" style="letter-spacing: -0.02em;">₹${parseFloat(row.total_amount).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                                             </td>
                                         </tr>
                                     </tfoot>
@@ -1674,6 +1747,95 @@
             });
 
 
+            $(document).on('click', '.init-return-btn', function() {
+                let data = $(this).data();
+
+                if (data.isReturnable == 0) {
+                    Swal.fire({
+                        title: '<span style="color: #ef4444;">Non-Returnable Item</span>',
+                        html: `
+                            <div class="text-center p-3">
+                                <div class="mb-4">
+                                    <i class="fa fa-exclamation-triangle fa-3x text-warning"></i>
+                                </div>
+                                <h5 class="fw-bold mb-3">${data.productName}</h5>
+                                <p class="text-muted">This product is not eligible for returns per company policy.</p>
+                                <div class="mt-4 p-3 bg-light rounded-3 small text-start border-start border-4 border-danger">
+                                    <strong>Note:</strong> Some items such as specialized medicines or promotional goods may be restricted from returns for safety or commercial reasons.
+                                </div>
+                            </div>
+                        `,
+                        showConfirmButton: true,
+                        confirmButtonText: 'Understood',
+                        confirmButtonColor: '#00497a',
+                        customClass: {
+                            popup: 'rounded-4 shadow-lg border-0',
+                            confirmButton: 'btn btn-primary px-4 py-2 rounded-3 fw-bold'
+                        },
+                        showCloseButton: true
+                    });
+                    return;
+                }
+
+                $('#return_order_id').val(data.orderId);
+                $('#return_product_id').val(data.productId);
+                $('#return_product_name').text(data.productName);
+                $('#return_qty_input').val(data.quantity).attr('max', data.quantity);
+                $('#return_unit_text').text(data.unit);
+                $('#image_preview_container').empty();
+                $('#submitReturnModal').modal('show');
+            });
+
+            // Image preview logic
+            $('#return_images_input').on('change', function() {
+                const container = $('#image_preview_container');
+                container.empty();
+                
+                if (this.files) {
+                    Array.from(this.files).forEach(file => {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            container.append(`
+                                <div class="position-relative" style="width: 80px; height: 80px;">
+                                    <img src="${e.target.result}" class="img-thumbnail w-100 h-100 object-fit-cover rounded-3">
+                                </div>
+                            `);
+                        }
+                        reader.readAsDataURL(file);
+                    });
+                }
+            });
+
+            $('#submitReturnForm').submit(function(e) {
+                e.preventDefault();
+                let formData = new FormData(this);
+                formData.append('_token', '{{ csrf_token() }}');
+                formData.append('order_type', 'retailer');
+
+                let $btn = $(this).find('button[type="submit"]');
+                $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Submitting...');
+
+                $.ajax({
+                    url: "{{ route('admin.returns.store') }}",
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(res) {
+                        $('#submitReturnModal').modal('hide');
+                        Swal.fire('Success', res.success, 'success');
+                        $('#submitReturnForm')[0].reset();
+                        $('#image_preview_container').empty();
+                    },
+                    error: function(xhr) {
+                        let err = xhr.responseJSON ? (xhr.responseJSON.error || xhr.responseJSON.message) : 'Submission failed.';
+                        Swal.fire('Error', err, 'error');
+                    },
+                    complete: function() {
+                        $btn.prop('disabled', false).text('Submit Return');
+                    }
+                });
+            });
         });
     </script>
 @endpush

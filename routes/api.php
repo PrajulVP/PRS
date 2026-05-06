@@ -110,6 +110,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('retailer-orders/{id}/update-status', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'updateStatus']);
 
         // Tracking & Actions
+        Route::get('punch', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'getPunchStatus']);
         Route::post('punch', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'punch']);
         Route::post('ping', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'pingLocation']);
         Route::post('log-visit', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'logVisit']);

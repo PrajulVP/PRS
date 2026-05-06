@@ -58,6 +58,34 @@
         background-color: rgba(var(--bs-primary-rgb), 0.1);
     }
     .font-outfit { font-family: 'Outfit', sans-serif; }
+
+    /* Custom Toggle Switch */
+    .switch-returnable {
+        position: relative;
+        display: inline-block;
+        width: 46px;
+        height: 24px;
+    }
+    .switch-returnable input { opacity: 0; width: 0; height: 0; }
+    .slider-returnable {
+        position: absolute;
+        cursor: pointer;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 34px;
+    }
+    .slider-returnable:before {
+        position: absolute;
+        content: "";
+        height: 18px; width: 18px;
+        left: 3px; bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    input:checked + .slider-returnable { background-color: #10b981; }
+    input:checked + .slider-returnable:before { transform: translateX(22px); }
 </style>
 
 @section('page-body')
@@ -69,6 +97,10 @@
                         <h5><i class="fa fa-package me-2"></i>Products</h5>
                         <div class="d-flex gap-2">
                             @if(Auth::user()->hasAnyRole(['admin', 'superadmin']) || Auth::user()->hasPermissionToCategory('products', 'add'))
+                            <button type="button" class="btn btn-warning text-white" data-bs-toggle="modal"
+                                data-bs-target="#brandReturnSettingsModal">
+                                <i class="fa fa-cog me-1"></i>Return Settings
+                            </button>
                             <button type="button" class="btn btn-secondary" data-bs-toggle="modal"
                                 data-bs-target="#importProductModal">
                                 <i class="fa fa-upload me-1"></i>Import Products
@@ -110,6 +142,7 @@
                                         <th>PTS</th>
                                         <th>Loyalty %</th>
                                         <th>Brand</th>
+                                        <th>Returnable</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -230,6 +263,12 @@
                                 <input type="hidden" name="variant_name_2" value="Size">
                                 <input type="text" name="variant_values_2" class="form-control" placeholder="e.g. S, M, L, XL">
                             </div>
+                            <div class="col-md-12 mt-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="is_returnable" id="create_is_returnable" value="1" checked>
+                                    <label class="form-check-label fw-bold" for="create_is_returnable">Product is Returnable</label>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -348,6 +387,12 @@
                                 <input type="hidden" name="variant_name_2" value="Size">
                                 <input type="text" name="variant_values_2" id="edit_variant_values_2" class="form-control" placeholder="e.g. S, M, L, XL">
                             </div>
+                            <div class="col-md-12 mt-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="is_returnable" id="edit_is_returnable" value="1">
+                                    <label class="form-check-label fw-bold" for="edit_is_returnable">Product is Returnable</label>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -414,6 +459,37 @@
                         <button type="submit" class="btn btn-success"><i class="fa fa-upload me-1"></i> Import Data</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- Brand Return Settings Modal --}}
+    <div class="modal fade" id="brandReturnSettingsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title text-white"><i class="fa fa-cog me-2"></i>Brand Return Settings</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-4">Set which brands are returnable. Changing this will update <strong>all products</strong> associated with that brand.</p>
+                    <div class="list-group">
+                        @foreach($availableBrands as $brand)
+                            <div class="list-group-item d-flex justify-content-between align-items-center rounded-3 mb-2 border">
+                                <div>
+                                    <h6 class="mb-0 fw-bold">{{ $brand }}</h6>
+                                </div>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-success brand-bulk-btn" data-brand="{{ $brand }}" data-returnable="1">Enable All</button>
+                                    <button class="btn btn-outline-danger brand-bulk-btn" data-brand="{{ $brand }}" data-returnable="0">Disable All</button>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
@@ -500,6 +576,19 @@
                     name: 'brand',
                     render: function(data) {
                         return data || '<span class="text-muted">N/A</span>';
+                    }
+                },
+                {
+                    data: 'is_returnable',
+                    name: 'is_returnable',
+                    render: function(data, type, row) {
+                        const checked = data ? 'checked' : '';
+                        return `
+                            <label class="switch-returnable">
+                                <input type="checkbox" class="toggle-returnable-btn" data-id="${row.id}" ${checked}>
+                                <span class="slider-returnable"></span>
+                            </label>
+                        `;
                     }
                 },
 
@@ -596,6 +685,7 @@
                 // Offer and discount fields removed
                 $('#edit_loyalty_point_percentage').val(product.loyalty_point_percentage);
                 $('#edit_brand').val(product.brand || '');
+                $('#edit_is_returnable').prop('checked', !!product.is_returnable);
 
                 // Variant Options
                 $('#edit_variant_values_1').val('');
@@ -718,6 +808,56 @@
                 // The current blade has <tbody id="showProductTableBody"> inside a <table>. We should check if we need to replace the table with a div.
                 $('#showProductTableBody').html(html);
                 $('#showProductModal').modal('show');
+            });
+
+            // Handle Returnable Toggle Switch
+            $('#products-table').on('change', '.toggle-returnable-btn', function() {
+                const id = $(this).data('id');
+                const btn = $(this);
+                
+                $.ajax({
+                    url: "{{ route('products.toggle-returnable', ':id') }}".replace(':id', id),
+                    method: 'POST',
+                    data: { _token: "{{ csrf_token() }}" },
+                    success: function(res) {
+                        if(res.success) {
+                            // Optional: Show toast
+                        }
+                    },
+                    error: function() {
+                        btn.prop('checked', !btn.prop('checked')); // Revert on error
+                        alert('Error updating returnable status');
+                    }
+                });
+            });
+
+            // Handle Brand Bulk Update
+            $('.brand-bulk-btn').on('click', function() {
+                const brand = $(this).data('brand');
+                const returnable = $(this).data('returnable');
+                const btn = $(this);
+                
+                if(!confirm(`Are you sure you want to ${returnable ? 'Enable' : 'Disable'} returns for all products in ${brand}?`)) return;
+
+                btn.prop('disabled', true);
+                
+                $.ajax({
+                    url: "{{ route('products.bulk-brand-returnable') }}",
+                    method: 'POST',
+                    data: { 
+                        _token: "{{ csrf_token() }}",
+                        brand: brand,
+                        is_returnable: returnable
+                    },
+                    success: function(res) {
+                        table.ajax.reload();
+                        $('#brandReturnSettingsModal').modal('hide');
+                        alert(res.success);
+                    },
+                    complete: function() {
+                        btn.prop('disabled', false);
+                    }
+                });
             });
 
             // Auto-calculation logic removed since tax info isn't on product level anymore.

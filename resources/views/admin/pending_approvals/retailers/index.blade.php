@@ -184,6 +184,17 @@
             white-space: nowrap !important;
         }
 
+        .product-col {
+            min-width: 200px !important;
+            max-width: 200px !important;
+            width: 200px !important;
+            white-space: normal !important;
+            word-break: break-all !important;
+            overflow-wrap: break-word !important;
+            vertical-align: top !important;
+            line-height: 1.3 !important;
+        }
+
         /* Preview / full content helper */
         .preview-content {
             display: inline-block;
@@ -264,6 +275,9 @@
         /* AI Scan Specific Flex Column Layout */
         .ai-col-product {
             flex: 2.5;
+            max-width: 200px;
+            white-space: normal;
+            word-break: break-word;
         }
 
         .ai-col-batch {
@@ -455,7 +469,12 @@
         body.dark-only .approval-error-alert #distributor_approval_error_message {
             color: #fecaca !important;
         }
-    </style>
+        #submitReturnModal {
+        background: rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+    }
+</style>
     <div class="container-fluid">
         <div class="card shadow-sm border-0 rounded-3">
             <div class="card-header bg-card-theme border-bottom pb-0">
@@ -533,7 +552,7 @@
                                 <th>No.</th>
                                 <th>Order Code</th>
                                 <th>Retailer</th>
-                                <th style="min-width: 350px;">Products</th>
+                                <th style="width: 200px;">Products</th>
                                 <th>Total</th>
                                 <th>Placed At</th>
                                 <th>Distributor</th>
@@ -552,54 +571,51 @@
 
     {{-- Improved View Details Modal --}}
     <div class="modal fade" id="viewOrderModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg overflow-hidden">
                 <div class="modal-header border-0 p-0">
-                    <div class="w-100 p-4 bg-card-theme"
-                        style="border-top: 4px solid var(--med-primary); border-bottom: 1px solid var(--med-border-light);">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="badge bg-primary-subtle text-primary px-3 py-2 fw-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;">ORDER DETAILS</span>
+                    <div class="w-100 p-3 bg-card-theme"
+                        style="border-top: 3px solid var(--med-primary); border-bottom: 1px solid var(--med-border-light);">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="badge bg-primary-subtle text-primary px-2 py-1 fw-bold" style="font-size: 0.6rem; letter-spacing: 0.5px;">ORDER DETAILS</span>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
-                        <h3 class="mb-1 fw-bold text-main-theme" id="view_order_code">--</h3>
-                        <div class="d-flex align-items-center gap-3 mt-3">
-                            <span class="small text-muted-theme"><i class="fa fa-calendar me-1 text-primary"></i> <span id="view_placed_at">--</span></span>
+                        <h4 class="mb-0 fw-bold text-main-theme" id="view_order_code">--</h4>
+                        <div class="d-flex align-items-center gap-3 mt-2">
+                            <span class="small text-muted-theme" style="font-size: 0.75rem;"><i class="fa fa-calendar me-1 text-primary"></i> <span id="view_placed_at">--</span></span>
+                            <span class="small text-muted-theme" style="font-size: 0.75rem;"><i class="fa fa-hashtag me-1 text-primary"></i> Inv: <span id="view_invoice_no">--</span></span>
                             <div class="d-flex gap-2 align-items-center">
-                                <div class="badge" id="view_status_badge" style="font-size: 0.7rem; padding: 0.4em 0.8em; letter-spacing: 0.5px;">--</div>
-                                <div class="badge" id="view_payment_status_badge" style="font-size: 0.7rem; padding: 0.4em 0.8em; letter-spacing: 0.5px; border: 1px solid currentColor; background: transparent;">--</div>
+                                <div class="badge" id="view_status_badge" style="font-size: 0.65rem; padding: 0.3em 0.6em; letter-spacing: 0.5px;">--</div>
+                                <div class="badge" id="view_payment_status_badge" style="font-size: 0.65rem; padding: 0.3em 0.6em; letter-spacing: 0.5px; border: 1px solid currentColor; background: transparent;">--</div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-body p-4 bg-body-theme">
-                    <div class="row g-4 mb-4">
+                <div class="modal-body p-3 bg-body-theme">
+                    <div class="row g-3 mb-3">
                         <div class="col-md-7">
-                            <div class="card border-0 shadow-sm h-100 bg-card-theme">
-                                <div class="card-body">
-                                    <h6 class="text-uppercase text-muted-theme fw-bold mb-3"
-                                        style="font-size: 0.75rem; letter-spacing: 1px;">Retailer Information</h6>
-                                    <h5 class="fw-bold mb-2 text-main-theme" id="view_retailer_name">--</h5>
-                                    <div class="d-flex flex-column gap-2">
-                                        <div class="d-flex align-items-center text-muted-theme small">
-                                            <i class="fa fa-phone me-2 text-primary" style="width: 15px;"></i>
+                            <div class="card border-0 shadow-sm h-100 bg-card-theme" style="border-radius: 10px !important;">
+                                <div class="card-body py-2 px-3">
+                                    <h6 class="text-uppercase text-muted-theme fw-bold mb-1"
+                                        style="font-size: 0.6rem; letter-spacing: 1px;">Retailer Information</h6>
+                                    <h5 class="fw-bold mb-1 text-main-theme" id="view_retailer_name" style="font-size: 1rem;">--</h5>
+                                    <div class="d-flex flex-column gap-1">
+                                        <div class="d-flex align-items-center text-muted-theme small" style="font-size: 0.75rem;">
+                                            <i class="fa fa-phone me-2 text-primary" style="width: 12px;"></i>
                                             <span id="view_retailer_phone">--</span>
-                                        </div>
-                                        <div class="d-flex align-items-start text-muted-theme small">
-                                            <i class="fa fa-map-marker-alt me-2 text-primary mt-1" style="width: 15px;"></i>
-                                            <span id="view_retailer_address">--</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-5">
-                            <div class="card border-0 shadow-sm h-100 bg-card-theme">
-                                <div class="card-body">
-                                    <h6 class="text-uppercase text-muted-theme fw-bold mb-3"
-                                        style="font-size: 0.75rem; letter-spacing: 1px;">Distributor Information</h6>
-                                    <h5 class="fw-bold mb-2 text-main-theme" id="view_distributor_name">--</h5>
-                                    <div class="d-flex align-items-center text-muted-theme small">
-                                        <i class="fa fa-phone me-2 text-success" style="width: 15px;"></i>
+                            <div class="card border-0 shadow-sm h-100 bg-card-theme" style="border-radius: 10px !important;">
+                                <div class="card-body py-2 px-3">
+                                    <h6 class="text-uppercase text-muted-theme fw-bold mb-1"
+                                        style="font-size: 0.6rem; letter-spacing: 1px;">Distributor Information</h6>
+                                    <h5 class="fw-bold mb-1 text-main-theme" id="view_distributor_name" style="font-size: 1rem;">--</h5>
+                                    <div class="d-flex align-items-center text-muted-theme small" style="font-size: 0.75rem;">
+                                        <i class="fa fa-phone me-2 text-primary" style="width: 12px;"></i>
                                         <span id="view_distributor_phone">--</span>
                                     </div>
                                 </div>
@@ -615,7 +631,7 @@
                             <table class="table table-hover mb-0">
                                 <thead class="bg-body-theme">
                                     <tr>
-                                        <th class="border-0 small text-muted-theme text-uppercase fw-bold py-3 ps-4">Product</th>
+                                        <th class="border-0 small text-muted-theme text-uppercase fw-bold py-3 ps-4" style="width: 240px;">Product</th>
                                         <th class="border-0 small text-muted-theme text-uppercase fw-bold py-3">Batch/Exp</th>
                                         <th class="border-0 small text-muted-theme text-uppercase fw-bold py-3 text-center">Qty
                                         </th>
@@ -642,6 +658,49 @@
                 <div class="modal-footer bg-card-theme border-0 p-4 pt-0">
                     <button type="button" class="btn btn-secondary px-4 py-2" data-bs-dismiss="modal">Close</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Submit Return Modal --}}
+    <div class="modal fade" id="submitReturnModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow" style="border-radius: 20px;">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Return Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="submitReturnForm">
+                    <div class="modal-body">
+                        <input type="hidden" name="order_id" id="return_order_id">
+                        <input type="hidden" name="product_id" id="return_product_id">
+                        
+                        <div class="mb-3">
+                            <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Product</label>
+                            <div id="return_product_name" class="fw-bold text-main-theme"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Return Quantity (<span id="return_unit_text">Nos</span>)</label>
+                            <input type="number" name="quantity" id="return_qty_input" class="form-control" step="0.01" required min="0.01">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Reason for Return</label>
+                            <textarea name="reason" class="form-control" rows="3" required placeholder="E.g., Damaged product, Expired..."></textarea>
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="form-label fw-bold">Upload Images (Proof)</label>
+                            <input type="file" name="images[]" id="return_images_input" class="form-control" accept="image/*" required multiple>
+                            <div id="image_preview_container" class="mt-2 d-flex flex-wrap gap-2"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary px-4">Submit Return</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -740,6 +799,19 @@
                         </div>
 
                         <div class="p-4">
+                            <!-- Action Required / Validation Errors -->
+                            <div id="approval_validation_errors" class="mb-4">
+                                <div class="alert alert-danger border-0 shadow-sm rounded-4 p-3 d-flex align-items-center" style="background: #fff5f5;">
+                                    <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; flex-shrink: 0;">
+                                        <i class="fa fa-exclamation-triangle"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold mb-1 text-danger">Action Required</h6>
+                                        <p class="mb-0 text-muted-theme small" id="approval_validation_msg">Please select payment status and upload the finalized invoice to proceed.</p>
+                                    </div>
+                                </div>
+                            </div>
+
                             <h6 class="fw-bold mb-3 d-flex align-items-center">
                                 <span class="bg-light p-2 rounded me-2"><i
                                         class="fa fa-shopping-basket text-primary"></i></span>
@@ -747,7 +819,7 @@
                             </h6>
                             <div class="invoice-list mb-4">
                                 <div class="invoice-list-header">
-                                    <div style="flex: 2;">Product Name</div>
+                                    <div style="flex: 2; max-width: 240px;">Product Name</div>
                                     <div style="flex: 1;" class="text-center">Quantity</div>
                                     <div style="flex: 1;" class="text-end">Value (PTR)</div>
                                 </div>
@@ -877,22 +949,8 @@
                                 </div>
                             </div>
 
-                            <!-- Invoice Number Input -->
-                            <div class="mb-4">
-                                <label class="form-label fw-bold text-main-theme small text-uppercase">
-                                    Retailer Invoice Number <span class="text-danger">*</span>
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light border-0"><i class="fa fa-hashtag text-muted"></i></span>
-                                    <input type="text" name="invoice_no" id="retailer_invoice_no_input" 
-                                           class="form-control border-0 bg-light shadow-none" 
-                                           placeholder="Scan invoice below to unlock..." required readonly
-                                           style="border-top-right-radius: 12px; border-bottom-right-radius: 12px;">
-                                </div>
-                                <div class="form-text small text-muted mt-2">
-                                    <i class="fa fa-info-circle me-1"></i> This number must be unique for your distributor records.
-                                </div>
-                            </div>
+                            <!-- Invoice Number (Hidden, populated by AI) -->
+                            <input type="hidden" name="invoice_no" id="retailer_invoice_no_input" required>
 
                             <!-- Smart Invoice Processing Section -->
                             <div class="mb-4">
@@ -924,30 +982,23 @@
                                 </div>
 
                                 <div id="automation_success_state" class="d-none">
-                                    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
-                                        <div>
-                                            <h5 class="fw-bold mb-1 text-success"><i
-                                                    class="fa fa-check-circle me-2"></i>Scan Complete</h5>
-                                            <span class="text-muted small" id="processed_summary_text">Extracted
-                                                metadata</span>
-                                        </div>
-                                        <div class="text-end" id="extracted_metadata_section">
-                                            <div class="d-flex gap-3">
-                                                <div>
-                                                    <small class="text-muted d-block text-uppercase fw-bold"
-                                                        style="font-size: 0.7rem;">Date</small>
-                                                    <span class="fw-bold" id="meta_date">--</span>
-                                                </div>
-                                                <div>
-                                                    <small class="text-muted d-block text-uppercase fw-bold"
-                                                        style="font-size: 0.7rem;">Invoice No.</small>
-                                                    <span class="fw-bold" id="meta_invoice_no">--</span>
-                                                </div>
-                                                <div>
-                                                    <small class="text-muted d-block text-uppercase fw-bold"
-                                                        style="font-size: 0.7rem;">GSTIN</small>
-                                                    <span class="fw-bold" id="meta_gstin">--</span>
-                                                </div>
+                                    <div class="premium-metadata-card p-3 rounded-4 border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);">
+                                        <div class="row g-4">
+                                            <div class="col-md-3 border-end border-2 border-white">
+                                                <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 1px;">Invoice Date</div>
+                                                <div class="fw-bold text-dark fs-6" id="meta_date" contenteditable="true" title="Click to edit">--</div>
+                                            </div>
+                                            <div class="col-md-3 border-end border-2 border-white">
+                                                <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 1px;">Invoice Number</div>
+                                                <div class="fw-bold text-primary fs-6" id="meta_invoice_no" contenteditable="true" title="Click to edit">--</div>
+                                            </div>
+                                            <div class="col-md-3 border-end border-2 border-white">
+                                                <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 1px;">GSTIN Extracted</div>
+                                                <div class="fw-bold text-dark fs-6" id="meta_gstin" contenteditable="true" title="Click to edit">--</div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 1px;">Drug License</div>
+                                                <div class="fw-bold text-dark fs-6" id="meta_dl" contenteditable="true" title="Click to edit">--</div>
                                             </div>
                                         </div>
                                     </div>
@@ -1018,8 +1069,9 @@
                     <div class="modal-footer border-0 px-4 pb-4 pt-0">
                         <button type="button" class="btn btn-link text-muted fw-bold text-decoration-none px-4" data-bs-dismiss="modal">Go Back</button>
                         <button type="submit" class="btn btn-primary px-5 py-2 fw-bold shadow-sm" id="btnSubmitDistributorApprove" 
+                            disabled
                             style="border-radius: 12px; background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);">
-                            Finalize & Approve
+                            Confirm & Approve
                         </button>
                     </div>
                 </form>
@@ -1127,6 +1179,16 @@
                     [0, 'desc']
                 ],
                 autoWidth: false,
+                columnDefs: [
+                    {
+                        targets: 4,
+                        className: 'product-col',
+                    },
+                    {
+                        targets: '_all',
+                        className: 'align-middle'
+                    }
+                ],
                 drawCallback: function (settings) {
                     var api = this.api();
                     api.column(1, {
@@ -1262,7 +1324,7 @@
                 {
                     data: 'product_summary',
                     name: 'product_summary',
-                    width: '450px',
+                    className: 'product-col',
                     render: function (data, type, row) {
                         if (!data) return '-';
                         let items = data.split('|||');
@@ -1494,7 +1556,7 @@
                         if (res.success) {
                             $('#distributorApproveModal').modal('hide');
                             table.ajax.reload(null, false);
-                            showToast('success', res.success);
+                            // showToast('success', res.success);
                             if (window.updateSidebarCounts) window.updateSidebarCounts();
                             Swal.fire({
                                 icon: 'success',
@@ -1536,7 +1598,7 @@
                         $.post(url, { _token: '{{ csrf_token() }}' }, function (res) {
                             if (res.success) {
                                 table.ajax.reload(null, false);
-                                showToast('success', res.success);
+                                // // showToast('success', res.success);
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
                             } else {
                                 showToast('error', res.error || 'Failed to confirm order');
@@ -1661,7 +1723,7 @@
                     },
                     success: function (res) {
                         $('#retailerPaymentStatusModal').modal('hide');
-                        showToast('success', res.success || 'Updated');
+                        // // showToast('success', res.success || 'Updated');
                         table.ajax.reload(null, false);
                         if (window.updateSidebarCounts) window.updateSidebarCounts();
                     },
@@ -1735,7 +1797,7 @@
 
                         $select.addClass(newClass);
                         $select.data('original', newStatus);
-                        showToast('success', res.success);
+                        // showToast('success', res.success);
                         if (window.updateSidebarCounts) window.updateSidebarCounts();
                     } else {
                         showToast('error', res.error || 'Failed to update status');
@@ -1776,7 +1838,7 @@
                         $select.addClass(newClass);
                         $select.data('original', newStatus);
 
-                        showToast('success', res.success);
+                        // showToast('success', res.success);
                     } else {
                         showToast('error', res.error || 'Failed to update payment status');
                         $select.val(originalStatus);
@@ -1814,7 +1876,7 @@
                     processData: false,
                     contentType: false,
                     success: function (res) {
-                        showToast('success', res.success);
+                        // showToast('success', res.success);
                         table.ajax.reload(null, false);
                         if (window.updateSidebarCounts) window.updateSidebarCounts();
                     },
@@ -1892,7 +1954,7 @@
                 }, function (res) {
                     $('#removeInvoiceConfirmModal').modal('hide');
                     if (res.success) {
-                        showToast('success', res.success);
+                        // showToast('success', res.success);
                         table.ajax.reload(null, false);
                     } else {
                         showToast('error', res.error || 'Failed to remove invoice');
@@ -1912,6 +1974,7 @@
                 // Header Info
                 $('#view_order_code').text(row.order_code);
                 $('#view_placed_at').text(row.placed_at || '--');
+                $('#view_invoice_no').text(row.invoice_no || '--');
                 // Status Badge logic
                 let status = (row.status || 'pending').toLowerCase();
                 let badgeClass = 'bg-secondary text-white';
@@ -1943,31 +2006,34 @@
                 if (row.items && row.items.length) {
                     row.items.forEach(item => {
                         let batchInfo = item.batches && item.batches.length ?
-                            item.batches.map(b => `<div class="small text-muted">B: ${b.batch_no} | E: ${b.expiry_date}</div>`).join('') :
+                            item.batches.map(b => `<div class="mb-1 last-child-mb-0"><span class="badge bg-soft-info text-info border-0 px-2 py-1" style="font-size: 0.85rem; font-weight: 800; letter-spacing: 0.5px;">${b.batch_no}</span><div class="text-muted d-block" style="font-size: 0.75rem; margin-top: 1px;">Exp: ${b.expiry_date}</div></div>`).join('') :
                             '<span class="text-muted small">Not Allocated</span>';
 
-                        let variantInfo = '';
-                        if (item.side || item.size) {
-                            variantInfo = `<span class="variant-highlight ms-2">${[item.side, item.size].filter(v => v).join(' / ')}</span>`;
-                        }
+                        let cleanedName = window.cleanProductName(item.product_name, item.side, item.size);
+                        let variantBadge = window.renderProductVariantBadge(item);
 
                         tbody.append(`
-                                                        <tr class="align-middle">
-                                                            <td class="py-3 ps-4">
-                                                                <div class="fw-bold text-main-theme" style="font-size: 0.95rem;">${item.product_name}${variantInfo}</div>
-                                                                <div class="d-flex gap-2 flex-wrap mt-1">
-                                                                    ${item.generic_name ? `<span class="badge bg-light text-dark border-0 fw-normal" style="font-size: 0.65rem;">${item.generic_name}</span>` : ''}
-                                                                    ${item.pack && item.pack !== 'N/A' && item.pack !== '---' ? `<div class="small text-muted-theme opacity-75">Pack: ${item.pack}</div>` : ''}
-                                                                    ${item.product_code && item.product_code !== '---' && item.product_code !== 'N/A' ? `<div class="small text-muted-theme opacity-75">Code: ${item.product_code}</div>` : ''}
+                                                        <tr class="align-middle" style="border-bottom: 1px solid var(--med-border-light, #f1f5f9);">
+                                                            <td class="py-1 ps-3" style="max-width: 300px;">
+                                                                <div class="fw-bold text-main-theme mb-0" style="font-size: 0.9rem; white-space: normal; line-height: 1.2;">
+                                                                    ${cleanedName} ${variantBadge}
+                                                                </div>
+                                                                <div class="small text-muted-theme" style="font-size: 0.7rem;">
+                                                                    (${item.brand || 'Generic'}) • <span class="fw-bold text-primary">${item.quantity} ${item.unit || 'Nos'}</span>
+                                                                    ${item.free_quantity > 0 ? `<span class="text-success fw-bold ms-1" style="font-size: 0.65rem;">(+${item.free_quantity} Free)</span>` : ''}
+                                                                </div>
+                                                                <div class="d-flex gap-2 flex-wrap mt-0 opacity-75" style="font-size: 0.6rem;">
+                                                                    ${item.generic_name ? `<span>${item.generic_name}</span>` : ''}
+                                                                    ${item.product_code && item.product_code !== '---' && item.product_code !== 'N/A' ? `<span>Code: ${item.product_code}</span>` : ''}
                                                                 </div>
                                                             </td>
-                                                            <td class="text-main-theme">${batchInfo}</td>
+                                                            <td class="text-main-theme" style="font-size: 0.75rem;">${batchInfo}</td>
                                                             <td class="text-center text-main-theme">
-                                                                ${item.quantity} ${item.unit || 'Strips'}
-                                                                ${item.free_quantity > 0 ? `<div class="text-success small fw-bold">+${item.free_quantity} Free</div>` : ''}
+                                                                <div class="fw-bold" style="font-size: 0.85rem;">${item.quantity}</div>
+                                                                <div class="small opacity-75" style="font-size: 0.65rem;">${item.unit || 'Nos'}</div>
                                                             </td>
-                                                            <td class="text-end text-main-theme">₹${parseFloat(item.unit_price).toFixed(2)}</td>
-                                                            <td class="text-end fw-bold text-primary">₹${parseFloat(item.total_amount).toFixed(2)}</td>
+                                                            <td class="text-end text-main-theme" style="font-size: 0.75rem;">₹${parseFloat(item.unit_price).toFixed(2)}</td>
+                                                            <td class="text-end fw-bold text-primary" style="font-size: 0.85rem;">₹${parseFloat(item.total_amount).toFixed(2)}</td>
                                                         </tr>
                                                     `);
                     });
@@ -2024,12 +2090,12 @@
                         row.items.forEach(item => {
                             list.append(`
                                 <div class="invoice-list-row">
-                                    <div style="flex: 2;" class="fw-bold text-main-theme">
-                                        ${item.product_name}
+                                    <div style="flex: 2; max-width: 200px;" class="fw-bold text-main-theme">
+                                        <div style="white-space: normal; line-height: 1.3;">
+                                            ${window.cleanProductName(item.product_name, item.side, item.size)} ${window.renderProductVariantBadge(item)}
+                                        </div>
                                         <div class="d-flex gap-2 flex-wrap mt-1">
-                                            ${(item.side || item.size) ? `<div class="small badge bg-info text-white border-0" style="font-size: 0.6rem;">${[item.side, item.size].filter(Boolean).join(' / ')}</div>` : ''}
                                             ${item.generic_name ? `<span class="badge bg-light text-dark border-0 fw-normal" style="font-size: 0.6rem;">${item.generic_name}</span>` : ''}
-                                            ${item.pack && item.pack !== 'N/A' && item.pack !== '---' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.65rem;">P: ${item.pack}</div>` : ''}
                                             ${item.product_code && item.product_code !== '---' && item.product_code !== 'N/A' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.65rem;">C: ${item.product_code}</div>` : ''}
                                         </div>
                                     </div>
@@ -2068,7 +2134,8 @@
                     $('#approveRetailerOrderModal').modal('show');
                 };
 
-                if (isAdmin) {
+                proceed();
+                if (false) {
                     let targetRole = (row.status || '').toLowerCase() === 'pending' ? 'field staff' : 'distributor';
                     Swal.fire({
                         title: 'Confirm Admin Approval',
@@ -2116,7 +2183,7 @@
                         if (res.success) {
                             $('#approveRetailerOrderModal').modal('hide');
                             table.ajax.reload(null, false);
-                            showToast('success', res.success);
+                            // showToast('success', res.success);
                             if (window.updateSidebarCounts) window.updateSidebarCounts();
                         } else {
                             showToast('error', res.error || 'Failed to approve order');
@@ -2160,12 +2227,7 @@
 
                     let payStatus = (row.payment_status || 'pending').toLowerCase();
                     
-                    // Set modal radio buttons
-                    if (payStatus === 'paid') {
-                        $('#retailer_modal_pay_paid').prop('checked', true);
-                    } else {
-                        $('#retailer_modal_pay_pending').prop('checked', true);
-                    }
+                    // Radio buttons are unchecked by default to force manual selection
 
 
 
@@ -2180,7 +2242,29 @@
                     $('#ocr_idle_state').show();
                     $('#batch_allocation_table_container').addClass('d-none');
                     $('#scan_retailer_file_input').val(''); // Clear old file inputs
-                    $('#retailer_approval_error_alert').addClass('d-none');
+                    $('#retailer_approval_error_alert').removeClass('d-none');
+                    $('#retailer_approval_error_message').text('Please select payment status and upload the finalized invoice to proceed.');
+                    $('#btnSubmitDistributorApprove').prop('disabled', true);
+                    
+                    // Helper to check readiness
+                    window.checkRetailerApprovalReadiness = function() {
+                        let paySelected = $('input[name="payment_status"]:checked').length > 0;
+                        let fileUploaded = $('#scan_retailer_file_input')[0].files.length > 0 || $('#batch_allocation_table_container').not('.d-none').length > 0;
+                        
+                        if (paySelected && fileUploaded) {
+                            $('#retailer_approval_error_alert').addClass('d-none');
+                            $('#btnSubmitDistributorApprove').prop('disabled', false);
+                        } else {
+                            $('#retailer_approval_error_alert').removeClass('d-none');
+                            $('#btnSubmitDistributorApprove').prop('disabled', true);
+                            
+                            let msg = "";
+                            if (!paySelected && !fileUploaded) msg = "Please select payment status and upload the finalized invoice to proceed.";
+                            else if (!paySelected) msg = "Please select the payment status manually to continue.";
+                            else if (!fileUploaded) msg = "Please upload and scan the invoice to continue.";
+                            $('#retailer_approval_error_message').text(msg);
+                        }
+                    };
 
                     $('#distributorApproveModal').modal('show');
 
@@ -2226,15 +2310,13 @@
                                                                                                                                                                             `;
                         tbody.append(rowHtml);
 
-                        let vVariantInfo = '';
-                        if (item.side || item.size) {
-                            vVariantInfo = `<span class="variant-highlight ms-2">${[item.side, item.size].filter(v => v).join(' / ')}</span>`;
-                        }
 
                         // 2. Visible Verification Row (Invoiced Style)
                         let vRowHtml = `
                                                                                                                                                                                 <div id="v_row_${orderItemId}" class="invoice-list-row">
-                                                                                                                                                                                    <div class="ai-col-product fw-bold text-dark small">${item.product_name}${vVariantInfo}</div>
+                                                                                                                                                                                    <div class="ai-col-product fw-bold text-dark small" style="white-space: normal; line-height: 1.2;">
+                                                                                                                                                                                        ${window.cleanProductName(item.product_name, item.side, item.size)} ${window.renderProductVariantBadge(item)}
+                                                                                                                                                                                    </div>
                                                                                                                                                                                     <div class="ai-col-batch v-batch-display text-muted small" data-id="${orderItemId}">--</div>
                                                                                                                                                                                     <div class="ai-col-expiry v-expiry-display text-muted small" data-id="${orderItemId}">--</div>
                                                                                                                                                                                     <div class="ai-col-qty fw-bold text-primary v-qty-display" data-original-unit="${item.unit || ''}">
@@ -2250,7 +2332,8 @@
                     });
                 };
 
-                if (isAdmin) {
+                proceed();
+                if (false) {
                     let targetRole = (row.status || '').toLowerCase() === 'pending' ? 'field staff' : 'distributor';
                     Swal.fire({
                         title: 'Confirm Admin Approval',
@@ -2301,6 +2384,13 @@
                 }, false);
             }
 
+            // Payment Radio Change
+            $(document).on('change', 'input[name="payment_status"]', function() {
+                if (typeof window.checkRetailerApprovalReadiness === 'function') {
+                    window.checkRetailerApprovalReadiness();
+                }
+            });
+
             // File upload logic for AI Processing
             $(document).on('change', '#scan_retailer_file_input', function () {
                 const file = this.files[0];
@@ -2350,6 +2440,7 @@
                                 $('#automation_success_footer').removeClass('d-none');
                                 $('#batch_allocation_table_container').removeClass('d-none'); // Show grid
                                 $('#processed_summary_text').text(`${identifiedCount} products mapped from Invoice.`);
+                                window.checkRetailerApprovalReadiness();
                             } else {
                                 // If identifiedCount is 0, it might be due to a mismatch Gatekeeper
                                 let extracted = $('#retailer_invoice_no_input').data('extracted');
@@ -2359,20 +2450,20 @@
                                 $('#results_loading_spinner').addClass('d-none');
                                 
                                 if (entered && extracted && !isInvoiceMatch(entered, extracted)) {
-                                    // Mismatch Gatekeeper state
+                                    // Mismatch - Allow but warn
                                     $('#automation_error_state').removeClass('d-none').fadeIn();
                                     $('#automation_error_state h5').text('Invoice Number Mismatch');
-                                    $('#automation_error_state p').text('Please enter the correct invoice number above to load and verify line items.');
-                                    $('#batch_allocation_table_container').addClass('d-none');
+                                    $('#automation_error_state p').text('Warning: The entered number differs from the document scan.');
+                                    $('#batch_allocation_table_container').removeClass('d-none');
+                                    parseRetailerOCRResponse(res.data);
                                 } else {
                                     // Actual "No products found" error
                                     $('#automation_error_state').removeClass('d-none').fadeIn();
                                     $('#automation_error_state h5').text('No Products Identified');
                                     $('#automation_error_state p').text('The AI could not identify any ordered products in the uploaded invoice.');
                                     $('#batch_allocation_table_container').addClass('d-none');
-                                    showToast('warning', 'Mismatched Invoice: No products identified.');
+                                    $('#btnSubmitDistributorApprove').prop('disabled', true); 
                                 }
-                                $('#btnSubmitDistributorApprove').prop('disabled', true); 
                             }
                         } else {
                             $('#automation_idle_state').show();
@@ -2454,20 +2545,32 @@
                 // Update Metadata visually
                 if (data.invoice_metadata) {
                     const meta = data.invoice_metadata;
+                    const invNo = (meta.invoice_no || meta.invoice_number || meta.inv_no || meta.bill_no || meta.invoice_id || meta.invoice_code || '--').trim();
+                    const dlNo = (meta.drug_license || meta.dl_no || meta.drug_lic_no || meta.license_no || '--').trim();
+                    const gstin = (meta.gstin || meta.gst_no || meta.gst_number || '--').trim();
+
                     $('#meta_date').text(meta.date || '--');
-                    $('#meta_invoice_no').text(meta.invoice_no || '--');
-                    $('#meta_gstin').text(meta.gstin || '--');
+                    $('#meta_invoice_no').text(invNo);
+                    $('#meta_gstin').text(gstin);
+                    $('#meta_dl').text(dlNo);
+
+                    // Sync editable fields
+                    $('#meta_invoice_no').attr('contenteditable', 'true').on('input', function() {
+                        let val = $(this).text().trim();
+                        if (val !== '--') $('#retailer_invoice_no_input').val(val).trigger('input');
+                    });
+                    $('#meta_gstin').attr('contenteditable', 'true');
+                    $('#meta_dl').attr('contenteditable', 'true');
 
                     // Validation Logic
                     let enteredInv = $('#retailer_invoice_no_input').val().trim().toLowerCase();
-                    let extractedInvRaw = (meta.invoice_no || meta.invoice_number || '').trim();
+                    let extractedInvRaw = invNo !== '--' ? invNo : '';
                     let extractedInv = extractedInvRaw.toLowerCase();
                     
                     // Auto-fill feature: If field is empty, populate from AI
                     if (!enteredInv && extractedInvRaw) {
                         $('#retailer_invoice_no_input').val(extractedInvRaw).addClass('is-valid');
                         enteredInv = extractedInv;
-                        showToast('info', 'Invoice number auto-filled from scan.');
                     }
                     
                     let $valAlert = $('#ai_retailer_validation_alert');
@@ -2476,7 +2579,7 @@
 
                     // Store extracted data on the input element for real-time re-validation
                     $('#retailer_invoice_no_input').data('extracted', extractedInv);
-                    $('#retailer_invoice_no_input').data('extracted-raw', meta.invoice_no);
+                    $('#retailer_invoice_no_input').data('extracted-raw', extractedInvRaw);
                     $('#retailer_invoice_no_input').data('is-duplicate', meta.is_duplicate);
 
                     $valAlert.addClass('d-none').removeClass('alert-warning alert-danger');
@@ -2487,23 +2590,25 @@
                         hasError = true;
                     } else if (enteredInv && extractedInv && !isInvoiceMatch(enteredInv, extractedInv)) {
                         $valAlert.removeClass('d-none').addClass('alert-warning');
-                        $valMsg.text(`MISMATCH: Entered No. (${$('#retailer_invoice_no_input').val()}) does not match Extracted No. (${meta.invoice_no}).`);
+                        $valMsg.text(`MISMATCH: Entered No. (${$('#retailer_invoice_no_input').val()}) does not match Extracted No. (${extractedInvRaw}).`);
                         hasError = true;
                     }
 
                     if (hasError) {
-                        $('#btnSubmitDistributorApprove').prop('disabled', true);
-                        return 0; // Stop here if mismatch/duplicate
-                    } else if (!enteredInv) {
-                        // GATEKEEPER: Don't load products if number is empty
+                        // Show warning but no longer block product mapping
+                        $('#btnSubmitDistributorApprove').prop('disabled', meta.is_duplicate); 
+                    } else {
+                        $('#btnSubmitDistributorApprove').prop('disabled', false);
+                    }
+
+                    if (!enteredInv) {
+                        // Gatekeeper: Still block if number is missing, but show products
                         $('#btnSubmitDistributorApprove').prop('disabled', true);
                         $('#automation_error_state').removeClass('d-none').show();
                         $('#automation_error_state h5').text('Invoice Number Required');
-                        $('#automation_error_state p').text('Please enter the invoice number from the document to verify and load the product data.');
-                        $('#batch_allocation_table_container').addClass('d-none');
-                        return 0;
+                        $('#automation_error_state p').text('Please enter the invoice number from the document to proceed.');
+                        return fillRetailerProducts(data);
                     } else {
-                        $('#btnSubmitDistributorApprove').prop('disabled', false);
                         return fillRetailerProducts(data);
                     }
                 }
@@ -2512,6 +2617,7 @@
 
             function fillRetailerProducts(data) {
                 let identifiedCount = 0;
+                let matchedProducts = [];
                 let missingProducts = [];
                 let invoiceProducts = [...(data.line_items || [])];
                 let totalInvoiceNet = 0;
@@ -2524,35 +2630,24 @@
                     let productName = container.find('.product-name-marker').text().trim().toLowerCase();
                     let orderedQty = parseInt(container.data('ordered-qty'));
 
-                    // Helper to normalize strings for better matching
                     const normalize = (str) => {
                         if (!str) return '';
                         return str.toLowerCase()
                             .replace(/\bsyp\b|\bsyrup\b/g, 'syrup')
                             .replace(/\btab\b|\btablet\b/g, 'tablet')
                             .replace(/\bcap\b|\bcapsule\b/g, 'capsule')
-                            .replace(/\(\d+\)/g, '') // Remove pack sizes like (10), (5)
-                            .replace(/\([^)]*\)/g, ' ') // Remove anything in parentheses
-                            .replace(/[^a-z0-9\s]/g, ' ') // Replace non-alphanumeric with space
+                            .replace(/\(\d+\)/g, ' ')
+                            .replace(/[^a-z0-9\s]/g, ' ')
                             .replace(/\s+/g, ' ')
                             .trim();
                     };
 
                     let normProductName = normalize(productName);
 
-                    // Try to extract a product code (e.g., first part of the name before spaces/hyphens)
-                    let pCodeMatch = container.data('p-code') || productName.split(/[\s\-]/)[0].toLowerCase();
                     // 1. Try exact or full inclusion match
                     let matchedIdx = invoiceProducts.findIndex(p => {
                         if (!p.description) return false;
                         let normDesc = normalize(p.description);
-                        let normAiCode = p.p_code ? String(p.p_code).toLowerCase() : '';
-
-                        // If p_code matches exactly, it's a very strong indicator
-                        if (pCodeMatch && normAiCode && normAiCode.includes(pCodeMatch)) {
-                            return true;
-                        }
-
                         return normDesc === normProductName || normDesc.includes(normProductName) || normProductName.includes(normDesc);
                     });
 
@@ -2566,21 +2661,21 @@
                             productWords.forEach(word => {
                                 if (normDesc.includes(word)) matchCount++;
                             });
-                            // Match if at least 60% of words found (minimum 1 word if possible)
                             let threshold = Math.max(1, Math.ceil(productWords.length * 0.6));
                             return matchCount >= threshold;
                         });
                     }
 
-                    // 3. Last fallback to substring match
-                    if (matchedIdx === -1) {
-                        matchedIdx = invoiceProducts.findIndex(p => p.description && p.description.toLowerCase().includes(normProductName.substring(0, 7)));
+                    // 3. Last fallback (start-of-string prefix match)
+                    if (matchedIdx === -1 && normProductName.length >= 6) {
+                        matchedIdx = invoiceProducts.findIndex(p => p.description && normalize(p.description).startsWith(normProductName.substring(0, 6)));
                     }
 
                     if (matchedIdx !== -1) {
                         let matchedInvoiceItem = invoiceProducts[matchedIdx];
                         invoiceProducts.splice(matchedIdx, 1); // Remove from pool
                         identifiedCount++;
+                        matchedProducts.push(productName);
                         // Helper to parse numeric values safely
                         const safeParse = (val) => {
                             if (typeof val === 'string' && val.toUpperCase() === 'N/A') return 0;
@@ -2633,13 +2728,21 @@
                                 vRow.find('.v-batch-display').text(extBatch).removeClass('text-muted').addClass('text-success fw-bold');
                             }
                             if (extExpiry) {
-                                vRow.find('.v-expiry-display').text(extExpiry).removeClass('text-muted').addClass('text-success fw-bold');
+                                let cleanDisplay = extExpiry;
+                                let match = extExpiry.match(/\b(\d{1,2}[\/\-\.]\d{2,4})\b/);
+                                if (match) cleanDisplay = match[1];
+                                vRow.find('.v-expiry-display').text(cleanDisplay).removeClass('text-muted').addClass('text-success fw-bold');
                             }
 
                             let origUnit = vRow.find('.v-qty-display').data('original-unit') || '';
-                            let displayQty = `${billedQty} ${origUnit}`;
-                            if (freeQty > 0) {
-                                displayQty += ` <span class="text-success small">(+${freeQty} Free)</span>`;
+                            let displayQty = `<strong>${billedQty}</strong> ${origUnit}`;
+                            
+                            if (freeQty > 0) displayQty += ` <span class="text-success small">(+${freeQty} Free)</span>`;
+                            
+                            // Visual cue if quantity differs from ordered
+                            if (billedQty !== orderedQty) {
+                                let diffClass = billedQty > orderedQty ? 'text-primary' : 'text-danger';
+                                displayQty += ` <br><small class="${diffClass} fw-bold" style="font-size: 0.65rem;">(Ord: ${orderedQty})</small>`;
                             }
                             vRow.find('.v-qty-display').html(displayQty);
 
@@ -2686,18 +2789,64 @@
                 // Update Footer Totals
                 $('#verification_table_footer').removeClass('d-none');
                 $('#v_total_net').text(`₹${totalInvoiceNet.toFixed(2)}`);
+                
+                let ocrTotal = 0;
                 if (data.invoice_metadata && data.invoice_metadata.total_amount) {
-                    let metaTotal = parseFloat(data.invoice_metadata.total_amount) || 0;
-                    $('#v_total_meta').text(`₹${metaTotal.toFixed(2)}`);
+                    ocrTotal = parseFloat(data.invoice_metadata.total_amount) || 0;
+                    $('#v_total_meta').text(`₹${ocrTotal.toFixed(2)}`);
                 }
 
-                if (missingProducts.length > 0) {
-                    let missingList = missingProducts.map(p => `<li>${p.charAt(0).toUpperCase() + p.slice(1)}</li>`).join('');
+                // STRICT MATCH BLOCKING: Only enable if no missing AND no extra items
+                if (missingProducts.length === 0 && invoiceProducts.length === 0) {
+                    $('#automation_error_state').hide();
+                    $('#automation_success_state').fadeIn();
+                    $('#btnSubmitDistributorApprove').prop('disabled', false);
+                } else {
+                    $('#automation_error_state').removeClass('d-none').show();
+                    $('#automation_error_state h5').text('Invoice Content Mismatch');
+                    
+                    let msg = '';
+                    if (missingProducts.length > 0) {
+                        msg = `This document is <b>missing ${missingProducts.length} ordered items</b>. `;
+                    }
+                    if (invoiceProducts.length > 0) {
+                        msg += `It also contains <b>${invoiceProducts.length} extra items</b> not in the order. `;
+                    }
+                    
+                    $('#automation_error_state p').html(`${msg} Please upload a perfect match invoice to proceed.`);
+                    $('#automation_success_state').hide();
+                    $('#btnSubmitDistributorApprove').prop('disabled', true);
+                }
+
+                // COMPREHENSIVE SUMMARY ALERT
+                if (missingProducts.length > 0 || invoiceProducts.length > 0) {
+                    let matchedHtml = matchedProducts.length > 0 
+                        ? `<div class="mb-2"><small class="fw-bold text-success">MATCHED (${matchedProducts.length})</small><ul class="text-start text-success small mb-0" style="column-count: 1; list-style-type: none; padding-left: 0;">${matchedProducts.map(p => `<li>✓ ${p}</li>`).join('')}</ul></div>` 
+                        : '';
+                    
+                    let missingHtml = missingProducts.length > 0 
+                        ? `<div class="mb-2"><small class="fw-bold text-danger">MISSING IN INVOICE (${missingProducts.length})</small><ul class="text-start text-danger small mb-0" style="column-count: 1; list-style-type: none; padding-left: 0;">${missingProducts.map(p => `<li>✗ ${p}</li>`).join('')}</ul></div>` 
+                        : '';
+                    
+                    let extraHtml = invoiceProducts.length > 0 
+                        ? `<div class="mb-2"><small class="fw-bold text-danger">EXTRA ITEMS IN INVOICE (${invoiceProducts.length})</small><ul class="text-start text-danger small mb-0" style="column-count: 1; list-style-type: none; padding-left: 0;">${invoiceProducts.map(p => `<li>! ${p.description || 'Unknown Item'}</li>`).join('')}</ul></div>` 
+                        : '';
+
                     Swal.fire({
-                        title: 'Missing Products!',
-                        html: `<p>The AI could not find the following ordered products in the invoice:</p><ul class="text-start text-danger">${missingList}</ul><p>Please enter their batch and expiry manually.</p>`,
-                        icon: 'warning',
-                        confirmButtonText: 'I understand'
+                        title: '<h4 class="fw-bold mb-0">Verification Summary</h4>',
+                        html: `
+                            <div class="text-start p-3 bg-light rounded shadow-inner" style="max-height: 300px; overflow-y: auto;">
+                                ${matchedHtml}
+                                ${missingHtml}
+                                ${extraHtml}
+                            </div>
+                            <p class="mt-3 mb-0 text-dark fw-bold">Please verify or upload another invoice.</p>`,
+                        icon: (missingProducts.length === 0 && invoiceProducts.length > 0) ? 'info' : 'warning',
+                        confirmButtonText: 'I understand',
+                        customClass: {
+                            confirmButton: 'btn btn-primary px-5 py-2 shadow-sm'
+                        },
+                        buttonsStyling: false
                     });
                 }
 
@@ -2759,6 +2908,96 @@
                 }
 
                 $('#btnSubmitDistributorApprove').prop('disabled', hasError || !entered);
+            });
+            $(document).on('click', '.init-return-btn', function() {
+                let data = $(this).data();
+
+                if (data.isReturnable == 0) {
+                    Swal.fire({
+                        title: '<span style="color: #ef4444;">Non-Returnable Item</span>',
+                        html: `
+                            <div class="text-center p-3">
+                                <div class="mb-4">
+                                    <i class="fa fa-exclamation-triangle fa-3x text-warning"></i>
+                                </div>
+                                <h5 class="fw-bold mb-3">${data.productName}</h5>
+                                <p class="text-muted">This product is not eligible for returns per company policy.</p>
+                                <div class="mt-4 p-3 bg-light rounded-3 small text-start border-start border-4 border-danger">
+                                    <strong>Note:</strong> Some items such as specialized medicines or promotional goods may be restricted from returns for safety or commercial reasons.
+                                </div>
+                            </div>
+                        `,
+                        showConfirmButton: true,
+                        confirmButtonText: 'Understood',
+                        confirmButtonColor: '#00497a',
+                        customClass: {
+                            popup: 'rounded-4 shadow-lg border-0',
+                            confirmButton: 'btn btn-primary px-4 py-2 rounded-3 fw-bold'
+                        },
+                        showCloseButton: true
+                    });
+                    return;
+                }
+
+                $('#return_order_id').val(data.orderId);
+                $('#return_product_id').val(data.productId);
+                $('#return_product_name').text(data.productName);
+                $(this).data('items-filled', true);
+                $('#return_qty_input').val(data.quantity).attr('max', data.quantity);
+                $('#return_unit_text').text(data.unit);
+                $('#image_preview_container').empty();
+                $('#submitReturnModal').modal('show');
+            });
+
+            // Image preview logic
+            $('#return_images_input').on('change', function() {
+                const container = $('#image_preview_container');
+                container.empty();
+                
+                if (this.files) {
+                    Array.from(this.files).forEach(file => {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            container.append(`
+                                <div class="position-relative" style="width: 80px; height: 80px;">
+                                    <img src="${e.target.result}" class="img-thumbnail w-100 h-100 object-fit-cover rounded-3">
+                                </div>
+                            `);
+                        }
+                        reader.readAsDataURL(file);
+                    });
+                }
+            });
+
+            $('#submitReturnForm').submit(function(e) {
+                e.preventDefault();
+                let formData = new FormData(this);
+                formData.append('_token', '{{ csrf_token() }}');
+                formData.append('order_type', 'retailer');
+
+                let $btn = $(this).find('button[type="submit"]');
+                $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Submitting...');
+
+                $.ajax({
+                    url: "{{ route('admin.returns.store') }}",
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(res) {
+                        $('#submitReturnModal').modal('hide');
+                        Swal.fire('Success', res.success, 'success');
+                        $('#submitReturnForm')[0].reset();
+                        $('#image_preview_container').empty();
+                    },
+                    error: function(xhr) {
+                        let err = xhr.responseJSON ? xhr.responseJSON.error : 'Submission failed';
+                        Swal.fire('Error', err, 'error');
+                    },
+                    complete: function() {
+                        $btn.prop('disabled', false).text('Submit Return');
+                    }
+                });
             });
         });
     </script>

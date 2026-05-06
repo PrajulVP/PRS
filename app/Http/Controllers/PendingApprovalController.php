@@ -51,7 +51,7 @@ class PendingApprovalController extends Controller
 
             // Logic based on requested view type
             if ($viewType === 'distributor') {
-                $query = \App\Models\DistributorOrder::with(['distributor.user', 'items.product', 'items.batches', 'distributor.salesManager.user', 'salesManager.user']);
+                $query = \App\Models\DistributorOrder::with(['distributor.user', 'items.product', 'items.batches', 'distributor.salesManager.user', 'salesManager.user', 'returnRequests']);
 
                 if ($user->hasRole('salesmanager') && $user->salesManager) {
                     $salesManagerId = $user->salesManager->id;
@@ -104,7 +104,7 @@ class PendingApprovalController extends Controller
                 $totalCount = array_sum($statusCounts);
             } elseif ($viewType === 'retailer') {
                 // Fetch Retailer Orders
-                $query = \App\Models\RetailerOrder::with(['retailer.user', 'retailer.salesManager.user', 'retailer.fieldStaff.user', 'items.product', 'distributor.user', 'fieldStaff.user']);
+                $query = \App\Models\RetailerOrder::with(['retailer.user', 'retailer.salesManager.user', 'retailer.fieldStaff.user', 'items.product', 'distributor.user', 'fieldStaff.user', 'returnRequests']);
 
                 if ($user->hasRole('distributor') && $user->distributor) {
                     $query->where('distributor_id', $user->distributor->id);
@@ -205,30 +205,30 @@ class PendingApprovalController extends Controller
                     
                     $pPack = $i->product?->pack ?? null;
                     
-                    $summary = '<div class="product-summary-item mb-2" style="line-height: 1.3; min-width: 350px;">';
-                    $summary .= '<div class="d-flex align-items-center flex-nowrap gap-2" style="white-space: nowrap;">';
-                    $summary .= '<span class="fw-bold text-dark" style="font-size: 0.9rem;">'.$pName.'</span>';
+                    $summary = '<div class="product-summary-item mb-1" style="line-height: 1.2; width: 100%;">';
+                    $summary .= '<div class="d-flex align-items-start gap-1" style="white-space: normal; word-break: break-all;">';
+                    $summary .= '<span class="fw-bold" style="color: #334155; font-size: 0.85rem;">'.$pName.'</span>';
                     if (!empty(trim($pPack)) && strtoupper(trim($pPack)) !== 'N/A') {
-                        $summary .= '<span class="text-secondary small fw-bold" style="font-size: 0.75rem;">['.$pPack.']</span>';
+                        $summary .= '<span class="small" style="color: #94a3b8; font-size: 0.7rem; white-space: nowrap;">['.$pPack.']</span>';
                     }
                     if (!empty($vLabel)) {
-                        $summary .= '<span class="text-info fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">' . strtoupper(implode(' / ', $vLabel)) . '</span>';
+                        $summary .= '<span class="badge rounded-pill" style="background: #e0f2fe; color: #0369a1; font-size: 0.65rem; padding: 2px 6px; font-weight: 700; letter-spacing: 0.3px; white-space: nowrap;">' . strtoupper(implode(' / ', $vLabel)) . '</span>';
                     }
                     $summary .= '</div>';
                     
                     $meta = [];
-                    if (!empty(trim($pBrand)) && strtoupper(trim($pBrand)) !== 'N/A') {
-                        $meta[] = '<span class="text-muted small">('.$pBrand.')</span>';
-                    }
-                    
                     $qtyStr = $i->quantity . ' ' . ($i->unit ?? 'Nos');
                     if (($i->free_quantity ?? 0) > 0) {
-                        $qtyStr .= ' <span class="text-success">(+ ' . $i->free_quantity . ' Free)</span>';
+                        $qtyStr .= ' <span class="text-success" style="font-size: 0.7rem;">(+' . $i->free_quantity . ' Free)</span>';
                     }
-                    $meta[] = '<span class="text-primary fw-bold" style="font-size: 0.8rem;">' . $qtyStr . '</span>';
+                    $meta[] = '<span class="text-primary fw-bold" style="font-size: 0.75rem;">' . $qtyStr . '</span>';
+
+                    if (!empty(trim($pBrand)) && strtoupper(trim($pBrand)) !== 'N/A') {
+                        $meta[] = '<span class="text-muted" style="font-size: 0.75rem; opacity: 0.8;">' . $pBrand . '</span>';
+                    }
                     
                     if (!empty($meta)) {
-                        $summary .= '<div class="d-flex align-items-center gap-2 flex-nowrap mt-1" style="white-space: nowrap;">' . implode('<span class="text-light" style="font-size: 0.8rem;">|</span>', $meta) . '</div>';
+                        $summary .= '<div class="d-flex align-items-center gap-1 mt-0" style="white-space: normal; word-break: break-all;">' . implode('<span class="text-light" style="font-size: 0.7rem; margin: 0 2px;">•</span>', $meta) . '</div>';
                     }
                     $summary .= '</div>';
                     return $summary;
@@ -258,7 +258,17 @@ class PendingApprovalController extends Controller
                             'carton_size' => $i->product?->carton_size,
                             'side' => $i->side,
                             'size' => $i->size,
+                            'is_returnable' => $i->product?->is_returnable ?? true,
                         ];
+
+                        // Find corresponding return request if any
+                        $retReq = ($item->returnRequests ?? collect())->where('product_id', $i->product_id)
+                            ->where('side', $i->side)
+                            ->where('size', $i->size)
+                            ->first();
+                        
+                        $itemData['return_status'] = $retReq ? $retReq->status : null;
+                        $itemData['return_code'] = $retReq ? $retReq->return_code : null;
 
                         if ($viewType === 'distributor') {
                             $itemData['unit_price'] = number_format($i->price ?? 0, 2);

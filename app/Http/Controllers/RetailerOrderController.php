@@ -29,9 +29,35 @@ class RetailerOrderController extends Controller
                     'order_code' => $order->order_code,
                     'product_summary' => $order->items->map(function($i) {
                          $pName = $i->product_name ?? $i->product->product_name ?? 'Product';
-                         return $pName . ' (' . $i->quantity . ')';
-                         return $pName . ' (' . $i->quantity . ')';
-                    })->implode(', '),
+                         $pPack = $i->product?->pack;
+                         $vLabel = array_filter([$i->side, $i->size]);
+                         $pBrand = $i->product?->brand;
+
+                         $summary = '<div class="product-summary-item mb-1" style="line-height: 1.2; width: 100%;">';
+                         $summary .= '<div class="d-flex align-items-start gap-1" style="white-space: normal; word-break: break-all;">';
+                         $summary .= '<span class="fw-bold" style="color: #334155; font-size: 0.85rem;">'.$pName.'</span>';
+                         if (!empty(trim($pPack)) && strtoupper(trim($pPack)) !== 'N/A') {
+                             $summary .= '<span class="small" style="color: #94a3b8; font-size: 0.7rem; white-space: nowrap;">['.$pPack.']</span>';
+                         }
+                         if (!empty($vLabel)) {
+                             $summary .= '<span class="badge rounded-pill" style="background: #e0f2fe; color: #0369a1; font-size: 0.65rem; padding: 2px 6px; font-weight: 700; letter-spacing: 0.3px; white-space: nowrap;">' . strtoupper(implode(' / ', $vLabel)) . '</span>';
+                         }
+                         $summary .= '</div>';
+                         
+                         $meta = [];
+                         $qtyText = $i->quantity . ' ' . ($i->unit ?? 'Nos');
+                         $meta[] = '<span class="text-primary fw-bold" style="font-size: 0.75rem;">' . $qtyText . '</span>';
+
+                         if (!empty(trim($pBrand)) && strtoupper(trim($pBrand)) !== 'N/A') {
+                             $meta[] = '<span class="text-muted" style="font-size: 0.75rem; opacity: 0.8;">' . $pBrand . '</span>';
+                         }
+                         
+                         if (!empty($meta)) {
+                             $summary .= '<div class="d-flex align-items-center gap-1 mt-0" style="white-space: normal; word-break: break-all;">' . implode('<span class="text-light" style="font-size: 0.7rem; margin: 0 2px;">•</span>', $meta) . '</div>';
+                         }
+                         $summary .= '</div>';
+                         return $summary;
+                    })->implode(''),
                     'total_amount' => number_format($order->total_amount, 2),
                     'status' => ucfirst($order->status),
                     'placed_at' => $order->placed_at ? $order->placed_at->format('Y-m-d') : '-',

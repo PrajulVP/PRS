@@ -243,6 +243,21 @@ class User extends Authenticatable implements JWTSubject
         }
 
         $counts['inactive_users'] = $counts['inactive_sales_managers'] + $counts['inactive_distributors'] + $counts['inactive_field_staff'] + $counts['inactive_retailers'];
+        
+        // 6. Pending Returns
+        $returnQuery = \App\Models\ReturnRequest::query();
+        if ($this->hasRole('fieldstaff') && $this->fieldStaff) {
+            $returnQuery->where('field_staff_id', $this->fieldStaff->id)->where('status', 'pending')->where('order_type', 'retailer');
+        } elseif ($this->hasRole('distributor') && $this->distributor) {
+            $returnQuery->where('distributor_id', $this->distributor->id)->where('status', 'approved_tier1')->where('order_type', 'retailer');
+        } elseif ($this->hasRole('salesmanager') && $this->salesManager) {
+            $returnQuery->where('sales_manager_id', $this->salesManager->id)->where('status', 'pending')->where('order_type', 'distributor');
+        } elseif ($this->hasAnyRole(['admin', 'superadmin'])) {
+            $returnQuery->where('status', 'approved_tier1')->where('order_type', 'distributor');
+        } else {
+            $returnQuery->whereRaw('1=0');
+        }
+        $counts['pending_returns'] = $returnQuery->count();
 
         return $counts;
     }

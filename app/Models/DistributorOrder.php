@@ -67,4 +67,9 @@ class DistributorOrder extends Model
     {
         return $this->belongsTo(SalesManager::class, 'sales_manager_id');
     }
+
+    public function returnRequests(): HasMany
+    {
+        return $this->hasMany(ReturnRequest::class, 'order_id')->where('order_type', 'distributor');
+    }
 }

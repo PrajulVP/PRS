@@ -109,6 +109,17 @@
             white-space: nowrap !important;
         }
 
+        .product-col {
+            min-width: 200px !important;
+            max-width: 200px !important;
+            width: 200px !important;
+            white-space: normal !important;
+            word-break: break-all !important;
+            overflow-wrap: break-word !important;
+            vertical-align: top !important;
+            line-height: 1.3 !important;
+        }
+
         .action-buttons {
             display: inline-flex !important;
             align-items: center;
@@ -259,9 +270,9 @@
         .ai-col-product {
             flex: 2.5;
             min-width: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            max-width: 200px;
+            white-space: normal;
+            word-break: break-word;
         }
 
         .ai-col-batch {
@@ -457,6 +468,12 @@
         body.dark-only .approval-error-alert #distributor_approval_error_message {
             color: #fecaca !important;
         }
+
+        #submitReturnModal {
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
     </style>
 
     <div class="container-fluid">
@@ -530,57 +547,65 @@
                     </div>
                 </div>
 
-                <table class="table table-striped table-hover" id="distributor-approval-table">
-                    <thead>
-                        <tr>
-                            <th style="display:none;">ID</th>
-                            <th>No.</th>
-                            <th>Order Code</th>
-                            <th>Distributor</th>
-                            <th style="min-width: 350px;">Summary</th>
-                            <th>Total</th>
-                            <th>Placed At</th>
-                            <th>Status</th>
-                            <th>Payment Status</th>
-                            <th>Invoice</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="distributor-approval-table">
+                        <thead>
+                            <tr>
+                                <th style="display:none;">ID</th>
+                                <th>No.</th>
+                                <th>Order Code</th>
+                                <th>Distributor</th>
+                                <th style="width: 200px;">products</th>
+                                <th>Total</th>
+                                <th>Placed At</th>
+                                <th>Status</th>
+                                <th>Payment Status</th>
+                                <th>Invoice</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="modal fade" id="viewOrderModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content shadow-lg border-0 overflow-hidden">
                 <div class="modal-body p-0">
                     <!-- Order Summary Header -->
-                    <div class="order-summary-header">
+                    <div class="order-summary-header py-3 px-4">
                         <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"
                             aria-label="Close"></button>
                         <div class="row align-items-center">
                             <div class="col-sm-7">
-                                <div class="d-flex align-items-center mb-2">
+                                <div class="d-flex align-items-center mb-1">
                                     <span class="badge bg-primary-subtle text-primary me-2 fw-bold"
-                                        style="font-size: 0.65rem; letter-spacing: 0.5px;">DETAILS</span>
-                                    <h4 class="mb-0 fw-bold text-main-theme" id="view_order_code">--</h4>
+                                        style="font-size: 0.6rem; letter-spacing: 0.5px;">DETAILS</span>
+                                    <h4 class="mb-0 fw-bold text-main-theme" id="view_order_code" style="font-size: 1.25rem;">--</h4>
                                 </div>
-                                <div class="retailer-detail-item">
-                                    <i class="fa fa-calendar"></i>
-                                    <span id="view_placed_at" class="text-muted-theme">--</span>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="retailer-detail-item mb-0">
+                                        <i class="fa fa-calendar" style="font-size: 0.75rem;"></i>
+                                        <span id="view_placed_at" class="text-muted-theme" style="font-size: 0.75rem;">--</span>
+                                    </div>
+                                    <div class="retailer-detail-item mb-0">
+                                        <i class="fa fa-hashtag" style="font-size: 0.75rem;"></i>
+                                        <span id="view_invoice_no" class="text-muted-theme" style="font-size: 0.75rem;">--</span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-sm-5 text-sm-end">
-                                <div class="text-muted-theme small text-uppercase fw-bold mb-1"
-                                    style="font-size: 0.65rem; letter-spacing: 0.5px;">Distributor Information</div>
-                                <h5 class="fw-bold text-main-theme mb-2" id="view_distributor">--</h5>
+                                <div class="text-muted-theme fw-bold mb-1"
+                                    style="font-size: 0.6rem; letter-spacing: 0.5px; text-transform: uppercase;">Distributor</div>
+                                <h5 class="fw-bold text-main-theme mb-1" id="view_distributor" style="font-size: 1rem;">--</h5>
                                 <div class="d-flex justify-content-sm-end gap-2 align-items-center">
                                     <div class="badge" id="view_status_badge"
-                                        style="font-size: 0.7rem; padding: 0.4em 0.8em; letter-spacing: 0.5px;">--</div>
+                                        style="font-size: 0.65rem; padding: 0.3em 0.6em; letter-spacing: 0.5px;">--</div>
                                     <div class="badge" id="view_payment_status_badge"
-                                        style="font-size: 0.7rem; padding: 0.4em 0.8em; letter-spacing: 0.5px; border: 1px solid currentColor; background: transparent;">
+                                        style="font-size: 0.65rem; padding: 0.3em 0.6em; letter-spacing: 0.5px; border: 1px solid currentColor; background: transparent;">
                                         --</div>
                                 </div>
                             </div>
@@ -596,7 +621,7 @@
                             <div class="invoice-list-header bg-dark text-white border-0 py-2">
                                 <div style="flex: 2;" class="ps-3 text-white">Product Name</div>
                                 <div style="flex: 1;" class="text-center text-white">Quantity</div>
-                                <div style="flex: 1;" class="text-end pe-3 text-white">Total Price</div>
+                                <div style="flex: 1;" class="text-end text-white pe-3">Total Price</div>
                             </div>
                             <div id="view_items_list">
                                 <!-- Items will be populated here -->
@@ -617,6 +642,49 @@
                 <div class="modal-footer bg-card-theme border-top-0">
                     <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Submit Return Modal --}}
+    <div class="modal fade" id="submitReturnModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow" style="border-radius: 20px;">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Return Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="submitReturnForm">
+                    <div class="modal-body">
+                        <input type="hidden" name="order_id" id="return_order_id">
+                        <input type="hidden" name="product_id" id="return_product_id">
+                        
+                        <div class="mb-3">
+                            <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Product</label>
+                            <div id="return_product_name" class="fw-bold text-main-theme"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Return Quantity (<span id="return_unit_text">Nos</span>)</label>
+                            <input type="number" name="quantity" id="return_qty_input" class="form-control" step="0.01" required min="0.01">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Reason for Return</label>
+                            <textarea name="reason" class="form-control" rows="3" required placeholder="E.g., Damaged product, Expired..."></textarea>
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="form-label fw-bold">Upload Images (Proof)</label>
+                            <input type="file" name="images[]" id="return_images_input" class="form-control" accept="image/*" required multiple>
+                            <div id="image_preview_container" class="mt-2 d-flex flex-wrap gap-2"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary px-4">Submit Return</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -839,23 +907,8 @@
                                 </div>
                             </div>
 
-                            <!-- Invoice Number Input -->
-                            <div class="mb-4">
-                                <label class="form-label fw-bold text-main-theme small text-uppercase">
-                                    Distributor Invoice Number <span class="text-danger">*</span>
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light border-0"><i
-                                            class="fa fa-hashtag text-muted"></i></span>
-                                    <input type="text" name="invoice_no" id="invoice_no_input"
-                                        class="form-control border-0 bg-light shadow-none"
-                                        placeholder="Scan invoice below to unlock..." required readonly
-                                        style="border-radius: 0 12px 12px 0;">
-                                </div>
-                                <div class="form-text small text-muted mt-2">
-                                    <i class="fa fa-info-circle me-1"></i> This number must be unique for this distributor.
-                                </div>
-                            </div>
+                            <!-- Invoice Number (Hidden, populated by AI) -->
+                            <input type="hidden" name="invoice_no" id="invoice_no_input" required>
 
                             <!-- Smart Invoice Processing Section -->
                             <div class="mb-4">
@@ -886,23 +939,23 @@
                                 </div>
 
                                 <div id="automation_success_state" class="d-none">
-                                    <div class="bg-light p-3 rounded-3 border mb-3">
-                                        <div class="row g-3">
-                                            <div class="col-md-3">
-                                                <div class="text-muted small">Inv Date</div>
-                                                <div class="fw-bold text-dark" id="extract_date">--</div>
+                                    <div class="premium-metadata-card p-3 rounded-4 border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
+                                        <div class="row g-4">
+                                            <div class="col-md-3 border-end border-2 border-white">
+                                                <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 1px;">Invoice Date</div>
+                                                <div class="fw-bold text-dark fs-6" id="extract_date" contenteditable="true" title="Click to edit">--</div>
+                                            </div>
+                                            <div class="col-md-3 border-end border-2 border-white">
+                                                <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 1px;">Invoice Number</div>
+                                                <div class="fw-bold text-primary fs-6" id="extract_invoice_no" contenteditable="true" title="Click to edit">--</div>
+                                            </div>
+                                            <div class="col-md-3 border-end border-2 border-white">
+                                                <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 1px;">GSTIN Extracted</div>
+                                                <div class="fw-bold text-dark fs-6" id="extract_gstin" contenteditable="true" title="Click to edit">--</div>
                                             </div>
                                             <div class="col-md-3">
-                                                <div class="text-muted small">Invoice No.</div>
-                                                <div class="fw-bold text-dark" id="extract_invoice_no">--</div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="text-muted small">GSTIN (Extracted)</div>
-                                                <div class="fw-bold text-dark" id="extract_gstin">--</div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="text-muted small">Drug License</div>
-                                                <div class="fw-bold text-dark" id="extract_dl">--</div>
+                                                <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 1px;">Drug License</div>
+                                                <div class="fw-bold text-dark fs-6" id="extract_dl" contenteditable="true" title="Click to edit">--</div>
                                             </div>
                                         </div>
                                     </div>
@@ -963,11 +1016,6 @@
                                 </div>
                             </div>
 
-                            <div class="alert alert-info py-2 small mb-0 d-flex align-items-center">
-                                <i class="fa fa-info-circle me-2 fs-5"></i>
-                                <span>Verify extracted batch, expiry and pricing details before confirming. You can edit
-                                    them directly if needed.</span>
-                            </div>
 
                             <!-- Hidden inputs for Form Submission -->
                             <div id="hidden_batch_inputs" class="d-none">
@@ -979,8 +1027,9 @@
                         <button type="button" class="btn btn-link text-muted fw-bold text-decoration-none px-4"
                             data-bs-dismiss="modal">Go Back</button>
                         <button type="submit" id="btn_approve_order" class="btn btn-primary px-5 py-2 fw-bold shadow-sm"
+                            disabled
                             style="border-radius: 12px; background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);">
-                            Confirm & Approve Order
+                            Confirm & Approve
                         </button>
                     </div>
                 </form>
@@ -1156,6 +1205,25 @@
                     [0, 'desc']
                 ],
                 autoWidth: false,
+                columnDefs: [
+                    {
+                        targets: 4,
+                        width: "300px",
+                        createdCell: function (td, cellData, rowData, row, col) {
+                            $(td).css({
+                                'min-width': '200px',
+                                'max-width': '350px',
+                                'white-space': 'normal',
+                                'word-break': 'break-word',
+                                'line-height': '1.3'
+                            });
+                        }
+                    },
+                    {
+                        targets: '_all',
+                        className: 'align-middle'
+                    }
+                ],
                 drawCallback: function (settings) {
                     var api = this.api();
                     api.column(1, {
@@ -1289,7 +1357,7 @@
                     },
                     {
                         data: 'product_summary',
-                        width: '450px',
+                        className: 'product-col',
                         render: function (data, type, row) {
                             if (!data) return '-';
                             let items = data.split('|||');
@@ -1501,7 +1569,7 @@
                     processData: false,
                     contentType: false,
                     success: function (res) {
-                        showToast('success', res.success);
+                        // showToast('success', res.success);
                         table.ajax.reload(null, false);
                         if (window.updateSidebarCounts) window.updateSidebarCounts();
                     },
@@ -1522,7 +1590,7 @@
                 $.post(url, { _token: '{{ csrf_token() }}' }, function (res) {
                     $('#removeInvoiceConfirmModal').modal('hide');
                     if (res.success) {
-                        showToast('success', res.success);
+                        // showToast('success', res.success);
                         table.ajax.reload(null, false);
                         if (window.updateSidebarCounts) window.updateSidebarCounts();
                     }
@@ -1555,7 +1623,7 @@
                     },
                     success: function (res) {
                         $('#paymentStatusModal').modal('hide');
-                        showToast('success', res.success || 'Updated');
+                        // showToast('success', res.success || 'Updated');
                         table.ajax.reload(null, false);
                         if (window.updateSidebarCounts) window.updateSidebarCounts();
                     },
@@ -1573,6 +1641,7 @@
                 let row = $(this).data('row');
                 $('#view_order_code').text(row.order_code || '--');
                 $('#view_placed_at').text(row.placed_at || '--');
+                $('#view_invoice_no').text(row.invoice_no || '--');
                 $('#view_distributor').text(row.distributor_name || '--');
                 $('#view_total').text('₹' + (row.total_amount || '0'));
 
@@ -1605,23 +1674,31 @@
 
                 if (row.items && row.items.length) {
                     row.items.forEach(item => {
-                        let variantInfo = '';
-                        if (item.side || item.size) {
-                            variantInfo = `<span class="variant-highlight ms-2">${[item.side, item.size].filter(v => v).join(' / ')}</span>`;
-                        }
+                        let cleanedName = window.cleanProductName(item.product_name, item.side, item.size);
+                        let variantBadge = window.renderProductVariantBadge(item);
 
                         list.append(`
-                            <div class="invoice-list-row p-2">
-                                <div style="flex: 2;" class="fw-bold text-main-theme small ps-2">
-                                    ${item.product_name}${variantInfo}
+                            <div class="invoice-list-row p-1 border-bottom border-light-theme">
+                                <div style="flex: 2; max-width: 200px;" class="ps-2">
+                                    <div class="fw-bold text-main-theme" style="font-size: 0.9rem; white-space: normal; line-height: 1.2;">
+                                        ${cleanedName} ${variantBadge}
+                                    </div>
+                                    <div class="small text-muted-theme" style="font-size: 0.7rem;">
+                                        (${item.brand || 'Generic'}) • <span class="fw-bold text-primary">${item.quantity} ${item.unit || 'Nos'}</span>
+                                        ${item.free_quantity > 0 ? `<span class="text-success fw-bold ms-1" style="font-size: 0.65rem;">(+${item.free_quantity} Free)</span>` : ''}
+                                    </div>
+                                    <div class="d-flex gap-2 flex-wrap mt-0 opacity-75" style="font-size: 0.6rem;">
+                                        ${item.generic_name ? `<span>${item.generic_name}</span>` : ''}
+                                        ${item.product_code && item.product_code !== '---' && item.product_code !== 'N/A' ? `<span>Code: ${item.product_code}</span>` : ''}
+                                    </div>
                                 </div>
-                                <div style="flex: 1;" class="fw-bold text-primary text-center">
-                                    ${item.quantity} ${item.unit || 'Nos'}
-                                    ${item.free_quantity > 0 ? `<div class="text-success small fw-bold">+${item.free_quantity} Free</div>` : ''}
+                                <div style="flex: 1;" class="text-center">
+                                    <div class="fw-bold text-primary" style="font-size: 0.85rem;">${item.quantity}</div>
+                                    <div class="small opacity-75" style="font-size: 0.65rem;">${item.unit || 'Nos'}</div>
                                 </div>
-                                <div style="flex: 1;" class="fw-bold text-main-theme text-end pe-3">₹${item.total_amount}</div>
+                                <div style="flex: 1;" class="fw-bold text-main-theme text-end pe-2" style="font-size: 0.85rem;">₹${item.total_amount}</div>
                             </div>
-                                                    `);
+                        `);
                     });
                 } else {
                     list.append('<div class="invoice-list-row justify-content-center text-muted">No items</div>');
@@ -1662,15 +1739,14 @@
 
                     if (row.items && row.items.length) {
                         row.items.forEach(item => {
-                            let appVariantInfo = '';
-                            if (item.side || item.size) {
-                                appVariantInfo = `<span class="variant-highlight ms-2">${[item.side, item.size].filter(v => v).join(' / ')}</span>`;
-                            }
+                            let appVariantBadge = window.renderProductVariantBadge(item);
 
                             list.append(`
                                 <div class="invoice-list-row p-2">
                                     <div style="flex: 2;" class="fw-bold text-main-theme small ps-2">
-                                        ${item.product_name}${appVariantInfo}
+                                        <div style="white-space: normal;">
+                                            ${window.cleanProductName(item.product_name, item.side, item.size)} ${appVariantBadge}
+                                        </div>
                                         <div class="d-flex gap-2 flex-wrap mt-1">
                                             ${item.generic_name ? `<span class="badge bg-light text-dark border-0 fw-normal" style="font-size: 0.6rem;">${item.generic_name}</span>` : ''}
                                             ${item.pack && item.pack !== 'N/A' && item.pack !== '---' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.6rem;">P: ${item.pack}</div>` : ''}
@@ -1693,23 +1769,7 @@
                     $('#approveOrderModal').modal('show');
                 };
 
-                if (isAdmin) {
-                    Swal.fire({
-                        title: 'Confirm Admin Approval',
-                        text: "This order should ideally be approved by the respective salesmanager. Do you still want to proceed as an Admin?",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonText: 'Yes, proceed',
-                        cancelButtonText: 'No, cancel',
-                        confirmButtonColor: '#28a745'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            proceed();
-                        }
-                    });
-                } else {
-                    proceed();
-                }
+                proceed();
             });
 
             // Sales Manager Approve Form Submit
@@ -1733,7 +1793,7 @@
                     success: function (res) {
                         $('#approveOrderModal').modal('hide');
                         table.ajax.reload(null, false);
-                        showToast('success', res.success || 'Order approved successfully');
+                        // // showToast('success', res.success || 'Order approved successfully');
                         if (window.updateSidebarCounts) window.updateSidebarCounts();
                     },
                     error: function (xhr) {
@@ -1775,12 +1835,7 @@
                     let payBadgeClass = payStatus === 'paid' ? 'text-success' : 'text-warning';
                     $('#process_payment_status_badge').text(payStatus === 'paid' ? 'PAID' : 'UNPAID').removeClass().addClass('badge ' + payBadgeClass).css({ 'border': '1px solid currentColor', 'background': 'transparent', 'font-size': '0.7rem' });
 
-                    // Set modal radio buttons
-                    if (payStatus === 'paid') {
-                        $('#modal_pay_paid').prop('checked', true);
-                    } else {
-                        $('#modal_pay_pending').prop('checked', true);
-                    }
+                    // Radio buttons are unchecked by default to force manual selection
 
 
                     // Reset OCR & Automation UI States
@@ -1788,11 +1843,29 @@
                     $('#ocr_processing_state').addClass('d-none');
                     $('#verification_table_footer').addClass('d-none');
                     $('#scan_file_input').val('');
-                    $('#automation_success_state').addClass('d-none');
-                    $('#automation_error_state').addClass('d-none');
+                    $('#distributor_approval_error_alert').removeClass('d-none');
+                    $('#distributor_approval_error_message').text('Please select payment status and upload the finalized invoice to proceed.');
                     $('#btn_approve_order').prop('disabled', true);
-                    $('#ocr_dropzone').removeClass('has-file');
-                    $('#distributor_approval_error_alert').addClass('d-none');
+                    
+                    // Helper to check readiness
+                    window.checkDistributorApprovalReadiness = function() {
+                        let paySelected = $('input[name="payment_status"]:checked').length > 0;
+                        let fileUploaded = $('#scan_file_input')[0].files.length > 0 || $('#verification_table_body').children().not('.invoice-list-row.justify-content-center').length > 0;
+                        
+                        if (paySelected && fileUploaded) {
+                            $('#distributor_approval_error_alert').addClass('d-none');
+                            $('#btn_approve_order').prop('disabled', false);
+                        } else {
+                            $('#distributor_approval_error_alert').removeClass('d-none');
+                            $('#btn_approve_order').prop('disabled', true);
+                            
+                            let msg = "";
+                            if (!paySelected && !fileUploaded) msg = "Please select payment status and upload the finalized invoice to proceed.";
+                            else if (!paySelected) msg = "Please select the payment status manually to continue.";
+                            else if (!fileUploaded) msg = "Please upload and scan the invoice to continue.";
+                            $('#distributor_approval_error_message').text(msg);
+                        }
+                    };
 
                     // Populate Expected Details (old ID mappings if still needed, but mostly moved to premium header)
                     $('#expected_order_id').text(row.order_code || '--');
@@ -1833,21 +1906,21 @@
                             let vRowHtml = `
                                 <div id="v_row_${item.order_item_id}" class="invoice-list-row p-2">
                                     <div class="ai-col-product fw-bold text-main-theme small ps-2">
-                                        ${item.product_name}
+                                        <div style="white-space: normal; line-height: 1.2; font-size: 0.9rem;">
+                                            ${window.cleanProductName(item.product_name, item.side, item.size)} ${window.renderProductVariantBadge(item)}
+                                        </div>
                                         <div class="d-flex gap-2 flex-wrap mt-1">
-                                            ${(item.side || item.size) ? `<div class="small badge bg-info text-white border-0" style="font-size: 0.6rem;">${[item.side, item.size].filter(Boolean).join(' / ')}</div>` : ''}
                                             ${item.generic_name ? `<span class="badge bg-light text-dark border-0 fw-normal" style="font-size: 0.6rem;">${item.generic_name}</span>` : ''}
-                                            ${item.pack && item.pack !== 'N/A' && item.pack !== '---' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.6rem;">P: ${item.pack}</div>` : ''}
                                             ${item.product_code && item.product_code !== '---' && item.product_code !== 'N/A' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.6rem;">C: ${item.product_code}</div>` : ''}
                                         </div>
                                     </div>
                                     <div class="ai-col-batch">
                                         <input type="text" class="form-control form-control-sm v-batch-input border-0 bg-body-theme text-main-theme p-1" 
-                                               data-id="${item.order_item_id}" placeholder="Wait AI...">
+                                               data-id="${item.order_item_id}" placeholder="Wait AI..." readonly>
                                     </div>
                                     <div class="ai-col-expiry">
                                         <input type="text" class="form-control form-control-sm v-expiry-input border-0 bg-body-theme text-main-theme p-1" 
-                                               data-id="${item.order_item_id}" placeholder="MM/YY">
+                                               data-id="${item.order_item_id}" placeholder="MM/YY" readonly>
                                     </div>
                                     <div class="ai-col-qty fw-bold text-primary text-center v-qty-display" data-original-unit="${item.unit || 'Nos'}">
                                         ${item.quantity} ${item.unit || 'Nos'}
@@ -1863,23 +1936,7 @@
                     $('#processOrderModal').modal('show');
                 };
 
-                if (isAdmin) {
-                    Swal.fire({
-                        title: 'Confirm Admin Approval',
-                        text: "This order should ideally be approved by the respective distributor. Do you still want to proceed as an Admin?",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonText: 'Yes, proceed',
-                        cancelButtonText: 'No, cancel',
-                        confirmButtonColor: '#28a745'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            proceed();
-                        }
-                    });
-                } else {
-                    proceed();
-                }
+                proceed();
             });
 
             function parseExpiryToDate(expStr) {
@@ -1916,6 +1973,13 @@
                 let displayVal = $(this).val();
                 let parsedDate = parseExpiryToDate(displayVal);
                 $(`#batches_for_${id} .hidden-expiry-val`).val(parsedDate || displayVal);
+            });
+
+            // Payment Radio Change
+            $(document).on('change', 'input[name="payment_status"]', function() {
+                if (typeof window.checkDistributorApprovalReadiness === 'function') {
+                    window.checkDistributorApprovalReadiness();
+                }
             });
 
             // OCR Dropzone Click
@@ -2008,7 +2072,9 @@
                                         $('#automation_success_state').removeClass('d-none').hide().fadeIn(400);
                                         $('#extracted_metadata_section').show();
                                         $('#processed_summary_text').text(`${identifiedCount} items auto-filled from Invoice.`);
-                                        $('#btn_approve_order').prop('disabled', false);
+                                        if (typeof window.checkDistributorApprovalReadiness === 'function') {
+                                            window.checkDistributorApprovalReadiness();
+                                        }
                                     } else {
                                         // Gatekeeper or No Products found
                                         let extracted = $('#invoice_no_input').data('extracted');
@@ -2019,20 +2085,24 @@
 
                                         if (entered && extracted && !isInvoiceMatch(entered, extracted)) {
                                             $('#automation_error_state h5').text('Invoice Number Mismatch');
-                                            $('#automation_error_state p').text('Please enter the correct invoice number above to load and verify line items.');
-                                            $('#extracted_metadata_section').hide();
+                                            $('#automation_error_state p').text('Warning: The entered number differs from the document scan.');
+                                            $('#extracted_metadata_section').show();
+                                            parseAndFillOCRResponse(res.data);
                                         } else {
                                             $('#automation_error_state h5').text('No Products Identified');
                                             $('#automation_error_state p').text('The AI could not identify any ordered products in the uploaded invoice.');
                                             $('#extracted_metadata_section').hide();
-                                            showToast('warning', 'Mismatched Invoice: No products identified.');
+                                            if (typeof window.checkDistributorApprovalReadiness === 'function') {
+                                                window.checkDistributorApprovalReadiness();
+                                            }
                                         }
-                                        $('#btn_approve_order').prop('disabled', true);
                                     }
                                 } else {
                                     $('#automation_idle_state').removeClass('d-none').hide().fadeIn(400);
                                     showToast('error', 'OCR Failed: Invalid response from server.');
-                                    $('#btn_approve_order').prop('disabled', false); // Re-enable if OCR failed but user can manual
+                                    if (typeof window.checkDistributorApprovalReadiness === 'function') {
+                                        window.checkDistributorApprovalReadiness();
+                                    }
                                 }
                             });
                         }, 500);
@@ -2067,12 +2137,23 @@
             }
 
             function parseAndFillOCRResponse(data) {
-                // Extract Overall Metadata
                 const meta = data.invoice_metadata || {};
+                const invNo = (meta.invoice_no || meta.invoice_number || meta.inv_no || meta.bill_no || meta.invoice_id || meta.invoice_code || '--').trim();
+                const dlNo = (meta.drug_license || meta.dl_no || meta.drug_lic_no || meta.license_no || '--').trim();
+                const gstin = (meta.gstin || meta.gst_no || meta.gst_number || '--').trim();
+                
                 $('#extract_date').text(meta.date || '--');
-                $('#extract_invoice_no').text(meta.invoice_no || '--');
-                $('#extract_gstin').text(meta.gstin || '--');
-                $('#extract_dl').text(meta.drug_license || '--');
+                $('#extract_invoice_no').text(invNo);
+                $('#extract_gstin').text(gstin);
+                $('#extract_dl').text(dlNo);
+
+                // Sync editable fields to hidden inputs if changed manually
+                $('#extract_invoice_no').attr('contenteditable', 'true').on('input', function() {
+                    let val = $(this).text().trim();
+                    if (val !== '--') $('#invoice_no_input').val(val).trigger('input');
+                });
+                $('#extract_gstin').attr('contenteditable', 'true');
+                $('#extract_dl').attr('contenteditable', 'true');
 
                 // Validation Logic
                 let enteredInv = $('#invoice_no_input').val().trim().toLowerCase();
@@ -2083,7 +2164,6 @@
                 if (!enteredInv && extractedInvRaw) {
                     $('#invoice_no_input').val(extractedInvRaw).addClass('is-valid');
                     enteredInv = extractedInv;
-                    showToast('info', 'Invoice number auto-filled from scan.');
                 }
 
                 let $valAlert = $('#ai_validation_alert');
@@ -2108,12 +2188,18 @@
                 $('#invoice_no_input').data('is-duplicate', meta.is_duplicate);
 
                 if (hasError) {
-                    $('#btn_approve_order').prop('disabled', true);
-                    return 0; // Stop Gatekeeper
+                    // Show warning but no longer block product mapping
+                    $('#btn_approve_order').prop('disabled', meta.is_duplicate); // Still block duplicates
                 } else {
                     $('#btn_approve_order').prop('disabled', false);
-                    return fillDistributorProducts(data);
                 }
+
+                if (!enteredInv) {
+                     // Still need a number to proceed with final approval, but we can try to fill products
+                     $('#btn_approve_order').prop('disabled', true);
+                }
+
+                return fillDistributorProducts(data);
             }
 
             function fillDistributorProducts(data) {
@@ -2130,14 +2216,14 @@
                     let name = $(this).find('.product-name-marker').text().trim();
                     items.push({
                         id: $(this).data('item-id'),
-                        name: name
+                        name: name,
+                        orderedQty: parseInt($(this).data('ordered-qty')) || 0
                     });
                 });
-                console.log('Order Items to match:', items);
-
+                
                 let missingProducts = [];
+                let matchedProducts = [];
                 let invoiceProducts = [...(data.line_items || [])];
-                console.log('AI Invoice Items:', invoiceProducts);
 
                 items.forEach(item => {
                     const normalize = (str) => {
@@ -2240,8 +2326,16 @@
                         if (billedQty > 0) {
                             $(`input[name="batches[${item.id}][0][quantity]"]`).val(billedQty);
                             let unitStr = $(`#v_row_${item.id} .v-qty-display`).data('original-unit') || '';
-                            let displayHtml = `${billedQty} ${unitStr}`;
+                            let displayHtml = `<strong>${billedQty}</strong> ${unitStr}`;
+                            
                             if (freeQty > 0) displayHtml += ` <small class="text-success ms-1">(+${freeQty} Free)</small>`;
+                            
+                            // Visual cue if quantity differs from ordered
+                            if (billedQty !== item.orderedQty) {
+                                let diffClass = billedQty > item.orderedQty ? 'text-primary' : 'text-danger';
+                                displayHtml += ` <br><small class="${diffClass} fw-bold" style="font-size: 0.65rem;">(Ord: ${item.orderedQty})</small>`;
+                            }
+                            
                             $(`#v_row_${item.id} .v-qty-display`).html(displayHtml);
                         }
 
@@ -2276,24 +2370,70 @@
                     $('#tfoot_taxable').text(totalTaxable.toFixed(2));
                     $('#tfoot_gst_total').text((totalCgst + totalSgst + totalIgst).toFixed(2));
 
-                    // If OCR provided an exact total, prefer that, else sum of parts
+                    $('#tfoot_net').text(`₹${totalNet.toFixed(2)}`);
+                    
+                    // Show AI total as secondary verification if available and different
                     let ocrTotalStr = data.invoice_metadata ? data.invoice_metadata.total_amount : '';
                     let ocrTotal = parseFloat(ocrTotalStr);
-                    if (!isNaN(ocrTotal) && ocrTotal > 0) {
-                        $('#tfoot_net').text(`₹${ocrTotal.toFixed(2)}`);
+                    
+                    // STRICT MATCH BLOCKING: Only enable if no missing AND no extra items
+                    if (missingProducts.length === 0 && invoiceProducts.length === 0) {
+                        $('#automation_error_state').hide();
+                        $('#automation_success_state').fadeIn();
+                        $('#btn_approve_order').prop('disabled', false);
                     } else {
-                        $('#tfoot_net').text(`₹${totalNet.toFixed(2)}`);
+                        $('#automation_error_state').removeClass('d-none').show();
+                        $('#automation_error_state h5').text('Invoice Content Mismatch');
+                        
+                        let msg = '';
+                        if (missingProducts.length > 0) {
+                            msg = `This document is <b>missing ${missingProducts.length} ordered items</b>. `;
+                        }
+                        if (invoiceProducts.length > 0) {
+                            msg += `It also contains <b>${invoiceProducts.length} extra items</b> not in the order. `;
+                        }
+                        
+                        $('#automation_error_state p').html(`${msg} Please upload a perfect match invoice to proceed.`);
+                        $('#automation_success_state').hide();
+                        $('#btn_approve_order').prop('disabled', true);
                     }
+
+                    if (!isNaN(ocrTotal) && Math.abs(ocrTotal - totalNet) > 1) {
+                        $('#tfoot_net').append(`<br><small class="text-muted" style="font-size: 0.65rem;">Doc Total: ₹${ocrTotal.toFixed(2)}</small>`);
+                    }
+                    
                     $('#verification_table_footer').removeClass('d-none');
                 }
 
-                if (missingProducts.length > 0) {
-                    let missingList = missingProducts.map(p => `<li>${p.charAt(0).toUpperCase() + p.slice(1)}</li>`).join('');
+                // COMPREHENSIVE SUMMARY ALERT
+                if (missingProducts.length > 0 || invoiceProducts.length > 0) {
+                    let matchedHtml = matchedProducts.length > 0 
+                        ? `<div class="mb-2"><small class="fw-bold text-success">MATCHED (${matchedProducts.length})</small><ul class="text-start text-success small mb-0" style="column-count: 1; list-style-type: none; padding-left: 0;">${matchedProducts.map(p => `<li>✓ ${p}</li>`).join('')}</ul></div>` 
+                        : '';
+                    
+                    let missingHtml = missingProducts.length > 0 
+                        ? `<div class="mb-2"><small class="fw-bold text-danger">MISSING IN INVOICE (${missingProducts.length})</small><ul class="text-start text-danger small mb-0" style="column-count: 1; list-style-type: none; padding-left: 0;">${missingProducts.map(p => `<li>✗ ${p}</li>`).join('')}</ul></div>` 
+                        : '';
+                    
+                    let extraHtml = invoiceProducts.length > 0 
+                        ? `<div class="mb-2"><small class="fw-bold text-danger">EXTRA ITEMS IN INVOICE (${invoiceProducts.length})</small><ul class="text-start text-danger small mb-0" style="column-count: 1; list-style-type: none; padding-left: 0;">${invoiceProducts.map(p => `<li>! ${p.description || 'Unknown Item'}</li>`).join('')}</ul></div>` 
+                        : '';
+
                     Swal.fire({
-                        title: 'Missing Products!',
-                        html: `<p>The AI could not find the following ordered products in the invoice:</p><ul class="text-start text-danger">${missingList}</ul><p>Please review the invoice manually.</p>`,
-                        icon: 'warning',
-                        confirmButtonText: 'I understand'
+                        title: '<h4 class="fw-bold mb-0">Verification Summary</h4>',
+                        html: `
+                            <div class="text-start p-3 bg-light rounded shadow-inner" style="max-height: 300px; overflow-y: auto;">
+                                ${matchedHtml}
+                                ${missingHtml}
+                                ${extraHtml}
+                            </div>
+                            <p class="mt-3 mb-0 text-dark fw-bold">Please verify or upload another invoice.</p>`,
+                        icon: (missingProducts.length === 0 && invoiceProducts.length > 0) ? 'info' : 'warning',
+                        confirmButtonText: 'I understand',
+                        customClass: {
+                            confirmButton: 'btn btn-primary px-5 py-2 shadow-sm'
+                        },
+                        buttonsStyling: false
                     });
                 }
 
@@ -2333,7 +2473,7 @@
                         if (res.success) {
                             $('#processOrderModal').modal('hide');
                             table.ajax.reload(null, false);
-                            showToast('success', res.success);
+                            // // showToast('success', res.success);
                             if (window.updateSidebarCounts) window.updateSidebarCounts();
                         } else {
                             $('#distributor_approval_error_message').html(res.error || 'Failed to approve order');
@@ -2390,24 +2530,107 @@
                         }
                     }
                 } else if (!entered || hasError) {
-                    // Hide products for safety if empty or mismatch
+                } else {
                     $('#verification_table_footer').addClass('d-none');
                     $('#automation_success_state').hide();
                     $('#extracted_metadata_section').hide();
-
-                    if (!entered) {
-                        $('#automation_error_state').removeClass('d-none').show();
-                        $('#automation_error_state h5').text('Invoice Number Required');
-                        $('#automation_error_state p').text('Please enter the invoice number to unlock and verify data.');
-                    } else {
-                        $('#automation_error_state').removeClass('d-none').show();
-                        $('#automation_error_state h5').text('Invoice Number Mismatch');
-                        $('#automation_error_state p').text('The entered number does not match the AI scan. Products hidden for safety.');
-                    }
+                    $('#automation_error_state').removeClass('d-none').show();
+                    $('#automation_error_state h5').text('Invoice Number Required');
+                    $('#automation_error_state p').text('Please enter the invoice number to unlock and verify data.');
                     $(this).data('items-filled', false);
                 }
 
                 $('#btn_approve_order').prop('disabled', hasError || !entered);
+            });
+
+            $(document).on('click', '.init-return-btn', function() {
+                let data = $(this).data();
+
+                if (data.isReturnable == 0) {
+                    Swal.fire({
+                        title: '<span style="color: #ef4444;">Non-Returnable Item</span>',
+                        html: `
+                            <div class="text-center p-3">
+                                <div class="mb-4">
+                                    <i class="fa fa-exclamation-triangle fa-3x text-warning"></i>
+                                </div>
+                                <h5 class="fw-bold mb-3">${data.productName}</h5>
+                                <p class="text-muted">This product is not eligible for returns per company policy.</p>
+                                <div class="mt-4 p-3 bg-light rounded-3 small text-start border-start border-4 border-danger">
+                                    <strong>Note:</strong> Some items such as specialized medicines or promotional goods may be restricted from returns for safety or commercial reasons.
+                                </div>
+                            </div>
+                        `,
+                        showConfirmButton: true,
+                        confirmButtonText: 'Understood',
+                        confirmButtonColor: '#00497a',
+                        customClass: {
+                            popup: 'rounded-4 shadow-lg border-0',
+                            confirmButton: 'btn btn-primary px-4 py-2 rounded-3 fw-bold'
+                        },
+                        showCloseButton: true
+                    });
+                    return;
+                }
+
+                $('#return_order_id').val(data.orderId);
+                $('#return_product_id').val(data.productId);
+                $('#return_product_name').text(data.productName);
+                $('#return_qty_input').val(data.quantity).attr('max', data.quantity);
+                $('#return_unit_text').text(data.unit);
+                $('#image_preview_container').empty();
+                $('#submitReturnModal').modal('show');
+            });
+
+            // Image preview logic
+            $('#return_images_input').on('change', function() {
+                const container = $('#image_preview_container');
+                container.empty();
+                
+                if (this.files) {
+                    Array.from(this.files).forEach(file => {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            container.append(`
+                                <div class="position-relative" style="width: 80px; height: 80px;">
+                                    <img src="${e.target.result}" class="img-thumbnail w-100 h-100 object-fit-cover rounded-3">
+                                </div>
+                            `);
+                        }
+                        reader.readAsDataURL(file);
+                    });
+                }
+            });
+
+            $('#submitReturnForm').submit(function(e) {
+                e.preventDefault();
+                let formData = new FormData(this);
+                formData.append('_token', '{{ csrf_token() }}');
+                formData.append('order_type', 'distributor');
+
+                let $btn = $(this).find('button[type="submit"]');
+                $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Submitting...');
+
+                $.ajax({
+                    url: "{{ route('admin.returns.store') }}",
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(res) {
+                        $('#submitReturnModal').modal('hide');
+                        Swal.fire('Success', res.success, 'success');
+                        $('#submitReturnForm')[0].reset();
+                        $('#image_preview_container').empty();
+                    },
+                    error: function(xhr) {
+                        let err = xhr.responseJSON ? xhr.responseJSON.error : 'Submission failed';
+                        Swal.fire('Error', err, 'error');
+                    },
+                    complete: function() {
+                        $btn.prop('disabled', false).text('Submit Return');
+                    }
+                });
             });
         });
     </script>

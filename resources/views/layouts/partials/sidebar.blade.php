@@ -8,11 +8,6 @@
     .sidebar-wrapper .sidebar-main .sidebar-links li {
         position: relative;
     }
-    .sidebar-wrapper .sidebar-main .sidebar-links li .according-menu {
-        right: 15px !important;
-        top: 50% !important;
-        transform: translateY(-50%) !important;
-    }
   </style>
   {{-- <div class="logo-icon-wrapper"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/atom-logo-main-white.png') }}" width="170" alt=""></a></div> --}}
   <nav class="sidebar-main">
@@ -199,6 +194,28 @@
         </li>
         @endif
 
+        {{-- Returns & Credits --}}
+        @if (Auth::user()->hasPermissionToCategory('retailer_orders', 'view') || 
+             Auth::user()->hasPermissionToCategory('distributor_orders', 'view') || 
+             Auth::user()->hasRole('retailer') || 
+             Auth::user()->hasRole('distributor') ||
+             Auth::user()->hasRole('salesmanager') ||
+             Auth::user()->hasRole('fieldstaff'))
+        <li class="sidebar-list">
+          <a class="sidebar-link sidebar-title link-nav {{ request()->routeIs('admin.returns.*') ? 'active' : '' }}" href="{{ route('admin.returns.index') }}">
+            <svg class="stroke-icon">
+              <use href="{{ $iconSprite }}#stroke-form"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{{ $iconSprite }}#fill-form"></use>
+            </svg>
+            <span style="display: inline-flex; align-items: center; gap: 8px;">Returns & Credits
+                <span id="badge-pending-returns" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; {{ ($actionCounts['pending_returns'] ?? 0) > 0 ? '' : 'display: none !important;' }}">{{ $actionCounts['pending_returns'] ?? 0 }}</span>
+            </span>
+          </a>
+        </li>
+        @endif
+
         {{-- Order Approvals Dropdown --}}
         @if (Auth::user()->hasPermissionToCategory('retailer_approvals', 'view') || 
              Auth::user()->hasPermissionToCategory('distributor_approvals', 'view') || 
@@ -218,8 +235,8 @@
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-user"></use>
             </svg>
-            <span style="display: inline-flex; align-items: center; gap: 8px;">Order Approval
-                <span id="badge-total-approvals" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; {{ $totalApprovals > 0 ? '' : 'display: none !important;' }}">{{ $totalApprovals }}</span>
+            <span style="display: inline-flex; align-items: center; gap: 8px;">Approvals
+                <span id="badge-total-approvals" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; {{ $totalApprovals > 0 ? '' : 'display: none !important;' }}">{{ $totalApprovals }}</span>
             </span>
           </a>
           <ul class="sidebar-submenu">
@@ -525,32 +542,17 @@
 
   /* Decrease the line height and spacing of modules inside the navbar */
   .sidebar-wrapper .sidebar-list {
-    margin-bottom: 8px !important; /* Increased slightly */
+    /* margin-bottom: 2px !important; */
   }
   
   .sidebar-wrapper .sidebar-main .sidebar-links .sidebar-list .sidebar-link {
-    padding-top: 10px !important; /* Increased slightly */
-    padding-bottom: 10px !important; /* Increased slightly */
-    display: flex !important;
-    align-items: center !important;
-  }
-
-  .sidebar-wrapper .sidebar-main .sidebar-links .sidebar-list .sidebar-link svg {
-    margin: 0 12px 0 0 !important;
-    position: relative !important;
-    top: 2px !important; /* Optical adjustment */
-  }
-
-  .sidebar-wrapper .sidebar-main .sidebar-links .sidebar-list .sidebar-link span {
-    margin: 0 !important;
-    position: relative !important;
-    top: 0px !important;
-    line-height: 1.2 !important; /* slight increase */
+    /* padding-top: 6px !important; */
+    /* padding-bottom: 6px !important; */
   }
 
   .sidebar-wrapper .sidebar-main-title {
-    padding-top: 12px !important;
-    padding-bottom: 8px !important;
+    /* padding-top: 10px !important; */
+    /* padding-bottom: 4px !important; */
   }
 
   /* Pulse Animation for Notification Badges */
