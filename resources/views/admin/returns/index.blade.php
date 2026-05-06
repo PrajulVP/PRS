@@ -214,38 +214,30 @@
                 {{-- Step 1: Search Order --}}
                 <div id="searchStep">
                     <div class="mb-4">
-                        <label class="form-label fw-bold">Enter Delivered Order Code</label>
-                        <div class="input-group">
-                            <input type="text" id="searchOrderCode" class="form-control form-control-lg" placeholder="e.g., ORD-12345678" style="border-radius: 12px 0 0 12px;">
-                            <button class="btn btn-primary px-4" id="btnSearchOrder" style="border-radius: 0 12px 12px 0;">
-                                <i class="fa fa-search"></i> Search
+                        <label class="form-label fw-bold small text-uppercase">Find Delivered Order</label>
+                        <div class="input-group mb-2">
+                            <span class="input-group-text bg-white border-end-0" style="border-radius: 12px 0 0 12px;">
+                                <i class="fa fa-search text-muted"></i>
+                            </span>
+                            <input type="text" id="searchOrderCode" class="form-control border-start-0 ps-0" placeholder="Search by Order Code or Product Name..." style="border-radius: 0 12px 12px 0; height: 48px;">
+                            <button class="btn btn-primary px-4 ms-2 rounded-3" id="btnSearchOrder">
+                                Search
                             </button>
                         </div>
-                        <div class="form-text mt-2 small text-muted">Search for orders that have already been delivered.</div>
+                        <div class="form-text small text-muted">Enter order code or a product name from that order.</div>
                     </div>
 
-                    @if(isset($deliveredOrders) && count($deliveredOrders) > 0)
-                    <div class="mb-4">
-                        <label class="text-muted small text-uppercase fw-bold mb-3 d-block">Quick Select (Recent Delivered Orders)</label>
-                        <div class="row g-2">
-                            @foreach($deliveredOrders as $order)
-                            <div class="col-sm-6">
-                                <div class="card border shadow-none rounded-3 cursor-pointer recent-order-card" 
-                                     data-code="{{ $order->order_code }}" 
-                                     style="transition: all 0.2s ease; cursor: pointer;">
-                                    <div class="card-body p-2 d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <div class="fw-bold text-primary small">{{ $order->order_code }}</div>
-                                            <div class="text-muted" style="font-size: 0.65rem;">{{ $order->delivered_at ? $order->delivered_at->format('d M, Y') : ($order->updated_at ? $order->updated_at->format('d M, Y') : 'N/A') }}</div>
-                                        </div>
-                                        <i class="fa fa-chevron-right text-muted opacity-50 small"></i>
-                                    </div>
-                                </div>
+                    <div id="orderHistoryContainer" class="mb-4">
+                        <label class="text-muted small text-uppercase fw-bold mb-3 d-block">Delivered Order History</label>
+                        <div id="orderHistoryList" class="row g-2">
+                            {{-- Orders loaded via AJAX --}}
+                            <div class="col-12 text-center py-4 text-muted">
+                                <i class="fa fa-spinner fa-spin fa-2x mb-2"></i>
+                                <p class="small">Loading your orders...</p>
                             </div>
-                            @endforeach
                         </div>
+                        <div id="orderHistoryPagination" class="mt-3 d-flex justify-content-center"></div>
                     </div>
-                    @endif
                     
                     <div id="searchResults" class="d-none">
                         <h6 class="fw-bold mb-3">Order Items</h6>
@@ -627,35 +619,97 @@ $(document).ready(function() {
     // --- Create Return Flow ---
     let currentSearchOrder = null;
     let currentSearchType = null;
+    let historyPage = 1;
+
+    window.loadOrderHistory = function(page = 1, search = '') {
+        const list = $('#orderHistoryList');
+        if (page === 1) list.html('<div class="col-12 text-center py-4 text-muted"><i class="fa fa-spinner fa-spin fa-2x mb-2"></i><p class="small">Searching...</p></div>');
+        
+        $.get("{{ route('admin.returns.delivered-orders') }}", { page: page, search: search }, function(res) {
+            if (page === 1) list.empty();
+            
+            if (res.data.length === 0) {
+                list.html('<div class="col-12 text-center py-4 text-muted"><i class="fa fa-search fa-2x mb-2"></i><p class="small">No delivered orders found.</p></div>');
+                $('#orderHistoryPagination').empty();
+                return;
+            }
+            
+            res.data.forEach(o => {
+                list.append(`
+                    <div class="col-sm-6">
+                        <div class="card border shadow-none rounded-3 cursor-pointer recent-order-card" 
+                             data-code="${o.order_code}" 
+                             style="transition: all 0.2s ease; cursor: pointer;">
+                            <div class="card-body p-2 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-bold text-primary small">${o.order_code}</div>
+                                    <div class="text-muted" style="font-size: 0.65rem;">${o.date} • ₹${parseFloat(o.total_amount).toLocaleString('en-IN')}</div>
+                                    <div class="text-muted small" style="font-size: 0.6rem;">${o.item_count} Items • Distro: ${o.distributor}</div>
+                                </div>
+                                <i class="fa fa-chevron-right text-muted opacity-50 small"></i>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            });
+
+            // Simple "Load More" style pagination
+            if (res.meta.current_page < res.meta.last_page) {
+                $('#orderHistoryPagination').html(`<button class="btn btn-sm btn-outline-primary rounded-pill px-4" onclick="loadOrderHistory(${res.meta.current_page + 1}, '${search}')">Load More</button>`);
+            } else {
+                $('#orderHistoryPagination').empty();
+            }
+        });
+    }
+
+    $('#createReturnModal').on('shown.bs.modal', function() {
+        loadOrderHistory(1);
+    });
 
     $(document).on('click', '.recent-order-card', function() {
         let code = $(this).data('code');
         $('#searchOrderCode').val(code);
         $('#btnSearchOrder').trigger('click');
+        
+        // Visual feedback
+        $('.recent-order-card').removeClass('border-primary shadow-sm');
+        $(this).addClass('border-primary shadow-sm');
     });
 
     $('#btnSearchOrder').click(function() {
         let code = $('#searchOrderCode').val();
-        if(!code) return showToast('error', 'Please enter an order code');
+        // If searching without selection, reload history
+        loadOrderHistory(1, code);
+
+        if(!code) return;
 
         let $btn = $(this);
+        let oldText = $btn.text();
         $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
 
         $.get("{{ route('admin.returns.search-order') }}", { code: code }, function(res) {
-            $btn.prop('disabled', false).html('<i class="fa fa-search"></i> Search');
+            $btn.prop('disabled', false).text(oldText);
             if(res.success) {
                 currentSearchOrder = res.order;
                 currentSearchType = res.type;
                 renderSearchItems(res.order.items);
                 $('#searchResults').removeClass('d-none');
+                $('#orderHistoryContainer').addClass('d-none'); // Hide history when showing items
             } else {
-                showToast('error', res.message);
+                // If direct code search fails, maybe it was a product search, which history already handles.
                 $('#searchResults').addClass('d-none');
+                $('#orderHistoryContainer').removeClass('d-none');
             }
         }).fail(function() {
-            $btn.prop('disabled', false).html('<i class="fa fa-search"></i> Search');
+            $btn.prop('disabled', false).text(oldText);
             showToast('error', 'An error occurred while searching');
         });
+    });
+
+    $('#btnBackToSearch').click(function() {
+        $('#returnFormStep').addClass('d-none');
+        $('#searchStep').removeClass('d-none');
+        $('#orderHistoryContainer').removeClass('d-none'); // Show history again
     });
 
     function renderSearchItems(items) {

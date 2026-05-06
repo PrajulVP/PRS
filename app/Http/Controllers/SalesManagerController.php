@@ -37,6 +37,9 @@ class SalesManagerController extends Controller
                 ->addColumn('can_delete', function($row) use ($currentUser) {
                     return $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory('sales_managers', 'delete');
                 })
+                ->addColumn('can_activate', function($row) use ($currentUser) {
+                    return $currentUser->hasRole('superadmin');
+                })
                 ->addColumn('pincode', function ($row) {
                     return optional($row->user)->pincode ?? 'N/A';
                 })
@@ -244,11 +247,12 @@ class SalesManagerController extends Controller
 
         /** @var User $currentUser */
         $currentUser = Auth::user();
-        if (!$currentUser->hasAnyRole(['superadmin', 'admin'])) {
+        if (!$currentUser->hasRole('superadmin')) {
+            $msg = 'Only Superadmin can change the status of Sales Managers.';
             if (request()->ajax() || request()->expectsJson()) {
-                return response()->json(['success' => false, 'message' => 'You do not have permission to change the status of this user.'], 403);
+                return response()->json(['success' => false, 'message' => $msg], 403);
             }
-            return redirect()->route('admin.sales-managers.index')->with('error', 'You do not have permission to change the status of this user.');
+            return redirect()->route('admin.sales-managers.index')->with('error', $msg);
         }
 
         // 1. Repair by user_id if relationship is null but ID exists
@@ -302,11 +306,12 @@ class SalesManagerController extends Controller
 
         /** @var User $currentUser */
         $currentUser = Auth::user();
-        if (!$currentUser->hasAnyRole(['superadmin', 'admin'])) {
+        if (!$currentUser->hasRole('superadmin')) {
+            $msg = 'Only Superadmin can change the status of Sales Managers.';
             if (request()->ajax() || request()->expectsJson()) {
-                return response()->json(['success' => false, 'message' => 'You do not have permission to change the status of this user.'], 403);
+                return response()->json(['success' => false, 'message' => $msg], 403);
             }
-            return redirect()->route('admin.sales-managers.index')->with('error', 'You do not have permission to change the status of this user.');
+            return redirect()->route('admin.sales-managers.index')->with('error', $msg);
         }
 
         // Repair by user_id if relationship is null but ID exists

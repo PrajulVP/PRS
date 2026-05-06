@@ -57,6 +57,9 @@ class DistributorController extends Controller
                 ->addColumn('can_delete', function($row) use ($currentUser) {
                     return $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory('distributors', 'delete');
                 })
+                ->addColumn('can_activate', function($row) use ($currentUser) {
+                    return $currentUser->hasRole('superadmin');
+                })
                 ->make(true);
         }
 
@@ -292,11 +295,12 @@ class DistributorController extends Controller
     {
         /** @var User $currentUser */
         $currentUser = Auth::user();
-        if (!$currentUser->hasAnyRole(['superadmin', 'admin'])) {
+        if (!$currentUser->hasRole('superadmin')) {
+            $msg = 'Only Superadmin can change the status of Distributors.';
             if (request()->ajax() || request()->expectsJson()) {
-                return response()->json(['success' => false, 'message' => 'You do not have permission to change the status of this user.'], 403);
+                return response()->json(['success' => false, 'message' => $msg], 403);
             }
-            return redirect()->route('admin.distributors.index')->with('error', 'You do not have permission to change the status of this user.');
+            return redirect()->route('admin.distributors.index')->with('error', $msg);
         }
 
         // Smart Repair: If user relationship is missing, check if a user with this email exists
@@ -329,11 +333,12 @@ class DistributorController extends Controller
     {
         /** @var User $currentUser */
         $currentUser = Auth::user();
-        if (!$currentUser->hasAnyRole(['superadmin', 'admin'])) {
+        if (!$currentUser->hasRole('superadmin')) {
+            $msg = 'Only Superadmin can change the status of Distributors.';
             if (request()->ajax() || request()->expectsJson()) {
-                return response()->json(['success' => false, 'message' => 'You do not have permission to change the status of this user.'], 403);
+                return response()->json(['success' => false, 'message' => $msg], 403);
             }
-            return redirect()->route('admin.distributors.index')->with('error', 'You do not have permission to change the status of this user.');
+            return redirect()->route('admin.distributors.index')->with('error', $msg);
         }
 
         if (!$distributor->user) {

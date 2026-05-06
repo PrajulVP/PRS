@@ -99,20 +99,32 @@
                 <form action="{{ route('admin.users.store') }}" method="POST" id="createForm">
                     @csrf
                     <div class="modal-body">
-                        <div class="mb-3"><label>Name</label><input type="text" name="name" class="form-control" required pattern="^[a-zA-Z\s]+$" title="Name should only contain letters and spaces.">
+                        <div class="mb-3">
+                            <label>Name</label>
+                            <input type="text" name="name" class="form-control" required pattern="^[a-zA-Z\s]+$" title="Name should only contain letters and spaces.">
+                            <span class="text-danger small error-text" id="error-name"></span>
                         </div>
-                        <div class="mb-3"><label>Email</label><input type="email" name="email" class="form-control"
-                                required pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address with a valid domain (e.g. .com, .in)"></div>
-                        <div class="mb-3"><label>Password</label><input type="password" name="password" class="form-control"
-                                required></div>
-                        <div class="mb-3"><label>Confirm Password</label><input type="password" name="password_confirmation"
-                                class="form-control" required></div>
+                        <div class="mb-3">
+                            <label>Email</label>
+                            <input type="email" name="email" class="form-control" required pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address with a valid domain (e.g. .com, .in)">
+                            <span class="text-danger small error-text" id="error-email"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label>Password</label>
+                            <input type="password" name="password" class="form-control" required>
+                            <span class="text-danger small error-text" id="error-password"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label>Confirm Password</label>
+                            <input type="password" name="password_confirmation" class="form-control" required>
+                        </div>
                         <div class="mb-3">
                             <label>Role</label>
                             <select name="role" class="form-select role-select" required>
                                 <option value="">Select Role</option>
                                 @foreach($roles as $r) <option value="{{ $r }}">{{ ucfirst($r) }}</option> @endforeach
                             </select>
+                            <span class="text-danger small error-text" id="error-role"></span>
                         </div>
 
                         {{-- Conditional Fields --}}
@@ -135,14 +147,17 @@
                         <div class="mb-3">
                             <label>Contact No</label>
                             <input type="text" name="contact_no" class="form-control" required>
+                            <span class="text-danger small error-text" id="error-contact_no"></span>
                         </div>
                         <div class="mb-3">
                             <label>Address</label>
                             <textarea name="address" class="form-control" rows="2" required></textarea>
+                            <span class="text-danger small error-text" id="error-address"></span>
                         </div>
                         <div class="mb-3">
                             <label>Pincode</label>
                             <input type="text" name="pincode" class="form-control" required>
+                            <span class="text-danger small error-text" id="error-pincode"></span>
                         </div>
                         <div class="mb-3">
                             <label>Profile Picture</label>
@@ -165,12 +180,21 @@
                 <form id="editForm" method="POST">
                     @csrf @method('PUT')
                     <div class="modal-body">
-                        <div class="mb-3"><label>Name</label><input type="text" name="name" id="edit_name"
-                                class="form-control" required pattern="^[a-zA-Z\s]+$" title="Name should only contain letters and spaces."></div>
-                        <div class="mb-3"><label>Email</label><input type="email" name="email" id="edit_email"
-                                class="form-control" required pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address with a valid domain (e.g. .com, .in)"></div>
-                        <div class="mb-3"><label>Password (blank to keep)</label><input type="password" name="password"
-                                class="form-control"></div>
+                        <div class="mb-3">
+                            <label>Name</label>
+                            <input type="text" name="name" id="edit_name" class="form-control" required pattern="^[a-zA-Z\s]+$" title="Name should only contain letters and spaces.">
+                            <span class="text-danger small error-text" id="edit-error-name"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label>Email</label>
+                            <input type="email" name="email" id="edit_email" class="form-control" required pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address with a valid domain (e.g. .com, .in)">
+                            <span class="text-danger small error-text" id="edit-error-email"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label>Password (blank to keep)</label>
+                            <input type="password" name="password" class="form-control">
+                            <span class="text-danger small error-text" id="edit-error-password"></span>
+                        </div>
                         <div class="mb-3">
                             <label>Role</label>
                             <select name="role" id="edit_role" class="form-select role-select" required>
@@ -188,14 +212,17 @@
                         <div class="mb-3">
                             <label>Contact No</label>
                             <input type="text" name="contact_no" id="edit_contact_no" class="form-control" required>
+                            <span class="text-danger small error-text" id="edit-error-contact_no"></span>
                         </div>
                         <div class="mb-3">
                             <label>Address</label>
                             <textarea name="address" id="edit_address" class="form-control" rows="2" required></textarea>
+                            <span class="text-danger small error-text" id="edit-error-address"></span>
                         </div>
                         <div class="mb-3">
                             <label>Pincode</label>
                             <input type="text" name="pincode" id="edit_pincode" class="form-control" required>
+                            <span class="text-danger small error-text" id="edit-error-pincode"></span>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold small mb-2">Profile Picture</label>
@@ -393,11 +420,13 @@
                             btns += `<button class="btn btn-primary btn-sm edit-btn" data-row="${json}">Edit</button>`;
                         }
 
-                        if (row.status !== 'active') {
-                            btns += `<button class="btn btn-success btn-sm status-toggle-btn" data-url="${activateUrl}" data-action="activate">Activate</button>`;
-                        } else {
-                            let deactivateUrl = "{{ route('admin.users.deactivate', ':id') }}".replace(':id', row.id);
-                            btns += `<button class="btn btn-warning btn-sm status-toggle-btn" data-url="${deactivateUrl}" data-action="deactivate">Deactivate</button>`;
+                        if (row.can_activate) {
+                            if (row.status !== 'active') {
+                                btns += `<button class="btn btn-success btn-sm status-toggle-btn" data-url="${activateUrl}" data-action="activate">Activate</button>`;
+                            } else {
+                                let deactivateUrl = "{{ route('admin.users.deactivate', ':id') }}".replace(':id', row.id);
+                                btns += `<button class="btn btn-warning btn-sm status-toggle-btn" data-url="${deactivateUrl}" data-action="deactivate">Deactivate</button>`;
+                            }
                         }
 
                         // Permission-based Delete
@@ -580,6 +609,10 @@
                 let form = $(this);
                 let btn = form.find('button[type="submit"]');
                 let oldText = btn.text();
+                
+                // Clear previous errors
+                form.find('.error-text').text('');
+                
                 btn.prop('disabled', true).text('Saving...');
 
                 $.ajax({
@@ -598,13 +631,24 @@
                     },
                     error: (xhr) => {
                         btn.prop('disabled', false).text(oldText);
-                        let message = 'Error';
+                        let isEdit = form.attr('id') === 'editForm';
+                        let prefix = isEdit ? 'edit-error-' : 'error-';
+
                         if (xhr.status === 422 && xhr.responseJSON.errors) {
-                            message = Object.values(xhr.responseJSON.errors).map(e => e[0]).join('<br>');
-                        } else if (xhr.responseJSON && xhr.responseJSON.message) {
-                            message = xhr.responseJSON.message;
+                            let errors = xhr.responseJSON.errors;
+                            Object.keys(errors).forEach(key => {
+                                let errorSpan = form.find(`#${prefix}${key}`);
+                                if (errorSpan.length) {
+                                    errorSpan.text(errors[key][0]);
+                                }
+                            });
+                        } else {
+                            let message = 'Error';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                message = xhr.responseJSON.message;
+                            }
+                            showToast('danger', message);
                         }
-                        showToast('danger', message);
                     }
                 });
             });

@@ -128,7 +128,7 @@ class AuthApiController extends Controller
     /**
      * @OA\Post(
      *     path="/api/send-otp",
-     *     summary="Send OTP to field staff",
+     *     summary="Send OTP to user",
      *     tags={"Auth"},
      *     @OA\RequestBody(
      *         required=true,

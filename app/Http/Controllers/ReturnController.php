@@ -438,5 +438,94 @@ class ReturnController extends Controller
                 ];
             })
         ];
+    /**
+     * Get paginated/searchable delivered orders for the current user.
+     */
+    public function getDeliveredOrders(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $search = $request->search;
+        
+        if ($user->hasRole('retailer')) {
+            $retailer = $user->retailer;
+            if (!$retailer) return response()->json(['data' => []]);
+            
+            $query = RetailerOrder::where('retailer_id', $retailer->id)
+                ->where('status', 'delivered')
+                ->with(['items.product', 'distributor']);
+                
+            if ($search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('order_code', 'like', "%{$search}%")
+                      ->orWhereHas('items.product', function($pq) use ($search) {
+                          $pq->where('product_name', 'like', "%{$search}%");
+                      });
+                });
+            }
+            
+            $orders = $query->latest()->paginate(10);
+            
+            $formatted = $orders->getCollection()->map(function($o) {
+                return [
+                    'id' => $o->id,
+                    'order_code' => $o->order_code,
+                    'date' => $o->delivered_at ? $o->delivered_at->format('d M, Y') : $o->updated_at->format('d M, Y'),
+                    'total_amount' => $o->total_amount,
+                    'item_count' => $o->items->count(),
+                    'distributor' => $o->distributor?->user?->name ?? 'N/A'
+                ];
+            });
+            
+            return response()->json([
+                'data' => $formatted,
+                'meta' => [
+                    'current_page' => $orders->currentPage(),
+                    'last_page' => $orders->lastPage(),
+                    'total' => $orders->total()
+                ]
+            ]);
+            
+        } elseif ($user->hasRole('distributor')) {
+            $distributor = $user->distributor;
+            if (!$distributor) return response()->json(['data' => []]);
+            
+            $query = DistributorOrder::where('distributor_id', $distributor->id)
+                ->where('status', 'delivered')
+                ->with(['items.product']);
+                
+            if ($search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('order_code', 'like', "%{$search}%")
+                      ->orWhereHas('items.product', function($pq) use ($search) {
+                          $pq->where('product_name', 'like', "%{$search}%");
+                      });
+                });
+            }
+            
+            $orders = $query->latest()->paginate(10);
+            
+            $formatted = $orders->getCollection()->map(function($o) {
+                return [
+                    'id' => $o->id,
+                    'order_code' => $o->order_code,
+                    'date' => $o->delivered_at ? $o->delivered_at->format('d M, Y') : $o->updated_at->format('d M, Y'),
+                    'total_amount' => $o->total_amount,
+                    'item_count' => $o->items->count(),
+                    'distributor' => 'Self'
+                ];
+            });
+            
+            return response()->json([
+                'data' => $formatted,
+                'meta' => [
+                    'current_page' => $orders->currentPage(),
+                    'last_page' => $orders->lastPage(),
+                    'total' => $orders->total()
+                ]
+            ]);
+        }
+        
+        return response()->json(['data' => []]);
     }
 }

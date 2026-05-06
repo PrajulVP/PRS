@@ -180,6 +180,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/{returnRequest}/approve', [ReturnController::class, 'approve'])->name('approve');
             Route::post('/{returnRequest}/reject', [ReturnController::class, 'reject'])->name('reject');
             Route::get('/search-order', [ReturnController::class, 'searchOrder'])->name('search-order');
+            Route::get('/delivered-orders', [ReturnController::class, 'getDeliveredOrders'])->name('delivered-orders');
         });
 
         // Master settings

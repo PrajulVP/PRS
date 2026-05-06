@@ -458,7 +458,10 @@
                     { data: 'pincode', name: 'pincode' },
                     {
                         data: 'user.status', name: 'user.status',
-                        render: (data, type, row) => `<span class="status-badge ${data === 'active' ? 'status-badge-active' : 'status-badge-inactive'} status-toggle cursor-pointer" data-id="${row.id}" data-status="${data}">${data === 'active' ? 'Active' : 'Inactive'}</span>`
+                        render: (data, type, row) => {
+                            let canToggle = row.can_activate ? 'status-toggle cursor-pointer' : '';
+                            return `<span class="status-badge ${data === 'active' ? 'status-badge-active' : 'status-badge-inactive'} ${canToggle}" data-id="${row.id}" data-status="${data}">${data === 'active' ? 'Active' : 'Inactive'}</span>`;
+                        }
                     },
                     {
                         data: 'id', orderable: false, searchable: false,

@@ -105,6 +105,7 @@ class UserController extends Controller
                     'order_link'      => $orderLink,
                     'can_edit'        => $canEdit,
                     'can_delete'      => $canDelete,
+                    'can_activate'    => (in_array($u->role, ['salesmanager', 'distributor'])) ? $currentUser->hasRole('superadmin') : $canEdit,
                 ];
             });
 
@@ -375,6 +376,13 @@ class UserController extends Controller
             }
         }
 
+        // Only Superadmin can activate Sales Managers and Distributors
+        if (in_array($user->role, ['salesmanager', 'distributor'])) {
+            if (!$currentUser->hasRole('superadmin')) {
+                $canEdit = false;
+            }
+        }
+
         // Non-admin (Sales Managers, etc.) restrictions: Cannot activate higher roles
         if (!$currentUser->hasAnyRole(['admin', 'superadmin'])) {
             if (in_array($user->role, ['admin', 'superadmin', 'salesmanager', 'distributor', 'fieldstaff'])) {
@@ -415,6 +423,13 @@ class UserController extends Controller
         // Admin specific restrictions: Cannot deactivate Superadmin or other Admins
         if ($currentUser->hasRole('admin')) {
             if (in_array($user->role, ['admin', 'superadmin'])) {
+                $canEdit = false;
+            }
+        }
+
+        // Only Superadmin can deactivate Sales Managers and Distributors
+        if (in_array($user->role, ['salesmanager', 'distributor'])) {
+            if (!$currentUser->hasRole('superadmin')) {
                 $canEdit = false;
             }
         }

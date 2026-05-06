@@ -1400,12 +1400,6 @@
                                     newNotifications.push(n);
                                 }
                                 
-                                // Show toasts in order (oldest of the new ones first)
-                                newNotifications.reverse().forEach(n => {
-                                    if (typeof showToast === 'function') {
-                                        showToast('info', n.message);
-                                    }
-                                });
                             }
                             lastNotificationId = latestId;
                         } else {
