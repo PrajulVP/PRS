@@ -6,7 +6,13 @@
 <div class="container-fluid py-4">
     <div class="row mb-4 align-items-center">
         <div class="col-md-6">
-            <h4 class="fw-bold text-main-theme mb-1">Returns & Credits</h4>
+            @php
+                $heading = 'Returns & Credits';
+                if(auth()->user()->hasRole('retailer') || auth()->user()->hasRole('distributor')) {
+                    $heading = 'My Return Requests';
+                }
+            @endphp
+            <h4 class="fw-bold text-main-theme mb-1">{{ $heading }}</h4>
             <p class="text-muted-theme small mb-0">Track and manage product returns and issued credit notes.</p>
         </div>
         <div class="col-md-6 text-md-end mt-3 mt-md-0">
@@ -21,72 +27,84 @@
     <!-- Summary Cards -->
     <div class="row g-3 mb-4">
         <div class="col-6 col-lg-3">
-            <div class="card border-0 shadow-sm bg-card-theme rounded-4">
+            <div class="card border-0 shadow-sm bg-card-theme rounded-4 h-100 summary-card" style="transition: transform 0.2s;">
                 <div class="card-body p-3">
-                    <div class="d-flex align-items-center mb-2">
-                        <div class="bg-soft-warning p-2 rounded-3 me-2">
-                            <i class="fa fa-clock text-warning"></i>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-soft-warning p-3 rounded-3 me-3">
+                            <i class="fa fa-clock text-warning fs-5"></i>
                         </div>
-                        <span class="text-muted-theme small fw-bold">Pending</span>
+                        <div>
+                            <span class="text-muted-theme small fw-bold d-block">Pending</span>
+                            <h4 class="fw-bold mb-0 text-main-theme" id="count-pending">0</h4>
+                        </div>
                     </div>
-                    <h3 class="fw-bold mb-0 text-main-theme" id="count-pending">0</h3>
                 </div>
             </div>
         </div>
         <div class="col-6 col-lg-3">
-            <div class="card border-0 shadow-sm bg-card-theme rounded-4">
+            <div class="card border-0 shadow-sm bg-card-theme rounded-4 h-100 summary-card" style="transition: transform 0.2s;">
                 <div class="card-body p-3">
-                    <div class="d-flex align-items-center mb-2">
-                        <div class="bg-soft-info p-2 rounded-3 me-2">
-                            <i class="fa fa-check-circle text-info"></i>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-soft-info p-3 rounded-3 me-3">
+                            <i class="fa fa-check-circle text-info fs-5"></i>
                         </div>
-                        <span class="text-muted-theme small fw-bold">Approved</span>
+                        <div>
+                            <span class="text-muted-theme small fw-bold d-block">Approved</span>
+                            <h4 class="fw-bold mb-0 text-main-theme" id="count-approved">0</h4>
+                        </div>
                     </div>
-                    <h3 class="fw-bold mb-0 text-main-theme" id="count-approved">0</h3>
                 </div>
             </div>
         </div>
         <div class="col-6 col-lg-3">
-            <div class="card border-0 shadow-sm bg-card-theme rounded-4">
+            <div class="card border-0 shadow-sm bg-card-theme rounded-4 h-100 summary-card" style="transition: transform 0.2s;">
                 <div class="card-body p-3">
-                    <div class="d-flex align-items-center mb-2">
-                        <div class="bg-soft-success p-2 rounded-3 me-2">
-                            <i class="fa fa-file-invoice-dollar text-success"></i>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-soft-success p-3 rounded-3 me-3">
+                            <i class="fa fa-file-invoice-dollar text-success fs-5"></i>
                         </div>
-                        <span class="text-muted-theme small fw-bold">Completed</span>
+                        <div>
+                            <span class="text-muted-theme small fw-bold d-block">Completed</span>
+                            <h4 class="fw-bold mb-0 text-main-theme" id="count-completed">0</h4>
+                        </div>
                     </div>
-                    <h3 class="fw-bold mb-0 text-main-theme" id="count-completed">0</h3>
                 </div>
             </div>
         </div>
         <div class="col-6 col-lg-3">
-            <div class="card border-0 shadow-sm bg-card-theme rounded-4">
+            <div class="card border-0 shadow-sm bg-card-theme rounded-4 h-100 summary-card" style="transition: transform 0.2s;">
                 <div class="card-body p-3">
-                    <div class="d-flex align-items-center mb-2">
-                        <div class="bg-soft-primary p-2 rounded-3 me-2">
-                            <i class="fa fa-wallet text-primary"></i>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-soft-primary p-3 rounded-3 me-3">
+                            <i class="fa fa-wallet text-primary fs-5"></i>
                         </div>
-                        <span class="text-muted-theme small fw-bold">Total Credits</span>
+                        <div>
+                            <span class="text-muted-theme small fw-bold d-block">Total Credits</span>
+                            <h4 class="fw-bold mb-0 text-main-theme" id="total-refunds">₹0</h4>
+                        </div>
                     </div>
-                    <h3 class="fw-bold mb-0 text-main-theme" id="total-refunds">₹0</h3>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Filter Tabs (Only for Admin and Distributors who see multiple types) -->
-    @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('distributor'))
+    <!-- Filter Tabs (For Admin, Super Admin, Sales Manager, and Distributors) -->
+    @php
+        $user = auth()->user();
+        $showTabs = $user->hasAnyRole(['admin', 'superadmin', 'salesmanager', 'distributor']);
+    @endphp
+    @if($showTabs)
     <div class="card border-0 shadow-sm bg-card-theme mb-3" style="border-radius: 12px;">
         <div class="card-body p-2">
             <ul class="nav nav-pills nav-justified" id="returnTypeTabs">
                 <li class="nav-item">
                     <a class="nav-link active rounded-3 fw-bold small py-2" data-type="retailer" href="javascript:void(0)">
-                        <i class="fa fa-shopping-basket me-1"></i> Retailer Returns
+                        <i class="fa fa-shopping-basket me-1"></i> {{ auth()->user()->hasRole('distributor') ? 'Retailer Returns' : 'Retailer Returns' }}
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link rounded-3 fw-bold small py-2" data-type="distributor" href="javascript:void(0)">
-                        <i class="fa fa-truck me-1"></i> Distributor Returns
+                        <i class="fa fa-truck me-1"></i> {{ auth()->user()->hasRole('distributor') ? 'My Returns' : 'Distributor Returns' }}
                     </a>
                 </li>
             </ul>
@@ -214,17 +232,53 @@
                 {{-- Step 1: Search Order --}}
                 <div id="searchStep">
                     <div class="mb-4">
-                        <label class="form-label fw-bold small text-uppercase">Find Delivered Order</label>
-                        <div class="input-group mb-2">
-                            <span class="input-group-text bg-white border-end-0" style="border-radius: 12px 0 0 12px;">
+                        <label class="form-label mb-2 fw-bold small text-uppercase">Find Delivered Order</label>
+                        <div class="input-group mb-3 shadow-sm premium-search-bar">
+                            <span class="input-group-text bg-white">
                                 <i class="fa fa-search text-muted"></i>
                             </span>
-                            <input type="text" id="searchOrderCode" class="form-control border-start-0 ps-0" placeholder="Search by Order Code or Product Name..." style="border-radius: 0 12px 12px 0; height: 48px;">
-                            <button class="btn btn-primary px-4 ms-2 rounded-3" id="btnSearchOrder">
-                                Search
+                            <input type="text" id="searchOrderCode" class="form-control ps-0" placeholder="Search by Order Code, Product or Brand..." style="height: 48px;">
+                            <button class="btn btn-primary px-4" id="btnSearchOrder">
+                                <i class="fa fa-search me-1"></i> Search
                             </button>
                         </div>
-                        <div class="form-text small text-muted">Enter order code or a product name from that order.</div>
+
+                        {{-- Advanced Filters --}}
+                        <div class="bg-light p-3 rounded-4 mb-4 border shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0 small text-uppercase text-muted"><i class="fa fa-filter me-1"></i> Advanced Filters</h6>
+                                <button class="btn btn-link btn-sm text-decoration-none p-0" id="btnClearFilters">Clear All</button>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold text-muted mb-1">Brand</label>
+                                    <select id="filterBrand" class="form-select form-select-sm rounded-3">
+                                        <option value="">All Brands</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold text-muted mb-1">Product</label>
+                                    <select id="filterProduct" class="form-select form-select-sm rounded-3">
+                                        <option value="">All Products</option>
+                                    </select>
+                                </div>
+                                @if(auth()->user()->hasRole('retailer'))
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold text-muted mb-1">Distributor</label>
+                                    <select id="filterDistributor" class="form-select form-select-sm rounded-3">
+                                        <option value="">All Distributors</option>
+                                    </select>
+                                </div>
+                                @endif
+                                <div class="col-md-3 {{ auth()->user()->hasRole('retailer') ? 'col-md-3' : 'col-md-6' }}">
+                                    <label class="form-label small fw-bold text-muted mb-1">Date Range</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="date" id="filterStartDate" class="form-control rounded-start-3" placeholder="From">
+                                        <input type="date" id="filterEndDate" class="form-control rounded-end-3" placeholder="To">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div id="orderHistoryContainer" class="mb-4">
@@ -240,7 +294,15 @@
                     </div>
                     
                     <div id="searchResults" class="d-none">
-                        <h6 class="fw-bold mb-3">Order Items</h6>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold mb-0">Order Items</h6>
+                            <button class="btn btn-link btn-sm text-decoration-none p-0" id="btnBackToHistory">
+                                <i class="fa fa-arrow-left me-1"></i> Back to History
+                            </button>
+                        </div>
+                        <div class="mb-3 px-3 py-2 bg-light rounded-3 border-start border-primary border-4" id="selectedOrderMeta">
+                            {{-- Order details like Distributor, Date etc. injected here --}}
+                        </div>
                         <div class="table-responsive rounded-3 border">
                             <table class="table table-hover align-middle mb-0" id="searchItemsTable">
                                 <thead class="bg-light">
@@ -327,9 +389,81 @@
     </div>
 </div>
 
-@endsection
+@push('styles')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .modal-content {
+        border-radius: 24px !important;
+        overflow: hidden !important;
+        border: none !important;
+    }
+    .recent-order-card:hover {
+        border-color: var(--med-primary) !important;
+        background-color: var(--soft-primary) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
+    }
+    .bg-soft-primary { background-color: rgba(13, 110, 253, 0.1); }
+    .bg-soft-success { background-color: rgba(25, 135, 84, 0.1); }
+    .bg-soft-warning { background-color: rgba(255, 193, 7, 0.1); }
+    .bg-soft-danger { background-color: rgba(220, 53, 69, 0.1); }
+    .bg-soft-info { background-color: rgba(13, 202, 240, 0.1); }
+
+    .premium-search-bar {
+        border: 1.5px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
+        transition: all 0.3s ease;
+    }
+    .premium-search-bar:focus-within {
+        border-color: var(--med-primary, #00497a) !important;
+        box-shadow: 0 4px 12px rgba(0, 73, 122, 0.1) !important;
+    }
+    .premium-search-bar .input-group-text, 
+    .premium-search-bar .form-control {
+        border: none !important;
+    }
+
+    /* Premium Select2 Styling */
+    .select2-container--default .select2-selection--single {
+        height: 38px !important;
+        border-radius: 10px !important;
+        border: 1px solid #dee2e6 !important;
+        padding: 4px 8px !important;
+        background-color: #fff !important;
+        transition: all 0.2s ease;
+    }
+    .select2-container--default.select2-container--focus .select2-selection--single {
+        border-color: var(--med-primary, #00497a) !important;
+        box-shadow: 0 0 0 0.2rem rgba(0, 73, 122, 0.1) !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px !important;
+        right: 8px !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 28px !important;
+        color: #495057 !important;
+        font-size: 0.85rem !important;
+    }
+    .select2-dropdown {
+        border-radius: 12px !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+        z-index: 2000 !important; /* Ensure it shows above modals if needed */
+    }
+    .select2-results__option {
+        padding: 10px 15px !important;
+        font-size: 0.85rem !important;
+    }
+    .select2-results__option--highlighted[aria-selected] {
+        background-color: var(--med-primary, #00497a) !important;
+    }
+</style>
+@endpush
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 $(document).ready(function() {
     let userRoles = {!! json_encode(auth()->user()->getRoleNames()) !!};
@@ -368,9 +502,18 @@ $(document).ready(function() {
                 title: 'Responsible Staff',
                 render: function(data, type, row) {
                     let html = '<div class="d-flex flex-column gap-1">';
-                    if (row.field_staff) html += `<div class="small text-muted-theme" style="font-size: 0.7rem;"><i class="fa fa-user-tie me-1 text-success"></i>${row.field_staff.name}</div>`;
-                    if (row.sales_manager) html += `<div class="small text-muted-theme" style="font-size: 0.7rem;"><i class="fa fa-user-shield me-1 text-info"></i>${row.sales_manager.name}</div>`;
-                    if (row.distributor) html += `<div class="small text-muted-theme" style="font-size: 0.7rem;"><i class="fa fa-truck me-1 text-primary"></i>${row.distributor.name}</div>`;
+                    if (row.field_staff) {
+                        let name = row.field_staff.name || (row.field_staff.user ? row.field_staff.user.name : 'N/A');
+                        html += `<div class="small text-muted-theme" style="font-size: 0.7rem;"><i class="fa fa-user-tie me-1 text-success"></i>${name}</div>`;
+                    }
+                    if (row.sales_manager) {
+                        let name = row.sales_manager.name || (row.sales_manager.user ? row.sales_manager.user.name : 'N/A');
+                        html += `<div class="small text-muted-theme" style="font-size: 0.7rem;"><i class="fa fa-user-shield me-1 text-info"></i>${name}</div>`;
+                    }
+                    if (row.distributor) {
+                        let name = row.distributor.name || (row.distributor.user ? row.distributor.user.name : 'N/A');
+                        html += `<div class="small text-muted-theme" style="font-size: 0.7rem;"><i class="fa fa-truck me-1 text-primary"></i>${name}</div>`;
+                    }
                     if (html === '<div class="d-flex flex-column gap-1">') html += '<span class="text-muted small">-</span>';
                     html += '</div>';
                     return html;
@@ -449,18 +592,19 @@ $(document).ready(function() {
             </div>`
         },
         drawCallback: function(settings) {
-            let json = settings.json;
-            if(json && json.data) {
-                let pending = json.data.filter(r => r.status === 'pending').length;
-                let approved = json.data.filter(r => r.status.startsWith('approved')).length;
-                let completed = json.data.filter(r => r.status === 'completed').length;
-                let totalRefund = json.data.filter(r => r.status === 'completed').reduce((sum, r) => sum + parseFloat(r.refund_amount || 0), 0);
-                
-                $('#count-pending').text(pending);
-                $('#count-approved').text(approved);
-                $('#count-completed').text(completed);
-                $('#total-refunds').text('₹' + totalRefund.toLocaleString('en-IN', {minimumFractionDigits: 0}));
-            }
+            // Context-aware summary cards - Use this.api() to avoid reference error during initialization
+            let api = this.api();
+            let visibleData = api.rows({ filter: 'applied' }).data().toArray();
+            
+            let pending = visibleData.filter(r => r.status === 'pending').length;
+            let approved = visibleData.filter(r => r.status.startsWith('approved')).length;
+            let completed = visibleData.filter(r => r.status === 'completed').length;
+            let totalRefund = visibleData.filter(r => r.status === 'completed').reduce((sum, r) => sum + parseFloat(r.refund_amount || 0), 0);
+            
+            $('#count-pending').text(pending);
+            $('#count-approved').text(approved);
+            $('#count-completed').text(completed);
+            $('#total-refunds').text('₹' + totalRefund.toLocaleString('en-IN', {minimumFractionDigits: 0}));
         }
     });
 
@@ -553,22 +697,28 @@ $(document).ready(function() {
             $('#approvalActions').addClass('d-none');
         }
 
-        $('#btnApprove, #btnReject').data('id', row.id);
+        $('#btnApprove, #btnReject').data('row', row);
 
         $('#viewReturnModal').modal('show');
     });
 
     $('#btnApprove').click(function() {
-        let id = $(this).data('id');
+        let row = $(this).data('row');
+        let id = row.id;
         let approveUrl = "{{ route('admin.returns.approve', ':id') }}".replace(':id', id);
         
+        let isFinal = (row.status === 'approved_tier1');
+        let title = isFinal ? 'Complete Return?' : 'Approve Return?';
+        let text = isFinal ? 'This will finalize the return and allow the credit note to be issued.' : 'This will move the request to the next stage for final approval.';
+        let confirmText = isFinal ? 'Yes, Complete Return' : 'Yes, Approve';
+        
         Swal.fire({
-            title: 'Approve Return?',
-            text: "This will move the request to the next stage or complete it.",
+            title: title,
+            text: text,
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#0d6efd',
-            confirmButtonText: 'Yes, Approve'
+            confirmButtonText: confirmText
         }).then((result) => {
             if (result.isConfirmed) {
                 $.post(approveUrl, { _token: '{{ csrf_token() }}' }, function(res) {
@@ -623,13 +773,25 @@ $(document).ready(function() {
 
     window.loadOrderHistory = function(page = 1, search = '') {
         const list = $('#orderHistoryList');
-        if (page === 1) list.html('<div class="col-12 text-center py-4 text-muted"><i class="fa fa-spinner fa-spin fa-2x mb-2"></i><p class="small">Searching...</p></div>');
+        if (page === 1) {
+            list.html('<div class="col-12 text-center py-5 text-muted"><i class="fa fa-spinner fa-spin fa-3x mb-3 text-primary opacity-25"></i><p class="small fw-bold">Searching your orders...</p></div>');
+        }
         
-        $.get("{{ route('admin.returns.delivered-orders') }}", { page: page, search: search }, function(res) {
+        let filters = {
+            page: page,
+            search: search,
+            brand: $('#filterBrand').val(),
+            product_id: $('#filterProduct').val(),
+            distributor_id: $('#filterDistributor').val(),
+            start_date: $('#filterStartDate').val(),
+            end_date: $('#filterEndDate').val()
+        };
+        
+        $.get("{{ route('admin.returns.delivered-orders') }}", filters, function(res) {
             if (page === 1) list.empty();
             
             if (res.data.length === 0) {
-                list.html('<div class="col-12 text-center py-4 text-muted"><i class="fa fa-search fa-2x mb-2"></i><p class="small">No delivered orders found.</p></div>');
+                list.html('<div class="col-12 text-center py-5 text-muted"><i class="fa fa-search fa-3x mb-3 opacity-25"></i><p class="small fw-bold">No delivered orders found matching your criteria.</p></div>');
                 $('#orderHistoryPagination').empty();
                 return;
             }
@@ -637,16 +799,25 @@ $(document).ready(function() {
             res.data.forEach(o => {
                 list.append(`
                     <div class="col-sm-6">
-                        <div class="card border shadow-none rounded-3 cursor-pointer recent-order-card" 
+                        <div class="card border border-2 shadow-none rounded-4 recent-order-card h-100" 
                              data-code="${o.order_code}" 
-                             style="transition: all 0.2s ease; cursor: pointer;">
-                            <div class="card-body p-2 d-flex justify-content-between align-items-center">
-                                <div>
-                                    <div class="fw-bold text-primary small">${o.order_code}</div>
-                                    <div class="text-muted" style="font-size: 0.65rem;">${o.date} • ₹${parseFloat(o.total_amount).toLocaleString('en-IN')}</div>
-                                    <div class="text-muted small" style="font-size: 0.6rem;">${o.item_count} Items • Distro: ${o.distributor}</div>
+                             style="transition: all 0.3s ease; cursor: pointer; border-style: dashed !important;">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="bg-soft-primary px-2 py-1 rounded-2 fw-bold text-primary" style="font-size: 0.75rem;">${o.order_code}</div>
+                                    <div class="text-muted" style="font-size: 0.7rem;">${o.date}</div>
                                 </div>
-                                <i class="fa fa-chevron-right text-muted opacity-50 small"></i>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <div>
+                                        <div class="fw-bold text-success mb-1">₹${parseFloat(o.total_amount).toLocaleString('en-IN')}</div>
+                                        <div class="text-muted small" style="font-size: 0.65rem;">
+                                            <i class="fa fa-shopping-bag me-1"></i>${o.item_count} Items • <i class="fa fa-truck me-1"></i>${o.distributor}
+                                        </div>
+                                    </div>
+                                    <div class="bg-primary bg-opacity-10 d-flex align-items-center justify-content-center rounded-circle" style="width: 28px; height: 28px;">
+                                        <i class="fa fa-arrow-right text-primary" style="font-size: 0.7rem;"></i>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -655,21 +826,106 @@ $(document).ready(function() {
 
             // Simple "Load More" style pagination
             if (res.meta.current_page < res.meta.last_page) {
-                $('#orderHistoryPagination').html(`<button class="btn btn-sm btn-outline-primary rounded-pill px-4" onclick="loadOrderHistory(${res.meta.current_page + 1}, '${search}')">Load More</button>`);
+                $('#orderHistoryPagination').html(`<button class="btn btn-primary rounded-pill px-5 shadow-sm" onclick="loadOrderHistory(${res.meta.current_page + 1}, '${search}')">Load More Results</button>`);
             } else {
                 $('#orderHistoryPagination').empty();
             }
         });
     }
 
+    // Fetch filters dynamically
+    window.loadReturnFilters = function() {
+        $.get("{{ route('admin.returns.get-filters') }}", function(res) {
+            let brandSelect = $('#filterBrand');
+            let productSelect = $('#filterProduct');
+            let distSelect = $('#filterDistributor');
+            
+            brandSelect.find('option:not(:first)').remove();
+            productSelect.find('option:not(:first)').remove();
+            if (distSelect.length) distSelect.find('option:not(:first)').remove();
+            
+            res.brands.forEach(b => brandSelect.append(`<option value="${b}">${b}</option>`));
+            res.products.forEach(p => productSelect.append(`<option value="${p.id}">${p.product_name}</option>`));
+            if (distSelect.length) res.distributors.forEach(d => distSelect.append(`<option value="${d.id}">${d.name}</option>`));
+            
+            // Re-initialize Select2 to reflect new options
+            brandSelect.trigger('change.select2');
+            productSelect.trigger('change.select2');
+            if (distSelect.length) distSelect.trigger('change.select2');
+        });
+    };
+
     $('#createReturnModal').on('shown.bs.modal', function() {
+        // Initialize Select2 when modal is shown
+        $('#filterBrand, #filterProduct, #filterDistributor').select2({
+            dropdownParent: $('#createReturnModal'),
+            width: '100%'
+        });
+
+        // Reset state
+        $('#searchOrderCode').val('');
+        $('#searchResults').addClass('d-none');
+        $('#orderHistoryContainer').removeClass('d-none');
+        $('#returnFormStep').addClass('d-none');
+        $('#searchStep').removeClass('d-none');
+        $('#directReturnForm')[0].reset();
+        $('#dr_image_preview').empty();
+        
+        // Reset filters
+        $('#filterBrand, #filterProduct, #filterDistributor, #filterStartDate, #filterEndDate').val('').trigger('change.select2');
+        
+        loadReturnFilters();
         loadOrderHistory(1);
+    });
+
+    // Handle filter changes
+    $('#filterBrand, #filterProduct, #filterDistributor, #filterStartDate, #filterEndDate').on('change', function() {
+        loadOrderHistory(1, $('#searchOrderCode').val());
+    });
+
+    $('#btnClearFilters').click(function() {
+        $('#filterBrand, #filterProduct, #filterDistributor, #filterStartDate, #filterEndDate').val('');
+        loadOrderHistory(1, $('#searchOrderCode').val());
     });
 
     $(document).on('click', '.recent-order-card', function() {
         let code = $(this).data('code');
-        $('#searchOrderCode').val(code);
-        $('#btnSearchOrder').trigger('click');
+        // Clear search bar as requested
+        $('#searchOrderCode').val('');
+        
+        let $btn = $('#btnSearchOrder');
+        let oldText = $btn.text();
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
+
+        $.get("{{ route('admin.returns.search-order') }}", { code: code }, function(res) {
+            $btn.prop('disabled', false).text(oldText);
+            if(res.success) {
+                currentSearchOrder = res.order;
+                currentSearchType = res.type;
+                
+                // Show order details before product listing
+                $('#selectedOrderMeta').html(`
+                    <div class="row g-2 align-items-center">
+                        <div class="col-auto">
+                            <span class="badge bg-primary rounded-pill px-3">${res.order.order_code}</span>
+                        </div>
+                        <div class="col">
+                            <div class="d-flex flex-wrap gap-3" style="font-size: 0.75rem;">
+                                <span><i class="fa fa-truck me-1 text-muted"></i><strong>Distro:</strong> ${res.order.distributor_name}</span>
+                                <span><i class="fa fa-calendar me-1 text-muted"></i><strong>Date:</strong> ${res.order.delivered_at}</span>
+                            </div>
+                        </div>
+                    </div>
+                `);
+
+                renderSearchItems(res.order.items);
+                $('#searchResults').removeClass('d-none');
+                $('#orderHistoryContainer').addClass('d-none');
+            }
+        }).fail(function() {
+            $btn.prop('disabled', false).text(oldText);
+            showToast('error', 'An error occurred');
+        });
         
         // Visual feedback
         $('.recent-order-card').removeClass('border-primary shadow-sm');
@@ -692,11 +948,26 @@ $(document).ready(function() {
             if(res.success) {
                 currentSearchOrder = res.order;
                 currentSearchType = res.type;
+
+                // Show order details before product listing
+                $('#selectedOrderMeta').html(`
+                    <div class="row g-2 align-items-center">
+                        <div class="col-auto">
+                            <span class="badge bg-primary rounded-pill px-3">${res.order.order_code}</span>
+                        </div>
+                        <div class="col">
+                            <div class="d-flex flex-wrap gap-3" style="font-size: 0.75rem;">
+                                <span><i class="fa fa-truck me-1 text-muted"></i><strong>Distro:</strong> ${res.order.distributor_name}</span>
+                                <span><i class="fa fa-calendar me-1 text-muted"></i><strong>Date:</strong> ${res.order.delivered_at}</span>
+                            </div>
+                        </div>
+                    </div>
+                `);
+
                 renderSearchItems(res.order.items);
                 $('#searchResults').removeClass('d-none');
-                $('#orderHistoryContainer').addClass('d-none'); // Hide history when showing items
+                $('#orderHistoryContainer').addClass('d-none'); 
             } else {
-                // If direct code search fails, maybe it was a product search, which history already handles.
                 $('#searchResults').addClass('d-none');
                 $('#orderHistoryContainer').removeClass('d-none');
             }
@@ -710,6 +981,13 @@ $(document).ready(function() {
         $('#returnFormStep').addClass('d-none');
         $('#searchStep').removeClass('d-none');
         $('#orderHistoryContainer').removeClass('d-none'); // Show history again
+    });
+
+    $('#btnBackToHistory').click(function() {
+        $('#searchResults').addClass('d-none');
+        $('#orderHistoryContainer').removeClass('d-none');
+        $('#searchOrderCode').val('');
+        loadOrderHistory(1);
     });
 
     function renderSearchItems(items) {
@@ -966,5 +1244,10 @@ body.dark-only #returnsTable thead th {
 
 .cursor-pointer { cursor: pointer; }
 .recent-order-card:hover { border-color: #7366ff !important; background: rgba(115, 102, 255, 0.05); }
+
+.modal-content {
+    border-radius: 20px !important;
+    overflow: hidden !important;
+}
 </style>
 @endpush

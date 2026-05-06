@@ -275,7 +275,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>
                 </div>
-                <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" id="editProfileForm">
                     @csrf
                     @method('PUT')
                     <div class="modal-body p-3">
@@ -289,6 +289,7 @@
                                     <label class="form-label fw-bold small mb-1">Full Name</label>
                                     <input type="text" name="name" class="form-control form-control-sm"
                                         value="{{ $user->name }}" required>
+                                    <div class="invalid-feedback d-block" id="error_name"></div>
                                 </div>
 
                                 @if($user->hasRole('fieldstaff'))
@@ -352,17 +353,20 @@
                                     <label class="form-label fw-bold small mb-1">Address</label>
                                     <textarea name="address" class="form-control form-control-sm"
                                         rows="2">{{ $user->address }}</textarea>
+                                    <div class="invalid-feedback d-block" id="error_address"></div>
                                 </div>
                                 <div class="row g-2">
                                     <div class="col-md-6">
                                         <label class="form-label fw-bold small mb-1">City</label>
                                         <input type="text" name="city" class="form-control form-control-sm"
                                             value="{{ $user->city }}">
+                                        <div class="invalid-feedback d-block" id="error_city"></div>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label fw-bold small mb-1">Pincode</label>
                                         <input type="text" name="pincode" class="form-control form-control-sm"
                                             value="{{ $user->pincode ?? '' }}">
+                                        <div class="invalid-feedback d-block" id="error_pincode"></div>
                                     </div>
                                 </div>
                             </div>
@@ -484,5 +488,107 @@
                 document.getElementById('btn_remove_pic').style.display = 'none';
             }
         }
+        // AJAX Form Submission
+        $('#editProfileForm').on('submit', function(e) {
+            e.preventDefault();
+            let form = $(this);
+            let btn = form.find('button[type="submit"]');
+            
+            // Clear previous errors
+            form.find('.invalid-feedback').text('');
+            form.find('.form-control').removeClass('is-invalid');
+            
+            btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Saving...');
+            
+            $.ajax({
+                url: form.attr('action'),
+                type: "POST",
+                data: new FormData(this),
+                processData: false,
+                contentType: false,
+                success: function(res) {
+                    $('#editProfileModal').modal('hide');
+                    showToast('success', 'Profile updated successfully.');
+                    setTimeout(() => window.location.reload(), 1000);
+                },
+                error: function(xhr) {
+                    btn.prop('disabled', false).html('<i class="fa fa-save me-1"></i> Save');
+                    if (xhr.status === 422 && xhr.responseJSON.errors) {
+                        $.each(xhr.responseJSON.errors, function(key, messages) {
+                            let input = form.find(`[name="${key}"]`);
+                            input.addClass('is-invalid');
+                            let errorDiv = form.find(`#error_${key}`);
+                            if (errorDiv.length) {
+                                errorDiv.text(messages[0]);
+                            } else {
+                                input.after(`<div class="invalid-feedback d-block">${messages[0]}</div>`);
+                            }
+                        });
+                        showToast('danger', 'Please fix the errors below.');
+                    } else {
+                        let message = xhr.responseJSON?.message || 'An error occurred';
+                        showToast('danger', message);
+                    }
+                }
+            });
+        });
+
+        // Live Validation & UI Logic
+        // Name Validation (No numbers/symbols)
+        $('input[name="name"]').on('input', function() {
+            let val = $(this).val();
+            let regex = /^[a-zA-Z\s]*$/;
+            let errorDiv = $('#error_name');
+            
+            if (!regex.test(val)) {
+                errorDiv.text('Name should only contain letters and spaces.');
+                $(this).addClass('is-invalid');
+            } else {
+                errorDiv.text('');
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        // Phone Validation (if editable/present)
+        $('input[name="contact_no"]').on('input', function() {
+            let val = $(this).val().replace(/\D/g, ''); // Remove non-digits
+            let errorDiv = $('#error_contact_no');
+            if (errorDiv.length === 0) {
+                $(this).after('<div class="invalid-feedback d-block" id="error_contact_no"></div>');
+                errorDiv = $('#error_contact_no');
+            }
+
+            if (val.startsWith('0')) {
+                val = val.substring(1);
+                errorDiv.text('Phone number cannot start with 0.');
+            } else if (val.length > 10) {
+                val = val.substring(0, 10);
+                errorDiv.text('Phone number cannot exceed 10 digits.');
+            } else {
+                errorDiv.text('');
+            }
+            
+            $(this).val(val);
+            if (errorDiv.text() !== '') {
+                $(this).addClass('is-invalid');
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        // Pincode Validation (6 digits)
+        $('input[name="pincode"]').on('input', function() {
+            let val = $(this).val().replace(/\D/g, '').substring(0, 6);
+            $(this).val(val);
+            let errorDiv = $('#error_pincode');
+
+            if (val.length > 0 && val.length < 6) {
+                errorDiv.text('Pincode must be exactly 6 digits.');
+                $(this).addClass('is-invalid');
+            } else {
+                errorDiv.text('');
+                $(this).removeClass('is-invalid');
+            }
+        });
     </script>
 @endpush

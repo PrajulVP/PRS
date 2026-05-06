@@ -130,12 +130,19 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Password</label>
-                                <input type="password" name="password" id="create_password" class="form-control" required>
+                                <div class="password-field-container">
+                                    <input type="password" name="password" id="create_password" class="form-control" required>
+                                    <span class="toggle-password"><i class="fa fa-eye"></i></span>
+                                </div>
+                                <div class="invalid-feedback d-block" id="create_password_error"></div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Confirm Password</label>
-                                <input type="password" name="password_confirmation" id="create_password_confirmation"
-                                    class="form-control" required>
+                                <div class="password-field-container">
+                                    <input type="password" name="password_confirmation" id="create_password_confirmation" class="form-control" required>
+                                    <span class="toggle-password"><i class="fa fa-eye"></i></span>
+                                </div>
+                                <div class="invalid-feedback d-block" id="create_password_confirmation_error"></div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">GST</label>
@@ -230,12 +237,19 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Password (Leave blank to keep unchanged)</label>
-                                <input type="password" name="password" id="edit_password" class="form-control">
+                                <div class="password-field-container">
+                                    <input type="password" name="password" id="edit_password" class="form-control">
+                                    <span class="toggle-password"><i class="fa fa-eye"></i></span>
+                                </div>
+                                <div class="invalid-feedback d-block" id="edit_password_error"></div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Confirm Password</label>
-                                <input type="password" name="password_confirmation" id="edit_password_confirmation"
-                                    class="form-control">
+                                <div class="password-field-container">
+                                    <input type="password" name="password_confirmation" id="edit_password_confirmation" class="form-control">
+                                    <span class="toggle-password"><i class="fa fa-eye"></i></span>
+                                </div>
+                                <div class="invalid-feedback d-block" id="edit_password_confirmation_error"></div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">GST</label>
@@ -656,6 +670,11 @@
                 e.preventDefault();
                 let form = $(this);
                 let btn = form.find('button[type="submit"]');
+                
+                // Clear previous errors
+                form.find('.invalid-feedback').text('');
+                form.find('.form-control').removeClass('is-invalid');
+
                 btn.prop('disabled', true);
                 $.ajax({
                     url: form.attr('action') || "{{ route('admin.distributors.store') }}",
@@ -669,15 +688,93 @@
                     },
                     error: (xhr) => {
                         btn.prop('disabled', false);
-                        let message = 'Error';
                         if (xhr.status === 422 && xhr.responseJSON.errors) {
-                            message = Object.values(xhr.responseJSON.errors).map(e => e[0]).join('<br>');
-                        } else if (xhr.responseJSON && xhr.responseJSON.message) {
-                            message = xhr.responseJSON.message;
+                            $.each(xhr.responseJSON.errors, function(key, messages) {
+                                let input = form.find(`[name="${key}"]`);
+                                input.addClass('is-invalid');
+                                // Find or create error div
+                                let errorDiv = form.find(`#${form.attr('id').startsWith('create') ? 'create' : 'edit'}_${key}_error`);
+                                if (errorDiv.length === 0) {
+                                    // Fallback: search for generic error div or append one
+                                    input.after(`<div class="invalid-feedback d-block">${messages[0]}</div>`);
+                                } else {
+                                    errorDiv.text(messages[0]);
+                                }
+                            });
+                            showToast('danger', 'Please fix the errors below.');
+                        } else {
+                            let message = xhr.responseJSON?.message || 'An error occurred';
+                            showToast('danger', message);
                         }
-                        showToast('danger', message);
                     }
                 });
+            });
+
+            // Live Validation & UI Logic
+
+            // Name Validation (No numbers/symbols)
+            $('input[name="name"]').on('input', function() {
+                let val = $(this).val();
+                let regex = /^[a-zA-Z\s]*$/;
+                let errorDiv = $(this).closest('div').find('.invalid-feedback');
+                if (errorDiv.length === 0) {
+                    $(this).after('<div class="invalid-feedback d-block name-error"></div>');
+                    errorDiv = $(this).closest('div').find('.name-error');
+                }
+                
+                if (!regex.test(val)) {
+                    errorDiv.text('Name should only contain letters and spaces.');
+                    $(this).addClass('is-invalid');
+                } else {
+                    errorDiv.text('');
+                    $(this).removeClass('is-invalid');
+                }
+            });
+
+            // Phone Validation (No 0 at start, max 10 digits)
+            $('input[name="contact_no"]').on('input', function() {
+                let val = $(this).val().replace(/\D/g, ''); // Remove non-digits
+                let errorDiv = $(this).closest('div').find('.invalid-feedback');
+                if (errorDiv.length === 0) {
+                    $(this).after('<div class="invalid-feedback d-block phone-error"></div>');
+                    errorDiv = $(this).closest('div').find('.phone-error');
+                }
+
+                if (val.startsWith('0')) {
+                    val = val.substring(1);
+                    errorDiv.text('Phone number cannot start with 0.');
+                } else if (val.length > 10) {
+                    val = val.substring(0, 10);
+                    errorDiv.text('Phone number cannot exceed 10 digits.');
+                } else {
+                    errorDiv.text('');
+                }
+                
+                $(this).val(val);
+                if (errorDiv.text() !== '') {
+                    $(this).addClass('is-invalid');
+                } else {
+                    $(this).removeClass('is-invalid');
+                }
+            });
+
+            // Pincode Validation (6 digits)
+            $('input[name="pincode"]').on('input', function() {
+                let val = $(this).val().replace(/\D/g, '').substring(0, 6);
+                $(this).val(val);
+                let errorDiv = $(this).closest('div').find('.invalid-feedback');
+                if (errorDiv.length === 0) {
+                    $(this).after('<div class="invalid-feedback d-block pin-error"></div>');
+                    errorDiv = $(this).closest('div').find('.pin-error');
+                }
+
+                if (val.length > 0 && val.length < 6) {
+                    errorDiv.text('Pincode must be exactly 6 digits.');
+                    $(this).addClass('is-invalid');
+                } else {
+                    errorDiv.text('');
+                    $(this).removeClass('is-invalid');
+                }
             });
 
             $('#distributors-table').on('click', '.delete-btn', function () {

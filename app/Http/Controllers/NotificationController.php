@@ -32,6 +32,9 @@ class NotificationController extends Controller
                         $orderExists = true;
                         if (str_contains(strtolower($msg), 'ready for your approval') && !in_array($order->status, ['pending', 'processing'])) $needsAction = false;
                     }
+                } elseif (str_starts_with($code, 'RET-')) {
+                    $order = \App\Models\ReturnRequest::where('return_code', $code)->first();
+                    if ($order) $orderExists = true;
                 }
 
                 if (!$orderExists) {
@@ -73,6 +76,19 @@ class NotificationController extends Controller
             if ($order) {
                 if (str_contains(strtolower($msg), 'ready for your approval') && !in_array($order->status, ['pending', 'processing'])) return false;
                 return true;
+            }
+        } elseif (str_starts_with($code, 'RET-')) {
+            $returnRequest = \App\Models\ReturnRequest::where('return_code', $code)->first();
+            if ($returnRequest) {
+                if ($returnRequest->status === 'rejected' || $returnRequest->status === 'completed') return false;
+                
+                $user = auth()->user();
+                if ($user->hasRole('fieldstaff') && $returnRequest->status === 'pending') return true;
+                if ($user->hasRole('distributor') && $returnRequest->status === 'approved_tier1') return true;
+                if ($user->hasRole('salesmanager') && $returnRequest->status === 'pending' && $returnRequest->order_type === 'distributor') return true;
+                if ($user->hasAnyRole(['admin', 'superadmin']) && $returnRequest->status === 'approved_tier1' && $returnRequest->order_type === 'distributor') return true;
+                
+                return false;
             }
         }
 

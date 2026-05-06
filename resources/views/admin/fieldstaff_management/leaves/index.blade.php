@@ -126,5 +126,9 @@
 <style>
     .pulsate { animation: pulsate 2s infinite; }
     @keyframes pulsate { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+    .modal-content {
+        border-radius: 20px !important;
+        overflow: hidden !important;
+    }
 </style>
 @endpush

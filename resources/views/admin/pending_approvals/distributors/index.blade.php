@@ -450,6 +450,10 @@
         }
 
         /* Custom Modal Width */
+        .modal-content {
+            border-radius: 20px !important;
+            overflow: hidden !important;
+        }
         /* Premium Error Alert Styles */
         .approval-error-alert {
             border-left: 5px solid #ef4444 !important;

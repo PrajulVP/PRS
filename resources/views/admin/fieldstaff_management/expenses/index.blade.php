@@ -142,6 +142,13 @@
         </form>
     </div>
 </div>
+
+<style>
+    .modal-content {
+        border-radius: 20px !important;
+        overflow: hidden !important;
+    }
+</style>
 @endsection
 
 @push('scripts')

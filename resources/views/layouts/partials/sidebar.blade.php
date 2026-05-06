@@ -209,9 +209,7 @@
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-form"></use>
             </svg>
-            <span style="display: inline-flex; align-items: center; gap: 8px;">Returns & Credits
-                <span id="badge-pending-returns" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; {{ ($actionCounts['pending_returns'] ?? 0) > 0 ? '' : 'display: none !important;' }}">{{ $actionCounts['pending_returns'] ?? 0 }}</span>
-            </span>
+            <span style="display: inline-flex; align-items: center; gap: 8px;">Returns & Credits</span>
           </a>
         </li>
         @endif

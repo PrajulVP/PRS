@@ -61,6 +61,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('products/import', [ProductController::class, 'import'])->name('products.import');
     Route::post('products/{product}/toggle-returnable', [ProductController::class, 'toggleReturnable'])->name('products.toggle-returnable');
     Route::post('products/bulk-brand-returnable', [ProductController::class, 'bulkBrandReturnable'])->name('products.bulk-brand-returnable');
+    Route::get('products/get-by-brand/{brand}', [ProductController::class, 'getByBrand'])->name('products.get-by-brand');
     Route::resource('products', ProductController::class);
     Route::post('inventories/{inventory}/adjust-stock', [InventoryController::class, 'adjustStock'])->name('inventories.adjust-stock');
     Route::resource('inventories', InventoryController::class);
@@ -181,6 +182,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/{returnRequest}/reject', [ReturnController::class, 'reject'])->name('reject');
             Route::get('/search-order', [ReturnController::class, 'searchOrder'])->name('search-order');
             Route::get('/delivered-orders', [ReturnController::class, 'getDeliveredOrders'])->name('delivered-orders');
+            Route::get('/get-filters', [ReturnController::class, 'getFilters'])->name('get-filters');
         });
 
         // Master settings

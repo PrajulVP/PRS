@@ -41,6 +41,8 @@ class User extends Authenticatable implements JWTSubject
         'player_id',
         'device_uuid',
         'device_bound_at',
+        'otp',
+        'otp_expires_at',
     ];
 
     public function distributor()

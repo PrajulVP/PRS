@@ -180,6 +180,11 @@
             max-width: 1140px;
         }
 
+        .modal-content {
+            border-radius: 20px !important;
+            overflow: hidden !important;
+        }
+
         #retailer-approval-table td:last-child {
             white-space: nowrap !important;
         }
@@ -2129,6 +2134,12 @@
                         $('#invoiceUploadGroup').show();
                         $('#retailer_invoice_file_input').prop('required', true);
                         $('#approveModalTextContainer').addClass('d-none');
+                    }
+
+                    if (status === 'pending') {
+                        $('#approval_validation_errors').addClass('d-none');
+                    } else {
+                        $('#approval_validation_errors').removeClass('d-none');
                     }
 
                     $('#approveRetailerOrderModal').modal('show');

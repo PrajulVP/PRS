@@ -153,6 +153,50 @@
             </div>
         </div>
     </div>
+    
+    <!-- Manage Products Modal -->
+    <div class="modal fade" id="manageBrandProductsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                <div class="modal-header border-0 bg-light rounded-top-4 pb-3">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary p-2 rounded-3 me-3">
+                            <i class="fa fa-boxes text-white"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold mb-0" id="modalBrandTitle">Brand Products</h5>
+                            <p class="text-muted small mb-0">Toggle returnability for individual products.</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="p-3 bg-light border-bottom">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="fa fa-search text-muted"></i></span>
+                            <input type="text" id="productSearchInput" class="form-control border-start-0" placeholder="Search products in this brand...">
+                        </div>
+                    </div>
+                    <div class="table-responsive" style="max-height: 450px;">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light sticky-top">
+                                <tr>
+                                    <th class="ps-4 py-3 text-muted small text-uppercase fw-bold">Product Details</th>
+                                    <th class="py-3 text-muted small text-uppercase fw-bold text-center">Returnable</th>
+                                </tr>
+                            </thead>
+                            <tbody id="brandProductsTableBody">
+                                <!-- Products loaded via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-3">
+                    <button type="button" class="btn btn-light rounded-3 px-4" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -187,19 +231,24 @@
                     currentBrands.forEach((brand, index) => {
                         let isReturnable = returnableBrands.includes(brand);
                         html += `
-                            <div class="brand-tag-wrapper d-inline-flex flex-column bg-white border border-primary rounded p-3 shadow-sm" style="min-width: 180px;">
-                                <div class="d-flex align-items-center justify-content-between mb-2 border-bottom pb-2">
-                                    <span class="fw-bold text-primary"><i class="fa fa-tag me-1 small"></i>${brand}</span>
-                                    <div class="d-flex gap-1">
-                                        <button type="button" class="btn btn-outline-info p-0 d-flex align-items-center justify-content-center edit-brand-btn" data-index="${index}" style="width: 24px; height: 24px;" title="Edit"><i class="fa fa-edit small"></i></button>
-                                        <button type="button" class="btn btn-outline-danger p-0 d-flex align-items-center justify-content-center delete-brand-btn" data-index="${index}" style="width: 24px; height: 24px;" title="Delete"><i class="fa fa-trash small"></i></button>
+                            <div class="brand-tag-wrapper d-inline-flex flex-column bg-white border border-primary rounded p-3 shadow-sm" style="min-width: 220px;">
+                                <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                                    <span class="fw-bold text-primary text-truncate me-2" title="${brand}"><i class="fa fa-tag me-1 small"></i>${brand}</span>
+                                    <div class="d-flex gap-1 flex-shrink-0">
+                                        <button type="button" class="btn btn-outline-info p-0 d-flex align-items-center justify-content-center edit-brand-btn" data-index="${index}" style="width: 28px; height: 28px;" title="Edit"><i class="fa fa-edit small"></i></button>
+                                        <button type="button" class="btn btn-outline-danger p-0 d-flex align-items-center justify-content-center delete-brand-btn" data-index="${index}" style="width: 28px; height: 28px;" title="Delete"><i class="fa fa-trash small"></i></button>
                                     </div>
                                 </div>
-                                <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
                                     <span class="small text-muted">Returnable</span>
                                     <div class="form-check form-switch mb-0">
                                         <input class="form-check-input returnable-toggle" type="checkbox" data-brand="${brand}" ${isReturnable ? 'checked' : ''}>
                                     </div>
+                                </div>
+                                <div class="border-top pt-2 mt-1 text-center">
+                                    <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 manage-products-btn" data-brand="${brand}">
+                                        <i class="fa fa-list-ul me-1"></i>Manage Products
+                                    </button>
                                 </div>
                             </div>
                         `;
@@ -303,6 +352,69 @@
                         currentBrands[index] = result.value.trim();
                         $('#save_brands_btn').show();
                         renderBrands();
+                    }
+                });
+            });
+
+            // Manage Products Individual Logic
+            $(document).on('click', '.manage-products-btn', function() {
+                let brand = $(this).data('brand');
+                $('#modalBrandTitle').text(`${brand} Products`);
+                $('#brandProductsTableBody').html('<tr><td colspan="2" class="text-center py-5"><i class="fa fa-spinner fa-spin fa-2x mb-2 d-block"></i>Loading products...</td></tr>');
+                $('#manageBrandProductsModal').modal('show');
+                
+                $.get(`/products/get-by-brand/${encodeURIComponent(brand)}`, function(products) {
+                    renderBrandProducts(products);
+                });
+            });
+
+            function renderBrandProducts(products) {
+                let html = '';
+                if (products.length === 0) {
+                    html = '<tr><td colspan="2" class="text-center py-4 text-muted">No products found for this brand.</td></tr>';
+                } else {
+                    products.forEach(p => {
+                        html += `
+                            <tr class="product-row">
+                                <td class="ps-4 py-3">
+                                    <div class="fw-bold text-main-theme">${p.product_name}</div>
+                                    <div class="text-muted small">${p.product_code || 'No Code'}</div>
+                                </td>
+                                <td class="text-center">
+                                    <div class="form-check form-switch d-inline-block mb-0">
+                                        <input class="form-check-input individual-product-toggle" type="checkbox" data-id="${p.id}" ${p.is_returnable ? 'checked' : ''}>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+                $('#brandProductsTableBody').html(html);
+            }
+
+            // Search in Modal
+            $('#productSearchInput').on('keyup', function() {
+                let val = $(this).val().toLowerCase();
+                $('.product-row').each(function() {
+                    let text = $(this).text().toLowerCase();
+                    $(this).toggle(text.indexOf(val) > -1);
+                });
+            });
+
+            // Toggle Individual Product
+            $(document).on('change', '.individual-product-toggle', function() {
+                let id = $(this).data('id');
+                let isChecked = $(this).is(':checked');
+                let toggleUrl = "{{ route('products.toggle-returnable', ':id') }}".replace(':id', id);
+                
+                $.ajax({
+                    url: toggleUrl,
+                    method: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    error: function() {
+                        showToast('error', 'Error', 'Failed to update product setting.');
                     }
                 });
             });

@@ -111,12 +111,19 @@
                         </div>
                         <div class="mb-3">
                             <label>Password</label>
-                            <input type="password" name="password" class="form-control" required>
-                            <span class="text-danger small error-text" id="error-password"></span>
+                            <div class="password-field-container">
+                                <input type="password" name="password" id="create_password" class="form-control" required>
+                                <span class="toggle-password"><i class="fa fa-eye"></i></span>
+                            </div>
+                            <div class="invalid-feedback d-block" id="create_password_error"></div>
                         </div>
                         <div class="mb-3">
                             <label>Confirm Password</label>
-                            <input type="password" name="password_confirmation" class="form-control" required>
+                            <div class="password-field-container">
+                                <input type="password" name="password_confirmation" id="create_password_confirmation" class="form-control" required>
+                                <span class="toggle-password"><i class="fa fa-eye"></i></span>
+                            </div>
+                            <div class="invalid-feedback d-block" id="create_password_confirmation_error"></div>
                         </div>
                         <div class="mb-3">
                             <label>Role</label>
@@ -192,8 +199,19 @@
                         </div>
                         <div class="mb-3">
                             <label>Password (blank to keep)</label>
-                            <input type="password" name="password" class="form-control">
-                            <span class="text-danger small error-text" id="edit-error-password"></span>
+                            <div class="password-field-container">
+                                <input type="password" name="password" id="edit_password" class="form-control">
+                                <span class="toggle-password"><i class="fa fa-eye"></i></span>
+                            </div>
+                            <div class="invalid-feedback d-block" id="edit_password_error"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label>Confirm Password</label>
+                            <div class="password-field-container">
+                                <input type="password" name="password_confirmation" id="edit_password_confirmation" class="form-control">
+                                <span class="toggle-password"><i class="fa fa-eye"></i></span>
+                            </div>
+                            <div class="invalid-feedback d-block" id="edit_password_confirmation_error"></div>
                         </div>
                         <div class="mb-3">
                             <label>Role</label>
@@ -636,17 +654,23 @@
 
                         if (xhr.status === 422 && xhr.responseJSON.errors) {
                             let errors = xhr.responseJSON.errors;
-                            Object.keys(errors).forEach(key => {
-                                let errorSpan = form.find(`#${prefix}${key}`);
-                                if (errorSpan.length) {
-                                    errorSpan.text(errors[key][0]);
+                            $.each(errors, function(key, messages) {
+                                let input = form.find(`[name="${key}"]`);
+                                input.addClass('is-invalid');
+                                let errorDiv = form.find(`#${isEdit ? 'edit' : 'create'}_${key}_error`);
+                                if (errorDiv.length === 0) {
+                                    errorDiv = form.find(`#${isEdit ? 'edit-' : ''}error-${key}`);
+                                }
+                                
+                                if (errorDiv.length === 0) {
+                                    input.after(`<div class="invalid-feedback d-block">${messages[0]}</div>`);
+                                } else {
+                                    errorDiv.text(messages[0]).addClass('d-block');
                                 }
                             });
+                            showToast('danger', 'Please fix the errors below.');
                         } else {
-                            let message = 'Error';
-                            if (xhr.responseJSON && xhr.responseJSON.message) {
-                                message = xhr.responseJSON.message;
-                            }
+                            let message = xhr.responseJSON?.message || 'An error occurred';
                             showToast('danger', message);
                         }
                     }
@@ -717,11 +741,75 @@
                 // Show initials as fallback
                 let name = $('#edit_name').val();
                 let initials = name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
-                $('#edit_avatar_initials_preview').text(initials).show();
+                // Check if element exists before setting text
+                if ($('#edit_avatar_initials_preview').length) {
+                    $('#edit_avatar_initials_preview').text(initials).show();
+                }
                 $('#btn_remove_edit_pic').hide();
                 // Clear file input
                 $('#editUserModal input[type="file"]').val('');
             }
         }
+
+        // Live Validation & UI Logic
+
+        // Name Validation (No numbers/symbols)
+        $('input[name="name"]').on('input', function() {
+            let val = $(this).val();
+            let regex = /^[a-zA-Z\s]*$/;
+            let form = $(this).closest('form');
+            let isEdit = form.attr('id') === 'editForm';
+            let errorDiv = form.find(`#${isEdit ? 'edit-' : ''}error-name`);
+            
+            if (!regex.test(val)) {
+                errorDiv.text('Name should only contain letters and spaces.').addClass('d-block');
+                $(this).addClass('is-invalid');
+            } else {
+                errorDiv.text('').removeClass('d-block');
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        // Phone Validation (No 0 at start, max 10 digits)
+        $('input[name="contact_no"]').on('input', function() {
+            let val = $(this).val().replace(/\D/g, ''); // Remove non-digits
+            let form = $(this).closest('form');
+            let isEdit = form.attr('id') === 'editForm';
+            let errorDiv = form.find(`#${isEdit ? 'edit-' : ''}error-contact_no`);
+
+            if (val.startsWith('0')) {
+                val = val.substring(1);
+                errorDiv.text('Phone number cannot start with 0.').addClass('d-block');
+            } else if (val.length > 10) {
+                val = val.substring(0, 10);
+                errorDiv.text('Phone number cannot exceed 10 digits.').addClass('d-block');
+            } else {
+                errorDiv.text('').removeClass('d-block');
+            }
+            
+            $(this).val(val);
+            if (errorDiv.text() !== '') {
+                $(this).addClass('is-invalid');
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        // Pincode Validation (6 digits)
+        $('input[name="pincode"]').on('input', function() {
+            let val = $(this).val().replace(/\D/g, '').substring(0, 6);
+            $(this).val(val);
+            let form = $(this).closest('form');
+            let isEdit = form.attr('id') === 'editForm';
+            let errorDiv = form.find(`#${isEdit ? 'edit-' : ''}error-pincode`);
+
+            if (val.length > 0 && val.length < 6) {
+                errorDiv.text('Pincode must be exactly 6 digits.').addClass('d-block');
+                $(this).addClass('is-invalid');
+            } else {
+                errorDiv.text('').removeClass('d-block');
+                $(this).removeClass('is-invalid');
+            }
+        });
     </script>
 @endpush

@@ -102,6 +102,10 @@ class ProfileController extends Controller
             ]);
         }
 
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Profile updated successfully.']);
+        }
+
         return redirect()->route('profile.index')->with('success', 'Profile updated successfully.');
     }
 }

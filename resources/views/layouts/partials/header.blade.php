@@ -224,7 +224,11 @@
                   $data = $notification->data;
                   if (isset($data['order_code'])) {
                     $needsAction = \App\Http\Controllers\NotificationController::checkActionStatus($notification);
-                    $orderExists = isset($data['order_code']) && (\App\Models\RetailerOrder::where('order_code', $data['order_code'])->exists() || \App\Models\DistributorOrder::where('order_code', $data['order_code'])->exists());
+                    $orderExists = isset($data['order_code']) && (
+                        \App\Models\RetailerOrder::where('order_code', $data['order_code'])->exists() || 
+                        \App\Models\DistributorOrder::where('order_code', $data['order_code'])->exists() ||
+                        \App\Models\ReturnRequest::where('return_code', $data['order_code'])->exists()
+                    );
 
                     if (!$orderExists && isset($data['order_code'])) {
                       $notification->delete(); // Clean up deleted orders

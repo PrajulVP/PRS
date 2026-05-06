@@ -99,6 +99,43 @@
             transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        /* Password Eye Icon Integration */
+        .password-field-container {
+            position: relative;
+        }
+        .password-field-container .toggle-password {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            z-index: 10;
+            color: #94a3b8;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none !important;
+            border: none !important;
+            padding: 0 !important;
+            opacity: 0.7;
+        }
+        .password-field-container .toggle-password:hover {
+            color: var(--med-primary, #00497a);
+            opacity: 1;
+            transform: translateY(-50%) scale(1.1);
+        }
+        .password-field-container .form-control {
+            padding-right: 42px !important;
+        }
+        .dark-only .password-field-container .toggle-password {
+            color: #4b5563;
+        }
+        .dark-only .password-field-container .toggle-password:hover {
+            color: var(--med-primary, #38bdf8);
+        }
+
         .page-body {
             margin-top: 0 !important;
             padding-top: 0 !important;
@@ -1189,10 +1226,27 @@
         @include('layouts.partials.scripts')
 
         @stack('scripts')
+        <script>
+            // Global Password Toggle Handler
+            $(document).on('click', '.toggle-password', function() {
+                const container = $(this).closest('.password-field-container');
+                const input = container.find('input');
+                const icon = $(this).find('i');
+                
+                if (input.length && input.attr('type') === 'password') {
+                    input.attr('type', 'text');
+                    icon.removeClass('fa-eye').addClass('fa-eye-slash');
+                } else if (input.length) {
+                    input.attr('type', 'password');
+                    icon.removeClass('fa-eye-slash').addClass('fa-eye');
+                }
+            });
+        </script>
     @else
         {{-- If NOT authenticated as any role → show only login content --}}
         @yield('content')
     @endif
+
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {

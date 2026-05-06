@@ -37,17 +37,12 @@
 
                             <div class="mb-3">
                                 <label for="password" class="form-label fw-bold small mb-2" style="color: var(--login-muted);">Password</label>
-                                <div class="input-group">
+                                <div class="password-field-container">
                                     <input id="password" type="password"
-                                        class="form-control form-control-lg border-opacity-10 border-end-0"
+                                        class="form-control form-control-lg border-opacity-10"
                                         name="password" required autocomplete="current-password"
                                         placeholder="Enter password">
-                                    <button type="button"
-                                        class="btn btn-lg border-opacity-10 border-start-0 text-muted show-pass bg-transparent"
-                                        style="border: 1px solid var(--med-border);"
-                                        tabindex="-1" title="Show/Hide">
-                                        <i class="fa fa-eye"></i>
-                                    </button>
+                                    <span class="toggle-password"><i class="fa fa-eye"></i></span>
                                 </div>
                             </div>
 
@@ -86,10 +81,11 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const showPassBtns = document.querySelectorAll('.show-pass');
-            showPassBtns.forEach(btn => {
+            const toggleBtns = document.querySelectorAll('.toggle-password');
+            toggleBtns.forEach(btn => {
                 btn.addEventListener('click', function () {
-                    const input = this.parentElement.querySelector('input');
+                    const container = this.closest('.password-field-container');
+                    const input = container.querySelector('input');
                     const icon = this.querySelector('i');
                     if (input.type === 'password') {
                         input.type = 'text';

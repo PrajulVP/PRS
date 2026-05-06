@@ -499,6 +499,15 @@ class ProductController extends Controller
         return redirect()->route('products.index')->with('success', "$successCount products imported successfully.");
     }
 
+    public function getByBrand($brand)
+    {
+        $products = Product::where('brand', $brand)
+            ->select('id', 'product_name', 'product_code', 'is_returnable')
+            ->orderBy('product_name')
+            ->get();
+        return response()->json($products);
+    }
+
     public function toggleReturnable(Product $product)
     {
         $product->is_returnable = !$product->is_returnable;
