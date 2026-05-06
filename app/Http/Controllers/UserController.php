@@ -368,9 +368,9 @@ class UserController extends Controller
 
         $canEdit = $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory($cat, 'edit');
 
-        // Admin specific restrictions: Cannot activate Superadmin, Admin, Sales Manager, or Distributor
+        // Admin specific restrictions: Cannot activate Superadmin or other Admins
         if ($currentUser->hasRole('admin')) {
-            if (in_array($user->role, ['admin', 'superadmin', 'salesmanager', 'distributor'])) {
+            if (in_array($user->role, ['admin', 'superadmin'])) {
                 $canEdit = false;
             }
         }
@@ -412,9 +412,9 @@ class UserController extends Controller
 
         $canEdit = $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory($cat, 'edit');
 
-        // Admin specific restrictions: Cannot deactivate Superadmin, Admin, Sales Manager, or Distributor
+        // Admin specific restrictions: Cannot deactivate Superadmin or other Admins
         if ($currentUser->hasRole('admin')) {
-            if (in_array($user->role, ['admin', 'superadmin', 'salesmanager', 'distributor'])) {
+            if (in_array($user->role, ['admin', 'superadmin'])) {
                 $canEdit = false;
             }
         }

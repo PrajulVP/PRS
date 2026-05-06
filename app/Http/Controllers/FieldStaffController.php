@@ -275,10 +275,39 @@ class FieldStaffController extends Controller
 
     public function activate(FieldStaff $field_staff)
     {
+        // Resilient model loading if Route Model Binding fails or relationship is broken
+        if (!$field_staff->exists) {
+            $id = request()->route('field_staff');
+            $field_staff = FieldStaff::find($id);
+            if (!$field_staff) {
+                return response()->json(['success' => false, 'message' => 'Field Staff record not found.'], 404);
+            }
+        }
+
         /** @var \App\Models\User $currentUser */
         $currentUser = Auth::user();
         
         if ($currentUser->hasAnyRole(['superadmin', 'admin'])) {
+            // 1. Repair by user_id if relationship is null but ID exists
+            if (!$field_staff->user && $field_staff->user_id) {
+                $u = User::find($field_staff->user_id);
+                if ($u) {
+                    $field_staff->setRelation('user', $u);
+                }
+            }
+
+            // 2. Smart Repair: Search by Contact No or User with matching email (if FS record had email, but it doesn't)
+            if (!$field_staff->user) {
+                $foundUser = User::where('contact_no', $field_staff->contact_no)->where('role', 'fieldstaff')->first();
+                // FieldStaff doesn't have email column, but maybe we can find by name if we had it.
+                
+                if ($foundUser) {
+                    $field_staff->user_id = $foundUser->id;
+                    $field_staff->save();
+                    $field_staff->load('user');
+                }
+            }
+
             if (!$field_staff->user) {
                 $msg = 'Cannot activate: User account missing for this record. Please edit and save the staff to repair the account.';
                 return request()->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : redirect()->back()->with('error', $msg);
@@ -302,10 +331,27 @@ class FieldStaffController extends Controller
 
     public function deactivate(FieldStaff $field_staff)
     {
+        // Resilient model loading if Route Model Binding fails or relationship is broken
+        if (!$field_staff->exists) {
+            $id = request()->route('field_staff');
+            $field_staff = FieldStaff::find($id);
+            if (!$field_staff) {
+                return response()->json(['success' => false, 'message' => 'Field Staff record not found.'], 404);
+            }
+        }
+
         /** @var \App\Models\User $currentUser */
         $currentUser = Auth::user();
 
         if ($currentUser->hasAnyRole(['superadmin', 'admin'])) {
+            // Repair by user_id if relationship is null but ID exists
+            if (!$field_staff->user && $field_staff->user_id) {
+                $u = User::find($field_staff->user_id);
+                if ($u) {
+                    $field_staff->setRelation('user', $u);
+                }
+            }
+
             if (!$field_staff->user) {
                 $msg = 'Cannot deactivate: User account missing for this record.';
                 return request()->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : redirect()->back()->with('error', $msg);

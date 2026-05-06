@@ -59,6 +59,18 @@ class FieldStaffActionApiController extends Controller
             return response()->json(['error' => 'Device mismatch. Use registered device.'], 403);
         }
 
+        // Prevent duplicate punch per day
+        $exists = AttendanceLog::where('user_id', $user->id)
+            ->where('type', $request->type)
+            ->whereDate('timestamp', Carbon::today())
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'error' => 'You have already ' . str_replace('_', ' ', $request->type) . 'ed for today.'
+            ], 422);
+        }
+
         $log = AttendanceLog::create([
             'user_id' => $user->id,
             'type' => $request->type,

@@ -292,11 +292,21 @@ class DistributorController extends Controller
     {
         /** @var User $currentUser */
         $currentUser = Auth::user();
-        if (!$currentUser->hasRole('superadmin')) {
+        if (!$currentUser->hasAnyRole(['superadmin', 'admin'])) {
             if (request()->ajax() || request()->expectsJson()) {
                 return response()->json(['success' => false, 'message' => 'You do not have permission to change the status of this user.'], 403);
             }
             return redirect()->route('admin.distributors.index')->with('error', 'You do not have permission to change the status of this user.');
+        }
+
+        // Smart Repair: If user relationship is missing, check if a user with this email exists
+        if (!$distributor->user) {
+            $foundUser = User::where('email', $distributor->email)->first();
+            if ($foundUser) {
+                $distributor->user_id = $foundUser->id;
+                $distributor->save();
+                $distributor->load('user');
+            }
         }
 
         if (!$distributor->user) {
@@ -319,7 +329,7 @@ class DistributorController extends Controller
     {
         /** @var User $currentUser */
         $currentUser = Auth::user();
-        if (!$currentUser->hasRole('superadmin')) {
+        if (!$currentUser->hasAnyRole(['superadmin', 'admin'])) {
             if (request()->ajax() || request()->expectsJson()) {
                 return response()->json(['success' => false, 'message' => 'You do not have permission to change the status of this user.'], 403);
             }

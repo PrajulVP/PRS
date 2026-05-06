@@ -690,9 +690,9 @@
             $('#distributors-table').on('click', '.status-toggle', function () {
                 let id = $(this).data('id'), status = $(this).data('status'), next = status === 'active' ? 'inactive' : 'active';
                 
-                // Frontend Permission Check (Only Superadmin can manage Distributors)
-                const isSuperadmin = @json(Auth::user()->hasRole('superadmin'));
-                if (!isSuperadmin) {
+                // Frontend Permission Check (Allow Admin & Superadmin)
+                const canManage = @json(Auth::user()->hasAnyRole(['superadmin', 'admin']) || Auth::user()->role === 'superadmin' || Auth::user()->role === 'admin');
+                if (!canManage) {
                     Swal.fire({
                         icon: 'error',
                         title: 'Permission Denied',
@@ -719,6 +719,9 @@
                         }).fail((xhr) => {
                             console.error('Status Toggle Error:', xhr);
                             let msg = 'Error changing user status';
+                            let title = 'Action Failed';
+                            if (xhr.status === 403) title = 'Permission Denied';
+
                             if (xhr.responseJSON && xhr.responseJSON.message) {
                                 msg = xhr.responseJSON.message;
                             } else if (xhr.responseText) {
@@ -733,12 +736,12 @@
                             if (window.Swal) {
                                 Swal.fire({
                                     icon: 'error',
-                                    title: 'Permission Denied',
+                                    title: title,
                                     text: msg,
                                     confirmButtonColor: '#00497a'
                                 });
                             } else {
-                                alert('Permission Denied: ' + msg);
+                                alert(title + ': ' + msg);
                             }
                         });
                     }

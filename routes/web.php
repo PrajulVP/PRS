@@ -84,8 +84,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::name('admin.')->prefix('admin')->group(function () {
         Route::resource('sales-managers', SalesManagerController::class);
-        Route::patch('sales-managers/{salesManager}/activate', [SalesManagerController::class, 'activate'])->name('sales-managers.activate');
-        Route::patch('sales-managers/{salesManager}/deactivate', [SalesManagerController::class, 'deactivate'])->name('sales-managers.deactivate');
+        Route::patch('sales-managers/{sales_manager}/activate', [SalesManagerController::class, 'activate'])->name('sales-managers.activate');
+        Route::patch('sales-managers/{sales_manager}/deactivate', [SalesManagerController::class, 'deactivate'])->name('sales-managers.deactivate');
 
         Route::get('approvals/retailers', [PendingApprovalController::class, 'index'])->defaults('type', 'retailer')->name('approvals.retailer');
         Route::get('approvals/distributors', [PendingApprovalController::class, 'index'])->defaults('type', 'distributor')->name('approvals.distributor');
@@ -97,8 +97,8 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('distributors/{distributor}/deactivate', [DistributorController::class, 'deactivate'])->name('distributors.deactivate');
 
         Route::resource('field-staffs', FieldStaffController::class);
-        Route::patch('field-staffs/{fieldstaff}/activate', [FieldStaffController::class, 'activate'])->name('field-staffs.activate');
-        Route::patch('field-staffs/{fieldstaff}/deactivate', [FieldStaffController::class, 'deactivate'])->name('field-staffs.deactivate');
+        Route::patch('field-staffs/{field_staff}/activate', [FieldStaffController::class, 'activate'])->name('field-staffs.activate');
+        Route::patch('field-staffs/{field_staff}/deactivate', [FieldStaffController::class, 'deactivate'])->name('field-staffs.deactivate');
 
         // Field Staff Specialized Management (Expenses & Leaves)
         Route::get('field-staff/expenses', [\App\Http\Controllers\FieldStaffManagementController::class, 'expensesIndex'])->name('field-staff.expenses');

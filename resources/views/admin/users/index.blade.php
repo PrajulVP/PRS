@@ -493,6 +493,9 @@
                     error: function (xhr) {
                         console.error('Status Toggle Error:', xhr);
                         let msg = 'Error changing user status';
+                        let title = 'Action Failed';
+                        if (xhr.status === 403) title = 'Permission Denied';
+
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             msg = xhr.responseJSON.message;
                         } else if (xhr.responseText) {
@@ -507,12 +510,12 @@
                         if (window.Swal) {
                             Swal.fire({
                                 icon: 'error',
-                                title: 'Permission Denied',
+                                title: title,
                                 text: msg,
                                 confirmButtonColor: '#00497a'
-                            });
+                              });
                         } else {
-                            alert('Permission Denied: ' + msg);
+                            alert(title + ': ' + msg);
                         }
                     },
                     complete: function () {

@@ -131,19 +131,26 @@ class SalesManagerController extends Controller
 
     public function update(Request $request, SalesManager $sales_manager)
     {
-        if (!$sales_manager->user) {
-            $msg = 'User account missing for this Sales Manager. This record may be corrupted.';
-            return $request->ajax() 
-                ? response()->json(['success' => false, 'message' => $msg], 422) 
-                : redirect()->back()->with('error', $msg);
+        // Smart Repair: If user relationship is missing, check if a user with this email already exists
+        if (!$sales_manager->user && $request->filled('email')) {
+            $foundUser = User::where('email', $request->email)->first();
+            if ($foundUser) {
+                $sales_manager->user_id = $foundUser->id;
+                $sales_manager->save();
+                $sales_manager->load('user');
+            }
         }
+
+        $userId = $sales_manager->user ? $sales_manager->user->id : null;
+
         $request->validate([
             'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
             'email' => [
-                'required', 'string', 'email', 'max:255', 'unique:users,email,' . $sales_manager->user->id,
+                'required', 'string', 'email', 'max:255', 
+                $userId ? 'unique:users,email,' . $userId : 'unique:users,email',
                 'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
             ],
-            'password' => ['nullable', 'string', 'min:6', 'regex:/^\S+$/', 'confirmed'],
+            'password' => [$userId ? 'nullable' : 'required', 'string', 'min:6', 'regex:/^\S+$/', 'confirmed'],
             'contact_no' => ['required', 'digits:10', 'regex:/^[1-9][0-9]{9}$/'],
             'address' => ['required', 'string'],
             'pincode' => ['required', 'digits:6'],
@@ -151,6 +158,7 @@ class SalesManagerController extends Controller
             'name.regex' => 'The name must only contain letters and spaces.',
             'email.regex' => 'The email format is invalid or has an invalid top-level domain.',
             'password.regex' => 'The password must not contain spaces.',
+            'password.required' => 'A password is required to create a new account for this Sales Manager.',
             'contact_no.regex' => 'The contact number must not start with zero.',
         ]);
 
@@ -170,7 +178,19 @@ class SalesManagerController extends Controller
             $userData['status'] = $request->status;
         }
 
-        $sales_manager->user->update($userData);
+        if (!$userId) {
+            // Re-create the missing user record
+            $user = User::create(array_merge($userData, [
+                'role' => 'salesmanager',
+                'status' => $request->status ?? 'inactive',
+            ]));
+            $user->assignRole('salesmanager');
+            
+            $sales_manager->user_id = $user->id;
+            $sales_manager->save();
+        } else {
+            $sales_manager->user->update($userData);
+        }
 
         $sales_manager->update([
             'name' => $request->name,
@@ -213,17 +233,48 @@ class SalesManagerController extends Controller
 
     public function activate(SalesManager $sales_manager)
     {
+        // Resilient model loading if Route Model Binding fails or relationship is broken
+        if (!$sales_manager->exists) {
+            $id = request()->route('sales_manager');
+            $sales_manager = SalesManager::find($id);
+            if (!$sales_manager) {
+                return response()->json(['success' => false, 'message' => 'Sales Manager record not found.'], 404);
+            }
+        }
+
         /** @var User $currentUser */
         $currentUser = Auth::user();
-        if (!$currentUser->hasRole('superadmin')) {
+        if (!$currentUser->hasAnyRole(['superadmin', 'admin'])) {
             if (request()->ajax() || request()->expectsJson()) {
                 return response()->json(['success' => false, 'message' => 'You do not have permission to change the status of this user.'], 403);
             }
             return redirect()->route('admin.sales-managers.index')->with('error', 'You do not have permission to change the status of this user.');
         }
 
+        // 1. Repair by user_id if relationship is null but ID exists
+        if (!$sales_manager->user && $sales_manager->user_id) {
+            $u = User::find($sales_manager->user_id);
+            if ($u) {
+                $sales_manager->setRelation('user', $u);
+            }
+        }
+
+        // 2. Smart Repair: Search by Email or Contact No
         if (!$sales_manager->user) {
-            $msg = 'User account missing for this Sales Manager.';
+            $foundUser = User::where('email', $sales_manager->email)->first();
+            if (!$foundUser && $sales_manager->contact_no) {
+                $foundUser = User::where('contact_no', $sales_manager->contact_no)->where('role', 'salesmanager')->first();
+            }
+
+            if ($foundUser) {
+                $sales_manager->user_id = $foundUser->id;
+                $sales_manager->save();
+                $sales_manager->load('user');
+            }
+        }
+
+        if (!$sales_manager->user) {
+            $msg = 'Cannot activate: User account missing for this Sales Manager. Please edit and save the record to repair it.';
             return request()->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : redirect()->back()->with('error', $msg);
         }
 
@@ -240,13 +291,30 @@ class SalesManagerController extends Controller
 
     public function deactivate(SalesManager $sales_manager)
     {
+        // Resilient model loading if Route Model Binding fails or relationship is broken
+        if (!$sales_manager->exists) {
+            $id = request()->route('sales_manager');
+            $sales_manager = SalesManager::find($id);
+            if (!$sales_manager) {
+                return response()->json(['success' => false, 'message' => 'Sales Manager record not found.'], 404);
+            }
+        }
+
         /** @var User $currentUser */
         $currentUser = Auth::user();
-        if (!$currentUser->hasRole('superadmin')) {
+        if (!$currentUser->hasAnyRole(['superadmin', 'admin'])) {
             if (request()->ajax() || request()->expectsJson()) {
                 return response()->json(['success' => false, 'message' => 'You do not have permission to change the status of this user.'], 403);
             }
             return redirect()->route('admin.sales-managers.index')->with('error', 'You do not have permission to change the status of this user.');
+        }
+
+        // Repair by user_id if relationship is null but ID exists
+        if (!$sales_manager->user && $sales_manager->user_id) {
+            $u = User::find($sales_manager->user_id);
+            if ($u) {
+                $sales_manager->setRelation('user', $u);
+            }
         }
 
         if (!$sales_manager->user) {
