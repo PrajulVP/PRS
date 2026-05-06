@@ -147,14 +147,19 @@ class AuthApiController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || !$user->hasRole('fieldstaff')) {
-            return response()->json(['error' => 'Unauthorized or account not found.'], 404);
+        // Allow all roles for app login (except superadmin/admin if they use web login, but let's allow them if they have a role)
+        if (!$user || !in_array($user->role, ['salesmanager', 'distributor', 'fieldstaff', 'retailer'])) {
+            return response()->json(['error' => 'Account not found or not eligible for app login.'], 404);
         }
 
         $otp = $this->otpService->generateOtp();
-        $this->otpService->sendOtp($user, $otp);
+        $sent = $this->otpService->sendOtp($user, $otp);
 
-        return response()->json(['message' => 'OTP sent successfully (Check logs for mock OTP).']);
+        if (!$sent) {
+            return response()->json(['error' => 'Failed to send OTP. Please try again later.'], 500);
+        }
+
+        return response()->json(['message' => 'OTP sent successfully to your email.']);
     }
 
     /**
@@ -184,7 +189,7 @@ class AuthApiController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || !$user->hasRole('fieldstaff')) {
+        if (!$user || !in_array($user->role, ['salesmanager', 'distributor', 'fieldstaff', 'retailer'])) {
             return response()->json(['error' => 'Unauthorized.'], 403);
         }
 
@@ -201,19 +206,21 @@ class AuthApiController extends Controller
             return response()->json(['error' => 'Failed to generate token.'], 500);
         }
 
-        // Device Binding check
-        $deviceId = $request->input('device_id') ?? $request->header('X-Device-ID');
-        if (!$deviceId) {
-            return response()->json(['error' => 'Device ID required for Field Staff.'], 403);
-        }
+        // Device Binding check for Field Staff (Optional for others, but let's stick to user's requirement for Field Staff)
+        if ($user->hasRole('fieldstaff')) {
+            $deviceId = $request->input('device_id') ?? $request->header('X-Device-ID');
+            if (!$deviceId) {
+                return response()->json(['error' => 'Device ID required for Field Staff.'], 403);
+            }
 
-        if (empty($user->device_uuid)) {
-            $user->update(['device_uuid' => $deviceId, 'device_bound_at' => now()]);
-        } elseif ($user->device_uuid !== $deviceId) {
-            return response()->json([
-                'error' => 'This account is bound to another device.',
-                'message' => 'Please contact your administrator to reset your device binding.'
-            ], 403);
+            if (empty($user->device_uuid)) {
+                $user->update(['device_uuid' => $deviceId, 'device_bound_at' => now()]);
+            } elseif ($user->device_uuid !== $deviceId) {
+                return response()->json([
+                    'error' => 'This account is bound to another device.',
+                    'message' => 'Please contact your administrator to reset your device binding.'
+                ], 403);
+            }
         }
 
         return response()->json([

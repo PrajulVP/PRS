@@ -60,15 +60,17 @@ class FieldStaffActionApiController extends Controller
         }
 
         // Prevent duplicate punch per day
-        $exists = AttendanceLog::where('user_id', $user->id)
+        $lastLog = AttendanceLog::where('user_id', $user->id)
             ->where('type', $request->type)
             ->whereDate('timestamp', Carbon::today())
-            ->exists();
+            ->first();
 
-        if ($exists) {
+        if ($lastLog) {
             return response()->json([
-                'error' => 'You have already ' . str_replace('_', ' ', $request->type) . 'ed for today.'
-            ], 422);
+                'message' => 'You have already ' . str_replace('_', ' ', $request->type) . 'for today.',
+                'already_punched' => true,
+                'log' => $lastLog
+            ], 200);
         }
 
         $log = AttendanceLog::create([
