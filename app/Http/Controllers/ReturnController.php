@@ -438,6 +438,8 @@ class ReturnController extends Controller
                 ];
             })
         ];
+    }
+
     /**
      * Get paginated/searchable delivered orders for the current user.
      */
