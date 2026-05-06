@@ -1355,7 +1355,7 @@
                 {
                     data: 'distributor_name',
                     name: 'distributor.user.name',
-                    visible: isAdmin || isSalesManager,
+                    visible: isAdmin || isSalesManager || isFieldStaff,
                     render: function(data, type, row) {
                         if (type !== 'display') return data;
                         return `<span class="fw-bold text-primary">${data}</span>`;

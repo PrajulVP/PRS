@@ -790,13 +790,13 @@
             $('#distributors-table').on('click', '.status-toggle', function () {
                 let id = $(this).data('id'), status = $(this).data('status'), next = status === 'active' ? 'inactive' : 'active';
                 
-                // Frontend Permission Check (Allow Admin & Superadmin)
-                const canManage = @json(Auth::user()->hasAnyRole(['superadmin', 'admin']) || Auth::user()->role === 'superadmin' || Auth::user()->role === 'admin');
-                if (!canManage) {
+                // Frontend Permission Check (Allow ONLY Superadmin)
+                const isSuperAdmin = {{ Auth::user()->hasRole('superadmin') ? 'true' : 'false' }};
+                if (!isSuperAdmin) {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Permission Denied',
-                        text: 'You do not have permission to change the status of distributors.',
+                        title: 'Superadmin Required',
+                        text: 'Only a Superadmin can activate or deactivate distributors.',
                         confirmButtonColor: '#00497a'
                     });
                     return;

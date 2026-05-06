@@ -238,10 +238,27 @@ class AuthApiController extends Controller
     {
         if (!$user) return null;
 
-        $user->load(['distributor', 'retailer', 'fieldStaff', 'salesManager']);
+        // Only load the relationship relevant to the user's role
+        switch ($user->role) {
+            case 'distributor':
+                $user->load('distributor');
+                break;
+            case 'retailer':
+                $user->load('retailer');
+                break;
+            case 'fieldstaff':
+                $user->load('fieldStaff');
+                break;
+            case 'salesmanager':
+                $user->load('salesManager');
+                break;
+        }
 
-        // Hide father's and mother's name for everyone except fieldstaff
-        if (!$user->hasRole('fieldstaff')) {
+        // Ensure sensitive and unnecessary fields are hidden
+        $user->makeHidden(['otp', 'otp_expires_at', 'password', 'remember_token']);
+
+        // Hide family details for everyone except fieldstaff
+        if ($user->role !== 'fieldstaff') {
             $user->makeHidden(['fathers_name', 'mothers_name']);
         }
 

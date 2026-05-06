@@ -58,7 +58,7 @@ class DistributorController extends Controller
                     return $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory('distributors', 'delete');
                 })
                 ->addColumn('can_activate', function($row) use ($currentUser) {
-                    return $currentUser->hasRole('superadmin');
+                    return $currentUser->hasAnyRole(['admin', 'superadmin']);
                 })
                 ->make(true);
         }

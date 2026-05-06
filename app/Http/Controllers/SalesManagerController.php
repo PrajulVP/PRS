@@ -38,7 +38,7 @@ class SalesManagerController extends Controller
                     return $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory('sales_managers', 'delete');
                 })
                 ->addColumn('can_activate', function($row) use ($currentUser) {
-                    return $currentUser->hasRole('superadmin');
+                    return $currentUser->hasAnyRole(['admin', 'superadmin']);
                 })
                 ->addColumn('pincode', function ($row) {
                     return optional($row->user)->pincode ?? 'N/A';
