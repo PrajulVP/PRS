@@ -95,6 +95,9 @@ class RetailerController extends Controller
                 ->addColumn('loyalty_points', function ($row) {
                     return $row->loyalty_points ?? 0;
                 })
+                ->addColumn('credit_balance', function ($row) {
+                    return $row->credit_balance ?? 0;
+                })
                 ->addColumn('latitude', function ($row) {
                     return $row->latitude ?? '';
                 })

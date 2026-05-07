@@ -472,7 +472,12 @@ $(document).ready(function() {
     
     let table = $('#returnsTable').DataTable({
         processing: true,
-        ajax: "{{ route('admin.returns.index') }}",
+        ajax: {
+            url: "{{ route('admin.returns.index') }}",
+            data: function(d) {
+                d.order_type = $('#returnTypeTabs .nav-link.active').data('type') || 'retailer';
+            }
+        },
         columns: [
             { 
                 data: 'return_code',
@@ -564,9 +569,6 @@ $(document).ready(function() {
         ],
         order: [[0, 'desc']],
         dom: '<"d-flex flex-column flex-md-row justify-content-between align-items-center p-3 gap-3"<"d-flex align-items-center"l><"d-flex align-items-center"B><"d-flex align-items-center"f>>t<"d-flex justify-content-between align-items-center p-3"ip>',
-        search: {
-            search: "retailer" 
-        },
         buttons: [
             {
                 extend: 'excel',
@@ -613,9 +615,7 @@ $(document).ready(function() {
     $('#returnTypeTabs .nav-link').click(function() {
         $('#returnTypeTabs .nav-link').removeClass('active');
         $(this).addClass('active');
-        
-        let type = $(this).data('type');
-        table.search(type === 'retailer' ? 'retailer' : 'distributor').draw();
+        table.ajax.reload();
     });
 
     $(document).on('click', '.view-btn', function() {

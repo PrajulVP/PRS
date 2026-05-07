@@ -5,42 +5,47 @@
     display: flex !important;
     align-items: center;
     justify-content: center;
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
     border-radius: 50% !important;
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: rgba(255, 255, 255, 0.1) !important;
     transition: all 0.3s ease;
     cursor: pointer;
     border: none !important;
     padding: 0 !important;
+    overflow: hidden !important;
   }
 
   body:not(.dark-only) .notification-box, 
   body:not(.dark-only) .mode-toggle {
-    background-color: #f1f5f9;
+    background-color: #f1f5f9 !important;
   }
 
   .nav-menus li {
     background: transparent !important;
+    background-color: transparent !important;
     border: none !important;
     padding: 0 !important;
-    margin: 0 5px !important;
+    margin: 0 8px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    border-radius: 50% !important;
   }
 
   .mode-toggle.mode {
       box-shadow: none !important;
-      background-color: rgba(255, 255, 255, 0.08) !important;
       border-radius: 50% !important;
-      width: 42px;
-      height: 42px;
+      width: 40px;
+      height: 40px;
   }
 
   .notification-box i, .mode-toggle i {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
   }
 
   .notification-box .badge {

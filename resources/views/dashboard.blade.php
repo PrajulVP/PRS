@@ -378,6 +378,14 @@
                     .dark-only .retailer-rep-name {
                         color: #fff !important;
                     }
+                    /* Force white font for chart tooltips as they use dark backgrounds */
+                    .apexcharts-tooltip, 
+                    .apexcharts-tooltip *,
+                    .apexcharts-tooltip-title, 
+                    .apexcharts-tooltip-text, 
+                    .apexcharts-tooltip-y-group {
+                        color: #ffffff !important;
+                    }
                 </style>
 
                 @php 
@@ -1428,6 +1436,11 @@
                 @push('scripts')
                     <script>
                         document.addEventListener('DOMContentLoaded', function () {
+                            // Theme Detection for charts
+                            var isDark = document.body.classList.contains('dark-only') || document.documentElement.getAttribute('data-theme') === 'dark';
+                            var chartTheme = isDark ? 'dark' : 'light';
+                            var tooltipTheme = 'dark'; // Force dark tooltips for white font visibility
+
                             // Initialize Charts
                             window.charts = {};
 
@@ -1441,6 +1454,7 @@
                                         stroke: { curve: 'smooth', width: 3 },
                                         xaxis: { categories: categories },
                                         colors: [color],
+                                        tooltip: { theme: tooltipTheme },
                                         fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.6, opacityTo: 0.1, stops: [0, 90, 100] } }
                                     };
                                     var chart = new ApexCharts(document.querySelector(selector), options);
@@ -1478,7 +1492,7 @@
                                     stroke: { width: 0 },
                                     plotOptions: { pie: { donut: { size: '65%' } } },
                                     dataLabels: { enabled: false },
-                                    tooltip: { enabled: orderTotal > 0 },
+                                    tooltip: { enabled: orderTotal > 0, theme: tooltipTheme },
                                     legend: { position: 'bottom' },
                                     responsive: [{
                                         breakpoint: 480,
@@ -1505,6 +1519,7 @@
                                         stroke: { curve: 'smooth', width: 3 },
                                         xaxis: { categories: @json($monthlyDistributorOrdersChart['labels']) },
                                         colors: ['#8b5cf6'],
+                                        tooltip: { theme: tooltipTheme },
                                         fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.6, opacityTo: 0.1, stops: [0, 90, 100] } }
                                     };
                                     window.charts.monthlyDistOrdersChart = new ApexCharts(document.querySelector("#monthlyDistOrdersChart"), monthlyDistOptions);
@@ -1547,6 +1562,7 @@
                                         legend: { position: 'right' },
                                         tooltip: { 
                                             enabled: hasBrandData,
+                                            theme: tooltipTheme,
                                             y: {
                                                 formatter: (val) => '₹' + val.toLocaleString()
                                             }

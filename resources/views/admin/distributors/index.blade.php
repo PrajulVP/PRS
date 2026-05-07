@@ -294,7 +294,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Status</label>
-                                <select name="status" id="edit_status" class="form-select">
+                                <select name="status" id="edit_status" class="form-select" {{ Auth::user()->hasRole('superadmin') ? '' : 'disabled' }}>
                                     <option value="active">Active</option>
                                     <option value="inactive">Inactive</option>
                                 </select>

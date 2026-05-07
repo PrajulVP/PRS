@@ -166,12 +166,12 @@
 
     <div class="container-fluid">
         <div class="row">
-            <!-- Total Points Card (Horizontal & Simple) -->
-            <div class="col-xl-4 col-lg-6 mb-4 entrance-animate delay-1">
+            <!-- Total Points Card -->
+            <div class="col-xl-4 col-md-6 mb-4 entrance-animate delay-1">
                 <div class="card shadow-sm border-0 loyalty-widget-card overflow-hidden">
                     <div class="card-body d-flex align-items-center py-3 px-4">
                         <div class="coin-wrapper me-4">
-                            <div class="big-gold-coin-dashboard" style="margin: 0; width: 60px; height: 60px;">
+                            <div class="big-gold-coin-dashboard" style="margin: 0; width: 60px; height: 60px; background: radial-gradient(ellipse at center, #ffd700 0%, #daa520 100%);">
                                 <div class="coin-inner-dashboard" style="font-size: 30px;">
                                     <i class="fa fa-star"></i>
                                 </div>
@@ -181,8 +181,24 @@
                             <h1 class="fw-800 mb-0 display-6 line-height-1" style="line-height: 1;">{{ number_format($totalPoints, 2) }}</h1>
                             <p class="text-white opacity-75 text-uppercase mb-0 fw-bold small" style="letter-spacing: 0.5px; font-size: 0.75rem;">Loyalty Points</p>
                         </div>
-                        <div class="ms-auto">
-                            <i class="fa fa-angle-right opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Credit Balance Card -->
+            <div class="col-xl-4 col-md-6 mb-4 entrance-animate delay-1">
+                <div class="card shadow-sm border-0 overflow-hidden" style="border-radius: 20px; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);">
+                    <div class="card-body d-flex align-items-center py-3 px-4">
+                        <div class="coin-wrapper me-4">
+                            <div class="big-gold-coin-dashboard" style="margin: 0; width: 60px; height: 60px; background: radial-gradient(ellipse at center, #00d2ff 0%, #3a7bd5 100%);">
+                                <div class="coin-inner-dashboard" style="font-size: 30px;">
+                                    <i class="fa fa-wallet"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 text-white">
+                            <h1 class="fw-800 mb-0 display-6 line-height-1 text-white" style="line-height: 1;">₹{{ number_format($creditBalance, 2) }}</h1>
+                            <p class="text-white opacity-75 text-uppercase mb-0 fw-bold small" style="letter-spacing: 0.5px; font-size: 0.75rem;">Wallet Credits</p>
                         </div>
                     </div>
                 </div>
@@ -210,38 +226,29 @@
                                     </tr>
                                 </thead>
                                 <tbody style="color: var(--med-text-main);">
-                                    @forelse($orders as $order)
+                                    @forelse($unifiedHistory as $item)
                                         <tr>
-                                            <td>{{ $order->updated_at->format('d M Y, h:i A') }}</td>
-                                            <td><span class="fw-bold text-primary">#{{ $order->order_code }}</span></td>
+                                            <td>{{ \Carbon\Carbon::parse($item->date)->format('d M Y, h:i A') }}</td>
+                                            <td><span class="fw-bold {{ $item->type === 'CR' ? 'text-info' : 'text-primary' }}">{{ $item->reference }}</span></td>
                                             <td class="small">
-                                                @foreach($order->items as $item)
-                                                    <div class="mb-1">
-                                                        @if($item->product)
-                                                            <span class="fw-bold">{{ $item->product->product_name }}</span>
-                                                            @if($item->product->generic_name && $item->product->generic_name !== 'N/A')
-                                                                <span class="text-muted small">({{ $item->product->generic_name }})</span>
-                                                            @endif
-                                                        @else
-                                                            <span class="fw-bold">{{ $item->missing_product_name ?? 'Unknown Product #' . $item->product_id }}</span>
-                                                            @if($item->missing_product_code && $item->missing_product_code !== 'N/A')
-                                                                <span class="text-muted small">({{ $item->missing_product_code }})</span>
-                                                            @endif
-                                                        @endif
-                                                        <br>
-                                                        <span class="small">{{ $item->quantity }} {{ $item->unit }}</span>
-                                                    </div>
-                                                @endforeach
+                                                {{ $item->details }}
                                             </td>
-                                            <td class="fw-bold">{{ number_format($order->loyalty_points_earned, 2) }}</td>
+                                            <td class="fw-bold">
+                                                {{ $item->type === 'CR' ? '₹' : '' }}{{ number_format($item->amount, 2) }}
+                                            </td>
                                             <td class="text-center">
-                                                <span class="badge {{ $order->status === 'delivered' ? 'bg-success' : 'bg-info' }} text-uppercase" style="font-size: 10px;">
-                                                    {{ str_replace('_', ' ', $order->status) }}
+                                                @php
+                                                    $badgeClass = 'bg-primary';
+                                                    if ($item->status === 'delivered') $badgeClass = 'bg-success';
+                                                    if ($item->status === 'CREDIT') $badgeClass = 'bg-info';
+                                                @endphp
+                                                <span class="badge {{ $badgeClass }} text-uppercase" style="font-size: 10px;">
+                                                    {{ str_replace('_', ' ', $item->status) }}
                                                 </span>
                                             </td>
                                         </tr>
                                     @empty
-                                        <tr><td colspan="5" class="text-center py-5">No loyalty points recorded yet.</td></tr>
+                                        <tr><td colspan="5" class="text-center py-5">No loyalty points or credits recorded yet.</td></tr>
                                     @endforelse
                                 </tbody>
                             </table>
@@ -254,7 +261,6 @@
 @endsection
 
 @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script>
         $(document).ready(function () {
             $('#retailer-points-table').DataTable({
@@ -275,14 +281,6 @@
                     search: "_INPUT_",
                     searchPlaceholder: "Filter transactions..."
                 }
-            });
-
-            // Trigger confetti on page load
-            confetti({
-                particleCount: 150,
-                spread: 70,
-                origin: { y: 0.6 },
-                colors: ['#ffd700', '#daa520', '#b8860b']
             });
         });
     </script>

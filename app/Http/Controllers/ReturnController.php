@@ -46,6 +46,10 @@ class ReturnController extends Controller
             $query->where('sales_manager_id', $user->sales_manager_id ?? ($user->salesManager->id ?? null));
         }
 
+        if ($request->filled('order_type')) {
+            $query->where('order_type', $request->order_type);
+        }
+
         if ($request->ajax()) {
             return response()->json([
                 'data' => $query->latest()->get()

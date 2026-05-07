@@ -361,6 +361,12 @@ class DashboardController extends Controller
 
     private function getBrandSalesDistribution($startDate, $endDate, $user = null)
     {
+        // Get all unique brands in the system
+        $allBrands = \App\Models\Product::distinct('brand')->pluck('brand')
+            ->map(fn($b) => $b ?: 'Standard')
+            ->unique()
+            ->values();
+
         $query = \App\Models\RetailerOrderItem::join('products', 'retailer_order_items.product_id', '=', 'products.id')
             ->join('retailer_orders', 'retailer_order_items.retailer_order_id', '=', 'retailer_orders.id')
             ->where('retailer_orders.status', 'delivered')
@@ -373,12 +379,21 @@ class DashboardController extends Controller
 
         $distribution = $query->select('products.brand', DB::raw('SUM(retailer_order_items.total_amount) as revenue'))
             ->groupBy('products.brand')
-            ->orderByDesc('revenue')
-            ->get();
+            ->get()
+            ->keyBy(fn($item) => $item->brand ?: 'Standard');
+
+        $finalData = [];
+        foreach ($allBrands as $brand) {
+            $revenue = isset($distribution[$brand]) ? (float)$distribution[$brand]->revenue : 0.0;
+            $finalData[$brand] = $revenue;
+        }
+
+        // Sort by revenue descending to keep the chart meaningful
+        arsort($finalData);
 
         return [
-            'labels' => $distribution->pluck('brand')->map(fn($b) => $b ?: 'Standard')->toArray(),
-            'values' => $distribution->pluck('revenue')->map(fn($v) => (float)$v)->toArray(),
+            'labels' => array_keys($finalData),
+            'values' => array_values($finalData),
         ];
     }
 

@@ -26,31 +26,66 @@ class LoyaltyPointsController extends Controller
                 return redirect()->back()->with('error', 'Retailer profile not found.');
             }
 
-            // Get history of points earned (show all finalized orders)
+            // Use persistent loyalty points balance
+            $totalPoints = $retailer->loyalty_points ?? 0;
+            $creditBalance = $retailer->credit_balance ?? 0;
+
+            // --- COMBINED HISTORY (Orders + Credits) ---
             $orders = $retailer->retailerOrders()
                 ->with('items.product')
                 ->whereIn('status', ['approved', 'delivered'])
-                ->orderBy('updated_at', 'desc')
                 ->get();
 
-            // Handle missing products gracefully
-            $orders->each(function($order) {
-                $order->items->each(function($item) {
-                    if (!$item->product) {
-                        $inventory = \App\Models\Inventory::where('product_id', $item->product_id)->first();
-                        $item->missing_product_name = $inventory ? $inventory->product_name : 'Unknown Product #' . $item->product_id;
-                        $item->missing_product_code = $inventory ? $inventory->distributor_product_code : 'N/A';
-                    }
-                });
+            $credits = \App\Models\CreditNote::where('user_id', $retailer->user_id)
+                ->with('returnRequest')
+                ->where('status', 'active')
+                ->get();
+
+            // Transform both to a unified history format
+            $history = $orders->map(function ($order) {
+                return (object)[
+                    'date' => $order->updated_at,
+                    'reference' => '#' . $order->order_code,
+                    'details' => $order->items->map(function ($item) {
+                        $name = $item->product ? $item->product->product_name : ($item->missing_product_name ?? 'Unknown Product');
+                        return "{$item->quantity}x {$name}";
+                    })->implode(', '),
+                    'amount' => $order->loyalty_points_earned,
+                    'status' => $order->status,
+                    'type' => 'LP'
+                ];
             });
 
-            $totalPoints = $retailer->retailerOrders()
-                ->whereNotNull('loyalty_points_earned')
-                ->where('loyalty_points_earned', '>', 0)
-                ->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED)
-                ->sum('loyalty_points_earned');
+            $creditHistory = $credits->map(function ($credit) {
+                $details = 'Refund Credit';
+                if ($credit->returnRequest) {
+                    $rr = $credit->returnRequest;
+                    $details .= ": " . ($rr->product_name ?? 'Product');
+                    $details .= " ({$rr->quantity} {$rr->unit})";
+                    $details .= " [Return ID: #{$rr->id}]";
+                }
+                if ($credit->notes) {
+                    $details .= " | Notes: " . $credit->notes;
+                }
 
-            return view('admin.loyalty_points.retailer_view', compact('retailer', 'orders', 'totalPoints'));
+                return (object)[
+                    'date' => $credit->created_at,
+                    'reference' => 'CN-' . ($credit->credit_code ?? $credit->id),
+                    'details' => $details,
+                    'amount' => $credit->amount,
+                    'status' => 'CREDIT',
+                    'type' => 'CR'
+                ];
+            });
+
+            $unifiedHistory = $history->concat($creditHistory)->sortByDesc('date');
+
+            return view('admin.loyalty_points.retailer_view', [
+                'retailer' => $retailer,
+                'totalPoints' => $totalPoints,
+                'creditBalance' => $creditBalance,
+                'unifiedHistory' => $unifiedHistory
+            ]);
         }
 
         // 2. For other roles (Admin, Manager, Field Staff), show selector page
@@ -79,12 +114,7 @@ class LoyaltyPointsController extends Controller
         // Add Aggregates
         $retailersQuery->withCount(['retailerOrders as total_orders' => function ($query) {
             $query->whereIn('status', ['approved', 'delivered']);
-        }])->withSum(['retailerOrders as dynamic_loyalty_points' => function ($query) {
-            $query->whereNotNull('loyalty_points_earned')
-                ->where('loyalty_points_earned', '>', 0)
-                ->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED);
-        }], 'loyalty_points_earned')
-        ->withMax(['retailerOrders as last_order_date' => function ($query) {
+        }])->withMax(['retailerOrders as last_order_date' => function ($query) {
             $query->whereIn('status', ['approved', 'delivered']);
         }], 'updated_at');
 
@@ -104,11 +134,55 @@ class LoyaltyPointsController extends Controller
                 $orders = $targetRetailer->retailerOrders()
                     ->with('items.product')
                     ->whereIn('status', ['approved', 'delivered'])
-                    ->orderBy('updated_at', 'desc');
+                    ->get()
+                    ->map(function($o) {
+                        $o->type = 'order';
+                        return $o;
+                    });
 
-                return DataTables::of($orders)
+                $credits = \App\Models\CreditNote::where('user_id', $targetRetailer->user_id)
+                    ->with('returnRequest')
+                    ->get()
+                    ->map(function($c) {
+                        $summary = '';
+                        $returnId = null;
+                        if ($c->returnRequest) {
+                            $rr = $c->returnRequest;
+                            $productName = $rr->product_name ?? 'Unknown Product';
+                            $summary = '<div class="mb-1"><span class="fw-bold">' . $productName . '</span>';
+                            if (!empty($rr->side) && strtoupper(trim($rr->side)) !== 'N/A') {
+                                $summary .= ' <span class="text-muted small">(' . $rr->side . ')</span>';
+                            }
+                            if (!empty($rr->size) && strtoupper(trim($rr->size)) !== 'N/A') {
+                                $summary .= ' <span class="text-muted small">(' . $rr->size . ')</span>';
+                            }
+                            $summary .= '<br><span class="small">' . $rr->quantity . ' ' . $rr->unit . '</span>';
+                            $summary .= '<br><span class="small">Return ID: #' . $rr->id . '</span>';
+                            $summary .= '</div>';
+                            $returnId = $rr->id;
+                        }
+                        return (object)[
+                            'id' => $c->id,
+                            'order_code' => $c->credit_code,
+                            'updated_at' => $c->updated_at,
+                            'loyalty_points_earned' => $c->amount,
+                            'status' => 'credit',
+                            'type' => 'credit',
+                            'notes' => $c->notes,
+                            'product_summary' => $summary,
+                            'return_id' => $returnId
+                        ];
+                    });
+
+                $merged = $orders->concat($credits)->sortByDesc('updated_at');
+
+                return DataTables::of($merged)
                     ->addIndexColumn()
                     ->addColumn('product_summary', function ($row) {
+                        if (isset($row->type) && $row->type === 'credit') {
+                            $notes = !empty($row->notes) ? '<div class="small text-muted mt-1">Notes: '.$row->notes.'</div>' : '';
+                            return '<div class="text-info fw-bold"><i class="fa fa-receipt me-1"></i> Credit Note Issued</div>' . ($row->product_summary ?? '') . $notes;
+                        }
                         return $row->items->map(function ($item) {
                             $pName = $item->product->product_name ?? 'Product';
                             $pGeneric = $item->product->generic_name ?? null;
@@ -132,9 +206,17 @@ class LoyaltyPointsController extends Controller
                         return $row->updated_at->format('d M Y, h:i A');
                     })
                     ->editColumn('loyalty_points_earned', function ($row) {
-                        return number_format($row->loyalty_points_earned ?? 0, 2);
+                        $prefix = (isset($row->type) && $row->type === 'credit') ? '+' : '';
+                        return $prefix . number_format($row->loyalty_points_earned ?? 0, 2);
                     })
-                    ->rawColumns(['product_summary'])
+                    ->editColumn('status', function ($row) {
+                        if (isset($row->type) && $row->type === 'credit') {
+                            return '<span class="badge bg-info text-white">CREDIT</span>';
+                        }
+                        $statusClass = $row->status === 'delivered' ? 'success' : 'primary';
+                        return '<span class="badge bg-'.$statusClass.' text-white">'.strtoupper($row->status).'</span>';
+                    })
+                    ->rawColumns(['product_summary', 'status'])
                     ->make(true);
             }
 
@@ -165,9 +247,11 @@ class LoyaltyPointsController extends Controller
                     return $row->last_order_date ? \Carbon\Carbon::parse($row->last_order_date)->format('d M Y') : '<span class="text-muted">N/A</span>';
                 })
                 ->editColumn('dynamic_loyalty_points', function ($row) {
-                    $pts = number_format($row->dynamic_loyalty_points ?? 0, 2);
+                    $pts = number_format($row->loyalty_points ?? 0, 2);
+                    $credits = number_format($row->credit_balance ?? 0, 2);
                     return '<div class="text-center">
-                                <span class="badge-points px-3 py-2" style="font-size: 0.9rem;">'.$pts.'</span>
+                                <span class="badge-points px-3 py-2 mb-1 d-block" style="font-size: 0.9rem;" title="Loyalty Points">'.$pts.' LP</span>
+                                <span class="badge bg-info text-white px-2 py-1" style="font-size: 0.7rem;" title="Credit Balance">₹'.$credits.' Cr</span>
                             </div>';
                 })
                 ->addColumn('action', function ($row) {
@@ -208,7 +292,7 @@ class LoyaltyPointsController extends Controller
 
         // --- HANDLE NON-AJAX REQUEST (Initial View Load) ---
         $retailers = (clone $retailersQuery)->get();
-        $globalLoyaltyPoints = $retailers->sum('dynamic_loyalty_points');
+        $globalLoyaltyPoints = $retailers->sum('loyalty_points');
 
         $salesManagers = collect();
         $fieldStaffs = collect();
@@ -255,7 +339,8 @@ class LoyaltyPointsController extends Controller
             ->first();
 
         return response()->json([
-            'total_points' => $totalPoints,
+            'total_points' => $retailer->loyalty_points ?? 0,
+            'credit_balance' => $retailer->credit_balance ?? 0,
             'is_top_retailer' => ($isTop && $isTop->id === $retailer->id),
             'redeemed_points' => 0,
             'shop_name' => $retailer->shop_name,

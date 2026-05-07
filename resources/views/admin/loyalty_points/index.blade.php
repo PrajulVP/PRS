@@ -246,7 +246,7 @@
                                 <select id="retailer_selector" class="form-select select2">
                                     <option value="">-- Quick Search Retailer --</option>
                                     @foreach($retailers as $r)
-                                        <option value="{{ $r->id }}" data-points="{{ number_format($r->dynamic_loyalty_points, 2) }}">
+                                        <option value="{{ $r->id }}" data-points="{{ number_format($r->loyalty_points, 2) }}" data-credits="{{ number_format($r->credit_balance, 2) }}">
                                             {{ $r->shop_name }} ({{ $r->user->name }})
                                         </option>
                                     @endforeach
@@ -411,38 +411,62 @@
                         </div>
                     </div>
 
-                    <!-- Points Card -->
-                    <div class="col-xl-4 mb-4">
+                    <!-- Loyalty Points Card -->
+                    <div class="col-xl-4 col-md-6 mb-4">
                         <div class="card h-100 shadow-sm border-0 overflow-hidden" style="background: var(--med-bg-card); border-radius: 20px;">
                             <div class="card-body d-flex flex-column justify-content-center align-items-center text-center p-4">
-                                <div class="mb-4">
-                                    <div class="big-gold-coin-dashboard">
+                                <div class="mb-3">
+                                    <div class="big-gold-coin-dashboard" style="background: radial-gradient(ellipse at center, #ffd700 0%, #daa520 100%);">
                                         <div class="coin-inner-dashboard">
                                             <i class="fa fa-star"></i>
                                         </div>
                                     </div>
                                 </div>
-                                <h1 id="display_total_points" class="display-5 fw-800 text-primary mb-1">0.00</h1>
-                                <p class="text-muted text-uppercase fw-bold small m-0 letter-spacing-1">Current Loyalty Points</p>
-                                <div class="mt-4 px-3 py-2 rounded-pill bg-light w-100 border">
-                                    <small class="text-muted">Calculated from Delivered Orders</small>
+                                <h1 id="display_total_points" class="display-6 fw-800 text-primary mb-1">0.00</h1>
+                                <p class="text-muted text-uppercase fw-bold small m-0 letter-spacing-1">Loyalty Points</p>
+                                <div class="mt-3 px-3 py-1 rounded-pill bg-light w-100 border">
+                                    <small class="text-muted" style="font-size: 0.65rem;">Earned from Approved Orders</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Credit Balance Card -->
+                    <div class="col-xl-4 col-md-6 mb-4">
+                        <div class="card h-100 shadow-sm border-0 overflow-hidden" style="background: var(--med-bg-card); border-radius: 20px;">
+                            <div class="card-body d-flex flex-column justify-content-center align-items-center text-center p-4">
+                                <div class="mb-3">
+                                    <div class="big-gold-coin-dashboard" style="background: radial-gradient(ellipse at center, #00d2ff 0%, #3a7bd5 100%);">
+                                        <div class="coin-inner-dashboard">
+                                            <i class="fa fa-wallet"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h1 id="display_credit_balance" class="display-6 fw-800 text-info mb-1">₹0.00</h1>
+                                <p class="text-muted text-uppercase fw-bold small m-0 letter-spacing-1">Wallet Credits</p>
+                                <div class="mt-3 px-3 py-1 rounded-pill bg-light w-100 border">
+                                    <small class="text-muted" style="font-size: 0.65rem;">From Returns & Refund Notes</small>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Redemption Summary -->
+                    <!-- Total Wallet Summary -->
                     <div class="col-xl-4 mb-4">
                         <div class="card h-100 shadow-sm border-0" style="background: var(--med-bg-card); border-radius: 20px;">
                             <div class="card-body p-4 d-flex flex-column">
                                 <h6 class="fw-bold heading-theme mb-3">Redemption Summary</h6>
                                 <div class="mt-auto">
                                     <div class="d-flex justify-content-between mb-2">
-                                        <span class="text-muted small">Available for Use</span>
-                                        <span class="fw-bold text-success" id="available_points">0.00</span>
+                                        <span class="text-muted small">Loyalty Pts</span>
+                                        <span class="fw-bold text-primary" id="available_points">0.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted small">Refund Credits</span>
+                                        <span class="fw-bold text-info" id="available_credits">₹0.00</span>
                                     </div>
                                     <div class="progress mb-4" style="height: 6px;">
-                                        <div class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
                                     </div>
                                     <button class="btn btn-primary w-100 rounded-pill py-2 fw-bold disabled" style="opacity: 0.6">Redeem Rewards (Coming Soon)</button>
                                 </div>
@@ -588,10 +612,14 @@
             function formatRetailer(state) {
                 if (!state.id) return state.text;
                 let points = $(state.element).data('points') || '0.00';
+                let credits = $(state.element).data('credits') || '0.00';
                 return $(
                     `<div class="d-flex justify-content-between align-items-center">
                         <div class="fw-bold">${state.text}</div>
-                        <div class="points-box-simple ms-3">${points} Pts</div>
+                        <div class="d-flex gap-2">
+                            <div class="points-box-simple">${points} Pts</div>
+                            <div class="points-box-simple" style="background: #e0f2fe; color: #0369a1;">₹${credits} Cr</div>
+                        </div>
                     </div>`
                 );
             }
@@ -599,10 +627,14 @@
             function formatRetailerSelection(state) {
                 if (!state.id) return state.text;
                 let points = $(state.element).data('points') || '0.00';
+                let credits = $(state.element).data('credits') || '0.00';
                 return $(
                     `<div class="d-flex justify-content-between align-items-center w-100">
-                        <span class="fw-bold text-truncate" style="max-width: 70%">${state.text}</span>
-                        <div class="points-box-simple ms-2">${points} Pts</div>
+                        <span class="fw-bold text-truncate" style="max-width: 60%">${state.text}</span>
+                        <div class="d-flex gap-1">
+                            <div class="points-box-simple">${points} Pts</div>
+                            <div class="points-box-simple" style="background: #e0f2fe; color: #0369a1;">₹${credits}</div>
+                        </div>
                     </div>`
                 );
             }
@@ -646,6 +678,7 @@
                     $('#display_region').text(data.district + ', ' + data.area);
                     $('#display_joined').text(data.joined_date);
                     $('#display_total_points, #available_points').text(parseFloat(data.total_points).toFixed(2));
+                    $('#display_credit_balance, #available_credits').text('₹' + parseFloat(data.credit_balance).toFixed(2));
                     
                     // Show trophy if top retailer
                     if (data.is_top_retailer) {
@@ -705,11 +738,7 @@
                         {
                             data: 'status',
                             name: 'status',
-                            className: 'text-center',
-                            render: function (data) {
-                                let badgeClass = data.toLowerCase() === 'delivered' ? 'bg-success' : 'bg-info';
-                                return `<span class="badge ${badgeClass} text-uppercase" style="font-size: 10px;">${data}</span>`;
-                            }
+                            className: 'text-center'
                         }
                     ],
                     order: [[0, 'desc']],
