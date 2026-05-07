@@ -3526,6 +3526,26 @@
                 ]
             }
         },
+        "/api/sales-manager/online-fieldstaffs": {
+            "get": {
+                "tags": [
+                    "Sales Manager Dashboard"
+                ],
+                "summary": "List online field staff",
+                "description": "Returns a list of field staff who are currently punched in.",
+                "operationId": "edc2e989d0d5c3569a38cec6dd5c8ecd",
+                "responses": {
+                    "200": {
+                        "description": "List of online field staff"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/sales-manager/live-tracking": {
             "get": {
                 "tags": [
@@ -3534,9 +3554,70 @@
                 "summary": "Get Live Tracking Data for Field Staff",
                 "description": "Returns the current location and status of field staff assigned to the Sales Manager. \n     *     \n     *     **Real-time Updates (WebSockets / Laravel Echo)**\n     *     To receive live location updates without polling, clients should connect to the WebSocket server using Laravel Echo.\n     *     - **Channel Type**: Public\n     *     - **Channel Name**: `tracking`\n     *     - **Event Name**: `location.updated`\n     *     \n     *     **Event Payload Example**:\n     *     ```json\n     *     {\n     *         \"userId\": 42,\n     *         \"latitude\": 28.6139,\n     *         \"longitude\": 77.2090,\n     *         \"timestamp\": \"2026-05-07 14:30:00\"\n     *     }\n     *     ```",
                 "operationId": "c4a44d3ea381da8aa0c22f8c9591c5b0",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "Filter by User ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "field_staff_id",
+                        "in": "query",
+                        "description": "Filter by Field Staff ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Live tracking data"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/sales-manager/route-map": {
+            "get": {
+                "tags": [
+                    "Sales Manager Dashboard"
+                ],
+                "summary": "Get historical route map data for a field staff member",
+                "description": "Returns all recorded GPS coordinates, visits, and attendance logs for a specific day to draw a route map (Polyline).",
+                "operationId": "44b208eb93994b2646a73c3511fb706a",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "The User ID of the field staff",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "description": "The date (YYYY-MM-DD), defaults to today",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Route map data"
                     }
                 },
                 "security": [

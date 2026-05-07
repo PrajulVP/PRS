@@ -2,7 +2,7 @@
 
 @section('title', 'Field Staff Tracking - ' . $user->name)
 
-@@push('styles')
+@push('styles')
     <style>
         #map { height: 600px; border-radius: 12px; z-index: 1; border: 1px solid var(--med-border, #e2e8f0); }
         .tracking-info-card { height: 600px; overflow-y: auto; background-color: transparent !important; }
@@ -122,7 +122,13 @@
                         <div class="col-md-3 col-6 mt-md-0 mt-3">
                             <div class="p-3 rounded text-center border-start border-info border-4 shadow-sm stats-card-modern">
                                 <h6 class="text-muted small mb-1 text-uppercase fw-700">Status</h6>
-                                <h4 class="mb-0 text-info fw-800"><span class="badge bg-success" id="liveStatus">Active</span></h4>
+                                <h4 class="mb-0 fw-800">
+                                    @if($isOnline)
+                                        <span class="badge bg-success" id="liveStatus">Online</span>
+                                    @else
+                                        <span class="badge bg-secondary" id="liveStatus">Offline</span>
+                                    @endif
+                                </h4>
                             </div>
                         </div>
                     </div>

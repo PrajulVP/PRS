@@ -1532,7 +1532,8 @@
                                 if (document.querySelector("#brandSalesChart")) {
                                     var brandValues = @json($brandSalesDistribution['values']);
                                     var brandLabels = @json($brandSalesDistribution['labels']);
-                                    var hasBrandData = brandValues.length > 0;
+                                    var brandTotal = brandValues.reduce((a, b) => Number(a) + Number(b), 0);
+                                    var hasBrandData = brandValues.length > 0 && brandTotal > 0;
 
                                     var brandOptions = {
                                         series: hasBrandData ? brandValues : [1],
@@ -1659,7 +1660,8 @@
 
                                     if (window.charts.brandSalesChart && data.brandSalesDistribution) {
                                         const brandData = data.brandSalesDistribution;
-                                        const hasBrandData = brandData.values.length > 0;
+                                        const brandTotal = brandData.values.reduce((a, b) => Number(a) + Number(b), 0);
+                                        const hasBrandData = brandData.values.length > 0 && brandTotal > 0;
                                         window.charts.brandSalesChart.updateOptions({
                                             labels: hasBrandData ? brandData.labels : ['No Sales Data'],
                                             colors: hasBrandData ? ['#00497a', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#0ea5e9'] : ['#e2e8f0'],

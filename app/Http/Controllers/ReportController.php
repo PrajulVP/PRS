@@ -592,7 +592,9 @@ class ReportController extends Controller
         $user = Auth::user();
 
         if ($request->ajax()) {
-            $query = FieldStaff::with(['user', 'salesManager.user'])->select('fieldstaffs.*');
+            $today = now()->toDateString();
+            $query = FieldStaff::with(['user', 'salesManager.user'])
+                ->selectRaw("fieldstaffs.*, (SELECT CASE WHEN type = 'punch_in' THEN 1 ELSE 0 END FROM attendance_logs WHERE attendance_logs.user_id = fieldstaffs.user_id AND DATE(attendance_logs.timestamp) = ? ORDER BY timestamp DESC LIMIT 1) as is_online", [$today]);
             [$f, $t] = $this->getFilterDates($request);
 
             // Scoping
@@ -621,8 +623,16 @@ class ReportController extends Controller
                 }]);
 
             return DataTables::of($query)
-                ->addColumn('name', fn($fs) => $fs->user->name ?? 'N/A')
+                ->addColumn('name', function($fs) {
+                    $status = $fs->is_online ? '<span class="live-dot" style="width:8px;height:8px;background:#2ecc71;border-radius:50%;display:inline-block;margin-right:5px;"></span>' : '<span style="width:8px;height:8px;background:#95a5a6;border-radius:50%;display:inline-block;margin-right:5px;"></span>';
+                    return $status . ($fs->user->name ?? 'N/A');
+                })
                 ->addColumn('manager', fn($fs) => $fs->salesManager->user->name ?? 'N/A')
+                ->addColumn('location', function($fs) {
+                    $district = $fs->district->name ?? $fs->user->city ?? 'N/A';
+                    $area = $fs->area->name ?? $fs->user->address ?? 'N/A';
+                    return "<div class='fw-bold'>{$district}</div><div class='small text-muted'>{$area}</div>";
+                })
                 ->addColumn('coverage_stats', function($fs) {
                     return "<div class='fw-bold'>{$fs->total_retailers} Outlets</div><div class='small text-muted'>{$fs->total_visits} Visits Logged</div>";
                 })
@@ -638,7 +648,7 @@ class ReportController extends Controller
                     return '<a href="' . route('admin.reports.fieldstaff.tracking', ['user_id' => $fs->user_id]) . '" class="btn btn-sm btn-primary"><i class="fa fa-map-marker-alt me-1"></i>Track</a>';
                 })
                 ->editColumn('total_revenue', fn($fs) => '₹' . number_format($fs->total_revenue ?? 0, 2))
-                ->rawColumns(['coverage_stats', 'activity', 'actions'])
+                ->rawColumns(['name', 'location', 'coverage_stats', 'activity', 'actions'])
                 ->make(true);
         }
 
@@ -646,7 +656,21 @@ class ReportController extends Controller
         $distributors = Distributor::with('user')->get();
         $fieldStaffs = FieldStaff::with('user')->get();
 
-        return view('admin.reports.fieldstaffs', compact('salesManagers', 'distributors', 'fieldStaffs'));
+        $today = now()->toDateString();
+        $activeStaffCount = \App\Models\AttendanceLog::whereDate('timestamp', $today)
+            ->where('type', 'punch_in')
+            ->distinct('user_id')
+            ->count();
+
+        $todayVisitsCount = \App\Models\VisitLog::whereDate('check_in_at', $today)->count();
+        
+        $pulseStats = [
+            'active' => $activeStaffCount,
+            'visits' => $todayVisitsCount,
+            'alerts' => 0,
+        ];
+
+        return view('admin.reports.fieldstaffs', compact('salesManagers', 'distributors', 'fieldStaffs', 'pulseStats'));
     }
 
     public function visitReports(Request $request)
@@ -947,7 +971,10 @@ class ReportController extends Controller
         // Calculate total distance coverd
         $totalDistance = \App\Models\LocationLog::calculateDailyDistance($userId, $date);
 
-        return view('admin.reports.fieldstaff_tracking', compact('user', 'locations', 'punches', 'visits', 'date', 'totalDistance'));
+        $lastPunch = $punches->last();
+        $isOnline = $lastPunch && $lastPunch->type === 'punch_in';
+
+        return view('admin.reports.fieldstaff_tracking', compact('user', 'locations', 'punches', 'visits', 'date', 'totalDistance', 'isOnline'));
     }
 
     public function downloadExport(Request $request, $format)

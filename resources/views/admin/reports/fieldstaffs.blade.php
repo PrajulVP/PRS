@@ -20,6 +20,53 @@
         </div>
     </div>
 
+    <!-- Live Pulse Widget -->
+    <div class="row mb-4">
+        <div class="col-md-8 col-lg-6 col-xl-5">
+            <div class="card border-0 shadow-sm rounded-4" style="border: 1px solid var(--med-border) !important;">
+                <div class="card-body p-4 position-relative">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="icon-circle bg-soft-danger text-danger rounded-circle d-flex align-items-center justify-content-center" style="background: rgba(239, 68, 68, 0.1); width: 45px; height: 45px;">
+                                <i class="fa fa-map-marker fs-5"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold text-dark" style="font-size: 1.1rem;">Live Field Monitoring</h6>
+                                <p class="text-muted small mb-0">Real-time GPS tracking & route history</p>
+                            </div>
+                        </div>
+                        <span class="badge bg-soft-danger text-danger px-2 py-1 fw-bold">LIVE</span>
+                    </div>
+
+                    <div class="row g-2 mb-4">
+                        <div class="col-4">
+                            <div class="bg-light p-2 rounded-3 text-center h-100">
+                                <div class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Active</div>
+                                <div class="fw-bold fs-5 text-dark">{{ $pulseStats['active'] ?? '--' }}</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="bg-light p-2 rounded-3 text-center h-100">
+                                <div class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Visits</div>
+                                <div class="fw-bold fs-5 text-dark">{{ $pulseStats['visits'] ?? '--' }}</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="bg-light p-2 rounded-3 text-center h-100">
+                                <div class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Alerts</div>
+                                <div class="fw-bold fs-5 text-danger">{{ $pulseStats['alerts'] ?? 0 }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="{{ route('admin.reports.monitoring') }}" class="btn btn-primary w-100 fw-bold rounded-pill shadow-sm" style="background: #00497a; border: none;">
+                        Launch Command Map
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Filters Section -->
     @include('admin.reports.partials._filters', [
         'reportType' => 'fieldstaffs',
@@ -46,6 +93,7 @@
                                 <th style="width: 50px;">No.</th>
                                 <th>Staff Member</th>
                                 <th>Sales Manager</th>
+                                <th>Location</th>
                                 <th>Coverage & Visits</th>
                                 <th class="text-center">Activity</th>
                                 <th class="text-center">Orders</th>
@@ -87,11 +135,18 @@
                     render: (data, type, row, meta) => meta.row + meta.settings._iDisplayStart + 1
                 },
                 { 
+                    data: 'is_online', 
+                    name: 'is_online', 
+                    visible: false,
+                    searchable: false
+                },
+                { 
                     data: 'name', 
                     name: 'user.name', 
                     className: 'fw-bold'
                 },
                 { data: 'manager', name: 'salesManager.user.name', className: 'text-muted small' },
+                { data: 'location', name: 'location', searchable: false },
                 { data: 'coverage_stats', name: 'total_retailers', searchable: false },
                 { data: 'activity', name: 'total_punches', orderable: false, searchable: false },
                 { data: 'total_orders', name: 'total_orders', className: 'text-center fw-bold', searchable: false },
@@ -133,7 +188,7 @@
                 }
             ],
             pageLength: 25,
-            order: [[5, 'desc']],
+            order: [[1, 'desc']], // Index 1 is is_online
             language: {
                 processing: '<div class="spinner-border text-primary" role="status"></div>',
                 search: "_INPUT_",
