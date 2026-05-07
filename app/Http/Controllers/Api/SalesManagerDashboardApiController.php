@@ -159,6 +159,262 @@ class SalesManagerDashboardApiController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/sales-manager/online-fieldstaffs",
+     *     summary="List online field staff",
+     *     description="Returns a list of field staff who are currently punched in.",
+     *     tags={"Sales Manager Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(response=200, description="List of online field staff")
+     * )
+     */
+    public function getOnlineFieldStaffs(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
+
+        $salesManager = $user->salesManager;
+        
+        $staffUsers = \App\Models\FieldStaff::with(['user'])
+            ->where('sales_manager_id', $salesManager->id)
+            ->get();
+
+        $today = now()->toDateString();
+        $onlineStaff = [];
+
+        foreach ($staffUsers as $fs) {
+            $fsUser = $fs->user;
+            if (!$fsUser) continue;
+
+            $lastAttendance = \App\Models\AttendanceLog::where('user_id', $fsUser->id)
+                ->whereDate('timestamp', $today)
+                ->latest('timestamp')
+                ->first();
+
+            if ($lastAttendance && $lastAttendance->type === 'punch_in') {
+                $lastLoc = \App\Models\LocationLog::where('user_id', $fsUser->id)
+                    ->whereDate('timestamp', $today)
+                    ->latest('timestamp')
+                    ->first();
+                
+                $status = 'online';
+                if ($lastLoc) {
+                    $diffInMins = $lastLoc->timestamp->diffInMinutes(now());
+                    if ($diffInMins > 45) {
+                        $status = 'idle';
+                    }
+                }
+                
+                $ongoingVisit = \App\Models\VisitLog::where('user_id', $fsUser->id)
+                    ->whereDate('check_in_at', $today)
+                    ->whereNull('check_out_at')
+                    ->first();
+
+                if ($ongoingVisit) {
+                    $status = 'visiting';
+                }
+
+                $onlineStaff[] = [
+                    'id' => $fs->id,
+                    'user_id' => $fsUser->id,
+                    'name' => $fsUser->name,
+                    'contact_no' => $fs->contact_no,
+                    'status' => $status,
+                    'last_seen' => $lastLoc ? $lastLoc->timestamp->diffForHumans() : 'Never today',
+                ];
+            }
+        }
+
+        return response()->json($onlineStaff);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/sales-manager/live-tracking",
+     *     summary="Get Live Tracking Data for Field Staff",
+     *     description="Returns the current location and status of field staff assigned to the Sales Manager. 
+     *     
+     *     **Real-time Updates (WebSockets / Laravel Echo)**
+     *     To receive live location updates without polling, clients should connect to the WebSocket server using Laravel Echo.
+     *     - **Channel Type**: Public
+     *     - **Channel Name**: `tracking`
+     *     - **Event Name**: `location.updated`
+     *     
+     *     **Event Payload Example**:
+     *     ```json
+     *     {
+     *         ""userId"": 42,
+     *         ""latitude"": 28.6139,
+     *         ""longitude"": 77.2090,
+     *         ""timestamp"": ""2026-05-07 14:30:00""
+     *     }
+     *     ```",
+     *     tags={"Sales Manager Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="user_id", in="query", required=false, @OA\Schema(type="integer"), description="Filter by User ID"),
+     *     @OA\Parameter(name="field_staff_id", in="query", required=false, @OA\Schema(type="integer"), description="Filter by Field Staff ID"),
+     *     @OA\Response(response=200, description="Live tracking data")
+     * )
+     */
+    public function getLiveTracking(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
+
+        $salesManager = $user->salesManager;
+        
+        $query = \App\Models\FieldStaff::with(['user', 'salesManager.user'])
+            ->where('sales_manager_id', $salesManager->id);
+
+        if ($request->has('user_id') && !empty($request->user_id)) {
+            $query->where('user_id', $request->user_id);
+        } elseif ($request->has('field_staff_id') && !empty($request->field_staff_id)) {
+            $query->where('id', $request->field_staff_id);
+        }
+
+        $staffUsers = $query->get();
+
+        $today = now()->toDateString();
+        $data = [];
+
+        foreach ($staffUsers as $fs) {
+            $fsUser = $fs->user;
+            if (!$fsUser) continue;
+
+            $lastLoc = \App\Models\LocationLog::where('user_id', $fsUser->id)
+                ->whereDate('timestamp', $today)
+                ->latest('timestamp')
+                ->first();
+
+            $lastAttendance = \App\Models\AttendanceLog::where('user_id', $fsUser->id)
+                ->whereDate('timestamp', $today)
+                ->latest('timestamp')
+                ->first();
+
+            $visitCount = \App\Models\VisitLog::where('user_id', $fsUser->id)
+                ->whereDate('check_in_at', $today)
+                ->count();
+
+            $ongoingVisit = \App\Models\VisitLog::where('user_id', $fsUser->id)
+                ->whereDate('check_in_at', $today)
+                ->whereNull('check_out_at')
+                ->first();
+
+            $distance = \App\Models\LocationLog::calculateDailyDistance($fsUser->id, $today);
+
+            $status = 'offline';
+            
+            if ($lastAttendance && $lastAttendance->type === 'punch_in') {
+                $status = 'online';
+                
+                if ($lastLoc) {
+                    $diffInMins = $lastLoc->timestamp->diffInMinutes(now());
+                    if ($diffInMins > 45) {
+                        $status = 'idle';
+                    }
+                }
+                
+                if ($ongoingVisit) {
+                    $status = 'visiting';
+                }
+            }
+
+            $data[] = [
+                'id' => $fs->id,
+                'user_id' => $fsUser->id,
+                'name' => $fsUser->name,
+                'avatar' => $fsUser->avatar_url,
+                'manager' => $fs->salesManager?->user?->name ?? 'N/A',
+                'lat' => $lastLoc->latitude ?? null,
+                'lng' => $lastLoc->longitude ?? null,
+                'last_seen' => $lastLoc ? $lastLoc->timestamp->diffForHumans() : 'Never today',
+                'status' => $status,
+                'stats' => [
+                    'visits' => $visitCount,
+                    'distance' => $distance . ' KM'
+                ],
+                'ongoing_visit' => $ongoingVisit ? $ongoingVisit->customer_name : null
+            ];
+        }
+
+        return response()->json([
+            'staff' => $data,
+            'timestamp' => now()->format('H:i:s'),
+            'websocket_info' => [
+                'channel' => 'tracking',
+                'event' => 'location.updated'
+            ]
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/sales-manager/route-map",
+     *     summary="Get historical route map data for a field staff member",
+     *     description="Returns all recorded GPS coordinates, visits, and attendance logs for a specific day to draw a route map (Polyline).",
+     *     tags={"Sales Manager Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="user_id", in="query", required=true, @OA\Schema(type="integer"), description="The User ID of the field staff"),
+     *     @OA\Parameter(name="date", in="query", required=false, @OA\Schema(type="string", format="date"), description="The date (YYYY-MM-DD), defaults to today"),
+     *     @OA\Response(response=200, description="Route map data")
+     * )
+     */
+    public function getRouteMap(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'date' => 'nullable|date_format:Y-m-d'
+        ]);
+
+        /** @var \App\Models\User $me */
+        $me = Auth::user();
+        if (!$me->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
+
+        $userId = $request->user_id;
+        $date = $request->date ?? now()->toDateString();
+
+        // Verify the user is under this Sales Manager
+        $staff = \App\Models\FieldStaff::where('user_id', $userId)
+            ->where('sales_manager_id', $me->salesManager->id)
+            ->first();
+
+        if (!$staff) {
+            return response()->json(['error' => 'Field staff not assigned to you'], 403);
+        }
+
+        // 1. Fetch GPS Locations (for the Polyline)
+        $locations = \App\Models\LocationLog::where('user_id', $userId)
+            ->whereDate('timestamp', $date)
+            ->orderBy('timestamp', 'asc')
+            ->get(['latitude', 'longitude', 'timestamp', 'is_mock_location']);
+
+        // 2. Fetch Punches (Start/End markers)
+        $punches = \App\Models\AttendanceLog::where('user_id', $userId)
+            ->whereDate('timestamp', $date)
+            ->orderBy('timestamp', 'asc')
+            ->get(['type', 'latitude', 'longitude', 'timestamp']);
+
+        // 3. Fetch Visits (Map markers)
+        $visits = \App\Models\VisitLog::where('user_id', $userId)
+            ->whereDate('check_in_at', $date)
+            ->get(['customer_name', 'customer_category', 'latitude', 'longitude', 'check_in_at', 'check_out_at', 'notes']);
+
+        // 4. Calculate Distance
+        $totalDistance = \App\Models\LocationLog::calculateDailyDistance($userId, $date);
+
+        return response()->json([
+            'staff_name' => $staff->user->name,
+            'date' => $date,
+            'total_distance' => $totalDistance . ' KM',
+            'locations' => $locations,
+            'punches' => $punches,
+            'visits' => $visits
+        ]);
+    }
+
+    /**
      * @OA\Post(
      *     path="/api/sales-manager/retailers/{id}/approve",
      *     summary="Approve (activate) a retailer account",

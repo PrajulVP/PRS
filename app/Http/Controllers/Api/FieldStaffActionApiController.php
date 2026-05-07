@@ -142,7 +142,7 @@ class FieldStaffActionApiController extends Controller
      *     path="/api/field-staff/ping",
      *     summary="Log continuous GPS location ping",
      *     tags={"Field Staff"},
-     *     security={{"bearerAuth":{}}},
+     *     description="Receives field staff location pings. This endpoint also triggers a WebSocket broadcast on the `tracking` channel with the `location.updated` event.",
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
@@ -158,7 +158,7 @@ class FieldStaffActionApiController extends Controller
      *         description="Unique Device identifier for binding",
      *         @OA\Schema(type="string")
      *     ),
-     *     @OA\Response(response=200, description="Location ping saved")
+     *     @OA\Response(response=200, description="Location ping saved and broadcasted")
      * )
      */
     public function pingLocation(Request $request)

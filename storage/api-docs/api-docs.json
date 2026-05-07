@@ -94,7 +94,7 @@
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Send OTP to field staff",
+                "summary": "Send OTP to user",
                 "operationId": "f10280ddb0678b8f93fef703094bcead",
                 "requestBody": {
                     "required": true,
@@ -1580,6 +1580,7 @@
                     "Field Staff"
                 ],
                 "summary": "Log continuous GPS location ping",
+                "description": "Receives field staff location pings. This endpoint also triggers a WebSocket broadcast on the `tracking` channel with the `location.updated` event.",
                 "operationId": "04f4953f3cfa6596212fecf030c4f8bd",
                 "parameters": [
                     {
@@ -1615,14 +1616,9 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Location ping saved"
+                        "description": "Location ping saved and broadcasted"
                     }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
+                }
             }
         },
         "/api/field-staff/log-visit": {
@@ -3521,6 +3517,26 @@
                 "responses": {
                     "200": {
                         "description": "List of pending retailers"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/sales-manager/live-tracking": {
+            "get": {
+                "tags": [
+                    "Sales Manager Dashboard"
+                ],
+                "summary": "Get Live Tracking Data for Field Staff",
+                "description": "Returns the current location and status of field staff assigned to the Sales Manager. \n     *     \n     *     **Real-time Updates (WebSockets / Laravel Echo)**\n     *     To receive live location updates without polling, clients should connect to the WebSocket server using Laravel Echo.\n     *     - **Channel Type**: Public\n     *     - **Channel Name**: `tracking`\n     *     - **Event Name**: `location.updated`\n     *     \n     *     **Event Payload Example**:\n     *     ```json\n     *     {\n     *         \"userId\": 42,\n     *         \"latitude\": 28.6139,\n     *         \"longitude\": 77.2090,\n     *         \"timestamp\": \"2026-05-07 14:30:00\"\n     *     }\n     *     ```",
+                "operationId": "c4a44d3ea381da8aa0c22f8c9591c5b0",
+                "responses": {
+                    "200": {
+                        "description": "Live tracking data"
                     }
                 },
                 "security": [

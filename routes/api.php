@@ -80,6 +80,9 @@ Route::middleware('auth:api')->group(function () {
     Route::prefix('sales-manager')->group(function () {
         Route::get('dashboard', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'index']);
         Route::get('pending-retailers', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getPendingRetailers']);
+        Route::get('online-fieldstaffs', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getOnlineFieldStaffs']);
+        Route::get('live-tracking', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getLiveTracking']);
+        Route::get('route-map', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getRouteMap']);
         Route::get('fieldstaffs', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getFieldStaffs']);
         Route::post('fieldstaffs', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'storeFieldStaff']);
         Route::get('retailers', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getRetailers']);
