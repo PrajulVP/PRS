@@ -41,9 +41,9 @@ class ReturnController extends Controller
                 });
             }
         } elseif ($user->hasRole('fieldstaff')) {
-            $query->where('field_staff_id', $user->field_staff_id ?? ($user->fieldStaff->id ?? null));
+            $query->where('field_staff_id', $user->field_staff_id ?? ($user->fieldStaff?->id ?? null));
         } elseif ($user->hasRole('salesmanager')) {
-            $query->where('sales_manager_id', $user->sales_manager_id ?? ($user->salesManager->id ?? null));
+            $query->where('sales_manager_id', $user->sales_manager_id ?? ($user->salesManager?->id ?? null));
         }
 
         if ($request->filled('order_type')) {

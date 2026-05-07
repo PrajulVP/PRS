@@ -1636,6 +1636,10 @@
             }, 5000);
         };
 
+        // Ensure icons are initialized for dynamic content
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
     </script>
 </body>
 

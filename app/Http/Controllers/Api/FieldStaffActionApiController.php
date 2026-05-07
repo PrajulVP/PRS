@@ -185,6 +185,14 @@ class FieldStaffActionApiController extends Controller
             'timestamp' => now(),
         ]);
 
+        // Broadcast the update for real-time tracking
+        broadcast(new \App\Events\LocationUpdated(
+            $user->id, 
+            (float)$request->latitude, 
+            (float)$request->longitude, 
+            now()->toDateTimeString()
+        ));
+
         return response()->json(['message' => 'Ping received.', 'id' => $log->id, 'flagged' => $request->is_mock ?? false]);
     }
 

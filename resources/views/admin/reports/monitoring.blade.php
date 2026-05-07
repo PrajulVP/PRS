@@ -3,9 +3,6 @@
 @section('title', 'Field Staff Monitoring Dashboard')
 
 @push('styles')
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
     <style>
         #monitoring-map { height: calc(100vh - 180px); border-radius: 12px; z-index: 1; border: 1px solid var(--med-border); }
         .staff-sidebar-card { height: calc(100vh - 180px); overflow-y: auto; }
@@ -71,6 +68,20 @@
             object-fit: cover;
             border-radius: 10px;
         }
+
+        /* Custom Marker Styling */
+        .staff-marker-container {
+            position: relative;
+            width: 30px;
+            height: 30px;
+        }
+        .staff-marker-inner {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
     </style>
 @endpush
 
@@ -79,14 +90,14 @@
     <div class="page-title text-start mb-3">
         <div class="row m-0 align-items-center">
           <div class="col-sm-6 p-0">
-            <h4 class="mb-0 fw-bold">Live Field Operations monitoring</h4>
+            <h4 class="mb-0 fw-bold">Live Field Operations Monitoring</h4>
             <div class="live-indicator mt-1">
-                <span class="live-dot"></span> Real-time: <span id="last-update">...</span>
+                <span class="live-dot"></span> Real-time Sync: <span id="last-update">...</span>
             </div>
           </div>
           <div class="col-sm-6 p-0 text-end">
               <div class="btn-group">
-                <button class="btn btn-outline-primary btn-sm" onclick="fetchData()"><i class="fa fa-sync-alt me-1"></i> Refresh</button>
+                <button class="btn btn-outline-primary btn-sm" onclick="fetchData()"><i class="fa fa-refresh me-1"></i> Sync Now</button>
               </div>
           </div>
         </div>
@@ -125,18 +136,36 @@
 @endsection
 
 @push('scripts')
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key', env('GOOGLE_MAPS_API_KEY')) }}"></script>
+    <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
     <script>
-        var map, markers, staffMarkers = {};
-        
+        let map, markerCluster;
+        let staffMarkers = {};
+        let staffData = {};
+
         function initMap() {
-            map = L.map('monitoring-map').setView([20.5937, 78.9629], 5);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap'
-            }).addTo(map);
-            markers = L.markerClusterGroup();
-            map.addLayer(markers);
+            const defaultLoc = { lat: 20.5937, lng: 78.9629 };
+            map = new google.maps.Map(document.getElementById("monitoring-map"), {
+                zoom: 5,
+                center: defaultLoc,
+                styles: [
+                    { "featureType": "poi", "stylers": [{ "visibility": "off" }] }
+                ]
+            });
+
+            markerCluster = new markerClusterer.MarkerClusterer({ map, markers: [] });
+            
+            // Initial Fetch
+            fetchData();
+
+            // Setup Real-time Listener
+            if (typeof Echo !== 'undefined') {
+                Echo.channel('tracking')
+                    .listen('.location.updated', (e) => {
+                        console.log('Monitoring update:', e);
+                        handleRealTimeUpdate(e);
+                    });
+            }
         }
 
         function fetchData() {
@@ -145,27 +174,50 @@
                 updateStaffList(data.staff);
                 updateMapMarkers(data.staff);
                 processAlerts(data.alerts);
+            }).fail(function() {
+                $('#last-update').text('Sync Failed');
             });
+        }
+
+        function handleRealTimeUpdate(e) {
+            // Update staff marker if it exists
+            if (staffMarkers[e.userId]) {
+                const pos = { lat: parseFloat(e.latitude), lng: parseFloat(e.longitude) };
+                staffMarkers[e.userId].setPosition(pos);
+                
+                // Update small stats in list if visible
+                const $distanceEl = $(`#staff-card-${e.userId} .distance-val`);
+                if ($distanceEl.length) {
+                    // We don't have new distance here easily without API call, 
+                    // but we can at least show activity
+                    $(`#staff-card-${e.userId}`).addClass('active');
+                    setTimeout(() => $(`#staff-card-${e.userId}`).removeClass('active'), 2000);
+                }
+            } else {
+                // If marker doesn't exist, maybe they just logged in? Refresh all.
+                fetchData();
+            }
         }
 
         function updateStaffList(staff) {
             let html = '';
             staff.forEach(s => {
+                staffData[s.user_id] = s;
                 html += `
-                    <div class="staff-item p-3 border-bottom" onclick="focusStaff(${s.id})" id="staff-card-${s.id}">
+                    <div class="staff-item p-3 border-bottom" onclick="focusStaff(${s.user_id})" id="staff-card-${s.user_id}">
                         <div class="d-flex align-items-center">
-                            <img src="${s.avatar}" class="staff-avatar me-3 shadow-sm border">
+                            <img src="${s.avatar || 'https://via.placeholder.com/40'}" class="staff-avatar me-3 shadow-sm border">
                             <div class="flex-grow-1">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <h6 class="mb-0 fw-bold small text-dark">${s.name}</h6>
-                                    <span class="badge badge-light-${s.status === 'visiting' ? 'warning' : (s.status === 'idle' ? 'danger' : 'success')} small fs-10" style="font-size: 8px;">${s.status.toUpperCase()}</span>
+                                    <span class="badge bg-light text-dark small" style="background-color: ${s.status_color} !important; color: white !important; font-size: 8px;">${s.status.toUpperCase()}</span>
                                 </div>
                                 <p class="mb-0 text-muted small" style="font-size: 11px;">Manager: ${s.manager}</p>
                                 <div class="mt-2 d-flex gap-2">
-                                    <span class="text-primary small" style="font-size: 10px;"><i class="fa fa-walking me-1"></i>${s.stats.distance}</span>
-                                    <span class="text-info small" style="font-size: 10px;"><i class="fa fa-store me-1"></i>${s.stats.visits} Visits</span>
+                                    <span class="text-primary small distance-val" style="font-size: 10px;"><i class="fa fa-user me-1"></i>${s.stats.distance}</span>
+                                    <span class="text-info small" style="font-size: 10px;"><i class="fa fa-shopping-cart me-1"></i>${s.stats.visits} Visits</span>
                                 </div>
-                                ${s.ongoing_visit ? `<div class="mt-1 small bg-soft-warning p-1 rounded" style="font-size: 10px;"><i class="fa fa-map-marker-alt me-1"></i>At: ${s.ongoing_visit}</div>` : ''}
+                                ${s.ongoing_visit ? `<div class="mt-1 small p-1 rounded" style="font-size: 10px; background: rgba(155, 89, 182, 0.1); color: #9b59b6;"><i class="fa fa-map-marker me-1"></i>At: ${s.ongoing_visit}</div>` : ''}
                             </div>
                         </div>
                     </div>`;
@@ -174,41 +226,60 @@
         }
 
         function updateMapMarkers(staff) {
-            markers.clearLayers();
+            // Remove existing markers from cluster
+            markerCluster.clearMarkers();
+            
             staff.forEach(s => {
                 if (s.lat && s.lng) {
-                    const icon = L.divIcon({
-                        className: 'custom-map-marker',
-                        html: `<div style="background-color:${s.status_color}; border: 3px solid white; width:15px; height:15px; border-radius:50%; box-shadow: 0 0 10px ${s.status_color};"></div>`,
-                        iconSize: [20, 20]
+                    const pos = { lat: parseFloat(s.lat), lng: parseFloat(s.lng) };
+                    
+                    const marker = new google.maps.Marker({
+                        position: pos,
+                        title: s.name,
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 8,
+                            fillColor: s.status_color,
+                            fillOpacity: 1,
+                            strokeColor: "#fff",
+                            strokeWeight: 3
+                        }
                     });
 
-                    const m = L.marker([s.lat, s.lng], { icon: icon });
-                    m.bindPopup(`
-                        <div class="p-2" style="min-width: 150px;">
-                            <div class="d-flex align-items-center mb-2">
-                                <img src="${s.avatar}" class="staff-avatar me-2" style="width:30px; height:30px;">
-                                <h6 class="mb-0 fw-bold">${s.name}</h6>
+                    const infoWindow = new google.maps.InfoWindow({
+                        content: `
+                            <div class="p-2" style="min-width: 150px; font-family: 'Montserrat', sans-serif;">
+                                <div class="d-flex align-items-center mb-2">
+                                    <img src="${s.avatar || 'https://via.placeholder.com/30'}" class="staff-avatar me-2" style="width:30px; height:30px;">
+                                    <h6 class="mb-0 fw-bold">${s.name}</h6>
+                                </div>
+                                <p class="mb-1 text-muted small">Status: <span class="fw-bold" style="color:${s.status_color}">${s.status}</span></p>
+                                <p class="mb-1 text-muted small">Daily Distance: ${s.stats.distance}</p>
+                                <p class="mb-2 text-muted small">Last Seen: ${s.last_seen}</p>
+                                <a href="/admin/reports/fieldstaffs/tracking?user_id=${s.user_id}" class="btn btn-primary btn-sm w-100 text-white" style="font-size: 10px;">Full History</a>
                             </div>
-                            <p class="mb-1 text-muted small">Status: <span class="fw-bold" style="color:${s.status_color}">${s.status}</span></p>
-                            <p class="mb-1 text-muted small">Daily Distance: ${s.stats.distance}</p>
-                            <p class="mb-2 text-muted small">Last Seen: ${s.last_seen}</p>
-                            <a href="/admin/reports/fieldstaffs/tracking?user_id=${s.user_id}" class="btn btn-primary btn-xs w-100 text-white">Full History</a>
-                        </div>
-                    `);
-                    markers.addLayer(m);
-                    staffMarkers[s.id] = m;
+                        `
+                    });
+
+                    marker.addListener("click", () => {
+                        infoWindow.open({ anchor: marker, map });
+                    });
+
+                    staffMarkers[s.user_id] = marker;
+                    markerCluster.addMarker(marker);
                 }
             });
         }
 
-        function focusStaff(id) {
+        function focusStaff(userId) {
             $('.staff-item').removeClass('active');
-            $(`#staff-card-${id}`).addClass('active');
-            if (staffMarkers[id]) {
-                const marker = staffMarkers[id];
-                map.flyTo(marker.getLatLng(), 15);
-                marker.openPopup();
+            $(`#staff-card-${userId}`).addClass('active');
+            
+            if (staffMarkers[userId]) {
+                const marker = staffMarkers[userId];
+                map.panTo(marker.getPosition());
+                map.setZoom(15);
+                google.maps.event.trigger(marker, 'click');
             }
         }
 
@@ -218,25 +289,23 @@
                 const alertId = `alert-${a.staff_id}-${a.type}`;
                 if ($(`#${alertId}`).length === 0) {
                     const html = `
-                        <div class="alert alert-light-danger border-danger shadow p-3 mb-2 animate-fade-in" id="${alertId}" style="border-left: 5px solid #e74c3c !important;">
+                        <div class="alert alert-danger border-danger shadow p-3 mb-2" id="${alertId}" style="border-left: 5px solid #e74c3c !important; background: #fff;">
                             <div class="d-flex justify-content-between">
-                                <h6 class="mb-1 text-danger fw-bold"><i class="fa fa-exclamation-triangle me-2"></i> ${a.type === 'mock_gps' ? 'Fake GPS Alert' : 'Inactivity Alert'}</h6>
-                                <button type="button" class="btn-close btn-xs" onclick="$(this).parent().parent().remove()"></button>
+                                <h6 class="mb-1 text-danger fw-bold small"><i class="fa fa-exclamation-triangle me-2"></i> ${a.type === 'mock_gps' ? 'Fake GPS Alert' : 'Inactivity Alert'}</h6>
+                                <button type="button" class="btn-close" onclick="$(this).parent().parent().remove()" style="font-size: 10px;"></button>
                             </div>
-                            <p class="mb-0 small">${a.message}</p>
-                            <small class="text-muted">${a.time}</small>
+                            <p class="mb-0 small text-dark" style="font-size: 11px;">${a.message}</p>
+                            <small class="text-muted" style="font-size: 9px;">${a.time}</small>
                         </div>`;
                     container.prepend(html);
-                    // play sound or notify if needed
                 }
             });
         }
 
+        // Initialize when Google Maps is ready
         $(function() {
             initMap();
-            fetchData();
-            setInterval(fetchData, 60000); // Pulse every 60 seconds
-
+            
             $('#staff-search').on('keyup', function() {
                 const val = $(this).val().toLowerCase();
                 $('.staff-item').each(function() {

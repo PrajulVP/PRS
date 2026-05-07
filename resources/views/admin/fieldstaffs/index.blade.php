@@ -329,9 +329,9 @@
             <div class="modal-content border-0 shadow">
                 <div class="modal-header border-0"
                     style="background: linear-gradient(135deg, #1e3a5f, #2e6da4); border-radius: 0.5rem 0.5rem 0 0;">
-                    <h5 class="modal-title text-white" style="color: #fff !important;"><i class="fa fa-user-circle me-2"
+                    <h5 class="modal-title text-white" style="color: #fff !important;"><i class="fa fa-user-circle-o me-2"
                             style="color: #fff !important;"></i>Field Staff Details</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-0">
                     {{-- Avatar + Name Header --}}
@@ -369,7 +369,7 @@
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link fw-bold" id="fs-retailer-tab" data-bs-toggle="tab"
                                     data-bs-target="#fs-retailer-panel" type="button" role="tab">
-                                    <i class="fa fa-store me-1"></i>Retailers (<span id="fsRetailerCount">0</span>)
+                                    <i class="fa fa-shopping-bag me-1"></i>Retailers (<span id="fsRetailerCount">0</span>)
                                 </button>
                             </li>
                         </ul>
@@ -411,7 +411,7 @@
                                     <div class="col-12">
                                         <div class="d-flex align-items-start gap-2 p-3 rounded"
                                             style="background: var(--med-bg-body);">
-                                            <i class="fa fa-mobile-alt mt-1 text-warning"></i>
+                                            <i class="fa fa-mobile mt-1 text-warning"></i>
                                             <div>
                                                 <div class="text-muted small">Bound Device ID</div>
                                                 <div class="fw-semibold" id="fs_view_device">Not Bound</div>
@@ -421,7 +421,7 @@
                                     <div class="col-12">
                                         <div class="d-flex align-items-start gap-2 p-3 rounded"
                                             style="background: var(--med-bg-body);">
-                                            <i class="fa fa-map-marker-alt mt-1 text-danger"></i>
+                                            <i class="fa fa-map-marker mt-1 text-danger"></i>
                                             <div>
                                                 <div class="text-muted small">Address</div>
                                                 <div class="fw-semibold" id="fs_view_address"></div>
@@ -431,7 +431,7 @@
                                 </div>
                                 {{-- 
                                 <hr class="my-4">
-                                <h6 class="mb-3"><i class="fa fa-map-marker-alt me-2"></i>Location on Map</h6>
+                                <h6 class="mb-3"><i class="fa fa-map-marker me-2"></i>Location on Map</h6>
                                 <div id="show_map"
                                     style="height:300px;width:100%;border-radius:12px;border:1px solid #eee;"></div>
                                 --}}
@@ -637,6 +637,7 @@
                             let deleteUrl = "{{ route('admin.field-staffs.destroy', ':id') }}".replace(':id', id);
                             let btns = `<div class="action-buttons">
                                 <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>`;
+
                             if (row.can_edit) btns += `<button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>`;
                             if (row.can_delete) btns += `<button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>`;
                             btns += `</div>`;
@@ -689,13 +690,15 @@
                         }
 
                         $('#fs_view_name').text(fs.user.name);
-                        $('#fs_view_manager').html('<i class="fa fa-user-tie me-1"></i>Manager: ' + (fs.sales_manager?.user?.name || 'Not Assigned'));
+                        $('#fs_view_manager').html('<i class="fa fa-user me-1"></i>Manager: ' + (fs.sales_manager?.user?.name || 'Not Assigned'));
                         $('#fs_view_status').attr('class', 'status-badge ' + (fs.user?.status === 'active' ? 'status-badge-active' : 'status-badge-inactive')).text(fs.user?.status);
                         $('#fs_view_email').text(fs.user.email);
                         $('#fs_view_contact').text(fs.contact_no || 'N/A');
                         $('#fs_view_pincode').text(fs.pincode || 'N/A');
                         $('#fs_view_address').text(fs.address || 'N/A');
                         $('#fs_view_device').text(fs.user.device_uuid || 'Not Bound');
+
+
                         
                         let retHtml = fs.retailers?.map(ret => {
                             let retData = JSON.stringify(ret).replace(/"/g, '&quot;');
@@ -792,10 +795,18 @@
                 let url = $(this).data('url');
                 Swal.fire({ title: 'Delete?', text: "Are you sure?", icon: 'warning', showCancelButton: true }).then((result) => {
                     if (result.isConfirmed) {
-                        $.ajax({ url: url, type: 'DELETE', data: { _token: "{{ csrf_token() }}" }, success: (res) => {
-                            table.ajax.reload(null, false);
-                            if (window.updateSidebarCounts) window.updateSidebarCounts();
-                            Swal.fire('Deleted!', res.message, 'success');
+                        $.ajax({
+                            url: url,
+                            type: 'DELETE',
+                            data: { _token: "{{ csrf_token() }}" },
+                            success: (res) => {
+                                table.ajax.reload(null, false);
+                                if (window.updateSidebarCounts) window.updateSidebarCounts();
+                                Swal.fire('Deleted!', res.message, 'success');
+                            }
+                        });
+                    }
+                });
             });
 
             $('#createFieldStaffForm, #editFieldStaffForm').on('submit', function (e) {
@@ -910,7 +921,7 @@
             // Map Resize on Modal Show
             $('#createFieldStaffModal, #editFieldStaffModal, #showFieldStaffModal').on('shown.bs.modal', function () {
                 let m = (this.id === 'createFieldStaffModal') ? createMap : (this.id === 'editFieldStaffModal' ? editMap : showMap);
-                if (m) {
+                if (m && window.google && window.google.maps) {
                     google.maps.event.trigger(m, 'resize');
                     let lat = parseFloat($('#' + (this.id === 'showFieldStaffModal' ? 'showFieldStaffModal' : (this.id === 'editFieldStaffModal' ? 'edit_latitude' : 'create_latitude'))).val() || $(this).data('lat'));
                     let lng = parseFloat($('#' + (this.id === 'showFieldStaffModal' ? 'showFieldStaffModal' : (this.id === 'editFieldStaffModal' ? 'edit_longitude' : 'create_longitude'))).val() || $(this).data('lng'));

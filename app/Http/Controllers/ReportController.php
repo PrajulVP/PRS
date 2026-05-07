@@ -901,7 +901,7 @@ class ReportController extends Controller
                 'user_id' => $fsUser->id,
                 'name' => $fsUser->name,
                 'avatar' => $fsUser->avatar_url,
-                'manager' => $fs->salesManager->user->name ?? 'N/A',
+                'manager' => $fs->salesManager?->user?->name ?? 'N/A',
                 'lat' => $lastLoc->latitude ?? null,
                 'lng' => $lastLoc->longitude ?? null,
                 'last_seen' => $lastLoc ? $lastLoc->timestamp->diffForHumans() : 'Never today',

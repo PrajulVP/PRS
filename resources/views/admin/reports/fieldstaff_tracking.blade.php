@@ -2,46 +2,14 @@
 
 @section('title', 'Field Staff Tracking - ' . $user->name)
 
-@push('styles')
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+@@push('styles')
     <style>
         #map { height: 600px; border-radius: 12px; z-index: 1; border: 1px solid var(--med-border, #e2e8f0); }
         .tracking-info-card { height: 600px; overflow-y: auto; background-color: transparent !important; }
         
-        /* Custom Marker Pin Styling */
-        .marker-pin {
-            width: 30px;
-            height: 30px;
-            border-radius: 50% 50% 50% 0;
-            position: absolute;
-            transform: rotate(-45deg);
-            left: 50%;
-            top: 50%;
-            margin: -15px 0 0 -15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .marker-pin::after {
-            content: '';
-            width: 24px;
-            height: 24px;
-            margin: 3px 0 0 3px;
-            background: rgba(0,0,0,0.15);
-            position: absolute;
-            border-radius: 50%;
-        }
-        .custom-div-icon i {
-            z-index: 10;
-        }
-
-        /* Animated Path Effect */
-        .animated-polyline {
-            stroke-dasharray: 12, 12;
-            animation: dash-animation 20s linear infinite;
-        }
-        @keyframes dash-animation {
-            from { stroke-dashoffset: 240; }
-            to { stroke-dashoffset: 0; }
-        }
+        /* Custom Marker Info Window Styling */
+        .gm-style-iw-d { overflow: hidden !important; }
+        .custom-info-window { padding: 10px; font-family: 'Montserrat', sans-serif; }
 
         /* Timeline refinement */
         .timeline-item { 
@@ -86,6 +54,10 @@
             font-size: 11px;
             font-weight: 600;
             color: var(--med-text-main, #333);
+            position: absolute;
+            bottom: 30px;
+            right: 10px;
+            z-index: 1000;
         }
         .legend i {
             width: 12px;
@@ -107,10 +79,6 @@
             border-color: rgba(255, 255, 255, 0.1) !important;
             color: #fff;
         }
-        .dark-only .stats-card-modern h6,
-        [data-theme="dark"] .stats-card-modern h6 {
-            color: rgba(255, 255, 255, 0.6) !important;
-        }
     </style>
 @endpush
 
@@ -121,8 +89,8 @@
             <div class="card bg-card-theme border-0 shadow-sm">
                 <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
                     <div>
-                        <h5><i class="fa fa-map-marked-alt text-primary me-2"></i>Route History: {{ $user->name }}</h5>
-                        <p class="mb-0 text-muted">Movement tracking for <strong>{{ \Carbon\Carbon::parse($date)->format('M d, Y') }}</strong></p>
+                        <h5><i class="fa fa-map-marked-alt text-primary me-2"></i>Live Tracking: {{ $user->name }}</h5>
+                        <p class="mb-0 text-muted">Real-time movement for <strong>{{ \Carbon\Carbon::parse($date)->format('M d, Y') }}</strong></p>
                     </div>
                     <form action="{{ route('admin.reports.fieldstaff.tracking') }}" method="GET" class="d-flex gap-2">
                         <input type="hidden" name="user_id" value="{{ $user->id }}">
@@ -131,38 +99,44 @@
                     </form>
                 </div>
                 <div class="card-body">
-                    <!-- Premium Stats Summary Row -->
+                    <!-- Stats Summary Row -->
                     <div class="row mb-4">
                         <div class="col-md-3 col-6">
-                            <div class="p-3 bg-card-theme rounded text-center border-start border-primary border-4 shadow-sm stats-card-modern">
-                                <h6 class="text-muted small mb-1 text-uppercase fw-700" style="letter-spacing: 0.5px;">Distance Covered</h6>
-                                <h4 class="mb-0 text-primary fw-800">{{ number_format($totalDistance ?? 0, 2) }} <span class="small fw-normal">KM</span></h4>
+                            <div class="p-3 rounded text-center border-start border-primary border-4 shadow-sm stats-card-modern">
+                                <h6 class="text-muted small mb-1 text-uppercase fw-700">Distance</h6>
+                                <h4 class="mb-0 text-primary fw-800" id="distanceCovered">{{ number_format($totalDistance ?? 0, 2) }} <span class="small fw-normal">KM</span></h4>
                             </div>
                         </div>
                         <div class="col-md-3 col-6">
-                            <div class="p-3 bg-card-theme rounded text-center border-start border-success border-4 shadow-sm stats-card-modern">
-                                <h6 class="text-muted small mb-1 text-uppercase fw-700" style="letter-spacing: 0.5px;">Punches</h6>
+                            <div class="p-3 rounded text-center border-start border-success border-4 shadow-sm stats-card-modern">
+                                <h6 class="text-muted small mb-1 text-uppercase fw-700">Punches</h6>
                                 <h4 class="mb-0 text-success fw-800">{{ $punches->count() }}</h4>
                             </div>
                         </div>
                         <div class="col-md-3 col-6 mt-md-0 mt-3">
-                            <div class="p-3 bg-card-theme rounded text-center border-start border-warning border-4 shadow-sm stats-card-modern">
-                                <h6 class="text-muted small mb-1 text-uppercase fw-700" style="letter-spacing: 0.5px;">Visits Captured</h6>
+                            <div class="p-3 rounded text-center border-start border-warning border-4 shadow-sm stats-card-modern">
+                                <h6 class="text-muted small mb-1 text-uppercase fw-700">Visits</h6>
                                 <h4 class="mb-0 text-warning fw-800">{{ $visits->count() }}</h4>
                             </div>
                         </div>
                         <div class="col-md-3 col-6 mt-md-0 mt-3">
-                            <div class="p-3 bg-card-theme rounded text-center border-start border-info border-4 shadow-sm stats-card-modern">
-                                <h6 class="text-muted small mb-1 text-uppercase fw-700" style="letter-spacing: 0.5px;">Path Points</h6>
-                                <h4 class="mb-0 text-info fw-800">{{ $locations->count() }}</h4>
+                            <div class="p-3 rounded text-center border-start border-info border-4 shadow-sm stats-card-modern">
+                                <h6 class="text-muted small mb-1 text-uppercase fw-700">Status</h6>
+                                <h4 class="mb-0 text-info fw-800"><span class="badge bg-success" id="liveStatus">Active</span></h4>
                             </div>
                         </div>
                     </div>
 
                     <div class="row">
                         <!-- Map Column -->
-                        <div class="col-xl-8 col-lg-7">
+                        <div class="col-xl-8 col-lg-7 position-relative">
                             <div id="map"></div>
+                            <div class="legend">
+                                <div class="mb-1"><i style="background: #51bb25"></i> Punch In</div>
+                                <div class="mb-1"><i style="background: #f73164"></i> Punch Out</div>
+                                <div class="mb-1"><i style="background: #7366ff"></i> Customer Visit</div>
+                                <div><i style="background: #7366ff; border-radius: 0; height: 2px; margin-top: 11px;"></i> Route</div>
+                            </div>
                         </div>
 
                         <!-- Sidebar Info Column -->
@@ -171,7 +145,7 @@
                                 <div class="card-header bg-transparent pb-2 ps-0">
                                     <h6 class="mb-0">Activity Timeline</h6>
                                 </div>
-                                <div class="card-body p-0 pt-3">
+                                <div class="card-body p-0 pt-3" id="timelineContainer">
                                     @php
                                         $allEvents = collect();
                                         $punches->each(fn($p) => $allEvents->push(['type' => 'punch', 'time' => $p->timestamp, 'data' => $p]));
@@ -180,9 +154,9 @@
                                     @endphp
 
                                     @if($sortedEvents->isEmpty())
-                                        <div class="text-center py-5">
+                                        <div class="text-center py-5 no-activity">
                                             <i class="fa fa-walking-light fa-3x text-light mb-3"></i>
-                                            <p class="text-muted">No punch or visit activity recorded for this day.</p>
+                                            <p class="text-muted">No activity recorded yet.</p>
                                         </div>
                                     @else
                                         @foreach($sortedEvents as $event)
@@ -200,25 +174,13 @@
                                                 </div>
                                                 <div class="mt-1">
                                                     @if($event['type'] == 'punch')
-                                                        <p class="mb-0 small text-dark">Punched at location (GPS Verified)</p>
+                                                        <p class="mb-0 small text-dark">Punched at location</p>
                                                         @if($event['data']->is_mock_location)
-                                                            <div class="badge badge-light-danger small mt-1"><i class="fa fa-exclamation-triangle me-1"></i>Mock GPS Detected!</div>
+                                                            <div class="badge badge-light-danger small mt-1"><i class="fa fa-exclamation-triangle me-1"></i>Mock GPS!</div>
                                                         @endif
-                                                        <div class="small text-muted mt-1">Device: {{ $event['data']->device_id ?? 'Unknown' }}</div>
                                                     @else
                                                         <p class="mb-0 fw-bold small text-primary">{{ $event['data']->customer_name }}</p>
-                                                        <p class="mb-0 text-muted small">Category: {{ $event['data']->customer_category }}</p>
-                                                        @if($event['data']->is_flagged)
-                                                            <div class="badge badge-light-danger small mt-1"><i class="fa fa-map-marker-alt me-1"></i>Geofencing Alert: Outside Area!</div>
-                                                        @endif
-                                                        @if($event['data']->notes)
-                                                            <div class="bg-body-theme p-2 mt-1 rounded small italic">"{{ $event['data']->notes }}"</div>
-                                                        @endif
-                                                        @if($event['data']->photo_path)
-                                                            <div class="mt-2 text-center">
-                                                                <img src="{{ asset('storage/' . $event['data']->photo_path) }}" class="img-fluid rounded border" style="max-height: 100px;">
-                                                            </div>
-                                                        @endif
+                                                        <p class="mb-0 text-muted small">{{ $event['data']->customer_category }}</p>
                                                     @endif
                                                 </div>
                                             </div>
@@ -236,122 +198,156 @@
 @endsection
 
 @push('scripts')
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key', env('GOOGLE_MAPS_API_KEY')) }}&callback=initMap" async defer></script>
     <script>
-        var map;
-        function flyToLocation(lat, lng) {
-            if (map) {
-                map.flyTo([lat, lng], 17, {
-                    duration: 1.5,
-                    easeLinearity: 0.25
+        let map, routePath, staffMarker;
+        let pathPoints = [];
+        let markers = [];
+
+        function initMap() {
+            const defaultCenter = { lat: 20.5937, lng: 78.9629 };
+            
+            map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 5,
+                center: defaultCenter,
+                styles: [
+                    { "featureType": "poi", "stylers": [{ "visibility": "off" }] }
+                ]
+            });
+
+            // Initialize Route Path (Polyline)
+            routePath = new google.maps.Polyline({
+                path: pathPoints,
+                geodesic: true,
+                strokeColor: "#7366ff",
+                strokeOpacity: 1.0,
+                strokeWeight: 4,
+                map: map
+            });
+
+            // Initial Plotting
+            loadInitialData();
+
+            // Initialize WebSocket Listener
+            initRealTimeTracking();
+        }
+
+        function loadInitialData() {
+            const bounds = new google.maps.LatLngBounds();
+
+            // 1. Plot History Path
+            @foreach($locations as $loc)
+                pathPoints.push({ lat: {{ $loc->latitude }}, lng: {{ $loc->longitude }} });
+            @endforeach
+            routePath.setPath(pathPoints);
+            pathPoints.forEach(p => bounds.extend(p));
+
+            // 2. Add Current Position Marker (if today and has locations)
+            if (pathPoints.length > 0) {
+                const lastPos = pathPoints[pathPoints.length - 1];
+                staffMarker = new google.maps.Marker({
+                    position: lastPos,
+                    map: map,
+                    title: "Current Position",
+                    icon: {
+                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                        scale: 5,
+                        fillColor: "#7366ff",
+                        fillOpacity: 1,
+                        strokeWeight: 2,
+                        rotation: 0
+                    }
                 });
+            }
+
+            // 3. Plot Punches
+            @foreach($punches as $p)
+                addSpecialMarker({{ $p->latitude }}, {{ $p->longitude }}, "{{ $p->type == 'punch_in' ? '#51bb25' : '#f73164' }}", "fa-user");
+                bounds.extend({ lat: {{ $p->latitude }}, lng: {{ $p->longitude }} });
+            @endforeach
+
+            // 4. Plot Visits
+            @foreach($visits as $v)
+                addSpecialMarker({{ $v->latitude }}, {{ $v->longitude }}, "#7366ff", "fa-store");
+                bounds.extend({ lat: {{ $v->latitude }}, lng: {{ $v->longitude }} });
+            @endforeach
+
+            if (!bounds.isEmpty()) {
+                map.fitBounds(bounds);
             }
         }
 
-        $(function() {
-            map = L.map('map').setView([20.5937, 78.9629], 5); // Default to India center
+        function addSpecialMarker(lat, lng, color, icon) {
+            new google.maps.Marker({
+                position: { lat: lat, lng: lng },
+                map: map,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 7,
+                    fillColor: color,
+                    fillOpacity: 1,
+                    strokeColor: "#fff",
+                    strokeWeight: 2
+                }
+            });
+        }
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
+        function flyToLocation(lat, lng) {
+            const pos = { lat: parseFloat(lat), lng: parseFloat(lng) };
+            map.panTo(pos);
+            map.setZoom(17);
+        }
 
-            // Custom Icon Creator
-            function createCustomIcon(color, iconClass) {
-                return L.divIcon({
-                    className: 'custom-div-icon',
-                    html: `<div style='background-color:${color};' class='marker-pin'></div><i class='fa ${iconClass}' style='color:white;position:absolute;top:7px;left:50%;transform:translateX(-50%);font-size:12px;'></i>`,
-                    iconSize: [30, 42],
-                    iconAnchor: [15, 42],
-                    popupAnchor: [0, -35]
+        function initRealTimeTracking() {
+            // Check if user ID matches current tracking and date is today
+            const trackingUserId = "{{ $user->id }}";
+            const trackingDate = "{{ $date }}";
+            const today = new Date().toISOString().split('T')[0];
+
+            if (trackingDate !== today) return;
+
+            // Using Laravel Echo (assumed available globally from app.js)
+            if (typeof Echo !== 'undefined') {
+                Echo.channel('tracking')
+                    .listen('.location.updated', (e) => {
+                        console.log('Real-time update:', e);
+                        if (e.userId == trackingUserId) {
+                            updateLiveMap(e.latitude, e.longitude);
+                        }
+                    });
+            }
+        }
+
+        function updateLiveMap(lat, lng) {
+            const newPos = { lat: parseFloat(lat), lng: parseFloat(lng) };
+
+            // Update Polyline
+            pathPoints.push(newPos);
+            routePath.setPath(pathPoints);
+
+            // Update Arrow Marker
+            if (staffMarker) {
+                staffMarker.setPosition(newPos);
+            } else {
+                staffMarker = new google.maps.Marker({
+                    position: newPos,
+                    map: map,
+                    icon: {
+                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                        scale: 5,
+                        fillColor: "#7366ff",
+                        fillOpacity: 1,
+                        strokeWeight: 2
+                    }
                 });
             }
 
-            var punchInIcon = createCustomIcon('#51bb25', 'fa-sign-in-alt');
-            var punchOutIcon = createCustomIcon('#f73164', 'fa-sign-out-alt');
-            var visitIcon = createCustomIcon('#7366ff', 'fa-store');
-
-            var pathCoordinates = [];
-            var bounds = L.latLngBounds();
-
-            // 1. Plot continuous logs (Path) with animation
-            @foreach($locations as $loc)
-                pathCoordinates.push([{{ $loc->latitude }}, {{ $loc->longitude }}]);
-            @endforeach
-
-            if (pathCoordinates.length > 2) {
-                // Background path (static ghost path)
-                L.polyline(pathCoordinates, {color: '#7366ff', weight: 2, opacity: 0.2}).addTo(map);
-                
-                // Animated foreground path
-                L.polyline(pathCoordinates, {
-                    color: '#7366ff', 
-                    weight: 4, 
-                    opacity: 0.8, 
-                    className: 'animated-polyline'
-                }).addTo(map);
-                
-                bounds.extend(pathCoordinates);
-            } else if (pathCoordinates.length > 0) {
-                bounds.extend(pathCoordinates);
-            }
-
-            // 2. Plot Punches
-            @foreach($punches as $p)
-                var pIcon = "{{ $p->type == 'punch_in' }}" == "1" ? punchInIcon : punchOutIcon;
-                var pMarker = L.marker([{{ $p->latitude }}, {{ $p->longitude }}], { icon: pIcon }).addTo(map);
-                
-                pMarker.bindPopup(`
-                    <div class="p-1">
-                        <h6 class="mb-1 fw-bold text-{{ $p->type == 'punch_in' ? 'success' : 'danger' }}">{{ ucfirst(str_replace('_', ' ', $p->type)) }}</h6>
-                        <p class="mb-0 small text-dark"><i class="fa fa-clock me-1 text-muted"></i> {{ $p->timestamp->format('h:i A') }}</p>
-                        @if($p->is_mock_location)
-                            <div class="mt-2 badge badge-light-danger px-2 py-1"><i class="fa fa-exclamation-triangle"></i> Mock GPS Detected</div>
-                        @endif
-                    </div>
-                `);
-                bounds.extend([{{ $p->latitude }}, {{ $p->longitude }}]);
-            @endforeach
-
-            // 3. Plot Visits
-            @foreach($visits as $v)
-                var vMarker = L.marker([{{ $v->latitude }}, {{ $v->longitude }}], { icon: visitIcon }).addTo(map);
-                vMarker.bindPopup(`
-                    <div class="p-1" style="min-width: 150px;">
-                        <h6 class="mb-1 fw-bold text-primary">{{ $v->customer_name }}</h6>
-                        <p class="mb-1 small text-muted"><i class="fa fa-tag me-1"></i> {{ $v->customer_category }}</p>
-                        <p class="mb-0 small text-dark"><i class="fa fa-clock me-1 text-muted"></i> {{ $v->check_in_at->format('h:i A') }}</p>
-                        @if($v->is_flagged)
-                            <div class="mt-2 badge badge-light-danger px-2 py-1 italic"><i class="fa fa-map-marker-alt"></i> Outside Geofence</div>
-                        @endif
-                        @if($v->notes)
-                            <hr class="my-2 opacity-25">
-                            <p class="mb-0 small italic text-muted">"{{ $v->notes }}"</p>
-                        @endif
-                        @if($v->photo_path)
-                            <div class="mt-2 text-center">
-                                <img src="{{ asset('storage/' . $v->photo_path) }}" class="rounded shadow-sm" style="width: 100%; max-height: 120px; object-fit: cover;">
-                            </div>
-                        @endif
-                    </div>
-                `);
-                bounds.extend([{{ $v->latitude }}, {{ $v->longitude }}]);
-            @endforeach
-
-            // Add Map Legend
-            var legend = L.control({position: 'bottomright'});
-            legend.onAdd = function (map) {
-                var div = L.DomUtil.create('div', 'legend');
-                div.innerHTML += '<div class="mb-1"><i style="background: #51bb25"></i> Punch In</div>';
-                div.innerHTML += '<div class="mb-1"><i style="background: #f73164"></i> Punch Out</div>';
-                div.innerHTML += '<div class="mb-1"><i style="background: #7366ff"></i> Customer Visit</div>';
-                div.innerHTML += '<div><i style="background: #7366ff; border-radius: 0; height: 2px; margin-top: 11px;"></i> Movement Path</div>';
-                return div;
-            };
-            legend.addTo(map);
-
-            if (bounds.isValid()) {
-                map.fitBounds(bounds, {padding: [50, 50]});
-            }
-        });
+            // Smooth Pan
+            map.panTo(newPos);
+            
+            // Visual feedback
+            $('#liveStatus').text('Moving').removeClass('bg-success').addClass('bg-info');
+            setTimeout(() => $('#liveStatus').text('Active').removeClass('bg-info').addClass('bg-success'), 3000);
+        }
     </script>
 @endpush

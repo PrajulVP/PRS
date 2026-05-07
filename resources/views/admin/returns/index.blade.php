@@ -31,7 +31,7 @@
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center mb-3">
                         <div class="bg-soft-warning p-3 rounded-3 me-3">
-                            <i class="fa fa-clock text-warning fs-5"></i>
+                            <i class="fa fa-clock-o text-warning fs-5"></i>
                         </div>
                         <div>
                             <span class="text-muted-theme small fw-bold d-block">Pending</span>
@@ -61,7 +61,7 @@
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center mb-3">
                         <div class="bg-soft-success p-3 rounded-3 me-3">
-                            <i class="fa fa-file-invoice-dollar text-success fs-5"></i>
+                            <i class="fa fa-check-square-o text-success fs-5"></i>
                         </div>
                         <div>
                             <span class="text-muted-theme small fw-bold d-block">Completed</span>
@@ -76,7 +76,7 @@
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center mb-3">
                         <div class="bg-soft-primary p-3 rounded-3 me-3">
-                            <i class="fa fa-wallet text-primary fs-5"></i>
+                            <i class="fa fa-money text-primary fs-5"></i>
                         </div>
                         <div>
                             <span class="text-muted-theme small fw-bold d-block">Total Credits</span>
@@ -92,21 +92,29 @@
     @php
         $user = auth()->user();
         $showTabs = $user->hasAnyRole(['admin', 'superadmin', 'salesmanager', 'distributor']);
+        
+        $defaultType = 'retailer';
+        $tabs = [
+            ['type' => 'retailer', 'label' => 'Retailer Returns', 'icon' => 'fa-shopping-basket'],
+            ['type' => 'distributor', 'label' => $user->hasRole('distributor') ? 'My Returns' : 'Distributor Returns', 'icon' => 'fa-truck'],
+        ];
+
+        if($user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
+            $defaultType = 'distributor';
+            $tabs = array_reverse($tabs); // Show Distributor first
+        }
     @endphp
     @if($showTabs)
     <div class="card border-0 shadow-sm bg-card-theme mb-3" style="border-radius: 12px;">
         <div class="card-body p-2">
             <ul class="nav nav-pills nav-justified" id="returnTypeTabs">
+                @foreach($tabs as $tab)
                 <li class="nav-item">
-                    <a class="nav-link active rounded-3 fw-bold small py-2" data-type="retailer" href="javascript:void(0)">
-                        <i class="fa fa-shopping-basket me-1"></i> {{ auth()->user()->hasRole('distributor') ? 'Retailer Returns' : 'Retailer Returns' }}
+                    <a class="nav-link {{ $defaultType === $tab['type'] ? 'active' : '' }} rounded-3 fw-bold small py-2" data-type="{{ $tab['type'] }}" href="javascript:void(0)">
+                        <i class="fa {{ str_replace('fa-shopping-basket', 'fa-shopping-bag', $tab['icon']) }} me-1"></i> {{ $tab['label'] }}
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link rounded-3 fw-bold small py-2" data-type="distributor" href="javascript:void(0)">
-                        <i class="fa fa-truck me-1"></i> {{ auth()->user()->hasRole('distributor') ? 'My Returns' : 'Distributor Returns' }}
-                    </a>
-                </li>
+                @endforeach
             </ul>
         </div>
     </div>
@@ -143,7 +151,7 @@
             <div class="modal-header border-0 pb-0 pt-4 px-4">
                 <div class="d-flex align-items-center">
                     <div class="bg-soft-primary p-2 rounded-3 me-3">
-                        <i class="fa fa-file-invoice text-primary fs-5"></i>
+                        <i class="fa fa-file-text-o text-primary fs-5"></i>
                     </div>
                     <div>
                         <h5 class="modal-title fw-bold mb-0 text-main-theme" id="viewReturnCodeHeader">RET-XXXXX</h5>
@@ -511,11 +519,11 @@ $(document).ready(function() {
                     let html = '<div class="d-flex flex-column gap-1">';
                     if (row.field_staff) {
                         let name = row.field_staff.name || (row.field_staff.user ? row.field_staff.user.name : 'N/A');
-                        html += `<div class="small text-muted-theme" style="font-size: 0.7rem;"><i class="fa fa-user-tie me-1 text-success"></i>${name}</div>`;
+                        html += `<div class="small text-muted-theme" style="font-size: 0.7rem;"><i class="fa fa-user me-1 text-success"></i>${name}</div>`;
                     }
                     if (row.sales_manager) {
                         let name = row.sales_manager.name || (row.sales_manager.user ? row.sales_manager.user.name : 'N/A');
-                        html += `<div class="small text-muted-theme" style="font-size: 0.7rem;"><i class="fa fa-user-shield me-1 text-info"></i>${name}</div>`;
+                        html += `<div class="small text-muted-theme" style="font-size: 0.7rem;"><i class="fa fa-shield me-1 text-info"></i>${name}</div>`;
                     }
                     if (row.distributor) {
                         let name = row.distributor.name || (row.distributor.user ? row.distributor.user.name : 'N/A');
@@ -641,13 +649,16 @@ $(document).ready(function() {
 
         let tracking = $('#viewTracking').empty();
         if (row.distributor) {
-            tracking.append(`<span class="badge bg-soft-primary text-primary border-0 px-2 py-1" style="font-size: 0.7rem;"><i class="fa fa-truck me-1"></i>Distro: ${row.distributor.name}</span>`);
+            let distName = row.distributor.user ? row.distributor.user.name : (row.distributor.name || 'N/A');
+            tracking.append(`<span class="badge bg-soft-primary text-primary border-0 px-2 py-1" style="font-size: 0.7rem;"><i class="fa fa-truck me-1"></i>Distro: ${distName}</span>`);
         }
         if (row.field_staff) {
-            tracking.append(`<span class="badge bg-soft-success text-success border-0 px-2 py-1" style="font-size: 0.7rem;"><i class="fa fa-user-tie me-1"></i>Staff: ${row.field_staff.name}</span>`);
+            let name = row.field_staff.user ? row.field_staff.user.name : (row.field_staff.name || 'N/A');
+            tracking.append(`<span class="badge bg-soft-success text-success border-0 px-2 py-1" style="font-size: 0.7rem;"><i class="fa fa-user me-1"></i>Staff: ${name}</span>`);
         }
         if (row.sales_manager) {
-            tracking.append(`<span class="badge bg-soft-info text-info border-0 px-2 py-1" style="font-size: 0.7rem;"><i class="fa fa-user-shield me-1"></i>Manager: ${row.sales_manager.name}</span>`);
+            let name = row.sales_manager.user ? row.sales_manager.user.name : (row.sales_manager.name || 'N/A');
+            tracking.append(`<span class="badge bg-soft-info text-info border-0 px-2 py-1" style="font-size: 0.7rem;"><i class="fa fa-shield me-1"></i>Manager: ${name}</span>`);
         }
 
         let gallery = $('#returnGallery');

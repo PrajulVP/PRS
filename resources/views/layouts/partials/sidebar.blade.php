@@ -83,7 +83,7 @@
             </svg>
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-user"></use>
-            </svg><span>Field Staff Reports</span></a>
+            </svg><span>Field Staff Tracking</span></a>
         </li>
         @endif
         @endif
@@ -209,7 +209,7 @@
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-form"></use>
             </svg>
-            <span style="display: inline-flex; align-items: center; gap: 8px;">Returns & Credits</span>
+            <span>Returns & Credits</span>
           </a>
         </li>
         @endif
@@ -233,23 +233,26 @@
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-user"></use>
             </svg>
-            <span style="display: inline-flex; align-items: center; gap: 8px;">Approvals
-                <span id="badge-total-approvals" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; {{ $totalApprovals > 0 ? '' : 'display: none !important;' }}">{{ $totalApprovals }}</span>
-            </span>
+            <span>Approvals</span>
+            @if($totalApprovals > 0)
+                <span id="badge-total-approvals" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; margin-left: 8px;">{{ $totalApprovals }}</span>
+            @endif
           </a>
           <ul class="sidebar-submenu">
              @if(Auth::user()->hasPermissionToCategory('retailer_approvals', 'view') || Auth::user()->hasRole('fieldstaff') || (Auth::user()->hasAnyRole(['admin', 'superadmin']) && !Auth::user()->hasRole('salesmanager')))
              <li style="position: relative;"><a href="{{ route('admin.approvals.retailer') }}">
-               <span style="display: inline-flex; align-items: center; gap: 8px;">Retailers
-                   <span id="badge-retailer-approvals" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; {{ $actionCounts['retailer_approvals'] > 0 ? '' : 'display: none !important;' }}">{{ $actionCounts['retailer_approvals'] }}</span>
-               </span>
+               <span>Retailers</span>
+               @if($actionCounts['retailer_approvals'] > 0)
+                   <span id="badge-retailer-approvals" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; margin-left: 8px;">{{ $actionCounts['retailer_approvals'] }}</span>
+               @endif
              </a></li>
             @endif
              @if(Auth::user()->hasPermissionToCategory('distributor_approvals', 'view') || $hasApprovalRoles)
              <li style="position: relative;"><a href="{{ route('admin.approvals.distributor') }}">
-               <span style="display: inline-flex; align-items: center; gap: 8px;">Distributors
-                   <span id="badge-distributor-approvals" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; {{ $actionCounts['distributor_approvals'] > 0 ? '' : 'display: none !important;' }}">{{ $actionCounts['distributor_approvals'] }}</span>
-               </span>
+               <span>Distributors</span>
+               @if($actionCounts['distributor_approvals'] > 0)
+                   <span id="badge-distributor-approvals" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; margin-left: 8px;">{{ $actionCounts['distributor_approvals'] }}</span>
+               @endif
              </a></li>
             @endif
           </ul>
@@ -266,20 +269,23 @@
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-user"></use>
             </svg>
-            <span style="display: inline-flex; align-items: center; gap: 8px;">Staff Approval
-                <span id="badge-staff-approvals" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; {{ $staffActionCounts > 0 ? '' : 'display: none !important;' }}">{{ $staffActionCounts }}</span>
-            </span>
+            <span>Staff Approval</span>
+            @if($staffActionCounts > 0)
+                <span id="badge-staff-approvals" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; margin-left: 8px;">{{ $staffActionCounts }}</span>
+            @endif
           </a>
           <ul class="sidebar-submenu">
               <li><a href="{{ route('admin.field-staff.expenses') }}">
-                <span style="display: inline-flex; align-items: center; gap: 8px;">Staff Expenses
-                    <span id="badge-staff-expenses" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; {{ $actionCounts['staff_expenses'] > 0 ? '' : 'display: none !important;' }}">{{ $actionCounts['staff_expenses'] }}</span>
-                </span>
+                <span>Staff Expenses</span>
+                @if($actionCounts['staff_expenses'] > 0)
+                    <span id="badge-staff-expenses" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; margin-left: 8px;">{{ $actionCounts['staff_expenses'] }}</span>
+                @endif
               </a></li>
               <li><a href="{{ route('admin.field-staff.leaves') }}">
-                <span style="display: inline-flex; align-items: center; gap: 8px;">Staff Leaves
-                    <span id="badge-staff-leaves" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; {{ $actionCounts['staff_leaves'] > 0 ? '' : 'display: none !important;' }}">{{ $actionCounts['staff_leaves'] }}</span>
-                </span>
+                <span>Staff Leaves</span>
+                @if($actionCounts['staff_leaves'] > 0)
+                    <span id="badge-staff-leaves" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; margin-left: 8px;">{{ $actionCounts['staff_leaves'] }}</span>
+                @endif
               </a></li>
           </ul>
         </li>
@@ -385,9 +391,10 @@
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-form"></use>
             </svg>
-            <span style="display: inline-flex; align-items: center; gap: 8px;">Sales Managers
-                <span id="badge-inactive-sales-managers" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; {{ $actionCounts['inactive_sales_managers'] > 0 ? '' : 'display: none !important;' }}">{{ $actionCounts['inactive_sales_managers'] }}</span>
-            </span>
+            <span>Sales Managers</span>
+            @if($actionCounts['inactive_sales_managers'] > 0)
+                <span id="badge-inactive-sales-managers" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; margin-left: 8px;">{{ $actionCounts['inactive_sales_managers'] }}</span>
+            @endif
           </a>
         </li>
         @endif
@@ -401,9 +408,10 @@
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-form"></use>
             </svg>
-            <span style="display: inline-flex; align-items: center; gap: 8px;">Distributors
-                <span id="badge-inactive-distributors" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; {{ $actionCounts['inactive_distributors'] > 0 ? '' : 'display: none !important;' }}">{{ $actionCounts['inactive_distributors'] }}</span>
-            </span>
+            <span>Distributors</span>
+            @if($actionCounts['inactive_distributors'] > 0)
+                <span id="badge-inactive-distributors" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; margin-left: 8px;">{{ $actionCounts['inactive_distributors'] }}</span>
+            @endif
           </a>
         </li>
         @endif
@@ -417,9 +425,10 @@
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-form"></use>
             </svg>
-            <span style="display: inline-flex; align-items: center; gap: 8px;">Field Staff
-                <span id="badge-inactive-field-staff" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; {{ $actionCounts['inactive_field_staff'] > 0 ? '' : 'display: none !important;' }}">{{ $actionCounts['inactive_field_staff'] }}</span>
-            </span>
+            <span>Field Staff</span>
+            @if($actionCounts['inactive_field_staff'] > 0)
+                <span id="badge-inactive-field-staff" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; margin-left: 8px;">{{ $actionCounts['inactive_field_staff'] }}</span>
+            @endif
           </a>
         </li>
         @endif
@@ -433,9 +442,10 @@
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-form"></use>
             </svg>
-            <span style="display: inline-flex; align-items: center; gap: 8px;">Retailers
-                <span id="badge-inactive-retailers" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; {{ $actionCounts['inactive_retailers'] > 0 ? '' : 'display: none !important;' }}">{{ $actionCounts['inactive_retailers'] }}</span>
-            </span>
+            <span>Retailers</span>
+            @if($actionCounts['inactive_retailers'] > 0)
+                <span id="badge-inactive-retailers" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; margin-left: 8px;">{{ $actionCounts['inactive_retailers'] }}</span>
+            @endif
           </a>
         </li>
         @endif
