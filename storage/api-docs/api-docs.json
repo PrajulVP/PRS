@@ -3532,7 +3532,7 @@
                     "Sales Manager Dashboard"
                 ],
                 "summary": "List online field staff",
-                "description": "Returns a list of field staff who are currently punched in.\n     *     \n     *     **Real-time Updates (WebSockets / Laravel Echo)**\n     *     To receive live status updates (punch-in/out), connect to:\n     *     - **Channel Name**: `attendance`\n     *     - **Event Name**: `attendance.logged`\n     *     ",
+                "description": "Returns a list of field staff who are currently punched in with their current activity status (online, idle, or visiting).",
                 "operationId": "edc2e989d0d5c3569a38cec6dd5c8ecd",
                 "responses": {
                     "200": {
@@ -3552,7 +3552,7 @@
                     "Sales Manager Dashboard"
                 ],
                 "summary": "Get Live Tracking Data for Field Staff",
-                "description": "Returns the current location and status of field staff assigned to the Sales Manager. \n     *     \n     *     **Real-time Updates (WebSockets / Laravel Echo)**\n     *     To receive live location updates without polling, clients should connect to the WebSocket server using Laravel Echo.\n     *     - **Channel Type**: Public\n     *     - **Channel Name**: `tracking`\n     *     - **Event Name**: `location.updated`\n     *     \n     *     **Event Payload Example**:\n     *     ```json\n     *     {\n     *         \"userId\": 42,\n     *         \"latitude\": 28.6139,\n     *         \"longitude\": 77.2090,\n     *         \"timestamp\": \"2026-05-07 14:30:00\"\n     *     }\n     *     ```",
+                "description": "Returns the current location (latitude, longitude) and operational status of field staff assigned to the Sales Manager.",
                 "operationId": "c4a44d3ea381da8aa0c22f8c9591c5b0",
                 "parameters": [
                     {

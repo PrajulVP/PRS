@@ -162,13 +162,7 @@ class SalesManagerDashboardApiController extends Controller
      * @OA\Get(
      *     path="/api/sales-manager/online-fieldstaffs",
      *     summary="List online field staff",
-     *     description="Returns a list of field staff who are currently punched in.
-     *     
-     *     **Real-time Updates (WebSockets / Laravel Echo)**
-     *     To receive live status updates (punch-in/out), connect to:
-     *     - **Channel Name**: `attendance`
-     *     - **Event Name**: `attendance.logged`
-     *     ",
+     *     description="Returns a list of field staff who are currently punched in with their current activity status (online, idle, or visiting).",
      *     tags={"Sales Manager Dashboard"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Response(response=200, description="List of online field staff")
@@ -239,23 +233,7 @@ class SalesManagerDashboardApiController extends Controller
      * @OA\Get(
      *     path="/api/sales-manager/live-tracking",
      *     summary="Get Live Tracking Data for Field Staff",
-     *     description="Returns the current location and status of field staff assigned to the Sales Manager. 
-     *     
-     *     **Real-time Updates (WebSockets / Laravel Echo)**
-     *     To receive live location updates without polling, clients should connect to the WebSocket server using Laravel Echo.
-     *     - **Channel Type**: Public
-     *     - **Channel Name**: `tracking`
-     *     - **Event Name**: `location.updated`
-     *     
-     *     **Event Payload Example**:
-     *     ```json
-     *     {
-     *         ""userId"": 42,
-     *         ""latitude"": 28.6139,
-     *         ""longitude"": 77.2090,
-     *         ""timestamp"": ""2026-05-07 14:30:00""
-     *     }
-     *     ```",
+     *     description="Returns the current location (latitude, longitude) and operational status of field staff assigned to the Sales Manager.",
      *     tags={"Sales Manager Dashboard"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="user_id", in="query", required=false, @OA\Schema(type="integer"), description="Filter by User ID"),
