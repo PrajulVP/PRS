@@ -162,7 +162,13 @@ class SalesManagerDashboardApiController extends Controller
      * @OA\Get(
      *     path="/api/sales-manager/online-fieldstaffs",
      *     summary="List online field staff",
-     *     description="Returns a list of field staff who are currently punched in.",
+     *     description="Returns a list of field staff who are currently punched in.
+     *     
+     *     **Real-time Updates (WebSockets / Laravel Echo)**
+     *     To receive live status updates (punch-in/out), connect to:
+     *     - **Channel Name**: `attendance`
+     *     - **Event Name**: `attendance.logged`
+     *     ",
      *     tags={"Sales Manager Dashboard"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Response(response=200, description="List of online field staff")

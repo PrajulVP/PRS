@@ -83,6 +83,23 @@ class FieldStaffActionApiController extends Controller
             'timestamp' => now(),
         ]);
 
+        // Broadcast real-time update for Managers
+        try {
+            broadcast(new \App\Events\AttendanceLogged([
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'avatar' => $user->avatar_url,
+                'type' => $request->type,
+                'status' => $request->type === 'punch_in' ? 'online' : 'offline',
+                'timestamp' => $log->timestamp->toDateTimeString(),
+                'latitude' => $log->latitude,
+                'longitude' => $log->longitude,
+            ]))->toOthers();
+        } catch (\Exception $e) {
+            // Silently fail if broadcasting is not configured or fails
+            \Log::error('Broadcasting failed: ' . $e->getMessage());
+        }
+
         $message = ucfirst(str_replace('_', ' ', $request->type)) . ' successful.';
         if ($request->is_mock) {
             $message .= ' (Flagged for potential mock location)';

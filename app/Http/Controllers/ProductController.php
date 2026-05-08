@@ -129,7 +129,17 @@ class ProductController extends Controller
         $brandsRaw = \App\Models\Setting::getValue('product_brands', 'Atomets,Atomshield,Sudhneelgiri');
         $availableBrands = array_map('trim', explode(',', $brandsRaw));
 
-        return view('admin.products.index', compact('availableBrands'));
+        $brandStats = Product::select('brand', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
+            ->groupBy('brand')
+            ->get()
+            ->map(function($item) {
+                return [
+                    'brand' => $item->brand ?: 'Standard',
+                    'count' => $item->total
+                ];
+            });
+
+        return view('admin.products.index', compact('availableBrands', 'brandStats'));
     }
 
     /**

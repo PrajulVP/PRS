@@ -50,6 +50,7 @@ class DashboardController extends Controller
         $user = Auth::user();
         $endDate = now();
         $startDate = now();
+        $fieldStaffIds = null;
 
         switch ($period) {
             case 'daily':
@@ -83,6 +84,7 @@ class DashboardController extends Controller
         $topDistributors = collect();
         $topFieldStaff = collect();
         $topProducts = collect();
+        $topAreas = collect();
         $totalLoyaltyPoints = 0;
         $monthlyDistributorOrdersChart = null;
         $activeOffers = collect();
@@ -107,6 +109,22 @@ class DashboardController extends Controller
                 ->whereNotNull('fieldstaff_id')
                 ->groupBy('fieldstaff_id')->orderByDesc('total_orders')->take(5)
                 ->with('fieldStaff.user')->get();
+
+            $topAreas = \App\Models\Area::withCount('retailers')
+                ->with(['district'])
+                ->get()
+                ->map(function($area) use ($startDate, $endDate, $fieldStaffIds) {
+                    $area->total_revenue = RetailerOrder::whereHas('retailer', function($q) use ($area, $fieldStaffIds) {
+                        $q->where('area_id', $area->id);
+                        if ($fieldStaffIds) {
+                            $q->whereIn('field_staff_id', $fieldStaffIds);
+                        }
+                    })->where('status', 'delivered')
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->sum('total_amount');
+                    return $area;
+                })->filter(fn($a) => $a->total_revenue > 0)
+                ->sortByDesc('total_revenue')->take(5);
         } elseif ($user->hasRole('salesmanager')) {
             // See distributor order and retailer order statistics, and the performance of fieldstaffs under them.
             $salesManager = $user->salesManager;
@@ -128,6 +146,24 @@ class DashboardController extends Controller
                     ->whereIn('fieldstaff_id', $fieldStaffIds)
                     ->groupBy('fieldstaff_id')->orderByDesc('total_orders')->take(5)
                     ->with('fieldStaff.user')->get();
+
+                // Top Areas for Sales Manager
+                $topAreas = \App\Models\Area::withCount('retailers')
+                    ->with(['district'])
+                    ->whereHas('retailers', function($q) use ($fieldStaffIds) {
+                        $q->whereIn('field_staff_id', $fieldStaffIds);
+                    })
+                    ->get()
+                    ->map(function($area) use ($startDate, $endDate, $fieldStaffIds) {
+                        $area->total_revenue = RetailerOrder::whereHas('retailer', function($q) use ($area, $fieldStaffIds) {
+                            $q->where('area_id', $area->id)
+                              ->whereIn('field_staff_id', $fieldStaffIds);
+                        })->where('status', 'delivered')
+                        ->whereBetween('created_at', [$startDate, $endDate])
+                        ->sum('total_amount');
+                        return $area;
+                    })->filter(fn($a) => $a->total_revenue > 0)
+                    ->sortByDesc('total_revenue')->take(5);
             }
         } elseif ($user->hasRole('distributor')) {
             // See all orders and their mostly ordered retailers
@@ -276,6 +312,7 @@ class DashboardController extends Controller
             'products' => $productCount,
             'sales_managers' => $salesManagerQuery->count(),
             'field_staff' => $fieldStaffQuery->count(),
+            'areas' => \App\Models\Area::count(),
         ];
 
         // 4. Order Stats (Retailer Orders)
@@ -355,7 +392,8 @@ class DashboardController extends Controller
             'totalInLocality',
             'totalLoyaltyPoints',
             'data_extra',
-            'brandSalesDistribution'
+            'brandSalesDistribution',
+            'topAreas'
         );
     }
 
@@ -405,6 +443,7 @@ class DashboardController extends Controller
             // Group by Hour (Single day)
             $orders = $q->select(
                 DB::raw('count(id) as count'),
+                DB::raw('SUM(total_amount) as valuation'),
                 DB::raw("DATE_FORMAT(created_at, '%H:00') as label"),
                 DB::raw('HOUR(created_at) as hour')
             )->groupBy('hour', 'label')
@@ -413,16 +452,19 @@ class DashboardController extends Controller
 
             $chartLabels = [];
             $chartCounts = [];
+            $chartValuations = [];
             for ($i = 0; $i < 24; $i++) {
                 $label = sprintf("%02d:00", $i);
                 $chartLabels[] = $label;
                 $found = $orders->firstWhere('hour', $i);
                 $chartCounts[] = $found ? $found->count : 0;
+                $chartValuations[] = $found ? (float)$found->valuation : 0;
             }
         } elseif ($period === 'weekly') {
             // Group by Day
             $orders = $q->select(
                 DB::raw('count(id) as count'),
+                DB::raw('SUM(total_amount) as valuation'),
                 DB::raw("DATE_FORMAT(created_at, '%Y-%m-%d') as label"),
                 DB::raw('DATE(created_at) as date')
             )->groupBy('date', 'label')
@@ -432,17 +474,20 @@ class DashboardController extends Controller
             // Fill missing days
             $chartLabels = [];
             $chartCounts = [];
+            $chartValuations = [];
             for ($d = $startDate->copy(); $d->lte($endDate); $d->addDay()) {
                 $label = $d->format('Y-m-d');
                 $displayLabel = $d->format('D, M d');
                 $chartLabels[] = $displayLabel;
                 $found = $orders->firstWhere('label', $label);
                 $chartCounts[] = $found ? $found->count : 0;
+                $chartValuations[] = $found ? (float)$found->valuation : 0;
             }
         } elseif ($period === 'yearly') {
             // Group by Month (12 months)
             $orders = $q->select(
                 DB::raw('count(id) as count'),
+                DB::raw('SUM(total_amount) as valuation'),
                 DB::raw("DATE_FORMAT(created_at, '%Y-%m') as label")
             )->groupBy('label')
                 ->orderBy('label', 'asc')
@@ -450,17 +495,20 @@ class DashboardController extends Controller
                 
             $chartLabels = [];
             $chartCounts = [];
+            $chartValuations = [];
             for ($d = $startDate->copy()->startOfMonth(); $d->lte($endDate); $d->addMonth()) {
                 $label = $d->format('Y-m');
                 $displayLabel = $d->format('M Y');
                 $chartLabels[] = $displayLabel;
                 $found = $orders->firstWhere('label', $label);
                 $chartCounts[] = $found ? $found->count : 0;
+                $chartValuations[] = $found ? (float)$found->valuation : 0;
             }
         } else {
             // default monthly (group by day in current month)
             $orders = $q->select(
                 DB::raw('count(id) as count'),
+                DB::raw('SUM(total_amount) as valuation'),
                 DB::raw("DATE_FORMAT(created_at, '%Y-%m-%d') as label"),
                 DB::raw('DATE(created_at) as date')
             )->groupBy('date', 'label')
@@ -469,18 +517,21 @@ class DashboardController extends Controller
                 
             $chartLabels = [];
             $chartCounts = [];
+            $chartValuations = [];
             for ($d = $startDate->copy(); $d->lte($endDate); $d->addDay()) {
                 $label = $d->format('Y-m-d');
                 $displayLabel = $d->format('d M');
                 $chartLabels[] = $displayLabel;
                 $found = $orders->firstWhere('label', $label);
                 $chartCounts[] = $found ? $found->count : 0;
+                $chartValuations[] = $found ? (float)$found->valuation : 0;
             }
         }
 
         return [
             'labels' => $chartLabels,
             'counts' => $chartCounts,
+            'valuations' => $chartValuations,
         ];
     }
 

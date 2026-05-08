@@ -135,12 +135,6 @@
                     render: (data, type, row, meta) => meta.row + meta.settings._iDisplayStart + 1
                 },
                 { 
-                    data: 'is_online', 
-                    name: 'is_online', 
-                    visible: false,
-                    searchable: false
-                },
-                { 
                     data: 'name', 
                     name: 'user.name', 
                     className: 'fw-bold'
@@ -157,7 +151,13 @@
                     className: 'fw-bold text-primary text-end',
                     searchable: false
                 },
-                { data: 'actions', name: 'actions', orderable: false, searchable: false, className: 'text-center' }
+                { data: 'actions', name: 'actions', orderable: false, searchable: false, className: 'text-center' },
+                { 
+                    data: 'is_online', 
+                    name: 'is_online', 
+                    visible: false,
+                    searchable: false
+                }
             ],
             dom: '<"row mb-3 align-items-center"<"col-sm-12 col-md-6"B><"col-sm-12 col-md-6 text-end"f>>t<"row mt-3"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
             buttons: [
@@ -187,8 +187,8 @@
                     exportOptions: { columns: ':visible' }
                 }
             ],
-            pageLength: 25,
-            order: [[1, 'desc']], // Index 1 is is_online
+            pageLength: 20,
+            order: [[10, 'desc']], 
             language: {
                 processing: '<div class="spinner-border text-primary" role="status"></div>',
                 search: "_INPUT_",

@@ -3532,7 +3532,7 @@
                     "Sales Manager Dashboard"
                 ],
                 "summary": "List online field staff",
-                "description": "Returns a list of field staff who are currently punched in.",
+                "description": "Returns a list of field staff who are currently punched in.\n     *     \n     *     **Real-time Updates (WebSockets / Laravel Echo)**\n     *     To receive live status updates (punch-in/out), connect to:\n     *     - **Channel Name**: `attendance`\n     *     - **Event Name**: `attendance.logged`\n     *     ",
                 "operationId": "edc2e989d0d5c3569a38cec6dd5c8ecd",
                 "responses": {
                     "200": {

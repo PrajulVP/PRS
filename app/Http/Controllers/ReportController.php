@@ -10,6 +10,7 @@ use App\Models\RetailerOrder;
 use App\Models\RetailerOrderItem;
 use App\Models\DistributorOrder;
 use App\Models\SalesManager;
+use App\Models\Area;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -532,7 +533,17 @@ class ReportController extends Controller
         $fieldStaffs = FieldStaff::with('user')->get();
         $availableBrands = array_filter(array_map('trim', explode(',', \App\Models\Setting::getValue('product_brands') ?? '')));
 
-        return view('admin.reports.products', compact('salesManagers', 'distributors', 'fieldStaffs', 'availableBrands'));
+        $brandStats = Product::select('brand', DB::raw('count(*) as total'))
+            ->groupBy('brand')
+            ->get()
+            ->map(function($item) {
+                return [
+                    'brand' => $item->brand ?: 'Standard',
+                    'count' => $item->total
+                ];
+            });
+
+        return view('admin.reports.products', compact('salesManagers', 'distributors', 'fieldStaffs', 'availableBrands', 'brandStats'));
     }
 
     public function brandReports(Request $request)
@@ -584,10 +595,44 @@ class ReportController extends Controller
         return view('admin.reports.brands', compact('salesManagers', 'availableBrands'));
     }
 
+    public function areaReports(Request $request)
+    {
+        $user = Auth::user();
+        abort_if(!$user->hasPermissionToCategory('retailer_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
+        
+        if ($request->ajax()) {
+            $query = Area::query()
+                ->leftJoin('districts', 'areas.district_id', '=', 'districts.id')
+                ->select('areas.*', 'districts.name as district_name')
+                ->withCount('retailers');
+            
+            return DataTables::of($query)
+                ->addColumn('retailer_count', fn($area) => $area->retailers_count)
+                ->addColumn('total_revenue', function($area) use ($request) {
+                    $orderQuery = RetailerOrder::whereHas('retailer', function($q) use ($area) {
+                        $q->where('area_id', $area->id);
+                    })->where('status', RetailerOrder::STATUS_DELIVERED);
+                    
+                    [$f, $t] = $this->getFilterDates($request);
+                    if ($f && $t) {
+                        $orderQuery->whereBetween('created_at', [$f, $t]);
+                    }
+                    
+                    $total = $orderQuery->sum('total_amount');
+                    return '₹' . number_format($total, 2);
+                })
+                ->rawColumns(['total_revenue'])
+                ->make(true);
+        }
+
+        $salesManagers = SalesManager::with('user')->get();
+        return view('admin.reports.areas', compact('salesManagers'));
+    }
+
     public function fieldStaffReports(Request $request)
     {
         $user = Auth::user();
-        abort_if(!$user->hasPermissionToCategory('performance_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
+        abort_if(!$user->hasPermissionToCategory('performance_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view') && !$user->hasRole('salesmanager'), 403);
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
@@ -652,7 +697,7 @@ class ReportController extends Controller
                 ->make(true);
         }
 
-        $salesManagers = SalesManager::with('user')->get();
+        $salesManagers = $user->hasRole('salesmanager') ? SalesManager::with('user')->where('id', $user->salesManager->id)->get() : SalesManager::with('user')->get();
         $distributors = Distributor::with('user')->get();
         $fieldStaffs = FieldStaff::with('user')->get();
 
@@ -952,6 +997,12 @@ class ReportController extends Controller
         $date = $request->date ?? now()->toDateString();
         
         $user = \App\Models\User::findOrFail($userId);
+        
+        // Security check for Sales Managers
+        if (Auth::user()->hasRole('salesmanager')) {
+            $fs = FieldStaff::where('user_id', $userId)->firstOrFail();
+            abort_if($fs->sales_manager_id !== Auth::user()->salesManager->id, 403);
+        }
         
         // Fetch logs for the day
         $locations = \App\Models\LocationLog::where('user_id', $userId)

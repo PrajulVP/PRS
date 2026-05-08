@@ -53,8 +53,6 @@
                                         Remember me
                                     </label>
                                 </div>
-                                <a href="#" class="text-primary text-decoration-none small hover-underline fw-bold">Forgot
-                                    Password?</a>
                             </div>
 
                             <div class="d-grid">

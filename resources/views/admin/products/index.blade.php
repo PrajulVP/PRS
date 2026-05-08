@@ -64,6 +64,35 @@
 
 @section('page-body')
     <div class="container-fluid">
+        <!-- Brand Summary Cards -->
+        <div class="row g-3 pt-4 mb-4">
+            @foreach($brandStats as $stat)
+                <div class="col-xl-3 col-md-6">
+                    <div class="card h-100 mb-0 border-0 shadow-sm" style="border-radius: 15px; overflow: hidden;">
+                        @php
+                            $colors = ['#00497a', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9'];
+                            $color = $colors[$loop->index % count($colors)];
+                        @endphp
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0 p-3 rounded-3" style="background-color: {{ $color }}15;">
+                                    <i class="fa fa-tag" style="color: {{ $color }}; font-size: 1.2rem;"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="text-muted mb-1 text-uppercase fw-800" style="font-size: 0.7rem; letter-spacing: 0.5px;">{{ $stat['brand'] }}</h6>
+                                    <div class="d-flex align-items-baseline">
+                                        <h4 class="mb-0 fw-800" style="color: var(--med-primary);">{{ number_format($stat['count']) }}</h4>
+                                        <span class="ms-2 text-muted small">Products</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="height: 4px; background-color: {{ $color }}; width: 100%;"></div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
         <div class="row">
             <div class="col-sm-12">
                 <div class="card">

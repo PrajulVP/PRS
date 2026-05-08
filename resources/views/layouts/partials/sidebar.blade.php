@@ -8,6 +8,21 @@
     .sidebar-wrapper .sidebar-main .sidebar-links li {
         position: relative;
     }
+    .sidebar-link {
+        display: flex !important;
+        align-items: center !important;
+        white-space: nowrap !important;
+        justify-content: flex-start !important;
+    }
+    .sidebar-link span {
+        white-space: nowrap !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .sidebar-badge {
+        margin-left: auto !important;
+        flex-shrink: 0 !important;
+    }
   </style>
   {{-- <div class="logo-icon-wrapper"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/atom-logo-main-white.png') }}" width="170" alt=""></a></div> --}}
   <nav class="sidebar-main">
@@ -75,7 +90,7 @@
               <use href="{{ $iconSprite }}#fill-charts"></use>
             </svg><span>Executive Reports</span></a>
         </li>
-        @if (Auth::user()->hasPermissionToCategory('field_staff_reports', 'view') || Auth::user()->hasAnyRole(['admin', 'superadmin']))
+        @if (Auth::user()->hasPermissionToCategory('field_staff_reports', 'view') || Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
         <li class="sidebar-list">
           <a class="sidebar-link sidebar-title link-nav {{ request()->routeIs('admin.reports.fieldstaffs') ? 'active' : '' }}" href="{{ route('admin.reports.fieldstaffs') }}">
             <svg class="stroke-icon">

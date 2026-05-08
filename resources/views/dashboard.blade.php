@@ -909,21 +909,36 @@
                 {{-- ========================================== --}}
                 @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
 
-                    <div class="row">
+                    <div class="row g-3 mb-4">
                         @php
                             $adminStats = [
                                 ['label' => 'Distributors', 'value' => $counts['distributors'], 'icon' => 'briefcase', 'color' => 'var(--med-primary)', 'bg' => 'rgba(var(--med-primary-rgb), 0.1)', 'route' => route('admin.distributors.index')],
-                                ['label' => 'Retailers', 'value' => $counts['retailers'], 'icon' => 'shopping-bag', 'color' => '#10b981', 'bg' => 'rgba(16, 185, 129, 0.1)', 'route' => route('admin.retailers.index')]
+                                ['label' => 'Retailers', 'value' => $counts['retailers'], 'icon' => 'shopping-bag', 'color' => '#10b981', 'bg' => 'rgba(16, 185, 129, 0.1)', 'route' => route('admin.retailers.index')],
+                                ['label' => 'Field Staff', 'value' => $counts['field_staff'], 'icon' => 'users', 'color' => '#f59e0b', 'bg' => 'rgba(245, 158, 11, 0.1)', 'route' => route('admin.field-staffs.index')],
+                                ['label' => 'Products', 'value' => $counts['products'], 'icon' => 'box', 'color' => '#8b5cf6', 'bg' => 'rgba(139, 92, 246, 0.1)', 'route' => route('admin.reports.products')]
                             ];
 
                             if (Auth::user()->hasAnyRole(['admin', 'superadmin'])) {
-                                $adminStats[] = ['label' => 'Field Staff', 'value' => $counts['field_staff'], 'icon' => 'users', 'color' => '#f59e0b', 'bg' => 'rgba(245, 158, 11, 0.1)', 'route' => route('admin.field-staffs.index')];
                                 $adminStats[] = ['label' => 'Sales Managers', 'value' => $counts['sales_managers'], 'icon' => 'user-check', 'color' => '#0ea5e9', 'bg' => 'rgba(14, 165, 233, 0.1)', 'route' => route('admin.sales-managers.index')];
-                            } elseif (Auth::user()->hasRole('salesmanager')) {
-                                $adminStats[] = ['label' => 'Field Staff', 'value' => $counts['field_staff'], 'icon' => 'users', 'color' => '#f59e0b', 'bg' => 'rgba(245, 158, 11, 0.1)', 'route' => route('admin.field-staffs.index')];
-                                $adminStats[] = ['label' => 'Products', 'value' => $counts['products'], 'icon' => 'box', 'color' => '#8b5cf6', 'bg' => 'rgba(139, 92, 246, 0.1)', 'route' => '#'];
                             }
                         @endphp
+                        @foreach($adminStats as $stat)
+                            <div class="col-xl col-md-6">
+                                <div class="card border-0 shadow-sm executive-metric-card cursor-pointer h-100" onclick="window.location.href='{{ $stat['route'] }}'">
+                                    <div class="card-body py-3 px-4 text-center">
+                                        <div class="icon-circle-md bg-soft-primary mb-2 mx-auto" style="width: 45px; height: 45px; background: {{ $stat['bg'] }}">
+                                            <i data-feather="{{ $stat['icon'] }}" style="color: {{ $stat['color'] }}; width: 18px; height: 18px;"></i>
+                                        </div>
+                                        @php 
+                                            $slug = strtolower(str_replace(' ', '-', $stat['label'])); 
+                                        @endphp
+                                        <h6 class="text-muted fw-700 text-uppercase mb-1" style="font-size: 9px; letter-spacing: 1px;">{{ $stat['label'] }}</h6>
+                                        <h4 class="mb-0 fw-800" id="stat-{{ $slug }}" style="color: {{ $stat['color'] }}">{{ $stat['value'] }}</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
 
                     <!-- Executive Reports Section -->
                     <div class="row">
@@ -937,83 +952,89 @@
                             </div>
                         </div>
 
-                        <!-- Brand Performance Distribution Chart (NEW) -->
-                        <div class="col-lg-7 mb-4">
+                        <!-- Order Performance Activity Section -->
+                        <div class="col-lg-6 mb-4">
                             <div class="card p-4 border-0 shadow-sm h-100" style="border-radius: 20px;">
-                                <div class="mb-4">
-                                    <h6 class="fw-800 text-uppercase mb-0" style="font-size: 0.8rem; letter-spacing: 1px; color: var(--med-primary);">Order Valuation Breakdown</h6>
+                                <div class="mb-4 d-flex align-items-center justify-content-between">
+                                    <h6 class="fw-800 text-uppercase mb-0" style="font-size: 0.8rem; letter-spacing: 1px; color: var(--med-primary);">Retailer Order Activity</h6>
                                 </div>
-                                <div id="valuationTrendsChart"></div>
-                            </div>
-                        </div>
-                        <div class="col-lg-5 mb-4">
-                            <div class="card p-4 border-0 shadow-sm h-100" style="border-radius: 20px;">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <h6 class="fw-800 text-uppercase mb-0" style="font-size: 0.8rem; letter-spacing: 1px; color: var(--med-primary);">Market Share by Brand (<span class="current-period-text">{{ ucfirst($period) }}</span>)</h6>
-                                </div>
-                                <div id="brandSalesChart"></div>
+                                <div id="retailerOrderFlowChart"></div>
                             </div>
                         </div>
 
-                        <!-- Product Performance -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card h-100 executive-metric-card border-0">
-                                <div class="card-body p-5 text-center">
-                                    <div class="icon-circle-lg bg-soft-info mb-4">
-                                        <i class="fa fa-cubes fs-1 text-info"></i>
-                                    </div>
-                                    <h5 class="fw-bold mb-3">Products</h5>
-                                    <p class="text-muted mb-4 small" style="line-height: 1.6;">Analyze SKU mobility and inventory velocity metrics.</p>
-                                    <a href="{{ route('admin.reports.products') }}" class="btn btn-pill-compact btn-outline-info">Analyze</a>
+                        <div class="col-lg-6 mb-4">
+                            <div class="card p-4 border-0 shadow-sm h-100" style="border-radius: 20px;">
+                                <div class="mb-4 d-flex align-items-center justify-content-between">
+                                    <h6 class="fw-800 text-uppercase mb-0" style="font-size: 0.8rem; letter-spacing: 1px; color: var(--med-primary);">Distributor Order Volume</h6>
                                 </div>
+                                @if(isset($monthlyDistributorOrdersChart))
+                                    <div id="monthlyDistOrdersChart"></div>
+                                @else
+                                    <div class="text-center py-5 text-muted">
+                                        <i data-feather="bar-chart-2"></i><br>Insufficient Data
+                                    </div>
+                                @endif
                             </div>
                         </div>
 
-                        <!-- Distributor Performance -->
-                        @if(Auth::user()->hasPermissionToCategory('distributor_reports', 'view'))
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card h-100 executive-metric-card border-0">
-                                <div class="card-body p-5 text-center">
-                                    <div class="icon-circle-lg bg-soft-secondary mb-4">
-                                        <i class="fa fa-building fs-1" style="color: #8b5cf6;"></i>
+                        <div class="col-lg-6 mb-4">
+                            <div class="card p-4 border-0 shadow-sm h-100" style="border-radius: 20px;">
+                                <div class="mb-4 d-flex align-items-center justify-content-between">
+                                    <h6 class="fw-800 text-uppercase mb-0" style="font-size: 0.8rem; letter-spacing: 1px; color: var(--med-primary);">Market Share by Brand</h6>
+                                </div>
+                                <div id="brandDistributionChart"></div>
+                            </div>
+                        </div>
+
+                        @if($topAreas->count() > 0)
+                        <div class="col-lg-6 mb-4">
+                            <div class="card border-0 shadow-sm overflow-hidden h-100" style="border-radius: 20px;">
+                                <div class="card-header bg-white border-0 py-3 px-4 d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <h6 class="fw-800 text-uppercase mb-0" style="font-size: 0.75rem; letter-spacing: 1px; color: var(--med-primary);">Area Leaderboard</h6>
                                     </div>
-                                    <h5 class="fw-bold mb-3">Distributors</h5>
-                                    <p class="text-muted mb-4 small" style="line-height: 1.6;">Analyze partner performance and dispatch statistics.</p>
-                                    <a href="{{ route('admin.reports.distributors') }}" class="btn btn-pill-compact btn-outline-secondary">View</a>
+                                    <a href="{{ route('admin.reports.areas') }}" class="btn btn-pill-compact btn-outline-primary" style="font-size: 10px;">Analyze</a>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="bg-light">
+                                                <tr>
+                                                    <th class="px-4 py-2 border-0 small fw-800 text-uppercase text-muted" style="font-size: 9px;">Area</th>
+                                                    <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted text-center" style="font-size: 9px;">Retailers</th>
+                                                    <th class="px-4 py-2 border-0 small fw-800 text-uppercase text-muted text-end" style="font-size: 9px;">Revenue</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($topAreas as $area)
+                                                <tr>
+                                                    <td class="px-4 py-2">
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <div class="icon-circle-sm bg-soft-primary" style="width: 30px; height: 30px; border-radius: 8px;">
+                                                                <i data-feather="map-pin" class="text-primary" style="width: 14px;"></i>
+                                                            </div>
+                                                            <div>
+                                                                <div class="fw-800 text-dark small">{{ $area->name }}</div>
+                                                                <div class="text-muted" style="font-size: 9px;">{{ $area->district->name ?? 'N/A' }}</div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-3 py-2 text-center">
+                                                        <span class="badge bg-soft-info text-info px-2 py-1 rounded-pill fw-700" style="font-size: 9px;">{{ $area->retailers_count }}</span>
+                                                    </td>
+                                                    <td class="px-4 py-2 text-end">
+                                                        <div class="fw-800 text-primary small">₹{{ number_format($area->total_revenue, 0) }}</div>
+                                                    </td>
+                                                </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         @endif
 
-                        <!-- Retailer Performance -->
-                        @if(Auth::user()->hasPermissionToCategory('retailer_reports', 'view'))
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card h-100 executive-metric-card border-0">
-                                <div class="card-body p-5 text-center">
-                                    <div class="icon-circle-lg bg-soft-success mb-4">
-                                        <i class="fa fa-hospital-o fs-1 text-success"></i>
-                                    </div>
-                                    <h5 class="fw-bold mb-3">Retailers</h5>
-                                    <p class="text-muted mb-4 small" style="line-height: 1.6;">Track historical order data and outlet distribution.</p>
-                                    <a href="{{ route('admin.reports.retailers') }}" class="btn btn-pill-compact btn-outline-success">View</a>
-                                </div>
-                            </div>
-                        </div>
-                        @endif
-
-                        <!-- Staff Performance -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card h-100 executive-metric-card border-0">
-                                <div class="card-body p-5 text-center">
-                                    <div class="icon-circle-lg bg-soft-warning mb-4">
-                                        <i class="fa fa-users fs-1 text-warning"></i>
-                                    </div>
-                                    <h5 class="fw-bold mb-3">Staff KPI</h5>
-                                    <p class="text-muted mb-4 small" style="line-height: 1.6;">Analyze field force productivity and performance.</p>
-                                    <a href="{{ route('admin.reports.fieldstaffs') }}" class="btn btn-pill-compact btn-outline-warning">Analyze</a>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     <!-- Master Order Watch & Ops Center -->
@@ -1123,98 +1144,10 @@
                         </div>
                     </div>
 
-                    <!-- Pulse Statistics Grid -->
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="section-header-modern">
-                                <div class="dash"></div>
-                                <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.9rem; letter-spacing: 1.5px; color: var(--med-primary);">Real-time Operations Pulse</h5>
-                            </div>
-                        </div>
-                        @foreach($adminStats as $stat)
-                            <div class="col-xl col-md-6 mb-4">
-                                <div class="card border-0 shadow-sm executive-metric-card cursor-pointer" onclick="window.location.href='{{ $stat['route'] }}'">
-                                    <div class="card-body p-4 text-center">
-                                        <div class="icon-circle-lg mb-3 d-flex align-items-center justify-content-center rounded-circle" style="width: 60px; height: 60px; background-color: {{ $stat['bg'] }} !important;">
-                                            <i data-feather="{{ $stat['icon'] }}" style="color: {{ $stat['color'] }}; width: 22px; height: 22px;"></i>
-                                        </div>
-                                        @php 
-                                            $slug = strtolower(str_replace(' ', '_', $stat['label'])); 
-                                            if($slug === 'field_staffs') $slug = 'field_staff';
-                                        @endphp
-                                        <h6 class="text-muted fw-700 text-uppercase mb-2" style="font-size: 10px; letter-spacing: 1px;">{{ $stat['label'] }}</h6>
-                                        <h4 class="mb-0 fw-800" id="stat-{{ $slug }}" style="color: {{ $stat['color'] }}">{{ $stat['value'] }}</h4>
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
+
                     </div>
 
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="card p-4 mb-4 border-0 shadow-sm" style="border-radius: 15px;">
-                                <div class="mb-5 pb-3" style="border-bottom: 2px solid rgba(0, 73, 122, 0.05);">
-                                    <h5 class="fw-800 mb-1" style="color: var(--med-primary);">Order Performance Analytics</h5>
-                                    <p class="text-muted small mb-0">Visualization of fulfillment velocity and volume trends.</p>
-                                </div>
-                                <div class="row">
-                                    <!-- Retailer Orders Section -->
-                                    <div class="col-lg-6 analytics-divider">
-                                        <div class="px-3">
-                                            <div class="d-flex align-items-center gap-2 mb-4">
-                                                <i class="fa fa-shopping-basket text-primary"></i>
-                                                <h6 class="text-uppercase fw-800 mb-0" style="font-size: 0.75rem; letter-spacing: 1px; color: var(--med-primary);">Retailer Order Flow</h6>
-                                            </div>
-                                            <div class="row text-center mb-5 bg-light rounded-4 p-3 mx-0">
-                                                <div class="col-4">
-                                                    <h6 class="text-muted mb-1" style="font-size: 0.75rem;">Total</h6>
-                                                    <h4 id="stat-total-orders" class="fw-800 mb-0">{{ $retailerOrderStats['total'] }}</h4>
-                                                </div>
-                                                <div class="col-4">
-                                                    <h6 class="text-muted mb-1" style="font-size: 0.75rem;">Pending</h6>
-                                                    <h4 id="stat-pending" class="text-warning fw-800 mb-0">{{ $retailerOrderStats['pending'] }}</h4>
-                                                </div>
-                                                <div class="col-4">
-                                                    <h6 class="text-muted mb-1" style="font-size: 0.75rem;">Delivered</h6>
-                                                    <h4 id="stat-delivered" class="text-success fw-800 mb-0">{{ $retailerOrderStats['delivered'] }}</h4>
-                                                </div>
-                                            </div>
-                                            <div id="retailerOrderFlowChart"></div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Distributor Orders Section -->
-                                    <div class="col-lg-6">
-                                        <div class="px-2">
-                                            <h6 class="text-uppercase fw-700 mb-3" style="font-size: 0.8rem; letter-spacing: 1px; color: var(--med-primary);">Distributor Orders</h6>
-                                            <div class="row text-center mb-5 bg-light rounded-4 p-3 mx-0">
-                                                <div class="col-4">
-                                                    <h6 class="text-muted mb-1" style="font-size: 0.75rem;">Total</h6>
-                                                    <h4 id="stat-total-request" class="fw-800 mb-0">{{ $distributorOrderStats['total'] }}</h4>
-                                                </div>
-                                                <div class="col-4">
-                                                    <h6 class="text-muted mb-1" style="font-size: 0.75rem;">Pending</h6>
-                                                    <h4 id="stat-dist-pending" class="text-warning fw-800 mb-0">{{ $distributorOrderStats['pending'] }}</h4>
-                                                </div>
-                                                <div class="col-4">
-                                                    <h6 class="text-muted mb-1" style="font-size: 0.75rem;">Delivered</h6>
-                                                    <h4 id="stat-dist-delivered" class="text-success fw-800 mb-0">{{ $distributorOrderStats['delivered'] }}</h4>
-                                                </div>
-                                            </div>
-                                            @if(isset($monthlyDistributorOrdersChart))
-                                                <div id="monthlyDistOrdersChart"></div>
-                                            @else
-                                                <div class="text-center py-5 text-muted">
-                                                    <i data-feather="bar-chart-2"></i><br>Insufficient Data
-                                                </div>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
 
                     <div class="row">
                         <!-- Top performers tables -->
@@ -1445,7 +1378,7 @@
                             window.charts = {};
 
                             // Chart Initialization Helper
-                            function initPulseChart(selector, name, data, categories, color) {
+                            function initPulseChart(selector, name, data, categories, color, isCurrency = false) {
                                 if (document.querySelector(selector)) {
                                     var options = {
                                         series: [{ name: name, data: data }],
@@ -1454,7 +1387,14 @@
                                         stroke: { curve: 'smooth', width: 3 },
                                         xaxis: { categories: categories },
                                         colors: [color],
-                                        tooltip: { theme: tooltipTheme },
+                                        tooltip: { 
+                                            theme: tooltipTheme,
+                                            y: {
+                                                formatter: function (val) {
+                                                    return isCurrency ? '₹' + Number(val).toLocaleString() : val;
+                                                }
+                                            }
+                                        },
                                         fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.6, opacityTo: 0.1, stops: [0, 90, 100] } }
                                     };
                                     var chart = new ApexCharts(document.querySelector(selector), options);
@@ -1465,7 +1405,7 @@
                             }
 
                             // Initialize Retailer/Order Trend Charts
-                            window.charts.valuationTrendsChart = initPulseChart("#valuationTrendsChart", "Order Valuation", @json($chartData['counts']), @json($chartData['labels']), '#00497a');
+                            window.charts.valuationTrendsChart = initPulseChart("#valuationTrendsChart", "Order Valuation", @json($chartData['valuations']), @json($chartData['labels']), '#00497a', true);
                             window.charts.retailerOrderFlowChart = initPulseChart("#retailerOrderFlowChart", "Order Activity", @json($chartData['counts']), @json($chartData['labels']), '#00497a');
                             
                             // Compatibility for other roles using the old ID
@@ -1529,17 +1469,25 @@
 
                             // Brand Sales Distribution Chart
                             @if(isset($brandSalesDistribution))
-                                if (document.querySelector("#brandSalesChart")) {
+                                if (document.querySelector("#brandDistributionChart")) {
                                     var brandValues = @json($brandSalesDistribution['values']);
                                     var brandLabels = @json($brandSalesDistribution['labels']);
+                                    
+                                    // Sort brands alphabetically to maintain consistent order and color mapping
+                                    let brandZip = brandLabels.map((l, i) => ({ label: l, value: brandValues[i] }));
+                                    brandZip.sort((a, b) => a.label.localeCompare(b.label));
+                                    brandLabels = brandZip.map(z => z.label);
+                                    brandValues = brandZip.map(z => z.value);
                                     var brandTotal = brandValues.reduce((a, b) => Number(a) + Number(b), 0);
-                                    var hasBrandData = brandValues.length > 0 && brandTotal > 0;
+                                    var brandColors = ['#00497a', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#0ea5e9'];
+                                    var hasBrandData = brandValues.length > 0;
+                                    var isBrandZero = hasBrandData && brandTotal === 0;
 
                                     var brandOptions = {
-                                        series: hasBrandData ? brandValues : [1],
+                                        series: isBrandZero ? brandValues.map(() => 1) : (hasBrandData ? brandValues : [1]),
                                         labels: hasBrandData ? brandLabels : ['No Sales Data'],
                                         chart: { type: 'donut', height: 320 },
-                                        colors: hasBrandData ? ['#00497a', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#0ea5e9'] : ['#e2e8f0'],
+                                        colors: isBrandZero ? brandLabels.map(() => '#e2e8f0') : (hasBrandData ? brandColors : ['#e2e8f0']),
                                         stroke: { width: 0 },
                                         plotOptions: { 
                                             pie: { 
@@ -1549,20 +1497,35 @@
                                                         show: true,
                                                         total: {
                                                             show: true,
+                                                            showAlways: true,
                                                             label: 'Total Revenue',
+                                                            fontSize: '12px',
+                                                            fontWeight: 600,
+                                                            color: '#64748b',
                                                             formatter: function (w) {
-                                                                if (!hasBrandData) return '₹0';
+                                                                if (!hasBrandData || isBrandZero) return '₹0';
                                                                 return '₹' + w.globals.seriesTotals.reduce((a, b) => a + b, 0).toLocaleString(undefined, {maximumFractionDigits: 0});
                                                             }
+                                                        },
+                                                        value: {
+                                                            show: true,
+                                                            fontSize: '20px',
+                                                            fontWeight: 800,
+                                                            color: '#1e293b'
                                                         }
                                                     }
                                                 } 
                                             } 
                                         },
                                         dataLabels: { enabled: false },
-                                        legend: { position: 'right' },
+                                        legend: { 
+                                            position: 'right',
+                                            markers: {
+                                                fillColors: isBrandZero ? brandColors : undefined
+                                            }
+                                        },
                                         tooltip: { 
-                                            enabled: hasBrandData,
+                                            enabled: hasBrandData && !isBrandZero,
                                             theme: tooltipTheme,
                                             y: {
                                                 formatter: (val) => '₹' + val.toLocaleString()
@@ -1592,7 +1555,7 @@
                                             }
                                         }]
                                     };
-                                    window.charts.brandSalesChart = new ApexCharts(document.querySelector("#brandSalesChart"), brandOptions);
+                                    window.charts.brandSalesChart = new ApexCharts(document.querySelector("#brandDistributionChart"), brandOptions);
                                     window.charts.brandSalesChart.render();
                                 }
                             @endif
@@ -1604,7 +1567,7 @@
                             btn.classList.add('active');
 
                             // Show loading state (optional but premium)
-                            const containers = ['#monthlyOrdersChart', '#orderStatusChart', '#monthlyDistOrdersChart', '#brandSalesChart'];
+                            const containers = ['#monthlyOrdersChart', '#orderStatusChart', '#monthlyDistOrdersChart', '#brandDistributionChart'];
                             containers.forEach(selector => {
                                 const el = document.querySelector(selector);
                                 if (el) el.style.opacity = '0.5';
@@ -1617,7 +1580,7 @@
                                     // Update Valuation Chart
                                     if (window.charts.valuationTrendsChart && data.chartData) {
                                         window.charts.valuationTrendsChart.updateOptions({ xaxis: { categories: data.chartData.labels } });
-                                        window.charts.valuationTrendsChart.updateSeries([{ data: data.chartData.counts }]);
+                                        window.charts.valuationTrendsChart.updateSeries([{ data: data.chartData.valuations }]);
                                     }
 
                                     // Update Retailer Flow Chart
@@ -1660,28 +1623,53 @@
 
                                     if (window.charts.brandSalesChart && data.brandSalesDistribution) {
                                         const brandData = data.brandSalesDistribution;
+                                         
+                                         // Sort brands alphabetically to maintain consistent order and color mapping
+                                         let brandZip = brandData.labels.map((l, i) => ({ label: l, value: brandData.values[i] }));
+                                         brandZip.sort((a, b) => a.label.localeCompare(b.label));
+                                         const brandLabels = brandZip.map(z => z.label);
+                                         const brandValues = brandZip.map(z => z.value);
                                         const brandTotal = brandData.values.reduce((a, b) => Number(a) + Number(b), 0);
-                                        const hasBrandData = brandData.values.length > 0 && brandTotal > 0;
+                                         const brandColors = ['#00497a', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#0ea5e9'];
+                                         const hasBrandData = brandData.values.length > 0;
+                                         const isBrandZero = hasBrandData && brandTotal === 0;
                                         window.charts.brandSalesChart.updateOptions({
-                                            labels: hasBrandData ? brandData.labels : ['No Sales Data'],
-                                            colors: hasBrandData ? ['#00497a', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#0ea5e9'] : ['#e2e8f0'],
-                                            tooltip: { enabled: hasBrandData },
+                                            labels: hasBrandData ? brandLabels : ['No Sales Data'],
+                                             colors: isBrandZero ? brandLabels.map(() => '#e2e8f0') : (hasBrandData ? brandColors : ['#e2e8f0']),
+                                             tooltip: { enabled: hasBrandData && !isBrandZero },
+                                             legend: {
+                                                 markers: {
+                                                     fillColors: isBrandZero ? brandColors : undefined
+                                                 }
+                                             },
                                             plotOptions: { 
                                                 pie: { 
                                                     donut: { 
                                                         labels: {
                                                             total: {
+                                                                show: true,
+                                                                showAlways: true,
+                                                                label: 'Total Revenue',
+                                                                fontSize: '12px',
+                                                                fontWeight: 600,
+                                                                color: '#64748b',
                                                                 formatter: function (w) {
-                                                                    if (!hasBrandData) return '₹0';
+                                                                     if (!hasBrandData || isBrandZero) return '₹0';
                                                                     return '₹' + w.globals.seriesTotals.reduce((a, b) => a + b, 0).toLocaleString(undefined, {maximumFractionDigits: 0});
-                                                                }
                                                             }
+                                                        },
+                                                        value: {
+                                                            show: true,
+                                                            fontSize: '20px',
+                                                            fontWeight: 800,
+                                                            color: '#1e293b'
                                                         }
+                                                    }
                                                     } 
                                                 } 
                                             }
                                         });
-                                        window.charts.brandSalesChart.updateSeries(hasBrandData ? brandData.values : [1]);
+                                         window.charts.brandSalesChart.updateSeries(isBrandZero ? brandLabels.map(() => 1) : (hasBrandData ? brandValues : [1]));
                                     }
 
                                     // 2. Update Stat Cards

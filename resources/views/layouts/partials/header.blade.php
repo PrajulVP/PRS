@@ -13,7 +13,7 @@
     cursor: pointer;
     border: none !important;
     padding: 0 !important;
-    overflow: hidden !important;
+    overflow: visible !important;
   }
 
   body:not(.dark-only) .notification-box, 
@@ -50,17 +50,18 @@
 
   .notification-box .badge {
     position: absolute;
-    margin-top: -4px;
-    margin-right: -5px;
-    padding: 7px !important;
-    width: 10px;
-    height: 10px;
+    margin-top: -2px;
+    margin-right: -2px;
+    padding: 5px !important;
+    width: 16px;
+    height: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 10px !important;
     border-radius: 50% !important;
     line-height: 1;
+    z-index: 10;
   }
 
   .notification-dropdown {
@@ -90,6 +91,19 @@
   body.dark-only .profile-dropdown li form button.logout-btn {
       color: #fff !important;
       background-color: var(--bs-primary) !important;
+  }
+  .profile-dropdown li a {
+      display: flex !important;
+      align-items: center !important;
+      white-space: nowrap !important;
+      width: 100% !important;
+  }
+  .profile-dropdown li a i {
+      margin-right: 10px !important;
+      margin-bottom: 0 !important;
+  }
+  .profile-dropdown li a span {
+      white-space: nowrap !important;
   }
 </style>
 <div class="page-header">
