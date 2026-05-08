@@ -129,4 +129,14 @@ Route::middleware('auth:api')->group(function () {
         Route::post('rate-staff', [\App\Http\Controllers\Api\RatingApiController::class, 'rateStaff']);
         Route::get('my-ratings', [\App\Http\Controllers\Api\RatingApiController::class, 'getMyRatings']);
     });
+
+    // Return Management APIs
+    Route::prefix('returns')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\ReturnApiController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Api\ReturnApiController::class, 'store']);
+        Route::get('/filters', [\App\Http\Controllers\Api\ReturnApiController::class, 'getFilters']);
+        Route::get('/delivered-orders', [\App\Http\Controllers\Api\ReturnApiController::class, 'getDeliveredOrders']);
+        Route::post('/{returnRequest}/approve', [\App\Http\Controllers\Api\ReturnApiController::class, 'approve']);
+        Route::post('/{returnRequest}/reject', [\App\Http\Controllers\Api\ReturnApiController::class, 'reject']);
+    });
 });

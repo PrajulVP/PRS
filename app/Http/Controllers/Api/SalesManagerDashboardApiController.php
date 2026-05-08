@@ -188,13 +188,11 @@ class SalesManagerDashboardApiController extends Controller
             if (!$fsUser) continue;
 
             $lastAttendance = \App\Models\AttendanceLog::where('user_id', $fsUser->id)
-                ->whereDate('timestamp', $today)
                 ->latest('timestamp')
                 ->first();
 
             if ($lastAttendance && $lastAttendance->type === 'punch_in') {
                 $lastLoc = \App\Models\LocationLog::where('user_id', $fsUser->id)
-                    ->whereDate('timestamp', $today)
                     ->latest('timestamp')
                     ->first();
                 
@@ -268,12 +266,10 @@ class SalesManagerDashboardApiController extends Controller
             if (!$fsUser) continue;
 
             $lastLoc = \App\Models\LocationLog::where('user_id', $fsUser->id)
-                ->whereDate('timestamp', $today)
                 ->latest('timestamp')
                 ->first();
 
             $lastAttendance = \App\Models\AttendanceLog::where('user_id', $fsUser->id)
-                ->whereDate('timestamp', $today)
                 ->latest('timestamp')
                 ->first();
 

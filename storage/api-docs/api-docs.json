@@ -3463,6 +3463,268 @@
                 ]
             }
         },
+        "/api/returns": {
+            "get": {
+                "tags": [
+                    "Returns"
+                ],
+                "summary": "List return requests",
+                "description": "Returns a list of return requests filtered by user role and order type.",
+                "operationId": "887644e900198fec10cda7b280df3697",
+                "parameters": [
+                    {
+                        "name": "order_type",
+                        "in": "query",
+                        "description": "Filter by order type",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "retailer",
+                                "distributor"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of return requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Returns"
+                ],
+                "summary": "Submit a new return request",
+                "description": "Creates a new return request for a delivered product. Requires images as evidence.",
+                "operationId": "b29ae9a5f15aa3867129d58d598799d4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "order_type",
+                                    "order_id",
+                                    "product_id",
+                                    "quantity",
+                                    "reason",
+                                    "images[]"
+                                ],
+                                "properties": {
+                                    "order_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "retailer",
+                                            "distributor"
+                                        ]
+                                    },
+                                    "order_id": {
+                                        "type": "integer"
+                                    },
+                                    "product_id": {
+                                        "type": "integer"
+                                    },
+                                    "side": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "size": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "quantity": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "reason": {
+                                        "type": "string"
+                                    },
+                                    "images[]": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Return request submitted"
+                    },
+                    "422": {
+                        "description": "Validation error or ineligible product"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/returns/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Returns"
+                ],
+                "summary": "Approve a return request",
+                "description": "Approves a return request based on the user's role and the current tier of approval.",
+                "operationId": "3c06309263a1eb267132f999f2ab6b45",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Return request approved"
+                    },
+                    "403": {
+                        "description": "Unauthorized to approve at this stage"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/returns/{id}/reject": {
+            "post": {
+                "tags": [
+                    "Returns"
+                ],
+                "summary": "Reject a return request",
+                "description": "Rejects a return request with a provided reason.",
+                "operationId": "3a8c05e55dbc20cde152a688bf7035f9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "minLength": 5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Return request rejected"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/returns/filters": {
+            "get": {
+                "tags": [
+                    "Returns"
+                ],
+                "summary": "Get filters for return requests",
+                "description": "Returns available brands, products, and distributors for filtering purposes.",
+                "operationId": "96daf4daf1d149a297aa8a1c7ee846d1",
+                "responses": {
+                    "200": {
+                        "description": "Filter options"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/returns/delivered-orders": {
+            "get": {
+                "tags": [
+                    "Returns"
+                ],
+                "summary": "Get delivered orders for returns",
+                "description": "Returns a list of orders that are eligible for return requests based on the user's role.",
+                "operationId": "213dc2a3b3170c24bd75aa4377843e21",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of delivered orders"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/sales-manager/dashboard": {
             "get": {
                 "tags": [
@@ -4313,6 +4575,10 @@
         {
             "name": "Retailer Orders",
             "description": "Retailer Orders"
+        },
+        {
+            "name": "Returns",
+            "description": "Returns"
         },
         {
             "name": "Sales Manager Dashboard",
