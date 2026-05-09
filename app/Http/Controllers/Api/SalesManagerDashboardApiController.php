@@ -175,6 +175,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
+        if (!$salesManager) {
+            return response()->json(['error' => 'Sales Manager profile not found'], 404);
+        }
         
         $staffUsers = \App\Models\FieldStaff::with(['user'])
             ->where('sales_manager_id', $salesManager->id)
@@ -187,13 +190,16 @@ class SalesManagerDashboardApiController extends Controller
             $fsUser = $fs->user;
             if (!$fsUser) continue;
 
+            // Check for the latest attendance log
             $lastAttendance = \App\Models\AttendanceLog::where('user_id', $fsUser->id)
-                ->latest('timestamp')
+                ->orderByDesc('timestamp')
+                ->orderByDesc('id')
                 ->first();
 
+            // If they have punched in and haven't punched out since then, they are "online"
             if ($lastAttendance && $lastAttendance->type === 'punch_in') {
                 $lastLoc = \App\Models\LocationLog::where('user_id', $fsUser->id)
-                    ->latest('timestamp')
+                    ->orderByDesc('timestamp')
                     ->first();
                 
                 $status = 'online';
@@ -213,13 +219,30 @@ class SalesManagerDashboardApiController extends Controller
                     $status = 'visiting';
                 }
 
+                $visitCount = \App\Models\VisitLog::where('user_id', $fsUser->id)
+                    ->whereDate('check_in_at', $today)
+                    ->count();
+
+                $punchesToday = \App\Models\AttendanceLog::where('user_id', $fsUser->id)
+                    ->whereDate('timestamp', $today)
+                    ->count();
+
+                $distance = \App\Models\LocationLog::calculateDailyDistance($fsUser->id, $today);
+
                 $onlineStaff[] = [
                     'id' => $fs->id,
                     'user_id' => $fsUser->id,
                     'name' => $fsUser->name,
+                    'avatar' => $fsUser->avatar_url,
                     'contact_no' => $fs->contact_no,
                     'status' => $status,
                     'last_seen' => $lastLoc ? $lastLoc->timestamp->diffForHumans() : 'Never today',
+                    'stats' => [
+                        'visits' => $visitCount,
+                        'punches' => $punchesToday,
+                        'distance' => $distance . ' KM'
+                    ],
+                    'ongoing_visit' => $ongoingVisit ? $ongoingVisit->customer_name : null
                 ];
             }
         }
@@ -266,11 +289,13 @@ class SalesManagerDashboardApiController extends Controller
             if (!$fsUser) continue;
 
             $lastLoc = \App\Models\LocationLog::where('user_id', $fsUser->id)
-                ->latest('timestamp')
+                ->orderByDesc('timestamp')
+                ->orderByDesc('id')
                 ->first();
 
             $lastAttendance = \App\Models\AttendanceLog::where('user_id', $fsUser->id)
-                ->latest('timestamp')
+                ->orderByDesc('timestamp')
+                ->orderByDesc('id')
                 ->first();
 
             $visitCount = \App\Models\VisitLog::where('user_id', $fsUser->id)
@@ -313,6 +338,7 @@ class SalesManagerDashboardApiController extends Controller
                 'status' => $status,
                 'stats' => [
                     'visits' => $visitCount,
+                    'punches' => \App\Models\AttendanceLog::where('user_id', $fsUser->id)->whereDate('timestamp', $today)->count(),
                     'distance' => $distance . ' KM'
                 ],
                 'ongoing_visit' => $ongoingVisit ? $ongoingVisit->customer_name : null
