@@ -145,7 +145,10 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
-        $fieldStaffIds = $salesManager->fieldStaffs->pluck('id');
+        $fieldStaffIds = \App\Models\FieldStaff::where(function($q) use ($salesManager) {
+            $q->where('sales_manager_id', $salesManager->id)
+              ->orWhere('sales_manager_id', $salesManager->user_id);
+        })->pluck('id');
 
         $pendingRetailers = Retailer::with(['user', 'fieldStaff.user', 'district', 'area'])
             ->whereIn('field_staff_id', $fieldStaffIds)
@@ -179,8 +182,12 @@ class SalesManagerDashboardApiController extends Controller
             return response()->json(['error' => 'Sales Manager profile not found'], 404);
         }
         
+        // Inconsistent data: some field staff are assigned by SalesManager ID, others by SalesManager User ID
         $staffUsers = \App\Models\FieldStaff::with(['user'])
-            ->where('sales_manager_id', $salesManager->id)
+            ->where(function($q) use ($salesManager) {
+                $q->where('sales_manager_id', $salesManager->id)
+                  ->orWhere('sales_manager_id', $salesManager->user_id);
+            })
             ->get();
 
         $today = now()->toDateString();
@@ -271,7 +278,10 @@ class SalesManagerDashboardApiController extends Controller
         $salesManager = $user->salesManager;
         
         $query = \App\Models\FieldStaff::with(['user', 'salesManager.user'])
-            ->where('sales_manager_id', $salesManager->id);
+            ->where(function($q) use ($salesManager) {
+                $q->where('sales_manager_id', $salesManager->id)
+                  ->orWhere('sales_manager_id', $salesManager->user_id);
+            });
 
         if ($request->has('user_id') && !empty($request->user_id)) {
             $query->where('user_id', $request->user_id);
@@ -437,7 +447,10 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
-        $fieldStaffIds = $salesManager->fieldStaffs->pluck('id');
+        $fieldStaffIds = \App\Models\FieldStaff::where(function($q) use ($salesManager) {
+            $q->where('sales_manager_id', $salesManager->id)
+              ->orWhere('sales_manager_id', $salesManager->user_id);
+        })->pluck('id');
 
         $retailer = Retailer::whereIn('field_staff_id', $fieldStaffIds)->findOrFail($id);
 
@@ -471,7 +484,10 @@ class SalesManagerDashboardApiController extends Controller
 
         $salesManager = $user->salesManager;
         $fieldStaffs = \App\Models\FieldStaff::with('user')
-            ->where('sales_manager_id', $salesManager->id)
+            ->where(function($q) use ($salesManager) {
+                $q->where('sales_manager_id', $salesManager->id)
+                  ->orWhere('sales_manager_id', $salesManager->user_id);
+            })
             ->get();
 
         return response()->json($fieldStaffs);
@@ -493,7 +509,10 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
-        $fieldStaffIds = $salesManager->fieldStaffs->pluck('id');
+        $fieldStaffIds = \App\Models\FieldStaff::where(function($q) use ($salesManager) {
+            $q->where('sales_manager_id', $salesManager->id)
+              ->orWhere('sales_manager_id', $salesManager->user_id);
+        })->pluck('id');
 
         $retailers = Retailer::with(['user', 'district', 'area'])
             ->whereIn('field_staff_id', $fieldStaffIds)
@@ -518,7 +537,10 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
-        $fieldStaffIds = $salesManager->fieldStaffs->pluck('id');
+        $fieldStaffIds = \App\Models\FieldStaff::where(function($q) use ($salesManager) {
+            $q->where('sales_manager_id', $salesManager->id)
+              ->orWhere('sales_manager_id', $salesManager->user_id);
+        })->pluck('id');
 
         $retailers = Retailer::with('fieldStaff.user')
             ->whereIn('field_staff_id', $fieldStaffIds)

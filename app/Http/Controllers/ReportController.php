@@ -933,11 +933,12 @@ class ReportController extends Controller
                     if ($diffInMins > 45) {
                         $status = 'idle';
                         $statusColor = '#f1c40f'; // Yellow
+                        $roundedMins = round($diffInMins);
                         $alerts[] = [
                             'staff_id' => $fs->id,
                             'staff_name' => $fsUser->name,
                             'type' => 'inactivity',
-                            'message' => "{$fsUser->name} has been stationary for {$diffInMins} minutes.",
+                            'message' => "{$fsUser->name} has been stationary for {$roundedMins} minutes.",
                             'time' => $lastLoc->timestamp->format('H:i')
                         ];
                     }
