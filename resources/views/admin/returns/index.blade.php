@@ -209,10 +209,17 @@
                             </div>
                         </div>
 
-                        <div id="rejectionSection" class="mb-0 d-none">
+                        <div id="rejectionSection" class="mb-4 d-none">
                             <label class="text-danger small text-uppercase fw-bold mb-2 d-block">Rejection Feedback</label>
                             <div class="bg-soft-danger p-3 rounded-4">
                                 <p id="viewRejectionReason" class="text-danger mb-0 small"></p>
+                            </div>
+                        </div>
+
+                        <div id="approvalTimeline" class="mb-0">
+                            <label class="text-muted-theme small text-uppercase fw-bold mb-3 d-block">Approval History</label>
+                            <div id="timelineList" class="ps-2">
+                                {{-- Timeline items injected here --}}
                             </div>
                         </div>
                     </div>
@@ -519,12 +526,16 @@ $(document).ready(function() {
                 data: 'user',
                 render: function(data, type, row) {
                     let typeBadge = row.order_type === 'retailer' ? 'bg-soft-success text-success' : 'bg-soft-info text-info';
+                    let requester = data ? data.name : 'N/A';
+                    if (row.order_type === 'retailer' && row.user && row.user.retailer) {
+                        requester = row.user.retailer.shop_name || requester;
+                    }
                     return `<div class="d-flex align-items-center">
                         <div class="bg-soft-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
                             <i class="fa fa-user text-primary" style="font-size: 0.8rem;"></i>
                         </div>
                         <div>
-                            <div class="fw-bold text-main-theme small">${data ? data.name : 'N/A'}</div>
+                            <div class="fw-bold text-main-theme small">${requester}</div>
                             <span class="badge ${typeBadge} border-0" style="font-size: 0.55rem; text-transform: uppercase; padding: 2px 4px;">${row.order_type}</span>
                         </div>
                     </div>`;
@@ -742,8 +753,45 @@ $(document).ready(function() {
         if(row.status === 'rejected') {
             $('#rejectionSection').removeClass('d-none');
             $('#viewRejectionReason').text(row.rejection_reason || 'No reason provided.');
+            $('#approvalTimeline').addClass('d-none');
         } else {
             $('#rejectionSection').addClass('d-none');
+            $('#approvalTimeline').removeClass('d-none');
+            
+            let timeline = $('#timelineList').empty();
+            if (row.verified_at) {
+                let verifier = row.verified_by_user ? row.verified_by_user.name : 'System';
+                timeline.append(`
+                    <div class="border-start border-success border-2 ps-3 pb-3 position-relative">
+                        <div class="position-absolute start-0 top-0 translate-middle-x bg-success rounded-circle" style="width: 10px; height: 10px; margin-left: -1px;"></div>
+                        <div class="fw-bold small text-main-theme">VERIFIED</div>
+                        <div class="text-muted small" style="font-size: 0.7rem;">By ${verifier} on ${row.verified_at.split('T')[0]}</div>
+                    </div>
+                `);
+            }
+            if (row.distributor_approved_at) {
+                let approver = row.distributor_approved_by_user ? row.distributor_approved_by_user.name : 'System';
+                timeline.append(`
+                    <div class="border-start border-success border-2 ps-3 pb-3 position-relative">
+                        <div class="position-absolute start-0 top-0 translate-middle-x bg-success rounded-circle" style="width: 10px; height: 10px; margin-left: -1px;"></div>
+                        <div class="fw-bold small text-main-theme">DISTRIBUTOR APPROVED</div>
+                        <div class="text-muted small" style="font-size: 0.7rem;">By ${approver} on ${row.distributor_approved_at.split('T')[0]}</div>
+                    </div>
+                `);
+            }
+            if (row.admin_approved_at) {
+                let approver = row.admin_approver ? row.admin_approver.name : 'Admin';
+                timeline.append(`
+                    <div class="border-start border-success border-2 ps-3 position-relative">
+                        <div class="position-absolute start-0 top-0 translate-middle-x bg-success rounded-circle" style="width: 10px; height: 10px; margin-left: -1px;"></div>
+                        <div class="fw-bold small text-main-theme">ADMIN FINALIZED</div>
+                        <div class="text-muted small" style="font-size: 0.7rem;">By ${approver} on ${row.admin_approved_at.split('T')[0]}</div>
+                    </div>
+                `);
+            }
+            if (timeline.is(':empty')) {
+                timeline.append('<div class="text-muted small italic px-2">No approval history yet.</div>');
+            }
         }
 
         $('#viewReturnModal').modal('show');

@@ -24,7 +24,11 @@ class ReturnApiController extends Controller
      *     tags={"Returns"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="order_type", in="query", required=false, @OA\Schema(type="string", enum={"retailer", "distributor"}), description="Filter by order type"),
-     *     @OA\Parameter(name="status", in="query", required=false, @OA\Schema(type="string"), description="Filter by status"),
+     *     @OA\Parameter(name="status", in="query", required=false, @OA\Schema(type="string"), description="Filter by status (pending, verified, completed, rejected)"),
+     *     @OA\Parameter(name="brand", in="query", required=false, @OA\Schema(type="string"), description="Filter by product brand"),
+     *     @OA\Parameter(name="product_id", in="query", required=false, @OA\Schema(type="integer"), description="Filter by product ID"),
+     *     @OA\Parameter(name="date_from", in="query", required=false, @OA\Schema(type="string", format="date"), description="Start date (YYYY-MM-DD)"),
+     *     @OA\Parameter(name="date_to", in="query", required=false, @OA\Schema(type="string", format="date"), description="End date (YYYY-MM-DD)"),
      *     @OA\Response(
      *         response=200,
      *         description="List of return requests",
@@ -36,7 +40,7 @@ class ReturnApiController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        $query = ReturnRequest::with(['user', 'product', 'distributor.user', 'field_staff.user', 'sales_manager.user']);
+        $query = ReturnRequest::with(['user.retailer', 'product', 'verifiedByUser', 'distributorApprovedByUser', 'adminApprover', 'distributor.user', 'field_staff.user', 'sales_manager.user']);
 
         // Filter based on role
         if ($user->hasRole('retailer')) {
@@ -49,10 +53,13 @@ class ReturnApiController extends Controller
                       ->orWhere('distributor_id', $distributor->id);
                 });
             }
+            $query->with(['user.retailer']);
         } elseif ($user->hasRole('fieldstaff')) {
-            $query->where('field_staff_id', $user->fieldStaff?->id);
+            $query->where('field_staff_id', $user->fieldStaff?->id)->with(['user.retailer']);
         } elseif ($user->hasRole('salesmanager')) {
-            $query->where('sales_manager_id', $user->salesManager?->id);
+            $query->where('sales_manager_id', $user->salesManager?->id)->with(['user.retailer']);
+        } else {
+            $query->with(['user.retailer']);
         }
 
         if ($request->filled('order_type')) {
@@ -63,7 +70,36 @@ class ReturnApiController extends Controller
             $query->where('status', $request->status);
         }
 
-        return response()->json($query->latest()->get());
+        if ($request->filled('brand')) {
+            $query->whereHas('product', function($q) use ($request) {
+                $q->where('brand', $request->brand);
+            });
+        }
+
+        if ($request->filled('product_id')) {
+            $query->where('product_id', $request->product_id);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $returns = $query->latest()->get()->map(function($r) {
+            $shopName = null;
+            if ($r->order_type === 'retailer') {
+                $shopName = $r->user->retailer->shop_name ?? 'N/A';
+            }
+            
+            $data = $r->toArray();
+            $data['shop_name'] = $shopName;
+            return $data;
+        });
+
+        return response()->json($returns);
     }
 
     /**
@@ -227,14 +263,14 @@ class ReturnApiController extends Controller
                 if ($user->hasRole('fieldstaff') && $returnRequest->status === 'pending') {
                     $returnRequest->update([
                         'status' => 'verified',
-                        'tier1_approved_at' => now(),
-                        'tier1_approved_by' => $user->id,
+                        'verified_at' => now(),
+                        'verified_by' => $user->id,
                     ]);
                 } elseif ($user->hasRole('distributor') && $returnRequest->status === 'verified') {
                     $returnRequest->update([
                         'status' => 'completed',
-                        'tier2_approved_at' => now(),
-                        'tier2_approved_by' => $user->id,
+                        'distributor_approved_at' => now(),
+                        'distributor_approved_by' => $user->id,
                     ]);
                     $this->generateCreditNote($returnRequest);
                     $this->adjustStockForReturn($returnRequest);
@@ -245,8 +281,8 @@ class ReturnApiController extends Controller
                 if ($user->hasRole('salesmanager') && $returnRequest->status === 'pending') {
                     $returnRequest->update([
                         'status' => 'verified',
-                        'tier1_approved_at' => now(),
-                        'tier1_approved_by' => $user->id,
+                        'verified_at' => now(),
+                        'verified_by' => $user->id,
                     ]);
                 } elseif ($user->hasAnyRole(['admin', 'superadmin']) && $returnRequest->status === 'verified') {
                     $returnRequest->update([
@@ -412,7 +448,8 @@ class ReturnApiController extends Controller
      *     description="Returns a list of orders that are eligible for return requests based on the user's role.",
      *     tags={"Returns"},
      *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="search", in="query", required=false, @OA\Schema(type="string")),
+     *     @OA\Parameter(name="search", in="query", required=false, @OA\Schema(type="string"), description="Search by Order Code or Product Name"),
+     *     @OA\Parameter(name="date", in="query", required=false, @OA\Schema(type="string", format="date"), description="Filter by specific order date (YYYY-MM-DD)"),
      *     @OA\Response(response=200, description="List of delivered orders")
      * )
      */
@@ -434,7 +471,16 @@ class ReturnApiController extends Controller
         }
 
         if ($search) {
-            $query->where('order_code', 'like', "%{$search}%");
+            $query->where(function($q) use ($search) {
+                $q->where('order_code', 'like', "%{$search}%")
+                  ->orWhereHas('items', function($sq) use ($search) {
+                      $sq->where('product_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->date);
         }
         
         $orders = $query->latest()->paginate(10);

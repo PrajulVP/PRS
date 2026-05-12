@@ -26,7 +26,7 @@ class ReturnController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        $query = ReturnRequest::with(['user', 'product', 'tier1Approver', 'tier2Approver', 'adminApprover', 'distributor.user', 'field_staff.user', 'sales_manager.user']);
+        $query = ReturnRequest::with(['user.retailer', 'product', 'verifiedByUser', 'distributorApprovedByUser', 'adminApprover', 'distributor.user', 'field_staff.user', 'sales_manager.user']);
 
         // Filter based on role
         if ($user->hasRole('retailer')) {
@@ -260,16 +260,16 @@ class ReturnController extends Controller
                 if ($user->hasRole('fieldstaff') && $returnRequest->status === 'pending') {
                     $returnRequest->update([
                         'status' => 'verified',
-                        'tier1_approved_at' => now(),
-                        'tier1_approved_by' => $user->id,
+                        'verified_at' => now(),
+                        'verified_by' => $user->id,
                     ]);
                 }
                 // Tier 2: Distributor
                 elseif ($user->hasRole('distributor') && $returnRequest->status === 'verified') {
                     $returnRequest->update([
                         'status' => 'completed',
-                        'tier2_approved_at' => now(),
-                        'tier2_approved_by' => $user->id,
+                        'distributor_approved_at' => now(),
+                        'distributor_approved_by' => $user->id,
                     ]);
                     $this->generateCreditNote($returnRequest);
                     $this->adjustStockForReturn($returnRequest);
@@ -282,8 +282,8 @@ class ReturnController extends Controller
                 if ($user->hasRole('salesmanager') && $returnRequest->status === 'pending') {
                     $returnRequest->update([
                         'status' => 'verified',
-                        'tier1_approved_at' => now(),
-                        'tier1_approved_by' => $user->id,
+                        'verified_at' => now(),
+                        'verified_by' => $user->id,
                     ]);
                 }
                 // Tier 2: Admin

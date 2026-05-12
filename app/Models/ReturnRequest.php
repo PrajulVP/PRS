@@ -28,10 +28,10 @@ class ReturnRequest extends Model
         'sales_manager_id',
         'status',
         'refund_amount',
-        'tier1_approved_at',
-        'tier1_approved_by',
-        'tier2_approved_at',
-        'tier2_approved_by',
+        'verified_at',
+        'verified_by',
+        'distributor_approved_at',
+        'distributor_approved_by',
         'admin_approved_at',
         'admin_approved_by',
         'rejection_reason',
@@ -39,8 +39,8 @@ class ReturnRequest extends Model
     ];
 
     protected $casts = [
-        'tier1_approved_at' => 'datetime',
-        'tier2_approved_at' => 'datetime',
+        'verified_at' => 'datetime',
+        'distributor_approved_at' => 'datetime',
         'admin_approved_at' => 'datetime',
         'refund_amount' => 'decimal:2',
         'quantity' => 'decimal:2',
@@ -65,14 +65,14 @@ class ReturnRequest extends Model
         return $this->belongsTo(DistributorOrder::class, 'order_id');
     }
 
-    public function tier1Approver()
+    public function verifiedByUser()
     {
-        return $this->belongsTo(User::class, 'tier1_approved_by');
+        return $this->belongsTo(User::class, 'verified_by');
     }
 
-    public function tier2Approver()
+    public function distributorApprovedByUser()
     {
-        return $this->belongsTo(User::class, 'tier2_approved_by');
+        return $this->belongsTo(User::class, 'distributor_approved_by');
     }
 
     public function adminApprover()
