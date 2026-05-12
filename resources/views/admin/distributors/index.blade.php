@@ -157,15 +157,6 @@
                                 <input type="text" name="contact_no" class="form-control" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Sales Manager</label>
-                                <select name="sales_manager_id" class="form-select">
-                                    <option value="">Select Sales Manager</option>
-                                    @foreach($salesManagers as $manager)
-                                        <option value="{{ $manager->id }}">{{ $manager->user->name ?? 'N/A' }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-6">
                                 <label class="form-label">District</label>
                                 <select name="district_id" class="form-select district-select" required>
                                     <option value="">Select District</option>
@@ -175,9 +166,12 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Area</label>
-                                <select name="area_id" class="form-select area-select" required>
-                                    <option value="">Select Area</option>
+                                <label class="form-label">Sales Manager</label>
+                                <select name="sales_manager_id" class="form-select">
+                                    <option value="">Select Sales Manager</option>
+                                    @foreach($salesManagers as $manager)
+                                        <option value="{{ $manager->id }}">{{ $manager->user->name ?? 'N/A' }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                             <div class="col-md-6">
@@ -264,15 +258,6 @@
                                 <input type="text" name="contact_no" id="edit_contact_no" class="form-control" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Sales Manager</label>
-                                <select name="sales_manager_id" id="edit_sales_manager_id" class="form-select">
-                                    <option value="">Select Sales Manager</option>
-                                    @foreach($salesManagers as $manager)
-                                        <option value="{{ $manager->id }}">{{ $manager->user->name ?? 'N/A' }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-6">
                                 <label class="form-label">District</label>
                                 <select name="district_id" id="edit_district_id" class="form-select district-select"
                                     required>
@@ -283,9 +268,12 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Area</label>
-                                <select name="area_id" id="edit_area_id" class="form-select area-select" required>
-                                    <option value="">Select Area</option>
+                                <label class="form-label">Sales Manager</label>
+                                <select name="sales_manager_id" id="edit_sales_manager_id" class="form-select">
+                                    <option value="">Select Sales Manager</option>
+                                    @foreach($salesManagers as $manager)
+                                        <option value="{{ $manager->id }}">{{ $manager->user->name ?? 'N/A' }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                             <div class="col-md-6">
@@ -629,7 +617,6 @@
                 $('#edit_district_id').val(data.district_id);
                 $('#edit_sales_manager_id').val(data.sales_manager_id || '');
                 $('#edit_status').val(data.user?.status || '');
-                fetchAreas(data.district_id, $('#edit_area_id'), data.area_id);
                 $('#editDistributorForm').attr('action', "{{ route('admin.distributors.update', ':id') }}".replace(':id', data.id));
                 $('#editDistributorModal').modal('show');
             });
@@ -754,6 +741,54 @@
                 if (errorDiv.text() !== '') {
                     $(this).addClass('is-invalid');
                 } else {
+                    $(this).removeClass('is-invalid');
+                }
+            });
+
+            // Contact 10 digits check on blur
+            $('input[name="contact_no"]').on('blur', function() {
+                let val = $(this).val();
+                let errorDiv = $(this).closest('div').find('.phone-error');
+                if (val.length > 0 && val.length < 10) {
+                    errorDiv.text('The contact no should be of 10 digits.');
+                    $(this).addClass('is-invalid');
+                }
+            });
+
+            // GST Validation (No symbols)
+            $('input[name="gst"]').on('input', function() {
+                let val = $(this).val();
+                let regex = /^[a-zA-Z0-9]*$/;
+                let errorDiv = $(this).closest('div').find('.invalid-feedback');
+                if (errorDiv.length === 0) {
+                    $(this).after('<div class="invalid-feedback d-block gst-error"></div>');
+                    errorDiv = $(this).closest('div').find('.gst-error');
+                }
+                
+                if (!regex.test(val)) {
+                    errorDiv.text('GST should only contain letters and numbers.');
+                    $(this).addClass('is-invalid');
+                } else {
+                    errorDiv.text('');
+                    $(this).removeClass('is-invalid');
+                }
+            });
+
+            // Drug License Validation (No symbols except / and -)
+            $('input[name="drug_license_no"]').on('input', function() {
+                let val = $(this).val();
+                let regex = /^[a-zA-Z0-9\/\-]*$/;
+                let errorDiv = $(this).closest('div').find('.invalid-feedback');
+                if (errorDiv.length === 0) {
+                    $(this).after('<div class="invalid-feedback d-block drug-error"></div>');
+                    errorDiv = $(this).closest('div').find('.drug-error');
+                }
+                
+                if (!regex.test(val)) {
+                    errorDiv.text('Drug License No should only contain letters, numbers, / and -.');
+                    $(this).addClass('is-invalid');
+                } else {
+                    errorDiv.text('');
                     $(this).removeClass('is-invalid');
                 }
             });

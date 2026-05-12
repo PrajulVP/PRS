@@ -795,6 +795,60 @@
             }
         });
 
+        // Contact 10 digits check on blur
+        $('input[name="contact_no"]').on('blur', function() {
+            let val = $(this).val();
+            let form = $(this).closest('form');
+            let isEdit = form.attr('id') === 'editForm';
+            let errorDiv = form.find(`#${isEdit ? 'edit-' : ''}error-contact_no`);
+            if (val.length > 0 && val.length < 10) {
+                errorDiv.text('The contact no should be of 10 digits.').addClass('d-block');
+                $(this).addClass('is-invalid');
+            }
+        });
+
+        // GST Validation (No symbols)
+        $('input[name="gst"]').on('input', function() {
+            let val = $(this).val();
+            let regex = /^[a-zA-Z0-9]*$/;
+            let form = $(this).closest('form');
+            let isEdit = form.attr('id') === 'editForm';
+            let errorDiv = form.find(`#${isEdit ? 'edit-' : ''}error-gst`);
+            if (errorDiv.length === 0) {
+                $(this).after(`<div class="text-danger small error-text d-none" id="${isEdit ? 'edit-' : ''}error-gst"></div>`);
+                errorDiv = form.find(`#${isEdit ? 'edit-' : ''}error-gst`);
+            }
+            
+            if (!regex.test(val)) {
+                errorDiv.text('GST should only contain letters and numbers.').addClass('d-block');
+                $(this).addClass('is-invalid');
+            } else {
+                errorDiv.text('').removeClass('d-block');
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        // Drug License Validation (No symbols except / and -)
+        $('input[name="drug_license_no"]').on('input', function() {
+            let val = $(this).val();
+            let regex = /^[a-zA-Z0-9\/\-]*$/;
+            let form = $(this).closest('form');
+            let isEdit = form.attr('id') === 'editForm';
+            let errorDiv = form.find(`#${isEdit ? 'edit-' : ''}error-drug_license_no`);
+            if (errorDiv.length === 0) {
+                $(this).after(`<div class="text-danger small error-text d-none" id="${isEdit ? 'edit-' : ''}error-drug_license_no"></div>`);
+                errorDiv = form.find(`#${isEdit ? 'edit-' : ''}error-drug_license_no`);
+            }
+            
+            if (!regex.test(val)) {
+                errorDiv.text('Drug License No should only contain letters, numbers, / and -.').addClass('d-block');
+                $(this).addClass('is-invalid');
+            } else {
+                errorDiv.text('').removeClass('d-block');
+                $(this).removeClass('is-invalid');
+            }
+        });
+
         // Pincode Validation (6 digits)
         $('input[name="pincode"]').on('input', function() {
             let val = $(this).val().replace(/\D/g, '').substring(0, 6);

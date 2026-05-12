@@ -93,7 +93,7 @@ class DistributorController extends Controller
             'address' => ['required', 'string'],
             'pincode' => ['required', 'digits:6'],
             'district_id' => 'required|exists:districts,id',
-            'area_id' => 'required|exists:areas,id',
+            'area_id' => 'nullable|exists:areas,id',
             'sales_manager_id' => 'nullable|exists:sales_managers,id',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
@@ -118,9 +118,9 @@ class DistributorController extends Controller
         ]);
         $user->assignRole('distributor');
 
-        $distributor = new Distributor($distributorData);
-        $distributor->user_id = $user->id;
-        $distributor->save();
+        $distributorData['user_id'] = $user->id;
+        $distributorData['area_id'] = null; // Explicitly set null as per request
+        $distributor = Distributor::create($distributorData);
 
         // Notify Superadmins for approval
         $superAdmins = User::role('superadmin')->get();
@@ -191,7 +191,7 @@ class DistributorController extends Controller
             'address' => ['required', 'string'],
             'pincode' => ['required', 'digits:6'],
             'district_id' => 'required|exists:districts,id',
-            'area_id' => 'required|exists:areas,id',
+            'area_id' => 'nullable|exists:areas,id',
             'sales_manager_id' => 'nullable|exists:sales_managers,id',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
@@ -241,6 +241,7 @@ class DistributorController extends Controller
             $distributor->user->update($userUpdateData);
         }
 
+        $distributorData['area_id'] = null; // Explicitly set null as per request
         $distributor->update($distributorData);
 
         if ($request->ajax()) {

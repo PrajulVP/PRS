@@ -128,9 +128,9 @@
                         <tr>
                             <th class="ps-4">Return Code</th>
                             <th>Requester</th>
-                            <th>Responsible Staff</th>
+                            <th>Staff Assignment</th>
                             <th>Product Details</th>
-                            <th>Amount</th>
+                            <th>Credit</th>
                             <th>Status</th>
                             <th class="text-end pe-4">Actions</th>
                         </tr>
@@ -219,10 +219,7 @@
                 </div>
             </div>
             <div class="modal-footer border-0 pb-4 px-4 pt-0">
-                <div id="approvalActions" class="d-flex gap-2 w-100">
-                    <button class="btn btn-outline-danger flex-grow-1 py-2 rounded-3 fw-bold" id="btnReject">Reject</button>
-                    <button class="btn btn-primary flex-grow-1 py-2 rounded-3 fw-bold" id="btnApprove">Approve</button>
-                </div>
+                <button type="button" class="btn btn-light w-100 py-2 rounded-3 fw-bold" data-bs-dismiss="modal">Close Details</button>
             </div>
         </div>
     </div>
@@ -469,6 +466,27 @@
     .select2-results__option--highlighted[aria-selected] {
         background-color: var(--med-primary, #00497a) !important;
     }
+
+    .btn-soft-success {
+        background-color: rgba(25, 135, 84, 0.2) !important;
+        color: #198754 !important;
+        border: none !important;
+        font-weight: 700;
+    }
+    .btn-soft-success:hover {
+        background-color: #198754 !important;
+        color: #fff !important;
+    }
+    .btn-soft-danger {
+        background-color: rgba(220, 53, 69, 0.2) !important;
+        color: #dc3545 !important;
+        border: none !important;
+        font-weight: 700;
+    }
+    .btn-soft-danger:hover {
+        background-color: #dc3545 !important;
+        color: #fff !important;
+    }
 </style>
 @endpush
 
@@ -514,19 +532,19 @@ $(document).ready(function() {
             },
             {
                 data: null,
-                title: 'Responsible Staff',
+                title: 'Staff Assignment',
                 render: function(data, type, row) {
                     let html = '<div class="d-flex flex-column gap-1">';
                     if (row.field_staff) {
-                        let name = row.field_staff.name || (row.field_staff.user ? row.field_staff.user.name : 'N/A');
+                        let name = row.field_staff.user ? row.field_staff.user.name : (row.field_staff.name || 'N/A');
                         html += `<div class="small text-muted-theme" style="font-size: 0.7rem;"><i class="fa fa-user me-1 text-success"></i>${name}</div>`;
                     }
                     if (row.sales_manager) {
-                        let name = row.sales_manager.name || (row.sales_manager.user ? row.sales_manager.user.name : 'N/A');
+                        let name = row.sales_manager.user ? row.sales_manager.user.name : (row.sales_manager.name || 'N/A');
                         html += `<div class="small text-muted-theme" style="font-size: 0.7rem;"><i class="fa fa-shield me-1 text-info"></i>${name}</div>`;
                     }
                     if (row.distributor) {
-                        let name = row.distributor.name || (row.distributor.user ? row.distributor.user.name : 'N/A');
+                        let name = row.distributor.user ? row.distributor.user.name : (row.distributor.name || 'N/A');
                         html += `<div class="small text-muted-theme" style="font-size: 0.7rem;"><i class="fa fa-truck me-1 text-primary"></i>${name}</div>`;
                     }
                     if (html === '<div class="d-flex flex-column gap-1">') html += '<span class="text-muted small">-</span>';
@@ -541,14 +559,21 @@ $(document).ready(function() {
                     return `<div>
                         <div class="fw-bold text-main-theme small" style="max-width: 150px; white-space: normal; line-height: 1.2;">${data}</div>
                         ${variant ? `<span class="badge bg-soft-info text-info border-0 px-2 mt-1" style="font-size: 0.6rem;">${variant}</span>` : ''}
+                        <div class="mt-1">
+                            <span class="text-muted small" style="font-size: 0.65rem;"><i class="fa fa-shopping-cart me-1"></i>Order: #${row.order_id}</span>
+                        </div>
                     </div>`;
                 }
             },
             { 
                 data: 'refund_amount',
                 render: function(data, type, row) {
+                    let unit = row.unit;
+                    if (row.product && (row.product.brand === 'Sudhneelgiri' || row.product.brand === 'Atomshield')) {
+                        unit = 'Nos';
+                    }
                     return `<div class="fw-bold text-success">₹${parseFloat(data || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
-                    <div class="small text-muted" style="font-size: 0.65rem;">${row.quantity} ${row.unit}</div>`;
+                    <div class="small text-muted" style="font-size: 0.65rem;">${row.quantity} ${unit}</div>`;
                 }
             },
             { 
@@ -569,9 +594,32 @@ $(document).ready(function() {
                 data: null,
                 className: 'text-end pe-4',
                 render: function(data, type, row) {
-                    return `<button class="btn btn-light btn-sm rounded-3 view-btn shadow-sm" data-row='${JSON.stringify(row)}'>
-                        <i class="fa fa-eye text-primary"></i>
-                    </button>`;
+                    let rowData = JSON.stringify(row).replace(/'/g, "&apos;");
+                    let btns = `<div class="d-flex justify-content-end gap-1">
+                        <button class="btn btn-light btn-sm rounded-3 view-btn shadow-sm" data-row='${rowData}' title="View Details">
+                            <i class="fa fa-eye text-primary"></i>
+                        </button>`;
+                    
+                    let showApproval = false;
+                    if(row.order_type === 'retailer') {
+                        if(userRoles.includes('fieldstaff') && row.status === 'pending') showApproval = true;
+                        if(userRoles.includes('distributor') && row.status === 'verified') showApproval = true;
+                    } else {
+                        if(userRoles.includes('salesmanager') && row.status === 'pending') showApproval = true;
+                        if((userRoles.includes('admin') || userRoles.includes('superadmin')) && row.status === 'verified') showApproval = true;
+                    }
+
+                    if(showApproval) {
+                        btns += `<button class="btn btn-soft-success btn-sm rounded-3 approve-row-btn shadow-sm" data-row='${rowData}' title="Approve">
+                            <i class="fa fa-check"></i>
+                        </button>
+                        <button class="btn btn-soft-danger btn-sm rounded-3 reject-row-btn shadow-sm" data-row='${rowData}' title="Reject">
+                            <i class="fa fa-times"></i>
+                        </button>`;
+                    }
+
+                    btns += `</div>`;
+                    return btns;
                 }
             }
         ],
@@ -634,7 +682,7 @@ $(document).ready(function() {
         let statusBadge = '';
         switch(row.status) {
             case 'pending': statusBadge = '<span class="badge bg-soft-warning text-warning rounded-pill px-3 py-2">PENDING TIER 1</span>'; break;
-            case 'approved_tier1': statusBadge = '<span class="badge bg-soft-primary text-primary rounded-pill px-3 py-2">PENDING FINAL</span>'; break;
+            case 'verified': statusBadge = '<span class="badge bg-soft-primary text-primary rounded-pill px-3 py-2">VERIFIED</span>'; break;
             case 'completed': statusBadge = '<span class="badge bg-soft-success text-success rounded-pill px-3 py-2">COMPLETED</span>'; break;
             case 'rejected': statusBadge = '<span class="badge bg-soft-danger text-danger rounded-pill px-3 py-2">REJECTED</span>'; break;
         }
@@ -643,7 +691,11 @@ $(document).ready(function() {
         let variant = [row.side, row.size].filter(v => v).join(' / ');
         $('#viewProductVariant').html(variant ? `<span class="badge bg-soft-info text-info border-0">${variant}</span>` : '');
         
-        $('#viewQuantity').text(`${row.quantity} ${row.unit}`);
+        let unit = row.unit;
+        if (row.product && (row.product.brand === 'Sudhneelgiri' || row.product.brand === 'Atomshield')) {
+            unit = 'Nos';
+        }
+        $('#viewQuantity').text(`${row.quantity} ${unit}`);
         $('#viewRefund').text(`₹${row.refund_amount || '0.00'}`);
         $('#viewReason').text(row.reason);
 
@@ -694,49 +746,54 @@ $(document).ready(function() {
             $('#rejectionSection').addClass('d-none');
         }
 
-        let showApproval = false;
-        
-        if(row.order_type === 'retailer') {
-            if(userRoles.includes('fieldstaff') && row.status === 'pending') showApproval = true;
-            if(userRoles.includes('distributor') && row.status === 'approved_tier1') showApproval = true;
-        } else {
-            if(userRoles.includes('salesmanager') && row.status === 'pending') showApproval = true;
-            if((userRoles.includes('admin') || userRoles.includes('superadmin')) && row.status === 'approved_tier1') showApproval = true;
-        }
-
-        if(showApproval) {
-            $('#approvalActions').removeClass('d-none');
-        } else {
-            $('#approvalActions').addClass('d-none');
-        }
-
-        $('#btnApprove, #btnReject').data('row', row);
-
         $('#viewReturnModal').modal('show');
     });
 
-    $('#btnApprove').click(function() {
+    $(document).on('click', '.approve-row-btn', function() {
         let row = $(this).data('row');
-        let id = row.id;
-        let approveUrl = "{{ route('admin.returns.approve', ':id') }}".replace(':id', id);
+        let approveUrl = "{{ route('admin.returns.approve', ':id') }}".replace(':id', row.id);
         
-        let isFinal = (row.status === 'approved_tier1');
+        let isFinal = (row.status === 'verified');
         let title = isFinal ? 'Complete Return?' : 'Approve Return?';
-        let text = isFinal ? 'This will finalize the return and allow the credit note to be issued.' : 'This will move the request to the next stage for final approval.';
         let confirmText = isFinal ? 'Yes, Complete Return' : 'Yes, Approve';
+        
+        let unit = row.unit;
+        if (row.product && (row.product.brand === 'Sudhneelgiri' || row.product.brand === 'Atomshield')) {
+            unit = 'Nos';
+        }
+
+        let html = `
+            <div class="text-start mt-3">
+                <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-4 border mb-3">
+                    <img src="${row.image_path ? '/storage/'+row.image_path : '/assets/images/placeholder.png'}" 
+                         class="rounded-3 shadow-sm border cursor-pointer return-evidence-preview" 
+                         style="width: 70px; height: 70px; object-fit: cover;"
+                         onclick="Swal.fire({imageUrl: this.src, showConfirmButton: false, width: 'auto', background: 'transparent', padding: 0})">
+                    <div>
+                        <div class="fw-bold text-main-theme">${row.product_name}</div>
+                        <div class="small text-muted">${row.quantity} ${unit} • ₹${parseFloat(row.refund_amount).toLocaleString()}</div>
+                        <div class="d-flex gap-1 mt-1">
+                            <div class="badge bg-soft-info text-info small">RET: ${row.return_code}</div>
+                            <div class="badge bg-soft-secondary text-secondary small">ORD: #${row.order_id}</div>
+                        </div>
+                    </div>
+                </div>
+                <p class="small text-muted px-2"><i class="fa fa-info-circle me-1"></i> ${isFinal ? 'This will finalize the return and allow the credit note to be issued.' : 'This will move the request to the next stage for final approval.'}</p>
+            </div>
+        `;
         
         Swal.fire({
             title: title,
-            text: text,
+            html: html,
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#0d6efd',
-            confirmButtonText: confirmText
+            confirmButtonText: confirmText,
+            width: '450px'
         }).then((result) => {
             if (result.isConfirmed) {
                 $.post(approveUrl, { _token: '{{ csrf_token() }}' }, function(res) {
                     if(res.success) {
-                        $('#viewReturnModal').modal('hide');
                         table.ajax.reload();
                         showToast('success', res.success);
                     } else {
@@ -747,28 +804,54 @@ $(document).ready(function() {
         });
     });
 
-    $('#btnReject').click(function() {
-        let id = $(this).data('id');
+    $(document).on('click', '.reject-row-btn', function() {
+        let row = $(this).data('row');
+        let unit = row.unit;
+        if (row.product && (row.product.brand === 'Sudhneelgiri' || row.product.brand === 'Atomshield')) {
+            unit = 'Nos';
+        }
+
+        let html = `
+            <div class="text-start mt-3">
+                <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-4 border mb-3">
+                    <img src="${row.image_path ? '/storage/'+row.image_path : '/assets/images/placeholder.png'}" 
+                         class="rounded-3 shadow-sm border cursor-pointer return-evidence-preview" 
+                         style="width: 70px; height: 70px; object-fit: cover;"
+                         onclick="Swal.fire({imageUrl: this.src, showConfirmButton: false, width: 'auto', background: 'transparent', padding: 0})">
+                    <div>
+                        <div class="fw-bold text-main-theme">${row.product_name}</div>
+                        <div class="small text-muted">${row.quantity} ${unit} • ${row.return_code}</div>
+                    </div>
+                </div>
+                <div class="px-2">
+                    <label class="small fw-bold text-muted mb-2">REASON FOR REJECTION</label>
+                    <textarea id="swal-rejection-reason" class="form-control rounded-3" rows="3" placeholder="Please explain why this request is being rejected..."></textarea>
+                </div>
+            </div>
+        `;
+
         Swal.fire({
             title: 'Reject Return?',
-            input: 'textarea',
-            inputLabel: 'Reason for rejection',
-            inputPlaceholder: 'Enter reason here...',
-            inputAttributes: {
-                'aria-label': 'Type your reason here'
-            },
+            html: html,
             showCancelButton: true,
             confirmButtonColor: '#dc3545',
-            confirmButtonText: 'Reject'
+            confirmButtonText: 'Reject Request',
+            width: '450px',
+            preConfirm: () => {
+                const reason = Swal.getPopup().querySelector('#swal-rejection-reason').value;
+                if (!reason || reason.length < 5) {
+                    Swal.showValidationMessage(`Please enter a valid reason (min 5 characters)`);
+                }
+                return reason;
+            }
         }).then((result) => {
             if (result.isConfirmed && result.value) {
-                let rejectUrl = "{{ route('admin.returns.reject', ':id') }}".replace(':id', id);
+                let rejectUrl = "{{ route('admin.returns.reject', ':id') }}".replace(':id', row.id);
                 $.post(rejectUrl, { 
                     _token: '{{ csrf_token() }}',
                     reason: result.value
                 }, function(res) {
                     if(res.success) {
-                        $('#viewReturnModal').modal('hide');
                         table.ajax.reload();
                         showToast('success', res.success);
                     } else {
@@ -847,24 +930,29 @@ $(document).ready(function() {
     }
 
     // Fetch filters dynamically
-    window.loadReturnFilters = function() {
-        $.get("{{ route('admin.returns.get-filters') }}", function(res) {
+    window.loadReturnFilters = function(brand = '') {
+        $.get("{{ route('admin.returns.get-filters') }}", { brand: brand }, function(res) {
             let brandSelect = $('#filterBrand');
             let productSelect = $('#filterProduct');
             let distSelect = $('#filterDistributor');
             
-            brandSelect.find('option:not(:first)').remove();
-            productSelect.find('option:not(:first)').remove();
-            if (distSelect.length) distSelect.find('option:not(:first)').remove();
+            if (!brand) {
+                brandSelect.find('option:not(:first)').remove();
+                res.brands.forEach(b => brandSelect.append(`<option value="${b}">${b}</option>`));
+            }
             
-            res.brands.forEach(b => brandSelect.append(`<option value="${b}">${b}</option>`));
+            productSelect.find('option:not(:first)').remove();
             res.products.forEach(p => productSelect.append(`<option value="${p.id}">${p.product_name}</option>`));
-            if (distSelect.length) res.distributors.forEach(d => distSelect.append(`<option value="${d.id}">${d.name}</option>`));
+            
+            if (!brand && distSelect.length) {
+                distSelect.find('option:not(:first)').remove();
+                res.distributors.forEach(d => distSelect.append(`<option value="${d.id}">${d.name}</option>`));
+            }
             
             // Re-initialize Select2 to reflect new options
-            brandSelect.trigger('change.select2');
+            if (!brand) brandSelect.trigger('change.select2');
             productSelect.trigger('change.select2');
-            if (distSelect.length) distSelect.trigger('change.select2');
+            if (!brand && distSelect.length) distSelect.trigger('change.select2');
         });
     };
 
@@ -892,7 +980,13 @@ $(document).ready(function() {
     });
 
     // Handle filter changes
-    $('#filterBrand, #filterProduct, #filterDistributor, #filterStartDate, #filterEndDate').on('change', function() {
+    $('#filterBrand').on('change', function() {
+        let brand = $(this).val();
+        loadReturnFilters(brand);
+        loadOrderHistory(1, $('#searchOrderCode').val());
+    });
+
+    $('#filterProduct, #filterDistributor, #filterStartDate, #filterEndDate').on('change', function() {
         loadOrderHistory(1, $('#searchOrderCode').val());
     });
 

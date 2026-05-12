@@ -9,6 +9,7 @@ use App\Models\DistributorOrder;
 use App\Models\Retailer;
 use App\Models\Distributor;
 use App\Models\Product;
+use App\Models\Inventory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +26,7 @@ class ReturnController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        $query = ReturnRequest::with(['user', 'product', 'tier1Approver', 'tier2Approver', 'adminApprover', 'distributor', 'field_staff.user', 'sales_manager.user']);
+        $query = ReturnRequest::with(['user', 'product', 'tier1Approver', 'tier2Approver', 'adminApprover', 'distributor.user', 'field_staff.user', 'sales_manager.user']);
 
         // Filter based on role
         if ($user->hasRole('retailer')) {
@@ -198,7 +199,7 @@ class ReturnController extends Controller
                 'side' => $item->side,
                 'size' => $item->size,
                 'quantity' => $request->quantity,
-                'unit' => $item->unit ?? 'Nos',
+                'unit' => ($item->product && in_array($item->product->brand, ['Sudhneelgiri', 'Atomshield'])) ? 'Nos' : ($item->unit ?? 'Nos'),
                 'reason' => $request->reason,
                 'image_path' => $imagePaths[0] ?? null,
                 'image_paths' => $imagePaths,
@@ -258,19 +259,20 @@ class ReturnController extends Controller
                 // Tier 1: Field Staff
                 if ($user->hasRole('fieldstaff') && $returnRequest->status === 'pending') {
                     $returnRequest->update([
-                        'status' => 'approved_tier1',
+                        'status' => 'verified',
                         'tier1_approved_at' => now(),
                         'tier1_approved_by' => $user->id,
                     ]);
                 }
                 // Tier 2: Distributor
-                elseif ($user->hasRole('distributor') && $returnRequest->status === 'approved_tier1') {
+                elseif ($user->hasRole('distributor') && $returnRequest->status === 'verified') {
                     $returnRequest->update([
                         'status' => 'completed',
                         'tier2_approved_at' => now(),
                         'tier2_approved_by' => $user->id,
                     ]);
                     $this->generateCreditNote($returnRequest);
+                    $this->adjustStockForReturn($returnRequest);
                 }
                 else {
                     throw new \Exception('Unauthorized or invalid status for approval.');
@@ -279,19 +281,20 @@ class ReturnController extends Controller
                 // Tier 1: Sales Manager
                 if ($user->hasRole('salesmanager') && $returnRequest->status === 'pending') {
                     $returnRequest->update([
-                        'status' => 'approved_tier1',
+                        'status' => 'verified',
                         'tier1_approved_at' => now(),
                         'tier1_approved_by' => $user->id,
                     ]);
                 }
                 // Tier 2: Admin
-                elseif ($user->hasAnyRole(['admin', 'superadmin']) && $returnRequest->status === 'approved_tier1') {
+                elseif ($user->hasAnyRole(['admin', 'superadmin']) && $returnRequest->status === 'verified') {
                     $returnRequest->update([
                         'status' => 'completed',
                         'admin_approved_at' => now(),
                         'admin_approved_by' => $user->id,
                     ]);
                     $this->generateCreditNote($returnRequest);
+                    $this->adjustStockForReturn($returnRequest);
                 }
                 else {
                     throw new \Exception('Unauthorized or invalid status for approval.');
@@ -301,7 +304,7 @@ class ReturnController extends Controller
             DB::commit();
 
             // Send Notifications after successful state change
-            if ($returnRequest->status === 'approved_tier1') {
+            if ($returnRequest->status === 'verified') {
                 $nextRecipient = null;
                 if ($returnRequest->order_type === 'retailer' && $returnRequest->distributor_id) {
                     $nextRecipient = \App\Models\User::where('id', function($q) use ($returnRequest) {
@@ -328,6 +331,59 @@ class ReturnController extends Controller
             DB::rollBack();
             Log::error('Return Approval Error: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Internal method to adjust stock when a return is completed.
+     */
+    private function adjustStockForReturn(ReturnRequest $returnRequest)
+    {
+        try {
+            // Determine whose stock to adjust
+            // If it's a distributor return to admin, the distributor's stock decreases
+            if ($returnRequest->order_type === 'distributor') {
+                $inventory = Inventory::where('distributor_id', $returnRequest->distributor_id)
+                    ->where('product_id', $returnRequest->product_id)
+                    ->where('side', $returnRequest->side)
+                    ->where('size', $returnRequest->size)
+                    ->first();
+
+                if ($inventory) {
+                    $inventory->decrement('stock', $returnRequest->quantity);
+                    Log::info("Reduced stock for Distributor {$returnRequest->distributor_id} by {$returnRequest->quantity} for product {$returnRequest->product_id} after return completion.");
+                }
+            } 
+            // If it's a retailer return to distributor, the distributor's stock increases
+            elseif ($returnRequest->order_type === 'retailer') {
+                $inventory = Inventory::where('distributor_id', $returnRequest->distributor_id)
+                    ->where('product_id', $returnRequest->product_id)
+                    ->where('side', $returnRequest->side)
+                    ->where('size', $returnRequest->size)
+                    ->first();
+
+                if ($inventory) {
+                    $inventory->increment('stock', $returnRequest->quantity);
+                    Log::info("Increased stock for Distributor {$returnRequest->distributor_id} by {$returnRequest->quantity} for product {$returnRequest->product_id} after retailer return completion.");
+                } else {
+                    // Create inventory record if it doesn't exist? 
+                    // Usually it should exist if they bought it before, but for safety:
+                    Inventory::create([
+                        'distributor_id' => $returnRequest->distributor_id,
+                        'product_id' => $returnRequest->product_id,
+                        'product_name' => $returnRequest->product_name,
+                        'side' => $returnRequest->side,
+                        'size' => $returnRequest->size,
+                        'stock' => $returnRequest->quantity,
+                        'batch_no' => 'RETURNED',
+                        'expiry_date' => now()->addYear(), // Placeholder
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error("Failed to adjust stock for return {$returnRequest->return_code}: " . $e->getMessage());
+            // We don't throw here to avoid breaking the approval transaction if stock adjustment fails 
+            // (though in a strict system we might want to).
         }
     }
 
@@ -457,7 +513,7 @@ class ReturnController extends Controller
                     ->where('size', $item->size);
 
                 $returnedQty = $itemReturns->where('status', 'completed')->sum('quantity');
-                $pendingQty = $itemReturns->whereIn('status', ['pending', 'approved_tier1'])->sum('quantity');
+                $pendingQty = $itemReturns->whereIn('status', ['pending', 'verified'])->sum('quantity');
 
                 return [
                     'product_id' => $item->product_id,
@@ -465,7 +521,7 @@ class ReturnController extends Controller
                     'side' => $item->side,
                     'size' => $item->size,
                     'quantity' => $item->quantity,
-                    'unit' => $item->unit ?? 'Nos',
+                    'unit' => ($item->product && in_array($item->product->brand, ['Sudhneelgiri', 'Atomshield'])) ? 'Nos' : ($item->unit ?? 'Nos'),
                     'is_returnable' => $item->product?->is_returnable ?? true,
                     'returned_qty' => (float)$returnedQty,
                     'pending_return_qty' => (float)$pendingQty,
@@ -626,7 +682,12 @@ class ReturnController extends Controller
         $user = Auth::user();
         
         $brands = Product::whereNotNull('brand')->distinct()->pluck('brand')->sort()->values();
-        $products = Product::select('id', 'product_name')->orderBy('product_name')->get();
+        
+        $productQuery = Product::select('id', 'product_name');
+        if ($request->filled('brand')) {
+            $productQuery->where('brand', $request->brand);
+        }
+        $products = $productQuery->orderBy('product_name')->get();
         
         $distributors = [];
         if ($user->hasRole('retailer')) {

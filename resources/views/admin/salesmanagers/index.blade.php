@@ -714,6 +714,16 @@
                 }
             });
 
+            // Contact 10 digits check on blur
+            $('input[name="contact_no"]').on('blur', function() {
+                let val = $(this).val();
+                let errorDiv = $(this).closest('div').find('.phone-error');
+                if (val.length > 0 && val.length < 10) {
+                    errorDiv.text('The contact no should be of 10 digits.');
+                    $(this).addClass('is-invalid');
+                }
+            });
+
             // Pincode Validation (6 digits)
             $('input[name="pincode"]').on('input', function() {
                 let val = $(this).val().replace(/\D/g, '').substring(0, 6);

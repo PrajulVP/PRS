@@ -208,7 +208,38 @@
     <script>
         let map, routePath, staffMarker;
         let pathPoints = [];
+        let snappedPoints = [];
         let markers = [];
+        const apiKey = "{{ config('services.google_maps.key', env('GOOGLE_MAPS_API_KEY')) }}";
+
+        async function snapPathToRoads(points) {
+            if (points.length < 2) return points;
+            
+            // Chunk points to stay within Roads API limits (max 100 per request)
+            const chunks = [];
+            for (let i = 0; i < points.length; i += 100) {
+                chunks.push(points.slice(i, i + 100));
+            }
+            
+            let allSnapped = [];
+            for (const chunk of chunks) {
+                const pathParam = chunk.map(p => `${p.lat},${p.lng}`).join('|');
+                try {
+                    const response = await fetch(`https://roads.googleapis.com/v1/snapToRoads?path=${pathParam}&interpolate=true&key=${apiKey}`);
+                    const data = await response.json();
+                    if (data.snappedPoints) {
+                        allSnapped = allSnapped.concat(data.snappedPoints.map(p => ({
+                            lat: p.location.latitude,
+                            lng: p.location.longitude
+                        })));
+                    }
+                } catch (e) {
+                    console.error('Snap to Roads chunk failed:', e);
+                    allSnapped = allSnapped.concat(chunk);
+                }
+            }
+            return allSnapped;
+        }
 
         function initMap() {
             const defaultCenter = { lat: 20.5937, lng: 78.9629 };
@@ -223,11 +254,11 @@
 
             // Initialize Route Path (Polyline)
             routePath = new google.maps.Polyline({
-                path: pathPoints,
+                path: snappedPoints,
                 geodesic: true,
                 strokeColor: "#7366ff",
-                strokeOpacity: 1.0,
-                strokeWeight: 4,
+                strokeOpacity: 0.8,
+                strokeWeight: 5,
                 map: map
             });
 
@@ -238,15 +269,19 @@
             initRealTimeTracking();
         }
 
-        function loadInitialData() {
+        async function loadInitialData() {
             const bounds = new google.maps.LatLngBounds();
 
             // 1. Plot History Path
             @foreach($locations as $loc)
                 pathPoints.push({ lat: {{ $loc->latitude }}, lng: {{ $loc->longitude }} });
             @endforeach
-            routePath.setPath(pathPoints);
-            pathPoints.forEach(p => bounds.extend(p));
+            
+            if (pathPoints.length > 0) {
+                snappedPoints = await snapPathToRoads(pathPoints);
+                routePath.setPath(snappedPoints);
+                snappedPoints.forEach(p => bounds.extend(p));
+            }
 
             // 2. Add Current Position Marker (if today and has locations)
             if (pathPoints.length > 0) {
@@ -324,12 +359,20 @@
             }
         }
 
-        function updateLiveMap(lat, lng) {
+        async function updateLiveMap(lat, lng) {
             const newPos = { lat: parseFloat(lat), lng: parseFloat(lng) };
-
-            // Update Polyline
             pathPoints.push(newPos);
-            routePath.setPath(pathPoints);
+
+            // Snap only the last segment for performance
+            const lastTwo = pathPoints.slice(-2);
+            if (lastTwo.length === 2) {
+                const snapped = await snapPathToRoads(lastTwo);
+                snappedPoints = snappedPoints.concat(snapped.slice(1));
+            } else {
+                snappedPoints.push(newPos);
+            }
+            
+            routePath.setPath(snappedPoints);
 
             // Update Arrow Marker
             if (staffMarker) {

@@ -806,6 +806,54 @@
                 }
             });
 
+            // Contact 10 digits check on blur
+            $('input[name="contact_no"]').on('blur', function() {
+                let val = $(this).val();
+                let errorDiv = $(this).closest('div').find('.phone-error');
+                if (val.length > 0 && val.length < 10) {
+                    errorDiv.text('The contact no should be of 10 digits.');
+                    $(this).addClass('is-invalid');
+                }
+            });
+
+            // GST Validation (No symbols)
+            $('input[name="gst"]').on('input', function() {
+                let val = $(this).val();
+                let regex = /^[a-zA-Z0-9]*$/;
+                let errorDiv = $(this).closest('div').find('.invalid-feedback');
+                if (errorDiv.length === 0) {
+                    $(this).after('<div class="invalid-feedback d-block gst-error"></div>');
+                    errorDiv = $(this).closest('div').find('.gst-error');
+                }
+                
+                if (!regex.test(val)) {
+                    errorDiv.text('GST should only contain letters and numbers.');
+                    $(this).addClass('is-invalid');
+                } else {
+                    errorDiv.text('');
+                    $(this).removeClass('is-invalid');
+                }
+            });
+
+            // Drug License Validation (No symbols except / and -)
+            $('input[name="drug_license_no"]').on('input', function() {
+                let val = $(this).val();
+                let regex = /^[a-zA-Z0-9\/\-]*$/;
+                let errorDiv = $(this).closest('div').find('.invalid-feedback');
+                if (errorDiv.length === 0) {
+                    $(this).after('<div class="invalid-feedback d-block drug-error"></div>');
+                    errorDiv = $(this).closest('div').find('.drug-error');
+                }
+                
+                if (!regex.test(val)) {
+                    errorDiv.text('Drug License No should only contain letters, numbers, / and -.');
+                    $(this).addClass('is-invalid');
+                } else {
+                    errorDiv.text('');
+                    $(this).removeClass('is-invalid');
+                }
+            });
+
             // Pincode Validation (6 digits)
             $('input[name="pincode"]').on('input', function() {
                 let val = $(this).val().replace(/\D/g, '').substring(0, 6);

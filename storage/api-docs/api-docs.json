@@ -3598,13 +3598,14 @@
                 "tags": [
                     "Returns"
                 ],
-                "summary": "Approve a return request",
-                "description": "Approves a return request based on the user's role and the current tier of approval.",
+                "summary": "Approve a return request (Unified Tiered Approval)",
+                "description": "Approves a return request based on the authenticated user's role. This is a common endpoint for all roles (Field Staff, Sales Manager, Distributor, Admin). \n                The system automatically transitions the status through the following tiers:\n                - RETAILER RETURN: pending (Wait for Field Staff) -> verified (Wait for Distributor) -> completed (Final).\n                - DISTRIBUTOR RETURN: pending (Wait for Sales Manager) -> verified (Wait for Admin/Superadmin) -> completed (Final).\n                Final approval triggers credit note generation and stock adjustment.",
                 "operationId": "3c06309263a1eb267132f999f2ab6b45",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "Return Request ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -3613,10 +3614,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Return request approved"
+                        "description": "Return request approved successfully."
                     },
                     "403": {
-                        "description": "Unauthorized to approve at this stage"
+                        "description": "Unauthorized to approve at this stage for the current user's role."
                     }
                 },
                 "security": [
@@ -3683,6 +3684,17 @@
                 "summary": "Get filters for return requests",
                 "description": "Returns available brands, products, and distributors for filtering purposes.",
                 "operationId": "96daf4daf1d149a297aa8a1c7ee846d1",
+                "parameters": [
+                    {
+                        "name": "brand",
+                        "in": "query",
+                        "description": "Filter products by brand",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Filter options"

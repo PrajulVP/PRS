@@ -199,13 +199,20 @@ class ReturnApiController extends Controller
     /**
      * @OA\Post(
      *     path="/api/returns/{id}/approve",
-     *     summary="Approve a return request",
-     *     description="Approves a return request based on the user's role and the current tier of approval.",
+     *     summary="Approve a return request (Unified Tiered Approval)",
+     *     description="Approves a return request based on the authenticated user's role. This is a common endpoint for all roles (Field Staff, Sales Manager, Distributor, Admin). 
+                The system automatically transitions the status through the following tiers:
+                - RETAILER RETURN: pending (Wait for Field Staff) -> verified (Wait for Distributor) -> completed (Final).
+                - DISTRIBUTOR RETURN: pending (Wait for Sales Manager) -> verified (Wait for Admin/Superadmin) -> completed (Final).
+                Final approval triggers credit note generation and stock adjustment.",
      *     tags={"Returns"},
      *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="Return request approved"),
-     *     @OA\Response(response=403, description="Unauthorized to approve at this stage")
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), description="Return Request ID"),
+     *     @OA\Response(
+     *         response=200, 
+     *         description="Return request approved successfully."
+     *     ),
+     *     @OA\Response(response=403, description="Unauthorized to approve at this stage for the current user's role.")
      * )
      */
     public function approve(ReturnRequest $returnRequest)
@@ -219,33 +226,36 @@ class ReturnApiController extends Controller
             if ($returnRequest->order_type === 'retailer') {
                 if ($user->hasRole('fieldstaff') && $returnRequest->status === 'pending') {
                     $returnRequest->update([
-                        'status' => 'approved_tier1',
+                        'status' => 'verified',
                         'tier1_approved_at' => now(),
                         'tier1_approved_by' => $user->id,
                     ]);
-                } elseif ($user->hasRole('distributor') && $returnRequest->status === 'approved_tier1') {
+                } elseif ($user->hasRole('distributor') && $returnRequest->status === 'verified') {
                     $returnRequest->update([
                         'status' => 'completed',
                         'tier2_approved_at' => now(),
                         'tier2_approved_by' => $user->id,
                     ]);
-                    // Logic to generate credit note would go here (reusing existing logic if possible)
+                    $this->generateCreditNote($returnRequest);
+                    $this->adjustStockForReturn($returnRequest);
                 } else {
                     return response()->json(['error' => 'Unauthorized or invalid status for approval.'], 403);
                 }
             } else { // distributor return
                 if ($user->hasRole('salesmanager') && $returnRequest->status === 'pending') {
                     $returnRequest->update([
-                        'status' => 'approved_tier1',
+                        'status' => 'verified',
                         'tier1_approved_at' => now(),
                         'tier1_approved_by' => $user->id,
                     ]);
-                } elseif ($user->hasAnyRole(['admin', 'superadmin']) && $returnRequest->status === 'approved_tier1') {
+                } elseif ($user->hasAnyRole(['admin', 'superadmin']) && $returnRequest->status === 'verified') {
                     $returnRequest->update([
                         'status' => 'completed',
                         'admin_approved_at' => now(),
                         'admin_approved_by' => $user->id,
                     ]);
+                    $this->generateCreditNote($returnRequest);
+                    $this->adjustStockForReturn($returnRequest);
                 } else {
                     return response()->json(['error' => 'Unauthorized or invalid status for approval.'], 403);
                 }
@@ -256,6 +266,68 @@ class ReturnApiController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Internal method to generate Credit Note after final approval.
+     */
+    private function generateCreditNote(ReturnRequest $returnRequest)
+    {
+        $refundAmount = $returnRequest->refund_amount;
+        $creditCode = 'CN-' . strtoupper(Str::random(10));
+        
+        \App\Models\CreditNote::create([
+            'credit_code' => $creditCode,
+            'user_id' => $returnRequest->user_id,
+            'return_request_id' => $returnRequest->id,
+            'amount' => $refundAmount,
+            'balance' => $refundAmount,
+            'status' => 'active',
+            'notes' => 'Credit issued for return ' . $returnRequest->return_code,
+        ]);
+    }
+
+    /**
+     * Internal method to adjust stock when a return is completed.
+     */
+    private function adjustStockForReturn(ReturnRequest $returnRequest)
+    {
+        try {
+            if ($returnRequest->order_type === 'distributor') {
+                $inventory = \App\Models\Inventory::where('distributor_id', $returnRequest->distributor_id)
+                    ->where('product_id', $returnRequest->product_id)
+                    ->where('side', $returnRequest->side)
+                    ->where('size', $returnRequest->size)
+                    ->first();
+
+                if ($inventory) {
+                    $inventory->decrement('stock', $returnRequest->quantity);
+                }
+            } elseif ($returnRequest->order_type === 'retailer') {
+                $inventory = \App\Models\Inventory::where('distributor_id', $returnRequest->distributor_id)
+                    ->where('product_id', $returnRequest->product_id)
+                    ->where('side', $returnRequest->side)
+                    ->where('size', $returnRequest->size)
+                    ->first();
+
+                if ($inventory) {
+                    $inventory->increment('stock', $returnRequest->quantity);
+                } else {
+                    \App\Models\Inventory::create([
+                        'distributor_id' => $returnRequest->distributor_id,
+                        'product_id' => $returnRequest->product_id,
+                        'product_name' => $returnRequest->product_name,
+                        'side' => $returnRequest->side,
+                        'size' => $returnRequest->size,
+                        'stock' => $returnRequest->quantity,
+                        'batch_no' => 'RETURNED',
+                        'expiry_date' => now()->addYear(),
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error("API Stock Adjustment Error: " . $e->getMessage());
         }
     }
 
@@ -299,16 +371,22 @@ class ReturnApiController extends Controller
      *     description="Returns available brands, products, and distributors for filtering purposes.",
      *     tags={"Returns"},
      *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="brand", in="query", required=false, @OA\Schema(type="string"), description="Filter products by brand"),
      *     @OA\Response(response=200, description="Filter options")
      * )
      */
-    public function getFilters()
+    public function getFilters(Request $request)
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
         
         $brands = Product::whereNotNull('brand')->distinct()->pluck('brand')->sort()->values();
-        $products = Product::select('id', 'product_name')->orderBy('product_name')->get();
+        
+        $productQuery = Product::select('id', 'product_name');
+        if ($request->filled('brand')) {
+            $productQuery->where('brand', $request->brand);
+        }
+        $products = $productQuery->orderBy('product_name')->get();
         
         $distributors = [];
         if ($user->hasRole('retailer')) {
@@ -318,7 +396,7 @@ class ReturnApiController extends Controller
                 ->distinct()
                 ->pluck('distributor_id');
                 
-            $distributors = Distributor::whereIn('id', $distributorIds)
+            $distributors = \App\Models\Distributor::whereIn('id', $distributorIds)
                 ->with('user')
                 ->get()
                 ->map(fn($d) => ['id' => $d->id, 'name' => $d->user?->name ?? 'N/A']);
