@@ -204,7 +204,7 @@
 @endsection
 
 @push('scripts')
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key', env('GOOGLE_MAPS_API_KEY')) }}&callback=initMap" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key', env('GOOGLE_MAPS_API_KEY')) }}&libraries=geometry&callback=initMap" async defer></script>
     <script>
         let map, routePath, staffMarker;
         let pathPoints = [];
@@ -281,6 +281,9 @@
                 snappedPoints = await snapPathToRoads(pathPoints);
                 routePath.setPath(snappedPoints);
                 snappedPoints.forEach(p => bounds.extend(p));
+                
+                // Update frontend distance display based on snapped points
+                updateDistanceDisplay(snappedPoints);
             }
 
             // 2. Add Current Position Marker (if today and has locations)
@@ -339,6 +342,21 @@
             map.setZoom(17);
         }
 
+        function calculatePathDistance(points) {
+            let total = 0;
+            for (let i = 0; i < points.length - 1; i++) {
+                const p1 = new google.maps.LatLng(points[i].lat, points[i].lng);
+                const p2 = new google.maps.LatLng(points[i+1].lat, points[i+1].lng);
+                total += google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
+            }
+            return (total / 1000).toFixed(2); // Convert meters to KM
+        }
+
+        function updateDistanceDisplay(points) {
+            const km = calculatePathDistance(points);
+            $('#distanceCovered').html(`${km} <span class="small fw-normal">KM</span>`);
+        }
+
         function initRealTimeTracking() {
             // Check if user ID matches current tracking and date is today
             const trackingUserId = "{{ $user->id }}";
@@ -373,6 +391,7 @@
             }
             
             routePath.setPath(snappedPoints);
+            updateDistanceDisplay(snappedPoints);
 
             // Update Arrow Marker
             if (staffMarker) {

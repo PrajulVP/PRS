@@ -3751,7 +3751,7 @@
                     "Returns"
                 ],
                 "summary": "Get delivered orders for returns",
-                "description": "Returns a list of orders that are eligible for return requests based on the user's role.",
+                "description": "Returns a list of orders with full product details that are eligible for return requests based on the user's role.",
                 "operationId": "213dc2a3b3170c24bd75aa4377843e21",
                 "parameters": [
                     {
@@ -3776,7 +3776,34 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "List of delivered orders"
+                        "description": "List of delivered orders with product details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "last_page": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [

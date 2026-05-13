@@ -92,7 +92,6 @@
                                         <th>Drug Lic.</th>
                                         <th>Contact</th>
                                         <th>District</th>
-                                        <th>Area</th>
                                         <th>Pincode</th>
                                         <th>Address</th>
                                         <th>Status</th>
@@ -399,7 +398,7 @@
                                     style="background: var(--med-bg-body);">
                                     <i class="fa fa-map mt-1 text-secondary"></i>
                                     <div>
-                                        <div class="text-muted small">District / Area</div>
+                                        <div class="text-muted small">District</div>
                                         <div class="fw-semibold" id="dist_view_location"></div>
                                     </div>
                                 </div>
@@ -551,7 +550,6 @@
                     { data: 'drug_license_no', name: 'drug_license_no' },
                     { data: 'contact_no', name: 'contact_no' },
                     { data: 'district_name', name: 'district_name' },
-                    { data: 'area_name', name: 'area_name' },
                     { data: 'pincode', name: 'pincode' },
                     { data: 'address', name: 'address' },
                     { 
@@ -584,7 +582,7 @@
                         { extend: 'excel', className: 'btn btn-success btn-sm', text: '<i class="fa fa-file-excel"></i> Excel' },
                         { 
                             extend: 'pdf', className: 'btn btn-danger btn-sm', text: '<i class="fa fa-file-pdf"></i> PDF',
-                            exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
+                            exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
                             orientation: 'landscape',
                             pageSize: 'A4',
                             customize: function(doc) {
@@ -592,7 +590,7 @@
                                 doc.styles.tableHeader.fontSize = 8;
                             }
                         },
-                        { extend: 'print', className: 'btn btn-dark btn-sm', text: '<i class="fa fa-print"></i> Print', exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] } }
+                        { extend: 'print', className: 'btn btn-dark btn-sm', text: '<i class="fa fa-print"></i> Print', exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] } }
                     ]
                 }
             });
@@ -647,7 +645,7 @@
                 $('#dist_view_contact').text(data.contact_no || 'N/A');
                 $('#dist_view_gst').text(data.gst || 'N/A');
                 $('#dist_view_drug').text(data.drug_license_no || 'N/A');
-                $('#dist_view_location').text((data.district?.name || 'N/A') + ' / ' + (data.area?.name || 'N/A'));
+                $('#dist_view_location').text(data.district?.name || 'N/A');
                 $('#dist_view_pincode').text(data.pincode || 'N/A');
                 $('#dist_view_address').text(data.address || 'N/A');
                 $('#showDistributorModal').modal('show');

@@ -445,12 +445,23 @@ class ReturnApiController extends Controller
      * @OA\Get(
      *     path="/api/returns/delivered-orders",
      *     summary="Get delivered orders for returns",
-     *     description="Returns a list of orders that are eligible for return requests based on the user's role.",
+     *     description="Returns a list of orders with full product details that are eligible for return requests based on the user's role.",
      *     tags={"Returns"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="search", in="query", required=false, @OA\Schema(type="string"), description="Search by Order Code or Product Name"),
      *     @OA\Parameter(name="date", in="query", required=false, @OA\Schema(type="string", format="date"), description="Filter by specific order date (YYYY-MM-DD)"),
-     *     @OA\Response(response=200, description="List of delivered orders")
+     *     @OA\Response(
+     *         response=200, 
+     *         description="List of delivered orders with product details",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="current_page", type="integer"),
+     *             @OA\Property(property="per_page", type="integer"),
+     *             @OA\Property(property="total", type="integer"),
+     *             @OA\Property(property="last_page", type="integer")
+     *         )
+     *     )
      * )
      */
     public function getDeliveredOrders(Request $request)
@@ -462,10 +473,11 @@ class ReturnApiController extends Controller
         if ($user->hasRole('retailer')) {
             $query = RetailerOrder::where('retailer_id', $user->retailer?->id)
                 ->where('status', 'delivered')
-                ->with(['distributor.user']);
+                ->with(['distributor.user', 'retailer.user', 'fieldStaff.user', 'items.product', 'items.batches']);
         } elseif ($user->hasRole('distributor')) {
             $query = DistributorOrder::where('distributor_id', $user->distributor?->id)
-                ->where('status', 'delivered');
+                ->where('status', 'delivered')
+                ->with(['distributor.user', 'salesManager.user', 'items.product', 'items.batches']);
         } else {
             return response()->json(['data' => []]);
         }
@@ -484,6 +496,40 @@ class ReturnApiController extends Controller
         }
         
         $orders = $query->latest()->paginate(10);
+
+        $orders->getCollection()->transform(function($order) {
+            $data = $order->toArray();
+            
+            // Add flattened details for easier consumption by mobile/frontend apps
+            $data['distributor_name'] = $order->distributor?->user?->name ?? $order->distributor?->name ?? 'N/A';
+            $data['distributor_contact'] = $order->distributor?->contact_no ?? $order->distributor?->user?->contact_no ?? 'N/A';
+            $data['distributor_address'] = $order->distributor?->address ?? 'N/A';
+            $data['grand_total'] = (float)($order->total_amount ?? 0);
+            $data['invoice_url'] = $order->invoice_path ? asset('storage/' . $order->invoice_path) : null;
+            
+            if ($order instanceof RetailerOrder) {
+                $data['retailer_name'] = $order->retailer?->user?->name ?? 'N/A';
+                $data['retailer_shop'] = $order->retailer?->shop_name ?? 'N/A';
+                $data['field_staff_name'] = $order->fieldStaff?->user?->name ?? 'N/A';
+                $data['sales_manager'] = $order->distributor?->salesManager?->user?->name ?? 'N/A';
+            } else {
+                $data['sales_manager'] = $order->salesManager?->user?->name ?? 'N/A';
+                $data['retailer_name'] = 'N/A'; 
+            }
+            
+            // Enhance items with product returnable status
+            $data['items'] = collect($data['items'])->map(function($item) {
+                if (isset($item['product'])) {
+                    $item['is_returnable'] = (bool)($item['product']['is_returnable'] ?? false);
+                } else {
+                    $item['is_returnable'] = false;
+                }
+                return $item;
+            });
+            
+            return $data;
+        });
+
         return response()->json($orders);
     }
 }
