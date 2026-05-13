@@ -982,43 +982,7 @@ class RetailerOrderManagementController extends Controller
                 );
             }
 
-            // Award Loyalty Points on Distributor Acceptance
-            $totalPoints = 0;
-            $retailerOrder->load('items.product');
-            Log::info("Distributor Acceptance - Calculating Loyalty Points for Order: {$retailerOrder->id}");
-
-            foreach ($retailerOrder->items as $item) {
-                if ($item->product) {
-                    $ptr = (float) ($item->product->ptr ?? 0);
-                    $percentage = (float) $item->product->loyalty_point_percentage;
-
-                    Log::info("Item: {$item->product->product_name} (ID: {$item->product->id}) - Qty: {$item->quantity}, PTR: {$ptr}, Perc: {$percentage}");
-
-                    if ($percentage > 0 && $ptr > 0) {
-                        $subtotal = $item->quantity * $ptr;
-                        $points = $subtotal * ($percentage / 100);
-                        $totalPoints += $points;
-                    } else {
-                        Log::info("Skipping points: Percentage or PTR is 0");
-                    }
-                }
-            }
-            Log::info("Total Points to Add: {$totalPoints}");
-
-            if ($totalPoints > 0) {
-                // Ensure the points are saved to the order history (use update to force DB write)
-                $retailerOrder->update(['loyalty_points_earned' => $totalPoints]);
-                Log::info("Order ID {$retailerOrder->id} loyalty_points_earned updated to: {$totalPoints}");
-
-                $retailer = $retailerOrder->retailer;
-                if ($retailer) {
-                    $oldPoints = $retailer->loyalty_points ?? 0;
-                    $retailer->loyalty_points = $oldPoints + $totalPoints;
-                    $retailer->save();
-                    Log::info("Retailer ID {$retailer->id} points updated. Old: {$oldPoints}, New: {$retailer->loyalty_points}");
-                }
-            }
-
+            // Award Loyalty Points handled by RetailerOrderObserver
             return response()->json(['success' => 'Order accepted.']);
         }
 
@@ -1050,47 +1014,7 @@ class RetailerOrderManagementController extends Controller
                     $this->notifyUnique($retailerOrder->retailer->user, new OrderActionRequired($retailerOrder, "Your order #{$retailerOrder->order_code} has been accepted. Please confirm your order.", url('/retailer/orders'), 'retailer_order'));
                 }
 
-                // Award Loyalty Points (Admin Override)
-                $totalPoints = 0;
-                $retailerOrder->load('items.product');
-
-                Log::info("Admin/Manager Acceptance - Calculating Loyalty Points for Order: {$retailerOrder->id}");
-
-                foreach ($retailerOrder->items as $item) {
-                    if ($item->product) {
-                        $ptr = (float) ($item->product->ptr ?? 0);
-                        $percentage = (float) $item->product->loyalty_point_percentage;
-
-                        Log::info("Item: {$item->product->product_name} (ID: {$item->product->id}) - Qty: {$item->quantity}, PTR: {$ptr}, Perc: {$percentage}");
-
-                        if ($percentage > 0 && $ptr > 0) {
-                            $subtotal = $item->quantity * $ptr;
-                            $points = $subtotal * ($percentage / 100);
-                            $totalPoints += $points;
-                            Log::info("Points adding: {$points}");
-                        } else {
-                            Log::info("Skipping points: Percentage or PTR is 0");
-                        }
-                    } else {
-                        Log::warning("Item ID {$item->id} has no product attached.");
-                    }
-                }
-
-                Log::info("Total Points to Add: {$totalPoints}");
-
-                if ($totalPoints > 0) {
-                    // Ensure the points are saved to the order history (use update to force DB write)
-                    $retailerOrder->update(['loyalty_points_earned' => $totalPoints]);
-                    Log::info("Order ID {$retailerOrder->id} loyalty_points_earned updated to: {$totalPoints}");
-
-                    $retailer = $retailerOrder->retailer;
-                    if ($retailer) {
-                        $oldPoints = $retailer->loyalty_points ?? 0;
-                        $retailer->loyalty_points = $oldPoints + $totalPoints;
-                        $retailer->save();
-                        Log::info("Retailer ID {$retailer->id} points updated. Old: {$oldPoints}, New: {$retailer->loyalty_points}");
-                    }
-                }
+                // Award Loyalty Points handled by RetailerOrderObserver
                 return response()->json(['success' => 'Order accepted (Distributor stage)!', 'new_points' => $retailerOrder->retailer->loyalty_points ?? 0]);
             } else {
                 return response()->json(['error' => 'Order is in a state that cannot be accepted/approved further.'], 400);
@@ -1099,6 +1023,7 @@ class RetailerOrderManagementController extends Controller
 
         return response()->json(['error' => 'Unauthorized or invalid state'], 403);
     }
+
 
     // Manager: Assign Field Staff
     public function assignFieldStaff(Request $request, RetailerOrder $retailerOrder)

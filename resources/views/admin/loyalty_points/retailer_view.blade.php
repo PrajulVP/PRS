@@ -167,38 +167,36 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Total Points Card -->
-            <div class="col-xl-4 col-md-6 mb-4 entrance-animate delay-1">
-                <div class="card shadow-sm border-0 loyalty-widget-card overflow-hidden">
-                    <div class="card-body d-flex align-items-center py-3 px-4">
-                        <div class="coin-wrapper me-4">
-                            <div class="big-gold-coin-dashboard" style="margin: 0; width: 60px; height: 60px; background: radial-gradient(ellipse at center, #ffd700 0%, #daa520 100%);">
-                                <div class="coin-inner-dashboard" style="font-size: 30px;">
-                                    <i class="fa fa-star"></i>
-                                </div>
+            <div class="col-xl-3 col-md-6 mb-4 entrance-animate delay-1">
+                <div class="card shadow-sm border-0 overflow-hidden" style="background: linear-gradient(135deg, #00497a 0%, #002b5c 100%); border-radius: 24px !important;">
+                    <div class="card-body p-4 position-relative">
+                        <div class="d-flex align-items-center justify-content-between mb-4">
+                            <div class="d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.15);">
+                                <i data-feather="star" class="text-white" style="width: 22px; height: 22px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.4));"></i>
                             </div>
+                            <span class="badge rounded-pill px-3 py-1 fw-bold" style="font-size: 10px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); color: #fff; letter-spacing: 0.5px;">POINTS</span>
                         </div>
-                        <div class="flex-grow-1">
-                            <h1 class="fw-800 mb-0 display-6 line-height-1" style="line-height: 1;">{{ number_format($totalPoints, 2) }}</h1>
-                            <p class="text-white opacity-75 text-uppercase mb-0 fw-bold small" style="letter-spacing: 0.5px; font-size: 0.75rem;">Loyalty Points</p>
+                        <div class="flex-grow-1 text-white">
+                            <h1 class="fw-300 mb-0 display-6" style="line-height: 1; color: #fff !important; letter-spacing: -1px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">{{ number_format($totalPoints, 2) }}</h1>
+                            <p class="text-white opacity-75 small mb-0 fw-600 mt-2">Earned from orders</p>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Credit Balance Card -->
-            <div class="col-xl-4 col-md-6 mb-4 entrance-animate delay-1">
-                <div class="card shadow-sm border-0 overflow-hidden" style="border-radius: 20px; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);">
-                    <div class="card-body d-flex align-items-center py-3 px-4">
-                        <div class="coin-wrapper me-4">
-                            <div class="big-gold-coin-dashboard" style="margin: 0; width: 60px; height: 60px; background: radial-gradient(ellipse at center, #00d2ff 0%, #3a7bd5 100%);">
-                                <div class="coin-inner-dashboard" style="font-size: 30px;">
-                                    <i class="fa fa-wallet"></i>
-                                </div>
+            <div class="col-xl-3 col-md-6 mb-4 entrance-animate delay-1">
+                <div class="card shadow-sm border-0 overflow-hidden" style="background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); border-radius: 24px !important;">
+                    <div class="card-body p-4 position-relative">
+                        <div class="d-flex align-items-center justify-content-between mb-4">
+                            <div class="d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.15);">
+                                <i data-feather="credit-card" class="text-white" style="width: 22px; height: 22px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.4));"></i>
                             </div>
+                            <span class="badge rounded-pill px-3 py-1 fw-bold" style="font-size: 10px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); color: #fff; letter-spacing: 0.5px;">CREDITS</span>
                         </div>
                         <div class="flex-grow-1 text-white">
-                            <h1 class="fw-800 mb-0 display-6 line-height-1 text-white" style="line-height: 1;">₹{{ number_format($creditBalance, 2) }}</h1>
-                            <p class="text-white opacity-75 text-uppercase mb-0 fw-bold small" style="letter-spacing: 0.5px; font-size: 0.75rem;">Wallet Credits</p>
+                            <h1 class="fw-300 mb-0 display-6" style="line-height: 1; color: #fff !important; letter-spacing: -1px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">₹{{ number_format($creditBalance, 2) }}</h1>
+                            <p class="text-white opacity-75 small mb-0 fw-600 mt-2">Refunds & credits</p>
                         </div>
                     </div>
                 </div>

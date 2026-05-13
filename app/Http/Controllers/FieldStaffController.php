@@ -59,7 +59,20 @@ class FieldStaffController extends Controller
             $query->where('status', 'active');
         })->get();
 
-        return view('admin.fieldstaffs.index', compact('salesManagers'));
+        /** @var \App\Models\User $currentUser */
+        $currentUser = Auth::user();
+        $statsQuery = FieldStaff::query();
+        if ($currentUser->hasRole('salesmanager')) {
+            $statsQuery->where('sales_manager_id', $currentUser->salesManager->id);
+        }
+
+        $stats = [
+            'total' => (clone $statsQuery)->count(),
+            'active' => (clone $statsQuery)->whereHas('user', fn($q) => $q->where('status', 'active'))->count(),
+            'inactive' => (clone $statsQuery)->whereHas('user', fn($q) => $q->where('status', 'inactive'))->count(),
+        ];
+
+        return view('admin.fieldstaffs.index', compact('salesManagers', 'stats'));
     }
 
     public function show(FieldStaff $field_staff)

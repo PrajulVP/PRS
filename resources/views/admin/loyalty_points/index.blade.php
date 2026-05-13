@@ -18,46 +18,7 @@
             font-weight: 500;
         }
 
-        /* PREMIUM GLASS COIN DASHBOARD (Synced with Header) */
-        .big-gold-coin-dashboard {
-            width: 70px;
-            height: 70px;
-            background: radial-gradient(ellipse at center, #ffd700 0%, #daa520 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 
-                inset 0 0 0 4px #d4af37,
-                0 4px 10px rgba(0,0,0,0.1);
-            animation: coin-shine-flip-dashboard 7s infinite ease-in-out;
-            position: relative;
-            transform-style: preserve-3d;
-            flex-shrink: 0;
-        }
-
-        .big-gold-coin-dashboard::before {
-            content: '';
-            position: absolute;
-            inset: 8px;
-            border: 2px dashed rgba(184, 134, 11, 0.5);
-            border-radius: 50%;
-        }
-
-        .coin-inner-dashboard {
-            font-size: 35px;
-            color: #ffffff;
-            text-shadow: 2px 2px 4px rgba(184, 134, 11, 0.8);
-            transform: translateZ(1px);
-        }
-
-        @keyframes coin-shine-flip-dashboard {
-            0%, 75% { transform: rotateY(0deg); filter: brightness(1) drop-shadow(0 0 3px rgba(184, 134, 11, 0.3)); }
-            85% { filter: brightness(1.8) drop-shadow(0 0 15px rgba(212, 175, 55, 0.8)); transform: rotateY(0deg); }
-            100% { transform: rotateY(360deg); filter: brightness(1) drop-shadow(0 0 3px rgba(184, 134, 11, 0.3)); }
-        }
-
-        /* Dashbord Summary Cards (Glassmorphism) */
+        /* Dashboard Summary Cards (Glassmorphism) */
         .summary-card {
             background: var(--med-bg-card, #ffffff);
             border: 1px solid var(--med-border, #f1f5f9);
@@ -221,9 +182,11 @@
                     <p class="text-muted small m-0">Performance analytics and reward tracking for retailers</p>
                 </div>
                 <div class="col-sm-6 text-end">
-                    <button id="btn-back-to-list" class="btn btn-primary btn-sm rounded-pill px-4 fw-bold" style="display:none;">
-                        <i class="fa fa-arrow-left me-2"></i>Back to Overview
-                    </button>
+                    @if($selectedRetailer)
+                        <a href="{{ route('admin.loyalty-points.index') }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-bold">
+                            <i class="fa fa-arrow-left me-2"></i>Back to Overview
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>
@@ -233,6 +196,55 @@
 
     <div class="container-fluid">
         <div class="row">
+            @if(!$selectedRetailer)
+            <!-- COMPACT GLOBAL STATS BAR -->
+            <div class="col-12 mb-4 entrance-fade">
+                <div class="card border-0 shadow-sm" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 16px; border: 1px solid rgba(0, 73, 122, 0.05);">
+                    <div class="card-body py-3 px-4">
+                        <div class="row align-items-center text-center text-md-start">
+                            <!-- Total Retailers -->
+                            <div class="col-md-4 mb-3 mb-md-0 border-end border-light">
+                                <div class="d-flex align-items-center justify-content-center justify-content-md-start">
+                                    <div class="bg-glass-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background: rgba(0, 73, 122, 0.08);">
+                                        <i data-feather="users" class="text-primary" style="width: 18px; height: 18px;"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-muted small fw-bold mb-0 text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Network Reach</p>
+                                        <h5 class="fw-800 mb-0 heading-theme">{{ count($retailers) }} <span class="small fw-600 text-muted" style="font-size: 0.75rem;">Retailers</span></h5>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Total Loyalty Points -->
+                            <div class="col-md-4 mb-3 mb-md-0 border-end border-light">
+                                <div class="d-flex align-items-center justify-content-center justify-content-md-start">
+                                    <div class="bg-glass-warning rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background: rgba(218, 165, 32, 0.1);">
+                                        <i data-feather="star" style="width: 18px; height: 18px; color: #daa520;"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-muted small fw-bold mb-0 text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">System Liability</p>
+                                        <h5 class="fw-800 mb-0 heading-theme">{{ number_format($globalLoyaltyPoints, 2) }} <span class="small fw-600 text-muted" style="font-size: 0.75rem;">Points</span></h5>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Total Wallet Credits -->
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center justify-content-center justify-content-md-start">
+                                    <div class="bg-glass-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background: rgba(46, 204, 113, 0.1);">
+                                        <i data-feather="credit-card" class="text-success" style="width: 18px; height: 18px;"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-muted small fw-bold mb-0 text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Refund Pool</p>
+                                        <h5 class="fw-800 mb-0 heading-theme">₹{{ number_format($retailers->sum('credit_balance'), 2) }} <span class="small fw-600 text-muted" style="font-size: 0.75rem;">Credits</span></h5>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- OVERVIEW LIST VIEW (Shown by Default) -->
             <div id="overview-view" class="col-12 entrance-fade">
                 <div class="card shadow-sm border-0" style="border-radius: 20px; overflow: hidden; background: var(--med-bg-card);">
@@ -369,42 +381,40 @@
                     </div>
                 </div>
             </div>
-
-            <!-- DETAILED RETAILER VIEW (Hidden by Default) -->
-            <div id="detail-view" class="col-12" style="display:none;">
-                <div class="row">
+            @else
+            <!-- DETAILED RETAILER VIEW (Shown when a retailer is selected) --            <!-- DETAILED RETAILER VIEW (Shown when a retailer is selected) -->
+            <!-- DETAILED RETAILER VIEW (Shown when a retailer is selected) -->
+            <div id="detail-view" class="col-12 entrance-fade">
+                <div class="row g-3">
                     <!-- Retailer Profile Card -->
-                    <div class="col-xl-4 mb-4">
-                        <div class="card h-100 shadow-sm profile-highlight-card border-0" style="background: var(--med-bg-card); border-radius: 20px;">
-                            <div class="card-body p-4">
-                                <div class="d-flex align-items-center mb-4 pb-2 border-bottom">
-                                    <div class="avatar-md bg-glass-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 52px; height: 52px; position: relative;">
-                                        <i class="fa fa-shopping-bag text-primary"></i>
-                                        <div id="top_performer_badge" style="display:none; position: absolute; bottom: -5px; right: -5px; background: #ffd700; color: #fff; width: 22px; height: 22px; border-radius: 50%; display: none; align-items: center; justify-content: center; border: 2px solid #fff; font-size: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                                            <i class="fa fa-trophy"></i>
-                                        </div>
+                    <div class="col-xl-6 mb-3">
+                        <div class="card shadow-sm border-0 h-100" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(0, 73, 122, 0.1); border-radius: 20px !important;">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center mb-3 pb-2 border-bottom border-light">
+                                    <div class="d-flex align-items-center justify-content-center bg-glass-primary rounded-circle me-3" style="width: 42px; height: 42px; background: rgba(0, 73, 122, 0.05); border: 1px solid rgba(0, 73, 122, 0.1);">
+                                        <i data-feather="shopping-bag" class="text-primary" style="width: 20px; height: 20px;"></i>
                                     </div>
                                     <div class="text-truncate">
-                                        <h5 id="display_shop_name" class="fw-bold mb-0 heading-theme text-truncate">...</h5>
-                                        <p id="display_owner_name" class="sub-heading-theme mb-0 small">...</p>
+                                        <h6 id="display_shop_name" class="fw-800 mb-0 heading-theme text-truncate" style="letter-spacing: -0.3px;">...</h6>
+                                        <p id="display_owner_name" class="text-muted mb-0 small fw-600" style="font-size: 0.75rem;">...</p>
                                     </div>
                                 </div>
-                                <div class="row g-4">
+                                <div class="row g-2">
                                     <div class="col-6">
-                                        <label class="text-muted small d-block text-uppercase fw-bold mb-1">Phone</label>
-                                        <span id="display_phone" class="heading-theme fw-500">...</span>
+                                        <label class="text-muted small d-block text-uppercase fw-bold mb-0" style="font-size: 0.6rem; letter-spacing: 0.5px;">Phone</label>
+                                        <span id="display_phone" class="heading-theme fw-700 small">...</span>
                                     </div>
                                     <div class="col-6">
-                                        <label class="text-muted small d-block text-uppercase fw-bold mb-1">Region</label>
-                                        <span id="display_region" class="heading-theme fw-500 text-truncate d-block">...</span>
+                                        <label class="text-muted small d-block text-uppercase fw-bold mb-0" style="font-size: 0.6rem; letter-spacing: 0.5px;">Region</label>
+                                        <span id="display_region" class="heading-theme fw-700 small text-truncate d-block">...</span>
                                     </div>
-                                    <div class="col-12">
-                                        <small class="text-muted text-uppercase fw-bold mb-1 d-block" style="font-size: 0.7rem;">Email Address</small>
-                                        <span id="display_email" class="heading-theme fw-500 text-break">...</span>
+                                    <div class="col-6">
+                                        <label class="text-muted small d-block text-uppercase fw-bold mb-0" style="font-size: 0.6rem; letter-spacing: 0.5px;">Email</label>
+                                        <span id="display_email" class="heading-theme fw-700 small text-break">...</span>
                                     </div>
-                                    <div class="col-12">
-                                        <small class="text-muted text-uppercase fw-bold mb-1 d-block" style="font-size: 0.7rem;">Retailer Since</small>
-                                        <span id="display_joined" class="heading-theme fw-500">...</span>
+                                    <div class="col-6">
+                                        <label class="text-muted small d-block text-uppercase fw-bold mb-0" style="font-size: 0.6rem; letter-spacing: 0.5px;">Joined</label>
+                                        <span id="display_joined" class="heading-theme fw-700 small">...</span>
                                     </div>
                                 </div>
                             </div>
@@ -412,67 +422,42 @@
                     </div>
 
                     <!-- Loyalty Points Card -->
-                    <div class="col-xl-4 col-md-6 mb-4">
-                        <div class="card h-100 shadow-sm border-0 overflow-hidden" style="background: var(--med-bg-card); border-radius: 20px;">
-                            <div class="card-body d-flex flex-column justify-content-center align-items-center text-center p-4">
-                                <div class="mb-3">
-                                    <div class="big-gold-coin-dashboard" style="background: radial-gradient(ellipse at center, #ffd700 0%, #daa520 100%);">
-                                        <div class="coin-inner-dashboard">
-                                            <i class="fa fa-star"></i>
-                                        </div>
+                    <div class="col-xl-3 col-md-6 mb-3">
+                        <div class="card shadow-sm border-0 h-100 overflow-hidden summary-card" style="background: linear-gradient(135deg, #00497a 0%, #002b5c 100%); border-radius: 20px !important;">
+                            <div class="card-body p-4 position-relative">
+                                <div class="d-flex align-items-center justify-content-between mb-4">
+                                    <div class="d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.15);">
+                                        <i data-feather="star" class="text-white" style="width: 22px; height: 22px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.4));"></i>
                                     </div>
+                                    <span class="badge rounded-pill px-3 py-1 fw-bold" style="font-size: 10px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); color: #fff; letter-spacing: 0.5px;">POINTS</span>
                                 </div>
-                                <h1 id="display_total_points" class="display-6 fw-800 text-primary mb-1">0.00</h1>
-                                <p class="text-muted text-uppercase fw-bold small m-0 letter-spacing-1">Loyalty Points</p>
-                                <div class="mt-3 px-3 py-1 rounded-pill bg-light w-100 border">
-                                    <small class="text-muted" style="font-size: 0.65rem;">Earned from Approved Orders</small>
+                                <div class="flex-grow-1 text-white">
+                                    <h1 id="display_total_points" class="fw-300 mb-0 display-6" style="line-height: 1; color: #fff !important; letter-spacing: -1px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">0.00</h1>
+                                    <p class="text-white opacity-75 small mb-0 fw-600 mt-2">Earned from orders</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Credit Balance Card -->
-                    <div class="col-xl-4 col-md-6 mb-4">
-                        <div class="card h-100 shadow-sm border-0 overflow-hidden" style="background: var(--med-bg-card); border-radius: 20px;">
-                            <div class="card-body d-flex flex-column justify-content-center align-items-center text-center p-4">
-                                <div class="mb-3">
-                                    <div class="big-gold-coin-dashboard" style="background: radial-gradient(ellipse at center, #00d2ff 0%, #3a7bd5 100%);">
-                                        <div class="coin-inner-dashboard">
-                                            <i class="fa fa-wallet"></i>
-                                        </div>
+                    <div class="col-xl-3 col-md-6 mb-3">
+                        <div class="card shadow-sm border-0 h-100 overflow-hidden summary-card" style="background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); border-radius: 20px !important;">
+                            <div class="card-body p-4 position-relative">
+                                <div class="d-flex align-items-center justify-content-between mb-4">
+                                    <div class="d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.15);">
+                                        <i data-feather="credit-card" class="text-white" style="width: 22px; height: 22px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.4));"></i>
                                     </div>
+                                    <span class="badge rounded-pill px-3 py-1 fw-bold" style="font-size: 10px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); color: #fff; letter-spacing: 0.5px;">CREDITS</span>
                                 </div>
-                                <h1 id="display_credit_balance" class="display-6 fw-800 text-info mb-1">₹0.00</h1>
-                                <p class="text-muted text-uppercase fw-bold small m-0 letter-spacing-1">Wallet Credits</p>
-                                <div class="mt-3 px-3 py-1 rounded-pill bg-light w-100 border">
-                                    <small class="text-muted" style="font-size: 0.65rem;">From Returns & Refund Notes</small>
+                                <div class="flex-grow-1 text-white">
+                                    <h1 id="display_credit_balance" class="fw-300 mb-0 display-6" style="line-height: 1; color: #fff !important; letter-spacing: -1px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">₹0.00</h1>
+                                    <p class="text-white opacity-75 small mb-0 fw-600 mt-2">Refunds & credits</p>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Total Wallet Summary -->
-                    <div class="col-xl-4 mb-4">
-                        <div class="card h-100 shadow-sm border-0" style="background: var(--med-bg-card); border-radius: 20px;">
-                            <div class="card-body p-4 d-flex flex-column">
-                                <h6 class="fw-bold heading-theme mb-3">Redemption Summary</h6>
-                                <div class="mt-auto">
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span class="text-muted small">Loyalty Pts</span>
-                                        <span class="fw-bold text-primary" id="available_points">0.00</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span class="text-muted small">Refund Credits</span>
-                                        <span class="fw-bold text-info" id="available_credits">₹0.00</span>
-                                    </div>
-                                    <div class="progress mb-4" style="height: 6px;">
-                                        <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
-                                    </div>
-                                    <button class="btn btn-primary w-100 rounded-pill py-2 fw-bold disabled" style="opacity: 0.6">Redeem Rewards (Coming Soon)</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                </div>        
+
 
                     <!-- Transaction Logs -->
                     <div class="col-12 mb-4">
@@ -504,6 +489,7 @@
                     </div>
                 </div>
             </div>
+            @endif
         </div>
     </div>
 @endsection
@@ -518,7 +504,7 @@
     <script>
         $(document).ready(function () {
             // Main Overview Table
-
+            @if(!$selectedRetailer)
             var overviewTable = $('#overview-table').DataTable({
                 processing: true,
                 serverSide: true,
@@ -639,35 +625,19 @@
                 );
             }
 
-
-            // Handle Row/Button Detail Click - Use delegation for DataTables
-            $(document).on('click', '.detail-btn', function() {
-                let id = $(this).data('id');
-                $('#retailer_selector').val(id).trigger('change');
-            });
-
-            // Handle Selection/Drill-down
+            // Handle Selection/Drill-down - Change to REAL REDIRECT for separate page feel
             $('#retailer_selector').on('change', function () {
                 let id = $(this).val();
                 if (id) {
-                    $('#overview-view').fadeOut(300, function() {
-                        $('#btn-back-to-list').fadeIn();
-                        $('#detail-view').fadeIn(300);
-                        fetchData(id);
-                    });
-                    
-                    // Removed confetti per user request - Admin doesn't need excitement
+                    window.location.href = "{{ route('admin.loyalty-points.detail', ':id') }}".replace(':id', id);
                 }
             });
+            @endif
 
-            // Back to List
-            $('#btn-back-to-list').on('click', function() {
-                $('#detail-view').fadeOut(300, function() {
-                    $('#retailer_selector').val('').trigger('change.select2');
-                    $('#btn-back-to-list').hide();
-                    $('#overview-view').fadeIn(300);
-                });
-            });
+            @if($selectedRetailer)
+                // Initialize detail view immediately if selected
+                fetchData("{{ $selectedRetailer->id }}");
+            @endif
 
             function fetchData(retailerId) {
                 $.get("{{ route('admin.loyalty-points.summary', ':id') }}".replace(':id', retailerId), function (data) {

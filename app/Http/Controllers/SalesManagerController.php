@@ -45,7 +45,14 @@ class SalesManagerController extends Controller
                 })
                 ->make(true);
         }
-        return view('admin.salesmanagers.index');
+
+        $stats = [
+            'total' => SalesManager::count(),
+            'active' => SalesManager::whereHas('user', fn($q) => $q->where('status', 'active'))->count(),
+            'inactive' => SalesManager::whereHas('user', fn($q) => $q->where('status', 'inactive'))->count(),
+        ];
+
+        return view('admin.salesmanagers.index', compact('stats'));
     }
 
     public function show(SalesManager $sales_manager)

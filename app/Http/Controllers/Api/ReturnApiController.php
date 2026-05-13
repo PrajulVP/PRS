@@ -13,9 +13,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Traits\CalculatesPrices;
 
 class ReturnApiController extends Controller
 {
+    use CalculatesPrices;
     /**
      * @OA\Get(
      *     path="/api/returns",
@@ -274,6 +276,7 @@ class ReturnApiController extends Controller
                     ]);
                     $this->generateCreditNote($returnRequest);
                     $this->adjustStockForReturn($returnRequest);
+                    $this->deductLoyaltyPointsForReturn($returnRequest);
                 } else {
                     return response()->json(['error' => 'Unauthorized or invalid status for approval.'], 403);
                 }
@@ -531,5 +534,34 @@ class ReturnApiController extends Controller
         });
 
         return response()->json($orders);
+    }
+
+    /**
+     * Deduct loyalty points from retailer balance when a return is completed.
+     */
+    private function deductLoyaltyPointsForReturn(ReturnRequest $returnRequest)
+    {
+        if ($returnRequest->order_type !== 'retailer') return;
+
+        $product = $returnRequest->product;
+        if (!$product) return;
+
+        // Find the retailer by user_id
+        $retailer = \App\Models\Retailer::where('user_id', $returnRequest->user_id)->first();
+        if (!$retailer) return;
+
+        $ptr = (float)($product->ptr ?? 0);
+        $percentage = (float)($product->loyalty_point_percentage ?? 0);
+
+        if ($ptr > 0 && $percentage > 0) {
+            // Use trait helper for correct base quantity (strips)
+            $qtyInStrips = $this->convertQuantityToStrips($product, $returnRequest->quantity, $returnRequest->unit);
+            $pointsToDeduct = ($qtyInStrips * $ptr) * ($percentage / 100);
+
+            if ($pointsToDeduct > 0) {
+                $retailer->decrement('loyalty_points', $pointsToDeduct);
+                Log::info("Loyalty: Deducted {$pointsToDeduct} points from Retailer ID {$retailer->id} due to Return #{$returnRequest->return_code}");
+            }
+        }
     }
 }

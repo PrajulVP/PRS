@@ -64,13 +64,33 @@
 
 @section('page-body')
     <div class="container-fluid">
-        <!-- Brand Summary Cards -->
+        <!-- Stats Summary Bar -->
         <div class="row g-3 pt-4 mb-4">
+            {{-- Total Products Card --}}
+            <div class="col-xl-3 col-md-6">
+                <div class="card h-100 mb-0 border-0 shadow-sm" style="border-radius: 15px; overflow: hidden; background: linear-gradient(135deg, #1e3a5f, #2e6da4);">
+                    <div class="card-body p-3">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0 p-3 rounded-3" style="background: rgba(255,255,255,0.15);">
+                                <i class="fa fa-cubes text-white" style="font-size: 1.5rem;"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1 text-uppercase fw-800" style="font-size: 0.7rem; letter-spacing: 0.5px; color: #ffffff !important; opacity: 0.8;">Global Inventory</h6>
+                                <div class="d-flex align-items-baseline">
+                                    <h4 class="mb-0 fw-800" style="color: #ffffff !important;">{{ number_format($totalProducts) }}</h4>
+                                    <span class="ms-2 small" style="color: #ffffff !important; opacity: 0.8;">Total Products</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             @foreach($brandStats as $stat)
                 <div class="col-xl-3 col-md-6">
                     <div class="card h-100 mb-0 border-0 shadow-sm" style="border-radius: 15px; overflow: hidden;">
                         @php
-                            $colors = ['#00497a', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9'];
+                            $colors = ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9'];
                             $color = $colors[$loop->index % count($colors)];
                         @endphp
                         <div class="card-body p-3">
@@ -79,7 +99,7 @@
                                     <i class="fa fa-tag" style="color: {{ $color }}; font-size: 1.2rem;"></i>
                                 </div>
                                 <div class="flex-grow-1 ms-3">
-                                    <h6 class="text-muted mb-1 text-uppercase fw-800" style="font-size: 0.7rem; letter-spacing: 0.5px;">{{ $stat['brand'] }}</h6>
+                                    <h6 class="text-muted mb-1 text-uppercase fw-800" style="font-size: 0.75rem; letter-spacing: 0.5px;">{{ $stat['brand'] }}</h6>
                                     <div class="d-flex align-items-baseline">
                                         <h4 class="mb-0 fw-800" style="color: var(--med-primary);">{{ number_format($stat['count']) }}</h4>
                                         <span class="ms-2 text-muted small">Products</span>
@@ -97,7 +117,9 @@
             <div class="col-sm-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5><i class="fa fa-package me-2"></i>Products</h5>
+                        <h5 class="mb-0 fw-800 text-uppercase" style="font-size: 0.9rem; letter-spacing: 1px; color: var(--med-primary);">
+                            <i class="fa fa-th-list me-2"></i>Product Inventory
+                        </h5>
                         <div class="d-flex gap-2">
                             @if(Auth::user()->hasAnyRole(['admin', 'superadmin']) || Auth::user()->hasPermissionToCategory('products', 'add'))
 

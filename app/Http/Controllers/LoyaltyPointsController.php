@@ -14,7 +14,7 @@ class LoyaltyPointsController extends Controller
     /**
      * Display a listing of loyalty points.
      */
-    public function index(Request $request)
+    public function index(Request $request, Retailer $retailer = null)
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
@@ -255,10 +255,11 @@ class LoyaltyPointsController extends Controller
                             </div>';
                 })
                 ->addColumn('action', function ($row) {
+                    $url = route('admin.loyalty-points.detail', $row->id);
                     return '<div class="text-center">
-                                <button class="btn btn-primary btn-xs rounded-pill px-3 fw-bold detail-btn" data-id="'.$row->id.'">
+                                <a href="'.$url.'" class="btn btn-primary rounded-pill px-4 fw-bold" style="padding-top: 7px; padding-bottom: 7px; font-size: 0.85rem; box-shadow: 0 4px 10px rgba(0,73,122,0.2);">
                                     View
-                                </button>
+                                </a>
                             </div>';
                 })
                 ->filterColumn('shop_name', function($query, $keyword) {
@@ -310,7 +311,8 @@ class LoyaltyPointsController extends Controller
                 ->get();
         }
 
-        return view('admin.loyalty_points.index', compact('retailers', 'globalLoyaltyPoints', 'salesManagers', 'fieldStaffs'));
+        $selectedRetailer = $retailer;
+        return view('admin.loyalty_points.index', compact('retailers', 'globalLoyaltyPoints', 'salesManagers', 'fieldStaffs', 'selectedRetailer'));
     }
 
     /**

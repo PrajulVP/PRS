@@ -66,7 +66,13 @@ class DistributorController extends Controller
         $districts = District::orderBy('name', 'asc')->get();
         $salesManagers = SalesManager::with('user')->get();
 
-        return view('admin.distributors.index', compact('districts', 'salesManagers'));
+        $stats = [
+            'total' => Distributor::count(),
+            'active' => Distributor::whereHas('user', fn($q) => $q->where('status', 'active'))->count(),
+            'inactive' => Distributor::whereHas('user', fn($q) => $q->where('status', 'inactive'))->count(),
+        ];
+
+        return view('admin.distributors.index', compact('districts', 'salesManagers', 'stats'));
     }
 
     public function store(Request $request)

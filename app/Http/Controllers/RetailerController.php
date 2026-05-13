@@ -132,7 +132,36 @@ class RetailerController extends Controller
 
         $districts = District::orderBy('name', 'asc')->get();
 
-        return view('admin.retailers.index', compact('distributors', 'salesManagers', 'fieldStaffs', 'districts'));
+        /** @var \App\Models\User $currentUser */
+        $currentUser = Auth::user();
+        $statsQuery = Retailer::query();
+        if ($currentUser->hasRole('distributor')) {
+            $distributor = $currentUser->distributor;
+            if ($distributor) {
+                $statsQuery->whereHas('retailerOrders', function ($orderQuery) use ($distributor) {
+                    $orderQuery->where('distributor_id', $distributor->id);
+                });
+            }
+        } elseif ($currentUser->hasRole('fieldstaff')) {
+            $fieldstaff = $currentUser->fieldStaff;
+            if ($fieldstaff) {
+                $statsQuery->where('field_staff_id', $fieldstaff->id);
+            }
+        } elseif ($currentUser->hasRole('salesmanager')) {
+            $salesManager = $currentUser->salesManager;
+            if ($salesManager) {
+                $fieldStaffIds = $salesManager->fieldStaffs->pluck('id');
+                $statsQuery->whereIn('field_staff_id', $fieldStaffIds);
+            }
+        }
+
+        $stats = [
+            'total' => (clone $statsQuery)->count(),
+            'active' => (clone $statsQuery)->whereHas('user', fn($q) => $q->where('status', 'active'))->count(),
+            'inactive' => (clone $statsQuery)->whereHas('user', fn($q) => $q->where('status', 'inactive'))->count(),
+        ];
+
+        return view('admin.retailers.index', compact('distributors', 'salesManagers', 'fieldStaffs', 'districts', 'stats'));
     }
 
     public function store(Request $request)

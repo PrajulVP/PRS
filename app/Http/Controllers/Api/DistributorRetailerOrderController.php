@@ -9,11 +9,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Traits\HandlesNotifications;
 use App\Traits\OneSignalNotifications;
+use App\Traits\CalculatesPrices;
 use App\Services\OcrService;
 
 class DistributorRetailerOrderController extends Controller
 {
-    use HandlesNotifications, OneSignalNotifications;
+    use HandlesNotifications, OneSignalNotifications, CalculatesPrices;
 
     protected $ocrService;
 
@@ -567,12 +568,8 @@ class DistributorRetailerOrderController extends Controller
                     $orderItem = $retailerOrder->items()->findOrFail($allocation['order_item_id']);
                     $product = $orderItem->product;
 
-                    $multiplier = 1;
-                    if ($orderItem->unit === 'Box') {
-                        $multiplier = (int)($product->box_size ?? 1);
-                    } elseif ($orderItem->unit === 'Carton') {
-                        $multiplier = (int)($product->box_size ?? 1) * (int)($product->carton_size ?? 1);
-                    }
+                    $multiplier = $this->convertQuantityToStrips($product, 1, $orderItem->unit);
+
 
                     $totalAllocated = 0;
                     $orderItem->batches()->delete();
@@ -608,12 +605,8 @@ class DistributorRetailerOrderController extends Controller
                 foreach ($retailerOrder->items as $orderItem) {
                     $product = $orderItem->product;
                     $orderItem->batches()->delete();
-                    $multiplier = 1;
-                    if ($orderItem->unit === 'Box') {
-                        $multiplier = (int)($product->box_size ?? 1);
-                    } elseif ($orderItem->unit === 'Carton') {
-                        $multiplier = (int)($product->box_size ?? 1) * (int)($product->carton_size ?? 1);
-                    }
+                    $multiplier = $this->convertQuantityToStrips($product, 1, $orderItem->unit);
+
 
                     $neededStrips = $orderItem->quantity * $multiplier;
                     $inventories = \App\Models\Inventory::where('distributor_id', $distributor->id)
@@ -657,24 +650,7 @@ class DistributorRetailerOrderController extends Controller
             }
             $retailerOrder->update($updateData);
 
-            // 3. Loyalty Points Calculation
-            $totalPoints = 0;
-            foreach ($retailerOrder->items as $item) {
-                if ($item->product) {
-                    $ptr = (float) ($item->product->ptr ?? 0);
-                    $percentage = (float) $item->product->loyalty_point_percentage;
-                    if ($percentage > 0 && $ptr > 0) {
-                        $totalPoints += ($item->quantity * $ptr) * ($percentage / 100);
-                    }
-                }
-            }
-            if ($totalPoints > 0) {
-                $retailerOrder->update(['loyalty_points_earned' => $totalPoints]);
-                $retailer = $retailerOrder->retailer;
-                if ($retailer) {
-                    $retailer->increment('loyalty_points', $totalPoints);
-                }
-            }
+            // 3. Loyalty Points Calculation handled by RetailerOrderObserver
 
             // 4. Notifications
             $this->clearOrderNotifications($retailerOrder->id, 'retailer_order');

@@ -171,6 +171,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Loyalty Points Dashboard
         Route::get('loyalty-points', [LoyaltyPointsController::class, 'index'])->name('loyalty-points.index');
+        Route::get('loyalty-points/{retailer}', [LoyaltyPointsController::class, 'index'])->name('loyalty-points.detail');
         Route::get('loyalty-points/{retailer}/summary', [LoyaltyPointsController::class, 'getSummary'])->name('loyalty-points.summary');
         Route::get('loyalty-points/get-field-staffs-by-manager', [LoyaltyPointsController::class, 'getFieldStaffByManager'])->name('loyalty-points.field-staffs-by-manager');
 

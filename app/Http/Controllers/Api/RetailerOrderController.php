@@ -108,7 +108,7 @@ class RetailerOrderController extends Controller
                     'invoice_url'    => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
                     'placed_at'      => $order->placed_at?->format('Y-m-d H:i:s'),
                     'delivered_at'   => $order->delivered_at?->format('Y-m-d H:i:s'),
-                    'loyalty_points_earned' => $order->status === RetailerOrder::STATUS_DELIVERED ? (int)$order->loyalty_points_earned : 0,
+                    'loyalty_points_earned' => in_array($order->status, [RetailerOrder::STATUS_APPROVED, RetailerOrder::STATUS_DELIVERED]) ? (int)$order->loyalty_points_earned : 0,
                 ];
             });
 

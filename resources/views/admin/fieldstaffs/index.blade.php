@@ -50,13 +50,19 @@
                         <h5 class="mb-3"><i class="fa fa-users me-2"></i>Field Staff</h5>
                         <ul class="nav nav-tabs custom-tabs" id="userStatusTabs" role="tablist">
                             <li class="nav-item">
-                                <button class="nav-link active" data-bs-toggle="tab" data-status="all" type="button">All Field Staff</button>
+                                <button class="nav-link active" data-bs-toggle="tab" data-status="all" type="button">
+                                    All <span class="ms-1 fw-bold">({{ $stats['total'] }})</span>
+                                </button>
                             </li>
                             <li class="nav-item">
-                                <button class="nav-link" data-bs-toggle="tab" data-status="active" type="button">Active</button>
+                                <button class="nav-link" data-bs-toggle="tab" data-status="active" type="button">
+                                    Active <span class="ms-1 text-success">({{ $stats['active'] }})</span>
+                                </button>
                             </li>
                             <li class="nav-item">
-                                <button class="nav-link" data-bs-toggle="tab" data-status="inactive" type="button">Inactive</button>
+                                <button class="nav-link" data-bs-toggle="tab" data-status="inactive" type="button">
+                                    Inactive <span class="ms-1 text-danger">({{ $stats['inactive'] }})</span>
+                                </button>
                             </li>
                         </ul>
                     </div>

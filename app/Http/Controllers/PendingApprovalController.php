@@ -237,7 +237,7 @@ class PendingApprovalController extends Controller
                 $res = [
                     'id' => $item->id,
                     'order_code' => $item->order_code,
-                    'total_amount' => number_format($item->total_amount, 2),
+                    'total_amount' => $item->total_amount,
                     'status' => ucfirst(str_replace('_', ' ', $item->status)),
                     'product_summary' => $productSummary,
                     'placed_at' => $item->placed_at ? $item->placed_at->format('Y-m-d H:i') : '-',
@@ -271,8 +271,8 @@ class PendingApprovalController extends Controller
                         $itemData['return_code'] = $retReq ? $retReq->return_code : null;
 
                         if ($viewType === 'distributor') {
-                            $itemData['unit_price'] = number_format($i->price ?? 0, 2);
-                            $itemData['total_amount'] = number_format($i->subtotal ?? 0, 2);
+                            $itemData['unit_price'] = $i->price ?? 0;
+                            $itemData['total_amount'] = $i->subtotal ?? 0;
                             $itemData['batches'] = ($i->batches ?? collect())->map(function ($b) {
                                 return [
                                     'id' => $b->id,
@@ -282,8 +282,8 @@ class PendingApprovalController extends Controller
                                 ];
                             });
                         } else {
-                            $itemData['unit_price'] = number_format($i->unit_price ?? 0, 2);
-                            $itemData['total_amount'] = number_format($i->total_amount ?? 0, 2);
+                            $itemData['unit_price'] = $i->unit_price ?? 0;
+                            $itemData['total_amount'] = $i->total_amount ?? 0;
                             $itemData['batches'] = [];
                         }
 

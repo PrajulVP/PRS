@@ -139,7 +139,9 @@ class ProductController extends Controller
                 ];
             });
 
-        return view('admin.products.index', compact('availableBrands', 'brandStats'));
+        $totalProducts = Product::count();
+
+        return view('admin.products.index', compact('availableBrands', 'brandStats', 'totalProducts'));
     }
 
     /**

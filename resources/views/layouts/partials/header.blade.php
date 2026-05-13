@@ -168,68 +168,97 @@
           @if(Auth::guard('web')->check() && Auth::guard('web')->user()->hasRole('retailer') && Auth::guard('web')->user()->retailer)
             <li class="onhover-dropdown loyalty-header-item">
               <a href="{{ route('admin.loyalty-points.index') }}">
-                <div class="loyalty-coin-wrapper" title="My Loyalty Points">
-                  <div class="big-gold-coin">
-                      <div class="coin-inner">
-                        <i class="fa fa-star"></i>
-                      </div>
+                <div class="premium-loyalty-badge" title="My Loyalty Points">
+                  <div class="badge-icon">
+                    <i data-feather="star" style="width: 14px; height: 14px;"></i>
                   </div>
-                  <span class="pts-value">{{ number_format(Auth::guard('web')->user()->retailer->loyalty_points, 0) }}</span>
+                  <div class="badge-content">
+                    <span class="pts-label">LOYALTY</span>
+                    <span class="pts-value">{{ number_format(Auth::guard('web')->user()->retailer->loyalty_points, 0) }}</span>
+                  </div>
                 </div>
               </a>
             </li>
             <style>
-              .loyalty-coin-wrapper {
+              .premium-loyalty-badge {
                 display: flex;
                 align-items: center;
-                gap: 5px;
-                transition: transform 0.3s;
+                background: rgba(255, 255, 255, 0.05);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 215, 0, 0.3);
+                border-radius: 50px;
+                padding: 4px 12px 4px 6px;
+                gap: 8px;
+                transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+                position: relative;
+                overflow: hidden;
               }
 
-              .loyalty-coin-wrapper:hover {
-                transform: scale(1.05);
+              body:not(.dark-only) .premium-loyalty-badge {
+                background: rgba(0, 73, 122, 0.05);
+                border-color: rgba(218, 165, 32, 0.4);
               }
 
-              .big-gold-coin {
-                width: 25px;
-                height: 25px;
-                background: radial-gradient(ellipse at center, #ffd700 0%, #daa520 100%);
+              .premium-loyalty-badge::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(
+                  90deg,
+                  transparent,
+                  rgba(255, 215, 0, 0.2),
+                  transparent
+                );
+                transition: 0.5s;
+              }
+
+              .premium-loyalty-badge:hover::before {
+                left: 100%;
+              }
+
+              .premium-loyalty-badge:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(255, 215, 0, 0.15);
+                border-color: rgba(255, 215, 0, 0.6);
+              }
+
+              .badge-icon {
+                width: 28px;
+                height: 28px;
+                background: linear-gradient(135deg, #ffd700 0%, #daa520 100%);
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                box-shadow: 
-                  inset 0 0 0 2px #d4af37,
-                  0 2px 5px rgba(0,0,0,0.1);
-                animation: coin-shine-flip 7s infinite ease-in-out;
-                position: relative;
-                transform-style: preserve-3d;
-                flex-shrink: 0;
-
-              @keyframes coin-shine-flip {
-                0%, 75% { transform: rotateY(0deg); filter: brightness(1) drop-shadow(0 0 2px rgba(184, 134, 11, 0.3)); }
-                85% { filter: brightness(1.8) drop-shadow(0 0 10px rgba(212, 175, 55, 0.8)); transform: rotateY(0deg); }
-                100% { transform: rotateY(360deg); filter: brightness(1) drop-shadow(0 0 2px rgba(184, 134, 11, 0.3)); }
+                color: #fff;
+                font-size: 14px;
+                box-shadow: 0 2px 10px rgba(218, 165, 32, 0.4);
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
               }
 
-              .coin-inner {
-                font-size: 15px;
-                color: #ffffff;
-                text-shadow: 1px 1px 2px rgba(184, 134, 11, 0.8);
-                transform: translateZ(1px);
+              .badge-content {
+                display: flex;
+                flex-direction: column;
+                line-height: 1;
+              }
+
+              .pts-label {
+                font-size: 8px;
+                font-weight: 800;
+                color: #daa520;
+                letter-spacing: 1px;
+                margin-bottom: 1px;
               }
 
               .pts-value {
-                font-weight: 700;
-                font-size: 16px;
+                font-size: 14px;
+                font-weight: 800;
                 color: var(--med-text-main);
-                letter-spacing: 0.5px;
-              }
-
-              @keyframes coin-flip-spin {
-                0% { transform: rotateY(0deg); filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.5)); }
-                50% { transform: rotateY(180deg) scale(1.1); filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8)); }
-                100% { transform: rotateY(360deg); filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.5)); }
+                letter-spacing: -0.5px;
               }
             </style>
           @endif

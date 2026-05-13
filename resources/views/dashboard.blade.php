@@ -496,8 +496,8 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="card border-0 rounded-4 shadow-sm h-100 overflow-hidden executive-metric-card action-card-compact cursor-pointer" 
-                                        style="background: linear-gradient(135deg, #ef4444 0%, #7f1d1d 100%);"
-                                        onclick="window.location.href='{{ route('retailer.orders.index', ['status' => 'delivered']) }}'">
+                                        style="background: linear-gradient(135deg, #00497a 0%, #002b5c 100%);"
+                                        onclick="window.location.href='{{ url('admin/returns') }}'">
                                         <div class="card-body d-flex align-items-center gap-3">
                                             <div class="icon-circle-md" style="background: rgba(255, 255, 255, 0.2)">
                                                 <i data-feather="rotate-ccw" class="text-white" style="width: 24px; height: 24px; stroke-width: 2.5px;"></i>
@@ -597,8 +597,8 @@
                         </div>
                         <div class="col-md-4">
                             <div class="card border-0 rounded-4 shadow-sm h-100 overflow-hidden executive-metric-card action-card-compact cursor-pointer" 
-                                style="background: linear-gradient(135deg, #ef4444 0%, #7f1d1d 100%);"
-                                onclick="window.location.href='{{ route('distributor.orders.index', ['status' => 'delivered']) }}'">
+                                style="background: linear-gradient(135deg, #00497a 0%, #002b5c 100%);"
+                                onclick="window.location.href='{{ url('admin/returns') }}'">
                                 <div class="card-body d-flex align-items-center gap-3">
                                     <div class="icon-circle-md" style="background: rgba(255, 255, 255, 0.2)">
                                         <i data-feather="rotate-ccw" class="text-white" style="width: 24px; height: 24px; stroke-width: 2.5px;"></i>
