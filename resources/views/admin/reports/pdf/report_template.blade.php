@@ -100,10 +100,15 @@
 </head>
 <body>
     <div class="header">
-        <table>
-            <tr>
-                <td><span class="logo-text">Atomed Wellness</span></td>
-                <td>
+        <table style="border: none;">
+            <tr style="border: none;">
+                <td style="border: none; width: 60%;">
+                    <div style="display: flex; align-items: center;">
+                        <img src="{{ public_path('assets/images/logo/logo.png') }}" style="height: 50px; margin-right: 15px;">
+                        <span class="logo-text" style="vertical-align: middle;">Atomed Wellness</span>
+                    </div>
+                </td>
+                <td style="border: none; width: 40%;">
                     <div class="report-title">{{ $title }}</div>
                     @if(isset($subtitle))
                         <div class="report-subtitle">{{ $subtitle }}</div>
@@ -185,9 +190,10 @@
             @elseif($type === 'fieldstaffs')
                 <tr>
                     <th>Rank</th>
-                    <th>Staff Personnel</th>
+                    <th>Staff Member</th>
                     <th>Manager</th>
-                    <th class="text-right">Outlets / Engagement</th>
+                    <th class="text-right">Outlets / Visits</th>
+                    <th class="text-right">Distance (KM)</th>
                     <th class="text-right">AOV (₹)</th>
                     <th class="text-right">Orders</th>
                     <th class="text-right">Revenue (₹)</th>
@@ -276,7 +282,23 @@
                         <td>{{ $row->salesManager->user->name ?? 'N/A' }}</td>
                         <td class="text-right">
                             <span class="fw-bold">{{ $row->total_retailers ?? 0 }} Outlets</span><br>
-                            <span style="font-size: 8pt; color: #666;">{{ $row->total_orders ? number_format($row->total_orders / max($row->total_retailers, 1), 1) : 0 }} ord/shop</span>
+                            <span style="font-size: 8pt; color: #666;">{{ $row->total_visits ?? 0 }} Visits Logged</span>
+                        </td>
+                        <td class="text-right">
+                            @php
+                                [$f, $t] = (new \App\Http\Controllers\ReportController)->getFilterDates(request());
+                                $dist = 0;
+                                if ($f && $t) {
+                                    $curr = $f->copy();
+                                    while ($curr <= $t) {
+                                        $dist += \App\Models\LocationLog::calculateDailyDistance($row->user_id, $curr->toDateString());
+                                        $curr->addDay();
+                                    }
+                                } else {
+                                    $dist += \App\Models\LocationLog::calculateDailyDistance($row->user_id, now()->toDateString());
+                                }
+                            @endphp
+                            <span class="fw-bold">{{ number_format($dist, 2) }} KM</span>
                         </td>
                         <td class="text-right fw-bold text-primary">₹{{ $row->total_orders ? number_format($row->total_revenue / $row->total_orders, 2) : '0.00' }}</td>
                         <td class="text-right">{{ $row->total_orders ?? 0 }}</td>

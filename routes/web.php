@@ -201,6 +201,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/areas', [ReportController::class, 'areaReports'])->name('areas');
             Route::get('/fieldstaffs', [ReportController::class, 'fieldStaffReports'])->name('fieldstaffs');
             Route::get('/fieldstaffs/tracking', [ReportController::class, 'fieldStaffTracking'])->name('fieldstaff.tracking');
+            Route::get('/fieldstaffs/tracking/export', [ReportController::class, 'fieldStaffTrackingExport'])->name('fieldstaff.tracking.export');
             Route::get('/monitoring', [ReportController::class, 'monitoring'])->name('monitoring');
             Route::get('/monitoring/data', [ReportController::class, 'getMonitoringData'])->name('monitoring.data');
             Route::get('/targets', [ReportController::class, 'targetReports'])->name('targets');

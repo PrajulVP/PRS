@@ -4,53 +4,85 @@
 
 @push('styles')
     <style>
-        #map { height: 600px; border-radius: 12px; z-index: 1; border: 1px solid var(--med-border, #e2e8f0); }
-        .tracking-info-card { height: 600px; overflow-y: auto; background-color: transparent !important; }
-        
+        #map {
+            height: 600px;
+            border-radius: 12px;
+            z-index: 1;
+            border: 1px solid var(--med-border, #e2e8f0);
+        }
+
+        .tracking-info-card {
+            height: 600px;
+            overflow-y: auto;
+            background-color: transparent !important;
+        }
+
         /* Custom Marker Info Window Styling */
-        .gm-style-iw-d { overflow: hidden !important; }
-        .custom-info-window { padding: 10px; font-family: 'Montserrat', sans-serif; }
+        .gm-style-iw-d {
+            overflow: hidden !important;
+        }
+
+        .custom-info-window {
+            padding: 10px;
+            font-family: 'Montserrat', sans-serif;
+        }
 
         /* Timeline refinement */
-        .timeline-item { 
-            border-left: 2px solid #e0e0e0; 
-            position: relative; 
-            padding-left: 20px; 
-            padding-bottom: 15px; 
+        .timeline-item {
+            border-left: 2px solid #e0e0e0;
+            position: relative;
+            padding-left: 20px;
+            padding-bottom: 15px;
             cursor: pointer;
             transition: all 0.2s ease;
             border-radius: 0 8px 8px 0;
         }
+
         .timeline-item:hover {
             background: rgba(115, 102, 255, 0.05);
             transform: translateX(5px);
         }
-        .timeline-item::before { 
-            content: ''; 
-            position: absolute; 
-            left: -6px; 
-            top: 10px; 
-            width: 10px; 
-            height: 10px; 
-            border-radius: 50%; 
-            background: #7366ff; 
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 10px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #7366ff;
             border: 2px solid #fff;
             box-shadow: 0 0 0 2px rgba(115, 102, 255, 0.2);
             z-index: 2;
         }
-        .timeline-item.punch { border-left-color: #51bb25; }
-        .timeline-item.punch::before { background: #51bb25; box-shadow: 0 0 0 2px rgba(81, 187, 37, 0.2); }
-        .timeline-item.visit { border-left-color: #f8d62b; }
-        .timeline-item.visit::before { background: #f8d62b; box-shadow: 0 0 0 2px rgba(248, 214, 43, 0.2); }
-        
+
+        .timeline-item.punch {
+            border-left-color: #51bb25;
+        }
+
+        .timeline-item.punch::before {
+            background: #51bb25;
+            box-shadow: 0 0 0 2px rgba(81, 187, 37, 0.2);
+        }
+
+        .timeline-item.visit {
+            border-left-color: #f8d62b;
+        }
+
+        .timeline-item.visit::before {
+            background: #f8d62b;
+            box-shadow: 0 0 0 2px rgba(248, 214, 43, 0.2);
+        }
+
         .legend {
             padding: 12px;
             background: var(--med-bg-card, #ffffff);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             border-radius: 12px;
             line-height: 24px;
             color: #333;
-            border: 1px solid var(--med-border, rgba(0,0,0,0.05));
+            border: 1px solid var(--med-border, rgba(0, 0, 0, 0.05));
             font-size: 11px;
             font-weight: 600;
             color: var(--med-text-main, #333);
@@ -59,6 +91,7 @@
             right: 10px;
             z-index: 1000;
         }
+
         .legend i {
             width: 12px;
             height: 12px;
@@ -73,125 +106,222 @@
             background: var(--med-bg-card, #f8f9fa) !important;
             border: 1px solid var(--med-border, #e2e8f0) !important;
         }
-        .dark-only .stats-card-modern,
-        [data-theme="dark"] .stats-card-modern {
-            background: rgba(255, 255, 255, 0.05) !important;
-            border-color: rgba(255, 255, 255, 0.1) !important;
-            color: #fff;
+
+        /* Hide native date icon */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            background: transparent;
+            bottom: 0;
+            color: transparent;
+            cursor: pointer;
+            height: auto;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: auto;
+        }
+
+        .btn-pill-export:hover {
+            background-color: #f8f9fa !important;
+            transform: translateY(-1px);
         }
     </style>
 @endpush
 
 @section('page-body')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="card bg-card-theme border-0 shadow-sm">
-                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5><i class="fa fa-map-marked-alt text-primary me-2"></i>Live Tracking: {{ $user->name }}</h5>
-                        <p class="mb-0 text-muted">Real-time movement for <strong>{{ \Carbon\Carbon::parse($date)->format('M d, Y') }}</strong></p>
-                    </div>
-                    <form action="{{ route('admin.reports.fieldstaff.tracking') }}" method="GET" class="d-flex gap-2">
-                        <input type="hidden" name="user_id" value="{{ $user->id }}">
-                        <input type="date" name="date" class="form-control form-control-sm" value="{{ $date }}" onchange="this.form.submit()">
-                        <a href="{{ route('admin.reports.fieldstaffs') }}" class="btn btn-sm btn-primary">Back</a>
-                    </form>
-                </div>
-                <div class="card-body">
-                    <!-- Stats Summary Row -->
-                    <div class="row mb-4">
-                        <div class="col-md-3 col-6">
-                            <div class="p-3 rounded text-center border-start border-primary border-4 shadow-sm stats-card-modern">
-                                <h6 class="text-muted small mb-1 text-uppercase fw-700">Distance</h6>
-                                <h4 class="mb-0 text-primary fw-800" id="distanceCovered">{{ number_format($totalDistance ?? 0, 2) }} <span class="small fw-normal">KM</span></h4>
-                            </div>
-                        </div>
-                        <div class="col-md-3 col-6">
-                            <div class="p-3 rounded text-center border-start border-success border-4 shadow-sm stats-card-modern">
-                                <h6 class="text-muted small mb-1 text-uppercase fw-700">Punches</h6>
-                                <h4 class="mb-0 text-success fw-800">{{ $punches->count() }}</h4>
-                            </div>
-                        </div>
-                        <div class="col-md-3 col-6 mt-md-0 mt-3">
-                            <div class="p-3 rounded text-center border-start border-warning border-4 shadow-sm stats-card-modern">
-                                <h6 class="text-muted small mb-1 text-uppercase fw-700">Visits</h6>
-                                <h4 class="mb-0 text-warning fw-800">{{ $visits->count() }}</h4>
-                            </div>
-                        </div>
-                        <div class="col-md-3 col-6 mt-md-0 mt-3">
-                            <div class="p-3 rounded text-center border-start border-info border-4 shadow-sm stats-card-modern">
-                                <h6 class="text-muted small mb-1 text-uppercase fw-700">Status</h6>
-                                <h4 class="mb-0 fw-800">
-                                    @if($isOnline)
-                                        <span class="badge bg-success" id="liveStatus">Online</span>
-                                    @else
-                                        <span class="badge bg-secondary" id="liveStatus">Offline</span>
-                                    @endif
-                                </h4>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <!-- Map Column -->
-                        <div class="col-xl-8 col-lg-7 position-relative">
-                            <div id="map"></div>
-                            <div class="legend">
-                                <div class="mb-1"><i style="background: #51bb25"></i> Punch In</div>
-                                <div class="mb-1"><i style="background: #f73164"></i> Punch Out</div>
-                                <div class="mb-1"><i style="background: #7366ff"></i> Customer Visit</div>
-                                <div><i style="background: #7366ff; border-radius: 0; height: 2px; margin-top: 11px;"></i> Route</div>
-                            </div>
-                        </div>
-
-                        <!-- Sidebar Info Column -->
-                        <div class="col-xl-4 col-lg-5">
-                            <div class="card tracking-info-card border-0 shadow-none bg-transparent">
-                                <div class="card-header bg-transparent pb-2 ps-0">
-                                    <h6 class="mb-0">Activity Timeline</h6>
-                                </div>
-                                <div class="card-body p-0 pt-3" id="timelineContainer">
-                                    @php
-                                        $allEvents = collect();
-                                        $punches->each(fn($p) => $allEvents->push(['type' => 'punch', 'time' => $p->timestamp, 'data' => $p]));
-                                        $visits->each(fn($v) => $allEvents->push(['type' => 'visit', 'time' => $v->check_in_at, 'data' => $v]));
-                                        $sortedEvents = $allEvents->sortBy('time');
-                                    @endphp
-
-                                    @if($sortedEvents->isEmpty())
-                                        <div class="text-center py-5 no-activity">
-                                            <i class="fa fa-walking-light fa-3x text-light mb-3"></i>
-                                            <p class="text-muted">No activity recorded yet.</p>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="card bg-card-theme border-0 shadow-sm">
+                    <div class="card-header bg-transparent py-4">
+                        <div class="row align-items-center g-3">
+                            <!-- Profile Column -->
+                            <div class="col-lg-6">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+                                        style="width: 70px; height: 70px; border: 2px solid #fff;">
+                                        <span
+                                            class="fs-3 fw-bold text-primary">{{ strtoupper(substr($user->name, 0, 2)) }}</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="mb-1 fw-bold text-dark d-flex align-items-center">
+                                            {{ $user->name }}
+                                            <span
+                                                class="ms-2 badge rounded-pill {{ $isOnline ? 'bg-success' : 'bg-secondary' }} p-1 px-2"
+                                                style="font-size: 0.65rem;">
+                                                {{ $isOnline ? 'LIVE' : 'OFFLINE' }}
+                                            </span>
+                                        </h4>
+                                        <div class="d-flex flex-wrap gap-2 text-muted small">
+                                            <span><i class="fa fa-id-card me-1"></i>SM:
+                                                {{ $user->fieldStaff->salesManager->user->name ?? 'N/A' }}</span>
+                                            <span class="mx-1">•</span>
+                                            <span><i class="fa fa-map-marker-alt me-1"></i>{{ $user->city ?? 'N/A' }}</span>
+                                            <span class="mx-1 d-none d-md-inline">•</span>
+                                            <span class="d-none d-md-inline"><i
+                                                    class="fa fa-phone me-1"></i>{{ $user->contact_no ?? 'No Phone' }}</span>
                                         </div>
-                                    @else
-                                        @foreach($sortedEvents as $event)
-                                            <div class="timeline-item {{ $event['type'] }}" 
-                                                 onclick="flyToLocation({{ $event['data']->latitude }}, {{ $event['data']->longitude }})">
-                                                <div class="d-flex justify-content-between">
-                                                    <span class="small fw-bold">{{ $event['time']->format('h:i A') }}</span>
-                                                    @if($event['type'] == 'punch')
-                                                        <span class="badge badge-light-{{ $event['data']->type == 'punch_in' ? 'success' : 'danger' }} small">
-                                                            {{ str_replace('_', ' ', $event['data']->type) }}
-                                                        </span>
-                                                    @else
-                                                        <span class="badge badge-light-warning small">Visit</span>
-                                                    @endif
-                                                </div>
-                                                <div class="mt-1">
-                                                    @if($event['type'] == 'punch')
-                                                        <p class="mb-0 small text-dark">Punched at location</p>
-                                                        @if($event['data']->is_mock_location)
-                                                            <div class="badge badge-light-danger small mt-1"><i class="fa fa-exclamation-triangle me-1"></i>Mock GPS!</div>
-                                                        @endif
-                                                    @else
-                                                        <p class="mb-0 fw-bold small text-primary">{{ $event['data']->customer_name }}</p>
-                                                        <p class="mb-0 text-muted small">{{ $event['data']->customer_category }}</p>
-                                                    @endif
-                                                </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Controls Column -->
+                            <div class="col-lg-6">
+                                <div
+                                    class="d-flex flex-column flex-md-row align-items-md-center justify-content-lg-end gap-3">
+                                    <!-- Enhanced Date Selector -->
+                                    <div class="position-relative">
+                                        <form action="{{ route('admin.reports.fieldstaff.tracking') }}" method="GET"
+                                            id="dateFilterForm">
+                                            <input type="hidden" name="user_id" value="{{ $user->id }}">
+                                            <div class="position-relative bg-white rounded-3 shadow-sm d-flex align-items-center"
+                                                style="min-width: 160px; height: 38px; border: 1px solid #e0e0e0 !important;">
+                                                <input type="date" name="date"
+                                                    class="form-control fw-bold text-primary text-center"
+                                                    value="{{ $date }}" onchange="this.form.submit()"
+                                                    style="font-size: 0.95rem; cursor: pointer; border: none !important; background: transparent !important; outline: none !important; box-shadow: none !important; padding-left: 20px !important; height: 100%;">
+                                                <i class="fa fa-calendar text-primary me-3 fs-6"></i>
                                             </div>
-                                        @endforeach
-                                    @endif
+                                        </form>
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="d-flex gap-2 align-items-center">
+                                        <a href="{{ route('admin.reports.fieldstaff.tracking.export', ['user_id' => $user->id, 'date' => $date, 'format' => 'csv']) }}"
+                                            class="btn btn-primary shadow-sm rounded-3 d-flex align-items-center px-3"
+                                            style="height: 38px; border: none; background: #1a3a63; font-size: 0.85rem;">
+                                            <span class="fw-bold">CSV</span>
+                                        </a>
+                                        <a href="{{ route('admin.reports.fieldstaff.tracking.export', ['user_id' => $user->id, 'date' => $date, 'format' => 'csv']) }}"
+                                            class="btn btn-success shadow-sm rounded-3 d-flex align-items-center px-3"
+                                            style="height: 38px; border: none; background: #28a745; font-size: 0.85rem;">
+                                            <span class="fw-bold">Excel</span>
+                                        </a>
+                                        <a href="{{ route('admin.reports.fieldstaff.tracking.export', ['user_id' => $user->id, 'date' => $date, 'format' => 'pdf']) }}"
+                                            class="btn btn-danger shadow-sm rounded-3 d-flex align-items-center px-3"
+                                            style="height: 38px; border: none; background: #dc3545; font-size: 0.85rem;">
+                                            <span class="fw-bold">PDF</span>
+                                        </a>
+                                        <button onclick="window.print()"
+                                            class="btn btn-dark shadow-sm rounded-3 d-flex align-items-center px-3 text-white"
+                                            style="height: 38px; border: none; background: #2c3e50; font-size: 0.85rem;">
+                                            <span class="fw-bold">Print</span>
+                                        </button>
+
+                                        <div class="ms-1 ps-2 border-start">
+                                            <a href="{{ route('admin.reports.fieldstaffs') }}"
+                                                class="btn btn-primary rounded-3 px-4 d-flex align-items-center justify-content-center shadow-sm"
+                                                style="height: 38px; font-weight: 700; background: #0d6efd; border: none; font-size: 0.9rem;">
+                                                Back
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body pt-3">
+                        <!-- Stats Summary Row -->
+                        <div class="row mb-4 g-3">
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern">
+                                    <h6 class="text-muted small mb-1 text-uppercase fw-bold">Distance</h6>
+                                    <h4 class="mb-0 text-primary fw-bold" id="distanceCovered">
+                                        {{ number_format($totalDistance ?? 0, 2) }} <span class="small fw-normal">KM</span>
+                                    </h4>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern">
+                                    <h6 class="text-muted small mb-1 text-uppercase fw-bold">Punches</h6>
+                                    <h4 class="mb-0 text-success fw-bold">{{ $punches->count() }}</h4>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern">
+                                    <h6 class="text-muted small mb-1 text-uppercase fw-bold">Visits</h6>
+                                    <h4 class="mb-0 text-warning fw-bold">{{ $visits->count() }}</h4>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern">
+                                    <h6 class="text-muted small mb-1 text-uppercase fw-bold">Status</h6>
+                                    <h4 class="mb-0 fw-bold">
+                                        @if($isOnline)
+                                            <span class="badge rounded-pill bg-success px-3" id="liveStatus">Online</span>
+                                        @else
+                                            <span class="badge rounded-pill bg-secondary px-3" id="liveStatus">Offline</span>
+                                        @endif
+                                    </h4>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Map Column -->
+                            <div class="col-xl-8 col-lg-7 position-relative">
+                                <div id="map"></div>
+                                <div class="legend">
+                                    <div class="mb-1"><i style="background: #51bb25"></i> Punch In</div>
+                                    <div class="mb-1"><i style="background: #f73164"></i> Punch Out</div>
+                                    <div class="mb-1"><i style="background: #7366ff"></i> Customer Visit</div>
+                                    <div><i
+                                            style="background: #7366ff; border-radius: 0; height: 2px; margin-top: 11px;"></i>
+                                        Route</div>
+                                </div>
+                            </div>
+
+                            <!-- Sidebar Info Column -->
+                            <div class="col-xl-4 col-lg-5">
+                                <div class="card tracking-info-card border-0 shadow-none bg-transparent">
+                                    <div class="card-header bg-transparent pb-2 ps-0">
+                                        <h6 class="mb-0">Activity Timeline</h6>
+                                    </div>
+                                    <div class="card-body p-0 pt-3" id="timelineContainer">
+                                        @php
+                                            $allEvents = collect();
+                                            $punches->each(fn($p) => $allEvents->push(['type' => 'punch', 'time' => $p->timestamp, 'data' => $p]));
+                                            $visits->each(fn($v) => $allEvents->push(['type' => 'visit', 'time' => $v->check_in_at, 'data' => $v]));
+                                            $sortedEvents = $allEvents->sortBy('time');
+                                        @endphp
+
+                                        @if($sortedEvents->isEmpty())
+                                            <div class="text-center py-5 no-activity">
+                                                <i class="fa fa-walking-light fa-3x text-light mb-3"></i>
+                                                <p class="text-muted">No activity recorded yet.</p>
+                                            </div>
+                                        @else
+                                            @foreach($sortedEvents as $event)
+                                                <div class="timeline-item {{ $event['type'] }}"
+                                                    onclick="flyToLocation({{ $event['data']->latitude }}, {{ $event['data']->longitude }})">
+                                                    <div class="d-flex justify-content-between">
+                                                        <span class="small fw-bold">{{ $event['time']->format('h:i A') }}</span>
+                                                        @if($event['type'] == 'punch')
+                                                            <span
+                                                                class="badge badge-light-{{ $event['data']->type == 'punch_in' ? 'success' : 'danger' }} small">
+                                                                {{ str_replace('_', ' ', $event['data']->type) }}
+                                                            </span>
+                                                        @else
+                                                            <span class="badge badge-light-warning small">Visit</span>
+                                                        @endif
+                                                    </div>
+                                                    <div class="mt-1">
+                                                        @if($event['type'] == 'punch')
+                                                            <p class="mb-0 small text-dark">Punched at location</p>
+                                                            @if($event['data']->is_mock_location)
+                                                                <div class="badge badge-light-danger small mt-1"><i
+                                                                        class="fa fa-exclamation-triangle me-1"></i>Mock GPS!</div>
+                                                            @endif
+                                                        @else
+                                                            <p class="mb-0 fw-bold small text-primary">
+                                                                {{ $event['data']->customer_name }}</p>
+                                                            <p class="mb-0 text-muted small">{{ $event['data']->customer_category }}</p>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -200,11 +330,12 @@
             </div>
         </div>
     </div>
-</div>
 @endsection
 
 @push('scripts')
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key', env('GOOGLE_MAPS_API_KEY')) }}&libraries=geometry&callback=initMap" async defer></script>
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key', env('GOOGLE_MAPS_API_KEY')) }}&libraries=geometry&callback=initMap"
+        async defer></script>
     <script>
         let map, routePath, staffMarker;
         let pathPoints = [];
@@ -214,13 +345,13 @@
 
         async function snapPathToRoads(points) {
             if (points.length < 2) return points;
-            
+
             // Chunk points to stay within Roads API limits (max 100 per request)
             const chunks = [];
             for (let i = 0; i < points.length; i += 100) {
                 chunks.push(points.slice(i, i + 100));
             }
-            
+
             let allSnapped = [];
             for (const chunk of chunks) {
                 const pathParam = chunk.map(p => `${p.lat},${p.lng}`).join('|');
@@ -243,7 +374,7 @@
 
         function initMap() {
             const defaultCenter = { lat: 20.5937, lng: 78.9629 };
-            
+
             map = new google.maps.Map(document.getElementById("map"), {
                 zoom: 5,
                 center: defaultCenter,
@@ -276,12 +407,12 @@
             @foreach($locations as $loc)
                 pathPoints.push({ lat: {{ $loc->latitude }}, lng: {{ $loc->longitude }} });
             @endforeach
-            
-            if (pathPoints.length > 0) {
+
+                if (pathPoints.length > 0) {
                 snappedPoints = await snapPathToRoads(pathPoints);
                 routePath.setPath(snappedPoints);
                 snappedPoints.forEach(p => bounds.extend(p));
-                
+
                 // Update frontend distance display based on snapped points
                 updateDistanceDisplay(snappedPoints);
             }
@@ -316,7 +447,7 @@
                 bounds.extend({ lat: {{ $v->latitude }}, lng: {{ $v->longitude }} });
             @endforeach
 
-            if (!bounds.isEmpty()) {
+                if (!bounds.isEmpty()) {
                 map.fitBounds(bounds);
             }
         }
@@ -346,7 +477,7 @@
             let total = 0;
             for (let i = 0; i < points.length - 1; i++) {
                 const p1 = new google.maps.LatLng(points[i].lat, points[i].lng);
-                const p2 = new google.maps.LatLng(points[i+1].lat, points[i+1].lng);
+                const p2 = new google.maps.LatLng(points[i + 1].lat, points[i + 1].lng);
                 total += google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
             }
             return (total / 1000).toFixed(2); // Convert meters to KM
@@ -389,7 +520,7 @@
             } else {
                 snappedPoints.push(newPos);
             }
-            
+
             routePath.setPath(snappedPoints);
             updateDistanceDisplay(snappedPoints);
 
@@ -412,7 +543,7 @@
 
             // Smooth Pan
             map.panTo(newPos);
-            
+
             // Visual feedback
             $('#liveStatus').text('Moving').removeClass('bg-success').addClass('bg-info');
             setTimeout(() => $('#liveStatus').text('Active').removeClass('bg-info').addClass('bg-success'), 3000);

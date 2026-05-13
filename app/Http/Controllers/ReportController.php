@@ -681,9 +681,28 @@ class ReportController extends Controller
                 ->addColumn('coverage_stats', function($fs) {
                     return "<div class='fw-bold'>{$fs->total_retailers} Outlets</div><div class='small text-muted'>{$fs->total_visits} Visits Logged</div>";
                 })
-                ->addColumn('activity', function($fs) {
+                ->addColumn('activity', function($fs) use ($f, $t) {
                     $punches = $fs->total_punches ?? 0;
-                    return "<div class='badge badge-light-primary'>{$punches} Punches</div>";
+                    
+                    // Calculate distance for the period
+                    $distance = 0;
+                    if ($f && $t) {
+                        // If it's a single day, use the optimized helper
+                        if ($f->toDateString() === $t->toDateString()) {
+                            $distance = \App\Models\LocationLog::calculateDailyDistance($fs->user_id, $f->toDateString());
+                        } else {
+                            // Sum up daily distances in range (basic implementation)
+                            $current = $f->copy();
+                            while ($current <= $t) {
+                                $distance += \App\Models\LocationLog::calculateDailyDistance($fs->user_id, $current->toDateString());
+                                $current->addDay();
+                            }
+                        }
+                    } else {
+                        $distance = \App\Models\LocationLog::calculateDailyDistance($fs->user_id, now()->toDateString());
+                    }
+
+                    return "<div class='badge badge-light-primary'>{$punches} Punches</div><div class='mt-1 small text-muted'><i class='fa fa-road me-1'></i>" . number_format($distance, 2) . " KM</div>";
                 })
                 ->addColumn('aov', function($fs) {
                     if (!$fs->total_orders) return '₹0.00';
@@ -997,7 +1016,7 @@ class ReportController extends Controller
         $userId = $request->user_id;
         $date = $request->date ?? now()->toDateString();
         
-        $user = \App\Models\User::findOrFail($userId);
+        $user = \App\Models\User::with(['fieldStaff.salesManager.user'])->findOrFail($userId);
         
         // Security check for Sales Managers
         if (Auth::user()->hasRole('salesmanager')) {
@@ -1019,14 +1038,107 @@ class ReportController extends Controller
         $visits = \App\Models\VisitLog::where('user_id', $userId)
             ->whereDate('check_in_at', $date)
             ->get();
-
+ 
         // Calculate total distance coverd
         $totalDistance = \App\Models\LocationLog::calculateDailyDistance($userId, $date);
-
+ 
         $lastPunch = $punches->last();
         $isOnline = $lastPunch && $lastPunch->type === 'punch_in';
-
+ 
         return view('admin.reports.fieldstaff_tracking', compact('user', 'locations', 'punches', 'visits', 'date', 'totalDistance', 'isOnline'));
+    }
+ 
+    public function fieldStaffTrackingExport(Request $request)
+    {
+        $userId = $request->user_id;
+        $date = $request->date ?? now()->toDateString();
+        $format = $request->format ?? 'pdf';
+
+        $user = \App\Models\User::with('fieldStaff.salesManager.user')->findOrFail($userId);
+        
+        // Security check
+        if (Auth::user()->hasRole('salesmanager')) {
+            $fs = FieldStaff::where('user_id', $userId)->firstOrFail();
+            abort_if($fs->sales_manager_id !== Auth::user()->salesManager->id, 403);
+        }
+
+        $locations = \App\Models\LocationLog::where('user_id', $userId)
+            ->whereDate('timestamp', $date)
+            ->orderBy('timestamp', 'asc')
+            ->get();
+            
+        $punches = \App\Models\AttendanceLog::where('user_id', $userId)
+            ->whereDate('timestamp', $date)
+            ->orderBy('timestamp', 'asc')
+            ->get();
+            
+        $visits = \App\Models\VisitLog::where('user_id', $userId)
+            ->whereDate('check_in_at', $date)
+            ->get();
+
+        $totalDistance = \App\Models\LocationLog::calculateDailyDistance($userId, $date);
+
+        if ($format === 'csv') {
+            $filename = "tracking_{$user->name}_{$date}.csv";
+            $headers = [
+                "Content-type"        => "text/csv",
+                "Content-Disposition" => "attachment; filename=$filename",
+                "Pragma"              => "no-cache",
+                "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+                "Expires"             => "0"
+            ];
+
+            $callback = function() use($user, $date, $locations, $punches, $visits, $totalDistance) {
+                $file = fopen('php://output', 'w');
+                fputcsv($file, ["FIELD STAFF TRACKING REPORT"]);
+                fputcsv($file, ["Staff Name", $user->name]);
+                fputcsv($file, ["Date", $date]);
+                fputcsv($file, ["Total Distance", $totalDistance . " KM"]);
+                fputcsv($file, []);
+
+                fputcsv($file, ["ACTIVITY TIMELINE"]);
+                fputcsv($file, ["Time", "Type", "Details", "Location (Lat/Lng)"]);
+
+                $events = collect();
+                $punches->each(fn($p) => $events->push(['time' => $p->timestamp, 'type' => 'Attendance', 'details' => str_replace('_', ' ', $p->type), 'lat' => $p->latitude, 'lng' => $p->longitude]));
+                $visits->each(fn($v) => $events->push(['time' => $v->check_in_at, 'type' => 'Visit', 'details' => $v->customer_name . " (" . $v->customer_category . ")", 'lat' => $v->latitude, 'lng' => $v->longitude]));
+                
+                foreach ($events->sortBy('time') as $event) {
+                    fputcsv($file, [
+                        Carbon::parse($event['time'])->format('h:i A'),
+                        $event['type'],
+                        $event['details'],
+                        $event['lat'] . ", " . $event['lng']
+                    ]);
+                }
+
+                fputcsv($file, []);
+                fputcsv($file, ["RAW GPS LOGS"]);
+                fputcsv($file, ["Timestamp", "Latitude", "Longitude", "Mock GPS"]);
+                foreach ($locations as $loc) {
+                    fputcsv($file, [
+                        $loc->timestamp->format('H:i:s'),
+                        $loc->latitude,
+                        $loc->longitude,
+                        $loc->is_mock_location ? 'Yes' : 'No'
+                    ]);
+                }
+                fclose($file);
+            };
+            return response()->stream($callback, 200, $headers);
+        } else {
+            $pdf = Pdf::loadView('admin.reports.pdf.tracking_report', [
+                'user' => $user,
+                'date' => $date,
+                'locations' => $locations,
+                'punches' => $punches,
+                'visits' => $visits,
+                'totalDistance' => $totalDistance,
+                'reportDate' => now()->format('M d, Y H:i')
+            ])->setPaper('a4', 'portrait');
+
+            return $pdf->download("tracking_{$user->name}_{$date}.pdf");
+        }
     }
 
     public function downloadExport(Request $request, $format)
@@ -1340,13 +1452,27 @@ class ReportController extends Controller
                     ]);
                 }
             } elseif ($type === 'fieldstaffs') {
-                fputcsv($file, ['Rank', 'Staff Member', 'Sales Manager', 'Outlets Covered', 'Engagement (Ord/Outlet)', 'AOV (Avg Order Value)', 'Total Orders', 'Revenue']);
+                fputcsv($file, ['Rank', 'Staff Member', 'Sales Manager', 'Outlets Covered', 'Visits Logged', 'Distance Covered (KM)', 'Engagement (Ord/Outlet)', 'AOV (Avg Order Value)', 'Total Orders', 'Revenue']);
+                [$f, $t] = $this->getFilterDates($request);
                 foreach ($data as $i => $row) {
+                    $distance = 0;
+                    if ($f && $t) {
+                        $current = $f->copy();
+                        while ($current <= $t) {
+                            $distance += \App\Models\LocationLog::calculateDailyDistance($row->user_id, $current->toDateString());
+                            $current->addDay();
+                        }
+                    } else {
+                        $distance = \App\Models\LocationLog::calculateDailyDistance($row->user_id, now()->toDateString());
+                    }
+
                     fputcsv($file, [
                         $i+1, 
                         $row->user->name ?? 'N/A', 
                         $row->salesManager->user->name ?? 'N/A',
                         $row->total_retailers,
+                        $row->total_visits ?? 0,
+                        number_format($distance, 2),
                         number_format($row->total_orders / max($row->total_retailers, 1), 1),
                         $row->total_orders ? number_format($row->total_revenue / $row->total_orders, 2) : 0,
                         $row->total_orders,

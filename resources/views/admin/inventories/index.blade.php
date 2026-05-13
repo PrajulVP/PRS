@@ -246,6 +246,151 @@
         background-color: var(--med-bg-body) !important;
         color: var(--med-primary) !important;
     }
+
+    /* Premium Button & Search Styling */
+    .btn-view-premium {
+        background: var(--med-bg-body) !important;
+        color: var(--med-text-main) !important;
+        border: 1px solid var(--med-border) !important;
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+        transition: all 0.2s ease !important;
+        box-shadow: var(--med-shadow-soft) !important;
+    }
+
+    .btn-view-premium:hover {
+        background: var(--med-primary) !important;
+        color: white !important;
+        border-color: var(--med-primary) !important;
+        transform: translateY(-2px);
+    }
+
+    .inventory-search-group {
+        position: relative;
+        width: 100%;
+    }
+
+    .inventory-search-group i {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--med-text-muted);
+        pointer-events: none;
+        z-index: 5;
+    }
+
+    .inventory-search-group input {
+        padding-left: 45px !important;
+        height: 48px !important;
+        border-radius: 12px !important;
+        background: var(--med-bg-body) !important;
+        border: 1px solid var(--med-border) !important;
+        font-weight: 600 !important;
+    }
+
+    .inventory-search-group input:focus {
+        border-color: var(--med-primary) !important;
+        background: var(--med-bg-card) !important;
+        box-shadow: 0 0 0 4px rgba(var(--med-primary-rgb), 0.1) !important;
+    }
+
+    /* Hide redundant columns */
+    .merged-badge {
+        font-size: 0.65rem;
+        padding: 3px 10px;
+        border-radius: 6px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+
+    /* Selection Hub Styles */
+    .selection-hub-card {
+        border-radius: 24px;
+        background: linear-gradient(135deg, var(--med-bg-card) 0%, rgba(var(--med-primary-rgb), 0.02) 100%);
+        border: 1px solid var(--med-border);
+        box-shadow: var(--med-shadow-soft);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+    }
+
+    .distributor-pill {
+        background: var(--med-bg-body);
+        border: 1px solid var(--med-border);
+        border-radius: 16px;
+        padding: 12px 20px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+
+    .distributor-pill:hover {
+        border-color: var(--med-primary);
+        background: var(--med-bg-card);
+        transform: translateY(-2px);
+        box-shadow: var(--med-shadow-sm);
+    }
+
+    .distributor-pill.active {
+        background: var(--med-primary);
+        border-color: var(--med-primary);
+        color: white;
+    }
+
+    .distributor-pill.active .text-muted {
+        color: rgba(255,255,255,0.7) !important;
+    }
+
+    .stat-mini-card {
+        background: var(--med-bg-card);
+        border-radius: 16px;
+        padding: 15px;
+        border: 1px solid var(--med-border);
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+
+    .stat-mini-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--med-shadow-md);
+        border-color: var(--med-primary);
+    }
+
+    .distributor-avatar {
+        width: 45px;
+        height: 45px;
+        background: rgba(var(--med-primary-rgb), 0.1);
+        color: var(--med-primary);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.2rem;
+    }
+
+    .active .distributor-avatar {
+        background: rgba(255,255,255,0.2);
+        color: white;
+    }
+
+    .search-focus-mode {
+        background: var(--med-bg-card);
+        border-radius: 20px;
+        padding: 40px;
+        text-align: center;
+        border: 2px dashed var(--med-border);
+        transition: all 0.3s ease;
+    }
+
+    .search-focus-mode:hover {
+        border-color: var(--med-primary);
+        background: rgba(var(--med-primary-rgb), 0.01);
+    }
 </style>
 
 @section('page-body')
@@ -268,35 +413,93 @@
                         @endif
 
                         @unless(Auth::user()->hasRole('distributor'))
-                        <div class="inventory-filter-card mb-4">
-                            <div class="row align-items-end g-3">
-                                <div class="col-md-4">
-                                    <span class="filter-label"><i class="fa fa-filter me-2"></i>Select Distributor</span>
-                                    @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
-                                        <select id="distributor_filter" class="form-select select2-dist">
-                                            <option value="">Choose a Distributor...</option>
-                                            @foreach($distributors as $d)
-                                                <option value="{{ $d->id }}">{{ $d->user->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    @endif
-                                </div>
-                                <div class="col-md-8">
-                                    <div class="d-flex flex-wrap justify-content-md-end align-items-center gap-3">
-                                        <div id="table-search-container" class="position-relative" style="min-width: 250px;">
-                                            <i class="fa fa-search position-absolute top-50 translate-middle-y ms-3 text-muted"></i>
-                                            <!-- DataTable Search will be moved here -->
+                            <div class="selection-hub-card mb-4 p-4">
+                                <div id="distributor_selection_container">
+                                    <div class="row align-items-center g-4">
+                                        <div class="col-lg-4">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div>
+                                                    <h6 class="fw-bold mb-0">Distributor Inventory</h6>
+                                                    <p class="text-muted small mb-0">Select a partner to manage stock</p>
+                                                </div>
+                                            </div>
+                                            <select id="distributor_filter" class="form-select select2-dist">
+                                                <option value="">Search Distributor...</option>
+                                                @foreach($distributors as $d)
+                                                    <option value="{{ $d->id }}" 
+                                                        data-name="{{ $d->user->name }}"
+                                                        data-address="{{ $d->address }}"
+                                                        data-phone="{{ $d->contact_no }}"
+                                                        data-email="{{ $d->user->email }}"
+                                                        data-gst="{{ $d->gst ?? 'N/A' }}"
+                                                        data-license="{{ $d->drug_license_no ?? 'N/A' }}"
+                                                        data-credit="{{ number_format($d->credit_balance ?? 0, 2) }}"
+                                                        data-initials="{{ strtoupper(substr($d->user->name, 0, 2)) }}">
+                                                        {{ $d->user->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
                                         </div>
-                                        <div id="table-buttons-container"></div>
+                                        <div class="col-lg-8 border-start-lg">
+                                            <div id="distributor_welcome_msg" class="text-center py-2">
+                                                <div class="opacity-50 mb-2">
+                                                    <i class="fa fa-arrow-left-long me-2"></i> Select a distributor from the search to view their inventory profile
+                                                </div>
+                                            </div>
+                                            <div id="active_distributor_profile" class="d-none">
+                                                <div class="row g-3">
+                                                    <div class="col-md-5">
+                                                        <div class="d-flex align-items-start gap-3">
+                                                            <div id="active_dist_avatar" class="distributor-avatar shadow-sm mt-1">--</div>
+                                                            <div>
+                                                                <h5 id="active_dist_name" class="fw-bold mb-1 text-primary">--</h5>
+                                                                <p id="active_dist_address" class="text-muted small mb-2"><i class="fa fa-location-dot me-1"></i> --</p>
+                                                                <div class="d-flex flex-wrap gap-2">
+                                                                    <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.65rem;">GST: <b id="active_dist_gst">--</b></span>
+                                                                    <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.65rem;">DL: <b id="active_dist_license">--</b></span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-7">
+                                                        <div class="row g-2">
+                                                            <div class="col-6">
+                                                                <div class="stat-mini-card">
+                                                                    <div class="text-muted smaller fw-bold text-uppercase mb-1" style="font-size: 0.65rem;">Total SKU</div>
+                                                                    <div id="active_dist_sku" class="h5 fw-bold mb-0 text-dark">--</div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <div class="stat-mini-card">
+                                                                    <div class="text-muted smaller fw-bold text-uppercase mb-1" style="font-size: 0.65rem;">Credit Limit</div>
+                                                                    <div id="active_dist_credit" class="h5 fw-bold mb-0 text-success">--</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="mt-2 d-flex align-items-center justify-content-end gap-3 text-muted" style="font-size: 0.7rem;">
+                                                            <span><i class="fa fa-phone me-1"></i> <b id="active_dist_phone">--</b></span>
+                                                            <span><i class="fa fa-envelope me-1"></i> <b id="active_dist_email">--</b></span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        @else
-                        <div class="d-flex justify-content-end align-items-center mb-4">
-                            <div id="table-buttons-container"></div>
-                        </div>
                         @endunless
+
+                        <div class="row mb-4 align-items-center">
+                            <div class="col-md-6">
+                                <div class="inventory-search-group">
+                                    <i class="fa fa-search"></i>
+                                    <input type="text" id="custom-inventory-search" class="form-control" placeholder="Search by Product, Brand or Batch...">
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <div id="table-buttons-container"></div>
+                            </div>
+                        </div>
 
                         <div class="table-responsive">
                             <table class="display table table-hover" id="inventories-table">
@@ -305,9 +508,8 @@
                                         <th style="display:none;">Updated At</th>
                                         <th>No.</th>
 
-                                        <th>Product Name</th>
-                                        <th>Side</th>
-                                        <th>Size</th>
+                                        <th>Product Name & Variations</th>
+                                        <th>Brand</th>
                                         @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
                                             <th>Distributor</th>
                                         @endif
@@ -747,8 +949,7 @@
                             <thead class="bg-light">
                                 <tr>
                                     <th class="ps-4">Batch Number</th>
-                                    <th>Side</th>
-                                    <th>Size</th>
+                                    <th>Variation</th>
                                     <th>Expiry</th>
                                     <th class="text-center">Stock</th>
                                     {{-- <th class="text-end pe-4">Actions</th> --}}
@@ -1193,15 +1394,15 @@
                 if (n.includes('PANTO') || n.includes('PARA') || n.includes('PANTOPRAZOLE') || n.includes('PARACETAMOL')) return 'Tablet/Capsule';
 
                 // If it has a generic name or multiple units per strip, it's likely a medicine
-                if (pData.generic_name || u > 1) return 'Tablet/Capsule';
+                if (pData.generic_name || u > 1) return 'Tablet / Capsule';
                 
                 // Boundary-aware keyword matching
-                if (/\b(TAB|CAP|TABLET|CAPSULE|TABS|CAPS)\b/i.test(n)) return 'Tablet/Capsule';
-                if (/\b(SYP|LIQ|SUSP|SYRUP|LIQUID)\b/i.test(n)) return 'Liquid/Syrup';
+                if (/\b(TAB|CAP|TABLET|CAPSULE|TABS|CAPS)\b/i.test(n)) return 'Tablet / Capsule';
+                if (/\b(SYP|LIQ|SUSP|SYRUP|LIQUID)\b/i.test(n)) return 'Liquid / Syrup';
                 if (/\b(INJ|INJECTION)\b/i.test(n)) return 'Injection';
-                if (/\b(CRM|OINT|CREAM|OINTMENT)\b/i.test(n)) return 'Cream/Ointment';
-                if (/\b(DROP|DROPS)\b/i.test(n)) return 'Drop/Spray';
-                if (/\b(GEL)\b/i.test(n)) return 'Gel/Topical';
+                if (/\b(CRM|OINT|CREAM|OINTMENT)\b/i.test(n)) return 'Cream / Ointment';
+                if (/\b(DROP|DROPS)\b/i.test(n)) return 'Drop / Spray';
+                if (/\b(GEL)\b/i.test(n)) return 'Gel / Topical';
                 if (/\b(POW|POWDER)\b/i.test(n)) return 'Powder';
                 
                 return 'Medical Supply';
@@ -1280,10 +1481,9 @@
                     dataSrc: 'data'
                 },
                 language: {
-                    emptyTable: `<div class="selection-prompt">
-                                    <i class="fa fa-cubes"></i>
-                                    <h4>Inventory Selection</h2>
-                                    <p>Select a pharmaceutical distributor from the filter panel above to analyze their current stock levels and inventory breakdown.</p>
+                    emptyTable: `<div class="p-5 text-center text-muted">
+                                    <i class="fa fa-boxes-stacked fa-3x mb-3 opacity-25"></i>
+                                    <p class="mb-0">No inventory data available. Please select a distributor above.</p>
                                  </div>`,
                     zeroRecords: `<div class="text-center p-5">
                                     <i class="fa fa-search fa-3x text-muted mb-3"></i>
@@ -1299,16 +1499,14 @@
                     const hasDistributor = isDistributor || (distFilter.length && distFilter.val() !== "");
                     
                     if (hasDistributor) {
-                        settings.oLanguage.sEmptyTable = `<div class="selection-prompt">
-                                    <i class="fa fa-box-open"></i>
-                                    <h4>Inventory Empty</h4>
-                                    <p>No products are currently registered in this inventory. Please add products or check back later.</p>
+                        settings.oLanguage.sEmptyTable = `<div class="p-5 text-center text-muted">
+                                    <i class="fa fa-box-open fa-3x mb-3 opacity-25"></i>
+                                    <p class="mb-0">No products are currently registered in this inventory.</p>
                                   </div>`;
                     } else {
-                        settings.oLanguage.sEmptyTable = `<div class="selection-prompt">
-                                    <i class="fa fa-cubes"></i>
-                                    <h4>Inventory Selection</h4>
-                                    <p>Select a pharmaceutical distributor from the filter panel above to analyze their current stock levels and inventory breakdown.</p>
+                        settings.oLanguage.sEmptyTable = `<div class="p-5 text-center text-muted">
+                                    <i class="fa fa-boxes-stacked fa-3x mb-3 opacity-25"></i>
+                                    <p class="mb-0">Please select a distributor above to analyze stock levels.</p>
                                  </div>`;
                     }
                 },
@@ -1323,18 +1521,12 @@
                 dom: "<'row'<'col-sm-12'tr>>" +
                     "<'row mt-4 align-items-center'<'col-md-4'l><'col-md-4 text-center'i><'col-md-4'p>>",
                 initComplete: function () {
-                    // Move search box to custom container
                     $('.dataTables_filter').hide();
-                    const $searchContainer = $('#table-search-container');
-                    if ($searchContainer.length) {
-                        const $searchInput = $('.dataTables_filter input').addClass('form-control border-0 bg-light-soft').css({
-                            'padding-left': '40px',
-                            'border-radius': '12px',
-                            'height': '48px'
-                        });
-                        $searchInput.attr('placeholder', 'Quick Search Products...');
-                        $searchContainer.append($searchInput);
-                    }
+                    
+                    // Link custom search bar
+                    $('#custom-inventory-search').on('keyup', function() {
+                        table.search(this.value).draw();
+                    });
                     
                     // Move buttons to custom container
                     table.buttons().container().appendTo('#table-buttons-container');
@@ -1407,6 +1599,14 @@
                         if (details.product_code) subInfo.push(`<span class="badge bg-light text-dark border-0 px-2 py-0" style="font-size: 0.65rem;">${details.product_code}</span>`);
                         if (details.generic_name) subInfo.push(details.generic_name);
                         if (details.pack) subInfo.push(details.pack);
+
+                        // Add Variation badges if available
+                        if (row.side && row.side !== '-' && row.side !== 'N/A') {
+                            subInfo.push(`<span class="merged-badge bg-soft-primary text-primary">${row.side}</span>`);
+                        }
+                        if (row.size && row.size !== '-' && row.size !== 'N/A') {
+                            subInfo.push(`<span class="merged-badge bg-soft-info text-info">${row.size}</span>`);
+                        }
                         
                         return `
                             <div class="product-info-cell">
@@ -1416,7 +1616,7 @@
                                     title="View Product Technical Details">
                                      ${cleanName}
                                  </a>
-                                 <div class="text-muted d-flex align-items-center gap-2 mt-1" style="font-size: 0.72rem; opacity: 0.8;">
+                                 <div class="text-muted d-flex flex-wrap align-items-center gap-2 mt-1" style="font-size: 0.72rem; opacity: 0.8;">
                                     ${subInfo.join(' <span class="opacity-25">|</span> ')}
                                  </div>
                             </div>
@@ -1424,20 +1624,11 @@
                     }
                 },
                 {
-                    data: 'side',
-                    name: 'side',
+                    data: 'product_details.brand',
+                    name: 'product_details.brand',
                     render: function (data) {
-                        return data ? `<span class="badge bg-soft-primary text-primary px-3 rounded-pill">${data}</span>` : '-';
-                    },
-                    className: 'text-center'
-                },
-                {
-                    data: 'size',
-                    name: 'size',
-                    render: function (data) {
-                        return data ? `<span class="badge bg-soft-info text-info px-3 rounded-pill">${data}</span>` : '-';
-                    },
-                    className: 'text-center'
+                        return data ? `<span class="fw-bold" style="font-size: 0.8rem; color: #475569;">${data}</span>` : '<span class="text-muted small">N/A</span>';
+                    }
                 },
                     @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
                     {
@@ -1492,8 +1683,7 @@
                     className: 'text-center',
                     render: function (data, type, row) {
                         return `
-                            <button type="button" class="btn btn-sm btn-edit-premium px-3 view-batches-btn d-inline-flex align-items-center gap-2" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #fff; border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                                <i class="fa fa-eye small" style="color: #3b82f6;"></i>
+                            <button type="button" class="btn btn-sm btn-view-premium px-4 view-batches-btn d-inline-flex align-items-center">
                                 <span class="fw-bold">View</span>
                             </button>
                         `;
@@ -1504,7 +1694,38 @@
 
             // Filter Change Handler
             $('#distributor_filter').on('change', function () {
+                const $selected = $(this).find(':selected');
+                const val = $(this).val();
+                
+                if (val) {
+                    $('#distributor_welcome_msg').addClass('d-none');
+                    $('#active_distributor_profile').removeClass('d-none');
+                    
+                    // Update Profile Card
+                    $('#active_dist_name').text($selected.data('name'));
+                    $('#active_dist_address').html(`<i class="fa fa-location-dot me-1"></i> ${$selected.data('address')}`);
+                    $('#active_dist_phone').text($selected.data('phone'));
+                    $('#active_dist_email').text($selected.data('email'));
+                    $('#active_dist_avatar').text($selected.data('initials'));
+                    
+                    $('#active_dist_gst').text($selected.data('gst'));
+                    $('#active_dist_license').text($selected.data('license'));
+                    $('#active_dist_credit').text('₹' + $selected.data('credit'));
+                    
+                    // We can also fetch real counts if needed, but for now we'll update after table load
+                } else {
+                    $('#distributor_welcome_msg').removeClass('d-none');
+                    $('#active_distributor_profile').addClass('d-none');
+                }
+                
                 table.ajax.reload();
+            });
+
+            // Update SKU count after table draw
+            table.on('xhr', function (e, settings, json) {
+                if (json && json.recordsTotal !== undefined) {
+                    $('#active_dist_sku').text(json.recordsTotal);
+                }
             });
 
             // Edit Handler logic variables
@@ -1642,10 +1863,9 @@
                             <div class="smaller text-muted" style="font-size: 0.65rem;">${b.distributor_name}</div>
                         </td>
                         <td class="align-middle">
-                            ${b.side ? `<span class="badge bg-soft-primary text-primary rounded-pill px-2" style="font-size: 0.7rem;">${b.side}</span>` : '<span class="text-muted opacity-50">-</span>'}
-                        </td>
-                        <td class="align-middle">
-                            ${b.size ? `<span class="badge bg-soft-info text-info rounded-pill px-2" style="font-size: 0.7rem;">${b.size}</span>` : '<span class="text-muted opacity-50">-</span>'}
+                            ${b.side && b.side !== '-' ? `<span class="badge bg-soft-primary text-primary rounded-pill px-2" style="font-size: 0.7rem;">${b.side}</span>` : ''}
+                            ${b.size && b.size !== '-' ? `<span class="badge bg-soft-info text-info rounded-pill px-2 ms-1" style="font-size: 0.7rem;">${b.size}</span>` : ''}
+                            ${(!b.side || b.side === '-') && (!b.size || b.size === '-') ? '<span class="text-muted opacity-50">-</span>' : ''}
                         </td>
                         <td class="align-middle fw-600 text-muted" style="font-size: 0.85rem;">${b.expiry_date}</td>
                         <td class="text-center align-middle">

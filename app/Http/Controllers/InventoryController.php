@@ -97,7 +97,10 @@ class InventoryController extends Controller
                     $searchValue = $request->input('search')['value'];
                     $query->where(function ($q) use ($searchValue) {
                         $q->where('distributor_product_code', 'like', "%{$searchValue}%")
-                            ->orWhere('product_name', 'like', "%{$searchValue}%");
+                            ->orWhere('product_name', 'like', "%{$searchValue}%")
+                            ->orWhereHas('product', function ($qp) use ($searchValue) {
+                                $qp->where('brand', 'like', "%{$searchValue}%");
+                            });
                     });
                 }
 
@@ -250,6 +253,7 @@ class InventoryController extends Controller
                             'box_size' => $i->product->box_size,
                             'carton_size' => $i->product->carton_size,
                             'gst' => $i->product->gst,
+                            'brand' => $i->product->brand,
                             'description' => $i->product->description,
                             'has_variants' => (bool)$i->product->has_variants,
                         ] : null,
