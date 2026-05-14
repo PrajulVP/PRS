@@ -129,11 +129,15 @@
         .password-field-container .form-control {
             padding-right: 42px !important;
         }
-        .dark-only .password-field-container .toggle-password {
-            color: #4b5563;
-        }
         .dark-only .password-field-container .toggle-password:hover {
             color: var(--med-primary, #38bdf8);
+        }
+        /* Hide native Bootstrap validation icons globally */
+        .form-control.is-invalid, 
+        .form-select.is-invalid,
+        .password-field-container .form-control.is-invalid {
+            background-image: none !important;
+            padding-right: 0.75rem !important; /* Reset padding to standard if icon is gone */
         }
 
         .page-body {

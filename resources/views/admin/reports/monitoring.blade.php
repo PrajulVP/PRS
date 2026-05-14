@@ -95,7 +95,17 @@
                 <span class="live-dot"></span> Real-time Sync: <span id="last-update">...</span>
             </div>
           </div>
-          <div class="col-sm-6 p-0 text-end">
+          <div class="col-sm-6 p-0 text-end d-flex align-items-center justify-content-end gap-2">
+              @if(!auth()->user()->hasRole('salesmanager'))
+              <div style="min-width: 200px;">
+                  <select id="manager-filter" class="form-select form-select-sm rounded-pill border-0 shadow-sm px-3" onchange="fetchData()">
+                      <option value="">All Managers</option>
+                      @foreach($salesManagers as $sm)
+                          <option value="{{ $sm->id }}">{{ $sm->user->name ?? 'N/A' }}</option>
+                      @endforeach
+                  </select>
+              </div>
+              @endif
               <div class="btn-group">
                 <button class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm fw-bold" onclick="fetchData()" style="background: #00497a; border: none; transition: all 0.3s;">
                     <i class="fa fa-sync-alt me-1"></i> Sync Now
@@ -177,7 +187,8 @@
         }
 
         function fetchData() {
-            $.get("{{ route('admin.reports.monitoring.data') }}", function(data) {
+            const managerId = $('#manager-filter').val();
+            $.get("{{ route('admin.reports.monitoring.data') }}", { sales_manager_id: managerId }, function(data) {
                 $('#last-update').text(data.timestamp);
                 updateStaffList(data.staff);
                 updateMapMarkers(data.staff);
@@ -234,7 +245,11 @@
         }
 
         function updateMapMarkers(staff) {
-            // Remove existing markers from cluster
+            // Remove existing markers from cluster and map
+            for (let id in staffMarkers) {
+                staffMarkers[id].setMap(null);
+            }
+            staffMarkers = {};
             markerCluster.clearMarkers();
             
             staff.forEach(s => {

@@ -178,7 +178,7 @@
         <div class="page-title">
             <div class="row align-items-center">
                 <div class="col-sm-6">
-                    <h3 class="fw-bold m-0 heading-theme">Loyalty Dashboard</h3>
+                    <h3 class="fw-bold m-0 heading-theme">Loyalty & Credits</h3>
                     <p class="text-muted small m-0">Performance analytics and reward tracking for retailers</p>
                 </div>
                 <div class="col-sm-6 text-end">
@@ -250,7 +250,7 @@
                 <div class="card shadow-sm border-0" style="border-radius: 20px; overflow: hidden; background: var(--med-bg-card);">
                     <div class="card-header loyalty-card-header py-4 px-4 d-flex justify-content-between align-items-center">
                         <div>
-                            <h5 class="fw-bold mb-1 heading-theme">Retailer Performance</h5>
+                            <h5 class="fw-bold mb-1 heading-theme">Retailer Loyalty & Credits</h5>
                             <p class="text-muted small mb-0">Monitor loyalty points and transaction history across all retailers.</p>
                         </div>
                         <div class="d-flex gap-3 align-items-center" style="width: 50%;">

@@ -64,7 +64,7 @@
             </svg>
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-bookmark"></use>
-            </svg><span>Loyalty Points</span></a>
+            </svg><span>Loyalty & Credits</span></a>
         </li>
         @endif
 
@@ -224,7 +224,7 @@
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-form"></use>
             </svg>
-            <span>Returns & Credits</span>
+            <span>Return Products</span>
           </a>
         </li>
         @endif

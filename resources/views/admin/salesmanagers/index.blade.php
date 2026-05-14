@@ -160,7 +160,7 @@
                     <h5 class="modal-title">Create Sales Manager</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form id="createSalesManagerForm" action="{{ route('admin.sales-managers.store') }}" method="POST">
+                <form id="createSalesManagerForm" action="{{ route('admin.sales-managers.store') }}" method="POST" novalidate autocomplete="off">
                     @csrf
                     <div class="modal-body">
                         <div class="row">
@@ -177,18 +177,18 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Password</label>
                                 <div class="password-field-container">
-                                    <input type="password" name="password" id="create_password" class="form-control" required>
+                                    <input type="password" name="password" id="create_password" class="form-control" required autocomplete="new-password">
                                     <span class="toggle-password"><i class="fa fa-eye"></i></span>
                                 </div>
-                                <div class="invalid-feedback d-block" id="create_password_error"></div>
+                                <span class="text-danger small error-text" id="create_password_error"></span>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Confirm Password</label>
                                 <div class="password-field-container">
-                                    <input type="password" name="password_confirmation" id="create_password_confirmation" class="form-control" required>
+                                    <input type="password" name="password_confirmation" id="create_password_confirmation" class="form-control" required autocomplete="new-password">
                                     <span class="toggle-password"><i class="fa fa-eye"></i></span>
                                 </div>
-                                <div class="invalid-feedback d-block" id="create_password_confirmation_error"></div>
+                                <span class="text-danger small error-text" id="create_password_confirmation_error"></span>
                             </div>
                         </div>
                         <div class="row">
@@ -223,7 +223,7 @@
                     <h5 class="modal-title">Edit Sales Manager</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form id="editSalesManagerForm" method="POST">
+                <form id="editSalesManagerForm" method="POST" novalidate>
                     @csrf
                     @method('PUT')
                     <div class="modal-body">
@@ -244,7 +244,7 @@
                                     <input type="password" name="password" id="edit_password" class="form-control">
                                     <span class="toggle-password"><i class="fa fa-eye"></i></span>
                                 </div>
-                                <div class="invalid-feedback d-block" id="edit_password_error"></div>
+                                <span class="text-danger small error-text" id="edit_password_error"></span>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Confirm Password</label>
@@ -252,7 +252,7 @@
                                     <input type="password" name="password_confirmation" id="edit_password_confirmation" class="form-control">
                                     <span class="toggle-password"><i class="fa fa-eye"></i></span>
                                 </div>
-                                <div class="invalid-feedback d-block" id="edit_password_confirmation_error"></div>
+                                <span class="text-danger small error-text" id="edit_password_confirmation_error"></span>
                             </div>
                         </div>
                         <div class="row">
@@ -643,6 +643,35 @@
                 $.ajax({
                     url: form.attr('action') || (form.attr('id') === 'createSalesManagerForm' ? "{{ route('admin.sales-managers.store') }}" : null),
                     type: "POST", data: new FormData(this), processData: false, contentType: false,
+                    beforeSend: function() {
+                        let isValid = true;
+                        // Clear previous errors
+                        form.find('.is-invalid').removeClass('is-invalid');
+                        form.find('.error-text').text('').removeClass('d-block');
+                        form.find('.invalid-feedback').text('').removeClass('d-block');
+
+                        form.find('[required]').each(function() {
+                            if (!$(this).val()) {
+                                let name = $(this).attr('name');
+                                $(this).addClass('is-invalid');
+                                // Target specific error div
+                                let errorDiv = $(this).closest('div').find('.invalid-feedback, .error-text').first();
+                                if (errorDiv.length) {
+                                    errorDiv.text('This field is required.').addClass('d-block');
+                                } else {
+                                    $(this).after('<div class="invalid-feedback d-block">This field is required.</div>');
+                                }
+                                isValid = false;
+                            }
+                        });
+                        
+                        if (!isValid) {
+                            btn.prop('disabled', false).text('Create');
+                            if (form.attr('id').startsWith('edit')) btn.text('Update');
+                            showToast('danger', 'Please fill in all required fields.');
+                            return false;
+                        }
+                    },
                     success: (res) => {
                         $('.modal').modal('hide');
                         form[0].reset();
@@ -731,7 +760,7 @@
             });
 
             // Pincode Validation (6 digits)
-            $('input[name="pincode"]').on('input', function() {
+            $('input[name="pincode"]').on('input blur', function() {
                 let val = $(this).val().replace(/\D/g, '').substring(0, 6);
                 $(this).val(val);
                 let errorDiv = $(this).closest('div').find('.invalid-feedback');
@@ -746,6 +775,81 @@
                 } else {
                     errorDiv.text('');
                     $(this).removeClass('is-invalid');
+                }
+            });
+
+            // Email Validation (Live & Blur)
+            $('input[name="email"]').on('input blur', function(e) {
+                let val = $(this).val();
+                let regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                let errorDiv = $(this).closest('div').find('.invalid-feedback');
+                if (errorDiv.length === 0) {
+                    $(this).after('<div class="invalid-feedback d-block email-error"></div>');
+                    errorDiv = $(this).closest('div').find('.email-error');
+                }
+                
+                if (e.type === 'blur' || $(this).hasClass('is-invalid')) {
+                    if (val && !regex.test(val)) {
+                        errorDiv.text('Please enter a valid email address.').addClass('d-block');
+                        $(this).addClass('is-invalid');
+                    } else {
+                        errorDiv.text('').removeClass('d-block');
+                        $(this).removeClass('is-invalid');
+                    }
+                } else if (val && regex.test(val)) {
+                    errorDiv.text('').removeClass('d-block');
+                    $(this).removeClass('is-invalid');
+                }
+            });
+
+            // Password Validation (Live & Blur)
+            $('input[name="password"]').on('input blur', function(e) {
+                let val = $(this).val();
+                let form = $(this).closest('form');
+                let errorDiv = $(this).closest('div').find('.invalid-feedback');
+                if (errorDiv.length === 0) {
+                    $(this).after('<div class="invalid-feedback d-block pass-error"></div>');
+                    errorDiv = $(this).closest('div').find('.pass-error');
+                }
+                
+                if (e.type === 'blur' || $(this).hasClass('is-invalid')) {
+                    if (val && val.length < 6) {
+                        errorDiv.text('Password must be at least 6 characters.').addClass('d-block');
+                        $(this).addClass('is-invalid');
+                    } else {
+                        errorDiv.text('').removeClass('d-block');
+                        $(this).removeClass('is-invalid');
+                    }
+                } else if (!val || val.length >= 6) {
+                    errorDiv.text('').removeClass('d-block');
+                    $(this).removeClass('is-invalid');
+                }
+                form.find('input[name="password_confirmation"]').trigger('input');
+            });
+
+            // Confirm Password Validation (Live)
+            $('input[name="password_confirmation"]').on('input blur', function() {
+                let val = $(this).val();
+                let form = $(this).closest('form');
+                let password = form.find('input[name="password"]').val();
+                let errorDiv = $(this).closest('div').find('.invalid-feedback');
+                if (errorDiv.length === 0) {
+                    $(this).after('<div class="invalid-feedback d-block confirm-error"></div>');
+                    errorDiv = $(this).closest('div').find('.confirm-error');
+                }
+
+                if (val && password && val !== password) {
+                    errorDiv.text('Passwords do not match.').addClass('d-block');
+                    $(this).addClass('is-invalid');
+                } else if (!val && !password) {
+                    errorDiv.text('').removeClass('d-block');
+                    $(this).removeClass('is-invalid');
+                } else if (val === password) {
+                    errorDiv.text('').removeClass('d-block');
+                    $(this).removeClass('is-invalid');
+                } else if (val && !password) {
+                    errorDiv.text('Passwords do not match.').addClass('d-block');
+                    $(this).addClass('is-invalid');
                 }
             });
 

@@ -26,6 +26,12 @@
             border-color: var(--med-border, #e2e8f0) !important;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
         }
+        .dark-only .password-field-container .toggle-password:hover {
+            color: var(--med-primary, #38bdf8);
+        }
+        .password-field-container .form-control.is-invalid {
+            background-image: none !important;
+        }
         .nav-tabs.custom-tabs .nav-link:hover:not(.active) {
             color: var(--med-text-main, #475569);
             background: var(--med-bg-body);
@@ -96,34 +102,34 @@
                 <div class="modal-header">
                     <h5>Create User</h5><button class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form action="{{ route('admin.users.store') }}" method="POST" id="createForm">
+                <form action="{{ route('admin.users.store') }}" method="POST" id="createForm" novalidate autocomplete="off">
                     @csrf
                     <div class="modal-body">
                         <div class="mb-3">
                             <label>Name</label>
-                            <input type="text" name="name" class="form-control" required pattern="^[a-zA-Z\s]+$" title="Name should only contain letters and spaces.">
+                            <input type="text" name="name" class="form-control" required>
                             <span class="text-danger small error-text" id="error-name"></span>
                         </div>
                         <div class="mb-3">
                             <label>Email</label>
-                            <input type="email" name="email" class="form-control" required pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address with a valid domain (e.g. .com, .in)">
+                            <input type="email" name="email" class="form-control" required>
                             <span class="text-danger small error-text" id="error-email"></span>
                         </div>
                         <div class="mb-3">
                             <label>Password</label>
                             <div class="password-field-container">
-                                <input type="password" name="password" id="create_password" class="form-control" required>
+                                <input type="password" name="password" id="create_password" class="form-control" required autocomplete="new-password">
                                 <span class="toggle-password"><i class="fa fa-eye"></i></span>
                             </div>
-                            <div class="invalid-feedback d-block" id="create_password_error"></div>
+                            <span class="text-danger small error-text" id="error-password"></span>
                         </div>
                         <div class="mb-3">
                             <label>Confirm Password</label>
                             <div class="password-field-container">
-                                <input type="password" name="password_confirmation" id="create_password_confirmation" class="form-control" required>
+                                <input type="password" name="password_confirmation" id="create_password_confirmation" class="form-control" required autocomplete="new-password">
                                 <span class="toggle-password"><i class="fa fa-eye"></i></span>
                             </div>
-                            <div class="invalid-feedback d-block" id="create_password_confirmation_error"></div>
+                            <span class="text-danger small error-text" id="error-password_confirmation"></span>
                         </div>
                         <div class="mb-3">
                             <label>Role</label>
@@ -145,11 +151,11 @@
                         </div>
                         <div class="mb-3 d-none field-gst">
                             <label>GST (Retailer/Distributor)</label>
-                            <input type="text" name="gst" class="form-control" pattern="^[a-zA-Z0-9]+$" title="GST must only contain letters and numbers.">
+                            <input type="text" name="gst" class="form-control">
                         </div>
                         <div class="mb-3 d-none field-drug-license">
                             <label>Drug License No (Retailer/Distributor)</label>
-                            <input type="text" name="drug_license_no" class="form-control" pattern="^[a-zA-Z0-9\/\-]+$" title="Only letters, numbers, / and - are allowed.">
+                            <input type="text" name="drug_license_no" class="form-control">
                         </div>
                         <div class="mb-3">
                             <label>Contact No</label>
@@ -184,17 +190,17 @@
                 <div class="modal-header">
                     <h5>Edit User</h5><button class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form id="editForm" method="POST">
+                <form id="editForm" method="POST" novalidate>
                     @csrf @method('PUT')
                     <div class="modal-body">
                         <div class="mb-3">
                             <label>Name</label>
-                            <input type="text" name="name" id="edit_name" class="form-control" required pattern="^[a-zA-Z\s]+$" title="Name should only contain letters and spaces.">
+                            <input type="text" name="name" id="edit_name" class="form-control" required>
                             <span class="text-danger small error-text" id="edit-error-name"></span>
                         </div>
                         <div class="mb-3">
                             <label>Email</label>
-                            <input type="email" name="email" id="edit_email" class="form-control" required pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address with a valid domain (e.g. .com, .in)">
+                            <input type="email" name="email" id="edit_email" class="form-control" required>
                             <span class="text-danger small error-text" id="edit-error-email"></span>
                         </div>
                         <div class="mb-3">
@@ -203,7 +209,7 @@
                                 <input type="password" name="password" id="edit_password" class="form-control">
                                 <span class="toggle-password"><i class="fa fa-eye"></i></span>
                             </div>
-                            <div class="invalid-feedback d-block" id="edit_password_error"></div>
+                            <span class="text-danger small error-text" id="edit-error-password"></span>
                         </div>
                         <div class="mb-3">
                             <label>Confirm Password</label>
@@ -211,7 +217,7 @@
                                 <input type="password" name="password_confirmation" id="edit_password_confirmation" class="form-control">
                                 <span class="toggle-password"><i class="fa fa-eye"></i></span>
                             </div>
-                            <div class="invalid-feedback d-block" id="edit_password_confirmation_error"></div>
+                            <span class="text-danger small error-text" id="edit-error-password_confirmation"></span>
                         </div>
                         <div class="mb-3">
                             <label>Role</label>
@@ -221,11 +227,11 @@
                         </div>
                         <div class="mb-3 d-none field-gst">
                             <label>GST (Retailer/Distributor)</label>
-                            <input type="text" name="gst" id="edit_gst" class="form-control" pattern="^[a-zA-Z0-9]+$" title="GST must only contain letters and numbers.">
+                            <input type="text" name="gst" id="edit_gst" class="form-control">
                         </div>
                         <div class="mb-3 d-none field-drug-license">
                             <label>Drug License No (Retailer/Distributor)</label>
-                            <input type="text" name="drug_license_no" id="edit_drug_license_no" class="form-control" pattern="^[a-zA-Z0-9\/\-]+$" title="Only letters, numbers, / and - are allowed.">
+                            <input type="text" name="drug_license_no" id="edit_drug_license_no" class="form-control">
                         </div>
                         <div class="mb-3">
                             <label>Contact No</label>
@@ -639,6 +645,34 @@
                     data: new FormData(this),
                     processData: false,
                     contentType: false,
+                    beforeSend: function() {
+                        let isValid = true;
+                        // Clear previous errors
+                        form.find('.is-invalid').removeClass('is-invalid');
+                        form.find('.error-text').text('').removeClass('d-block');
+                        form.find('.invalid-feedback').text('').removeClass('d-block');
+
+                        form.find('[required]').each(function() {
+                            if (!$(this).val()) {
+                                let name = $(this).attr('name');
+                                $(this).addClass('is-invalid');
+                                // Target specific error div
+                                let errorDiv = $(this).closest('div').find('.invalid-feedback, .error-text').first();
+                                if (errorDiv.length) {
+                                    errorDiv.text('This field is required.').addClass('d-block');
+                                } else {
+                                    $(this).after('<div class="invalid-feedback d-block">This field is required.</div>');
+                                }
+                                isValid = false;
+                            }
+                        });
+                        
+                        if (!isValid) {
+                            btn.prop('disabled', false).text(oldText);
+                            showToast('danger', 'Please fill in all required fields.');
+                            return false;
+                        }
+                    },
                     success: (res) => {
                         $('.modal').modal('hide');
                         form[0].reset();
@@ -831,7 +865,7 @@
         // Drug License Validation (No symbols except / and -)
         $('input[name="drug_license_no"]').on('input', function() {
             let val = $(this).val();
-            let regex = /^[a-zA-Z0-9\/\-]*$/;
+            let regex = /^[a-zA-Z0-9\/\-_]*$/;
             let form = $(this).closest('form');
             let isEdit = form.attr('id') === 'editForm';
             let errorDiv = form.find(`#${isEdit ? 'edit-' : ''}error-drug_license_no`);
@@ -841,7 +875,7 @@
             }
             
             if (!regex.test(val)) {
-                errorDiv.text('Drug License No should only contain letters, numbers, / and -.').addClass('d-block');
+                errorDiv.text('Drug License No should only contain letters, numbers, /, - and _.').addClass('d-block');
                 $(this).addClass('is-invalid');
             } else {
                 errorDiv.text('').removeClass('d-block');
@@ -863,6 +897,83 @@
             } else {
                 errorDiv.text('').removeClass('d-block');
                 $(this).removeClass('is-invalid');
+            }
+        });
+
+        // Email Validation (Live & Blur)
+        $('input[name="email"]').on('input blur', function(e) {
+            let val = $(this).val();
+            let regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            let form = $(this).closest('form');
+            let isEdit = form.attr('id') === 'editForm';
+            let errorDiv = form.find(`#${isEdit ? 'edit-' : ''}error-email`);
+            
+            // On blur or if already invalid, show error
+            if (e.type === 'blur' || $(this).hasClass('is-invalid')) {
+                if (val && !regex.test(val)) {
+                    errorDiv.text('Please enter a valid email address.').addClass('d-block');
+                    $(this).addClass('is-invalid');
+                } else if (!val && $(this).prop('required')) {
+                    errorDiv.text('Email is required.').addClass('d-block');
+                    $(this).addClass('is-invalid');
+                } else {
+                    errorDiv.text('').removeClass('d-block');
+                    $(this).removeClass('is-invalid');
+                }
+            } else if (val && regex.test(val)) {
+                // If typing and becomes valid, clear error
+                errorDiv.text('').removeClass('d-block');
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        // Password Validation (Live)
+        $('input[name="password"]').on('input blur', function(e) {
+            let val = $(this).val();
+            let form = $(this).closest('form');
+            let isEdit = form.attr('id') === 'editForm';
+            let errorDiv = form.find(`#${isEdit ? 'edit-' : ''}error-password`);
+            
+            if (e.type === 'blur' || $(this).hasClass('is-invalid')) {
+                if (val && val.length < 6) {
+                    errorDiv.text('Password must be at least 6 characters.').addClass('d-block');
+                    $(this).addClass('is-invalid');
+                } else if (!val && $(this).prop('required')) {
+                    errorDiv.text('Password is required.').addClass('d-block');
+                    $(this).addClass('is-invalid');
+                } else {
+                    errorDiv.text('').removeClass('d-block');
+                    $(this).removeClass('is-invalid');
+                }
+            } else if (!val || val.length >= 6) {
+                errorDiv.text('').removeClass('d-block');
+                $(this).removeClass('is-invalid');
+            }
+
+            // Trigger confirmation check too
+            form.find('input[name="password_confirmation"]').trigger('input');
+        });
+
+        // Confirm Password Validation (Live)
+        $('input[name="password_confirmation"]').on('input blur', function(e) {
+            let val = $(this).val();
+            let form = $(this).closest('form');
+            let password = form.find('input[name="password"]').val();
+            let isEdit = form.attr('id') === 'editForm';
+            let errorDiv = form.find(`#${isEdit ? 'edit-' : ''}error-password_confirmation`);
+
+            if (val && password && val !== password) {
+                errorDiv.text('Passwords do not match.').addClass('d-block');
+                $(this).addClass('is-invalid');
+            } else if (!val && !password) {
+                errorDiv.text('').removeClass('d-block');
+                $(this).removeClass('is-invalid');
+            } else if (val === password) {
+                errorDiv.text('').removeClass('d-block');
+                $(this).removeClass('is-invalid');
+            } else if (val && !password) {
+                errorDiv.text('Passwords do not match.').addClass('d-block');
+                $(this).addClass('is-invalid');
             }
         });
     </script>

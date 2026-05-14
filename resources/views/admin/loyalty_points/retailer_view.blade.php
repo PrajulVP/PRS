@@ -157,7 +157,7 @@
         <div class="page-title">
             <div class="row align-items-center">
                 <div class="col-6">
-                    <h3 class="fw-bold m-0" style="color: var(--med-text-main, #1e293b);">Loyalty Points</h3>
+                    <h3 class="fw-bold m-0" style="color: var(--med-text-main, #1e293b);">Loyalty & Credits</h3>
                     <p class="text-muted small m-0">Dynamic tracking of your earned rewards</p>
                 </div>
             </div>

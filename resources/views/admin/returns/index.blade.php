@@ -1,19 +1,19 @@
 @extends('layouts.admin')
 
-@section('title', 'Return Requests & Credit Notes')
+@section('title', 'Return Requests')
 
 @section('page-body')
 <div class="container-fluid py-4">
     <div class="row mb-4 align-items-center">
         <div class="col-md-6">
             @php
-                $heading = 'Returns & Credits';
+                $heading = 'Returns';
                 if(auth()->user()->hasRole('retailer') || auth()->user()->hasRole('distributor')) {
                     $heading = 'My Return Requests';
                 }
             @endphp
             <h4 class="fw-bold text-main-theme mb-1">{{ $heading }}</h4>
-            <p class="text-muted-theme small mb-0">Track and manage product returns and issued credit notes.</p>
+            <p class="text-muted-theme small mb-0">Track and manage product returns.</p>
         </div>
         <div class="col-md-6 text-md-end mt-3 mt-md-0">
             @if(auth()->user()->hasRole('retailer') || auth()->user()->hasRole('distributor'))

@@ -23,15 +23,14 @@
             margin: 0 auto;
             width: 100%;
             max-width: 600px;
-            border-top: 5px solid #00497a;
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
         }
         .header {
-            padding: 40px 0 30px;
+            padding: 35px 20px;
             text-align: center;
-            background-color: #ffffff;
+            background-color: #00497a;
         }
         .content {
             padding: 0 40px 40px;
@@ -90,14 +89,13 @@
 </head>
 <body>
     <div class="wrapper">
-        <div class="header">
-            <img src="{{ asset('assets/images/logo/logo.png') }}" alt="Atom Connect Logo" class="logo-img">
-            <div style="font-size: 20px; font-weight: 700; color: #00497a;">Atom Connect</div>
-        </div>
-        
         <div class="main-card">
+            <div class="header">
+                <img src="{{ asset('admin/assets/images/logo/atom-logo-main-white.png') }}" alt="Atom Connect Logo" class="logo-img">
+            </div>
+            
             <div class="content">
-                <div style="padding-top: 30px;">
+                <div style="padding-top: 20px;">
                     <p class="greeting">Hello {{ $userName }},</p>
                     <p class="instruction">We received a request to access your account. Please use the following one-time password (OTP) to complete your login:</p>
                 </div>
