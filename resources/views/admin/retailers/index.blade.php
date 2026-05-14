@@ -305,7 +305,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Status</label>
-                                <select name="status" id="edit_status" class="form-select">
+                                <select name="status" id="edit_status" class="form-select" {{ Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']) ? '' : 'disabled' }}>
                                     <option value="active">Active</option>
                                     <option value="inactive">Inactive</option>
                                 </select>
@@ -871,10 +871,10 @@
                 }
             });
 
-            // Drug License Validation (No symbols except /, - and _)
+            // Drug License Validation (No symbols except / and -)
             $('input[name="drug_license_no"]').on('input', function() {
                 let val = $(this).val();
-                let regex = /^[a-zA-Z0-9\/\-_]*$/;
+                let regex = /^[a-zA-Z0-9\/\-]*$/;
                 let errorDiv = $(this).closest('div').find('.invalid-feedback');
                 if (errorDiv.length === 0) {
                     $(this).after('<div class="invalid-feedback d-block drug-error"></div>');
@@ -882,7 +882,7 @@
                 }
                 
                 if (!regex.test(val)) {
-                    errorDiv.text('Drug License No should only contain letters, numbers, /, - and _.');
+                    errorDiv.text('The drug license number can only contain letters, numbers, slashes (/), and hyphens (-).');
                     $(this).addClass('is-invalid');
                 } else {
                     errorDiv.text('');

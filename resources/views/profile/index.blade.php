@@ -418,8 +418,9 @@
                                             @endif
                                             <div class="col-md-6">
                                                 <label class="form-label fw-bold small text-muted text-uppercase" style="font-size: 0.65rem;">Drug License No.</label>
-                                                <input type="text" name="drug_license_no" class="form-control bg-light" 
+                                                <input type="text" name="drug_license_no" id="drug_license_no" class="form-control bg-light" 
                                                     value="{{ $user->hasRole('retailer') ? ($user->retailer->drug_license_no ?? '') : ($user->distributor->drug_license_no ?? '') }}">
+                                                <div class="text-danger small mt-1" id="error_drug_license" style="display:none;">The drug license number can only contain letters, numbers, slashes (/), and hyphens (-).</div>
                                             </div>
                                             <div class="col-md-6">
                                                 <label class="form-label fw-bold small text-muted text-uppercase" style="font-size: 0.65rem;">GST Number</label>
@@ -674,8 +675,24 @@
                 icon.removeClass('fa-eye').addClass('fa-eye-slash');
             }
         });
+            
+            // Live Drug License Validation
+            const drugLicenseInput = document.getElementById('drug_license_no');
+            const drugLicenseError = document.getElementById('error_drug_license');
+            if (drugLicenseInput) {
+                drugLicenseInput.addEventListener('input', function() {
+                    const regex = /^[a-zA-Z0-9\/\-]*$/;
+                    if (!regex.test(this.value)) {
+                        drugLicenseError.style.display = 'block';
+                        this.classList.add('is-invalid');
+                    } else {
+                        drugLicenseError.style.display = 'none';
+                        this.classList.remove('is-invalid');
+                    }
+                });
+            }
 
-        // Live Password Validation
+            // Real-time sequential password validation
         $('#current_password').on('blur', function() {
             let val = $(this).val();
             if (val.length > 0) {

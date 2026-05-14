@@ -132,6 +132,17 @@
         .dark-only .password-field-container .toggle-password:hover {
             color: var(--med-primary, #38bdf8);
         }
+        /* Disable browser-native password reveal button */
+        input::-ms-reveal,
+        input::-ms-clear {
+            display: none !important;
+        }
+        input::-webkit-contacts-auto-fill-button,
+        input::-webkit-credentials-auto-fill-button {
+            visibility: hidden !important;
+            display: none !important;
+            pointer-events: none !important;
+        }
         /* Hide native Bootstrap validation icons globally */
         .form-control.is-invalid, 
         .form-select.is-invalid,

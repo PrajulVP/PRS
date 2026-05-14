@@ -594,7 +594,7 @@ $(document).ready(function() {
                     let label = data.replace('_', ' ');
                     
                     if(data === 'pending') badgeClass = 'bg-warning';
-                    else if(data.startsWith('approved')) badgeClass = 'bg-info';
+                    else if(data === 'verified') badgeClass = 'bg-info';
                     else if(data === 'completed') badgeClass = 'bg-success';
                     else if(data === 'rejected') badgeClass = 'bg-danger';
                     
@@ -614,7 +614,7 @@ $(document).ready(function() {
                     let showApproval = false;
                     if(row.order_type === 'retailer') {
                         if((userRoles.includes('fieldstaff') || userRoles.includes('admin') || userRoles.includes('superadmin')) && row.status === 'pending') showApproval = true;
-                        if((userRoles.includes('distributor') || userRoles.includes('admin') || userRoles.includes('superadmin')) && row.status === 'verified') showApproval = true;
+                        if((userRoles.includes('distributor') || userRoles.some(r => r.toLowerCase() === 'distributor') || userRoles.includes('admin') || userRoles.includes('superadmin')) && row.status === 'verified') showApproval = true;
                     } else {
                         if(userRoles.includes('salesmanager') && row.status === 'pending') showApproval = true;
                         if((userRoles.includes('admin') || userRoles.includes('superadmin')) && row.status === 'verified') showApproval = true;

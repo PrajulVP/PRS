@@ -138,13 +138,12 @@ class ReturnController extends Controller
 
                 $fieldStaffId = $order->fieldstaff_id ?? $order->retailer?->field_staff_id;
                 
-                // Sales Manager should be from the distributor first, then retailer
-                $salesManagerId = null;
-                if ($distributorId) {
+                // Priority: Use the Retailer's assigned Sales Manager first
+                $salesManagerId = $order->retailer?->sales_manager_id;
+                
+                // Fallback: If retailer has no manager, use the Distributor's manager
+                if (!$salesManagerId && $distributorId) {
                     $salesManagerId = \App\Models\Distributor::find($distributorId)?->sales_manager_id;
-                }
-                if (!$salesManagerId) {
-                    $salesManagerId = $order->retailer?->sales_manager_id;
                 }
             } else {
                 $order = DistributorOrder::with('distributor')->findOrFail($request->order_id);

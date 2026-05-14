@@ -41,6 +41,7 @@ class ProductController extends Controller
      *             @OA\Property(property="ptr", type="number"),
      *             @OA\Property(property="pts", type="number"),
      *             @OA\Property(property="gst", type="number"),
+     *             @OA\Property(property="brand", type="string"),
      *             @OA\Property(property="pack", type="string"),
      *             @OA\Property(property="generic_name", type="string")
      *         )
@@ -60,6 +61,7 @@ class ProductController extends Controller
             'id' => $product->id,
             'product_code' => $product->product_code,
             'product_name' => $product->product_name,
+            'brand' => $product->brand,
             'generic_name' => $product->generic_name,
             'pack' => $product->pack,
             'has_variants' => $hasVariants,
@@ -97,6 +99,7 @@ class ProductController extends Controller
      *                 @OA\Property(property="ptr", type="string", example="15.00"),
      *                 @OA\Property(property="pts", type="string", example="12.00"),
      *                 @OA\Property(property="gst", type="string", example="12.00"),
+     *                 @OA\Property(property="brand", type="string", example="BrandName"),
      *                 @OA\Property(property="net_amount", type="string", example="18.00")
      *             )
      *         )

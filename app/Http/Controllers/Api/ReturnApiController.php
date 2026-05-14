@@ -173,7 +173,8 @@ class ReturnApiController extends Controller
                 $price = $item->unit_price ?? 0;
                 $distributorId = $order->distributor_id;
                 $fieldStaffId = $order->fieldstaff_id ?? $order->retailer?->field_staff_id;
-                $salesManagerId = $order->distributor?->sales_manager_id ?? $order->retailer?->sales_manager_id;
+                // Priority: Retailer's manager, then fallback to Distributor's manager
+                $salesManagerId = $order->retailer?->sales_manager_id ?? $order->distributor?->sales_manager_id;
             } else {
                 $order = DistributorOrder::with('distributor')->findOrFail($request->order_id);
                 $item = $order->items()

@@ -50,10 +50,10 @@ class ProfileController extends Controller
             $rules['shop_name'] = 'nullable|string|max:255';
             $rules['gst'] = 'nullable|string|max:50';
             // Assuming drug_license_no might be added to retailers, but for now just shop_name/gst which are known
-            $rules['drug_license_no'] = 'nullable|string|max:50';
+            $rules['drug_license_no'] = 'nullable|string|max:50|regex:/^[a-zA-Z0-9\/\-]+$/';
         } elseif ($user->hasRole('distributor')) {
             $rules['gst'] = 'nullable|string|max:50';
-            $rules['drug_license_no'] = 'nullable|string|max:50';
+            $rules['drug_license_no'] = 'nullable|string|max:50|regex:/^[a-zA-Z0-9\/\-]+$/';
         }
 
         if ($user->hasAnyRole(['superadmin', 'admin', 'distributor'])) {

@@ -346,7 +346,7 @@ class RetailerController extends Controller
                 $userUpdateData['password'] = Hash::make($request->password);
             }
 
-            if ($request->filled('status')) {
+            if ($request->filled('status') && Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
                 $userUpdateData['status'] = $request->status;
             }
 

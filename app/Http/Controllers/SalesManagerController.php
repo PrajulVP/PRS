@@ -184,7 +184,7 @@ class SalesManagerController extends Controller
             $userData['password'] = Hash::make($request->password);
         }
 
-        if ($request->filled('status')) {
+        if ($request->filled('status') && Auth::user()->hasAnyRole(['admin', 'superadmin'])) {
             $userData['status'] = $request->status;
         }
 
