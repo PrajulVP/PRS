@@ -93,6 +93,7 @@
                                         <th>No.</th>
                                         <th>Shop Name</th>
                                         <th>Owner</th>
+                                        <th>Email</th>
                                         <th>Sales Manager</th>
                                         <th>Field Staff</th>
                                         <th>GST</th>
@@ -618,6 +619,7 @@
                     { data: null, orderable: false, searchable: false, render: (d, t, r, m) => m.row + m.settings._iDisplayStart + 1 },
                     { data: 'shop_name', name: 'shop_name' },
                     { data: 'user_name', name: 'user.name' },
+                    { data: 'user.email', name: 'user.email', defaultContent: 'N/A' },
                     { data: 'sales_manager_name', name: 'salesManager.user.name', defaultContent: 'N/A' },
                     { data: 'field_staff_name', name: 'fieldStaff.user.name', defaultContent: 'N/A' },
                     { data: 'gst', name: 'gst' },
@@ -653,7 +655,7 @@
                         { extend: 'excel', className: 'btn btn-success btn-sm', text: '<i class="fa fa-file-excel"></i> Excel' },
                         { 
                             extend: 'pdf', className: 'btn btn-danger btn-sm', text: '<i class="fa fa-file-pdf"></i> PDF',
-                            exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
+                            exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
                             orientation: 'landscape',
                             pageSize: 'A4',
                             customize: function(doc) {
@@ -661,7 +663,7 @@
                                 doc.styles.tableHeader.fontSize = 8;
                             }
                         },
-                        { extend: 'print', className: 'btn btn-dark btn-sm', text: '<i class="fa fa-print"></i> Print', exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] } }
+                        { extend: 'print', className: 'btn btn-dark btn-sm', text: '<i class="fa fa-print"></i> Print', exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] } }
                     ]
                 }
             });

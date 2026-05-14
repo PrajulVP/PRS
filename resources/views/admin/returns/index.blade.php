@@ -613,8 +613,8 @@ $(document).ready(function() {
                     
                     let showApproval = false;
                     if(row.order_type === 'retailer') {
-                        if(userRoles.includes('fieldstaff') && row.status === 'pending') showApproval = true;
-                        if(userRoles.includes('distributor') && row.status === 'verified') showApproval = true;
+                        if((userRoles.includes('fieldstaff') || userRoles.includes('admin') || userRoles.includes('superadmin')) && row.status === 'pending') showApproval = true;
+                        if((userRoles.includes('distributor') || userRoles.includes('admin') || userRoles.includes('superadmin')) && row.status === 'verified') showApproval = true;
                     } else {
                         if(userRoles.includes('salesmanager') && row.status === 'pending') showApproval = true;
                         if((userRoles.includes('admin') || userRoles.includes('superadmin')) && row.status === 'verified') showApproval = true;

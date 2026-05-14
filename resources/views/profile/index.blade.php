@@ -262,197 +262,276 @@
         .modal-backdrop.show {
             backdrop-filter: blur(5px);
             background-color: rgba(0, 0, 0, 0.5);
-            /* Semi-transparent black */
         }
+        .bg-soft-primary { background-color: rgba(13, 110, 253, 0.08); }
+        .bg-soft-success { background-color: rgba(25, 135, 84, 0.08); }
+        .bg-soft-warning { background-color: rgba(255, 193, 7, 0.08); }
+        .bg-soft-danger { background-color: rgba(220, 53, 69, 0.08); }
+        .bg-soft-info { background-color: rgba(13, 202, 240, 0.08); }
+        .cursor-pointer { cursor: pointer; }
     </style>
 
     <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" style="max-width: 1000px;">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header border-1py-2 px-3">
-                    <h5 class="modal-title text-white fw-bold fs-6"><i class="fa fa-user-edit me-2"></i> Edit Profile
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-                </div>
-                <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" id="editProfileForm">
+        <div class="modal-dialog modal-dialog-centered" style="width: 95%; max-width: 950px;">
+            <div class="modal-content border-0 shadow-lg overflow-hidden position-relative" style="height: 560px; max-height: 90vh;">
+                <!-- Absolute Top Right Close Button -->
+                <button type="button" class="btn-close position-absolute top-0 end-0 m-3 z-3" data-bs-dismiss="modal" aria-label="Close"></button>
+
+                <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" id="editProfileForm" class="h-100 d-flex flex-column">
                     @csrf
                     @method('PUT')
-                    <div class="modal-body p-3">
-                        <div class="row g-3">
-                            <!-- Left Column: Editable Information -->
-                            <div class="col-lg-7 border-end">
-                                <h6 class="text-primary fw-bold mb-3 border-bottom pb-1" style="font-size: 0.8rem;">
-                                    Personal Information</h6>
-
-                                <div class="mb-2">
-                                    <label class="form-label fw-bold small mb-1">Full Name</label>
-                                    <input type="text" name="name" class="form-control form-control-sm"
-                                        value="{{ $user->name }}" required>
-                                    <div class="invalid-feedback d-block" id="error_name"></div>
+                    <div class="d-flex flex-column flex-md-row flex-grow-1 overflow-hidden">
+                        <!-- Sidebar: Profile Overview (Left) -->
+                        <div class="bg-light border-end p-4 d-flex flex-column align-items-center text-center flex-shrink-0 h-100" style="width: 260px;">
+                            <div class="w-100 mb-4">
+                                <div class="position-relative d-inline-block mt-2">
+                                    <img src="{{ $user->avatar_url }}" alt="Avatar"
+                                        id="modal_avatar_preview"
+                                        class="rounded-circle shadow-sm border border-4 border-white"
+                                        style="width: 120px; height: 120px; object-fit: cover;"
+                                        onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&color=FFFFFF&background={{ $user->avatar_background ?? '374151' }}';">
+                                    
+                                    <label for="profile_pic" class="position-absolute bottom-0 end-0 bg-white shadow-sm rounded-circle d-flex align-items-center justify-content-center cursor-pointer border hover-scale" 
+                                        style="width: 32px; height: 32px; margin-right: 4px; margin-bottom: 4px;" title="Change Photo">
+                                        <i class="fa fa-camera text-primary" style="font-size: 0.7rem;"></i>
+                                        <input type="file" name="profile_pic" id="profile_pic" class="d-none" accept="image/*" onchange="previewProfilePic(this)">
+                                    </label>
+                                </div>
+                                
+                                <h5 class="mt-3 mb-1 fw-bold text-dark">{{ $user->name }}</h5>
+                                <div class="d-flex justify-content-center">
+                                    <span class="badge bg-soft-primary text-primary rounded-pill px-3 py-1 mb-3" style="font-size: 0.7rem;">
+                                        {{ ucfirst($user->getRoleNames()->first() ?? 'User') }}
+                                    </span>
                                 </div>
 
-                                @if($user->hasRole('fieldstaff'))
-                                    <div class="row g-2 mb-2">
-                                        <div class="col-md-6">
-                                            <label class="form-label fw-bold small mb-1">Father's Name</label>
-                                            <input type="text" name="fathers_name" class="form-control form-control-sm"
-                                                value="{{ $user->fathers_name }}">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label fw-bold small mb-1">Mother's Name</label>
-                                            <input type="text" name="mothers_name" class="form-control form-control-sm"
-                                                value="{{ $user->mothers_name }}">
-                                        </div>
-                                    </div>
-                                @endif
-
-                                {{-- Role Specific Editable Fields --}}
-                                @if($user->hasRole('retailer'))
-                                    <h6 class="text-success fw-bold mt-3 mb-2 border-bottom pb-1" style="font-size: 0.8rem;">
-                                        Business Details (Retailer)</h6>
-                                    <div class="mb-2">
-                                        <label class="form-label fw-bold small mb-1">Shop Name</label>
-                                        <input type="text" name="shop_name" class="form-control form-control-sm"
-                                            value="{{ $user->retailer->shop_name ?? '' }}">
-                                    </div>
-                                    <div class="row g-2 mb-2">
-                                        <div class="col-md-6">
-                                            <label class="form-label fw-bold small mb-1">Drug License No.</label>
-                                            <input type="text" name="drug_license_no" class="form-control form-control-sm"
-                                                value="{{ $user->retailer->drug_license_no ?? '' }}">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label fw-bold small mb-1">GST Number</label>
-                                            <input type="text" name="gst" class="form-control form-control-sm"
-                                                value="{{ $user->retailer->gst ?? '' }}">
-                                        </div>
-                                    </div>
-                                @endif
-
-                                @if($user->hasRole('distributor'))
-                                    <h6 class="text-info fw-bold mt-3 mb-2 border-bottom pb-1" style="font-size: 0.8rem;">
-                                        Business Details (Distributor)</h6>
-                                    <div class="row g-2 mb-2">
-                                        <div class="col-md-6">
-                                            <label class="form-label fw-bold small mb-1">Drug License No.</label>
-                                            <input type="text" name="drug_license_no" class="form-control form-control-sm"
-                                                value="{{ $user->distributor->drug_license_no ?? '' }}">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label fw-bold small mb-1">GST Number</label>
-                                            <input type="text" name="gst" class="form-control form-control-sm"
-                                                value="{{ $user->distributor->gst ?? '' }}">
-                                        </div>
-                                    </div>
-                                @endif
-
-                                <h6 class="text-primary fw-bold mt-3 mb-2 border-bottom pb-1" style="font-size: 0.8rem;">
-                                    Address Details</h6>
-                                <div class="mb-2">
-                                    <label class="form-label fw-bold small mb-1">Address</label>
-                                    <textarea name="address" class="form-control form-control-sm"
-                                        rows="2">{{ $user->address }}</textarea>
-                                    <div class="invalid-feedback d-block" id="error_address"></div>
+                                <div id="remove_pic_container" style="{{ $user->profile_pic ? '' : 'display:none;' }}">
+                                    <button type="button" class="btn btn-link text-danger p-0 text-decoration-none fw-600" style="font-size: 0.75rem;" onclick="removeProfilePic()">
+                                        <i class="fa fa-trash-alt me-1"></i> Remove Photo
+                                    </button>
                                 </div>
-                                <div class="row g-2">
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-bold small mb-1">City</label>
-                                        <input type="text" name="city" class="form-control form-control-sm"
-                                            value="{{ $user->city }}">
-                                        <div class="invalid-feedback d-block" id="error_city"></div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-bold small mb-1">Pincode</label>
-                                        <input type="text" name="pincode" class="form-control form-control-sm"
-                                            value="{{ $user->pincode ?? '' }}">
-                                        <div class="invalid-feedback d-block" id="error_pincode"></div>
-                                    </div>
-                                </div>
+                                <input type="hidden" name="remove_profile_pic" id="remove_profile_pic" value="0">
                             </div>
 
-                            <!-- Right Column: Account Details & Avatar -->
-                            <div class="col-lg-5 ps-lg-4">
-                                <h6 class="text-primary fw-bold mb-3 border-bottom pb-1" style="font-size: 0.8rem;">
-                                    Profile Picture</h6>
-                                <div class="text-center mb-3">
-                                    <div class="position-relative d-inline-block">
-                                        <img src="{{ $user->avatar_url }}" alt="Avatar"
-                                            id="modal_avatar_preview"
-                                            class="rounded-circle shadow-sm border border-3 border-white"
-                                            style="width: 110px; height: 110px; object-fit: cover;"
-                                            onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&color=FFFFFF&background={{ $user->avatar_background ?? '374151' }}';">
-                                    </div>
-                                    <div class="d-flex justify-content-center gap-2 mt-3">
-                                        <label for="profile_pic"
-                                            class="btn btn-sm btn-outline-primary rounded-pill px-3 d-flex align-items-center"
-                                            style="cursor: pointer; font-size: 0.7rem; font-weight: 600;">
-                                            <i class="fa fa-camera me-1"></i> Change
-                                            <input type="file" name="profile_pic" id="profile_pic" class="d-none"
-                                                accept="image/*" onchange="previewProfilePic(this)">
-                                        </label>
-
-                                        <button type="button" id="btn_remove_pic" 
-                                            class="btn btn-sm btn-outline-danger rounded-pill px-3 d-flex align-items-center"
-                                            style="font-size: 0.7rem; font-weight: 600; {{ $user->profile_pic ? '' : 'display:none;' }}"
-                                            onclick="removeProfilePic()">
-                                            <i class="fa fa-trash-o me-1"></i> Remove
-                                        </button>
-                                        <input type="hidden" name="remove_profile_pic" id="remove_profile_pic" value="0">
-                                    </div>
-                                    <p class="text-muted small mt-2 fst-italic" style="font-size: 0.6rem;">Recommended: Square image, max 5MB</p>
-                                </div>
-
-                                <h6 class="text-muted fw-bold mb-2 small"><i class="fa fa-lock me-1"></i> Account
-                                    Details</h6>
-
-                                <div class="row g-2">
-                                    <div class="col-12">
-                                        <label class="form-label text-muted small text-uppercase mb-1"
-                                            style="font-size: 0.6rem;">Email</label>
-                                        <input type="text" name="email" class="form-control form-control-sm {{ $user->hasAnyRole(['superadmin', 'admin']) ? '' : 'bg-light text-dark' }}"
-                                            value="{{ $user->email }}" {{ $user->hasAnyRole(['superadmin', 'admin']) ? '' : 'readonly' }}>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label text-muted small text-uppercase mb-1"
-                                            style="font-size: 0.6rem;">Phone</label>
-                                        <input type="text" name="contact_no" class="form-control form-control-sm {{ $user->hasAnyRole(['superadmin', 'admin']) ? '' : 'bg-light text-dark' }}"
-                                            value="{{ $user->contact_no ?? $user->phone_number ?? '' }}" {{ $user->hasAnyRole(['superadmin', 'admin']) ? '' : 'readonly' }}>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label text-muted small text-uppercase mb-1"
-                                            style="font-size: 0.6rem;">Role</label>
-                                        <input type="text" class="form-control form-control-sm bg-light text-dark"
-                                            value="{{ ucfirst($user->getRoleNames()->first() ?? 'User') }}" readonly>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label text-muted small text-uppercase mb-1"
-                                            style="font-size: 0.6rem;">Member Since</label>
-                                        <input type="text" class="form-control form-control-sm bg-light text-dark"
-                                            value="{{ $user->created_at->format('M d, Y') }}" readonly>
-                                    </div>
-                                </div>
-
-                                @unless($user->hasAnyRole(['superadmin', 'admin']))
-                                    <div class="alert alert-info d-flex align-items-center mt-3 mb-0 py-2 small" role="alert">
-                                        <i class="fa fa-info-circle me-2"></i>
-                                        <div>
-                                            To update details, please contact Admin.
+                            @if(!$user->hasAnyRole(['superadmin', 'admin']))
+                                <div class="mt-auto text-center w-100 border-top pt-3">
+                                    <div class="text-muted mb-1 fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">ACCOUNT STATUS</div>
+                                    <div class="d-flex justify-content-center">
+                                        <div class="badge bg-success rounded-pill px-3 py-2 mb-3 text-white shadow-sm" style="font-size: 0.75rem;">
+                                            <i class="fa fa-check-circle me-1"></i> Active
                                         </div>
                                     </div>
-                                @endunless
+                                    <div class="text-muted border-top pt-2" style="font-size: 0.75rem;">
+                                        Member Since {{ $user->created_at->format('M d, Y') }}
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- Main Content: Tabs & Form (Right) -->
+                        <div class="flex-grow-1 bg-white d-flex flex-column overflow-hidden">
+                            <div class="px-4 pt-4 pb-0">
+                                <h5 class="fw-bold text-dark fs-5 mb-0">Edit Profile</h5>
+                            </div>
+
+                            <!-- Horizontal Navigation (Single Line) -->
+                            <div class="px-4 mb-2 mt-3">
+                                <ul class="nav nav-pills custom-profile-tabs-top bg-light p-1 rounded-3 flex-nowrap overflow-auto hide-scrollbar" id="pills-tab" role="tablist">
+                                    <li class="nav-item flex-grow-1 text-center" role="presentation">
+                                        <button class="nav-link active w-100 py-2 border-0 text-nowrap d-inline-flex align-items-center justify-content-center" id="pills-general-tab" data-bs-toggle="pill" data-bs-target="#pills-general" type="button" role="tab" style="font-size: 0.8rem; line-height: 1;">
+                                            <i class="fa fa-user-circle me-2"></i> <span>General</span>
+                                        </button>
+                                    </li>
+                                    @if($user->hasRole('retailer') || $user->hasRole('distributor'))
+                                        <li class="nav-item flex-grow-1 text-center" role="presentation">
+                                            <button class="nav-link w-100 py-2 border-0 text-nowrap d-inline-flex align-items-center justify-content-center" id="pills-business-tab" data-bs-toggle="pill" data-bs-target="#pills-business" type="button" role="tab" style="font-size: 0.8rem; line-height: 1;">
+                                                <i class="fa fa-briefcase me-2"></i> <span>Business</span>
+                                            </button>
+                                        </li>
+                                    @endif
+                                    <li class="nav-item flex-grow-1 text-center" role="presentation">
+                                        <button class="nav-link w-100 py-2 border-0 text-nowrap d-inline-flex align-items-center justify-content-center" id="pills-location-tab" data-bs-toggle="pill" data-bs-target="#pills-location" type="button" role="tab" style="font-size: 0.8rem; line-height: 1;">
+                                            <i class="fa fa-map-marker me-2"></i> <span>Location</span>
+                                        </button>
+                                    </li>
+                                    @if($user->hasAnyRole(['superadmin', 'admin']))
+                                        <li class="nav-item flex-grow-1 text-center" role="presentation">
+                                            <button class="nav-link w-100 py-2 border-0 text-nowrap d-inline-flex align-items-center justify-content-center" id="pills-security-tab" data-bs-toggle="pill" data-bs-target="#pills-security" type="button" role="tab" style="font-size: 0.8rem; line-height: 1;">
+                                                <i class="fa fa-shield me-2"></i> <span>Security</span>
+                                            </button>
+                                        </li>
+                                    @endif
+                                </ul>
+                            </div>
+
+                            <div class="tab-content flex-grow-1 p-4 overflow-y-auto hide-scrollbar" id="pills-tabContent">
+                                <!-- Tab content remains same -->
+                                <div class="tab-pane fade show active" id="pills-general" role="tabpanel" aria-labelledby="pills-general-tab">
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <label class="form-label fw-bold small text-muted text-uppercase" style="font-size: 0.65rem;">Full Name</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border-end-0"><i class="fa fa-user text-muted"></i></span>
+                                                <input type="text" name="name" class="form-control bg-light border-start-0" value="{{ $user->name }}" required>
+                                            </div>
+                                            <div class="invalid-feedback d-block" id="error_name"></div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold small text-muted text-uppercase" style="font-size: 0.65rem;">Email Address</label>
+                                            <input type="email" name="email" class="form-control {{ $user->hasAnyRole(['superadmin', 'admin']) ? 'bg-light' : 'bg-body-secondary' }}"
+                                                value="{{ $user->email }}" {{ $user->hasAnyRole(['superadmin', 'admin']) ? '' : 'readonly' }}>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold small text-muted text-uppercase" style="font-size: 0.65rem;">Phone Number</label>
+                                            <input type="text" name="contact_no" class="form-control {{ $user->hasAnyRole(['superadmin', 'admin']) ? 'bg-light' : 'bg-body-secondary' }}"
+                                                value="{{ $user->contact_no ?? $user->phone_number ?? '' }}" {{ $user->hasAnyRole(['superadmin', 'admin']) ? '' : 'readonly' }}>
+                                        </div>
+                                        @unless($user->hasAnyRole(['superadmin', 'admin']))
+                                            <div class="col-12">
+                                                <div class="alert alert-info border-0 py-2 small mb-0 d-flex align-items-center">
+                                                    <i class="fa fa-info-circle me-2"></i> Contact your administrator to update email or phone.
+                                                </div>
+                                            </div>
+                                        @endunless
+                                        @if($user->hasRole('fieldstaff'))
+                                            <div class="col-md-6 mt-3">
+                                                <label class="form-label fw-bold small text-muted text-uppercase" style="font-size: 0.65rem;">Father's Name</label>
+                                                <input type="text" name="fathers_name" class="form-control bg-light" value="{{ $user->fathers_name }}">
+                                            </div>
+                                            <div class="col-md-6 mt-3">
+                                                <label class="form-label fw-bold small text-muted text-uppercase" style="font-size: 0.65rem;">Mother's Name</label>
+                                                <input type="text" name="mothers_name" class="form-control bg-light" value="{{ $user->mothers_name }}">
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <!-- Tab: Business Details -->
+                                @if($user->hasRole('retailer') || $user->hasRole('distributor'))
+                                    <div class="tab-pane fade" id="pills-business" role="tabpanel" aria-labelledby="pills-business-tab">
+                                        <div class="row g-3">
+                                            @if($user->hasRole('retailer'))
+                                                <div class="col-12">
+                                                    <label class="form-label fw-bold small text-muted text-uppercase" style="font-size: 0.65rem;">Shop Name</label>
+                                                    <input type="text" name="shop_name" class="form-control bg-light" value="{{ $user->retailer->shop_name ?? '' }}">
+                                                </div>
+                                            @endif
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-bold small text-muted text-uppercase" style="font-size: 0.65rem;">Drug License No.</label>
+                                                <input type="text" name="drug_license_no" class="form-control bg-light" 
+                                                    value="{{ $user->hasRole('retailer') ? ($user->retailer->drug_license_no ?? '') : ($user->distributor->drug_license_no ?? '') }}">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-bold small text-muted text-uppercase" style="font-size: 0.65rem;">GST Number</label>
+                                                <input type="text" name="gst" class="form-control bg-light" 
+                                                    value="{{ $user->hasRole('retailer') ? ($user->retailer->gst ?? '') : ($user->distributor->gst ?? '') }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <div class="tab-pane fade" id="pills-location" role="tabpanel" aria-labelledby="pills-location-tab">
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <label class="form-label fw-bold small text-muted text-uppercase" style="font-size: 0.65rem;">Street Address</label>
+                                            <textarea name="address" class="form-control bg-light" rows="3">{{ $user->address }}</textarea>
+                                        </div>
+                                        @if(!$user->hasAnyRole(['admin', 'superadmin']))
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-bold small text-muted text-uppercase" style="font-size: 0.65rem;">Assigned District</label>
+                                                <div class="form-control bg-body-secondary text-muted border-0 fw-bold">
+                                                    @php
+                                                        $districtName = 'N/A';
+                                                        if ($user->hasRole('retailer') && $user->retailer && $user->retailer->district) {
+                                                            $districtName = $user->retailer->district->name;
+                                                        } elseif ($user->hasRole('distributor') && $user->distributor && $user->distributor->district) {
+                                                            $districtName = $user->distributor->district->name;
+                                                        }
+                                                    @endphp
+                                                    <i class="fa fa-lock me-2 small"></i> {{ $districtName }}
+                                                </div>
+                                            </div>
+                                        @endif
+                                        <div class="{{ $user->hasAnyRole(['admin', 'superadmin']) ? 'col-12' : 'col-md-6' }}">
+                                            <label class="form-label fw-bold small text-muted text-uppercase" style="font-size: 0.65rem;">Pincode</label>
+                                            <input type="text" name="pincode" class="form-control bg-light" value="{{ $user->pincode ?? '' }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Tab: Security -->
+                                @if($user->hasAnyRole(['superadmin', 'admin']))
+                                    <div class="tab-pane fade" id="pills-security" role="tabpanel" aria-labelledby="pills-security-tab">
+                                        <div class="mb-4">
+                                            <label class="form-label fw-bold small text-muted text-uppercase" style="font-size: 0.65rem;">Current Password</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border-end-0"><i class="fa fa-lock text-muted"></i></span>
+                                                <input type="password" name="current_password" id="current_password" class="form-control bg-light border-start-0" 
+                                                    placeholder="Type current password" autocomplete="new-password">
+                                                <span class="input-group-text bg-light cursor-pointer toggle-password border-start-0" data-target="current_password"><i class="fa fa-eye-slash"></i></span>
+                                            </div>
+                                            <div class="text-danger small mt-1" id="error_current_password" style="display:none;"></div>
+                                        </div>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-bold small text-muted text-uppercase" style="font-size: 0.65rem;">New Password</label>
+                                                <div class="input-group">
+                                                    <input type="password" name="new_password" id="new_password" class="form-control bg-light" autocomplete="new-password">
+                                                    <span class="input-group-text bg-light cursor-pointer toggle-password" data-target="new_password"><i class="fa fa-eye-slash"></i></span>
+                                                </div>
+                                                <div class="text-danger small mt-1" id="error_new_password" style="display:none;"></div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-bold small text-muted text-uppercase" style="font-size: 0.65rem;">Confirm Password</label>
+                                                <div class="input-group">
+                                                    <input type="password" name="new_password_confirmation" id="new_password_confirmation" class="form-control bg-light" autocomplete="new-password">
+                                                    <span class="input-group-text bg-light cursor-pointer toggle-password" data-target="new_password_confirmation"><i class="fa fa-eye-slash"></i></span>
+                                                </div>
+                                                <div class="text-danger small mt-1" id="error_confirm_password" style="display:none;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="modal-footer border-0 p-4 pt-0 bg-white">
+                                <button type="button" class="btn btn-light btn-sm px-4" data-bs-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary btn-sm px-5 fw-bold shadow-sm rounded-pill">
+                                    Update Profile
+                                </button>
                             </div>
                         </div>
-                    </div>
-                    <div class="modal-footer bg-card-theme border-top border-theme py-2 px-3">
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary btn-sm px-4"><i class="fa fa-save me-1"></i>
-                            Save</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
+
+    <style>
+        .custom-profile-tabs-top .nav-link {
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 0.8rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+        }
+        .custom-profile-tabs-top .nav-link:hover {
+            background: #e9ecef;
+            color: #212529;
+        }
+        .custom-profile-tabs-top .nav-link.active {
+            background-color: #fff !important;
+            color: var(--med-primary) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .bg-soft-primary { background-color: rgba(13, 110, 253, 0.1); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 @endsection
 
 @push('scripts')
@@ -461,31 +540,21 @@
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const img = document.getElementById('modal_avatar_preview');
-                    if (img) {
-                        img.src = e.target.result;
-                        document.getElementById('remove_profile_pic').value = '0';
-                        document.getElementById('btn_remove_pic').style.display = 'inline-flex';
-                    }
+                    $('#modal_avatar_preview').attr('src', e.target.result);
+                    $('#sidebar_avatar_preview').attr('src', e.target.result);
+                    $('#remove_pic_container').show();
+                    $('#remove_profile_pic').val('0');
                 }
                 reader.readAsDataURL(input.files[0]);
             }
         }
 
         function removeProfilePic() {
-            const currentSrc = document.getElementById('modal_avatar_preview').src;
-            const hasNoImage = currentSrc.includes('ui-avatars.com') && document.getElementById('profile_pic').value === '';
-
-            if (hasNoImage) {
-                alert('No profile picture to remove. Please upload an image first.');
-                return;
-            }
-
             if (confirm('Are you sure you want to remove your profile picture?')) {
-                document.getElementById('remove_profile_pic').value = '1';
-                document.getElementById('profile_pic').value = '';
-                document.getElementById('modal_avatar_preview').src = 'https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&color=FFFFFF&background={{ $user->avatar_background ?? '374151' }}';
-                document.getElementById('btn_remove_pic').style.display = 'none';
+                $('#remove_profile_pic').val('1');
+                $('#profile_pic').val('');
+                $('#modal_avatar_preview').attr('src', 'https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&color=FFFFFF&background={{ $user->avatar_background ?? '374151' }}');
+                $('#remove_pic_container').hide();
             }
         }
         // AJAX Form Submission
@@ -587,6 +656,74 @@
                 $(this).addClass('is-invalid');
             } else {
                 errorDiv.text('');
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        // Password Visibility Toggle
+        $(document).on('click', '.toggle-password', function() {
+            let targetId = $(this).data('target');
+            let input = targetId ? $('#' + targetId) : $(this).parent().find('input');
+            let icon = $(this).find('i');
+            
+            if (input.attr('type') === 'password') {
+                input.attr('type', 'text');
+                icon.removeClass('fa-eye-slash').addClass('fa-eye');
+            } else {
+                input.attr('type', 'password');
+                icon.removeClass('fa-eye').addClass('fa-eye-slash');
+            }
+        });
+
+        // Live Password Validation
+        $('#current_password').on('blur', function() {
+            let val = $(this).val();
+            if (val.length > 0) {
+                $.post('{{ route("profile.check-password") }}', {
+                    _token: '{{ csrf_token() }}',
+                    current_password: val
+                }, function(response) {
+                    if (!response.valid) {
+                        $('#error_current_password').text(response.message).show();
+                        $('#current_password').addClass('is-invalid');
+                    } else {
+                        $('#error_current_password').text('').hide();
+                        $('#current_password').removeClass('is-invalid');
+                    }
+                });
+            } else {
+                $('#error_current_password').hide();
+                $('#current_password').removeClass('is-invalid');
+            }
+        });
+
+        $('#new_password').on('focus input', function() {
+            let curVal = $('#current_password').val();
+            if (curVal.length === 0) {
+                $('#error_current_password').text('Please enter your current password first.').show();
+                $('#current_password').addClass('is-invalid');
+            }
+        });
+
+        $('#new_password').on('blur', function() {
+            let val = $(this).val();
+            if (val.length > 0 && val.length < 6) {
+                $('#error_new_password').text('Password must be at least 6 characters.').show();
+                $(this).addClass('is-invalid');
+            } else {
+                $('#error_new_password').hide();
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        $('#new_password_confirmation').on('input blur', function() {
+            let val = $(this).val();
+            let target = $('#new_password').val();
+            if (val.length > 0 && val !== target) {
+                $('#error_confirm_password').text('Passwords do not match.').show();
+                $(this).addClass('is-invalid');
+            } else {
+                $('#error_confirm_password').hide();
                 $(this).removeClass('is-invalid');
             }
         });

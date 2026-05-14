@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class ProfileController extends Controller
 {
@@ -12,6 +14,19 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
         return view('profile.index', compact('user'));
+    }
+
+    public function checkPassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required'
+        ]);
+
+        if (Hash::check($request->current_password, auth()->user()->password)) {
+            return response()->json(['valid' => true]);
+        }
+
+        return response()->json(['valid' => false, 'message' => 'The current password you entered is incorrect.']);
     }
 
     public function update(Request $request)
@@ -22,7 +37,6 @@ class ProfileController extends Controller
             'name' => 'required|string|max:255',
             'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
             'address' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
             'pincode' => 'nullable|string|max:20',
         ];
 
@@ -49,6 +63,16 @@ class ProfileController extends Controller
                     'required', 'email', 'unique:users,email,' . $user->id,
                     'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
                 ];
+
+                // Password change logic for admins
+                if ($request->filled('new_password')) {
+                    $rules['current_password'] = ['required', function ($attribute, $value, $fail) use ($user) {
+                        if (!Hash::check($value, $user->password)) {
+                            $fail('The current password you entered is incorrect.');
+                        }
+                    }];
+                    $rules['new_password'] = 'required|string|min:8|confirmed';
+                }
             }
         }
 
@@ -57,7 +81,6 @@ class ProfileController extends Controller
         // Update User Common Fields
         $user->name = $request->name;
         $user->address = $request->address;
-        $user->city = $request->city;
         $user->pincode = $request->pincode;
         if (!$user->hasRole('distributor')) {
             $user->fathers_name = $request->fathers_name;
@@ -68,6 +91,11 @@ class ProfileController extends Controller
             $user->contact_no = $request->contact_no;
             if ($user->hasAnyRole(['superadmin', 'admin'])) {
                 $user->email = $request->email;
+                
+                // Update password if provided
+                if ($request->filled('new_password')) {
+                    $user->password = Hash::make($request->new_password);
+                }
             }
         }
 

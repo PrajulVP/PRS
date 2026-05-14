@@ -26,7 +26,7 @@ class ReturnApiController extends Controller
      *     tags={"Returns"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="order_type", in="query", required=false, @OA\Schema(type="string", enum={"retailer", "distributor"}), description="Filter by order type"),
-     *     @OA\Parameter(name="status", in="query", required=false, @OA\Schema(type="string"), description="Filter by status (pending, verified, completed, rejected)"),
+     *     @OA\Parameter(name="status", in="query", required=false, @OA\Schema(type="string"), description="Filter by status (pending, verified, completed, rejected, all)"),
      *     @OA\Parameter(name="brand", in="query", required=false, @OA\Schema(type="string"), description="Filter by product brand"),
      *     @OA\Parameter(name="product_id", in="query", required=false, @OA\Schema(type="integer"), description="Filter by product ID"),
      *     @OA\Parameter(name="date_from", in="query", required=false, @OA\Schema(type="string", format="date"), description="Start date (YYYY-MM-DD)"),
@@ -68,7 +68,7 @@ class ReturnApiController extends Controller
             $query->where('order_type', $request->order_type);
         }
         
-        if ($request->filled('status')) {
+        if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
 
@@ -262,13 +262,18 @@ class ReturnApiController extends Controller
             DB::beginTransaction();
 
             if ($returnRequest->order_type === 'retailer') {
-                if ($user->hasRole('fieldstaff') && $returnRequest->status === 'pending') {
+                $isTier1User = $user->hasRole('fieldstaff') || $user->hasAnyRole(['admin', 'superadmin']);
+                $isAdmin = $user->hasAnyRole(['admin', 'superadmin']);
+                $isDistributor = $user->hasRole('distributor') && $returnRequest->distributor_id == $user->distributor?->id;
+
+                if ($isTier1User && $returnRequest->status === 'pending') {
                     $returnRequest->update([
                         'status' => 'verified',
                         'verified_at' => now(),
                         'verified_by' => $user->id,
                     ]);
-                } elseif ($user->hasRole('distributor') && $returnRequest->status === 'verified') {
+                } elseif (($isAdmin && ($returnRequest->status === 'verified' || $returnRequest->status === 'pending')) || 
+                          ($isDistributor && $returnRequest->status === 'verified')) {
                     $returnRequest->update([
                         'status' => 'completed',
                         'distributor_approved_at' => now(),
@@ -281,13 +286,16 @@ class ReturnApiController extends Controller
                     return response()->json(['error' => 'Unauthorized or invalid status for approval.'], 403);
                 }
             } else { // distributor return
-                if ($user->hasRole('salesmanager') && $returnRequest->status === 'pending') {
+                $isSM = $user->hasRole('salesmanager') && $returnRequest->sales_manager_id == $user->salesManager?->id;
+                $isAdmin = $user->hasAnyRole(['admin', 'superadmin']);
+
+                if (($isSM || $isAdmin) && $returnRequest->status === 'pending') {
                     $returnRequest->update([
                         'status' => 'verified',
                         'verified_at' => now(),
                         'verified_by' => $user->id,
                     ]);
-                } elseif ($user->hasAnyRole(['admin', 'superadmin']) && $returnRequest->status === 'verified') {
+                } elseif ($isAdmin && ($returnRequest->status === 'verified' || $returnRequest->status === 'pending')) {
                     $returnRequest->update([
                         'status' => 'completed',
                         'admin_approved_at' => now(),

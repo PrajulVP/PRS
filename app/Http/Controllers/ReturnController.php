@@ -256,16 +256,16 @@ class ReturnController extends Controller
             DB::beginTransaction();
 
             if ($returnRequest->order_type === 'retailer') {
-                // Tier 1: Field Staff
-                if ($user->hasRole('fieldstaff') && $returnRequest->status === 'pending') {
+                // Tier 1: Field Staff (or Admin override)
+                if (($user->hasRole('fieldstaff') || $user->hasAnyRole(['admin', 'superadmin'])) && $returnRequest->status === 'pending') {
                     $returnRequest->update([
                         'status' => 'verified',
                         'verified_at' => now(),
                         'verified_by' => $user->id,
                     ]);
                 }
-                // Tier 2: Distributor
-                elseif ($user->hasRole('distributor') && $returnRequest->status === 'verified') {
+                // Tier 2: Distributor (or Admin override)
+                elseif (($user->hasRole('distributor') || $user->hasAnyRole(['admin', 'superadmin'])) && $returnRequest->status === 'verified') {
                     $returnRequest->update([
                         'status' => 'completed',
                         'distributor_approved_at' => now(),

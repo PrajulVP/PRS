@@ -54,6 +54,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/check-password', [ProfileController::class, 'checkPassword'])->name('profile.check-password');
 
     Route::resource('districts', DistrictController::class);
     Route::resource('areas', AreaController::class);
