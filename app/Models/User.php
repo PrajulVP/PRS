@@ -18,6 +18,7 @@ class User extends Authenticatable implements JWTSubject
     use HasFactory, Notifiable, HasRoles; // Added HasRoles here
 
     protected $guard_name = 'web';
+    protected $appends = ['avatar_url', 'avatar'];
 
     /**
      * The attributes that are mass assignable.
@@ -296,6 +297,11 @@ class User extends Authenticatable implements JWTSubject
         $color = 'FFFFFF'; // White Text
 
         return "https://ui-avatars.com/api/?name={$name}&color={$color}&background={$background}";
+    }
+
+    public function getAvatarAttribute()
+    {
+        return $this->avatar_url;
     }
 
     public function getJWTCustomClaims()

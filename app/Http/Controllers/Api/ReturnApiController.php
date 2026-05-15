@@ -228,6 +228,24 @@ class ReturnApiController extends Controller
             ]);
 
             DB::commit();
+
+            // Notify respective manager/staff
+            if ($returnRequest->order_type === 'retailer') {
+                if ($returnRequest->field_staff_id) {
+                    $fsUser = \App\Models\FieldStaff::find($returnRequest->field_staff_id)?->user;
+                    if ($fsUser) $fsUser->notify(new \App\Notifications\ReturnRequestNotification($returnRequest, 'created', $user));
+                }
+                if ($returnRequest->distributor_id) {
+                    $distUser = \App\Models\Distributor::find($returnRequest->distributor_id)?->user;
+                    if ($distUser) $distUser->notify(new \App\Notifications\ReturnRequestNotification($returnRequest, 'created', $user));
+                }
+            } elseif ($returnRequest->order_type === 'distributor') {
+                if ($returnRequest->sales_manager_id) {
+                    $smUser = \App\Models\SalesManager::find($returnRequest->sales_manager_id)?->user;
+                    if ($smUser) $smUser->notify(new \App\Notifications\ReturnRequestNotification($returnRequest, 'created', $user));
+                }
+            }
+
             return response()->json(['success' => 'Return request submitted successfully.', 'data' => $returnRequest]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -310,6 +328,25 @@ class ReturnApiController extends Controller
             }
 
             DB::commit();
+
+            // Send Notifications after successful state change
+            if ($returnRequest->status === 'verified') {
+                $nextRecipient = null;
+                if ($returnRequest->order_type === 'retailer' && $returnRequest->distributor_id) {
+                    $nextRecipient = \App\Models\User::where('id', function($q) use ($returnRequest) {
+                        $q->select('user_id')->from('distributors')->where('id', $returnRequest->distributor_id);
+                    })->first();
+                } elseif ($returnRequest->order_type === 'distributor') {
+                    $nextRecipients = \App\Models\User::role(['admin', 'superadmin'])->get();
+                    foreach ($nextRecipients as $recipient) {
+                        $recipient->notify(new \App\Notifications\ReturnRequestNotification($returnRequest, 'approved', $user));
+                    }
+                }
+                if ($nextRecipient) $nextRecipient->notify(new \App\Notifications\ReturnRequestNotification($returnRequest, 'approved', $user));
+            } elseif ($returnRequest->status === 'completed') {
+                $returnRequest->user->notify(new \App\Notifications\ReturnRequestNotification($returnRequest, 'completed', $user));
+            }
+
             return response()->json(['success' => 'Return request approved.', 'data' => $returnRequest]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -408,6 +445,8 @@ class ReturnApiController extends Controller
             'rejection_reason' => $request->reason,
             'rejected_by' => $user->id,
         ]);
+
+        $returnRequest->user->notify(new \App\Notifications\ReturnRequestNotification($returnRequest, 'rejected', $user));
 
         return response()->json(['success' => 'Return request rejected.']);
     }

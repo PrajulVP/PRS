@@ -187,21 +187,6 @@
                                 <label class="form-label">Address</label>
                                 <textarea name="address" class="form-control" rows="2" required></textarea>
                             </div>
-                            {{-- 
-                            <input type="hidden" name="latitude" id="create_lat">
-                            <input type="hidden" name="longitude" id="create_long">
-                            <div class="col-12 mt-3">
-                                <div class="input-group">
-                                    <input id="create_pac-input" class="form-control" type="text"
-                                        placeholder="Search for a location">
-                                    <button type="button" class="btn btn-info"
-                                        onclick="getGeoLocation('create_lat', 'create_long', 'create')"><i
-                                            class="fa fa-map-marker"></i> Get Current Location</button>
-                                </div>
-                                <div id="create_map" style="height: 300px; width: 100%; margin-top: 10px;"></div>
-                            </div>
-                            --}}
-
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -297,20 +282,6 @@
                                 <textarea name="address" id="edit_address" class="form-control" rows="2"
                                     required></textarea>
                             </div>
-                            {{-- 
-                            <input type="hidden" name="latitude" id="edit_latitude">
-                            <input type="hidden" name="longitude" id="edit_longitude">
-                            <div class="col-12 mt-3">
-                                <div class="input-group">
-                                    <input id="edit_pac-input" class="form-control" type="text"
-                                        placeholder="Search for a location">
-                                    <button type="button" class="btn btn-info"
-                                        onclick="getGeoLocation('edit_latitude', 'edit_longitude', 'edit')"><i
-                                            class="fa fa-map-marker"></i> Get Current Location</button>
-                                </div>
-                                <div id="edit_map" style="height: 300px; width: 100%; margin-top: 10px;"></div>
-                            </div>
-                            --}}
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -333,11 +304,10 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-0">
-                    {{-- Avatar + Name Header --}}
                     <div class="d-flex align-items-center gap-4 p-4"
                         style="background: var(--med-bg-body); border-bottom:1px solid var(--med-border);">
                         <div style="flex-shrink:0;">
-                            <img id="dist_avatar_img" src="" alt="" class="rounded-circle shadow"
+                            <img id="dist_avatar_img" src="" alt="" class="rounded-circle shadow zoomable-avatar"
                                 style="width:85px;height:85px;object-fit:cover;display:none;border:3px solid #fff;">
                             <div id="dist_avatar_initials"
                                 style="width:85px;height:85px;border-radius:50%;display:flex;align-items:center;justify-content:center;
@@ -352,11 +322,7 @@
                             </div>
                             <div class="mt-1 text-muted small" id="dist_view_manager"></div>
                         </div>
-                        <div class="text-end">
-                            {{-- Badge moved to name part --}}
-                        </div>
                     </div>
-                    {{-- Info Cards --}}
                     <div class="p-4">
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -430,11 +396,6 @@
                                 </div>
                             </div>
                         </div>
-                        {{-- 
-                        <hr class="my-4">
-                        <h6 class="mb-3"><i class="fa fa-map-marker-alt me-2"></i>Location on Map</h6>
-                        <div id="show_map" style="height:300px;width:100%;border-radius:12px;border:1px solid #eee;"></div>
-                        --}}
                     </div>
                 </div>
                 <div class="modal-footer border-0" style="background: var(--med-bg-body);">
@@ -464,57 +425,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        // Global Map Variables
-        var createMap, editMap, showMap;
-        var createMarker, editMarker, showMarker;
-
-        function initMap() {
-            const createMapDiv = document.getElementById("create_map");
-            if (!createMapDiv) return;
-
-            const defaultLoc = { lat: 20.5937, lng: 78.9629 };
-
-            createMap = new google.maps.Map(createMapDiv, {
-                zoom: 5,
-                center: defaultLoc,
-                mapId: "DEMO_MAP_ID",
-            });
-            createMarker = new google.maps.marker.AdvancedMarkerElement({
-                position: defaultLoc,
-                map: createMap,
-                gmpDraggable: true,
-            });
-            createMarker.addListener("dragend", () => {
-                const pos = createMarker.position;
-                let lat = (typeof pos.lat === 'function') ? pos.lat() : pos.lat;
-                let lng = (typeof pos.lng === 'function') ? pos.lng() : pos.lng;
-                document.getElementById("create_lat").value = lat;
-                document.getElementById("create_long").value = lng;
-            });
-            createMap.addListener("click", (e) => {
-                createMarker.position = e.latLng;
-                document.getElementById("create_lat").value = e.latLng.lat();
-                document.getElementById("create_long").value = e.latLng.lng();
-            });
-
-            const createInput = document.getElementById("create_pac-input");
-            const createAutocomplete = new google.maps.places.Autocomplete(createInput);
-            createAutocomplete.bindTo("bounds", createMap);
-            createAutocomplete.addListener("place_changed", () => {
-                const place = createAutocomplete.getPlace();
-                if (!place.geometry || !place.geometry.location) return;
-                if (place.geometry.viewport) createMap.fitBounds(place.geometry.viewport);
-                else {
-                    createMap.setCenter(place.geometry.location);
-                    createMap.setZoom(17);
-                }
-                createMarker.position = place.geometry.location;
-                document.getElementById("create_lat").value = place.geometry.location.lat();
-                document.getElementById("create_long").value = place.geometry.location.lng();
-            });
-        }
-        window.initMap = initMap;
-
         function fetchAreas(districtId, areaSelect, selectedAreaId = null) {
             areaSelect.html('<option value="">Loading...</option>');
             if (!districtId) {
@@ -530,10 +440,7 @@
             }).fail(() => areaSelect.html('<option value="">Error loading areas</option>'));
         }
 
-        function getGeoLocation(latId, longId, mapType) {}
-
         $(document).ready(function () {
-            const canActivate = @json(Auth::user()->hasRole('superadmin'));
             var table = $('#distributors-table').DataTable({
                 processing: true,
                 serverSide: true,
@@ -545,7 +452,7 @@
                     }
                 },
                 columns: [
-                    { data: null, orderable: false, searchable: false, render: (data, type, row, meta) => meta.row + meta.settings._iDisplayStart + 1 },
+                    { data: 'id', name: 'id', render: (data, type, row, meta) => meta.row + meta.settings._iDisplayStart + 1 },
                     { data: 'name', name: 'name' },
                     { 
                         data: 'sales_manager', name: 'salesManager.user.name', orderable: false,

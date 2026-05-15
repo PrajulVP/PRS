@@ -370,7 +370,7 @@
                     <div class="d-flex align-items-center gap-4 p-4"
                         style="background: var(--med-bg-body); border-bottom:1px solid var(--med-border);">
                         <div style="flex-shrink:0;">
-                            <img id="ret_avatar_img" src="" alt="" class="rounded-circle shadow"
+                            <img id="ret_avatar_img" src="" alt="" class="rounded-circle shadow zoomable-avatar"
                                 style="width:85px;height:85px;object-fit:cover;display:none;border:3px solid #fff;">
                             <div id="ret_avatar_initials"
                                 style="width:85px;height:85px;border-radius:50%;display:flex;align-items:center;justify-content:center;
@@ -385,30 +385,16 @@
                             </div>
                             <div class="mt-1 text-muted small" id="ret_view_owner"></div>
                         </div>
-                            <div class="d-flex flex-column gap-2 align-items-end">
-                                <div class="loyalty-badge-modern shadow-sm rounded-4 py-2 px-4 d-inline-flex align-items-center gap-3" 
-                                     style="background: linear-gradient(135deg, #059669, #10b981); border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 4px 15px rgba(16,185,129,0.2) !important; min-width: 180px;">
-                                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
-                                         style="width: 38px; height: 38px; background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.3);">
-                                        <i class="fa fa-star text-white fs-5"></i>
-                                    </div>
-                                    <div class="text-start">
-                                        <div class="text-white opacity-80 small fw-bold text-uppercase" style="font-size: 0.55rem; letter-spacing: 1.2px; line-height: 1; margin-bottom: 3px;">Loyalty Pts</div>
-                                        <div class="text-white fw-bold fs-4 mb-0" id="ret_header_points" style="line-height: 1; letter-spacing: -0.5px;">0.00</div>
-                                    </div>
-                                </div>
-                                <div class="credit-badge-modern shadow-sm rounded-4 py-2 px-4 d-inline-flex align-items-center gap-3" 
-                                     style="background: linear-gradient(135deg, #0284c7, #0ea5e9); border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 4px 15px rgba(14,165,233,0.2) !important; min-width: 180px;">
-                                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
-                                         style="width: 38px; height: 38px; background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.3);">
-                                        <i class="fa fa-wallet text-white fs-5"></i>
-                                    </div>
-                                    <div class="text-start">
-                                        <div class="text-white opacity-80 small fw-bold text-uppercase" style="font-size: 0.55rem; letter-spacing: 1.2px; line-height: 1; margin-bottom: 3px;">Credit Wallet</div>
-                                        <div class="text-white fw-bold fs-4 mb-0" id="ret_header_credits" style="line-height: 1; letter-spacing: -0.5px;">₹0.00</div>
-                                    </div>
-                                </div>
+                        <div class="d-flex flex-column gap-2 align-items-end">
+                            <div class="bg-white p-2 px-3 rounded-3 border shadow-sm" style="min-width: 140px;">
+                                <div class="text-muted fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">Loyalty Pts</div>
+                                <div class="fw-bold text-dark" id="ret_header_points" style="font-size: 1.1rem; line-height: 1.2;">0.00</div>
                             </div>
+                            <div class="bg-white p-2 px-3 rounded-3 border shadow-sm" style="min-width: 140px;">
+                                <div class="text-muted fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">Credit Wallet</div>
+                                <div class="fw-bold text-dark" id="ret_header_credits" style="font-size: 1.1rem; line-height: 1.2;">₹0.00</div>
+                            </div>
+                        </div>
                     </div>
                     {{-- Info Cards --}}
                     <div class="p-4">

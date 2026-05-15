@@ -344,7 +344,7 @@
                     <div class="d-flex align-items-center gap-4 p-4"
                         style="background: var(--med-bg-body); border-bottom:1px solid var(--med-border);">
                         <div style="flex-shrink:0;">
-                            <img id="fs_avatar_img" src="" alt="" class="rounded-circle shadow"
+                            <img id="fs_avatar_img" src="" alt="" class="rounded-circle shadow zoomable-avatar"
                                 style="width:85px;height:85px;object-fit:cover;display:none;border:3px solid #fff;">
                             <div id="fs_avatar_initials"
                                 style="width:85px;height:85px;border-radius:50%;display:flex;align-items:center;justify-content:center;

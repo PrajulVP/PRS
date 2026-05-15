@@ -312,7 +312,7 @@
                                 <i class="fa fa-arrow-left me-1"></i> Back to History
                             </button>
                         </div>
-                        <div class="mb-3 px-3 py-2 bg-light rounded-3 border-start border-primary border-4" id="selectedOrderMeta">
+                        <div class="mb-3 px-3 py-2 bg-light-theme rounded-3 border-start border-primary border-4" id="selectedOrderMeta">
                             {{-- Order details like Distributor, Date etc. injected here --}}
                         </div>
                         <div class="table-responsive rounded-3 border">
@@ -566,7 +566,7 @@ $(document).ready(function() {
             { 
                 data: 'product_name',
                 render: function(data, type, row) {
-                    let variant = [row.side, row.size].filter(v => v).join(' / ');
+                    let variant = [row.side, row.size].filter(v => v && !['Both', 'None', 'NA', 'Universal'].includes(v)).join(' / ');
                     return `<div>
                         <div class="fw-bold text-main-theme small" style="max-width: 150px; white-space: normal; line-height: 1.2;">${data}</div>
                         ${variant ? `<span class="badge bg-soft-info text-info border-0 px-2 mt-1" style="font-size: 0.6rem;">${variant}</span>` : ''}
@@ -634,7 +634,7 @@ $(document).ready(function() {
                 }
             }
         ],
-        order: [[0, 'desc']],
+        order: [],
         dom: '<"d-flex flex-column flex-md-row justify-content-between align-items-center p-3 gap-3"<"d-flex align-items-center"l><"d-flex align-items-center"B><"d-flex align-items-center"f>>t<"d-flex justify-content-between align-items-center p-3"ip>',
         buttons: [
             {
@@ -699,7 +699,7 @@ $(document).ready(function() {
         }
         $('#viewStatusBadge').html(statusBadge);
         
-        let variant = [row.side, row.size].filter(v => v).join(' / ');
+        let variant = [row.side, row.size].filter(v => v && !['Both', 'None', 'NA', 'Universal'].includes(v)).join(' / ');
         $('#viewProductVariant').html(variant ? `<span class="badge bg-soft-info text-info border-0">${variant}</span>` : '');
         
         let unit = row.unit;
@@ -1065,7 +1065,7 @@ $(document).ready(function() {
                             <span class="badge bg-primary rounded-pill px-3">${res.order.order_code}</span>
                         </div>
                         <div class="col">
-                            <div class="d-flex flex-wrap gap-3" style="font-size: 0.75rem;">
+                            <div class="d-flex flex-wrap gap-3 text-main-theme" style="font-size: 0.75rem;">
                                 <span><i class="fa fa-truck me-1 text-muted"></i><strong>Distro:</strong> ${res.order.distributor_name}</span>
                                 <span><i class="fa fa-calendar me-1 text-muted"></i><strong>Date:</strong> ${res.order.delivered_at}</span>
                             </div>
@@ -1111,7 +1111,7 @@ $(document).ready(function() {
                             <span class="badge bg-primary rounded-pill px-3">${res.order.order_code}</span>
                         </div>
                         <div class="col">
-                            <div class="d-flex flex-wrap gap-3" style="font-size: 0.75rem;">
+                            <div class="d-flex flex-wrap gap-3 text-main-theme" style="font-size: 0.75rem;">
                                 <span><i class="fa fa-truck me-1 text-muted"></i><strong>Distro:</strong> ${res.order.distributor_name}</span>
                                 <span><i class="fa fa-calendar me-1 text-muted"></i><strong>Date:</strong> ${res.order.delivered_at}</span>
                             </div>
@@ -1332,6 +1332,11 @@ body.dark-only {
     --bg-card: #1e293b;
     --text-main: #f8fafc;
 }
+
+#selectedOrderMeta .text-muted { color: var(--login-muted) !important; }
+body.dark-only #selectedOrderMeta .text-muted { color: #94a3b8 !important; }
+#selectedOrderMeta strong { color: var(--login-text); }
+body.dark-only #selectedOrderMeta strong { color: #f8fafc; }
 
 .bg-card-theme { background-color: #ffffff; }
 .bg-light-theme { background-color: #f8f9fa; }

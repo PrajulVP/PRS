@@ -440,6 +440,17 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
+
+        body.dark-only .meta-capsule, .dark-only .meta-capsule {
+            background: rgba(30, 41, 59, 0.7) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            color: #f1f5f9 !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+        }
+
+        body.dark-only .meta-capsule i {
+            color: var(--med-primary) !important;
+        }
         .meta-capsule i {
             font-size: 1rem;
             opacity: 1;

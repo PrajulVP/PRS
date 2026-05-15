@@ -252,7 +252,7 @@
                             <label class="form-label fw-bold small mb-2">Profile Picture</label>
                             <div class="d-flex align-items-center gap-3 mb-2">
                                 <div class="position-relative">
-                                    <img id="edit_avatar_preview" src="" alt="" class="rounded-circle shadow-sm border border-2 border-white" style="width:60px;height:60px;object-fit:cover;display:none;">
+                                    <img id="edit_avatar_preview" src="" alt="" class="rounded-circle shadow-sm border border-2 border-white zoomable-avatar" style="width:60px;height:60px;object-fit:cover;display:none;">
                                     <div id="edit_avatar_initials_preview" class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="width:60px;height:60px;display:none;background:#374151; font-size: 1.2rem;"></div>
                                     <button type="button" id="btn_remove_edit_pic" class="position-absolute top-0 end-0 bg-white text-danger shadow-sm rounded-circle p-0 d-flex align-items-center justify-content-center" style="width:22px;height:22px; border: 1px solid #dee2e6; transform: translate(5px, -5px); display:none;" onclick="removeEditUserPic()">
                                         <i class="fa fa-times" style="font-size: 11px;"></i>
@@ -286,7 +286,7 @@
                     <div class="d-flex align-items-center gap-4 p-4"
                         style="background: var(--med-bg-body); border-bottom: 1px solid var(--med-border);">
                         <div id="view_avatar_wrap" style="flex-shrink:0;">
-                            <img id="view_avatar_img" src="" alt="" class="rounded-circle shadow"
+                            <img id="view_avatar_img" src="" alt="" class="rounded-circle shadow zoomable-avatar"
                                 style="width:90px;height:90px;object-fit:cover;display:none;border:3px solid #fff;">
                             <div id="view_avatar_initials"
                                 style="width:90px;height:90px;border-radius:50%;display:flex;align-items:center;justify-content:center;

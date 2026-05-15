@@ -1207,6 +1207,22 @@
                 border-bottom: 1px solid #eee !important;
             }
         }
+        /* Image Zoom Feature */
+        .zoomable-avatar { cursor: zoom-in; transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .zoomable-avatar:hover { transform: scale(1.05); filter: brightness(0.9); }
+        #imageZoomModal { backdrop-filter: blur(10px); background-color: rgba(0,0,0,0.85) !important; }
+        #imageZoomModal .modal-dialog { background: transparent !important; border: none !important; box-shadow: none !important; }
+        #imageZoomModal .zoomed-img { 
+            max-width: 85vw; 
+            max-height: 85vh; 
+            object-fit: contain; 
+            border-radius: 4px; 
+            box-shadow: 0 0 100px rgba(0,0,0,0.8);
+            border: none;
+            animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            cursor: pointer;
+        }
+        @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 
@@ -1241,6 +1257,29 @@
         @include('layouts.partials.scripts')
 
         @stack('scripts')
+
+        {{-- Global Image Zoom Modal --}}
+        <div class="modal fade" id="imageZoomModal" tabindex="-1" aria-hidden="true" data-bs-dismiss="modal">
+            <div class="modal-dialog modal-dialog-centered" style="max-width: fit-content !important; background: transparent !important; border: none !important; box-shadow: none !important;">
+                <img src="" id="zoomPreviewImg" class="zoomed-img" alt="Zoomed Preview" style="display: block; margin: auto;">
+            </div>
+        </div>
+
+        <script>
+            $(document).on('click', '.zoomable-avatar', function() {
+                let src = $(this).attr('src');
+                // Skip zooming if it's a UI-Avatar (initials)
+                if (src && !src.includes('ui-avatars.com')) {
+                    $('#zoomPreviewImg').attr('src', src);
+                    $('#imageZoomModal').modal('show');
+                }
+            });
+
+            // Close modal when clicking anywhere inside (image or backdrop)
+            $('#imageZoomModal').on('click', function() {
+                $(this).modal('hide');
+            });
+        </script>
         <script>
             // Global Password Toggle Handler
             $(document).on('click', '.toggle-password', function() {
