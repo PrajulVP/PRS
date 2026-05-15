@@ -55,6 +55,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::post('/profile/check-password', [ProfileController::class, 'checkPassword'])->name('profile.check-password');
+    Route::post('/profile/upload-photo', [ProfileController::class, 'uploadPhoto'])->name('profile.upload-photo');
+    Route::post('/profile/remove-photo', [ProfileController::class, 'removePhoto'])->name('profile.remove-photo');
 
     Route::resource('districts', DistrictController::class);
     Route::resource('areas', AreaController::class);
@@ -102,7 +104,10 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('field-staffs/{field_staff}/activate', [FieldStaffController::class, 'activate'])->name('field-staffs.activate');
         Route::patch('field-staffs/{field_staff}/deactivate', [FieldStaffController::class, 'deactivate'])->name('field-staffs.deactivate');
 
-        // Field Staff Specialized Management (Expenses & Leaves)
+        // Field Staff Specialized Management (Tracking, Expenses & Leaves)
+        Route::get('field-staff/tracking', [ReportController::class, 'fieldStaffReports'])->name('field-staff.tracking');
+        Route::get('field-staff/tracking-map', [ReportController::class, 'fieldStaffTracking'])->name('field-staff.tracking-map');
+        Route::get('field-staff/tracking/export', [ReportController::class, 'fieldStaffTrackingExport'])->name('field-staff.tracking.export');
         Route::get('field-staff/expenses', [\App\Http\Controllers\FieldStaffManagementController::class, 'expensesIndex'])->name('field-staff.expenses');
         Route::post('field-staff/expenses/{expense}/status', [\App\Http\Controllers\FieldStaffManagementController::class, 'updateExpenseStatus'])->name('field-staff.expenses.status');
         Route::get('field-staff/leaves', [\App\Http\Controllers\FieldStaffManagementController::class, 'leavesIndex'])->name('field-staff.leaves');
@@ -193,16 +198,14 @@ Route::middleware(['auth'])->group(function () {
 
         // Reports
         Route::prefix('reports')->name('reports.')->group(function () {
-            Route::get('/', [ReportController::class, 'index'])->name('index');
+            Route::get('/executive', [ReportController::class, 'index'])->name('index');
+    Route::get('/', function() { return redirect()->route('admin.reports.index'); });
             Route::get('/orders', [ReportController::class, 'orderReports'])->name('orders');
             Route::get('/distributors', [ReportController::class, 'distributorReports'])->name('distributors');
             Route::get('/retailers', [ReportController::class, 'retailerReports'])->name('retailers');
             Route::get('/products', [ReportController::class, 'productReports'])->name('products');
             Route::get('/brands', [ReportController::class, 'brandReports'])->name('brands');
             Route::get('/areas', [ReportController::class, 'areaReports'])->name('areas');
-            Route::get('/fieldstaffs', [ReportController::class, 'fieldStaffReports'])->name('fieldstaffs');
-            Route::get('/fieldstaffs/tracking', [ReportController::class, 'fieldStaffTracking'])->name('fieldstaff.tracking');
-            Route::get('/fieldstaffs/tracking/export', [ReportController::class, 'fieldStaffTrackingExport'])->name('fieldstaff.tracking.export');
             Route::get('/monitoring', [ReportController::class, 'monitoring'])->name('monitoring');
             Route::get('/monitoring/data', [ReportController::class, 'getMonitoringData'])->name('monitoring.data');
             Route::get('/targets', [ReportController::class, 'targetReports'])->name('targets');

@@ -843,11 +843,12 @@
                                 let name = $(this).attr('name');
                                 $(this).addClass('is-invalid');
                                 // Target specific error div
-                                let errorDiv = $(this).closest('div').find('.invalid-feedback, .error-text').first();
+                                let target = $(this).parent().hasClass('password-field-container') ? $(this).parent() : $(this);
+                                let errorDiv = target.next('.invalid-feedback, .error-text');
                                 if (errorDiv.length) {
                                     errorDiv.text('This field is required.').addClass('d-block');
                                 } else {
-                                    $(this).after('<div class="invalid-feedback d-block">This field is required.</div>');
+                                    target.after('<div class="invalid-feedback d-block">This field is required.</div>');
                                 }
                                 isValid = false;
                             }
@@ -875,7 +876,8 @@
                                 input.addClass('is-invalid');
                                 let errorDiv = form.find(`#${form.attr('id').startsWith('create') ? 'create' : 'edit'}_${key}_error`);
                                 if (errorDiv.length === 0) {
-                                    input.after(`<div class="invalid-feedback d-block">${messages[0]}</div>`);
+                                    let target = input.parent().hasClass('password-field-container') ? input.parent() : input;
+                                    target.after(`<div class="invalid-feedback d-block">${messages[0]}</div>`);
                                 } else {
                                     errorDiv.text(messages[0]);
                                 }
@@ -994,10 +996,11 @@
             $('input[name="password"]').on('input blur', function(e) {
                 let val = $(this).val();
                 let form = $(this).closest('form');
-                let errorDiv = $(this).closest('div').find('.invalid-feedback');
+                let errorDiv = $(this).parent().hasClass('password-field-container') ? $(this).parent().next('.invalid-feedback') : $(this).next('.invalid-feedback');
                 if (errorDiv.length === 0) {
-                    $(this).after('<div class="invalid-feedback d-block pass-error"></div>');
-                    errorDiv = $(this).closest('div').find('.pass-error');
+                    let target = $(this).parent().hasClass('password-field-container') ? $(this).parent() : $(this);
+                    target.after('<div class="invalid-feedback d-block pass-error"></div>');
+                    errorDiv = target.next('.pass-error');
                 }
                 
                 if (e.type === 'blur' || $(this).hasClass('is-invalid')) {
@@ -1020,10 +1023,11 @@
                 let val = $(this).val();
                 let form = $(this).closest('form');
                 let password = form.find('input[name="password"]').val();
-                let errorDiv = $(this).closest('div').find('.invalid-feedback');
+                let errorDiv = $(this).parent().hasClass('password-field-container') ? $(this).parent().next('.invalid-feedback') : $(this).next('.invalid-feedback');
                 if (errorDiv.length === 0) {
-                    $(this).after('<div class="invalid-feedback d-block confirm-error"></div>');
-                    errorDiv = $(this).closest('div').find('.confirm-error');
+                    let target = $(this).parent().hasClass('password-field-container') ? $(this).parent() : $(this);
+                    target.after('<div class="invalid-feedback d-block confirm-error"></div>');
+                    errorDiv = target.next('.confirm-error');
                 }
 
                 if (val && password && val !== password) {

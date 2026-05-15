@@ -84,26 +84,75 @@
   }
 
   /* Dark mode fixes */
-  body.dark-only .profile-dropdown li:hover a span, 
-  body.dark-only .profile-dropdown li:hover a i {
-      color: var(--bs-primary) !important;
+  body.dark-only .profile-nav .profile-dropdown {
+      background-color: #1a1b1e !important;
+      border: 1px solid #2d2e33 !important;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3) !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
   }
-  body.dark-only .profile-dropdown li form button.logout-btn {
-      color: #fff !important;
-      background-color: var(--bs-primary) !important;
+  body.dark-only .profile-dropdown li {
+      background-color: #1a1b1e !important;
+      width: 100% !important;
+      margin: 0 !important;
   }
-  .profile-dropdown li a {
+  body.dark-only .profile-dropdown li a {
+      color: #bbb !important;
+      width: 100% !important;
+      padding: 10px 15px !important;
       display: flex !important;
-      align-items: center !important;
-      white-space: nowrap !important;
+      justify-content: center !important;
+  }
+  body.dark-only .profile-dropdown li a:hover {
+      background-color: transparent !important;
+  }
+  body.dark-only .profile-dropdown .logout-section {
+      border-color: #2d2e33;
+      padding: 10px !important;
       width: 100% !important;
   }
-  .profile-dropdown li a i {
-      margin-right: 10px !important;
-      margin-bottom: 0 !important;
+  
+  /* Click-based dropdown styles */
+  .profile-nav .profile-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      z-index: 1000;
+      background-color: #fff;
+      transition: all 0.3s ease;
+      width: 150px;
+      padding: 0 !important;
+      margin: 0 !important;
   }
-  .profile-dropdown li a span {
-      white-space: nowrap !important;
+  .profile-nav.active .profile-dropdown {
+      display: block;
+      animation: fadeIn 0.2s ease-in-out;
+  }
+  @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+  }
+  /* Toggle logic for click-based dropdown */
+  .profile-nav.active .profile-dropdown {
+      display: block !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+  }
+  
+  /* Aggressive reset for oval background in dark mode */
+  body.dark-only .profile-dropdown li,
+  body.dark-only .profile-dropdown li:hover,
+  body.dark-only .profile-dropdown li a,
+  body.dark-only .profile-dropdown li a:hover {
+      background: transparent !important;
+      background-color: transparent !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+  }
+  
+  body.dark-only .profile-dropdown li a:hover span {
+      color: var(--bs-primary) !important;
   }
 </style>
 <div class="page-header">
@@ -362,8 +411,8 @@
               </ul>
             </div>
           </li>
-            <li class="profile-nav onhover-dropdown">
-              <div class="media profile-media">
+            <li class="profile-nav">
+              <div class="media profile-media" style="cursor: pointer;">
                 <img class="rounded-circle" src="{{ Auth::guard('web')->user()->avatar_url }}" width="43" height="43"
                   alt="Profile Picture">
                 <div class="media-body d-xxl-block d-none box-col-none">
@@ -376,10 +425,8 @@
                   @endif
                 </div>
               </div>
-
-              <ul class="profile-dropdown onhover-show-div">
-                <li><a href="{{ route('profile.index') }}"><i data-feather="user"></i><span>Edit Profile</span></a></li>
-                {{-- <li> <a href="edit-profile.html"> <i data-feather="settings"></i><span>Settings</span></a></li> --}}
+              <ul class="profile-dropdown">
+                <li><a href="{{ route('profile.index') }}"><span>Edit Profile</span></a></li>
                 <li>
                   <form id="logout-form" action="{{ route('admin.logout') }}" method="POST" class="d-inline">
                     @csrf
@@ -410,4 +457,24 @@
       feather.replace();
     }
   }, 500);
+
+  // Profile Dropdown Toggle Logic
+  document.addEventListener('DOMContentLoaded', function() {
+      const profileNav = document.querySelector('.profile-nav');
+      if (profileNav) {
+          const profileMedia = profileNav.querySelector('.profile-media');
+          
+          profileMedia.addEventListener('click', function(e) {
+              e.stopPropagation();
+              profileNav.classList.toggle('active');
+          });
+
+          // Close dropdown when clicking outside
+          document.addEventListener('click', function(e) {
+              if (!profileNav.contains(e.target)) {
+                  profileNav.classList.remove('active');
+              }
+          });
+      }
+  });
 </script>

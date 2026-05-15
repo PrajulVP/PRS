@@ -183,8 +183,8 @@ class RetailerController extends Controller
         $retailerData = $request->validate([
             'shop_name' => 'required|string|max:255',
             'pincode' => ['required', 'digits:6'],
-            'gst' => ['required', 'unique:retailers', 'regex:/^[a-zA-Z0-9]+$/'],
-            'drug_license_no' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\/\-]+$/'],
+            'gst' => ['nullable', 'unique:retailers', 'regex:/^[a-zA-Z0-9]+$/'],
+            'drug_license_no' => ['nullable', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\/\-]+$/'],
             'distributor_id' => 'nullable|exists:distributors,id',
             'field_staff_id' => 'nullable|exists:fieldstaffs,id',
             'sales_manager_id' => 'nullable|exists:sales_managers,id',
@@ -296,8 +296,8 @@ class RetailerController extends Controller
         $retailerData = $request->validate([
             'shop_name' => 'required|string|max:255',
             'pincode' => ['required', 'digits:6'],
-            'gst' => ['required', 'unique:retailers,gst,' . $retailer->id, 'regex:/^[a-zA-Z0-9]+$/'],
-            'drug_license_no' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\/\-]+$/'],
+            'gst' => ['nullable', 'unique:retailers,gst,' . $retailer->id, 'regex:/^[a-zA-Z0-9]+$/'],
+            'drug_license_no' => ['nullable', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\/\-]+$/'],
             'distributor_id' => 'nullable|exists:distributors,id',
             'field_staff_id' => 'nullable|exists:fieldstaffs,id',
             'sales_manager_id' => 'nullable|exists:sales_managers,id',

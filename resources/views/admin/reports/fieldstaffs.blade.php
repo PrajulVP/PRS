@@ -117,7 +117,7 @@
             processing: true,
             serverSide: true,
             ajax: {
-                url: "{{ route('admin.reports.fieldstaffs') }}",
+                url: "{{ route('admin.field-staff.tracking') }}",
                 data: function(d) {
                     d.from_date = $('#from_date').val();
                     d.to_date = $('#to_date').val();

@@ -128,16 +128,28 @@
                                             Location Details</h6>
                                     </div>
 
-                                    <div class="col-md-6">
-                                        <div class="p-2 border border-theme rounded bg-body-theme h-100">
-                                            <label class="text-muted-theme-theme small text-uppercase fw-bold mb-1"
-                                                style="font-size: 0.6rem;">City</label>
-                                            <div class="d-flex align-items-center">
-                                                <i class="fa fa-map-marker text-danger me-2 fs-5"></i>
-                                                <span class="fs-6 text-main-theme small">{{ $user->city ?? 'Not updated' }}</span>
+                                    @if(!$user->hasAnyRole(['admin', 'superadmin']))
+                                        <div class="col-md-6">
+                                            <div class="p-2 border border-theme rounded bg-body-theme h-100">
+                                                <label class="text-muted-theme-theme small text-uppercase fw-bold mb-1"
+                                                    style="font-size: 0.6rem;">District</label>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fa fa-map-marker text-danger me-2 fs-5"></i>
+                                                    <span class="fs-6 text-main-theme small">
+                                                        @php
+                                                            $districtName = null;
+                                                            if ($user->hasRole('retailer') && $user->retailer && $user->retailer->district) {
+                                                                $districtName = $user->retailer->district->name;
+                                                            } elseif ($user->hasRole('distributor') && $user->distributor && $user->distributor->district) {
+                                                                $districtName = $user->distributor->district->name;
+                                                            }
+                                                        @endphp
+                                                        {{ $districtName ?? 'Not assigned' }}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    @endif
                                     <div class="col-md-6">
                                         <div class="p-2 border border-theme rounded bg-body-theme h-100">
                                             <label class="text-muted-theme-theme small text-uppercase fw-bold mb-1"
@@ -436,23 +448,7 @@
                                             <label class="form-label fw-bold small text-muted-theme text-uppercase" style="font-size: 0.65rem;">Street Address</label>
                                             <textarea name="address" class="form-control bg-light-theme" rows="3">{{ $user->address }}</textarea>
                                         </div>
-                                        @if(!$user->hasAnyRole(['admin', 'superadmin']))
-                                            <div class="col-md-6">
-                                                <label class="form-label fw-bold small text-muted-theme text-uppercase" style="font-size: 0.65rem;">Assigned District</label>
-                                                <div class="form-control bg-body-secondary text-muted-theme border-0 fw-bold">
-                                                    @php
-                                                        $districtName = 'N/A';
-                                                        if ($user->hasRole('retailer') && $user->retailer && $user->retailer->district) {
-                                                            $districtName = $user->retailer->district->name;
-                                                        } elseif ($user->hasRole('distributor') && $user->distributor && $user->distributor->district) {
-                                                            $districtName = $user->distributor->district->name;
-                                                        }
-                                                    @endphp
-                                                    <i class="fa fa-lock me-2 small"></i> {{ $districtName }}
-                                                </div>
-                                            </div>
-                                        @endif
-                                        <div class="{{ $user->hasAnyRole(['admin', 'superadmin']) ? 'col-12' : 'col-md-6' }}">
+                                        <div class="col-12">
                                             <label class="form-label fw-bold small text-muted-theme text-uppercase" style="font-size: 0.65rem;">Pincode</label>
                                             <input type="text" name="pincode" class="form-control bg-light-theme" value="{{ $user->pincode ?? '' }}">
                                         </div>
@@ -494,7 +490,7 @@
                                 @endif
                             </div>
 
-                            <div class="modal-footer border-0 p-4 pt-0 bg-card-theme">
+                            <div class="modal-footer border-0 p-4 pt-0 bg-transparent">
                                 <button type="button" class="btn btn-light btn-sm px-4" data-bs-dismiss="modal">Close</button>
                                 <button type="submit" class="btn btn-primary btn-sm px-5 fw-bold shadow-sm rounded-pill">
                                     Update Profile
@@ -547,6 +543,16 @@
         .text-main-theme { color: var(--text-main) !important; }
         .border-theme { border-color: var(--border-light) !important; }
 
+        /* Modal Background Fixes */
+        body.dark-only .modal-content,
+        body.dark-only .bg-card-theme {
+            background-color: #1e293b !important;
+        }
+        
+        .tab-content, .tab-pane, .modal-footer {
+            background-color: transparent !important;
+        }
+
         .custom-profile-tabs-top .nav-link.active {
             background-color: #7366ff !important;
             color: #ffffff !important;
@@ -581,23 +587,50 @@
     <script>
         function previewProfilePic(input) {
             if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    $('#modal_avatar_preview').attr('src', e.target.result);
-                    $('#sidebar_avatar_preview').attr('src', e.target.result);
-                    $('#remove_pic_container').show();
-                    $('#remove_profile_pic').val('0');
-                }
-                reader.readAsDataURL(input.files[0]);
+                const formData = new FormData();
+                formData.append('profile_pic', input.files[0]);
+                formData.append('_token', '{{ csrf_token() }}');
+
+                // Show loading state
+                const originalImg = $('.zoomable-avatar').attr('src');
+                $('.zoomable-avatar').css('opacity', '0.5');
+
+                $.ajax({
+                    url: '{{ route("profile.upload-photo") }}',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(res) {
+                        $('.zoomable-avatar').attr('src', res.avatar_url).css('opacity', '1');
+                        $('#remove_pic_container').show();
+                        showToast('success', 'Profile picture updated successfully.');
+                        // Update header avatar too if possible
+                        $('.profile-nav img').attr('src', res.avatar_url);
+                    },
+                    error: function(xhr) {
+                        $('.zoomable-avatar').attr('src', originalImg).css('opacity', '1');
+                        let message = xhr.responseJSON?.message || 'Failed to upload photo';
+                        showToast('danger', message);
+                    }
+                });
             }
         }
 
         function removeProfilePic() {
             if (confirm('Are you sure you want to remove your profile picture?')) {
-                $('#remove_profile_pic').val('1');
-                $('#profile_pic').val('');
-                $('#modal_avatar_preview').attr('src', 'https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&color=FFFFFF&background={{ $user->avatar_background ?? '374151' }}');
-                $('#remove_pic_container').hide();
+                $.post('{{ route("profile.remove-photo") }}', {
+                    _token: '{{ csrf_token() }}'
+                }, function(res) {
+                    $('.zoomable-avatar').attr('src', res.avatar_url);
+                    $('#remove_pic_container').hide();
+                    showToast('success', 'Profile picture removed successfully.');
+                    // Update header avatar
+                    $('.profile-nav img').attr('src', res.avatar_url);
+                }).fail(function(xhr) {
+                    let message = xhr.responseJSON?.message || 'Failed to remove photo';
+                    showToast('danger', message);
+                });
             }
         }
         // AJAX Form Submission
@@ -693,6 +726,10 @@
             let val = $(this).val().replace(/\D/g, '').substring(0, 6);
             $(this).val(val);
             let errorDiv = $('#error_pincode');
+            if (errorDiv.length === 0) {
+                $(this).after('<div class="invalid-feedback d-block" id="error_pincode"></div>');
+                errorDiv = $('#error_pincode');
+            }
 
             if (val.length > 0 && val.length < 6) {
                 errorDiv.text('Pincode must be exactly 6 digits.');

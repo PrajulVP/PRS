@@ -29,6 +29,47 @@ class ProfileController extends Controller
         return response()->json(['valid' => false, 'message' => 'The current password you entered is incorrect.']);
     }
 
+    public function uploadPhoto(Request $request)
+    {
+        $request->validate([
+            'profile_pic' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120',
+        ]);
+
+        $user = Auth::user();
+
+        if ($user->profile_pic) {
+            Storage::disk('public')->delete($user->profile_pic);
+        }
+
+        $path = $request->file('profile_pic')->store('profile_pics', 'public');
+        $user->profile_pic = $path;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile picture updated successfully.',
+            'avatar_url' => $user->avatar_url
+        ]);
+    }
+
+    public function removePhoto(Request $request)
+    {
+        $user = Auth::user();
+
+        if ($user->profile_pic) {
+            Storage::disk('public')->delete($user->profile_pic);
+        }
+
+        $user->profile_pic = null;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile picture removed successfully.',
+            'avatar_url' => $user->avatar_url
+        ]);
+    }
+
     public function update(Request $request)
     {
         $user = Auth::user();
@@ -37,7 +78,7 @@ class ProfileController extends Controller
             'name' => 'required|string|max:255',
             'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
             'address' => 'nullable|string|max:255',
-            'pincode' => 'nullable|string|max:20',
+            'pincode' => 'nullable|digits:6',
         ];
 
         if (!$user->hasRole('distributor')) {
@@ -82,6 +123,7 @@ class ProfileController extends Controller
         $user->name = $request->name;
         $user->address = $request->address;
         $user->pincode = $request->pincode;
+        $user->city = $request->city;
         if (!$user->hasRole('distributor')) {
             $user->fathers_name = $request->fathers_name;
             $user->mothers_name = $request->mothers_name;

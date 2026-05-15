@@ -709,7 +709,7 @@ class ReportController extends Controller
                     return '₹' . number_format($fs->total_revenue / $fs->total_orders, 2);
                 })
                 ->addColumn('actions', function($fs) {
-                    return '<a href="' . route('admin.reports.fieldstaff.tracking', ['user_id' => $fs->user_id]) . '" class="btn btn-sm btn-primary"><i class="fa fa-map-marker-alt me-1"></i>Track</a>';
+                    return '<a href="' . route('admin.field-staff.tracking-map', ['user_id' => $fs->user_id]) . '" class="btn btn-sm btn-primary"><i class="fa fa-map-marker-alt me-1"></i>Track</a>';
                 })
                 ->editColumn('total_revenue', fn($fs) => '₹' . number_format($fs->total_revenue ?? 0, 2))
                 ->rawColumns(['name', 'location', 'coverage_stats', 'activity', 'actions'])

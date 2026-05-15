@@ -106,7 +106,7 @@
         .password-field-container .toggle-password {
             position: absolute;
             right: 14px;
-            top: 50%;
+            top: 19px; /* Fixed center point for standard 38px input */
             transform: translateY(-50%);
             cursor: pointer;
             z-index: 10;
