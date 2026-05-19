@@ -90,65 +90,78 @@
         });
     }
 
+    // Expose helpers and global commonExportOptions immediately to the window scope
+    const getExportTitle = () => {
+        let title = $('.card-header h5').first().clone()    // Clone to avoid modifying UI
+            .find('i').remove().end()           // Remove icon
+            .text().trim();
+        return title || 'PRS Export';
+    };
+    const getExportDate = () => new Date().toISOString().slice(0, 10);
+
+    window.commonExportOptions = { 
+        columns: ':not(:last-child)', // Excludes "Action" column globally
+        search: 'applied',
+        order: 'applied',
+        format: {
+            header: function (data, columnIdx) {
+                // Globally rename first column header to "No." if it's ID-like
+                if (columnIdx === 0) {
+                    let text = data.replace(/<[^>]*>/g, '').trim().toLowerCase();
+                    if (['id', 'sl no', 'sl.no', '#', 's.no', 'sr no', 'sr. no'].includes(text)) {
+                        return 'No.';
+                    }
+                }
+                return data.replace(/<[^>]*>/g, '');
+            },
+            body: function (data, row, column, node) {
+                if (typeof data === 'string') {
+                    // 1. Pre-process: Replace <br> with newlines
+                    let html = data.replace(/<br\s*\/?>/gi, '\n');
+                    
+                    // 2. Use a temporary DOM element to extract CLEAN text
+                    // This handles tags inside attributes (like popovers) which regex misses
+                    let tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
+                    
+                    // 3. Specifically handle the "Read More" toggle logic if present
+                    let preview = tempDiv.querySelector('.preview-content');
+                    let toggleBtn = tempDiv.querySelector('.toggle-more-btn');
+                    if (preview) preview.remove();
+                    if (toggleBtn) toggleBtn.remove();
+                    
+                    // 4. Extract text
+                    let stripped = tempDiv.textContent || tempDiv.innerText || "";
+                    
+                    // 5. Final cleanup: symbols, special strings, and whitespace
+                    stripped = stripped
+                        .replace(/₹/g, '')
+                        .replace(/â‚¹/g, '')
+                        .replace(/,/g, '')
+                        .replace(/\s*Read More\s*$/gi, '')
+                        .replace(/\s*Show Less\s*$/gi, '')
+                        .trim();
+                        
+                    // 6. Text preservation check for numeric codes, phone numbers, GST, order codes
+                    let isNumericCode = /^\d+$/.test(stripped) && stripped.length >= 10;
+                    let isOrderCode = /^[A-Z0-9\-]+$/i.test(stripped) && stripped.length >= 8 && (stripped.indexOf('-') !== -1 || stripped.startsWith('ORD'));
+                    let isGstOrDl = /^[A-Z0-9]+$/i.test(stripped) && (stripped.length === 15 || stripped.length === 21);
+                    
+                    if (isNumericCode || isOrderCode || isGstOrDl) {
+                        return '\t' + stripped;
+                    }
+                    
+                    return stripped;
+                }
+                return data;
+            }
+        }
+    };
+
     // --- Global DataTables Button Refinements ---
     $(document).ready(function() {
         if (typeof $.fn.dataTable !== 'undefined' && typeof $.fn.dataTable.Buttons !== 'undefined') {
-            // Dynamic Title & Filename helpers
-            const getExportTitle = () => {
-                let title = $('.card-header h5').first().clone()    // Clone to avoid modifying UI
-                    .find('i').remove().end()           // Remove icon
-                    .text().trim();
-                return title || 'PRS Export';
-            };
-            const getExportDate = () => new Date().toISOString().slice(0, 10);
-
-            const commonExportOptions = { 
-                columns: ':not(:last-child)', // Excludes "Action" column globally
-                search: 'applied',
-                order: 'applied',
-                format: {
-                    header: function (data, columnIdx) {
-                        // Globally rename first column header to "No." if it's ID-like
-                        if (columnIdx === 0) {
-                            let text = data.replace(/<[^>]*>/g, '').trim().toLowerCase();
-                            if (['id', 'sl no', 'sl.no', '#', 's.no', 'sr no', 'sr. no'].includes(text)) {
-                                return 'No.';
-                            }
-                        }
-                        return data.replace(/<[^>]*>/g, '');
-                    },
-                    body: function (data, row, column, node) {
-                        if (typeof data === 'string' && (data.indexOf('<') !== -1 || data.indexOf('&') !== -1)) {
-                            // 1. Pre-process: Replace <br> with newlines
-                            let html = data.replace(/<br\s*\/?>/gi, '\n');
-                            
-                            // 2. Use a temporary DOM element to extract CLEAN text
-                            // This handles tags inside attributes (like popovers) which regex misses
-                            let tempDiv = document.createElement('div');
-                            tempDiv.innerHTML = html;
-                            
-                            // 3. Specifically handle the "Read More" toggle logic if present
-                            let preview = tempDiv.querySelector('.preview-content');
-                            let toggleBtn = tempDiv.querySelector('.toggle-more-btn');
-                            if (preview) preview.remove();
-                            if (toggleBtn) toggleBtn.remove();
-                            
-                            // 4. Extract text
-                            let stripped = tempDiv.textContent || tempDiv.innerText || "";
-                            
-                            // 5. Final cleanup: symbols, special strings, and whitespace
-                            stripped = stripped
-                                .replace(/[₹\â‚¹]/g, '')
-                                .replace(/,/g, '')
-                                .replace(/\s*Read More\s*$/gi, '')
-                                .replace(/\s*Show Less\s*$/gi, '');
-                                
-                            return stripped.trim();
-                        }
-                        return data;
-                    }
-                }
-            };
+            const commonExportOptions = window.commonExportOptions;
 
             // Override ALL default export options for all button types (including shorthands)
             const buttonTypes = ['copy', 'csv', 'excel', 'pdf', 'print', 'copyHtml5', 'csvHtml5', 'excelHtml5', 'pdfHtml5'];

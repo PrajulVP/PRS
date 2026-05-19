@@ -27,7 +27,8 @@
         'showDistributor' => false,
         'showRetailer' => false,
         'showStaff' => false,
-        'showStatus' => false
+        'showStatus' => false,
+        'showExports' => false
     ])
 
     <!-- Report Table -->
@@ -94,9 +95,27 @@
             dom: '<"row mb-3 align-items-center"<"col-sm-12 col-md-6"B><"col-sm-12 col-md-6 text-end"f>>t<"row mt-3"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
             buttons: [
                 {
+                    extend: 'csv',
+                    text: '<i class="fa fa-file-text-o me-1"></i> CSV',
+                    className: 'btn btn-sm btn-csv-custom',
+                    exportOptions: { columns: ':visible' }
+                },
+                {
+                    extend: 'excel',
+                    text: '<i class="fa fa-file-excel-o me-1"></i> Excel',
+                    className: 'btn btn-sm btn-excel-custom',
+                    exportOptions: { columns: ':visible' }
+                },
+                {
+                    extend: 'pdf',
+                    text: '<i class="fa fa-file-pdf-o me-1"></i> PDF',
+                    className: 'btn btn-sm btn-pdf-custom',
+                    exportOptions: { columns: ':visible' }
+                },
+                {
                     extend: 'print',
                     text: '<i class="fa fa-print me-1"></i> Print',
-                    className: 'btn btn-sm btn-info',
+                    className: 'btn btn-sm btn-print-custom',
                     orientation: 'landscape',
                     pageSize: 'A4',
                     exportOptions: { columns: ':visible' },
@@ -105,12 +124,6 @@
                         $(win.document.body).addClass('landscape');
                         $(win.document.body).find('.dataTables_paginate, .pagination, .dataTables_info').hide();
                     }
-                },
-                {
-                    extend: 'excel',
-                    text: '<i class="fa fa-file-excel-o me-1"></i> Excel',
-                    className: 'btn btn-sm btn-success',
-                    exportOptions: { columns: ':visible' }
                 }
             ],
             pageLength: 25,
@@ -158,6 +171,137 @@
         border-color: var(--med-primary);
         box-shadow: 0 0 0 0.2rem rgba(var(--med-primary-rgb), 0.15);
         outline: none;
+    }
+
+    /* Premium DataTables Export Buttons styling */
+    .dt-buttons {
+        display: flex !important;
+        gap: 10px !important;
+        flex-wrap: wrap;
+        margin-bottom: 0 !important;
+    }
+
+    .dt-buttons .btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 100px !important;
+        padding: 8px 24px !important;
+        font-size: 13px !important;
+        font-weight: 700 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+        transition: all 0.2s ease-in-out !important;
+        margin: 0 !important;
+        color: #334155 !important;
+    }
+
+    .dt-buttons .btn:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 6px 15px rgba(0, 73, 122, 0.08) !important;
+        background: #f8fafc !important;
+    }
+
+    .dt-buttons .btn-csv-custom {
+        color: #475569 !important;
+        border-color: #e2e8f0 !important;
+    }
+    .dt-buttons .btn-csv-custom i {
+        color: #475569 !important;
+    }
+    .dt-buttons .btn-csv-custom:hover {
+        border-color: #94a3b8 !important;
+    }
+
+    .dt-buttons .btn-excel-custom {
+        color: #15803d !important;
+        border-color: rgba(21, 128, 61, 0.15) !important;
+    }
+    .dt-buttons .btn-excel-custom i {
+        color: #15803d !important;
+    }
+    .dt-buttons .btn-excel-custom:hover {
+        background: #f0fdf4 !important;
+        border-color: #15803d !important;
+    }
+
+    .dt-buttons .btn-pdf-custom {
+        color: #b91c1c !important;
+        border-color: rgba(185, 28, 28, 0.15) !important;
+    }
+    .dt-buttons .btn-pdf-custom i {
+        color: #b91c1c !important;
+    }
+    .dt-buttons .btn-pdf-custom:hover {
+        background: #fef2f2 !important;
+        border-color: #b91c1c !important;
+    }
+
+    .dt-buttons .btn-print-custom {
+        color: #1d4ed8 !important;
+        border-color: rgba(29, 78, 216, 0.15) !important;
+    }
+    .dt-buttons .btn-print-custom i {
+        color: #1d4ed8 !important;
+    }
+    .dt-buttons .btn-print-custom:hover {
+        background: #eff6ff !important;
+        border-color: #1d4ed8 !important;
+    }
+
+    body.dark-only .dt-buttons .btn {
+        background: #121b2a !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        color: #f8fafc !important;
+    }
+
+    body.dark-only .dt-buttons .btn:hover {
+        background: rgba(255, 255, 255, 0.03) !important;
+    }
+
+    body.dark-only .dt-buttons .btn-csv-custom {
+        color: #94a3b8 !important;
+    }
+    body.dark-only .dt-buttons .btn-csv-custom i {
+        color: #94a3b8 !important;
+    }
+
+    body.dark-only .dt-buttons .btn-excel-custom {
+        color: #4ade80 !important;
+        border-color: rgba(74, 222, 128, 0.1) !important;
+    }
+    body.dark-only .dt-buttons .btn-excel-custom i {
+        color: #4ade80 !important;
+    }
+    body.dark-only .dt-buttons .btn-excel-custom:hover {
+        background: rgba(74, 222, 128, 0.05) !important;
+        border-color: #4ade80 !important;
+    }
+
+    body.dark-only .dt-buttons .btn-pdf-custom {
+        color: #f87171 !important;
+        border-color: rgba(248, 113, 113, 0.1) !important;
+    }
+    body.dark-only .dt-buttons .btn-pdf-custom i {
+        color: #f87171 !important;
+    }
+    body.dark-only .dt-buttons .btn-pdf-custom:hover {
+        background: rgba(248, 113, 113, 0.05) !important;
+        border-color: #f87171 !important;
+    }
+
+    body.dark-only .dt-buttons .btn-print-custom {
+        color: #60a5fa !important;
+        border-color: rgba(96, 165, 250, 0.1) !important;
+    }
+    body.dark-only .dt-buttons .btn-print-custom i {
+        color: #60a5fa !important;
+    }
+    body.dark-only .dt-buttons .btn-print-custom:hover {
+        background: rgba(96, 165, 250, 0.05) !important;
+        border-color: #60a5fa !important;
     }
 </style>
 @endpush

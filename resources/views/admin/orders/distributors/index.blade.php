@@ -746,7 +746,20 @@
                             }
                             return `Placed: ${rowData.placed_at}`;
                         }
-                        return typeof data === 'string' ? data.replace(/<[^>]*>?/gm, '').trim() : data;
+                        if (typeof data === 'string') {
+                            let clean = data.replace(/<[^>]*>?/gm, '').trim();
+                            if (clean.includes('₹') || clean.includes('â‚¹')) {
+                                clean = clean.replace(/₹/g, '').replace(/â‚¹/g, '').replace(/,/g, '').trim();
+                            }
+                            let isNumericCode = /^\d+$/.test(clean) && clean.length >= 10;
+                            let isOrderCode = /^[A-Z0-9\-]+$/i.test(clean) && clean.length >= 8 && (clean.indexOf('-') !== -1 || clean.startsWith('ORD'));
+                            let isGstOrDl = /^[A-Z0-9]+$/i.test(clean) && (clean.length === 15 || clean.length === 21);
+                            if (isNumericCode || isOrderCode || isGstOrDl) {
+                                return '\t' + clean;
+                            }
+                            return clean;
+                        }
+                        return data;
                     }
                 }
             };

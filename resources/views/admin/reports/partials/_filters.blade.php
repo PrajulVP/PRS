@@ -59,6 +59,7 @@
                     </div>
                 </div>
 
+                @if($showExports ?? true)
                 <div class="export-fast-actions d-flex gap-2">
                     <button type="button" id="exportCsv" class="btn btn-export btn-csv" title="Export to CSV">
                         <i class="fa fa-file-text-o"></i> <span>CSV</span>
@@ -74,6 +75,7 @@
                         <i class="fa fa-print"></i> <span>Print</span>
                     </button>
                 </div>
+                @endif
             </div>
         </div>
 
@@ -195,7 +197,7 @@
                     <button type="button" id="applyFilters" class="btn btn-update-industrial px-4 me-2 shadow-sm">
                         <i class="fa fa-filter me-2"></i>Apply Analytics
                     </button>
-                    <button type="reset" class="btn btn-reset-industrial shadow-sm px-3" title="Clear All Filters" onclick="setTimeout(() => { $('#applyFilters').trigger('click'); }, 100);">
+                    <button type="button" id="resetFilters" class="btn btn-reset-industrial shadow-sm px-3" title="Clear All Filters">
                         <i class="fa fa-refresh me-2"></i> Reset
                     </button>
                 </div>
@@ -940,12 +942,14 @@
         });
 
         $('#resetFilters').on('click', function () {
+            $('.select2-industrial').val(null).trigger('change');
+            fromPicker.clear();
+            toPicker.clear();
+            $('.preset-btn').removeClass('active');
+            $('.preset-btn[data-range="all"]').addClass('active');
             setTimeout(() => {
-                $('.select2-industrial').val('').trigger('change');
-                fromPicker.clear();
-                toPicker.clear();
-                $('.preset-btn[data-range="this_month"]').trigger('click');
-            }, 10);
+                $('#applyFilters').trigger('click');
+            }, 50);
         });
 
         $('#applyFilters').on('click', function() {

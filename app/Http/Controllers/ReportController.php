@@ -678,12 +678,17 @@ class ReportController extends Controller
                     $area = $fs->area->name ?? $fs->user->address ?? 'N/A';
                     return "<div class='fw-bold'>{$district}</div><div class='small text-muted'>{$area}</div>";
                 })
-                ->addColumn('coverage_stats', function($fs) {
-                    return "<div class='fw-bold'>{$fs->total_retailers} Outlets</div><div class='small text-muted'>{$fs->total_visits} Visits Logged</div>";
+                ->addColumn('total_retailers', function($fs) {
+                    return "<div class='fw-bold text-center'>{$fs->total_retailers}</div>";
                 })
-                ->addColumn('activity', function($fs) use ($f, $t) {
+                ->addColumn('total_visits', function($fs) {
+                    return "<div class='fw-bold text-center text-muted'>{$fs->total_visits}</div>";
+                })
+                ->addColumn('total_punches', function($fs) {
                     $punches = $fs->total_punches ?? 0;
-                    
+                    return "<div class='fw-bold text-center text-primary'>{$punches}</div>";
+                })
+                ->addColumn('distance_val', function($fs) use ($f, $t) {
                     // Calculate distance for the period
                     $distance = 0;
                     if ($f && $t) {
@@ -702,7 +707,8 @@ class ReportController extends Controller
                         $distance = \App\Models\LocationLog::calculateDailyDistance($fs->user_id, now()->toDateString());
                     }
 
-                    return "<div class='badge badge-light-primary'>{$punches} Punches</div><div class='mt-1 small text-muted'><i class='fa fa-road me-1'></i>" . number_format($distance, 2) . " KM</div>";
+                    $distance_formatted = number_format($distance, 2);
+                    return "<div class='fw-bold text-center text-secondary'>{$distance_formatted} KM</div>";
                 })
                 ->addColumn('aov', function($fs) {
                     if (!$fs->total_orders) return '₹0.00';
@@ -712,7 +718,7 @@ class ReportController extends Controller
                     return '<a href="' . route('admin.field-staff.tracking-map', ['user_id' => $fs->user_id]) . '" class="btn btn-sm btn-primary"><i class="fa fa-map-marker-alt me-1"></i>Track</a>';
                 })
                 ->editColumn('total_revenue', fn($fs) => '₹' . number_format($fs->total_revenue ?? 0, 2))
-                ->rawColumns(['name', 'location', 'coverage_stats', 'activity', 'actions'])
+                ->rawColumns(['name', 'location', 'total_retailers', 'total_visits', 'total_punches', 'distance_val', 'actions'])
                 ->make(true);
         }
 
