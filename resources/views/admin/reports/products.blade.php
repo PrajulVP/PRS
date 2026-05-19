@@ -141,7 +141,10 @@
                     className: 'text-center',
                     searchable: false,
                     render: function(data, type, row) {
-                        return `<div class="fw-bold text-info">${data} Units</div><div class="small text-muted">${row.total_free} Free</div>`;
+                        if (type === 'display') {
+                            return `<div class="fw-bold text-info">${data} Units</div><div class="small text-muted">${row.total_free} Free</div>`;
+                        }
+                        return data + ' Units, ' + row.total_free + ' Free';
                     }
                 },
                 { 

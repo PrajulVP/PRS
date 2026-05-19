@@ -795,17 +795,42 @@ class ReportController extends Controller
 
             $this->applyGlobalFilters($query, $request, null);
 
+            [$f, $t] = $this->getFilterDates($request);
+
             // Total Business
-            $query->withSum([$rel . ' as total_business'], 'total_amount');
+            $query->withSum([$rel . ' as total_business' => function($q) use ($f, $t, $type) {
+                $dateCol = ($type === 'distributor') ? 'created_at' : 'placed_at';
+                if ($f && $t) {
+                    $q->whereBetween($dateCol, [$f, $t]);
+                }
+            }], 'total_amount');
 
             // Outstanding (Unpaid)
-            $query->withSum([$rel . ' as total_outstanding' => function($q) {
+            $query->withSum([$rel . ' as total_outstanding' => function($q) use ($f, $t, $type) {
+                $dateCol = ($type === 'distributor') ? 'created_at' : 'placed_at';
+                if ($f && $t) {
+                    $q->whereBetween($dateCol, [$f, $t]);
+                }
                 $q->where('payment_status', '!=', 'paid');
                 $q->where('status', '!=', 'cancelled');
                 $q->where('status', '!=', 'rejected');
             }], 'total_amount');
 
             return DataTables::of($query)
+                ->filterColumn('entity_name', function($q, $keyword) use ($type) {
+                    if ($type === 'distributor') {
+                        $q->whereHas('user', function($uq) use ($keyword) {
+                            $uq->where('name', 'like', "%{$keyword}%");
+                        });
+                    } else {
+                        $q->where(function($uq) use ($keyword) {
+                            $uq->where('shop_name', 'like', "%{$keyword}%")
+                              ->orWhereHas('user', function($uuq) use ($keyword) {
+                                  $uuq->where('name', 'like', "%{$keyword}%");
+                              });
+                        });
+                    }
+                })
                 ->addColumn('entity_name', function($row) use ($type) {
                     if ($type === 'distributor') return $row->user->name ?? $row->name;
                     return "<div class='fw-bold'>{$row->shop_name}</div><div class='small text-muted'>{$row->user->name}</div>";
@@ -814,9 +839,8 @@ class ReportController extends Controller
                 ->addColumn('outstanding', fn($row) => '₹' . number_format($row->total_outstanding ?? 0, 2))
                 ->addColumn('risk_level', function($row) {
                     $outstanding = $row->total_outstanding ?? 0;
-                    if ($outstanding == 0) return '<span class="badge bg-light-success text-success">Clear</span>';
-                    if ($outstanding > 50000) return '<span class="badge bg-light-danger text-danger">Critical</span>';
-                    return '<span class="badge bg-light-warning text-warning">Active</span>';
+                    if ($outstanding == 0) return '<span class="badge bg-light-success text-success">Paid</span>';
+                    return '<span class="badge bg-light-danger text-danger">Unpaid</span>';
                 })
                 ->rawColumns(['entity_name', 'risk_level'])
                 ->make(true);

@@ -86,4 +86,20 @@ class Product extends Model
             ->withPivot('stock')
             ->withTimestamps();
     }
+
+    /**
+     * Enforce standard approach: Returnable status depends on both the individual product toggle
+     * and whether the brand is currently enabled in settings under 'returnable_brands'.
+     */
+    public function getIsReturnableAttribute($value)
+    {
+        if (!$value) {
+            return false;
+        }
+
+        $returnableBrandsRaw = \App\Models\Setting::getValue('returnable_brands', '');
+        $returnableBrands = array_map('trim', explode(',', $returnableBrandsRaw));
+        return in_array($this->brand, $returnableBrands);
+    }
 }
+

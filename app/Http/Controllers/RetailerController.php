@@ -59,6 +59,36 @@ class RetailerController extends Controller
             $currentUser = Auth::user();
             return DataTables::of($query)
                 ->addIndexColumn()
+                ->filterColumn('district_name', function($q, $keyword) {
+                    $q->whereHas('district', function($sub) use ($keyword) {
+                        $sub->where('name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('area_name', function($q, $keyword) {
+                    $q->whereHas('area', function($sub) use ($keyword) {
+                        $sub->where('name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('user_name', function($q, $keyword) {
+                    $q->whereHas('user', function($sub) use ($keyword) {
+                        $sub->where('name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('sales_manager_name', function($q, $keyword) {
+                    $q->whereHas('salesManager.user', function($sub) use ($keyword) {
+                        $sub->where('name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('field_staff_name', function($q, $keyword) {
+                    $q->whereHas('fieldStaff.user', function($sub) use ($keyword) {
+                        $sub->where('name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('distributor_name', function($q, $keyword) {
+                    $q->whereHas('distributor.user', function($sub) use ($keyword) {
+                        $sub->where('name', 'like', "%{$keyword}%");
+                    });
+                })
                 ->addColumn('can_edit', function($row) use ($currentUser) {
                     return $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory('retailers', 'edit');
                 })

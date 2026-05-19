@@ -178,6 +178,9 @@ Route::middleware(['auth'])->group(function () {
         // Loyalty Points Dashboard
         Route::get('loyalty-points', [LoyaltyPointsController::class, 'index'])->name('loyalty-points.index');
         Route::get('loyalty-points/{retailer}', [LoyaltyPointsController::class, 'index'])->name('loyalty-points.detail');
+        
+        // Staff Ratings for Admin & Sales Managers
+        Route::get('staff-ratings', [\App\Http\Controllers\AdminRatingController::class, 'index'])->name('staff-ratings.index');
         Route::get('loyalty-points/{retailer}/summary', [LoyaltyPointsController::class, 'getSummary'])->name('loyalty-points.summary');
         Route::get('loyalty-points/get-field-staffs-by-manager', [LoyaltyPointsController::class, 'getFieldStaffByManager'])->name('loyalty-points.field-staffs-by-manager');
 
@@ -219,6 +222,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/prescribed-salts', [PrescriptionAnalysisController::class, 'prescribedSalts'])->name('prescribed-salts');
             Route::get('/fastest-molecules', [PrescriptionAnalysisController::class, 'fastestMovingMolecules'])->name('fastest-molecules');
             Route::get('/molecule-analytics', [PrescriptionAnalysisController::class, 'moleculeAnalytics'])->name('molecule-analytics');
+            Route::get('/molecule-analytics/export', [PrescriptionAnalysisController::class, 'exportMoleculeAnalytics'])->name('molecule-analytics.export');
         });
     });
 

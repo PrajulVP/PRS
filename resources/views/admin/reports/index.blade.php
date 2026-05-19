@@ -186,9 +186,9 @@
         <div class="col-12 mt-2">
             <div class="row g-4">
                 <div class="col-xl-6">
-                    <div class="card border-0 shadow-sm rounded-4 report-card-premium">
-                        <div class="card-body p-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
-                            <div class="d-flex align-items-center gap-3">
+                    <div class="card border-0 shadow-sm rounded-4 report-card-premium h-100">
+                        <div class="card-body p-4 d-flex flex-column justify-content-between">
+                            <div class="d-flex align-items-center gap-3 mb-4">
                                 <div class="bg-soft-success p-3 rounded-3">
                                     <i class="fa fa-flask text-success fs-4"></i>
                                 </div>
@@ -198,16 +198,15 @@
                                 </div>
                             </div>
                             <div class="d-flex gap-2">
-                                <a href="{{ route('admin.reports.molecule-analytics') }}?tab=demand" class="btn btn-success btn-pill-compact shadow-sm hover-elevate" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; border: 0 !important; color: white !important;">Prescriptions</a>
-                                <a href="{{ route('admin.reports.molecule-analytics') }}?tab=sales" class="btn btn-outline-dark btn-pill-compact">Sales Analytics</a>
+                                <a href="{{ route('admin.reports.molecule-analytics') }}" class="btn btn-success rounded-pill fw-bold px-4 shadow-sm hover-elevate" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; border: 0 !important; color: white !important;">View Analytics</a>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-xl-6">
-                    <div class="card border-0 shadow-sm rounded-4 report-card-premium">
-                        <div class="card-body p-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
-                            <div class="d-flex align-items-center gap-3">
+                    <div class="card border-0 shadow-sm rounded-4 report-card-premium h-100">
+                        <div class="card-body p-4 d-flex flex-column justify-content-between">
+                            <div class="d-flex align-items-center gap-3 mb-4">
                                 <div class="bg-soft-danger p-3 rounded-3">
                                     <i class="fa fa-credit-card text-danger fs-4"></i>
                                 </div>

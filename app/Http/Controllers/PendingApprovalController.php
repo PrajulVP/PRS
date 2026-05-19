@@ -205,33 +205,33 @@ class PendingApprovalController extends Controller
                     
                     $pPack = $i->product?->pack ?? null;
                     
-                    $summary = '<div class="product-summary-item mb-1" style="line-height: 1.2; width: 100%;">';
-                    $summary .= '<div class="d-flex align-items-start gap-1" style="white-space: normal; word-break: break-all;">';
-                    $summary .= '<span class="fw-bold" style="color: #334155; font-size: 0.85rem;">'.$pName.'</span>';
+                    $summary = '<div class="product-summary-item mb-2" style="line-height: 1.35; width: 100%; white-space: normal; word-break: break-word; overflow-wrap: break-word;">';
+                    $summary .= '<div style="display: block; margin-bottom: 2px;">';
+                    $summary .= '<span class="fw-bold" style="color: #334155; font-size: 0.85rem; word-break: break-word;">'.$pName.'</span>';
                     if (!empty(trim($pPack)) && strtoupper(trim($pPack)) !== 'N/A') {
-                        $summary .= '<span class="small" style="color: #94a3b8; font-size: 0.7rem; white-space: nowrap;">['.$pPack.']</span>';
+                        $summary .= '<span class="small fw-semibold" style="color: #94a3b8; font-size: 0.75rem; white-space: nowrap; margin-left: 3px;">['.$pPack.']</span>';
                     }
                     if (!empty($vLabel)) {
-                        $summary .= '<span class="badge rounded-pill" style="background: #e0f2fe; color: #0369a1; font-size: 0.65rem; padding: 2px 6px; font-weight: 700; letter-spacing: 0.3px; white-space: nowrap;">' . strtoupper(implode(' / ', $vLabel)) . '</span>';
+                        $summary .= ' <span class="badge rounded-pill align-middle" style="background: #e0f2fe; color: #0369a1; font-size: 0.65rem; padding: 2px 6.5px; font-weight: 700; letter-spacing: 0.3px; white-space: nowrap; margin-left: 4px; display: inline-block;">' . strtoupper(implode(' / ', $vLabel)) . '</span>';
                     }
                     $summary .= '</div>';
                     
                     $meta = [];
                     $qtyStr = $i->quantity . ' ' . ($i->unit ?? 'Nos');
                     if (($i->free_quantity ?? 0) > 0) {
-                        $qtyStr .= ' <span class="text-success" style="font-size: 0.7rem;">(+' . $i->free_quantity . ' Free)</span>';
+                        $qtyStr .= ' <span class="text-success" style="font-size: 0.7rem; font-weight: bold;">(+' . $i->free_quantity . ' Free)</span>';
                     }
                     $meta[] = '<span class="text-primary fw-bold" style="font-size: 0.75rem;">' . $qtyStr . '</span>';
-
-                    if (!empty(trim($pBrand)) && strtoupper(trim($pBrand)) !== 'N/A') {
-                        $meta[] = '<span class="text-muted" style="font-size: 0.75rem; opacity: 0.8;">' . $pBrand . '</span>';
-                    }
                     
                     if (!empty($meta)) {
-                        $summary .= '<div class="d-flex align-items-center gap-1 mt-0" style="white-space: normal; word-break: break-all;">' . implode('<span class="text-light" style="font-size: 0.7rem; margin: 0 2px;">•</span>', $meta) . '</div>';
+                        $summary .= '<div class="d-flex flex-wrap align-items-center gap-1 mt-1" style="word-break: break-word;">' . implode(' <span class="text-muted" style="font-size: 0.75rem; margin: 0 2px;">•</span> ', $meta) . '</div>';
                     }
                     $summary .= '</div>';
                     return $summary;
+                })->implode('|||');
+
+                $brandSummary = $item->items->map(function ($i) {
+                    return $i->product?->brand ?? 'N/A';
                 })->implode('|||');
 
                 $res = [
@@ -240,6 +240,7 @@ class PendingApprovalController extends Controller
                     'total_amount' => $item->total_amount,
                     'status' => ucfirst(str_replace('_', ' ', $item->status)),
                     'product_summary' => $productSummary,
+                    'brand_summary' => $brandSummary,
                     'placed_at' => $item->placed_at ? $item->placed_at->format('Y-m-d H:i') : '-',
                     'role_type' => 'order',
                     'items' => $item->items->map(function ($i) use ($viewType) {

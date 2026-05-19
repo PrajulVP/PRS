@@ -70,6 +70,42 @@
         </li>
         @endif
 
+        @if (Auth::user()->hasPermissionToCategory('staff_ratings', 'view') && !Auth::user()->hasAnyRole(['admin', 'superadmin']))
+        <li class="sidebar-list">
+          <a class="sidebar-link sidebar-title link-nav {{ request()->routeIs('distributor.staff-ratings.*') ? 'active' : '' }}" href="{{ route('distributor.staff-ratings.index') }}">
+            <svg class="stroke-icon">
+              <use href="{{ $iconSprite }}#stroke-user"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{{ $iconSprite }}#fill-user"></use>
+            </svg><span>Staff Ratings</span>
+          </a>
+        </li>
+        @endif
+
+        {{-- 6. Reports Section --}}
+        @if (Auth::user()->hasPermissionToCategory('executive_reports', 'view') || 
+             Auth::user()->hasPermissionToCategory('distributor_reports', 'view') || 
+             Auth::user()->hasPermissionToCategory('retailer_reports', 'view') || 
+             Auth::user()->hasPermissionToCategory('performance_reports', 'view') ||
+             Auth::user()->hasPermissionToCategory('product_reports', 'view') ||
+             Auth::user()->hasPermissionToCategory('master_order_reports', 'view'))
+        <li class="sidebar-main-title">
+          <div>
+            <h6>Reports</h6>
+          </div>
+        </li>
+        <li class="sidebar-list">
+          <a class="sidebar-link sidebar-title link-nav {{ Route::currentRouteName() == 'admin.reports.index' ? 'active' : '' }}" href="{{ route('admin.reports.index') }}">
+            <svg class="stroke-icon">
+              <use href="{{ $iconSprite }}#stroke-charts"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{{ $iconSprite }}#fill-charts"></use>
+            </svg><span>Executive Reports</span></a>
+        </li>
+        @endif
+
         {{-- 2. Approvals Section --}}
         @if (Auth::user()->hasPermissionToCategory('retailer_approvals', 'view') || 
              Auth::user()->hasPermissionToCategory('distributor_approvals', 'view') || 
@@ -170,18 +206,7 @@
           </a>
         </li>
         @endif
-        @if (Auth::user()->hasPermissionToCategory('staff_ratings', 'view'))
-        <li class="sidebar-list">
-          <a class="sidebar-link sidebar-title link-nav" href="{{ route('distributor.staff-ratings.index') }}">
-            <svg class="stroke-icon">
-              <use href="{{ $iconSprite }}#stroke-user"></use>
-            </svg>
-            <svg class="fill-icon">
-              <use href="{{ $iconSprite }}#fill-user"></use>
-            </svg><span>Staff Ratings</span>
-          </a>
-        </li>
-        @endif
+
         @endif
 
         {{-- Admin/Staff Order Dropdown --}}
@@ -273,32 +298,16 @@
                     <span id="badge-staff-leaves" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; margin-left: 8px;">{{ $actionCounts['staff_leaves'] }}</span>
                 @endif
               </a></li>
+              @if (Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
+              <li><a class="{{ request()->routeIs('admin.staff-ratings.*') ? 'active' : '' }}" href="{{ route('admin.staff-ratings.index') }}">
+                <span>Staff Ratings</span>
+              </a></li>
+              @endif
           </ul>
         </li>
         @endif
 
-        {{-- 6. Reports Section --}}
-        @if (Auth::user()->hasPermissionToCategory('executive_reports', 'view') || 
-             Auth::user()->hasPermissionToCategory('distributor_reports', 'view') || 
-             Auth::user()->hasPermissionToCategory('retailer_reports', 'view') || 
-             Auth::user()->hasPermissionToCategory('performance_reports', 'view') ||
-             Auth::user()->hasPermissionToCategory('product_reports', 'view') ||
-             Auth::user()->hasPermissionToCategory('master_order_reports', 'view'))
-        <li class="sidebar-main-title">
-          <div>
-            <h6>Reports</h6>
-          </div>
-        </li>
-        <li class="sidebar-list">
-          <a class="sidebar-link sidebar-title link-nav {{ Route::currentRouteName() == 'admin.reports.index' ? 'active' : '' }}" href="{{ route('admin.reports.index') }}">
-            <svg class="stroke-icon">
-              <use href="{{ $iconSprite }}#stroke-charts"></use>
-            </svg>
-            <svg class="fill-icon">
-              <use href="{{ $iconSprite }}#fill-charts"></use>
-            </svg><span>Executive Reports</span></a>
-        </li>
-        @endif
+
 
         {{-- 7. Inventory Section (Products & Stock) --}}
         @if (Auth::user()->hasAnyRole(['admin', 'superadmin']) || Auth::user()->hasPermissionToCategory('products', 'view') || Auth::user()->hasPermissionToCategory('inventories', 'view'))

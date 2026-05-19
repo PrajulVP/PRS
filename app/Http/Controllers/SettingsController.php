@@ -38,7 +38,7 @@ class SettingsController extends Controller
     {
         $data = $request->validate([
             'slug' => 'required|string',
-            'value' => 'required',
+            'value' => 'nullable',
         ]);
 
         // Basic numeric validation

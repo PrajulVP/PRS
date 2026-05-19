@@ -8,9 +8,18 @@
             <p class="text-muted small mb-0">Combined view of Prescription Trends (Demand) vs Secondary Sales (Fulfillment).</p>
         </div>
         <div class="d-flex gap-2">
-            <button class="btn btn-outline-primary btn-sm rounded-3 px-3" onclick="window.print()">
-                <i class="fa fa-print me-2"></i>Print
-            </button>
+            <a id="btn-export-csv" href="#" class="btn btn-secondary btn-sm rounded-3 px-3 d-flex align-items-center gap-2 shadow-sm fw-bold">
+                <i class="fa fa-file-text-o"></i> CSV
+            </a>
+            <a id="btn-export-excel" href="#" class="btn btn-success btn-sm rounded-3 px-3 d-flex align-items-center gap-2 shadow-sm fw-bold text-white" style="background-color: #10b981; border-color: #10b981;">
+                <i class="fa fa-file-excel-o"></i> Excel
+            </a>
+            <a id="btn-export-pdf" href="#" class="btn btn-danger btn-sm rounded-3 px-3 d-flex align-items-center gap-2 shadow-sm fw-bold">
+                <i class="fa fa-file-pdf-o"></i> PDF
+            </a>
+            <a id="btn-print" href="#" class="btn btn-info btn-sm rounded-3 px-3 d-flex align-items-center gap-2 shadow-sm fw-bold text-white">
+                <i class="fa fa-print"></i> Print
+            </a>
         </div>
     </div>
 
@@ -21,14 +30,21 @@
                 <div class="col-md-4">
                     <label class="form-label fw-bold text-muted small text-uppercase">Analysis Range</label>
                     <div class="input-group shadow-sm rounded-3 overflow-hidden">
-                        <input type="date" name="from_date" value="{{ $fromDate->toDateString() }}" class="form-control border-0">
+                        <input type="date" name="from_date" value="{{ $fromDate ? $fromDate->toDateString() : '' }}" class="form-control border-0">
                         <span class="input-group-text bg-white border-0">to</span>
-                        <input type="date" name="to_date" value="{{ $toDate->toDateString() }}" class="form-control border-0">
+                        <input type="date" name="to_date" value="{{ $toDate ? $toDate->toDateString() : '' }}" class="form-control border-0">
                     </div>
                 </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold text-muted small text-uppercase">Molecule Scope</label>
+                    <select name="scope" class="form-select border-0 shadow-sm rounded-3 fw-bold text-muted" style="height: 40px;">
+                        <option value="portfolio" {{ request('scope') === 'portfolio' || !request('scope') ? 'selected' : '' }}>Company Portfolio Only</option>
+                        <option value="all" {{ request('scope') === 'all' ? 'selected' : '' }}>All Extracted Molecules (Market Demand)</option>
+                    </select>
+                </div>
                 <div class="col-md-2">
-                    <button type="submit" class="btn btn-dark w-100 fw-bold rounded-3 shadow-sm">
-                        <i class="fa fa-sync-alt me-2"></i>Update Data
+                    <button type="submit" class="btn btn-dark w-100 fw-bold rounded-3 shadow-sm" style="height: 40px;">
+                        <i class="fa fa-sync-alt me-2"></i>Update
                     </button>
                 </div>
             </form>
@@ -97,8 +113,11 @@
                                     <thead class="bg-light">
                                         <tr>
                                             <th class="ps-4 py-3">Molecule Name</th>
+                                            <th class="py-3">Matched Product</th>
+                                            <th class="py-3">Brand</th>
                                             <th class="py-3 text-center">Retailer Source</th>
                                             <th class="py-3 text-center">Capture Date</th>
+                                            <th class="py-3 text-center">Order Conversion</th>
                                             <th class="pe-4 py-3 text-end">AI Confidence</th>
                                         </tr>
                                     </thead>
@@ -106,8 +125,25 @@
                                         @foreach($detailedMolecules as $detail)
                                         <tr>
                                             <td class="ps-4 fw-bold text-primary">{{ $detail['name'] }}</td>
+                                            <td>
+                                                @if($detail['product_name'])
+                                                    <div class="fw-bold text-dark">{{ $detail['product_name'] }}</div>
+                                                @else
+                                                    <span class="text-muted small italic">No SKU Match</span>
+                                                @endif
+                                            </td>
+                                            <td class="fw-medium text-dark">
+                                                {{ $detail['brand'] ?: '-' }}
+                                            </td>
                                             <td class="text-center text-muted">{{ $detail['retailer'] }}</td>
                                             <td class="text-center small">{{ $detail['date'] }}</td>
+                                            <td class="text-center">
+                                                @if($detail['order_placed'])
+                                                    <span class="badge rounded-pill px-3 py-1 fw-bold" style="background-color: rgba(16, 185, 129, 0.1); color: #10b981;"><i class="fa fa-shopping-bag me-1"></i>Order Placed</span>
+                                                @else
+                                                    <span class="badge rounded-pill px-3 py-1 fw-bold" style="background-color: rgba(100, 116, 139, 0.1); color: #64748b;">No Order Yet</span>
+                                                @endif
+                                            </td>
                                             <td class="pe-4 text-end">
                                                 @if($detail['confidence'] != 'N/A')
                                                     <div class="d-flex align-items-center justify-content-end gap-2">
@@ -208,6 +244,59 @@
             options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
         });
 
+        // Initialize client-side DataTable on detailed log table
+        const table = $('#moleculeTable').DataTable({
+            dom: '<"row p-3 align-items-center"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6 text-end"f>>Brt<"row p-3"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            buttons: [
+                {
+                    extend: 'csv',
+                    text: 'CSV',
+                    exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] }
+                },
+                {
+                    extend: 'excel',
+                    text: 'Excel',
+                    exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] }
+                },
+                {
+                    extend: 'pdf',
+                    text: 'PDF',
+                    exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] },
+                    orientation: 'landscape',
+                    pageSize: 'A4'
+                },
+                {
+                    extend: 'print',
+                    text: 'Print',
+                    exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6] }
+                }
+            ],
+            pageLength: 20,
+            order: [[4, 'desc']], // Capture Date column index
+            language: {
+                search: "_INPUT_",
+                searchPlaceholder: "Search transcription log..."
+            }
+        });
+
+        // Trigger exports via custom buttons
+        $('#btn-export-csv').on('click', function(e) {
+            e.preventDefault();
+            table.button('.buttons-csv').trigger();
+        });
+        $('#btn-export-excel').on('click', function(e) {
+            e.preventDefault();
+            table.button('.buttons-excel').trigger();
+        });
+        $('#btn-export-pdf').on('click', function(e) {
+            e.preventDefault();
+            table.button('.buttons-pdf').trigger();
+        });
+        $('#btn-print').on('click', function(e) {
+            e.preventDefault();
+            table.button('.buttons-print').trigger();
+        });
+
         // Handle URL parameter for tabs
         const urlParams = new URLSearchParams(window.location.search);
         const tab = urlParams.get('tab');
@@ -227,6 +316,7 @@
     });
 </script>
 <style>
+    .dt-buttons { display: none !important; }
     .bg-light-soft { background-color: #f8fafc; }
     .bg-soft-success { background-color: rgba(16, 185, 129, 0.1); }
     .bg-soft-warning { background-color: rgba(245, 158, 11, 0.1); }

@@ -1,6 +1,89 @@
 @extends('layouts.admin')
 
 @section('page-body')
+    <style>
+        /* === Premium Dynamic Theme Adjustments === */
+        #brands_tag_container {
+            background-color: var(--med-bg-body) !important;
+            border: 1px solid var(--med-border) !important;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+            transition: all 0.3s ease;
+        }
+        body.dark-only #brands_tag_container {
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+        }
+        .brand-tag-wrapper {
+            background-color: var(--med-bg-card) !important;
+            border: 1px solid var(--med-border) !important;
+            box-shadow: var(--med-shadow-soft) !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .brand-tag-wrapper:hover {
+            transform: translateY(-3px);
+            border-color: var(--med-primary) !important;
+            box-shadow: var(--med-shadow-glow), var(--med-shadow-soft) !important;
+        }
+        .brand-name {
+            color: var(--med-primary) !important;
+            font-weight: 700 !important;
+        }
+        .manage-products-btn {
+            color: var(--med-primary, #00497a) !important;
+            font-weight: 700 !important;
+            font-size: 0.85rem !important;
+            transition: all 0.2s ease !important;
+        }
+        .manage-products-btn:hover {
+            color: var(--med-secondary, #0067ab) !important;
+            text-decoration: underline !important;
+        }
+        body.dark-only .manage-products-btn {
+            color: #38bdf8 !important;
+        }
+        body.dark-only .manage-products-btn:hover {
+            color: #7dd3fc !important;
+        }
+        body.dark-only .form-check-input {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+        body.dark-only .form-check-input:checked {
+            background-color: #38bdf8 !important;
+            border-color: #38bdf8 !important;
+        }
+        .alert.alert-light.border {
+            background-color: var(--med-bg-card) !important;
+            border-color: var(--med-border) !important;
+            color: var(--med-text-main) !important;
+            border-radius: 16px !important;
+            box-shadow: var(--med-shadow-soft) !important;
+        }
+        .alert.alert-light.border h5 {
+            color: var(--med-primary) !important;
+            font-weight: 700 !important;
+        }
+        .alert.alert-light.border p {
+            color: var(--med-text-muted) !important;
+        }
+        .edit-brand-btn {
+            border-color: var(--med-primary, #00497a) !important;
+            color: var(--med-primary, #00497a) !important;
+            background: transparent !important;
+            transition: all 0.2s ease !important;
+        }
+        .edit-brand-btn:hover {
+            background-color: var(--med-primary, #00497a) !important;
+            color: #ffffff !important;
+        }
+        body.dark-only .edit-brand-btn {
+            border-color: #38bdf8 !important;
+            color: #38bdf8 !important;
+        }
+        body.dark-only .edit-brand-btn:hover {
+            background-color: #38bdf8 !important;
+            color: #000000 !important;
+        }
+    </style>
     <div class="container-fluid">
         <div class="row">
             <div class="col-sm-12">
@@ -143,11 +226,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div class="alert alert-light border mt-2">
-                            <h5><i class="fa fa-info-circle me-2"></i>Legacy Settings</h5>
-                            <p class="mb-0 small text-muted">Loyalty Points and GST settings have been moved to individual Product settings. Please edit products to manage those values.</p>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -231,9 +309,9 @@
                     currentBrands.forEach((brand, index) => {
                         let isReturnable = returnableBrands.includes(brand);
                         html += `
-                            <div class="brand-tag-wrapper d-inline-flex flex-column bg-white border border-primary rounded p-3 shadow-sm" style="min-width: 220px;">
+                            <div class="brand-tag-wrapper d-inline-flex flex-column rounded p-3" style="min-width: 220px;">
                                 <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
-                                    <span class="fw-bold text-primary text-truncate me-2" title="${brand}"><i class="fa fa-tag me-1 small"></i>${brand}</span>
+                                    <span class="brand-name text-truncate me-2" title="${brand}"><i class="fa fa-tag me-1 small"></i>${brand}</span>
                                     <div class="d-flex gap-1 flex-shrink-0">
                                         <button type="button" class="btn btn-outline-info p-0 d-flex align-items-center justify-content-center edit-brand-btn" data-index="${index}" style="width: 28px; height: 28px;" title="Edit"><i class="fa fa-edit small"></i></button>
                                         <button type="button" class="btn btn-outline-danger p-0 d-flex align-items-center justify-content-center delete-brand-btn" data-index="${index}" style="width: 28px; height: 28px;" title="Delete"><i class="fa fa-trash small"></i></button>

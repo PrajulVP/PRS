@@ -63,6 +63,14 @@ class DistributorOrderController extends Controller
                     $query->where('status', $request->input('status'));
                 }
 
+                // Apply date range filters if exist
+                if ($request->has('start_date') && !empty($request->input('start_date'))) {
+                    $query->whereDate('distributor_orders.placed_at', '>=', $request->input('start_date'));
+                }
+                if ($request->has('end_date') && !empty($request->input('end_date'))) {
+                    $query->whereDate('distributor_orders.placed_at', '<=', $request->input('end_date'));
+                }
+
                 // Apply payment_status filter if exists
                 if ($request->has('payment_status') && !empty($request->input('payment_status'))) {
                     $status = $request->input('payment_status');
@@ -136,38 +144,39 @@ class DistributorOrderController extends Controller
                         
                         $pPack = $item->product ? $item->product->pack : null;
                         
-                        $summary = '<div class="product-summary-item mb-1" style="line-height: 1.2; width: 100%;">';
-                        $summary .= '<div class="d-flex align-items-start gap-1" style="white-space: normal; word-break: break-all;">';
-                        $summary .= '<span class="fw-bold" style="color: #334155; font-size: 0.85rem;">'.$pName.'</span>';
+                        $summary = '<div class="product-summary-item mb-2" style="line-height: 1.35; width: 100%; white-space: normal; word-break: break-word; overflow-wrap: break-word;">';
+                        $summary .= '<div style="display: block; margin-bottom: 2px;">';
+                        $summary .= '<span class="fw-bold" style="color: #334155; font-size: 0.85rem; word-break: break-word;">'.$pName.'</span>';
                         if (!empty(trim($pPack)) && strtoupper(trim($pPack)) !== 'N/A') {
-                            $summary .= '<span class="small" style="color: #94a3b8; font-size: 0.7rem; white-space: nowrap;">['.$pPack.']</span>';
+                            $summary .= '<span class="small fw-semibold" style="color: #94a3b8; font-size: 0.75rem; white-space: nowrap; margin-left: 3px;">['.$pPack.']</span>';
                         }
                         if (!empty($vLabel)) {
-                            $summary .= '<span class="badge rounded-pill" style="background: #e0f2fe; color: #0369a1; font-size: 0.65rem; padding: 2px 6px; font-weight: 700; letter-spacing: 0.3px; white-space: nowrap;">' . strtoupper(implode(' / ', $vLabel)) . '</span>';
+                            $summary .= ' <span class="badge rounded-pill align-middle" style="background: #e0f2fe; color: #0369a1; font-size: 0.65rem; padding: 2px 6.5px; font-weight: 700; letter-spacing: 0.3px; white-space: nowrap; margin-left: 4px; display: inline-block;">' . strtoupper(implode(' / ', $vLabel)) . '</span>';
                         }
                         $summary .= '</div>';
                         
                         $meta = [];
                         $qtyText = $item->quantity . ' ' . ($item->unit ?? 'Nos');
                         if ($item->free_quantity > 0) {
-                            $qtyText .= ' <span class="text-success" style="font-size: 0.7rem;">(+' . $item->free_quantity . ' Free)</span>';
+                            $qtyText .= ' <span class="text-success" style="font-size: 0.7rem; font-weight: bold;">(+' . $item->free_quantity . ' Free)</span>';
                         }
                         $meta[] = '<span class="text-primary fw-bold" style="font-size: 0.75rem;">' . $qtyText . '</span>';
-
-                        if (!empty(trim($pBrand)) && strtoupper(trim($pBrand)) !== 'N/A') {
-                            $meta[] = '<span class="text-muted" style="font-size: 0.75rem; opacity: 0.8;">' . $pBrand . '</span>';
-                        }
                         
                         if (!empty($meta)) {
-                            $summary .= '<div class="d-flex align-items-center gap-1 mt-0" style="white-space: normal; word-break: break-all;">' . implode('<span class="text-light" style="font-size: 0.7rem; margin: 0 2px;">•</span>', $meta) . '</div>';
+                            $summary .= '<div class="d-flex flex-wrap align-items-center gap-1 mt-1" style="word-break: break-word;">' . implode(' <span class="text-muted" style="font-size: 0.75rem; margin: 0 2px;">•</span> ', $meta) . '</div>';
                         }
                         $summary .= '</div>';
                         return $summary;
                     })->implode('|||');
 
+                    $brandSummary = $order->items->map(function ($item) {
+                        return $item->product ? ($item->product->brand ?? 'N/A') : 'N/A';
+                    })->implode('|||');
+
                     return [
                         'id' => $order->id,
                         'order_code' => $order->order_code,
+                        'brand_summary' => $brandSummary,
                         'name' => $order->distributor?->name ?? $order->distributor?->user?->name ?? 'N/A',
                         'distributor_email' => $order->distributor?->email ?? $order->distributor?->user?->email ?? '',
                         'distributor_phone' => $order->distributor?->contact_no ?? $order->distributor?->phone ?? '',
@@ -243,7 +252,8 @@ class DistributorOrderController extends Controller
                         'invoice_url' => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
                         'payment_status' => $order->payment_status, // Added for payment status display
                         'cancellation_reason' => $order->cancellation_reason,
-                        'raw_status' => $order->status
+                        'raw_status' => $order->status,
+                        'delivered_at' => (isset($order->delivered_at) && $order->delivered_at) ? \Carbon\Carbon::parse($order->delivered_at)->format('Y-m-d H:i:s') : (($order->status === 'delivered' || $order->status === 'completed') ? \Carbon\Carbon::parse($order->updated_at)->format('Y-m-d H:i:s') : null)
                     ];
                 });
 

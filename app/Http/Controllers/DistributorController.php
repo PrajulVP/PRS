@@ -33,6 +33,26 @@ class DistributorController extends Controller
             $data->orderBy('distributors.id', 'desc');
             return DataTables::of($data)
                 ->addIndexColumn()
+                ->filterColumn('district_name', function($query, $keyword) {
+                    $query->whereHas('district', function($q) use ($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('sales_manager', function($query, $keyword) {
+                    $query->whereHas('salesManager.user', function($q) use ($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('user.email', function($query, $keyword) {
+                    $query->whereHas('user', function($q) use ($keyword) {
+                        $q->where('email', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('user.status', function($query, $keyword) {
+                    $query->whereHas('user', function($q) use ($keyword) {
+                        $q->where('status', 'like', "%{$keyword}%");
+                    });
+                })
                 ->editColumn('user.status', function ($row) {
                     return $row->user ? $row->user->status : 'N/A';
                 })

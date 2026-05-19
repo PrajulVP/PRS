@@ -203,7 +203,7 @@
                     <div class="card-body py-3 px-4">
                         <div class="row align-items-center text-center text-md-start">
                             <!-- Total Retailers -->
-                            <div class="col-md-4 mb-3 mb-md-0 border-end border-light">
+                            <div class="col-md-4 mb-3 mb-md-0">
                                 <div class="d-flex align-items-center justify-content-center justify-content-md-start">
                                     <div class="bg-glass-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background: rgba(0, 73, 122, 0.08);">
                                         <i data-feather="users" class="text-primary" style="width: 18px; height: 18px;"></i>
@@ -216,7 +216,7 @@
                             </div>
                             
                             <!-- Total Loyalty Points -->
-                            <div class="col-md-4 mb-3 mb-md-0 border-end border-light">
+                            <div class="col-md-4 mb-3 mb-md-0">
                                 <div class="d-flex align-items-center justify-content-center justify-content-md-start">
                                     <div class="bg-glass-warning rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background: rgba(218, 165, 32, 0.1);">
                                         <i data-feather="star" style="width: 18px; height: 18px; color: #daa520;"></i>

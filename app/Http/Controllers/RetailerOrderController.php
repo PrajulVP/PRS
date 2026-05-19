@@ -33,14 +33,14 @@ class RetailerOrderController extends Controller
                          $vLabel = array_filter([$i->side, $i->size]);
                          $pBrand = $i->product?->brand;
 
-                         $summary = '<div class="product-summary-item mb-1" style="line-height: 1.2; width: 100%;">';
-                         $summary .= '<div class="d-flex align-items-start gap-1" style="white-space: normal; word-break: break-all;">';
-                         $summary .= '<span class="fw-bold" style="color: #334155; font-size: 0.85rem;">'.$pName.'</span>';
+                         $summary = '<div class="product-summary-item mb-1" style="line-height: 1.3; width: 100%; white-space: normal; word-break: break-word; overflow-wrap: break-word;">';
+                         $summary .= '<div style="display: block; margin-bottom: 2px;">';
+                         $summary .= '<span class="fw-bold" style="color: #334155; font-size: 0.85rem; word-break: break-word;">'.$pName.'</span>';
                          if (!empty(trim($pPack)) && strtoupper(trim($pPack)) !== 'N/A') {
-                             $summary .= '<span class="small" style="color: #94a3b8; font-size: 0.7rem; white-space: nowrap;">['.$pPack.']</span>';
+                             $summary .= '<span class="small fw-semibold" style="color: #94a3b8; font-size: 0.7rem; white-space: nowrap; margin-left: 3px;">['.$pPack.']</span>';
                          }
                          if (!empty($vLabel)) {
-                             $summary .= '<span class="badge rounded-pill" style="background: #e0f2fe; color: #0369a1; font-size: 0.65rem; padding: 2px 6px; font-weight: 700; letter-spacing: 0.3px; white-space: nowrap;">' . strtoupper(implode(' / ', $vLabel)) . '</span>';
+                             $summary .= '<span class="badge rounded-pill align-middle" style="background: #e0f2fe; color: #0369a1; font-size: 0.65rem; padding: 2px 6px; font-weight: 700; letter-spacing: 0.3px; white-space: nowrap; margin-left: 4px; display: inline-block;">' . strtoupper(implode(' / ', $vLabel)) . '</span>';
                          }
                          $summary .= '</div>';
                          
@@ -53,7 +53,7 @@ class RetailerOrderController extends Controller
                          }
                          
                          if (!empty($meta)) {
-                             $summary .= '<div class="d-flex align-items-center gap-1 mt-0" style="white-space: normal; word-break: break-all;">' . implode('<span class="text-light" style="font-size: 0.7rem; margin: 0 2px;">•</span>', $meta) . '</div>';
+                             $summary .= '<div class="d-flex flex-wrap align-items-center gap-1 mt-0" style="word-break: break-word;">' . implode('<span class="text-muted" style="font-size: 0.7rem; margin: 0 2px;">•</span>', $meta) . '</div>';
                          }
                          $summary .= '</div>';
                          return $summary;

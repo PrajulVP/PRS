@@ -120,6 +120,48 @@
     </div>
     @endif
 
+    <!-- Advanced Filters for Return List -->
+    <div class="card border-0 shadow-sm bg-card-theme mb-4" style="border-radius: 16px !important;">
+        <div class="card-body p-3">
+            <div class="row g-3 align-items-end">
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-bold text-muted mb-2 text-uppercase tracking-wider"><i class="fa fa-tasks me-1"></i> Return Status</label>
+                    <select id="filterReturnStatus" class="form-select rounded-pill px-3" style="min-height: 48px; border-radius: 30px !important;">
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="verified">Verified</option>
+                        <option value="completed">Completed</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label small fw-bold text-muted mb-2 text-uppercase tracking-wider"><i class="fa fa-calendar-check-o me-1"></i> Analysis Range</label>
+                    <div class="modern-range-container shadow-sm d-flex align-items-center" style="border-radius: 30px !important; min-height: 48px; border: 1.5px solid var(--med-border, #dee2e6) !important; background-color: var(--bg-card, #fff); padding: 4px 16px;">
+                        <div class="range-field d-flex align-items-center flex-grow-1" style="border: none !important;">
+                            <i class="fa fa-calendar text-primary me-2" style="font-size: 0.9rem; opacity: 0.8;"></i>
+                            <input type="text" id="filterReturnStartDate" class="range-input w-100 bg-transparent border-0 text-center fw-semibold text-muted-theme" placeholder="Start Date" readonly style="font-size: 0.9rem; box-shadow: none; outline: none !important; cursor: pointer;">
+                        </div>
+                        <div class="range-divider px-2" style="color: #94a3b8; font-size: 11px; opacity: 0.5;">
+                            <i class="fa fa-long-arrow-right"></i>
+                        </div>
+                        <div class="range-field d-flex align-items-center flex-grow-1" style="border: none !important;">
+                            <input type="text" id="filterReturnEndDate" class="range-input w-100 bg-transparent border-0 text-center fw-semibold text-muted-theme" placeholder="End Date" readonly style="font-size: 0.9rem; box-shadow: none; outline: none !important; cursor: pointer;">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-3 d-flex gap-2">
+                    <button class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" id="btnApplyReturnFilters" style="min-height: 48px; border-radius: 30px !important;">
+                        <i class="fa fa-filter"></i> Apply
+                    </button>
+                    <button type="button" class="btn w-100 rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2" id="btnClearReturnFilters" 
+                        style="min-height: 48px; border-radius: 30px !important; border: 1.5px solid #ff9e88 !important; color: #ff6f4c !important; background-color: #ffe5dd !important;">
+                        <i class="fa fa-refresh"></i> Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="card border-0 shadow-sm bg-card-theme" style="border-radius: 16px !important;">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -133,6 +175,8 @@
                             <th>Credit</th>
                             <th>Status</th>
                             <th class="text-end pe-4">Actions</th>
+                            <th class="d-none">Placed At</th>
+                            <th class="d-none">Approved At</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -192,6 +236,16 @@
                                     <div class="col-6 text-end">
                                         <label class="text-muted-theme small text-uppercase fw-bold mb-1 d-block">Est. Credit</label>
                                         <h5 id="viewRefund" class="fw-bold text-success mb-0">₹0.00</h5>
+                                    </div>
+                                </div>
+                                <div class="row g-3 py-3 border-bottom border-light-theme">
+                                    <div class="col-6">
+                                        <label class="text-muted-theme small text-uppercase fw-bold mb-1 d-block">Placed At</label>
+                                        <span id="viewPlacedAt" class="fw-bold text-main-theme small"></span>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <label class="text-muted-theme small text-uppercase fw-bold mb-1 d-block">Approved At</label>
+                                        <span id="viewApprovedAt" class="fw-bold text-main-theme small"></span>
                                     </div>
                                 </div>
                             </div>
@@ -500,25 +554,126 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
+function formatDateTime(isoString) {
+    if (!isoString) return 'N/A';
+    try {
+        let parts = isoString.split('T');
+        let date = parts[0];
+        let time = parts[1] ? parts[1].substring(0, 5) : '';
+        return date + (time ? ' ' + time : '');
+    } catch(e) {
+        return isoString;
+    }
+}
+
 $(document).ready(function() {
     let userRoles = {!! json_encode(auth()->user()->getRoleNames()) !!};
     
+    // Flatpickr for Return Date Filters
+    const startPicker = flatpickr("#filterReturnStartDate", {
+        altInput: true,
+        altFormat: "F j, Y",
+        dateFormat: "Y-m-d",
+        onChange: function(selectedDates, dateStr, instance) {
+            endPicker.set('minDate', dateStr);
+        }
+    });
+    const endPicker = flatpickr("#filterReturnEndDate", {
+        altInput: true,
+        altFormat: "F j, Y",
+        dateFormat: "Y-m-d",
+        onChange: function(selectedDates, dateStr, instance) {
+            startPicker.set('maxDate', dateStr);
+        }
+    });
+
+    let exportOptions = {
+        columns: [0, 1, 2, 3, 4, 5, 7, 8],
+        format: {
+            body: function (data, rowIdx, columnIdx, node) {
+                let tableApi = $('#returnsTable').DataTable();
+                let rowData = tableApi.row(rowIdx).data();
+                if (!rowData) return data;
+
+                if (columnIdx === 0) {
+                    return rowData.return_code;
+                }
+                if (columnIdx === 1) {
+                    let requester = rowData.user ? rowData.user.name : 'N/A';
+                    if (rowData.order_type === 'retailer' && rowData.user && rowData.user.retailer) {
+                        requester = rowData.user.retailer.shop_name || requester;
+                    }
+                    return `${requester} (${rowData.order_type})`;
+                }
+                if (columnIdx === 2) {
+                    let assignments = [];
+                    if (rowData.field_staff) {
+                        let name = rowData.field_staff.user ? rowData.field_staff.user.name : (rowData.field_staff.name || 'N/A');
+                        assignments.push(`Staff: ${name}`);
+                    }
+                    if (rowData.sales_manager) {
+                        let name = rowData.sales_manager.user ? rowData.sales_manager.user.name : (rowData.sales_manager.name || 'N/A');
+                        assignments.push(`Manager: ${name}`);
+                    }
+                    if (rowData.distributor) {
+                        let name = rowData.distributor.user ? rowData.distributor.user.name : (rowData.distributor.name || 'N/A');
+                        assignments.push(`Distributor: ${name}`);
+                    }
+                    return assignments.join(' | ') || '-';
+                }
+                if (columnIdx === 3) {
+                    let variant = [rowData.side, rowData.size].filter(v => v && !['Both', 'None', 'NA', 'Universal'].includes(v)).join(' / ');
+                    return rowData.product_name + (variant ? ` [${variant}]` : '') + ` (Order: #${rowData.order_id})`;
+                }
+                if (columnIdx === 4) {
+                    let unit = rowData.unit;
+                    if (rowData.product && (rowData.product.brand === 'Sudhneelgiri' || rowData.product.brand === 'Atomshield')) {
+                        unit = 'Nos';
+                    }
+                    return `₹${parseFloat(rowData.refund_amount || 0).toFixed(2)} (${rowData.quantity} ${unit})`;
+                }
+                if (columnIdx === 5) {
+                    return rowData.status ? rowData.status.toUpperCase() : '';
+                }
+                return typeof data === 'string' ? data.replace(/<[^>]*>?/gm, '').trim() : data;
+            }
+        }
+    };
+
+    let dynamicTitle = function() {
+        let activeType = $('#returnTypeTabs .nav-link.active').data('type') || 'retailer';
+        return activeType === 'retailer' ? 'Retailer Return Requests' : 'Distributor Return Requests';
+    };
+
     let table = $('#returnsTable').DataTable({
         processing: true,
         ajax: {
             url: "{{ route('admin.returns.index') }}",
             data: function(d) {
                 d.order_type = $('#returnTypeTabs .nav-link.active').data('type') || 'retailer';
+                d.status = $('#filterReturnStatus').val();
+                d.start_date = $('#filterReturnStartDate').val();
+                d.end_date = $('#filterReturnEndDate').val();
             }
         },
         columns: [
             { 
                 data: 'return_code',
                 render: function(data, type, row) {
-                    let date = row.created_at ? row.created_at.split('T')[0] : 'N/A';
+                    let placed = formatDateTime(row.created_at);
+                    let approvedAt = '';
+                    if (row.status === 'completed') {
+                        let rawApprove = row.order_type === 'retailer' ? row.distributor_approved_at : row.admin_approved_at;
+                        if (rawApprove) {
+                            approvedAt = formatDateTime(rawApprove);
+                        }
+                    }
                     return `<div>
                         <span class="fw-bold text-primary">${data}</span>
-                        <div class="small text-muted" style="font-size: 0.65rem;">${date}</div>
+                        <div class="small text-muted" style="font-size: 0.68rem; line-height: 1.25; margin-top: 2px;">
+                            <span>Placed: ${placed}</span>
+                            ${approvedAt ? `<br><span class="text-success fw-semibold">Approved: ${approvedAt}</span>` : ''}
+                        </div>
                     </div>`;
                 }
             },
@@ -590,15 +745,38 @@ $(document).ready(function() {
             { 
                 data: 'status',
                 render: function(data, type, row) {
-                    let badgeClass = 'bg-secondary';
-                    let label = data.replace('_', ' ');
+                    let badgeBg = 'rgba(108, 117, 125, 0.1)';
+                    let badgeColor = '#6c757d';
+                    let badgeBorder = 'rgba(108, 117, 125, 0.25)';
+                    let icon = '<i class="fa fa-info-circle me-1"></i>';
+                    let label = data.replace('_', ' ').toUpperCase();
                     
-                    if(data === 'pending') badgeClass = 'bg-warning';
-                    else if(data === 'verified') badgeClass = 'bg-info';
-                    else if(data === 'completed') badgeClass = 'bg-success';
-                    else if(data === 'rejected') badgeClass = 'bg-danger';
+                    if (data === 'pending') {
+                        badgeBg = 'rgba(245, 158, 11, 0.12)';
+                        badgeColor = '#d97706';
+                        badgeBorder = 'rgba(245, 158, 11, 0.3)';
+                        icon = '<i class="fa fa-clock-o me-1"></i>';
+                    } else if (data === 'verified') {
+                        badgeBg = 'rgba(14, 165, 233, 0.12)';
+                        badgeColor = '#0284c7';
+                        badgeBorder = 'rgba(14, 165, 233, 0.3)';
+                        icon = '<i class="fa fa-check-circle-o me-1"></i>';
+                    } else if (data === 'completed') {
+                        badgeBg = 'rgba(34, 197, 94, 0.12)';
+                        badgeColor = '#16a34a';
+                        badgeBorder = 'rgba(34, 197, 94, 0.3)';
+                        icon = '<i class="fa fa-check-circle me-1"></i>';
+                    } else if (data === 'rejected') {
+                        badgeBg = 'rgba(239, 68, 68, 0.12)';
+                        badgeColor = '#dc2626';
+                        badgeBorder = 'rgba(239, 68, 68, 0.3)';
+                        icon = '<i class="fa fa-times-circle me-1"></i>';
+                    }
                     
-                    return `<span class="badge ${badgeClass} text-white text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px; padding: 4px 8px; border-radius: 4px;">${label}</span>`;
+                    return `<span class="badge d-inline-flex align-items-center fw-bold text-uppercase border" 
+                        style="background-color: ${badgeBg} !important; color: ${badgeColor} !important; border-color: ${badgeBorder} !important; font-size: 0.68rem; letter-spacing: 0.5px; padding: 6px 12px; border-radius: 30px;">
+                        ${icon}${label}
+                    </span>`;
                 }
             },
             { 
@@ -632,6 +810,24 @@ $(document).ready(function() {
                     btns += `</div>`;
                     return btns;
                 }
+            },
+            {
+                data: 'created_at',
+                visible: false,
+                render: function(data, type, row) {
+                    return formatDateTime(data);
+                }
+            },
+            {
+                data: null,
+                visible: false,
+                render: function(data, type, row) {
+                    if (row.status === 'completed') {
+                        let rawApprove = row.order_type === 'retailer' ? row.distributor_approved_at : row.admin_approved_at;
+                        return rawApprove ? formatDateTime(rawApprove) : 'Completed';
+                    }
+                    return '';
+                }
             }
         ],
         order: [],
@@ -640,17 +836,23 @@ $(document).ready(function() {
             {
                 extend: 'excel',
                 text: '<i class="fa fa-file-excel me-1"></i> Excel',
-                className: 'btn btn-success btn-sm rounded-3 shadow-sm border-0'
+                className: 'btn btn-success btn-sm rounded-3 shadow-sm border-0',
+                exportOptions: exportOptions,
+                title: dynamicTitle
             },
             {
                 extend: 'pdf',
                 text: '<i class="fa fa-file-pdf me-1"></i> PDF',
-                className: 'btn btn-danger btn-sm rounded-3 shadow-sm border-0'
+                className: 'btn btn-danger btn-sm rounded-3 shadow-sm border-0',
+                exportOptions: exportOptions,
+                title: dynamicTitle
             },
             {
                 extend: 'print',
                 text: '<i class="fa fa-print me-1"></i> Print',
-                className: 'btn btn-dark btn-sm rounded-3 shadow-sm border-0'
+                className: 'btn btn-dark btn-sm rounded-3 shadow-sm border-0',
+                exportOptions: exportOptions,
+                title: dynamicTitle
             }
         ],
         language: {
@@ -685,6 +887,19 @@ $(document).ready(function() {
         table.ajax.reload();
     });
 
+    $('#btnApplyReturnFilters').click(function() {
+        table.ajax.reload();
+    });
+
+    $('#btnClearReturnFilters').click(function() {
+        $('#filterReturnStatus').val('');
+        startPicker.clear();
+        endPicker.clear();
+        startPicker.set('maxDate', null);
+        endPicker.set('minDate', null);
+        table.ajax.reload();
+    });
+
     $(document).on('click', '.view-btn', function() {
         let row = $(this).data('row');
         $('#viewReturnCodeHeader').text(row.return_code);
@@ -708,6 +923,18 @@ $(document).ready(function() {
         }
         $('#viewQuantity').text(`${row.quantity} ${unit}`);
         $('#viewRefund').text(`₹${row.refund_amount || '0.00'}`);
+        
+        let placedAt = formatDateTime(row.created_at);
+        let approvedAt = 'Pending';
+        if (row.status === 'completed') {
+            let rawApprove = row.order_type === 'retailer' ? row.distributor_approved_at : row.admin_approved_at;
+            approvedAt = rawApprove ? formatDateTime(rawApprove) : 'Completed';
+        } else if (row.status === 'rejected') {
+            approvedAt = 'Rejected';
+        }
+        $('#viewPlacedAt').text(placedAt);
+        $('#viewApprovedAt').text(approvedAt);
+
         $('#viewReason').text(row.reason);
 
         let tracking = $('#viewTracking').empty();
@@ -765,7 +992,7 @@ $(document).ready(function() {
                     <div class="border-start border-success border-2 ps-3 pb-3 position-relative">
                         <div class="position-absolute start-0 top-0 translate-middle-x bg-success rounded-circle" style="width: 10px; height: 10px; margin-left: -1px;"></div>
                         <div class="fw-bold small text-main-theme">VERIFIED</div>
-                        <div class="text-muted small" style="font-size: 0.7rem;">By ${verifier} on ${row.verified_at.split('T')[0]}</div>
+                        <div class="text-muted small" style="font-size: 0.7rem;">By ${verifier} on ${formatDateTime(row.verified_at)}</div>
                     </div>
                 `);
             }
@@ -775,7 +1002,7 @@ $(document).ready(function() {
                     <div class="border-start border-success border-2 ps-3 pb-3 position-relative">
                         <div class="position-absolute start-0 top-0 translate-middle-x bg-success rounded-circle" style="width: 10px; height: 10px; margin-left: -1px;"></div>
                         <div class="fw-bold small text-main-theme">DISTRIBUTOR APPROVED</div>
-                        <div class="text-muted small" style="font-size: 0.7rem;">By ${approver} on ${row.distributor_approved_at.split('T')[0]}</div>
+                        <div class="text-muted small" style="font-size: 0.7rem;">By ${approver} on ${formatDateTime(row.distributor_approved_at)}</div>
                     </div>
                 `);
             }
@@ -785,7 +1012,7 @@ $(document).ready(function() {
                     <div class="border-start border-success border-2 ps-3 position-relative">
                         <div class="position-absolute start-0 top-0 translate-middle-x bg-success rounded-circle" style="width: 10px; height: 10px; margin-left: -1px;"></div>
                         <div class="fw-bold small text-main-theme">ADMIN FINALIZED</div>
-                        <div class="text-muted small" style="font-size: 0.7rem;">By ${approver} on ${row.admin_approved_at.split('T')[0]}</div>
+                        <div class="text-muted small" style="font-size: 0.7rem;">By ${approver} on ${formatDateTime(row.admin_approved_at)}</div>
                     </div>
                 `);
             }
@@ -1166,8 +1393,11 @@ $(document).ready(function() {
             tbody.append(`
                 <tr>
                     <td class="ps-3">
-                        <div class="fw-bold">${item.product_name}</div>
-                        ${variant ? `<div class="small text-muted">${variant}</div>` : ''}
+                        <div class="fw-bold text-main-theme">${item.product_name}</div>
+                        <div class="d-flex flex-wrap gap-1 align-items-center mt-1">
+                            ${item.brand ? `<span class="badge bg-soft-primary text-primary border-0 px-2" style="font-size: 0.65rem;"><i class="fa fa-tag me-1 text-primary"></i>${item.brand}</span>` : ''}
+                            ${variant ? `<span class="badge bg-soft-info text-info border-0 px-2" style="font-size: 0.65rem;">${variant}</span>` : ''}
+                        </div>
                     </td>
                     <td class="text-center">${item.quantity} ${item.unit}</td>
                     <td class="text-center">${item.returned_qty} ${item.unit}</td>

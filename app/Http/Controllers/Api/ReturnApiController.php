@@ -300,7 +300,6 @@ class ReturnApiController extends Controller
                     ]);
                     $this->generateCreditNote($returnRequest);
                     $this->adjustStockForReturn($returnRequest);
-                    $this->deductLoyaltyPointsForReturn($returnRequest);
                 } else {
                     return response()->json(['error' => 'Unauthorized or invalid status for approval.'], 403);
                 }
@@ -568,12 +567,18 @@ class ReturnApiController extends Controller
                 $data['retailer_name'] = 'N/A'; 
             }
             
-            // Enhance items with product returnable status
-            $data['items'] = collect($data['items'])->map(function($item) {
-                if (isset($item['product'])) {
-                    $item['is_returnable'] = (bool)($item['product']['is_returnable'] ?? false);
+            // Enhance items with brand & product returnable status
+            $data['items'] = collect($data['items'])->map(function($item) use ($order) {
+                $orderItem = $order->items->first(function($oi) use ($item) {
+                    return $oi->product_id == $item['product_id'];
+                });
+
+                if ($orderItem && $orderItem->product) {
+                    $item['brand'] = $orderItem->product->brand;
+                    $item['is_returnable'] = (bool)$orderItem->product->is_returnable;
                 } else {
-                    $item['is_returnable'] = false;
+                    $item['brand'] = $item['product']['brand'] ?? null;
+                    $item['is_returnable'] = (bool)($item['product']['is_returnable'] ?? false);
                 }
                 return $item;
             });
@@ -582,34 +587,5 @@ class ReturnApiController extends Controller
         });
 
         return response()->json($orders);
-    }
-
-    /**
-     * Deduct loyalty points from retailer balance when a return is completed.
-     */
-    private function deductLoyaltyPointsForReturn(ReturnRequest $returnRequest)
-    {
-        if ($returnRequest->order_type !== 'retailer') return;
-
-        $product = $returnRequest->product;
-        if (!$product) return;
-
-        // Find the retailer by user_id
-        $retailer = \App\Models\Retailer::where('user_id', $returnRequest->user_id)->first();
-        if (!$retailer) return;
-
-        $ptr = (float)($product->ptr ?? 0);
-        $percentage = (float)($product->loyalty_point_percentage ?? 0);
-
-        if ($ptr > 0 && $percentage > 0) {
-            // Use trait helper for correct base quantity (strips)
-            $qtyInStrips = $this->convertQuantityToStrips($product, $returnRequest->quantity, $returnRequest->unit);
-            $pointsToDeduct = ($qtyInStrips * $ptr) * ($percentage / 100);
-
-            if ($pointsToDeduct > 0) {
-                $retailer->decrement('loyalty_points', $pointsToDeduct);
-                Log::info("Loyalty: Deducted {$pointsToDeduct} points from Retailer ID {$retailer->id} due to Return #{$returnRequest->return_code}");
-            }
-        }
     }
 }

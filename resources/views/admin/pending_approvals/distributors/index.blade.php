@@ -560,6 +560,7 @@
                                 <th>Order Code</th>
                                 <th>Distributor</th>
                                 <th style="width: 200px;">products</th>
+                                <th style="width: 120px;">Brand</th>
                                 <th>Total</th>
                                 <th>Placed At</th>
                                 <th>Status</th>
@@ -1204,6 +1205,25 @@
             window.currentStatus = INITIAL_STATUS; // Will be refined in initComplete or use manual fallback if needed
             window.initialTabSelected = false;
 
+            let exportOptions = {
+                columns: ':not(.no-export)',
+                format: {
+                    body: function(data, row, column, node) {
+                        let tableApi = $('#distributor-approval-table').DataTable();
+                        let colIdx = column;
+                        let rowData = tableApi.row(row).data();
+
+                        if (colIdx === 4 && rowData && rowData.product_summary) {
+                            return rowData.product_summary.split('|||').map(it => it.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim()).join('\n');
+                        }
+                        if (colIdx === 5 && rowData && rowData.brand_summary) {
+                            return rowData.brand_summary.split('|||').join('\n');
+                        }
+                        return typeof data === 'string' ? data.replace(/<[^>]*>?/gm, '').trim() : data;
+                    }
+                }
+            };
+
             var table = $('#distributor-approval-table').DataTable({
                 order: [
                     [0, 'desc']
@@ -1254,41 +1274,31 @@
                         extend: 'copy',
                         className: 'btn btn-secondary btn-sm',
                         text: '<i class="fa fa-copy"></i> Copy',
-                        exportOptions: {
-                            columns: ':not(.no-export)'
-                        }
+                        exportOptions: exportOptions
                     },
                     {
                         extend: 'csv',
                         className: 'btn btn-info btn-sm text-white',
                         text: '<i class="fa fa-file-csv"></i> CSV',
-                        exportOptions: {
-                            columns: ':not(.no-export)'
-                        }
+                        exportOptions: exportOptions
                     },
                     {
                         extend: 'excel',
                         className: 'btn btn-success btn-sm',
                         text: '<i class="fa fa-file-excel"></i> Excel',
-                        exportOptions: {
-                            columns: ':not(.no-export)'
-                        }
+                        exportOptions: exportOptions
                     },
                     {
                         extend: 'pdf',
                         className: 'btn btn-danger btn-sm',
                         text: '<i class="fa fa-file-pdf"></i> PDF',
-                        exportOptions: {
-                            columns: ':not(.no-export)'
-                        }
+                        exportOptions: exportOptions
                     },
                     {
                         extend: 'print',
                         className: 'btn btn-dark btn-sm',
                         text: '<i class="fa fa-print"></i> Print',
-                        exportOptions: {
-                            columns: ':not(.no-export)'
-                        }
+                        exportOptions: exportOptions
                     }
                     ]
                 },
@@ -1366,10 +1376,23 @@
                             if (!data) return '-';
                             let items = data.split('|||');
                         if (type !== 'display') {
-                            return items.map(it => it.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim()).join(' | ');
+                            return items.map(it => it.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim()).join('\n');
                         }
-                            let joinedData = items.join('');
-                            return items.join('');
+                        return items.map(it => `<div class="py-1">${it}</div>`).join('<div class="border-bottom border-light opacity-50 my-1"></div>');
+                        }
+                    },
+                    {
+                        data: 'brand_summary',
+                        name: 'brand_summary',
+                        className: 'brand-col',
+                        orderable: false,
+                        render: function (data, type, row) {
+                            if (!data) return '-';
+                            let items = data.split('|||');
+                            if (type !== 'display') {
+                                return items.join(', ');
+                            }
+                            return items.map(it => `<div class="py-1 fw-semibold text-muted" style="font-size: 0.78rem;">${it}</div>`).join('<div class="border-bottom border-light opacity-50 my-1"></div>');
                         }
                     },
                     {

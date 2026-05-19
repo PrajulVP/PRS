@@ -51,6 +51,18 @@ class ReturnController extends Controller
             $query->where('order_type', $request->order_type);
         }
 
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+
         if ($request->ajax()) {
             return response()->json([
                 'data' => $query->latest()->get()
@@ -517,6 +529,7 @@ class ReturnController extends Controller
                 return [
                     'product_id' => $item->product_id,
                     'product_name' => $item->product_name ?? $item->product?->product_name,
+                    'brand' => $item->product?->brand,
                     'side' => $item->side,
                     'size' => $item->size,
                     'quantity' => $item->quantity,

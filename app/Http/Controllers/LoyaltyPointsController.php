@@ -200,7 +200,7 @@ class LoyaltyPointsController extends Controller
                             }
                             $summary .= '<br><span class="small">'.$item->quantity.' '.$item->unit.'</span></div>';
                             return $summary;
-                        })->implode('');
+                        })->implode("\n");
                     })
                     ->editColumn('updated_at', function ($row) {
                         return $row->updated_at->format('d M Y, h:i A');

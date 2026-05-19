@@ -404,6 +404,29 @@
                 @if(session('error'))
                 <div class="alert alert-danger">{{ session('error') }}</div> @endif
 
+                <!-- Date Filter Section -->
+                <div class="p-3 mb-4 rounded-3 border bg-card-theme" style="border-color: var(--med-border) !important;">
+                    <div class="row align-items-end g-3">
+                        <div class="col-12 col-md-4">
+                            <label class="form-label fw-bold small text-muted text-uppercase mb-1">
+                                <i class="fa fa-calendar text-primary me-1"></i> Placed From
+                            </label>
+                            <input type="text" id="start_date_filter" class="form-control bg-transparent flatpickr-input" placeholder="Select Start Date" readonly style="border-radius: 8px; border: 1.5px solid var(--med-border); font-size: 0.9rem; font-weight: 600; color: var(--med-text-main);">
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label fw-bold small text-muted text-uppercase mb-1">
+                                <i class="fa fa-calendar text-primary me-1"></i> Placed To
+                            </label>
+                            <input type="text" id="end_date_filter" class="form-control bg-transparent flatpickr-input" placeholder="Select End Date" readonly style="border-radius: 8px; border: 1.5px solid var(--med-border); font-size: 0.9rem; font-weight: 600; color: var(--med-text-main);">
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label d-none d-md-block mb-1">&nbsp;</label>
+                            <button type="button" id="clear_dates_btn" class="btn btn-clear-dates w-100 fw-bold d-flex align-items-center justify-content-center gap-2">
+                                <i class="fa fa-refresh"></i> Clear Dates
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Hidden filter element to be moved into datatable wrapper -->
                 <div class="d-none" id="payment-filter-wrapper">
@@ -433,12 +456,19 @@
                                 <th>Retailer</th>
                                 <th>Distributor</th>
                                 <th style="width: 200px;">Products</th>
+                                <th style="width: 120px;">Brand</th>
                                 <th>Total</th>
                                 <th>Status</th>
                                 <th>Placed At</th>
                                 <th>Payment Status</th>
                                 <th>Invoice</th>
                                 <th>Actions</th>
+                                <th class="d-none">Shop Name</th>
+                                <th class="d-none">Sales Manager</th>
+                                <th class="d-none">Field Staff</th>
+                                <th class="d-none">Phone</th>
+                                <th class="d-none">GST</th>
+                                <th class="d-none">Drug License</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -751,8 +781,47 @@
                 $(`#orderStatusTabs button[data-status="${urlStatus}"]`).tab('show');
             }
 
+            let exportOptions = {
+                columns: [0, 1, 2, 12, 13, 4, 5, 14, 15, 16, 17, 3, 6, 7, 8, 9],
+                format: {
+                    body: function(data, row, column, node) {
+                        if (column === 2) {
+                            let tableApi = $('#orders-table').DataTable();
+                            let rowData = tableApi.row(row).data();
+                            return rowData ? (rowData.retailer_name || '').trim() : '';
+                        }
+                        if (column === 5) {
+                            let tableApi = $('#orders-table').DataTable();
+                            let rowData = tableApi.row(row).data();
+                            if (rowData && rowData.product_summary) {
+                                return rowData.product_summary.split('|||').map(it => it.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim()).join('\n');
+                            }
+                        }
+                        if (column === 6) {
+                            let tableApi = $('#orders-table').DataTable();
+                            let rowData = tableApi.row(row).data();
+                            if (rowData && rowData.brand_summary) {
+                                return rowData.brand_summary.split('|||').join('\n');
+                            }
+                        }
+                        if (column === 14) {
+                            let tableApi = $('#orders-table').DataTable();
+                            let rowData = tableApi.row(row).data();
+                            if (rowData) {
+                                let st = (rowData.status || '').toLowerCase();
+                                if (st === 'delivered' && rowData.delivered_at) {
+                                    return `Placed: ${rowData.placed_at}\nDelivered: ${rowData.delivered_at}`;
+                                }
+                                return `Placed: ${rowData.placed_at}`;
+                            }
+                        }
+                        return typeof data === 'string' ? data.replace(/<[^>]*>?/gm, '').trim() : data;
+                    }
+                }
+            };
+
             var table = $('#orders-table').DataTable({
-                order: [[7, 'desc']],
+                order: [[8, 'desc']],
                 autoWidth: false,
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
                     "<'row mb-4 gy-4 d-flex align-items-center'<'col-12 col-lg-4 d-flex justify-content-center justify-content-lg-start'l><'col-12 col-lg-4 d-flex justify-content-center payment-filter-container'><'col-12 col-lg-4 d-flex justify-content-center justify-content-lg-end'f>>" +
@@ -768,41 +837,31 @@
                         extend: 'copy',
                         className: 'btn btn-secondary btn-sm',
                         text: '<i class="fa fa-copy"></i> Copy',
-                        exportOptions: {
-                            columns: ':not(.no-export)'
-                        }
+                        exportOptions: exportOptions
                     },
                     {
                         extend: 'csv',
                         className: 'btn btn-info btn-sm text-white',
                         text: '<i class="fa fa-file-csv"></i> CSV',
-                        exportOptions: {
-                            columns: ':not(.no-export)'
-                        }
+                        exportOptions: exportOptions
                     },
                     {
                         extend: 'excel',
                         className: 'btn btn-success btn-sm',
                         text: '<i class="fa fa-file-excel"></i> Excel',
-                        exportOptions: {
-                            columns: ':not(.no-export)'
-                        }
+                        exportOptions: exportOptions
                     },
                     {
                         extend: 'pdf',
                         className: 'btn btn-danger btn-sm',
                         text: '<i class="fa fa-file-pdf"></i> PDF',
-                        exportOptions: {
-                            columns: ':not(.no-export)'
-                        }
+                        exportOptions: exportOptions
                     },
                     {
                         extend: 'print',
                         className: 'btn btn-dark btn-sm',
                         text: '<i class="fa fa-print"></i> Print',
-                        exportOptions: {
-                            columns: ':not(.no-export)'
-                        }
+                        exportOptions: exportOptions
                     }
                     ]
                 },
@@ -814,6 +873,8 @@
                         d.payment_status = $('input[name="payment_status"]:checked').val();
                         d.status = $('#orderStatusTabs .nav-link.active').data('status');
                         d.retailer_id = urlParams.get('retailer_id');
+                        d.start_date = $('#start_date_filter').val();
+                        d.end_date = $('#end_date_filter').val();
                     }
                 },
                 columns: [{
@@ -866,10 +927,23 @@
                         if (!data) return '-';
                         let items = data.split('|||');
                         if (type !== 'display') {
-                            return items.map(it => it.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim()).join(' | ');
+                            return items.map(it => it.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim()).join('\n');
                         }
-                        let joinedData = items.join('');
-                        return items.join('');
+                        return items.map(it => `<div class="py-1">${it}</div>`).join('<div class="border-bottom border-light opacity-50 my-1"></div>');
+                    }
+                },
+                {
+                    data: 'brand_summary',
+                    name: 'brand_summary',
+                    className: 'brand-col',
+                    orderable: false,
+                    render: function (data, type, row) {
+                        if (!data) return '-';
+                        let items = data.split('|||');
+                        if (type !== 'display') {
+                            return items.join(', ');
+                        }
+                        return items.map(it => `<div class="py-1 fw-semibold text-muted" style="font-size: 0.78rem;">${it}</div>`).join('<div class="border-bottom border-light opacity-50 my-1"></div>');
                     }
                 },
                 {
@@ -899,7 +973,16 @@
                 },
                 {
                     data: 'placed_at',
-                    name: 'placed_at'
+                    name: 'placed_at',
+                    render: function (data, type, row) {
+                        if (type !== 'display') return data;
+                        let html = `<div>${data}</div>`;
+                        let st = (row.status || '').toLowerCase();
+                        if (st === 'delivered' && row.delivered_at) {
+                            html += `<div class="text-success fw-bold mt-1" style="font-size: 0.72rem;"><i class="fa fa-check-circle me-1"></i>Delivered: ${row.delivered_at}</div>`;
+                        }
+                        return html;
+                    }
                 },
                 {
                     data: 'payment_status',
@@ -962,8 +1045,37 @@
 
                         btns += `</div>`;
                         return btns;
-
                     }
+                },
+                {
+                    data: 'retailer_shop',
+                    visible: false,
+                    render: function(d) { return d || '-'; }
+                },
+                {
+                    data: 'retailer_sm_name',
+                    visible: false,
+                    render: function(d) { return d || '-'; }
+                },
+                {
+                    data: 'retailer_fs_name',
+                    visible: false,
+                    render: function(d) { return d || '-'; }
+                },
+                {
+                    data: 'retailer_phone',
+                    visible: false,
+                    render: function(d) { return d || '-'; }
+                },
+                {
+                    data: 'retailer_gst',
+                    visible: false,
+                    render: function(d) { return d || '-'; }
+                },
+                {
+                    data: 'retailer_dl',
+                    visible: false,
+                    render: function(d) { return d || '-'; }
                 }
                 ],
                 drawCallback: function() {
@@ -973,6 +1085,31 @@
 
             // Move Custom Filter
             $('#payment-filter-wrapper').children().appendTo('.payment-filter-container');
+
+            // Initialize Flatpickr for Date Filters
+            const startPicker = flatpickr("#start_date_filter", {
+                dateFormat: "Y-m-d",
+                onChange: function(selectedDates, dateStr, instance) {
+                    endPicker.set('minDate', dateStr);
+                    table.ajax.reload();
+                }
+            });
+            const endPicker = flatpickr("#end_date_filter", {
+                dateFormat: "Y-m-d",
+                onChange: function(selectedDates, dateStr, instance) {
+                    startPicker.set('maxDate', dateStr);
+                    table.ajax.reload();
+                }
+            });
+
+            // Clear Date Filters
+            $('#clear_dates_btn').click(function() {
+                startPicker.clear();
+                endPicker.clear();
+                startPicker.set('maxDate', null);
+                endPicker.set('minDate', null);
+                table.ajax.reload();
+            });
 
             // Initialize Minimal Select2
             $('.select2-minimal').select2({
@@ -1706,7 +1843,7 @@
                                         { key: 'pending', label: 'Order Placed', desc: `Initial request at ${row.placed_at || 'N/A'}` },
                                         { key: 'processing', label: 'Processing', desc: 'Laboratory processing' },
                                         { key: 'approved', label: 'Approved', desc: 'Cleared for dispatch' },
-                                        { key: 'delivered', label: 'Delivered', desc: 'Fulfillment confirmed' }
+                                        { key: 'delivered', label: 'Delivered', desc: `Fulfillment confirmed ${row.delivered_at ? 'at ' + row.delivered_at : ''}` }
                                     ];
 
                                     let activeIdx = 0;
@@ -1838,4 +1975,33 @@
             });
         });
     </script>
+@endpush
+
+@push('styles')
+<style>
+    .btn-clear-dates {
+        border-radius: 8px;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border: 1.5px solid #ff9e88 !important;
+        color: #ff6f4c !important;
+        background-color: #ffe5dd !important;
+        transition: all 0.2s ease;
+    }
+    .btn-clear-dates:hover {
+        background-color: #ff6f4c !important;
+        color: #ffffff !important;
+    }
+
+    body.dark-only .btn-clear-dates {
+        border-color: rgba(239, 68, 68, 0.4) !important;
+        color: #f87171 !important;
+        background-color: rgba(239, 68, 68, 0.1) !important;
+    }
+    body.dark-only .btn-clear-dates:hover {
+        background-color: #ef4444 !important;
+        color: #ffffff !important;
+    }
+</style>
 @endpush
