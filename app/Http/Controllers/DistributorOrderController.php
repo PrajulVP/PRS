@@ -190,6 +190,7 @@ class DistributorOrderController extends Controller
                         'total_items' => $order->total_items,
                         'total_quantity' => $order->total_quantity,
                         'total_amount' => $order->total_amount,
+                        'metadata' => $order->metadata,
                         'product_summary' => $productSummary,
                         'status' => ucfirst(str_replace('_', ' ', $order->status)),
                         'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d H:i:s') : '-',
@@ -586,6 +587,8 @@ class DistributorOrderController extends Controller
             'payment_status' => 'sometimes|nullable|in:pending,paid,failed',
             'invoice' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
             'invoice_no' => 'required|string|max:100', // Capture invoice number
+            'final_amount' => 'nullable|numeric|min:0',
+            'taxable_amount' => 'nullable|numeric|min:0',
             'batches' => 'required|array',
             'batches.*' => 'required|array|min:1',
             'batches.*.*.batch_no' => 'required|string|max:255',
@@ -652,11 +655,26 @@ class DistributorOrderController extends Controller
                 $invoicePath = $file->storeAs('invoices/distributors', $filename, 'public');
             }
 
+            $metadata = $distributorOrder->metadata ?? [];
+            if (!isset($metadata['estimated_amount'])) {
+                $metadata['estimated_amount'] = (float)$distributorOrder->total_amount;
+            }
+            
             $updateData = [
                 'status' => DistributorOrder::STATUS_APPROVED,
                 'invoice_path' => $invoicePath,
                 'invoice_no' => $request->invoice_no // Save the invoice number
             ];
+
+            if ($request->filled('final_amount')) {
+                $updateData['total_amount'] = (float)$request->final_amount;
+                $metadata['invoice_net_amount'] = (float)$request->final_amount;
+            }
+            if ($request->filled('taxable_amount')) {
+                $metadata['invoice_taxable_amount'] = (float)$request->taxable_amount;
+            }
+
+            $updateData['metadata'] = $metadata;
 
             if ($request->filled('payment_status')) {
                 $updateData['payment_status'] = $request->payment_status;

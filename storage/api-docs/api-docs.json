@@ -2694,6 +2694,9 @@
                                         "gst": {
                                             "type": "number"
                                         },
+                                        "brand": {
+                                            "type": "string"
+                                        },
                                         "pack": {
                                             "type": "string"
                                         },
@@ -2777,6 +2780,10 @@
                                             "gst": {
                                                 "type": "string",
                                                 "example": "12.00"
+                                            },
+                                            "brand": {
+                                                "type": "string",
+                                                "example": "BrandName"
                                             },
                                             "net_amount": {
                                                 "type": "string",
@@ -3488,7 +3495,7 @@
                     {
                         "name": "status",
                         "in": "query",
-                        "description": "Filter by status (pending, verified, completed, rejected)",
+                        "description": "Filter by status (pending, verified, completed, rejected, all)",
                         "required": false,
                         "schema": {
                             "type": "string"

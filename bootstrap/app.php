@@ -53,6 +53,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, \Illuminate\Http\Request $request) {
+            return redirect()->back()
+                ->withInput($request->except(['_token', 'password']))
+                ->withErrors(['session_expired' => 'Your session expired or site data was cleared. Please try logging in again.']);
+        });
     })
     ->create();

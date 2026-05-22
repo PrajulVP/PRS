@@ -470,7 +470,24 @@
                 const renderDistributors = (distributors) => {
                     $distSelect.empty().append('<option value="">Select Distributor (Top matches first)</option>');
                     
+                    let qty = parseFloat($('#qtyInput').val()) || 1;
+                    let unit = $('#unitSelect').val() || 'Strips';
+                    let mul = 1;
+                    if (currentProductDetails) {
+                        let stripsPerBox = parseInt(currentProductDetails.strips_per_box || 1);
+                        let boxesPerCarton = parseInt(currentProductDetails.boxes_per_carton || 1);
+                        if (unit === 'Box') {
+                            mul = stripsPerBox;
+                        } else if (unit === 'Carton') {
+                            mul = stripsPerBox * boxesPerCarton;
+                        } else if (unit === 'Nos') {
+                            mul = 1 / (max(1, parseInt(currentProductDetails.units_per_strip || 1)));
+                        }
+                    }
+                    let requiredStock = qty * mul;
+                    
                     if (distributors && distributors.length > 0) {
+                        let addedAny = false;
                         distributors.forEach(d => {
                             let stock = d.pivot ? parseFloat(d.pivot.stock) : 0;
                             
@@ -481,8 +498,14 @@
                                 stock -= (addedItems[key].qty * addedItems[key].multiplier);
                             }
                             
-                            $distSelect.append(`<option value="${d.id}" data-stock-raw="${stock}" ${currentVal == d.id ? 'selected' : ''}>${d.shop_name || d.name}</option>`);
+                            if (stock > 0 && stock >= requiredStock) {
+                                $distSelect.append(`<option value="${d.id}" data-stock-raw="${stock}" ${currentVal == d.id ? 'selected' : ''}>${d.shop_name || d.name}</option>`);
+                                addedAny = true;
+                            }
                         });
+                        if (!addedAny) {
+                            $distSelect.append('<option value="" disabled>No stockists with sufficient stock found in your area</option>');
+                        }
                     } else {
                         $distSelect.append('<option value="" disabled>No stockists found for this variant in your area</option>');
                     }
@@ -496,6 +519,9 @@
                     return;
                 }
 
+                let qty = parseFloat($('#qtyInput').val()) || 1;
+                let unit = $('#unitSelect').val() || 'Strips';
+
                 $distSelect.prop('disabled', true);
                 $.ajax({
                     url: "{{ route('admin.retailer.product-details', ':id') }}".replace(':id', prodId),
@@ -503,7 +529,9 @@
                     data: { 
                         retailer_id: retailerId,
                         side: side,
-                        size: size
+                        size: size,
+                        quantity: qty,
+                        unit: unit
                     },
                     success: function (res) {
                         renderDistributors(res.distributors);
@@ -513,6 +541,22 @@
                     }
                 });
             }
+
+            // Shared Javascript helper for Nos max limit
+            function max(a, b) {
+                return a > b ? a : b;
+            }
+
+            // Real-time stock filter when quantity or unit changes
+            $('#qtyInput, #unitSelect').on('input change', function() {
+                let prodId = $('#productSelect').val();
+                let retailerId = $('#retailer_id').val();
+                if (prodId && retailerId) {
+                    let side = $('.variant-btn.active[data-attr="Side"]').data('value') || null;
+                    let size = $('.variant-btn.active[data-attr="Size"]').data('value') || null;
+                    updateDistributorStock(prodId, retailerId, side, size);
+                }
+            });
             const isValid = (val, type) => {
                 if (!val || val === 'null' || val === null) return false;
                 let s = val.toString().toLowerCase().trim();

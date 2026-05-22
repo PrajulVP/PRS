@@ -962,9 +962,22 @@
                 {
                     data: 'total_amount',
                     name: 'total_amount',
-                    render: function (data, type) {
+                    render: function (data, type, row) {
                         if (type !== 'display') return data;
-                        return `<span class="fw-bold text-success">₹${data}</span>`;
+                        let status = (row.status || '').toLowerCase();
+                        let isEstimated = status.includes('pending') || status.includes('processing');
+                        if (isEstimated) {
+                            return `<div class="d-flex flex-column">
+                                <span class="fw-bold text-secondary">₹${parseFloat(data).toFixed(2)}</span>
+                                <span class="text-muted" style="font-size: 0.65rem; font-weight: normal; margin-top: 1px;">(Est. Total)</span>
+                            </div>`;
+                        } else {
+                            let estAmt = (row.metadata && row.metadata.estimated_amount !== undefined) ? parseFloat(row.metadata.estimated_amount).toFixed(2) : parseFloat(data).toFixed(2);
+                            return `<div class="d-flex flex-column">
+                                <span class="fw-bold text-success">₹${parseFloat(data).toFixed(2)} <small class="badge bg-success-subtle text-success border border-success rounded-pill px-2 py-0 ms-1" style="font-size: 0.55rem; font-weight: bold; vertical-align: middle;">INVOICED</small></span>
+                                <span class="text-muted small" style="font-size: 0.65rem; font-weight: 500; opacity: 0.85; margin-top: 2px;">Est: ₹${estAmt}</span>
+                            </div>`;
+                        }
                     }
                 },
                 {

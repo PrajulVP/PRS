@@ -104,7 +104,7 @@ class PendingApprovalController extends Controller
                 $totalCount = array_sum($statusCounts);
             } elseif ($viewType === 'retailer') {
                 // Fetch Retailer Orders
-                $query = \App\Models\RetailerOrder::with(['retailer.user', 'retailer.salesManager.user', 'retailer.fieldStaff.user', 'items.product', 'distributor.user', 'fieldStaff.user', 'returnRequests']);
+                $query = \App\Models\RetailerOrder::with(['retailer.user', 'retailer.salesManager.user', 'retailer.fieldStaff.user', 'items.product', 'items.batches', 'distributor.user', 'fieldStaff.user', 'returnRequests']);
 
                 if ($user->hasRole('distributor') && $user->distributor) {
                     $query->where('distributor_id', $user->distributor->id);
@@ -238,6 +238,7 @@ class PendingApprovalController extends Controller
                     'id' => $item->id,
                     'order_code' => $item->order_code,
                     'total_amount' => $item->total_amount,
+                    'metadata' => $item->metadata,
                     'status' => ucfirst(str_replace('_', ' ', $item->status)),
                     'product_summary' => $productSummary,
                     'brand_summary' => $brandSummary,
@@ -274,19 +275,29 @@ class PendingApprovalController extends Controller
                         if ($viewType === 'distributor') {
                             $itemData['unit_price'] = $i->price ?? 0;
                             $itemData['total_amount'] = $i->subtotal ?? 0;
-                            $itemData['batches'] = ($i->batches ?? collect())->map(function ($b) {
-                                return [
-                                    'id' => $b->id,
-                                    'batch_no' => $b->batch_no,
-                                    'expiry_date' => $b->expiry_date,
-                                    'quantity' => $b->quantity,
-                                ];
-                            });
                         } else {
                             $itemData['unit_price'] = $i->unit_price ?? 0;
                             $itemData['total_amount'] = $i->total_amount ?? 0;
-                            $itemData['batches'] = [];
                         }
+
+                        $itemData['batches'] = ($i->batches ?? collect())->map(function ($b) {
+                            return [
+                                'id' => $b->id,
+                                'batch_no' => $b->batch_no,
+                                'expiry_date' => $b->expiry_date ? (function ($date) {
+                                    try {
+                                        $parsed = \Carbon\Carbon::parse($date);
+                                        if ($parsed->copy()->endOfMonth()->isSameDay($parsed)) {
+                                            return $parsed->format('m/Y');
+                                        }
+                                        return $parsed->format('d/m/Y');
+                                    } catch (\Exception $e) {
+                                        return $date;
+                                    }
+                                })($b->expiry_date) : '-',
+                                'quantity' => $b->quantity,
+                            ];
+                        });
 
                         return $itemData;
                     }),

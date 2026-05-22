@@ -570,7 +570,7 @@
                         let deleteUrl = "{{ route('products.destroy', ':id') }}".replace(':id', id);
                         let csrf = "{{ csrf_token() }}";
                         // Store row data in a data attribute (JSON stringified) for easy access
-                        let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
+                        let rowData = JSON.stringify(row).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
                         return `
                                                                                     <div class="action-buttons">
@@ -682,6 +682,13 @@
             // Handle View Button Click
             $('#products-table').on('click', '.view-btn', function () {
                 var product = $(this).data('product');
+                if (typeof product === 'string') {
+                    try {
+                        product = JSON.parse(product);
+                    } catch (e) {
+                        console.error('Failed to parse product data JSON', e);
+                    }
+                }
 
                 const isValid = (val, type) => {
                     if (!val || val === 'null') return false;
@@ -692,90 +699,248 @@
                     return true;
                 };
 
-                let html = `
-                    <div class="product-detail-premium">
-                        <div class="text-center mb-5 pb-4 border-bottom">
-                            <h2 class="display-6 fw-bold text-primary text-uppercase mb-3" style="letter-spacing: 1px;">${product.product_name}</h2>
-                            <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
-                                ${isValid(product.product_code) ? `<div class="detail-badge"><i class="fa fa-tag me-2"></i>${product.product_code}</div>` : ''}
-                                ${isValid(product.pack) ? `<div class="detail-badge secondary"><i class="fa fa-box me-2"></i>${product.pack}</div>` : ''}
-                                ${isValid(product.hsn_code) ? `<div class="detail-badge success"><i class="fa fa-barcode me-2"></i>HSN: ${product.hsn_code}</div>` : ''}
-                                ${isValid(product.brand) ? `<div class="detail-badge danger"><i class="fa fa-landmark me-2"></i>${product.brand}</div>` : ''}
-                            </div>
-                        </div>
+                const getProductProp = (obj, props) => {
+                    if (!obj) return null;
+                    for (let prop of props) {
+                        if (obj[prop] !== undefined && obj[prop] !== null) return obj[prop];
+                    }
+                    return null;
+                };
 
-                        <div class="row g-4">
-                            <div class="col-md-6 border-end pe-md-4">
-                                <div class="mb-5">
-                                    <h5 class="fw-bold mb-4 text-dark border-start border-4 border-primary ps-3">Stock & Packaging</h5>
-                                    <div class="row g-4">
-                                        <div class="col-6">
-                                            <div class="text-muted small text-uppercase fw-bold mb-1">Tablet / Strip</div>
-                                            <div class="fs-4 fw-bold text-dark">${product.strip_size || 'N/A'}</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="text-muted small text-uppercase fw-bold mb-1">Strip / Box</div>
-                                            <div class="fs-4 fw-bold text-dark">${product.box_size || 'N/A'}</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="text-muted small text-uppercase fw-bold mb-1">Box / Carton</div>
-                                            <div class="fs-4 fw-bold text-dark">${product.boxes_per_carton || 'N/A'}</div>
-                                        </div>
-                                        ${isValid(product.generic_name) ? `
-                                        <div class="col-12 mt-3">
-                                            <div class="text-muted small text-uppercase fw-bold mb-1">Generic Name</div>
-                                            <div class="p-3 bg-light rounded text-dark fs-6">${product.generic_name}</div>
-                                        </div>` : ''}
-                                    </div>
-                                </div>
-                            </div>
+                const stripVal = getProductProp(product, ['strip_size', 'units_per_strip']);
+                const boxVal = getProductProp(product, ['box_size', 'strips_per_box']);
+                const cartonVal = getProductProp(product, ['boxes_per_carton', 'carton_size']);
 
-                            <div class="col-md-6 ps-md-4">
-                                <div class="mb-5">
-                                    <h5 class="fw-bold mb-4 text-dark border-start border-4 border-success ps-3">Commercials</h5>
-                                    <div class="row g-4">
-                                        <div class="col-6">
-                                            <div class="text-muted small text-uppercase fw-bold mb-1">MRP</div>
-                                            <div class="fs-3 fw-bold text-success">₹${parseFloat(product.mrp).toFixed(2)}</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="text-muted small text-uppercase fw-bold mb-1">PTR</div>
-                                            <div class="fs-4 fw-bold text-dark">₹${parseFloat(product.ptr).toFixed(2)}</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="text-muted small text-uppercase fw-bold mb-1">PTS</div>
-                                            <div class="fs-4 fw-bold text-dark">₹${parseFloat(product.pts).toFixed(2)}</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="text-muted small text-uppercase fw-bold mb-1">Loyalty Points</div>
-                                            <div class="fs-4 fw-bold text-primary">${parseFloat(product.loyalty_point_percentage || 0).toFixed(2)}%</div>
+                const stripValInt = parseInt(String(stripVal || '').replace(/[^0-9]/g, '')) || 1;
+                const boxValInt = parseInt(String(boxVal || '').replace(/[^0-9]/g, '')) || 1;
+                const cartonValInt = parseInt(String(cartonVal || '').replace(/[^0-9]/g, '')) || 1;
+
+                const isStripBased = isValid(stripVal) && 
+                                     isValid(boxVal) && 
+                                     stripVal.toString().toLowerCase().trim() !== 'n/a' && 
+                                     boxVal.toString().toLowerCase().trim() !== 'n/a' &&
+                                     !(stripValInt === 1 && boxValInt === 1 && cartonValInt === 1);
+
+                let packagingHtml = '';
+                if (isStripBased) {
+                    packagingHtml = `
+                        <div class="mb-4">
+                            <h5 class="fw-bold mb-3 text-dark border-start border-4 border-secondary ps-2.5 d-flex align-items-center" style="font-size: 0.95rem;">
+                                <i class="fa fa-cubes text-secondary me-2" style="font-size: 0.95rem;"></i> Stock & Packaging
+                            </h5>
+                            <div class="row g-2">
+                                <div class="col-12">
+                                    <div class="p-2.5 rounded-3 d-flex align-items-center justify-content-between border" style="background: #f8fafc; border-color: #e2e8f0 !important;">
+                                        <div class="d-flex align-items-center">
+                                            <div class="p-2 rounded-3 me-3 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #e0f2fe; color: #0284c7;">
+                                                <i class="fa fa-dot-circle-o" style="font-size: 0.95rem;"></i>
+                                            </div>
+                                            <div>
+                                                <div class="text-muted fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">Tablets Per Strip</div>
+                                                <div class="fw-bold text-dark fs-6" style="line-height: 1.1;">${stripVal} <span class="text-muted" style="font-weight: 500; font-size: 0.7rem;">Tabs</span></div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+                                <div class="col-12">
+                                    <div class="p-2.5 rounded-3 d-flex align-items-center justify-content-between border" style="background: #f8fafc; border-color: #e2e8f0 !important;">
+                                        <div class="d-flex align-items-center">
+                                            <div class="p-2 rounded-3 me-3 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #dcfce7; color: #16a34a;">
+                                                <i class="fa fa-cube" style="font-size: 0.95rem;"></i>
+                                            </div>
+                                            <div>
+                                                <div class="text-muted fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">Strips Per Box</div>
+                                                <div class="fw-bold text-dark fs-6" style="line-height: 1.1;">${boxVal} <span class="text-muted" style="font-weight: 500; font-size: 0.7rem;">Strips</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="p-2.5 rounded-3 d-flex align-items-center justify-content-between border" style="background: #f8fafc; border-color: #e2e8f0 !important;">
+                                        <div class="d-flex align-items-center">
+                                            <div class="p-2 rounded-3 me-3 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #fef3c7; color: #d97706;">
+                                                <i class="fa fa-archive" style="font-size: 0.95rem;"></i>
+                                            </div>
+                                            <div>
+                                                <div class="text-muted fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">Boxes Per Carton</div>
+                                                <div class="fw-bold text-dark fs-6" style="line-height: 1.1;">${cartonVal || '1'} <span class="text-muted" style="font-weight: 500; font-size: 0.7rem;">Boxes</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                    `;
+                }
 
-                        ${product.variant_options ? `
-                        <div class="mt-4 pt-4 border-top">
-                            <h5 class="fw-bold mb-4 text-dark border-start border-4 border-warning ps-3">Structured Variants</h5>
-                            <div class="row">
+                let genericNameHtml = '';
+                if (isValid(product.generic_name)) {
+                    genericNameHtml = `
+                        <div class="col-12 mb-3">
+                            <div class="p-2.5 bg-light rounded d-flex align-items-center" style="background: #f8fafc !important; border: 1px dashed #e2e8f0; border-radius: 8px;">
+                                <div class="p-2 rounded-3 me-3 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: #e0f2fe; color: #0284c7;">
+                                    <i class="fa fa-flask" style="font-size: 0.9rem;"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px; line-height: 1;">Generic Formulation</div>
+                                    <div class="fw-bold text-dark fs-7" style="line-height: 1.1;">${product.generic_name}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                let commercialsHtml = `
+                    <div class="mb-4">
+                        <h5 class="fw-bold mb-3 text-dark border-start border-4 border-secondary ps-2.5 d-flex align-items-center" style="font-size: 0.95rem;">
+                            <i class="fa fa-tag text-secondary me-2" style="font-size: 0.95rem;"></i> Commercials
+                        </h5>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="p-2.5 rounded-3 border" style="background: #f8fafc; border-color: #e2e8f0 !important;">
+                                    <div class="text-muted fw-bold text-uppercase mb-0.5" style="font-size: 0.6rem; letter-spacing: 0.5px;">MRP</div>
+                                    <div class="fw-extrabold text-dark fs-5">₹${parseFloat(product.mrp || 0).toFixed(2)}</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2.5 rounded-3 border" style="background: #f8fafc; border-color: #e2e8f0 !important;">
+                                    <div class="text-muted fw-bold text-uppercase mb-0.5" style="font-size: 0.6rem; letter-spacing: 0.5px;">PTR</div>
+                                    <div class="fw-bold text-dark fs-5">₹${parseFloat(product.ptr || 0).toFixed(2)}</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2.5 rounded-3 border" style="background: #f8fafc; border-color: #e2e8f0 !important;">
+                                    <div class="text-muted fw-bold text-uppercase mb-0.5" style="font-size: 0.6rem; letter-spacing: 0.5px;">PTS</div>
+                                    <div class="fw-bold text-dark fs-5">₹${parseFloat(product.pts || 0).toFixed(2)}</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2.5 rounded-3 border" style="background: #f8fafc; border-color: #e2e8f0 !important;">
+                                    <div class="text-muted fw-bold text-uppercase mb-0.5" style="font-size: 0.6rem; letter-spacing: 0.5px;">Loyalty Points</div>
+                                    <div class="fw-bold text-dark fs-5">${parseFloat(product.loyalty_point_percentage || 0).toFixed(2)}%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                let commercialsHtmlFull = `
+                    <div class="mb-3">
+                        <h5 class="fw-bold mb-3 text-dark border-start border-4 border-secondary ps-2.5 d-flex align-items-center" style="font-size: 0.95rem;">
+                            <i class="fa fa-tag text-secondary me-2" style="font-size: 0.95rem;"></i> Commercials
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="p-3 rounded-3 border h-100 bg-light-subtle" style="border-color: #e2e8f0 !important;">
+                                    <div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.6rem; letter-spacing: 0.5px;">MRP</div>
+                                    <div class="fw-bold text-dark fs-5">₹${parseFloat(product.mrp || 0).toFixed(2)}</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-3 rounded-3 border h-100 bg-light-subtle" style="border-color: #e2e8f0 !important;">
+                                    <div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.6rem; letter-spacing: 0.5px;">PTR</div>
+                                    <div class="fw-bold text-dark fs-5">₹${parseFloat(product.ptr || 0).toFixed(2)}</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-3 rounded-3 border h-100 bg-light-subtle" style="border-color: #e2e8f0 !important;">
+                                    <div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.6rem; letter-spacing: 0.5px;">PTS</div>
+                                    <div class="fw-bold text-dark fs-5">₹${parseFloat(product.pts || 0).toFixed(2)}</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-3 rounded-3 border h-100 bg-light-subtle" style="border-color: #e2e8f0 !important;">
+                                    <div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.6rem; letter-spacing: 0.5px;">Loyalty Points</div>
+                                    <div class="fw-bold text-dark fs-5">${parseFloat(product.loyalty_point_percentage || 0).toFixed(2)}%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                let bodyColumnsHtml = '';
+                if (isStripBased) {
+                    bodyColumnsHtml = `
+                        <div class="row g-3">
+                            <div class="col-md-6 border-end pe-md-3">
+                                ${packagingHtml}
+                            </div>
+                            <div class="col-md-6 ps-md-3">
+                                ${commercialsHtml}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    bodyColumnsHtml = `
+                        <div class="row g-2">
+                            <div class="col-12">
+                                ${commercialsHtmlFull}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                let variantsHtml = '';
+                if (product.variant_options && typeof product.variant_options === 'object' && Object.keys(product.variant_options).length > 0) {
+                    variantsHtml = `
+                        <div class="mt-3 pt-3 border-top">
+                            <h5 class="fw-bold mb-3 text-dark border-start border-4 border-secondary ps-2.5 d-flex align-items-center" style="font-size: 0.95rem;">
+                                <i class="fa fa-cogs text-secondary me-2" style="font-size: 0.95rem;"></i> Structured Product Variants
+                            </h5>
+                            <div class="row g-2">
                                 ${Object.entries(product.variant_options).map(([key, vals]) => `
-                                    <div class="col-md-6 mb-3">
-                                        <div class="p-3 bg-white border rounded shadow-sm">
-                                            <div class="text-muted small text-uppercase fw-bold mb-2">${key}</div>
-                                            <div class="d-flex flex-wrap gap-2">
-                                                ${vals.map(v => `<span class="badge bg-soft-primary text-primary px-3 py-2 border">${v}</span>`).join('')}
+                                    <div class="col-md-12">
+                                        <div class="card border border-light" style="border-radius: 8px; background: #f8fafc;">
+                                            <div class="card-body p-2.5">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <div class="p-1.5 rounded-3 me-2 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; background: #e2e8f0; color: #475569;">
+                                                        <i class="fa ${key.toLowerCase() === 'side' ? 'fa-arrows-h' : 'fa-arrows-v'}" style="font-size: 0.95rem;"></i>
+                                                    </div>
+                                                    <span class="text-uppercase fw-bold text-secondary" style="font-size: 0.65rem; letter-spacing: 0.5px;">${key} Options</span>
+                                                </div>
+                                                <div class="d-flex flex-wrap gap-1.5">
+                                                    ${vals.map(v => `
+                                                        <span class="badge px-2.5 py-1.5 fw-bold text-dark border" style="font-size: 0.72rem; border-radius: 6px; background: #ffffff; border-color: #e2e8f0 !important;">
+                                                            ${v}
+                                                        </span>
+                                                    `).join('')}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 `).join('')}
                             </div>
                         </div>
-                        ` : ''}
+                    `;
+                }
+
+                const pName = getProductProp(product, ['product_name', 'name']) || 'N/A';
+
+                let html = `
+                    <div class="product-detail-premium">
+                        <div class="text-center mb-3 pb-3 border-bottom">
+                            <h3 class="fw-bold text-primary text-uppercase mb-2" style="letter-spacing: 0.5px; font-size: 1.35rem;">${pName}</h3>
+                            <div class="d-flex flex-wrap justify-content-center gap-2 mt-2">
+                                ${isValid(product.product_code) ? `<div class="detail-badge shadow-none" style="font-size: 0.7rem; padding: 3px 10px; background: #f1f5f9; color: #475569; border-radius: 100px; border: 1px solid #e2e8f0;"><i class="fa fa-tag me-1.5 text-secondary"></i>Code: ${product.product_code}</div>` : ''}
+                                ${isValid(product.pack) ? `<div class="detail-badge shadow-none" style="font-size: 0.7rem; padding: 3px 10px; background: #f1f5f9; color: #475569; border-radius: 100px; border: 1px solid #e2e8f0;"><i class="fa fa-box me-1.5 text-secondary"></i>Pack: ${product.pack}</div>` : ''}
+                                ${isValid(product.hsn_code) ? `<div class="detail-badge shadow-none" style="font-size: 0.7rem; padding: 3px 10px; background: #f1f5f9; color: #475569; border-radius: 100px; border: 1px solid #e2e8f0;"><i class="fa fa-barcode me-1.5 text-secondary"></i>HSN: ${product.hsn_code}</div>` : ''}
+                                ${isValid(product.brand) ? `<div class="detail-badge shadow-none" style="font-size: 0.7rem; padding: 3px 10px; background: #f1f5f9; color: #475569; border-radius: 100px; border: 1px solid #e2e8f0;"><i class="fa fa-building me-1.5 text-secondary"></i>Brand: ${product.brand}</div>` : ''}
+                            </div>
+                        </div>
+
+                        ${genericNameHtml}
+
+                        ${bodyColumnsHtml}
+
+                        ${variantsHtml}
                     </div>
                 `;
-                // Note: We need to change the modal body structure slightly in the blade file to accommodate this if it expects a table structure.
-                // The current blade has <tbody id="showProductTableBody"> inside a <table>. We should check if we need to replace the table with a div.
+                if (isStripBased) {
+                    $('#showProductModal .modal-dialog').removeClass('modal-md').addClass('modal-lg');
+                } else {
+                    $('#showProductModal .modal-dialog').removeClass('modal-lg').addClass('modal-md');
+                }
+
                 $('#showProductTableBody').html(html);
                 $('#showProductModal').modal('show');
             });

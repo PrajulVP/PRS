@@ -834,7 +834,20 @@
                     name: 'total_amount',
                     render: function (data, type, row) {
                         if (type !== 'display') return data;
-                        return `<span class="fw-bold text-success">₹${data}</span>`;
+                        let status = (row.status || '').toLowerCase();
+                        let isEstimated = status.includes('pending') || status.includes('processing');
+                        if (isEstimated) {
+                            return `<div class="d-flex flex-column">
+                                <span class="fw-bold text-secondary">₹${data}</span>
+                                <span class="text-muted" style="font-size: 0.65rem; font-weight: normal; margin-top: 1px;">(Est. Total)</span>
+                            </div>`;
+                        } else {
+                            let estAmt = (row.metadata && row.metadata.estimated_amount !== undefined) ? parseFloat(row.metadata.estimated_amount).toFixed(2) : data;
+                            return `<div class="d-flex flex-column">
+                                <span class="fw-bold text-success">₹${data} <small class="badge bg-success-subtle text-success border border-success rounded-pill px-2 py-0 ms-1" style="font-size: 0.55rem; font-weight: bold; vertical-align: middle;">INVOICED</small></span>
+                                <span class="text-muted small" style="font-size: 0.65rem; font-weight: 500; opacity: 0.85; margin-top: 2px;">Est: ₹${estAmt}</span>
+                            </div>`;
+                        }
                     }
                 },
                 {
@@ -1538,9 +1551,9 @@
                     let cleanedName = window.cleanProductName(pName, i.side, i.size);
                     let variantBadge = window.renderProductVariantBadge(i);
 
-                        detailsHtml += `
+                    detailsHtml += `
                         <tr style="border-bottom: 1px solid var(--med-border-light, #f1f5f9);">
-                            <td class="py-2 px-3" style="max-width: 200px;">
+                            <td class="py-2 px-3">
                                 <div class="d-flex align-items-start">
                                     <div class="ms-0 w-100">
                                         <div class="text-main-theme fw-bold mb-0" style="font-size: 0.9rem; white-space: normal; line-height: 1.2;">

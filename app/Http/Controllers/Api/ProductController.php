@@ -205,7 +205,10 @@ class ProductController extends Controller
             })
             ->selectRaw('distributor_id, SUM(stock) as total_stock')
             ->groupBy('distributor_id')
-            ->having('total_stock', '>=', $minQuantity)
+            ->having('total_stock', '>', 0)
+            ->when($minQuantity > 0, function($q) use ($minQuantity) {
+                return $q->having('total_stock', '>=', $minQuantity);
+            })
             ->pluck('total_stock', 'distributor_id');
 
 

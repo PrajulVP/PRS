@@ -67,7 +67,10 @@ class RetailerOrderManagementController extends Controller
             })
             ->selectRaw('distributor_id, SUM(stock) as total_stock')
             ->groupBy('distributor_id')
-            ->having('total_stock', '>=', $minQuantity)
+            ->having('total_stock', '>', 0)
+            ->when($minQuantity > 0, function($q) use ($minQuantity) {
+                return $q->having('total_stock', '>=', $minQuantity);
+            })
             ->pluck('total_stock', 'distributor_id');
 
         $distributors = $allDistributors->filter(function ($distributor) use ($stockMap) {
@@ -971,6 +974,22 @@ class RetailerOrderManagementController extends Controller
                 }
 
                 $this->clearOrderNotifications($retailerOrder->id, 'retailer_order');
+
+                $metadata = $retailerOrder->metadata ?? [];
+                if (!isset($metadata['estimated_amount'])) {
+                    $metadata['estimated_amount'] = (float)$retailerOrder->total_amount;
+                }
+
+                if ($request->filled('final_amount')) {
+                    $updateData['total_amount'] = (float)$request->final_amount;
+                    $metadata['invoice_net_amount'] = (float)$request->final_amount;
+                }
+                if ($request->filled('taxable_amount')) {
+                    $metadata['invoice_taxable_amount'] = (float)$request->taxable_amount;
+                }
+
+                $updateData['metadata'] = $metadata;
+
                 $retailerOrder->update($updateData);
 
                 DB::commit();
@@ -1010,11 +1029,32 @@ class RetailerOrderManagementController extends Controller
                     $filename = 'invoice_' . $retailerOrder->id . '_' . time() . '.' . $file->getClientOriginalExtension();
                     $path = $file->storeAs('retailer_invoices', $filename, 'public');
 
-                    // Finalize status only if invoice is present
-                    $retailerOrder->update([
+                    $metadata = $retailerOrder->metadata ?? [];
+                    if (!isset($metadata['estimated_amount'])) {
+                        $metadata['estimated_amount'] = (float)$retailerOrder->total_amount;
+                    }
+
+                    $updateData = [
                         'status' => 'approved',
                         'invoice_path' => $path
-                    ]);
+                    ];
+
+                    if ($request->filled('invoice_no')) {
+                        $updateData['invoice_no'] = trim($request->invoice_no);
+                    }
+
+                    if ($request->filled('final_amount')) {
+                        $updateData['total_amount'] = (float)$request->final_amount;
+                        $metadata['invoice_net_amount'] = (float)$request->final_amount;
+                    }
+                    if ($request->filled('taxable_amount')) {
+                        $metadata['invoice_taxable_amount'] = (float)$request->taxable_amount;
+                    }
+
+                    $updateData['metadata'] = $metadata;
+
+                    // Finalize status only if invoice is present
+                    $retailerOrder->update($updateData);
                 } else {
                     return response()->json(['error' => 'Invoice upload is required for final approval.'], 422);
                 }

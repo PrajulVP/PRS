@@ -622,18 +622,25 @@
                             <span class="bg-body-theme p-2 rounded me-2"><i class="fa fa-list-ul text-primary"></i></span>
                             Order Items
                         </h6>
-                        <div class="invoice-list mb-3">
-                            <div class="invoice-list-header bg-dark text-white border-0 py-2">
-                                <div style="flex: 2;" class="ps-3 text-white">Product Name</div>
-                                <div style="flex: 1;" class="text-center text-white">Quantity</div>
-                                <div style="flex: 1;" class="text-end text-white pe-3">Total Price</div>
+                        <div class="card border-0 shadow-sm overflow-hidden mb-4 bg-card-theme">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="bg-body-theme">
+                                        <tr>
+                                            <th class="ps-3 text-muted-theme" style="font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Product Details</th>
+                                            <th class="text-muted-theme" style="font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Batch Details</th>
+                                            <th class="text-center text-muted-theme" style="font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Quantity</th>
+                                            <th class="text-end pe-3 text-muted-theme" style="font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Total Price</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="view_items_list">
+                                        <!-- Items will be populated here -->
+                                    </tbody>
+                                </table>
                             </div>
-                            <div id="view_items_list">
-                                <!-- Items will be populated here -->
-                            </div>
-                            <div class="invoice-list-footer bg-body-theme border-0">
-                                <div class="me-3 text-muted-theme">Grand Total:</div>
-                                <div class="text-primary fs-5" id="view_total">₹0</div>
+                            <div class="p-3 bg-light d-flex justify-content-between align-items-center border-top">
+                                <div class="fw-bold text-muted-theme text-uppercase" style="font-size: 0.75rem;">Grand Total:</div>
+                                <div class="text-primary fs-5 fw-bold" id="view_total">₹0.00</div>
                             </div>
                         </div>
 
@@ -914,6 +921,8 @@
 
                             <!-- Invoice Number (Hidden, populated by AI) -->
                             <input type="hidden" name="invoice_no" id="invoice_no_input" required>
+                            <input type="hidden" name="final_amount" id="final_amount_input">
+                            <input type="hidden" name="taxable_amount" id="taxable_amount_input">
 
                             <!-- Smart Invoice Processing Section -->
                             <div class="mb-4">
@@ -945,7 +954,7 @@
 
                                 <div id="automation_success_state" class="d-none">
                                     <div class="premium-metadata-card p-3 rounded-4 border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
-                                        <div class="row g-4">
+                                        <div class="row g-4 mb-3">
                                             <div class="col-md-3 border-end border-2 border-white">
                                                 <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 1px;">Invoice Date</div>
                                                 <div class="fw-bold text-dark fs-6" id="extract_date" contenteditable="true" title="Click to edit">--</div>
@@ -961,6 +970,17 @@
                                             <div class="col-md-3">
                                                 <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 1px;">Drug License</div>
                                                 <div class="fw-bold text-dark fs-6" id="extract_dl" contenteditable="true" title="Click to edit">--</div>
+                                            </div>
+                                        </div>
+                                        <hr class="my-3 border-white border-2">
+                                        <div class="row g-4">
+                                            <div class="col-md-6 border-end border-2 border-white">
+                                                <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 1px;">Total Amount (Taxable)</div>
+                                                <div class="fw-bold text-secondary fs-5" id="extract_total_amount">₹0.00</div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 1px;">Net Amount (Payable)</div>
+                                                <div class="fw-bold text-success fs-5" id="extract_net_amount">₹0.00</div>
                                             </div>
                                         </div>
                                     </div>
@@ -998,8 +1018,9 @@
                                                     <div>Txl: <span class="fw-bold" id="tfoot_taxable">0</span></div>
                                                     <div>GST: <span class="fw-bold" id="tfoot_gst_total">0</span></div>
                                                     <div class="ms-2 border-start ps-3 py-1">
-                                                        <div class="small text-muted mb-0">Invoice Net</div>
+                                                        <div class="small text-muted mb-0" id="tfoot_net_label">Doc Total</div>
                                                         <div class="fs-6 fw-bold text-primary" id="tfoot_net">₹0.00</div>
+                                                        <div id="tfoot_matched_net" class="text-muted small" style="font-size: 0.65rem; display: none;">Matched Total: ₹0.00</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1410,9 +1431,22 @@
                     },
                     {
                         data: 'total_amount',
-                        render: function (data, type) {
+                        render: function (data, type, row) {
                             if (type !== 'display') return data;
-                            return `<span class="fw-bold text-success">₹${data}</span>`;
+                            let status = (row.status || '').toLowerCase();
+                            let isEstimated = status.includes('pending') || status.includes('processing');
+                            if (isEstimated) {
+                                return `<div class="d-flex flex-column">
+                                    <span class="fw-bold text-secondary">₹${data}</span>
+                                    <span class="text-muted" style="font-size: 0.65rem; font-weight: normal; margin-top: 1px;">(Est. Total)</span>
+                                </div>`;
+                            } else {
+                                let estAmt = (row.metadata && row.metadata.estimated_amount !== undefined) ? parseFloat(row.metadata.estimated_amount).toFixed(2) : data;
+                                return `<div class="d-flex flex-column">
+                                    <span class="fw-bold text-success">₹${data} <small class="badge bg-success-subtle text-success border border-success rounded-pill px-2 py-0 ms-1" style="font-size: 0.55rem; font-weight: bold; vertical-align: middle;">INVOICED</small></span>
+                                    <span class="text-muted small" style="font-size: 0.65rem; font-weight: 500; opacity: 0.85; margin-top: 2px;">Est: ₹${estAmt}</span>
+                                </div>`;
+                            }
                         }
                     },
                     { data: 'placed_at' },
@@ -1716,11 +1750,23 @@
                     row.items.forEach(item => {
                         let cleanedName = window.cleanProductName(item.product_name, item.side, item.size);
                         let variantBadge = window.renderProductVariantBadge(item);
+                        
+                        let batchInfo = '<span class="text-muted-theme small">Not Allocated</span>';
+                        if (item.batches && item.batches.length > 0) {
+                            batchInfo = item.batches.map(b => `
+                                <div class="mb-1 last-child-mb-0">
+                                    <span class="badge bg-soft-info text-info border-0 px-2 py-0.5" style="font-size: 0.7rem; font-weight: bold;">${b.batch_no}</span>
+                                    <div class="text-muted-theme" style="font-size: 0.65rem; margin-top: 1px;">Exp: ${b.expiry_date}</div>
+                                </div>
+                            `).join('');
+                        }
+
+                        let totalAmtFormatted = parseFloat(item.total_amount || 0).toFixed(2);
 
                         list.append(`
-                            <div class="invoice-list-row p-1 border-bottom border-light-theme">
-                                <div style="flex: 2; max-width: 200px;" class="ps-2">
-                                    <div class="fw-bold text-main-theme" style="font-size: 0.9rem; white-space: normal; line-height: 1.2;">
+                            <tr class="align-middle" style="border-bottom: 1px solid var(--med-border-light, #f1f5f9);">
+                                <td class="py-2 ps-3">
+                                    <div class="fw-bold text-main-theme mb-0" style="font-size: 0.9rem; white-space: normal; line-height: 1.2;">
                                         ${cleanedName} ${variantBadge}
                                     </div>
                                     <div class="small text-muted-theme" style="font-size: 0.7rem;">
@@ -1731,17 +1777,20 @@
                                         ${item.generic_name ? `<span>${item.generic_name}</span>` : ''}
                                         ${item.product_code && item.product_code !== '---' && item.product_code !== 'N/A' ? `<span>Code: ${item.product_code}</span>` : ''}
                                     </div>
-                                </div>
-                                <div style="flex: 1;" class="text-center">
+                                </td>
+                                <td>
+                                    ${batchInfo}
+                                </td>
+                                <td class="text-center">
                                     <div class="fw-bold text-primary" style="font-size: 0.85rem;">${item.quantity}</div>
                                     <div class="small opacity-75" style="font-size: 0.65rem;">${item.unit || 'Nos'}</div>
-                                </div>
-                                <div style="flex: 1;" class="fw-bold text-main-theme text-end pe-2" style="font-size: 0.85rem;">₹${item.total_amount}</div>
-                            </div>
+                                </td>
+                                <td class="text-end pe-3 fw-bold text-main-theme" style="font-size: 0.85rem;">₹${totalAmtFormatted}</td>
+                            </tr>
                         `);
                     });
                 } else {
-                    list.append('<div class="invoice-list-row justify-content-center text-muted">No items</div>');
+                    list.append('<tr><td colspan="4" class="text-center py-3 text-muted">No items</td></tr>');
                 }
                 $('#viewOrderModal').modal('show');
             });
@@ -2410,11 +2459,28 @@
                     $('#tfoot_taxable').text(totalTaxable.toFixed(2));
                     $('#tfoot_gst_total').text((totalCgst + totalSgst + totalIgst).toFixed(2));
 
-                    $('#tfoot_net').text(`₹${totalNet.toFixed(2)}`);
-                    
-                    // Show AI total as secondary verification if available and different
+                    // Show AI total as primary Doc Total if available
                     let ocrTotalStr = data.invoice_metadata ? data.invoice_metadata.total_amount : '';
                     let ocrTotal = parseFloat(ocrTotalStr);
+                    let finalAmount = isNaN(ocrTotal) ? totalNet : ocrTotal;
+
+                    $('#tfoot_net').text(`₹${finalAmount.toFixed(2)}`);
+
+                    if (!isNaN(ocrTotal)) {
+                        $('#tfoot_net_label').text('Doc Total');
+                        $('#tfoot_matched_net').html(`Matched Total: ₹${totalNet.toFixed(2)}`).show();
+                    } else {
+                        $('#tfoot_net_label').text('Invoice Net');
+                        $('#tfoot_matched_net').hide();
+                    }
+                    
+                    // Update premium metadata card row 2
+                    $('#extract_total_amount').text('₹' + totalTaxable.toFixed(2));
+                    $('#extract_net_amount').text('₹' + finalAmount.toFixed(2));
+
+                    // Update hidden inputs for form submission
+                    $('#final_amount_input').val(finalAmount.toFixed(2));
+                    $('#taxable_amount_input').val(totalTaxable.toFixed(2));
                     
                     // STRICT MATCH BLOCKING: Only enable if no missing AND no extra items
                     if (missingProducts.length === 0 && invoiceProducts.length === 0) {
@@ -2436,10 +2502,6 @@
                         $('#automation_error_state p').html(`${msg} Please upload a perfect match invoice to proceed.`);
                         $('#automation_success_state').hide();
                         $('#btn_approve_order').prop('disabled', true);
-                    }
-
-                    if (!isNaN(ocrTotal) && Math.abs(ocrTotal - totalNet) > 1) {
-                        $('#tfoot_net').append(`<br><small class="text-muted" style="font-size: 0.65rem;">Doc Total: ₹${ocrTotal.toFixed(2)}</small>`);
                     }
                     
                     $('#verification_table_footer').removeClass('d-none');

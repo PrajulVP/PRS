@@ -995,7 +995,7 @@
 
                                 <div id="automation_success_state" class="d-none">
                                     <div class="premium-metadata-card p-3 rounded-4 border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);">
-                                        <div class="row g-4">
+                                        <div class="row g-4 mb-3">
                                             <div class="col-md-3 border-end border-2 border-white">
                                                 <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 1px;">Invoice Date</div>
                                                 <div class="fw-bold text-dark fs-6" id="meta_date" contenteditable="true" title="Click to edit">--</div>
@@ -1011,6 +1011,17 @@
                                             <div class="col-md-3">
                                                 <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 1px;">Drug License</div>
                                                 <div class="fw-bold text-dark fs-6" id="meta_dl" contenteditable="true" title="Click to edit">--</div>
+                                            </div>
+                                        </div>
+                                        <hr class="my-3 border-white border-2">
+                                        <div class="row g-4">
+                                            <div class="col-md-6 border-end border-2 border-white">
+                                                <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 1px;">Total Amount (Taxable)</div>
+                                                <div class="fw-bold text-secondary fs-5" id="meta_taxable_amount">₹0.00</div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 1px;">Net Amount (Payable)</div>
+                                                <div class="fw-bold text-success fs-5" id="meta_net_amount">₹0.00</div>
                                             </div>
                                         </div>
                                     </div>
@@ -1073,6 +1084,8 @@
                                 <!-- Hidden inputs for Form Submission -->
                                 <div id="hidden_batch_inputs" class="d-none">
                                     <div id="batch_entry_body"></div>
+                                    <input type="hidden" name="final_amount" id="final_amount_input">
+                                    <input type="hidden" name="taxable_amount" id="taxable_amount_input">
                                 </div>
 
                             </div>
@@ -1394,9 +1407,22 @@
                 {
                     data: 'total_amount',
                     name: 'total_amount',
-                    render: function(data, type) {
+                    render: function (data, type, row) {
                         if (type !== 'display') return data;
-                        return `<span class="fw-bold text-success">₹${data}</span>`;
+                        let status = (row.status || '').toLowerCase();
+                        let isEstimated = status.includes('pending') || status.includes('processing');
+                        if (isEstimated) {
+                            return `<div class="d-flex flex-column">
+                                <span class="fw-bold text-secondary">₹${parseFloat(data).toFixed(2)}</span>
+                                <span class="text-muted" style="font-size: 0.65rem; font-weight: normal; margin-top: 1px;">(Est. Total)</span>
+                            </div>`;
+                        } else {
+                            let estAmt = (row.metadata && row.metadata.estimated_amount !== undefined) ? parseFloat(row.metadata.estimated_amount).toFixed(2) : parseFloat(data).toFixed(2);
+                            return `<div class="d-flex flex-column">
+                                <span class="fw-bold text-success">₹${parseFloat(data).toFixed(2)} <small class="badge bg-success-subtle text-success border border-success rounded-pill px-2 py-0 ms-1" style="font-size: 0.55rem; font-weight: bold; vertical-align: middle;">INVOICED</small></span>
+                                <span class="text-muted small" style="font-size: 0.65rem; font-weight: 500; opacity: 0.85; margin-top: 2px;">Est: ₹${estAmt}</span>
+                            </div>`;
+                        }
                     }
                 },
                 {
@@ -2100,7 +2126,7 @@
 
                         tbody.append(`
                                                         <tr class="align-middle" style="border-bottom: 1px solid var(--med-border-light, #f1f5f9);">
-                                                            <td class="py-1 ps-3" style="max-width: 300px;">
+                                                            <td class="py-2 ps-4">
                                                                 <div class="fw-bold text-main-theme mb-0" style="font-size: 0.9rem; white-space: normal; line-height: 1.2;">
                                                                     ${cleanedName} ${variantBadge}
                                                                 </div>
@@ -2119,7 +2145,7 @@
                                                                 <div class="small opacity-75" style="font-size: 0.65rem;">${item.unit || 'Nos'}</div>
                                                             </td>
                                                             <td class="text-end text-main-theme" style="font-size: 0.75rem;">₹${parseFloat(item.unit_price).toFixed(2)}</td>
-                                                            <td class="text-end fw-bold text-primary" style="font-size: 0.85rem;">₹${parseFloat(item.total_amount).toFixed(2)}</td>
+                                                            <td class="text-end fw-bold text-primary pe-4" style="font-size: 0.85rem;">₹${parseFloat(item.total_amount).toFixed(2)}</td>
                                                         </tr>
                                                     `);
                     });
@@ -2174,6 +2200,15 @@
 
                     if (row.items && row.items.length) {
                         row.items.forEach(item => {
+                            let batchesHtml = '';
+                            if (item.batches && item.batches.length > 0) {
+                                batchesHtml = `<div class="mt-1 d-flex flex-wrap gap-2">` + item.batches.map(b => `
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary border-opacity-25" style="font-size: 0.65rem;">
+                                        <i class="fa fa-barcode me-1"></i>Batch: ${b.batch_no} | Exp: ${b.expiry_date}
+                                    </span>
+                                `).join('') + `</div>`;
+                            }
+
                             list.append(`
                                 <div class="invoice-list-row">
                                     <div style="flex: 2; max-width: 200px;" class="fw-bold text-main-theme">
@@ -2184,6 +2219,7 @@
                                             ${item.generic_name ? `<span class="badge bg-light text-dark border-0 fw-normal" style="font-size: 0.6rem;">${item.generic_name}</span>` : ''}
                                             ${item.product_code && item.product_code !== '---' && item.product_code !== 'N/A' ? `<div class="small text-muted-theme opacity-75" style="font-size: 0.65rem;">C: ${item.product_code}</div>` : ''}
                                         </div>
+                                        ${batchesHtml}
                                     </div>
                                     <div style="flex: 1;" class="text-center text-muted-theme small">
                                         ${item.quantity} ${item.unit || 'Box'}
@@ -2713,6 +2749,7 @@
                 let missingProducts = [];
                 let invoiceProducts = [...(data.line_items || [])];
                 let totalInvoiceNet = 0;
+                let totalInvoiceTaxable = 0;
 
                 console.log('Retailer AI Invoice Items:', invoiceProducts);
 
@@ -2866,6 +2903,7 @@
                         }
 
                         totalInvoiceNet += itemNet;
+                        totalInvoiceTaxable += extTaxable;
 
                     } else {
                         missingProducts.push(productName);
@@ -2885,8 +2923,17 @@
                 let ocrTotal = 0;
                 if (data.invoice_metadata && data.invoice_metadata.total_amount) {
                     ocrTotal = parseFloat(data.invoice_metadata.total_amount) || 0;
-                    $('#v_total_meta').text(`₹${ocrTotal.toFixed(2)}`);
                 }
+                let finalNet = ocrTotal > 0 ? ocrTotal : totalInvoiceNet;
+                $('#v_total_meta').text(`₹${finalNet.toFixed(2)}`);
+
+                // Update premium metadata card row 2
+                $('#meta_taxable_amount').text(`₹${totalInvoiceTaxable.toFixed(2)}`);
+                $('#meta_net_amount').text(`₹${finalNet.toFixed(2)}`);
+
+                // Update hidden inputs for form submission
+                $('#final_amount_input').val(finalNet.toFixed(2));
+                $('#taxable_amount_input').val(totalInvoiceTaxable.toFixed(2));
 
                 // STRICT MATCH BLOCKING: Only enable if no missing AND no extra items
                 if (missingProducts.length === 0 && invoiceProducts.length === 0) {
