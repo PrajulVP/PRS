@@ -274,7 +274,7 @@
                                 <p class="mb-1 text-muted small">Status: <span class="fw-bold" style="color:${s.status_color}">${s.status}</span></p>
                                 <p class="mb-1 text-muted small">Daily Distance: ${s.stats.distance}</p>
                                 <p class="mb-2 text-muted small">Last Seen: ${s.last_seen}</p>
-                                <a href="/admin/reports/fieldstaffs/tracking?user_id=${s.user_id}" class="btn btn-primary btn-sm w-100 text-white" style="font-size: 10px;">Full History</a>
+                                <a href="/admin/reports/field-staff/tracking-map?user_id=${s.user_id}" class="btn btn-primary btn-sm w-100 text-white" style="font-size: 10px;">Full History</a>
                             </div>
                         `
                     });
