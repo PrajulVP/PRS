@@ -970,12 +970,16 @@ class ReportController extends Controller
             $distance = \App\Models\LocationLog::calculateDailyDistance($fsUser->id, $today);
 
             // 5. Determine Status & Alerts
-            $status = 'offline';
+            $status = 'Not Started';
             $statusColor = '#95a5a6'; // Gray
             
-            if ($lastAttendance && $lastAttendance->type === 'punch_in') {
-                $status = 'online';
-                $statusColor = '#2ecc71'; // Green
+            if ($lastAttendance) {
+                if ($lastAttendance->type === 'punch_out') {
+                    $status = 'Punched Out';
+                } elseif ($lastAttendance->type === 'punch_in') {
+                    $status = 'Punched In';
+                    $statusColor = '#2ecc71'; // Green
+                }
                 
                 if ($lastLoc) {
                     $diffInMins = $lastLoc->timestamp->diffInMinutes(now());
