@@ -47,8 +47,8 @@
                                 <div class="input-group">
                                     <input id="password" type="password"
                                         class="form-control form-control-lg border-opacity-10 @error('password') is-invalid @enderror" name="password"
-                                        required autocomplete="new-password">
-                                    <button class="btn btn-light border border-opacity-10 toggle-password" type="button" tabindex="-1">
+                                        required autocomplete="new-password" style="border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important;">
+                                    <button class="btn btn-light border border-opacity-10 toggle-password" type="button" tabindex="-1" style="border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important; z-index: 0;">
                                         <i class="fa fa-eye text-muted"></i>
                                     </button>
                                 </div>
@@ -66,8 +66,8 @@
                                 <div class="input-group">
                                     <input id="password-confirm" type="password"
                                         class="form-control form-control-lg border-opacity-10" name="password_confirmation"
-                                        required autocomplete="new-password">
-                                    <button class="btn btn-light border border-opacity-10 toggle-password" type="button" tabindex="-1">
+                                        required autocomplete="new-password" style="border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important;">
+                                    <button class="btn btn-light border border-opacity-10 toggle-password" type="button" tabindex="-1" style="border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important; z-index: 0;">
                                         <i class="fa fa-eye text-muted"></i>
                                     </button>
                                 </div>
