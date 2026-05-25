@@ -1076,10 +1076,15 @@ class ReportController extends Controller
         // Calculate total distance coverd
         $totalDistance = \App\Models\LocationLog::calculateDailyDistance($userId, $date);
  
+        $mockGpsCount = \App\Models\LocationLog::where('user_id', $userId)
+            ->whereDate('timestamp', $date)
+            ->where('is_mock_location', true)
+            ->count();
+ 
         $lastPunch = $punches->last();
         $isOnline = $lastPunch && $lastPunch->type === 'punch_in';
- 
-        return view('admin.reports.fieldstaff_tracking', compact('user', 'locations', 'punches', 'visits', 'date', 'totalDistance', 'isOnline'));
+
+        return view('admin.reports.fieldstaff_tracking', compact('user', 'locations', 'punches', 'visits', 'date', 'totalDistance', 'isOnline', 'mockGpsCount'));
     }
  
     public function fieldStaffTrackingExport(Request $request)

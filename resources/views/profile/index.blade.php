@@ -365,13 +365,11 @@
                                             <i class="fa fa-map-marker me-2"></i> <span>Location</span>
                                         </button>
                                     </li>
-                                    @if($user->hasAnyRole(['superadmin', 'admin']))
-                                        <li class="nav-item flex-grow-1 text-center" role="presentation">
-                                            <button class="nav-link w-100 py-2 border-0 text-nowrap d-inline-flex align-items-center justify-content-center" id="pills-security-tab" data-bs-toggle="pill" data-bs-target="#pills-security" type="button" role="tab" style="font-size: 0.8rem; line-height: 1;">
-                                                <i class="fa fa-shield me-2"></i> <span>Security</span>
-                                            </button>
-                                        </li>
-                                    @endif
+                                    <li class="nav-item flex-grow-1 text-center" role="presentation">
+                                        <button class="nav-link w-100 py-2 border-0 text-nowrap d-inline-flex align-items-center justify-content-center" id="pills-security-tab" data-bs-toggle="pill" data-bs-target="#pills-security" type="button" role="tab" style="font-size: 0.8rem; line-height: 1;">
+                                            <i class="fa fa-shield me-2"></i> <span>Security</span>
+                                        </button>
+                                    </li>
                                 </ul>
                             </div>
 
@@ -456,38 +454,36 @@
                                 </div>
 
                                 <!-- Tab: Security -->
-                                @if($user->hasAnyRole(['superadmin', 'admin']))
-                                    <div class="tab-pane fade" id="pills-security" role="tabpanel" aria-labelledby="pills-security-tab">
-                                        <div class="mb-4">
-                                            <label class="form-label fw-bold small text-muted-theme text-uppercase" style="font-size: 0.65rem;">Current Password</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text bg-light-theme border-end-0"><i class="fa fa-lock text-muted-theme"></i></span>
-                                                <input type="password" name="current_password" id="current_password" class="form-control bg-light-theme border-start-0" 
-                                                    placeholder="Type current password" autocomplete="new-password">
-                                                <span class="input-group-text bg-light-theme cursor-pointer toggle-password border-start-0" data-target="current_password"><i class="fa fa-eye-slash"></i></span>
-                                            </div>
-                                            <div class="text-danger small mt-1" id="error_current_password" style="display:none;"></div>
+                                <div class="tab-pane fade" id="pills-security" role="tabpanel" aria-labelledby="pills-security-tab">
+                                    <div class="mb-4">
+                                        <label class="form-label fw-bold small text-muted-theme text-uppercase" style="font-size: 0.65rem;">Current Password</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light-theme border-end-0"><i class="fa fa-lock text-muted-theme"></i></span>
+                                            <input type="password" name="current_password" id="current_password" class="form-control bg-light-theme border-start-0" 
+                                                placeholder="Type current password" autocomplete="new-password">
+                                            <span class="input-group-text bg-light-theme cursor-pointer toggle-password border-start-0" data-target="current_password"><i class="fa fa-eye-slash"></i></span>
                                         </div>
-                                        <div class="row g-3">
-                                            <div class="col-md-6">
-                                                <label class="form-label fw-bold small text-muted-theme text-uppercase" style="font-size: 0.65rem;">New Password</label>
-                                                <div class="input-group">
-                                                    <input type="password" name="new_password" id="new_password" class="form-control bg-light-theme" autocomplete="new-password">
-                                                    <span class="input-group-text bg-light-theme cursor-pointer toggle-password" data-target="new_password"><i class="fa fa-eye-slash"></i></span>
-                                                </div>
-                                                <div class="text-danger small mt-1" id="error_new_password" style="display:none;"></div>
+                                        <div class="text-danger small mt-1" id="error_current_password" style="display:none;"></div>
+                                    </div>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold small text-muted-theme text-uppercase" style="font-size: 0.65rem;">New Password</label>
+                                            <div class="input-group">
+                                                <input type="password" name="new_password" id="new_password" class="form-control bg-light-theme" autocomplete="new-password">
+                                                <span class="input-group-text bg-light-theme cursor-pointer toggle-password" data-target="new_password"><i class="fa fa-eye-slash"></i></span>
                                             </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label fw-bold small text-muted-theme text-uppercase" style="font-size: 0.65rem;">Confirm Password</label>
-                                                <div class="input-group">
-                                                    <input type="password" name="new_password_confirmation" id="new_password_confirmation" class="form-control bg-light-theme" autocomplete="new-password">
-                                                    <span class="input-group-text bg-light-theme cursor-pointer toggle-password" data-target="new_password_confirmation"><i class="fa fa-eye-slash"></i></span>
-                                                </div>
-                                                <div class="text-danger small mt-1" id="error_confirm_password" style="display:none;"></div>
+                                            <div class="text-danger small mt-1" id="error_new_password" style="display:none;"></div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold small text-muted-theme text-uppercase" style="font-size: 0.65rem;">Confirm Password</label>
+                                            <div class="input-group">
+                                                <input type="password" name="new_password_confirmation" id="new_password_confirmation" class="form-control bg-light-theme" autocomplete="new-password">
+                                                <span class="input-group-text bg-light-theme cursor-pointer toggle-password" data-target="new_password_confirmation"><i class="fa fa-eye-slash"></i></span>
                                             </div>
+                                            <div class="text-danger small mt-1" id="error_confirm_password" style="display:none;"></div>
                                         </div>
                                     </div>
-                                @endif
+                                </div>
                             </div>
 
                             <div class="modal-footer border-0 p-4 pt-0 bg-transparent">

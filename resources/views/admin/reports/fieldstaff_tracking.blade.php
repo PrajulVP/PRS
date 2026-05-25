@@ -136,7 +136,7 @@
                     <div class="card-header bg-transparent py-4">
                         <div class="row align-items-center g-3">
                             <!-- Profile Column -->
-                            <div class="col-lg-6">
+                            <div class="col-xl-5 col-lg-12 mb-3 mb-xl-0">
                                 <div class="d-flex align-items-center gap-3">
                                     <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center shadow-sm"
                                         style="width: 70px; height: 70px; border: 2px solid #fff;">
@@ -166,55 +166,52 @@
                             </div>
 
                             <!-- Controls Column -->
-                            <div class="col-lg-6">
-                                <div
-                                    class="d-flex flex-column flex-md-row align-items-md-center justify-content-lg-end gap-3">
+                            <div class="col-xl-7 col-lg-12">
+                                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-xl-end gap-3 flex-wrap">
                                     <!-- Enhanced Date Selector -->
+                                    <div class="d-flex gap-2 align-items-center flex-wrap">
+                                        <a href="{{ route('admin.field-staff.tracking.export', ['user_id' => $user->id, 'date' => $date, 'format' => 'csv']) }}"
+                                            class="btn btn-primary shadow-sm rounded-3 d-flex align-items-center px-2"
+                                            style="height: 32px; border: none; background: #1a3a63; font-size: 0.8rem;">
+                                            <span class="fw-bold">CSV</span>
+                                        </a>
+                                        <a href="{{ route('admin.field-staff.tracking.export', ['user_id' => $user->id, 'date' => $date, 'format' => 'csv']) }}"
+                                            class="btn btn-success shadow-sm rounded-3 d-flex align-items-center px-2"
+                                            style="height: 32px; border: none; background: #28a745; font-size: 0.8rem;">
+                                            <span class="fw-bold">Excel</span>
+                                        </a>
+                                        <a href="{{ route('admin.field-staff.tracking.export', ['user_id' => $user->id, 'date' => $date, 'format' => 'pdf']) }}"
+                                            class="btn btn-danger shadow-sm rounded-3 d-flex align-items-center px-2"
+                                            style="height: 32px; border: none; background: #dc3545; font-size: 0.8rem;">
+                                            <span class="fw-bold">PDF</span>
+                                        </a>
+                                        <button onclick="window.print()"
+                                            class="btn btn-dark shadow-sm rounded-3 d-flex align-items-center px-2 text-white"
+                                            style="height: 32px; border: none; background: #2c3e50; font-size: 0.8rem;">
+                                            <span class="fw-bold">Print</span>
+                                        </button>
+
+                                    </div>
                                     <div class="position-relative">
                                         <form action="{{ route('admin.field-staff.tracking-map') }}" method="GET"
                                             id="dateFilterForm">
                                             <input type="hidden" name="user_id" value="{{ $user->id }}">
                                             <div class="position-relative bg-white rounded-3 shadow-sm d-flex align-items-center"
-                                                style="min-width: 160px; height: 38px; border: 1px solid #e0e0e0 !important;">
+                                                style="min-width: 140px; height: 32px; border: 1px solid #e0e0e0 !important;">
                                                 <input type="date" name="date"
                                                     class="form-control fw-bold text-primary text-center"
                                                     value="{{ $date }}" onchange="this.form.submit()"
-                                                    style="font-size: 0.95rem; cursor: pointer; border: none !important; background: transparent !important; outline: none !important; box-shadow: none !important; padding-left: 20px !important; height: 100%;">
+                                                    style="font-size: 0.85rem; cursor: pointer; border: none !important; background: transparent !important; outline: none !important; box-shadow: none !important; padding-left: 10px !important; height: 100%;">
                                                 <i class="fa fa-calendar text-primary me-3 fs-6"></i>
                                             </div>
                                         </form>
                                     </div>
-
-                                    <!-- Action Buttons -->
-                                    <div class="d-flex gap-2 align-items-center">
-                                        <a href="{{ route('admin.field-staff.tracking.export', ['user_id' => $user->id, 'date' => $date, 'format' => 'csv']) }}"
-                                            class="btn btn-primary shadow-sm rounded-3 d-flex align-items-center px-3"
-                                            style="height: 38px; border: none; background: #1a3a63; font-size: 0.85rem;">
-                                            <span class="fw-bold">CSV</span>
+                                    <div class="ms-1 ps-2 border-start">
+                                        <a href="{{ route('admin.field-staff.tracking') }}"
+                                            class="btn btn-primary rounded-3 px-3 d-flex align-items-center justify-content-center shadow-sm"
+                                            style="height: 32px; font-weight: 700; background: #0d6efd; border: none; font-size: 0.85rem;">
+                                            Back
                                         </a>
-                                        <a href="{{ route('admin.field-staff.tracking.export', ['user_id' => $user->id, 'date' => $date, 'format' => 'csv']) }}"
-                                            class="btn btn-success shadow-sm rounded-3 d-flex align-items-center px-3"
-                                            style="height: 38px; border: none; background: #28a745; font-size: 0.85rem;">
-                                            <span class="fw-bold">Excel</span>
-                                        </a>
-                                        <a href="{{ route('admin.field-staff.tracking.export', ['user_id' => $user->id, 'date' => $date, 'format' => 'pdf']) }}"
-                                            class="btn btn-danger shadow-sm rounded-3 d-flex align-items-center px-3"
-                                            style="height: 38px; border: none; background: #dc3545; font-size: 0.85rem;">
-                                            <span class="fw-bold">PDF</span>
-                                        </a>
-                                        <button onclick="window.print()"
-                                            class="btn btn-dark shadow-sm rounded-3 d-flex align-items-center px-3 text-white"
-                                            style="height: 38px; border: none; background: #2c3e50; font-size: 0.85rem;">
-                                            <span class="fw-bold">Print</span>
-                                        </button>
-
-                                        <div class="ms-1 ps-2 border-start">
-                                            <a href="{{ route('admin.field-staff.tracking') }}"
-                                                class="btn btn-primary rounded-3 px-4 d-flex align-items-center justify-content-center shadow-sm"
-                                                style="height: 38px; font-weight: 700; background: #0d6efd; border: none; font-size: 0.9rem;">
-                                                Back
-                                            </a>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -223,28 +220,28 @@
                     <div class="card-body pt-3">
                         <!-- Stats Summary Row -->
                         <div class="row mb-4 g-3">
-                            <div class="col-md-3 col-6">
-                                <div class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern">
+                            <div class="col-md col-6">
+                                <div class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern h-100 d-flex flex-column justify-content-center">
                                     <h6 class="text-muted small mb-1 text-uppercase fw-bold">Distance</h6>
                                     <h4 class="mb-0 text-primary fw-bold" id="distanceCovered">
                                         {{ number_format($totalDistance ?? 0, 2) }} <span class="small fw-normal">KM</span>
                                     </h4>
                                 </div>
                             </div>
-                            <div class="col-md-3 col-6">
-                                <div class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern">
+                            <div class="col-md col-6">
+                                <div class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern h-100 d-flex flex-column justify-content-center">
                                     <h6 class="text-muted small mb-1 text-uppercase fw-bold">Punches</h6>
                                     <h4 class="mb-0 text-success fw-bold">{{ $punches->count() }}</h4>
                                 </div>
                             </div>
-                            <div class="col-md-3 col-6">
-                                <div class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern">
+                            <div class="col-md col-6">
+                                <div class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern h-100 d-flex flex-column justify-content-center">
                                     <h6 class="text-muted small mb-1 text-uppercase fw-bold">Visits</h6>
                                     <h4 class="mb-0 text-warning fw-bold">{{ $visits->count() }}</h4>
                                 </div>
                             </div>
-                            <div class="col-md-3 col-6">
-                                <div class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern">
+                            <div class="col-md col-6">
+                                <div class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern h-100 d-flex flex-column justify-content-center">
                                     <h6 class="text-muted small mb-1 text-uppercase fw-bold">Status</h6>
                                     <h4 class="mb-0 fw-bold">
                                         @if($isOnline)
@@ -253,6 +250,18 @@
                                             <span class="badge rounded-pill bg-secondary px-3" id="liveStatus">Offline</span>
                                         @endif
                                     </h4>
+                                </div>
+                            </div>
+                            <div class="col-md col-6">
+                                <div class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern h-100 d-flex flex-column justify-content-center">
+                                    <h6 class="text-muted small mb-1 text-uppercase fw-bold">Alerts</h6>
+                                    @if(isset($mockGpsCount) && $mockGpsCount > 0)
+                                        <h4 class="mb-0 text-danger fw-bold" title="{{ $mockGpsCount }} Mock GPS triggers detected!">
+                                            <i class="fa fa-exclamation-triangle me-1"></i>{{ $mockGpsCount }}
+                                        </h4>
+                                    @else
+                                        <h4 class="mb-0 text-success fw-bold">0</h4>
+                                    @endif
                                 </div>
                             </div>
                         </div>

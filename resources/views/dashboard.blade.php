@@ -1052,15 +1052,14 @@
                                 <div class="card-body p-4">
                                     <div class="d-flex align-items-center justify-content-between mb-4">
                                         <div class="d-flex align-items-center gap-3">
-                                            <div class="icon-circle-lg bg-soft-danger" style="width: 50px; height: 50px;">
-                                                <i class="fa fa-map-marker text-danger"></i>
+                                            <div class="icon-circle-lg bg-soft-info" style="width: 50px; height: 50px;">
+                                                <i class="fa fa-map-marker text-info"></i>
                                             </div>
                                             <div>
-                                                <h6 class="fw-800 mb-0">Live Field Monitoring</h6>
-                                                <small class="text-muted">Real-time GPS tracking & route history</small>
+                                                <h6 class="fw-800 mb-0">Field Staff Tracking</h6>
+                                                <small class="text-muted">Historical GPS routing & daily timelines</small>
                                             </div>
                                         </div>
-                                        <span class="badge bg-soft-danger text-danger rounded-pill px-3 py-2">LIVE</span>
                                     </div>
                                     <div class="row g-3 mb-4">
                                         <div class="col-4">
@@ -1082,7 +1081,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <a href="{{ route('admin.reports.monitoring') }}" class="btn btn-primary w-100 btn-outline-pill py-3" style="background: var(--med-primary); border: none;">Launch Command Map</a>
+                                    <a href="{{ route('admin.field-staff.tracking') }}" class="btn btn-primary w-100 btn-outline-pill py-3" style="background: var(--med-primary); border: none;">View Staff Tracking</a>
                                 </div>
                             </div>
                         </div>

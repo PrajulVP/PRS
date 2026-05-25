@@ -20,52 +20,7 @@
         </div>
     </div>
 
-    <!-- Live Pulse Widget -->
-    <div class="row mb-4">
-        <div class="col-md-8 col-lg-6 col-xl-5">
-            <div class="card border-0 shadow-sm rounded-4" style="border: 1px solid var(--med-border) !important;">
-                <div class="card-body p-4 position-relative">
-                    <div class="d-flex justify-content-between align-items-start mb-4">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="icon-circle bg-soft-danger text-danger rounded-circle d-flex align-items-center justify-content-center" style="background: rgba(239, 68, 68, 0.1); width: 45px; height: 45px;">
-                                <i class="fa fa-map-marker fs-5"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-0 fw-bold text-dark" style="font-size: 1.1rem;">Live Field Monitoring</h6>
-                                <p class="text-muted small mb-0">Real-time GPS tracking & route history</p>
-                            </div>
-                        </div>
-                        <span class="badge bg-soft-danger text-danger px-2 py-1 fw-bold">LIVE</span>
-                    </div>
 
-                    <div class="row g-2 mb-4">
-                        <div class="col-4">
-                            <div class="bg-light p-2 rounded-3 text-center h-100">
-                                <div class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Active</div>
-                                <div class="fw-bold fs-5 text-dark">{{ $pulseStats['active'] ?? '--' }}</div>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="bg-light p-2 rounded-3 text-center h-100">
-                                <div class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Visits</div>
-                                <div class="fw-bold fs-5 text-dark">{{ $pulseStats['visits'] ?? '--' }}</div>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="bg-light p-2 rounded-3 text-center h-100">
-                                <div class="text-muted" style="font-size: 0.7rem; font-weight: 600;">Alerts</div>
-                                <div class="fw-bold fs-5 text-danger">{{ $pulseStats['alerts'] ?? 0 }}</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <a href="{{ route('admin.reports.monitoring') }}" class="btn btn-primary w-100 fw-bold rounded-pill shadow-sm" style="background: #00497a; border: none;">
-                        Launch Command Map
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Filters Section -->
     @include('admin.reports.partials._filters', [

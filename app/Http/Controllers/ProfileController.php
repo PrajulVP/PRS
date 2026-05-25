@@ -104,17 +104,17 @@ class ProfileController extends Controller
                     'required', 'email', 'unique:users,email,' . $user->id,
                     'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
                 ];
-
-                // Password change logic for admins
-                if ($request->filled('new_password')) {
-                    $rules['current_password'] = ['required', function ($attribute, $value, $fail) use ($user) {
-                        if (!Hash::check($value, $user->password)) {
-                            $fail('The current password you entered is incorrect.');
-                        }
-                    }];
-                    $rules['new_password'] = 'required|string|min:8|confirmed';
-                }
             }
+        }
+
+        // Password change logic for ALL users
+        if ($request->filled('new_password')) {
+            $rules['current_password'] = ['required', function ($attribute, $value, $fail) use ($user) {
+                if (!Hash::check($value, $user->password)) {
+                    $fail('The current password you entered is incorrect.');
+                }
+            }];
+            $rules['new_password'] = 'required|string|min:6|confirmed';
         }
 
         $request->validate($rules);
@@ -133,12 +133,12 @@ class ProfileController extends Controller
             $user->contact_no = $request->contact_no;
             if ($user->hasAnyRole(['superadmin', 'admin'])) {
                 $user->email = $request->email;
-                
-                // Update password if provided
-                if ($request->filled('new_password')) {
-                    $user->password = Hash::make($request->new_password);
-                }
             }
+        }
+
+        // Update password if provided for any user
+        if ($request->filled('new_password')) {
+            $user->password = Hash::make($request->new_password);
         }
 
         if ($request->remove_profile_pic == '1') {

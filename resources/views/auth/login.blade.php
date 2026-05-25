@@ -9,7 +9,7 @@
         <div class="row m-0 vh-100 justify-content-center align-items-center" 
              style="background: var(--login-overlay); transition: background 0.4s ease;">
 
-            <div class="col-12 col-sm-8 col-md-6 col-lg-4 col-xl-3">
+            <div class="col-12 w-100" style="max-width: 400px;">
                 <!-- Theme-aware Card -->
                 <div class="card border-0 shadow-lg rounded-4">
 
@@ -49,10 +49,15 @@
                             <div class="d-flex justify-content-between align-items-center mb-4">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-                                    <label class="form-check-label small" for="remember" style="color: var(--login-muted);">
+                                    <label class="form-check-label small" for="remember" style="color: var(--login-muted); white-space: nowrap;">
                                         Remember me
                                     </label>
                                 </div>
+                                @if (Route::has('password.request'))
+                                    <a class="small fw-bold text-decoration-none text-end" href="{{ route('password.request') }}" style="color: #0d6efd; white-space: nowrap;">
+                                        Forgot Password?
+                                    </a>
+                                @endif
                             </div>
 
                             <div class="d-grid">

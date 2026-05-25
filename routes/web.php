@@ -35,7 +35,9 @@ Route::get('/', function () {
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
-// Route::post('/login-alt', [AuthController::class, 'login'])->name('login.post');
+
+// Add Laravel UI password reset routes
+Auth::routes(['login' => false, 'register' => false, 'verify' => false, 'reset' => true]);
 
 Route::middleware(['auth'])->group(function () {
 
