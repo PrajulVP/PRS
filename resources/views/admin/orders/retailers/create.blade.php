@@ -86,7 +86,7 @@
                                     <select id="productSelect" class="form-select select2">
                                         <option value="">Search Product...</option>
                                         @foreach($products as $p)
-                                            <option value="{{ $p->id }}">{{ $p->product_name }}{{ trim($p->pack) && $p->pack != '' ? " ($p->pack)" : "" }} - ₹{{ number_format($p->ptr, 2) }}</option>
+                                            <option value="{{ $p->id }}" data-brand="{{ $p->brand }}">{{ $p->product_name }}{{ trim($p->pack) && $p->pack != '' ? " ($p->pack)" : "" }} - ₹{{ number_format($p->ptr, 2) }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -167,50 +167,9 @@
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {{-- Right Side: Recap & Submit --}}
-                <div class="col-xl-3 col-lg-4">
-                    <div class="sticky-top" style="top: 20px; z-index: 5;">
-                        <div class="card shadow-lg border-0 summary-card rounded-3 overflow-hidden">
-                            <div class="card-header bg-dark text-white py-3">
-                                <h5 class="card-title mb-0 fw-bold"><i class="fa fa-receipt me-2"></i>Grand Total</h5>
-                            </div>
-                            <div class="card-body p-4">
-                                <div class="mb-4 text-center">
-                                    <label class="text-muted small fw-bold text-uppercase d-block mb-2">Total Order Value (PTR)</label>
-                                    <div class="d-flex align-items-center justify-content-center gap-3">
-                                        <span id="grandTotal" class="h1 fw-bold text-primary mb-0 font-outfit" style="letter-spacing: -1px;">₹0.00</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="p-3 bg-light-soft rounded-3 border border-light-dark mb-4 text-center">
-                                    <small class="text-muted d-block line-height-sm">
-                                        <i class="fa fa-info-circle text-warning me-1"></i> 
-                                        GST & other charges will be calculated on the final invoice.
-                                    </small>
-                                </div>
-
-                                <div class="mb-4">
-                                    <label class="text-muted small fw-bold text-uppercase d-block mb-2">Delivery Notes (Optional)</label>
-                                    <textarea name="delivery_notes" class="form-control" rows="2" placeholder="Any special instructions for delivery..."></textarea>
-                                </div>
-
-                                <button type="submit"
-                                    class="btn btn-success btn-lg w-100 py-3 fw-bold shadow-sm font-outfit btn-confirm rounded-3 border-0 transition-all hover-shadow"
-                                    style="background: linear-gradient(135deg, #28a745 0%, #218838 100%);"
-                                    id="btnSubmitOrder" disabled>
-                                    <i class="fa fa-check-circle me-2"></i> CONFIRM ORDER
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Full Width Bundle Table --}}
-                <div class="col-xl-12 mt-4">
-                    {{-- 3. Bundle Table --}}
-                    <div class="card shadow-sm border-0 mb-4 overflow-hidden rounded-3">
+                    {{-- 3. Bundle Table (Moved into Left Column) --}}
+                    <div class="card shadow-sm border-0 mb-4 overflow-hidden rounded-3 mt-4">
                         <div
                             class="card-header bg-white dark-bg-transparent py-3 border-bottom border-light-dark d-flex justify-content-between align-items-center">
                             <h5 class="card-title mb-0 fw-bold text-dark label-font">Current Order Bundle</h5>
@@ -254,7 +213,45 @@
                         </div>
                     </div>
                 </div>
-            </div>
+
+                {{-- Right Side: Recap & Submit --}}
+                <div class="col-xl-3 col-lg-4">
+                    <div class="sticky-top" style="top: 20px; z-index: 5;">
+                        <div class="card shadow-lg border-0 summary-card rounded-3 overflow-hidden">
+                            <div class="card-header bg-dark text-white py-3">
+                                <h5 class="card-title mb-0 fw-bold"><i class="fa fa-receipt me-2"></i>Grand Total</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="mb-4 text-center">
+                                    <label class="text-muted small fw-bold text-uppercase d-block mb-2">Total Order Value (PTR)</label>
+                                    <div class="d-flex align-items-center justify-content-center gap-3">
+                                        <span id="grandTotal" class="h1 fw-bold text-primary mb-0 font-outfit" style="letter-spacing: -1px;">₹0.00</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-3 bg-light-soft rounded-3 border border-light-dark mb-4 text-center">
+                                    <small class="text-muted d-block line-height-sm">
+                                        <i class="fa fa-info-circle text-warning me-1"></i> 
+                                        GST & other charges will be calculated on the final invoice.
+                                    </small>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="text-muted small fw-bold text-uppercase d-block mb-2">Delivery Notes (Optional)</label>
+                                    <textarea name="delivery_notes" class="form-control" rows="2" placeholder="Any special instructions for delivery..."></textarea>
+                                </div>
+
+                                <button type="submit"
+                                    class="btn btn-success btn-lg w-100 py-3 fw-bold shadow-sm font-outfit btn-confirm rounded-3 border-0 transition-all hover-shadow d-flex align-items-center justify-content-center"
+                                    style="background: linear-gradient(135deg, #28a745 0%, #218838 100%); white-space: nowrap;"
+                                    id="btnSubmitOrder" disabled>
+                                    <i class="fa fa-check-circle me-2"></i> CONFIRM ORDER
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
         </form>
     </div>
 @endsection
@@ -929,9 +926,6 @@
                 }
 
                 let prodFullName = currentProductDetails.product_name;
-                if (isValid(currentProductDetails.pack, 'pack')) {
-                    prodFullName += ` (${currentProductDetails.pack})`;
-                }
 
                 if (addedItems[key]) {
                     addedItems[key].qty += qty;
@@ -947,9 +941,11 @@
                         size: size,
                         price: parseFloat(currentProductDetails.ptr),
                         qty: qty, unit: unit, multiplier: mul,
+                        brand: currentProductDetails.brand,
                         strips_per_box: stripsPerBox,
                         boxes_per_carton: boxesPerCarton,
                         units_per_strip: currentProductDetails.units_per_strip,
+                        pack: currentProductDetails.pack,
                         has_variants: currentProductDetails.has_variants,
                         is_count: $('#unitSelect').val() === 'Nos',
                         maxStock: maxStockRaw
@@ -1179,7 +1175,16 @@
                                                     <td class="ps-4 text-muted fw-bold small">${index++}</td>
                                                     <td>
                                                         <div class="fw-bold text-dark font-outfit" style="max-width:250px; white-space:normal; line-height:1.2;">
-                                                            ${item.name} ${item.variant ? `<span class="badge bg-primary ms-1">${item.variant}</span>` : ''}
+                                                            ${item.name} 
+                                                            ${item.side ? `<span class="badge bg-primary ms-1">${item.side}</span>` : ''}
+                                                            ${item.size ? `<span class="badge bg-info ms-1">${item.size}</span>` : ''}
+                                                            ${item.variant && !item.side && !item.size ? `<span class="badge bg-primary ms-1">${item.variant}</span>` : ''}
+                                                        </div>
+                                                        <div class="small text-muted mt-1 font-outfit">
+                                                            ${item.brand ? `<span class="me-2"><i class="fa fa-tag me-1 text-secondary"></i>${item.brand}</span>` : ''}
+                                                            ${item.pack ? `<span class="me-2"><i class="fa fa-box me-1 text-warning"></i>${item.pack}</span>` : ''}
+                                                            ${!item.is_count && item.units_per_strip ? `<span class="me-2"><i class="fa fa-pills me-1 text-primary"></i>${item.units_per_strip} Tab/Str</span>` : ''}
+                                                            ${!item.is_count && item.strips_per_box ? `<span class="me-2"><i class="fa fa-layer-group me-1 text-info"></i>${item.strips_per_box} Str/Box</span>` : ''}
                                                         </div>
                                                         <input type="hidden" name="items[${key}][product_id]" value="${item.id}">
                                                         ${item.side ? `<input type="hidden" name="items[${key}][side]" value="${item.side}">` : ''}
@@ -1377,10 +1382,12 @@
                         price: parseFloat(p.ptr),
                         qty: qty,
                         unit: unit,
+                        brand: p.brand,
                         multiplier: mul,
                         strips_per_box: stripsPerBox,
                         boxes_per_carton: boxesPerCarton,
                         units_per_strip: p.units_per_strip,
+                        pack: p.pack,
                         has_variants: p.has_variants,
                         is_count: unit === 'Nos',
                         maxStock: maxStockRaw

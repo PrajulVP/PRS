@@ -181,6 +181,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('loyalty-points', [LoyaltyPointsController::class, 'index'])->name('loyalty-points.index');
         Route::get('loyalty-points/{retailer}', [LoyaltyPointsController::class, 'index'])->name('loyalty-points.detail');
         
+        // Distributor Wallet Dashboard
+        Route::get('distributor-wallet', [\App\Http\Controllers\DistributorWalletController::class, 'index'])->name('distributor-wallet.index');
+        Route::get('distributor-wallet/{distributor}', [\App\Http\Controllers\DistributorWalletController::class, 'index'])->name('distributor-wallet.detail');
+        Route::get('distributor-wallet/{distributor}/summary', [\App\Http\Controllers\DistributorWalletController::class, 'getSummary'])->name('distributor-wallet.summary');
         // Staff Ratings for Admin & Sales Managers
         Route::get('staff-ratings', [\App\Http\Controllers\AdminRatingController::class, 'index'])->name('staff-ratings.index');
         Route::get('loyalty-points/{retailer}/summary', [LoyaltyPointsController::class, 'getSummary'])->name('loyalty-points.summary');

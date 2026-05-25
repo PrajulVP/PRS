@@ -35,7 +35,7 @@ class RetailerOrderManagementController extends Controller
         // User asked for AJAX to fetch info.
 
         // Revised: We will keep the products list for the dropdown, but minimal data.
-        $products = Product::select('id', 'product_name', 'mrp', 'ptr', 'pack')->get();
+        $products = Product::select('id', 'product_name', 'mrp', 'ptr', 'pack', 'brand')->get();
 
         return view('admin.orders.retailers.create', compact('retailers', 'products'));
     }

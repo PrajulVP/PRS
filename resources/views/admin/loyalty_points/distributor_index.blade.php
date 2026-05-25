@@ -214,13 +214,13 @@
         <div class="page-title">
             <div class="row align-items-center">
                 <div class="col-sm-6">
-                    <h3 class="fw-bold m-0 heading-theme">Loyalty & Credits</h3>
-                    <p class="text-muted small m-0">Performance analytics and reward tracking for retailers</p>
+                    <h3 class="fw-bold m-0 heading-theme">Distributor Wallet</h3>
+                    <p class="text-muted small m-0">Performance analytics and reward tracking for distributors</p>
                 </div>
                 <div class="col-sm-6 text-end">
-                    @if($selectedRetailer)
+                    @if($selectedDistributor)
                         <div id="detail-export-container" class="d-inline-flex gap-2 me-3"></div>
-                        <a href="{{ route('admin.loyalty-points.index') }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-bold">
+                        <a href="{{ route('admin.distributor-wallet.index') }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-bold">
                             <i class="fa fa-arrow-left me-2"></i>Back to Overview
                         </a>
                     @else
@@ -237,47 +237,34 @@
 
     <div class="container-fluid">
         <div class="row">
-            @if(!$selectedRetailer)
+            @if(!$selectedDistributor)
             <!-- COMPACT GLOBAL STATS BAR -->
             <div class="col-12 mb-4 entrance-fade">
                 <div class="card border-0 shadow-sm" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 16px; border: 1px solid rgba(0, 73, 122, 0.05);">
                     <div class="card-body py-3 px-4">
                         <div class="row align-items-center text-center text-md-start">
-                            <!-- Total Retailers -->
-                            <div class="col-md-4 mb-3 mb-md-0">
+                            <!-- Total distributors -->
+                            <div class="col-md-6 mb-3 mb-md-0">
                                 <div class="d-flex align-items-center justify-content-center justify-content-md-start">
                                     <div class="bg-glass-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background: rgba(0, 73, 122, 0.08);">
                                         <i data-feather="users" class="text-primary" style="width: 18px; height: 18px;"></i>
                                     </div>
                                     <div>
                                         <p class="text-muted small fw-bold mb-0 text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Network Reach</p>
-                                        <h5 class="fw-800 mb-0 heading-theme">{{ count($retailers) }} <span class="small fw-600 text-muted" style="font-size: 0.75rem;">Retailers</span></h5>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Total Loyalty Points -->
-                            <div class="col-md-4 mb-3 mb-md-0">
-                                <div class="d-flex align-items-center justify-content-center justify-content-md-start">
-                                    <div class="bg-glass-warning rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background: rgba(218, 165, 32, 0.1);">
-                                        <i data-feather="star" style="width: 18px; height: 18px; color: #daa520;"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-muted small fw-bold mb-0 text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">System Liability</p>
-                                        <h5 class="fw-800 mb-0 heading-theme">{{ number_format($globalLoyaltyPoints, 2) }} <span class="small fw-600 text-muted" style="font-size: 0.75rem;">Points</span></h5>
+                                        <h5 class="fw-800 mb-0 heading-theme">{{ count($distributors) }} <span class="small fw-600 text-muted" style="font-size: 0.75rem;">Distributors</span></h5>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Total Wallet Credits -->
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="d-flex align-items-center justify-content-center justify-content-md-start">
                                     <div class="bg-glass-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background: rgba(46, 204, 113, 0.1);">
                                         <i data-feather="credit-card" class="text-success" style="width: 18px; height: 18px;"></i>
                                     </div>
                                     <div>
                                         <p class="text-muted small fw-bold mb-0 text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Refund Pool</p>
-                                        <h5 class="fw-800 mb-0 heading-theme">₹{{ number_format($retailers->sum('credit_balance'), 2) }} <span class="small fw-600 text-muted" style="font-size: 0.75rem;">Credits</span></h5>
+                                        <h5 class="fw-800 mb-0 heading-theme">₹{{ number_format($globalCreditBalance, 2) }} <span class="small fw-600 text-muted" style="font-size: 0.75rem;">Credits</span></h5>
                                     </div>
                                 </div>
                             </div>
@@ -291,14 +278,14 @@
                 <div class="card shadow-sm border-0" style="border-radius: 20px; overflow: hidden; background: var(--med-bg-card);">
                     <div class="card-header loyalty-card-header py-4 px-4 d-flex justify-content-between align-items-center">
                         <div>
-                            <h5 class="fw-bold mb-1 heading-theme">Retailer Loyalty & Credits</h5>
-                            <p class="text-muted small mb-0">Monitor loyalty points and transaction history across all retailers.</p>
+                            <h5 class="fw-bold mb-1 heading-theme">Distributor Wallet</h5>
+                            <p class="text-muted small mb-0">Monitor loyalty points and transaction history across all distributors.</p>
                         </div>
                         <div class="d-flex gap-3 align-items-center" style="width: 50%;">
                              <div class="flex-grow-1">
-                                <select id="retailer_selector" class="form-select select2">
-                                    <option value="">-- Quick Search Retailer --</option>
-                                    @foreach($retailers as $r)
+                                <select id="distributor_selector" class="form-select select2">
+                                    <option value="">-- Quick Search Distributor --</option>
+                                    @foreach($distributors as $r)
                                         <option value="{{ $r->id }}" data-points="{{ number_format($r->loyalty_points, 2) }}" data-credits="{{ number_format($r->credit_balance, 2) }}">
                                             {{ $r->shop_name }} ({{ $r->user->name }})
                                         </option>
@@ -310,7 +297,7 @@
                     <div id="overview-table-controls" class="table-controls-row">
                         @if(auth()->user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
                         <div class="d-flex align-items-center gap-3">
-                            <form id="filter-form" action="{{ route('admin.loyalty-points.index') }}" method="GET" class="d-flex align-items-center gap-3 mb-0">
+                            <form id="filter-form" action="{{ route('admin.distributor-wallet.index') }}" method="GET" class="d-flex align-items-center gap-3 mb-0">
                                 @if(auth()->user()->hasAnyRole(['admin', 'superadmin']))
                                 <div class="position-relative" style="min-width: 200px;">
                                     <select id="sm-filter" name="sales_manager_id" class="form-select select2-basic filter-select">
@@ -328,22 +315,8 @@
                                     @endif
                                 </div>
                                 @endif
-                                <div class="position-relative" style="min-width: 200px;">
-                                    <select id="fs-filter" name="field_staff_id" class="form-select select2-basic filter-select">
-                                        <option value="">Field Staffs</option>
-                                        @foreach($fieldStaffs as $fs)
-                                            <option value="{{ $fs->id }}" {{ request('field_staff_id') == $fs->id ? 'selected' : '' }}>
-                                                {{ $fs->user->name ?? 'N/A' }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @if(request('field_staff_id'))
-                                        <button type="button" class="btn-clear-filter" data-target="fs-filter" title="Clear Field Staff">
-                                            <i class="fa fa-times-circle"></i>
-                                        </button>
-                                    @endif
-                                </div>
-                                <a href="{{ route('admin.loyalty-points.index') }}" class="btn reset-filter-btn">
+
+                                <a href="{{ route('admin.distributor-wallet.index') }}" class="btn reset-filter-btn">
                                     <i class="fa fa-undo"></i> Reset
                                 </a>
                             </form>
@@ -368,18 +341,14 @@
                                 @endphp
                                 <thead>
                                     <tr>
-                                        <th>Retailer Shop</th>
-                                        <th>Owner Name</th>
+                                        <th>Distributor Shop</th>
                                         @if(auth()->user()->hasAnyRole(['admin', 'superadmin']))
                                             <th>Sales Manager</th>
-                                        @endif
-                                        @if(auth()->user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
-                                            <th>Field Staff</th>
                                         @endif
                                         <th>Region & Area</th>
                                         <th class="text-center">Total Orders</th>
                                         <th>Last Order</th>
-                                        <th class="text-center py-3">Accumulated Points</th>
+                                        <th class="text-center py-3">Available Credits</th>
                                         <th class="text-center">Action</th>
                                     </tr>
                                 </thead>
@@ -426,11 +395,11 @@
                 </div>
             </div>
             @else
-            <!-- DETAILED RETAILER VIEW (Shown when a retailer is selected) --            <!-- DETAILED RETAILER VIEW (Shown when a retailer is selected) -->
-            <!-- DETAILED RETAILER VIEW (Shown when a retailer is selected) -->
+            <!-- DETAILED Distributor VIEW (Shown when a Distributor is selected) --            <!-- DETAILED Distributor VIEW (Shown when a Distributor is selected) -->
+            <!-- DETAILED Distributor VIEW (Shown when a Distributor is selected) -->
             <div id="detail-view" class="col-12 entrance-fade">
                 <div class="row g-3">
-                    <!-- Retailer Profile Card -->
+                    <!-- Distributor Profile Card -->
                     <div class="col-xl-6 mb-3">
                         <div class="card shadow-sm border-0 h-100" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(0, 73, 122, 0.1); border-radius: 20px !important;">
                             <div class="card-body p-3">
@@ -465,26 +434,8 @@
                         </div>
                     </div>
 
-                    <!-- Loyalty Points Card -->
-                    <div class="col-xl-3 col-md-6 mb-3">
-                        <div class="card shadow-sm border-0 h-100 overflow-hidden summary-card" style="background: linear-gradient(135deg, #00497a 0%, #002b5c 100%); border-radius: 20px !important;">
-                            <div class="card-body p-4 position-relative">
-                                <div class="d-flex align-items-center justify-content-between mb-4">
-                                    <div class="d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.15);">
-                                        <i data-feather="star" class="text-white" style="width: 22px; height: 22px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.4));"></i>
-                                    </div>
-                                    <span class="badge rounded-pill px-3 py-1 fw-bold" style="font-size: 10px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); color: #fff; letter-spacing: 0.5px;">POINTS</span>
-                                </div>
-                                <div class="flex-grow-1 text-white">
-                                    <h1 id="display_total_points" class="fw-300 mb-0 display-6" style="line-height: 1; color: #fff !important; letter-spacing: -1px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">0.00</h1>
-                                    <p class="text-white opacity-75 small mb-0 fw-600 mt-2">Earned from orders</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Credit Balance Card -->
-                    <div class="col-xl-3 col-md-6 mb-3">
+                    <div class="col-xl-6 mb-3">
                         <div class="card shadow-sm border-0 h-100 overflow-hidden summary-card" style="background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); border-radius: 20px !important;">
                             <div class="card-body p-4 position-relative">
                                 <div class="d-flex align-items-center justify-content-between mb-4">
@@ -520,7 +471,7 @@
                                             <th>Date</th>   
                                             <th>Reference</th>
                                             <th>Details</th>
-                                            <th class="py-3">Points Earned</th>
+                                            <th class="py-3">Amount</th>
                                             <th class="text-center">Status</th>
                                         </tr>
                                     </thead>
@@ -578,27 +529,22 @@
             };
 
             // Main Overview Table
-            @if(!$selectedRetailer)
+            @if(!$selectedDistributor)
             var overviewTable = $('#overview-table').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: "{{ route('admin.loyalty-points.index') }}",
+                    url: "{{ route('admin.distributor-wallet.index') }}",
                     data: function (d) {
                         d.sales_manager_id = $('#sm-filter').val();
-                        d.field_staff_id = $('#fs-filter').val();
                     }
                 },
                 pageLength: 10,
                 dom: "Bfrtip",
                 columns: [
-                    { data: 'shop_name', name: 'shop_name' },
-                    { data: 'owner_name', name: 'owner_name' },
+                    { data: 'distributor_name', name: 'distributor_name' },
                     @if(auth()->user()->hasAnyRole(['admin', 'superadmin']))
                         { data: 'sales_manager', name: 'sales_manager' },
-                    @endif
-                    @if(auth()->user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
-                        { data: 'field_staff', name: 'field_staff' },
                     @endif
                     { data: 'region_area', name: 'region_area' },
                     { data: 'total_orders', name: 'total_orders', className: 'text-center', searchable: false },
@@ -628,34 +574,14 @@
                 },
                 language: {
                     search: "_INPUT_",
-                    searchPlaceholder: "Search retailers...",
+                    searchPlaceholder: "Search distributors...",
                     processing: '<div class="spinner-border text-primary" role="status"></div>'
                 }
             });
 
             // Reload table on filter change
-            $('#sm-filter, #fs-filter').on('change', function() {
+            $('#sm-filter').on('change', function() {
                 overviewTable.ajax.reload();
-            });
-
-            // Auto-submit filter form (Dynamic AJAX Reload)
-            $('.filter-select').on('change', function() {
-                if ($(this).attr('id') === 'sm-filter') {
-                    let smId = $(this).val();
-                    // Update FS dropdown dynamically
-                    $.get("{{ route('admin.loyalty-points.field-staffs-by-manager') }}", { sales_manager_id: smId }, function(data) {
-                        let fsSelect = $('#fs-filter');
-                        fsSelect.empty();
-                        fsSelect.append('<option value="">All Field Staff</option>');
-                        data.forEach(function(item) {
-                            fsSelect.append(`<option value="${item.id}">${item.name}</option>`);
-                        });
-                        fsSelect.trigger('change.select2');
-                        overviewTable.ajax.reload();
-                    });
-                } else {
-                    overviewTable.ajax.reload();
-                }
             });
 
             // Handle individual clear buttons
@@ -671,15 +597,15 @@
             });
 
             // Select2 custom template
-            $('#retailer_selector').select2({
-                placeholder: "-- Quick Search Retailer --",
+            $('#distributor_selector').select2({
+                placeholder: "-- Quick Search Distributor --",
                 allowClear: true,
                 width: '100%',
-                templateResult: formatRetailer,
-                templateSelection: formatRetailerSelection
+                templateResult: formatDistributor,
+                templateSelection: formatdistributorselection
             });
 
-            function formatRetailer(state) {
+            function formatDistributor(state) {
                 if (!state.id) return state.text;
                 let points = $(state.element).data('points') || '0.00';
                 let credits = $(state.element).data('credits') || '0.00';
@@ -694,7 +620,7 @@
                 );
             }
 
-            function formatRetailerSelection(state) {
+            function formatdistributorselection(state) {
                 if (!state.id) return state.text;
                 let points = $(state.element).data('points') || '0.00';
                 let credits = $(state.element).data('credits') || '0.00';
@@ -710,21 +636,21 @@
             }
 
             // Handle Selection/Drill-down - Change to REAL REDIRECT for separate page feel
-            $('#retailer_selector').on('change', function () {
+            $('#distributor_selector').on('change', function () {
                 let id = $(this).val();
                 if (id) {
-                    window.location.href = "{{ route('admin.loyalty-points.detail', ':id') }}".replace(':id', id);
+                    window.location.href = "{{ route('admin.distributor-wallet.detail', ':id') }}".replace(':id', id);
                 }
             });
             @endif
 
-            @if($selectedRetailer)
+            @if($selectedDistributor)
                 // Initialize detail view immediately if selected
-                fetchData("{{ $selectedRetailer->id }}");
+                fetchData("{{ $selectedDistributor->id }}");
             @endif
 
-            function fetchData(retailerId) {
-                $.get("{{ route('admin.loyalty-points.summary', ':id') }}".replace(':id', retailerId), function (data) {
+            function fetchData(DistributorId) {
+                $.get("{{ route('admin.distributor-wallet.summary', ':id') }}".replace(':id', DistributorId), function (data) {
                     $('#display_shop_name').text(data.shop_name);
                     $('#display_owner_name').text(data.owner_name);
                     $('#display_phone').text(data.phone);
@@ -734,8 +660,8 @@
                     $('#display_total_points, #available_points').text(parseFloat(data.total_points).toFixed(2));
                     $('#display_credit_balance, #available_credits').text('₹' + parseFloat(data.credit_balance).toFixed(2));
                     
-                    // Show trophy if top retailer
-                    if (data.is_top_retailer) {
+                    // Show trophy if top Distributor
+                    if (data.is_top_Distributor) {
                         $('#top_performer_badge').css('display', 'flex');
                     } else {
                         $('#top_performer_badge').hide();
@@ -752,8 +678,8 @@
                     processing: true,
                     serverSide: true,
                     ajax: {
-                        url: "{{ route('admin.loyalty-points.index') }}",
-                        data: function (d) { d.retailer_id = retailerId; }
+                        url: "{{ route('admin.distributor-wallet.index') }}",
+                        data: function (d) { d.distributor_id = DistributorId; }
                     },
                     dom: "Bfrtip", // We'll move them manually for better control
                     initComplete: function() {

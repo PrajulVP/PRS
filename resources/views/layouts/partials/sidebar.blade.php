@@ -59,14 +59,22 @@
             </svg><span>Dashboard</span>
           </a>
         </li>
-        @if (Auth::user()->hasPermissionToCategory('loyalty_points', 'view') || Auth::user()->hasRole('retailer'))
-        <li class="sidebar-list"><a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.loyalty-points.index') }}">
+        @if (Auth::user()->hasPermissionToCategory('loyalty_points', 'view') || Auth::user()->hasAnyRole(['retailer', 'distributor']))
+        <li class="sidebar-list"><a class="sidebar-link sidebar-title" href="javascript:void(0)">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-bookmark"></use>
             </svg>
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-bookmark"></use>
-            </svg><span>Loyalty & Credits</span></a>
+            </svg><span>Wallet & Credits</span></a>
+            <ul class="sidebar-submenu">
+              @if (!Auth::user()->hasRole('distributor'))
+              <li><a href="{{ route('admin.loyalty-points.index') }}">Retailer Wallet</a></li>
+              @endif
+              @if (Auth::user()->hasAnyRole(['superadmin', 'admin', 'salesmanager', 'distributor']))
+              <li><a href="{{ route('admin.distributor-wallet.index') }}">Distributor Wallet</a></li>
+              @endif
+            </ul>
         </li>
         @endif
 

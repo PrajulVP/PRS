@@ -286,7 +286,7 @@ class DistributorOrderController extends Controller
     // Create Order Page
     public function create()
     {
-        $products = Product::select('id', 'product_name', 'mrp', 'pts', 'pack')->get();
+        $products = Product::select('id', 'product_name', 'mrp', 'pts', 'pack', 'brand')->get();
         $distributors = collect();
         /** @var \App\Models\User $user */
         $user = Auth::user();

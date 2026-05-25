@@ -711,6 +711,23 @@
                                 </div>
                             </div>
                         </div>
+
+                        {{-- Available Credits --}}
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-0 shadow-sm premium-stats-card h-100">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <div class="p-2 rounded-circle" style="background: rgba(14, 165, 233, 0.1);">
+                                            <i class="fa fa-wallet" style="color: #0ea5e9; width: 16px; height: 16px;"></i>
+                                        </div>
+                                        <span class="badge rounded-pill" style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9;">Refunds</span>
+                                    </div>
+                                    <h6 class="text-muted small fw-700 text-uppercase mb-1">Credit Balance</h6>
+                                    <h4 class="fw-800 mb-0" style="color: #0ea5e9;">₹{{ number_format(Auth::user()->distributor->credit_balance ?? 0, 2) }}</h4>
+                                    <p class="text-muted small mb-0 mt-1">Available for next orders</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="row">
