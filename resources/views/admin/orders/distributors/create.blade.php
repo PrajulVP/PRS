@@ -518,7 +518,6 @@
                         } else {
                             $unitSelect.append('<option value="Strips">Strips</option>');
                             $unitSelect.append('<option value="Box">Box</option>');
-                            $unitSelect.append('<option value="Nos">No.</option>'); 
                             $('#ptsLabel').text("PTS (Per Strip)");
                         }
 
