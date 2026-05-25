@@ -106,11 +106,6 @@
                   </select>
               </div>
               @endif
-              <div class="btn-group">
-                <button class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm fw-bold" onclick="fetchData()" style="background: #00497a; border: none; transition: all 0.3s;">
-                    <i class="fa fa-sync-alt me-1"></i> Sync Now
-                </button>
-              </div>
           </div>
         </div>
     </div>

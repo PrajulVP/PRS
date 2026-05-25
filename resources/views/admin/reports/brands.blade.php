@@ -24,6 +24,7 @@
     @include('admin.reports.partials._filters', [
         'reportType' => 'brands',
         'salesManagers' => $salesManagers,
+        'showManager' => false,
         'showDistributor' => false,
         'showRetailer' => false,
         'showStaff' => false,

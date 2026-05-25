@@ -56,7 +56,7 @@
                             </div>
 
                             <div class="d-grid">
-                                <button type="submit" class="btn btn-primary btn-lg shadow-sm py-3 fw-bold">LOG IN</button>
+                                <button type="submit" id="login-btn" class="btn btn-primary btn-lg shadow-sm py-3 fw-bold">LOG IN</button>
                             </div>
                         </form>
                     </div>
@@ -96,6 +96,17 @@
                     }
                 });
             });
+
+            const loginForm = document.getElementById('login-form');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function (e) {
+                    const submitBtn = document.getElementById('login-btn');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading...';
+                    }
+                });
+            }
         });
     </script>
 

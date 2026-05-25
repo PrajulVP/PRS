@@ -73,7 +73,7 @@ class DistributorController extends Controller
                 'distributor_id' => (int)$distributorId,
                 'product_id' => (int)$productId,
                 'available' => $inventory->stock > 0,
-                'stock' => (string)$inventory->stock . ' Strips'
+                'stock' => null
             ]);
         }
 
@@ -81,7 +81,7 @@ class DistributorController extends Controller
             'distributor_id' => (int)$distributorId,
             'product_id' => (int)$productId,
             'available' => false,
-            'stock' => '0 Strips'
+            'stock' => null
         ]);
     }
 }

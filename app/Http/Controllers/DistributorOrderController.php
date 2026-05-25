@@ -1034,12 +1034,19 @@ class DistributorOrderController extends Controller
             if (!$product) continue;
 
             $unit = strtolower($item->unit);
+            $freeStrips = $this->convertQuantityToStrips($product, $item->free_quantity ?? 0, $unit);
+            $freeAdded = false;
 
             foreach ($item->batches as $batch) {
                 $qty = $batch->quantity;
                 
                 // Use shared conversion helper for accuracy (handles box, carton, nos/tablets)
                 $totalStrips = $this->convertQuantityToStrips($product, $qty, $unit);
+
+                if (!$freeAdded && $freeStrips > 0) {
+                    $totalStrips += $freeStrips;
+                    $freeAdded = true;
+                }
 
                 $inventory = Inventory::firstOrNew([
                     'distributor_id' => $order->distributor_id,

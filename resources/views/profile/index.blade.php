@@ -581,40 +581,104 @@
             border-color: rgba(239, 68, 68, 0.3);
         }
     </style>
+
+    <!-- Crop Modal -->
+    <div class="modal fade" id="cropModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Crop Profile Picture</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div style="max-height: 400px; width: 100%; display: flex; justify-content: center;">
+                        <img id="cropImage" src="" style="max-width: 100%; display: block;">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="cropUploadBtn">Crop & Upload</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
     <script>
+        let cropper;
+        let cropModal;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            cropModal = new bootstrap.Modal(document.getElementById('cropModal'));
+
+            $('#cropModal').on('shown.bs.modal', function() {
+                if (cropper) {
+                    cropper.destroy();
+                }
+                cropper = new Cropper(document.getElementById('cropImage'), {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    autoCropArea: 1,
+                });
+            });
+
+            $('#cropUploadBtn').on('click', function() {
+                if (cropper) {
+                    const btn = $(this);
+                    btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Uploading...');
+
+                    cropper.getCroppedCanvas({
+                        width: 300,
+                        height: 300
+                    }).toBlob(function(blob) {
+                        const formData = new FormData();
+                        formData.append('profile_pic', blob, 'profile.jpg');
+                        formData.append('_token', '{{ csrf_token() }}');
+
+                        const originalImg = $('.zoomable-avatar').attr('src');
+                        $('.zoomable-avatar').css('opacity', '0.5');
+
+                        $.ajax({
+                            url: '{{ route("profile.upload-photo") }}',
+                            type: 'POST',
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            success: function(res) {
+                                $('.zoomable-avatar').attr('src', res.avatar_url).css('opacity', '1');
+                                $('#remove_pic_container').show();
+                                showToast('success', 'Profile picture updated successfully.');
+                                $('.profile-nav img').attr('src', res.avatar_url);
+                                cropModal.hide();
+                            },
+                            error: function(xhr) {
+                                $('.zoomable-avatar').attr('src', originalImg).css('opacity', '1');
+                                let message = xhr.responseJSON?.message || 'Failed to upload photo';
+                                showToast('danger', message);
+                            },
+                            complete: function() {
+                                btn.prop('disabled', false).html('Crop & Upload');
+                            }
+                        });
+                    }, 'image/jpeg');
+                }
+            });
+        });
+
         function previewProfilePic(input) {
             if (input.files && input.files[0]) {
-                const formData = new FormData();
-                formData.append('profile_pic', input.files[0]);
-                formData.append('_token', '{{ csrf_token() }}');
-
-                // Show loading state
-                const originalImg = $('.zoomable-avatar').attr('src');
-                $('.zoomable-avatar').css('opacity', '0.5');
-
-                $.ajax({
-                    url: '{{ route("profile.upload-photo") }}',
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function(res) {
-                        $('.zoomable-avatar').attr('src', res.avatar_url).css('opacity', '1');
-                        $('#remove_pic_container').show();
-                        showToast('success', 'Profile picture updated successfully.');
-                        // Update header avatar too if possible
-                        $('.profile-nav img').attr('src', res.avatar_url);
-                    },
-                    error: function(xhr) {
-                        $('.zoomable-avatar').attr('src', originalImg).css('opacity', '1');
-                        let message = xhr.responseJSON?.message || 'Failed to upload photo';
-                        showToast('danger', message);
-                    }
-                });
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#cropImage').attr('src', e.target.result);
+                    cropModal.show();
+                }
+                reader.readAsDataURL(input.files[0]);
             }
+            input.value = ''; // Reset input to allow selecting same file again
         }
 
         function removeProfilePic() {

@@ -80,8 +80,8 @@
                                 </div>
                             </div>
 
-                            <div class="row g-3">
-                                <div class="col-lg-4 col-md-6">
+                            <div class="row g-3 mb-3">
+                                <div class="col-lg-12 col-md-12">
                                     <label class="form-label fw-bold text-muted small text-uppercase mb-2">1. Select Product</label>
                                     <select id="productSelect" class="form-select select2">
                                         <option value="">Search Product...</option>
@@ -90,38 +90,40 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-lg-4 col-md-6">
-                                    <label class="form-label fw-bold text-muted small text-uppercase mb-2">2. Select Distributor</label>
-                                    <select id="distributorSelect" class="form-select select2" disabled>
-                                        <option value="">Select Product First</option>
-                                    </select>
-                                </div>
-                                <div class="col-lg-4 col-md-12" id="selectionDetails" style="display: none;">
-                                    <div class="row g-2 align-items-end">
-                                        <div class="col-6">
-                                            <label class="form-label fw-bold text-muted small text-uppercase mb-2">Qty</label>
-                                            <div class="input-group">
-                                                <input type="number" id="qtyInput" class="form-control fw-bold border-end-0" value="1" min="1" style="height: 48px;">
-                                                <select class="form-select fw-bold bg-light" id="unitSelect" style="height: 48px; max-width: 90px; border-top-left-radius: 0; border-bottom-left-radius: 0;">
-                                                    <option value="Strips">Str</option>
-                                                    <option value="Box">Box</option>
-                                                    <option value="Nos">Nos</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <button type="button" class="btn btn-primary w-100 fw-bold shadow-sm font-outfit rounded-3 py-2" id="btnAddItem" style="height: 48px; background: var(--med-primary);">
-                                                <i class="fa fa-plus me-1"></i> ADD
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
 
                             {{-- Variant Selection - Floating Bar Style --}}
-                            <div id="variantWrapper" class="mt-3 p-3 border rounded-4 bg-white shadow-sm border-primary border-opacity-10" style="display: none;">
+                            <div id="variantWrapper" class="mb-3 p-3 border rounded-4 bg-white shadow-sm border-primary border-opacity-10" style="display: none;">
                                 <div id="variantLevelsContainer" class="d-flex flex-wrap gap-4"></div>
                                 <input type="hidden" id="variantValue" value="">
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-lg-5 col-md-6" id="selectionDetails" style="display: none;">
+                                    <label class="form-label fw-bold text-muted small text-uppercase mb-2">2. Enter Quantity</label>
+                                    <div class="input-group">
+                                        <input type="number" id="qtyInput" class="form-control fw-bold border-end-0" min="1" style="height: 48px;">
+                                        <select class="form-select fw-bold bg-light" id="unitSelect" style="height: 48px; max-width: 100px; border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                                            <option value="Strips">Str</option>
+                                            <option value="Box">Box</option>
+                                            <option value="Nos">Nos</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-7 col-md-6" id="distributorContainer" style="display: none;">
+                                    <label class="form-label fw-bold text-muted small text-uppercase mb-2">3. Select Distributor</label>
+                                    <div class="d-flex gap-2 align-items-center">
+                                        <div class="flex-grow-1" style="min-width: 0;">
+                                            <select id="distributorSelect" class="form-select select2" disabled>
+                                                <option value="">Select Product First</option>
+                                            </select>
+                                        </div>
+                                        <button type="button" class="btn btn-primary fw-bold shadow-sm font-outfit rounded-3 px-4" id="btnAddItem" style="height: 48px; background: var(--med-primary); opacity: 0.5;" disabled>
+                                            <i class="fa fa-plus me-1"></i> ADD
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -459,6 +461,12 @@
 
     <script>
         $(document).ready(function () {
+            // Force reset on page load to prevent cached selections
+            setTimeout(() => {
+                $('#productSelect').val('').trigger('change');
+                $('#qtyInput').val('');
+            }, 100);
+
             let addedItems = {};
             let lastAiResponse = null; 
             var currentProductDetails = null;
@@ -468,7 +476,7 @@
                 let currentVal = $distSelect.val(); // Keep selection if possible
                 
                 const renderDistributors = (distributors) => {
-                    $distSelect.empty().append('<option value="">Select Distributor (Top matches first)</option>');
+                    $distSelect.empty();
                     
                     let qty = parseFloat($('#qtyInput').val()) || 1;
                     let unit = $('#unitSelect').val() || 'Strips';
@@ -488,6 +496,10 @@
                     
                     if (distributors && distributors.length > 0) {
                         let addedAny = false;
+                        let validCount = 0;
+                        let lastValidId = null;
+                        let optionsHtml = '';
+
                         distributors.forEach(d => {
                             let stock = d.pivot ? parseFloat(d.pivot.stock) : 0;
                             
@@ -499,18 +511,39 @@
                             }
                             
                             if (stock > 0 && stock >= requiredStock) {
-                                $distSelect.append(`<option value="${d.id}" data-stock-raw="${stock}" ${currentVal == d.id ? 'selected' : ''}>${d.shop_name || d.name}</option>`);
+                                optionsHtml += `<option value="${d.id}" data-stock-raw="${stock}" ${currentVal == d.id ? 'selected' : ''}>${d.shop_name || d.name}</option>`;
                                 addedAny = true;
+                                validCount++;
+                                lastValidId = d.id;
                             }
                         });
+                        
                         if (!addedAny) {
-                            $distSelect.append('<option value="" disabled>No stockists with sufficient stock found in your area</option>');
+                            $distSelect.append('<option value="empty" disabled selected>⚠️ Out of stock for this quantity</option>');
+                        } else if (validCount === 1 && !currentVal) {
+                            $distSelect.append('<option value="empty" disabled>Pick Distributor (1 Available)...</option>');
+                            $distSelect.append(optionsHtml);
+                            $distSelect.val(lastValidId); // Auto-select if only 1 distributor exists
+                        } else {
+                            $distSelect.append(`<option value="empty" disabled selected>Pick Distributor (${validCount} Available)...</option>`);
+                            $distSelect.append(optionsHtml);
                         }
                     } else {
-                        $distSelect.append('<option value="" disabled>No stockists found for this variant in your area</option>');
+                        $distSelect.append('<option value="empty" disabled selected>⚠️ No stockists found in area</option>');
                     }
                     
                     $distSelect.prop('disabled', false).trigger('change.select2');
+                    
+                    // Auto-open dropdown if there are multiple options, but ONLY if the container is currently visible 
+                    // (prevents JS errors when variants hide the container)
+                    if ($('#distributorContainer').is(':visible')) {
+                        if (validCount > 1 || (!currentVal && validCount > 0)) {
+                            setTimeout(() => {
+                                $distSelect.select2('open');
+                            }, 100);
+                        }
+                    }
+                    checkAddButtonState();
                 };
 
                 // Use pre-fetched data if available to avoid redundant AJAX (prevents double refresh)
@@ -547,16 +580,80 @@
                 return a > b ? a : b;
             }
 
-            // Real-time stock filter when quantity or unit changes
-            $('#qtyInput, #unitSelect').on('input change', function() {
+            // Smart Add Button State Manager
+            function checkAddButtonState() {
                 let prodId = $('#productSelect').val();
-                let retailerId = $('#retailer_id').val();
-                if (prodId && retailerId) {
-                    let side = $('.variant-btn.active[data-attr="Side"]').data('value') || null;
-                    let size = $('.variant-btn.active[data-attr="Size"]').data('value') || null;
-                    updateDistributorStock(prodId, retailerId, side, size);
+                let distId = $('#distributorSelect').val();
+                if (distId === 'empty') distId = ''; // Treat custom placeholder as empty
+
+                let qty = parseFloat($('#qtyInput').val());
+                let hasVariantSelect = $('#variantWrapper').is(':visible');
+                let variantSelected = hasVariantSelect ? $('#variantValue').val() !== '' : true;
+
+                if (prodId && distId && qty > 0 && variantSelected) {
+                    $('#btnAddItem').prop('disabled', false).css('opacity', '1');
+                } else {
+                    $('#btnAddItem').prop('disabled', true).css('opacity', '0.5');
+                }
+            }
+
+            $('#productSelect, #distributorSelect, #qtyInput, #unitSelect').on('change input', checkAddButtonState);
+            $(document).on('click', '.variant-btn', checkAddButtonState);
+
+            // Strictly restrict quantity input to positive integers only during typing/pasting
+            $('#qtyInput').on('keypress', function(e) {
+                if (e.which < 48 || e.which > 57) {
+                    e.preventDefault(); // Block -, ., e, etc.
+                }
+            }).on('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, ''); // Strip non-digits from pastes
+            });
+
+            // Enforce strictly positive values on blur for better UX
+            $('#qtyInput').on('blur', function() {
+                let val = $(this).val();
+                if (val !== '' && parseInt(val) < 1) {
+                    $(this).val(1).trigger('change');
                 }
             });
+
+            // Real-time stock filter with Debounce & Loading state
+            let qtyDebounceTimer;
+            let lastFetchKey = null;
+
+            function triggerStockCheck() {
+                let prodId = $('#productSelect').val();
+                let retailerId = $('#retailer_id').val();
+                let qty = parseFloat($('#qtyInput').val());
+                let unit = $('#unitSelect').val();
+                let side = $('.variant-btn.active[data-attr="Side"]').data('value') || null;
+                let size = $('.variant-btn.active[data-attr="Size"]').data('value') || null;
+                
+                let currentKey = `${prodId}-${retailerId}-${qty}-${unit}-${side}-${size}`;
+                
+                if (prodId && retailerId && qty > 0) {
+                    if (lastFetchKey === currentKey) return; // Prevent duplicate trigger
+                    lastFetchKey = currentKey;
+
+                    $('#distributorContainer').fadeIn(200);
+                    // Immediately show loading state to indicate refresh based on new qty
+                    $('#distributorSelect').prop('disabled', true).empty().append('<option value="empty" disabled selected>Recalculating Stock...</option>').trigger('change.select2');
+                    checkAddButtonState();
+
+                    clearTimeout(qtyDebounceTimer);
+                    qtyDebounceTimer = setTimeout(() => {
+                        updateDistributorStock(prodId, retailerId, side, size);
+                    }, 400); // Wait 400ms after user stops typing
+                } else {
+                    lastFetchKey = null;
+                    $('#distributorContainer').fadeOut(200);
+                    $('#btnAddItem').prop('disabled', true).css('opacity', '0.5');
+                }
+            }
+
+            // Only listen to 'input' for typing, NOT 'change' (which fires on blur and causes the double-load bug)
+            $('#qtyInput').on('input', triggerStockCheck);
+            $('#unitSelect').on('change', triggerStockCheck);
             const isValid = (val, type) => {
                 if (!val || val === 'null' || val === null) return false;
                 let s = val.toString().toLowerCase().trim();
@@ -580,13 +677,18 @@
                 let el = $(opt.element);
                 let stockRaw = el.data('stock-raw');
                 let distance = el.data('distance');
-                if (stockRaw !== undefined && stockRaw !== null) {
-                    let stock = parseFloat(stockRaw);
-                    let stockBadge = stock > 0 ? 'bg-success' : 'bg-danger';
-                    let distText = distance ? `<small class="text-muted"><i class="fa fa-map-marker-alt"></i> ${distance}km</small>` : '';
-                    let displayStock = Math.round(stock);
-                    return $(`<div class="d-flex justify-content-between align-items-center"><span>${opt.text}</span><div class="ms-2">${distText} <span class="badge ${stockBadge} ms-1">${displayStock}</span></div></div>`);
-                }
+                let distText = distance ? `<small class="text-muted"><i class="fa fa-map-marker-alt"></i> ${distance}km</small>` : '';
+
+                @if(Auth::user()->hasRole('retailer'))
+                    return $(`<div class="d-flex justify-content-between align-items-center"><span>${opt.text}</span><div class="ms-2">${distText}</div></div>`);
+                @else
+                    if (stockRaw !== undefined && stockRaw !== null) {
+                        let stock = parseFloat(stockRaw);
+                        let stockBadge = stock > 0 ? 'bg-success' : 'bg-danger';
+                        let displayStock = Math.round(stock);
+                        return $(`<div class="d-flex justify-content-between align-items-center"><span>${opt.text}</span><div class="ms-2">${distText} <span class="badge ${stockBadge} ms-1">${displayStock}</span></div></div>`);
+                    }
+                @endif
                 return opt.text;
             }
 
@@ -602,16 +704,19 @@
                     return;
                 }
 
-                // Reset variants when product changes
+                // Reset variants and quantity when product changes
                 $('#variantValue').val('');
                 $('#sideValue').val('');
                 $('#sizeValue').val('');
                 $('#variantWrapper').hide();
                 $('#variantLevelsContainer').empty();
+                $('#qtyInput').val(''); // Ensure quantity starts blank
+                lastFetchKey = null; // Reset fetch cache
 
                 // Set loading state without triggering redundant change events
                 $('#distributorSelect').prop('disabled', true).empty().append('<option value="">Searching Stockists...</option>');
                 $('#selectionDetails').hide();
+                $('#distributorContainer').hide();
                 $('#productDetailsCard').hide();
 
                 $.ajax({
@@ -675,10 +780,14 @@
                         let isCount = hasCode || p.box_size === "" || pPack.includes('nos') || pPack.includes('count');
 
                         if (isCount) {
-                            $unitSelect.append('<option value="Nos">No.</option>');
+                            $unitSelect.empty().append('<option value="Nos">No.</option>').hide();
+                            if ($('#unitText').length === 0) {
+                                $unitSelect.after('<span class="input-group-text fw-bold bg-light text-muted px-3" id="unitText" style="height: 48px;">No.</span>');
+                            }
                             $('#ptrLabel').text(`PTR (Per No.)`);
                         } else {
-                            $unitSelect.append('<option value="Strips">Strips</option><option value="Box">Box</option>');
+                            $unitSelect.empty().append('<option value="Strips">Strips</option><option value="Box">Box</option>').show();
+                            $('#unitText').remove();
                             $('#ptrLabel').text(`PTR (Per Strip)`);
                         }
 
@@ -729,15 +838,17 @@
                         }
 
                         if (hasVariants) {
-                            $('#selectionDetails').show();
                             $('#variantWrapper').show();
+                            // Keep quantity and distributor hidden until variant is selected
                         } else {
                             $('#variantWrapper').hide();
-                            $('#selectionDetails').show(); // Still show for qty/unit/add button
-                            $('#distributorSelect').select2('open');
+                            $('#selectionDetails').show(); // Show for qty/unit
+                            $('#qtyInput').focus();
+                            $('#distributorContainer').hide(); // Hidden until qty entered
                         }
 
-                        $('#distributorSelect').prop('disabled', false);
+                        // We let the retailer enter quantity first, as distributor stock filters by quantity.
+                        // $('#distributorSelect').prop('disabled', false); 
                         $('#productDetailsCard').fadeIn(300);
                     }
                 });
@@ -765,6 +876,8 @@
                 if ($nextLevel.length > 0) {
                     $nextLevel.fadeIn(200);
                     $('#variantValue').val(''); // Incomplete selection
+                    $('#selectionDetails').hide();
+                    $('#distributorContainer').hide();
                 } else {
                     // Final level reached - Assemble full variant string from all active buttons
                     let finalVariant = $('.variant-level:visible .variant-btn.active').map(function() {
@@ -773,19 +886,12 @@
 
                     $('#variantValue').val(finalVariant);
                     
-                    // Re-fetch stock for specific variant
-                    let side = $('.variant-btn.active[data-attr="Side"]').data('value') || null;
-                    let size = $('.variant-btn.active[data-attr="Size"]').data('value') || null;
+                    // Show quantity and wait for input to show distributor
+                    $('#selectionDetails').fadeIn(200);
+                    $('#distributorContainer').hide();
+                    $('#qtyInput').focus();
                     
-                    let prodId = $('#productSelect').val();
-                    let retailerId = $('#retailer_id').val();
-                    
-                    updateDistributorStock(prodId, retailerId, side, size);
-                    
-                    // Delay open to let stock update (optional, but smoother)
-                    setTimeout(() => {
-                        $('#distributorSelect').select2('open');
-                    }, 500);
+                    // Note: We no longer auto-fetch stock here, because we wait for the user to type the quantity.
                 }
             });
 
@@ -853,7 +959,7 @@
                 $('#productSelect').val(null).trigger('change');
                 $('#distributorSelect').empty().append('<option value="">Select Product First</option>').trigger('change');
                 $('#productDetailsCard').fadeOut(300);
-                $('#qtyInput').val(1);
+                $('#qtyInput').val('');
                 
                 // Reset variants
                 $('#variantWrapper').hide();
@@ -862,6 +968,11 @@
                 
                 currentProductDetails = null;
                 showToast('success', 'Product added to bundle');
+                
+                // Focus Trap: Automatically reopen product search for rapid ordering
+                setTimeout(() => {
+                    $('#productSelect').select2('open');
+                }, 400);
             });
 
             // --- Prescription OCR Logic ---

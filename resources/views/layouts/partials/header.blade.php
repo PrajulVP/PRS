@@ -113,11 +113,15 @@
   }
   
   /* Click-based dropdown styles */
+  .profile-nav {
+      position: relative;
+  }
   .profile-nav .profile-dropdown {
       display: none;
       position: absolute;
       top: 100%;
-      right: 0;
+      right: 0 !important;
+      left: auto !important;
       z-index: 1000;
       background-color: #fff;
       transition: all 0.3s ease;

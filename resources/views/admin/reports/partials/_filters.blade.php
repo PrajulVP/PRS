@@ -102,6 +102,7 @@
 
                 <!-- Entity Filter Group (Hierarchy) -->
                 @if(auth()->user()->hasAnyRole(['admin', 'superadmin']))
+                    @if($showManager ?? true)
                     <div class="col-xl col-md-6">
                         <label class="form-label fw-bold small text-muted text-uppercase mb-2"><i
                                 class="fa fa-user-circle-o me-1"></i> Exec. Manager</label>
@@ -112,6 +113,7 @@
                             @endforeach
                         </select>
                     </div>
+                    @endif
                 @endif
 
                 @if($showStaff ?? true)
