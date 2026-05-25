@@ -30,7 +30,8 @@ class DistributorDashboardApiController extends Controller
      *             @OA\Property(property="distributor_order_stats", type="object"),
      *             @OA\Property(property="recent_retailer_orders", type="array", @OA\Items()),
      *             @OA\Property(property="chart_data", type="object"),
-     *             @OA\Property(property="top_retailers", type="array", @OA\Items())
+     *             @OA\Property(property="top_retailers", type="array", @OA\Items()),
+     *             @OA\Property(property="credit_balance", type="string", example="5000.00")
      *         )
      *     ),
      *     @OA\Response(response=403, description="Unauthorized")
@@ -127,6 +128,9 @@ class DistributorDashboardApiController extends Controller
         // 8. Turnaround Time
         $avgTurnaroundTime = $this->calculateAvgTurnaroundTime($distributorId);
 
+        $distributorUser = Auth::user()->distributor;
+        $creditBalance = (string)($distributorUser->credit_balance ?? 0);
+
         return response()->json([
             'period' => $period,
             'counts' => $counts,
@@ -137,6 +141,7 @@ class DistributorDashboardApiController extends Controller
             'top_retailers' => $topRetailers,
             'target_achievement' => $targetAchievement,
             'avg_turnaround_time' => $avgTurnaroundTime,
+            'credit_balance' => $creditBalance,
         ]);
     }
 

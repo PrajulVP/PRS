@@ -60,22 +60,42 @@
           </a>
         </li>
         @if (Auth::user()->hasPermissionToCategory('loyalty_points', 'view') || Auth::user()->hasAnyRole(['retailer', 'distributor']))
-        <li class="sidebar-list"><a class="sidebar-link sidebar-title" href="javascript:void(0)">
-            <svg class="stroke-icon">
-              <use href="{{ $iconSprite }}#stroke-bookmark"></use>
-            </svg>
-            <svg class="fill-icon">
-              <use href="{{ $iconSprite }}#fill-bookmark"></use>
-            </svg><span>Wallet & Credits</span></a>
-            <ul class="sidebar-submenu">
-              @if (!Auth::user()->hasRole('distributor'))
-              <li><a href="{{ route('admin.loyalty-points.index') }}">Retailer Wallet</a></li>
-              @endif
-              @if (Auth::user()->hasAnyRole(['superadmin', 'admin', 'salesmanager', 'distributor']))
-              <li><a href="{{ route('admin.distributor-wallet.index') }}">Distributor Wallet</a></li>
-              @endif
-            </ul>
-        </li>
+          @if (Auth::user()->hasRole('retailer'))
+            <li class="sidebar-list">
+              <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.loyalty-points.index') }}">
+                <svg class="stroke-icon">
+                  <use href="{{ $iconSprite }}#stroke-bookmark"></use>
+                </svg>
+                <svg class="fill-icon">
+                  <use href="{{ $iconSprite }}#fill-bookmark"></use>
+                </svg><span>Loyalty & Credits</span>
+              </a>
+            </li>
+          @elseif (Auth::user()->hasRole('distributor'))
+            <li class="sidebar-list">
+              <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.distributor-wallet.index') }}">
+                <svg class="stroke-icon">
+                  <use href="{{ $iconSprite }}#stroke-bookmark"></use>
+                </svg>
+                <svg class="fill-icon">
+                  <use href="{{ $iconSprite }}#fill-bookmark"></use>
+                </svg><span>Credits</span>
+              </a>
+            </li>
+          @else
+            <li class="sidebar-list"><a class="sidebar-link sidebar-title" href="javascript:void(0)">
+                <svg class="stroke-icon">
+                  <use href="{{ $iconSprite }}#stroke-bookmark"></use>
+                </svg>
+                <svg class="fill-icon">
+                  <use href="{{ $iconSprite }}#fill-bookmark"></use>
+                </svg><span>Wallet & Credits</span></a>
+                <ul class="sidebar-submenu">
+                  <li><a href="{{ route('admin.loyalty-points.index') }}">Retailer Wallet</a></li>
+                  <li><a href="{{ route('admin.distributor-wallet.index') }}">Distributor Wallet</a></li>
+                </ul>
+            </li>
+          @endif
         @endif
 
         @if (Auth::user()->hasPermissionToCategory('staff_ratings', 'view') && !Auth::user()->hasAnyRole(['admin', 'superadmin']))

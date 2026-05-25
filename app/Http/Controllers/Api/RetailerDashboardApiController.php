@@ -25,7 +25,9 @@ class RetailerDashboardApiController extends Controller
      *             @OA\Property(property="delivered_orders", type="integer", example=110),
      *             @OA\Property(property="cancelled_orders", type="integer", example=3),
      *             @OA\Property(property="rejected_orders", type="integer", example=2),
-     *             @OA\Property(property="total_loyalty_points", type="string", example="500")
+     *             @OA\Property(property="total_loyalty_points", type="string", example="500"),
+     *             @OA\Property(property="credit_balance", type="string", example="1500.50"),
+     *             @OA\Property(property="credit_limit", type="string", example="5000.00")
      *         )
      *     ),
      *     @OA\Response(response=403, description="Unauthorized")
@@ -87,6 +89,8 @@ class RetailerDashboardApiController extends Controller
             'cancelled_orders' => $cancelledOrders,
             'rejected_orders' => $rejectedOrders,
             'total_loyalty_points' => (string)$totalLoyaltyPoints,
+            'credit_balance' => (string)($user->retailer->credit_balance ?? 0),
+            'credit_limit' => (string)($user->retailer->credit_limit ?? 0),
         ]);
     }
 
@@ -101,6 +105,8 @@ class RetailerDashboardApiController extends Controller
      *         description="Loyalty points details",
      *         @OA\JsonContent(
      *             @OA\Property(property="total_points", type="string", example="500"),
+     *             @OA\Property(property="credit_balance", type="string", example="1500.50"),
+     *             @OA\Property(property="credit_limit", type="string", example="5000.00"),
      *             @OA\Property(property="history", type="array", @OA\Items(
      *                 @OA\Property(property="order_code", type="string", example="RO-ABC123"),
      *                 @OA\Property(property="points_earned", type="integer", example=50),
@@ -144,6 +150,8 @@ class RetailerDashboardApiController extends Controller
 
         return response()->json([
             'total_points' => (string)$totalLoyaltyPoints,
+            'credit_balance' => (string)($retailer->credit_balance ?? 0),
+            'credit_limit' => (string)($retailer->credit_limit ?? 0),
             'history' => $pointsHistory
         ]);
     }

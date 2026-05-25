@@ -398,6 +398,10 @@
                                         "top_retailers": {
                                             "type": "array",
                                             "items": {}
+                                        },
+                                        "credit_balance": {
+                                            "type": "string",
+                                            "example": "5000.00"
                                         }
                                     },
                                     "type": "object"
@@ -3047,6 +3051,14 @@
                                         "total_loyalty_points": {
                                             "type": "string",
                                             "example": "500"
+                                        },
+                                        "credit_balance": {
+                                            "type": "string",
+                                            "example": "1500.50"
+                                        },
+                                        "credit_limit": {
+                                            "type": "string",
+                                            "example": "5000.00"
                                         }
                                     },
                                     "type": "object"
@@ -3082,6 +3094,14 @@
                                         "total_points": {
                                             "type": "string",
                                             "example": "500"
+                                        },
+                                        "credit_balance": {
+                                            "type": "string",
+                                            "example": "1500.50"
+                                        },
+                                        "credit_limit": {
+                                            "type": "string",
+                                            "example": "5000.00"
                                         },
                                         "history": {
                                             "type": "array",
