@@ -23,6 +23,11 @@
         margin-left: auto !important;
         flex-shrink: 0 !important;
     }
+    .sidebar-link .according-menu {
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        right: 20px !important;
+    }
   </style>
   {{-- <div class="logo-icon-wrapper"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/atom-logo-main-white.png') }}" width="170" alt=""></a></div> --}}
   <nav class="sidebar-main">
@@ -83,17 +88,20 @@
               </a>
             </li>
           @else
-            <li class="sidebar-list"><a class="sidebar-link sidebar-title" href="javascript:void(0)">
+            <li class="sidebar-list" style="position: relative;">
+              <a class="sidebar-link sidebar-title" href="javascript:void(0)">
                 <svg class="stroke-icon">
                   <use href="{{ $iconSprite }}#stroke-bookmark"></use>
                 </svg>
                 <svg class="fill-icon">
                   <use href="{{ $iconSprite }}#fill-bookmark"></use>
-                </svg><span>Wallet & Credits</span></a>
-                <ul class="sidebar-submenu">
-                  <li><a href="{{ route('admin.loyalty-points.index') }}">Retailer Wallet</a></li>
-                  <li><a href="{{ route('admin.distributor-wallet.index') }}">Distributor Wallet</a></li>
-                </ul>
+                </svg>
+                <span>Loyalty & Credits</span>
+              </a>
+              <ul class="sidebar-submenu">
+                <li><a href="{{ route('admin.loyalty-points.index') }}">Retailer</a></li>
+                <li><a href="{{ route('admin.distributor-wallet.index') }}">Distributor</a></li>
+              </ul>
             </li>
           @endif
         @endif
@@ -446,13 +454,16 @@
             <h6 class="lan-10">Settings</h6>
           </div>
         </li>
-        <li class="sidebar-list"><a class="sidebar-link sidebar-title -link-nav" href="javascript:void(0)">
+        <li class="sidebar-list" style="position: relative;">
+          <a class="sidebar-link sidebar-title" href="javascript:void(0)">
             <svg class="stroke-icon">
               <use href="{{ $iconSprite }}#stroke-user"></use>
             </svg>
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-user"></use>
-            </svg><span>Master Settings</span></a>
+            </svg>
+            <span>Master Settings</span>
+          </a>
           <ul class="sidebar-submenu">
             @if (Auth::user()->hasPermissionToCategory('districts', 'view') || Auth::user()->hasPermissionToCategory('districts', 'add'))
             <li><a href="{{ route('districts.index') }}"><span>Districts</span></a></li>
