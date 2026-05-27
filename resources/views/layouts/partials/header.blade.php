@@ -480,5 +480,22 @@
               }
           });
       }
+
+      // Logout Loading Indicator
+      const logoutForm = document.getElementById('logout-form');
+      if (logoutForm) {
+          logoutForm.addEventListener('submit', function (e) {
+              const submitBtn = logoutForm.querySelector('.logout-btn');
+              if (submitBtn) {
+                  submitBtn.disabled = true;
+                  submitBtn.style.whiteSpace = 'nowrap';
+                  submitBtn.style.display = 'inline-flex';
+                  submitBtn.style.alignItems = 'center';
+                  submitBtn.style.justifyContent = 'center';
+                  submitBtn.style.fontSize = '11px';
+                  submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" style="width: 0.85rem; height: 0.85rem;"></span>Logging out...';
+              }
+          });
+      }
   });
 </script>
