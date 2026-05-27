@@ -18,9 +18,20 @@
                         <div class="card-body p-4">
                             <div class="row g-4">
                                 {{-- Row 1: Product and Distributor (for Admin) --}}
-                                <div class="col-md-{{ Auth::user()->distributor ? '12' : '6' }}">
-                                    <label class="form-label fw-bold text-muted small text-uppercase mb-2">Find
-                                        Product</label>
+                                @if(!Auth::user()->distributor)
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label class="form-label fw-bold text-muted small text-uppercase mb-0">Find Product</label>
+                                        <div class="d-flex align-items-center gap-1">
+                                            <span class="small text-muted font-outfit" style="font-size: 0.8rem;">Filter Brand:</span>
+                                            <select id="brandSelect" class="form-select form-select-sm border-0 bg-transparent text-primary fw-bold py-0 ps-1 pe-4" style="width: auto; height: auto !important; min-height: unset; font-size: 0.8rem !important; box-shadow: none !important; cursor: pointer; display: inline-block;">
+                                                <option value="">All Brands</option>
+                                                @foreach($brands as $brand)
+                                                    <option value="{{ $brand }}">{{ $brand }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
                                     <select id="productSelect" class="form-select select2">
                                         <option value="">Search by Name or POS Code...</option>
                                         @foreach($products as $p)
@@ -28,8 +39,6 @@
                                         @endforeach
                                     </select>
                                 </div>
-
-                                @if(!Auth::user()->distributor)
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-muted small text-uppercase mb-2">Select Distributor</label>
                                     <select name="distributor_id" id="distributor_id" class="form-select select2">
@@ -39,19 +48,40 @@
                                         @endforeach
                                     </select>
                                 </div>
+                                @else
+                                <div class="col-md-12">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label class="form-label fw-bold text-muted small text-uppercase mb-0">Find Product</label>
+                                        <div class="d-flex align-items-center gap-1">
+                                            <span class="small text-muted font-outfit" style="font-size: 0.8rem;">Filter Brand:</span>
+                                            <select id="brandSelect" class="form-select form-select-sm border-0 bg-transparent text-primary fw-bold py-0 ps-1 pe-4" style="width: auto; height: auto !important; min-height: unset; font-size: 0.8rem !important; box-shadow: none !important; cursor: pointer; display: inline-block;">
+                                                <option value="">All Brands</option>
+                                                @foreach($brands as $brand)
+                                                    <option value="{{ $brand }}">{{ $brand }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <select id="productSelect" class="form-select select2">
+                                        <option value="">Search by Name or POS Code...</option>
+                                        @foreach($products as $p)
+                                            <option value="{{ $p->id }}" data-brand="{{ $p->brand }}">{{ $p->product_name }}{{ trim($p->pack) && $p->pack != '' ? " ($p->pack)" : "" }} - ₹{{ number_format($p->pts, 2) }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                                 @endif
 
-                                {{-- Row 2: Qty and Add Button --}}
+                                 {{-- Row 2: Qty and Add Button --}}
                                 <div class="col-md-12">
                                     <div class="row g-3 align-items-end">
                                         <div class="col-md-5">
                                             <label class="form-label fw-bold text-muted small text-uppercase mb-2">Quantity & Type</label>
                                             <div class="input-group">
                                                 <input type="number" id="qtyInput" class="form-control fw-bold rounded-start"
-                                                    value="1" min="1" style="height: 48px;">
+                                                    value="1" min="1" style="height: 38px;">
                                                 <select
                                                     class="form-select input-group-text bg-light-soft border-start-0 font-outfit rounded-end"
-                                                    id="unitSelect" style="max-width: 120px; height: 48px;">
+                                                    id="unitSelect" style="max-width: 120px; height: 38px;">
                                                     <option value="Strips">Strips</option>
                                                     <option value="Box">Box</option>
                                                     <option value="Nos">Nos</option>
@@ -62,7 +92,7 @@
                                         <div class="col-md-3">
                                             <button type="button"
                                                 class="btn btn-primary w-100 fw-bold py-2 shadow-sm font-outfit rounded-3"
-                                                style="height: 48px;"
+                                                style="height: 38px;"
                                                 id="btnAddItem">
                                                 <i class="fa fa-plus me-1"></i> ADD
                                             </button>
@@ -358,14 +388,14 @@
 
         /* === Select2 Customization === */
         .select2-container .select2-selection--single {
-            height: 48px;
+            height: 38px;
             border-radius: 8px !important;
-            padding-top: 10px;
+            padding-top: 5px;
             border-color: #e2e8f0;
         }
 
         .select2-container--default .select2-selection--single .select2-selection__arrow {
-            height: 46px;
+            height: 36px;
         }
 
         /* === Animations === */
@@ -419,7 +449,35 @@
                 return true;
             };
 
-            $('.select2').select2({ placeholder: "Find product...", allowClear: true });
+            $('.select2').select2({ placeholder: "Search...", allowClear: true });
+
+            $('#brandSelect').on('change', function() {
+                let brand = $(this).val();
+                $('#productDetailsCard').fadeOut(200);
+                $('#variantWrapper').hide();
+                $('#variantLevelsContainer').empty();
+                
+                $.ajax({
+                    url: "{{ route('admin.distributor-orders.get-products') }}",
+                    method: 'GET',
+                    data: { brand: brand },
+                    success: function(res) {
+                        let options = '<option value="">Search by Name or POS Code...</option>';
+                        res.forEach(function(p) {
+                            let packSuffix = (p.pack && p.pack.trim() !== '') ? ' (' + p.pack + ')' : '';
+                            let price = parseFloat(p.pts).toFixed(2);
+                            options += `<option value="${p.id}" data-brand="${p.brand || ''}">${p.product_name}${packSuffix} - ₹${price}</option>`;
+                        });
+                        $('#productSelect').html(options).val(null).trigger('change');
+                    },
+                    error: function(xhr) {
+                        console.error(xhr);
+                        if (typeof showToast === 'function') {
+                            showToast('error', 'Failed to fetch products for the selected brand');
+                        }
+                    }
+                });
+            });
 
             var addedItems = {};
             var currentProductDetails = null;

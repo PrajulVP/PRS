@@ -119,6 +119,8 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('retailers/{retailer}/activate', [RetailerController::class, 'activate'])->name('retailers.activate');
         Route::patch('retailers/{retailer}/deactivate', [RetailerController::class, 'deactivate'])->name('retailers.deactivate');
 
+        Route::get('retailer-orders/get-products', [RetailerOrderManagementController::class, 'getProducts'])->name('retailer-orders.get-products');
+
         Route::resource('retailer', RetailerOrderManagementController::class)
             // ->except(['create']) // Removed to allow create route
             ->parameters(['retailer' => 'retailerOrder']);
@@ -146,6 +148,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('retailer/{retailerOrder}/reject', [RetailerOrderManagementController::class, 'rejectOrder'])->name('retailer.reject');
 
 
+        Route::get('distributor-orders/get-products', [DistributorOrderController::class, 'getProducts'])->name('distributor-orders.get-products');
         Route::resource('distributor-orders', DistributorOrderController::class);
         Route::get('distributor-orders/product/{product}', [DistributorOrderController::class, 'getProductDetails'])->name('distributor-orders.product-details');
 

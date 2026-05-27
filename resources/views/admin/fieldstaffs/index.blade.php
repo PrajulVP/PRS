@@ -86,6 +86,25 @@
                                 </ul>
                             </div>
                         @endif
+
+                        <!-- Advanced Filters -->
+                        <div class="row g-3 mb-4 align-items-end">
+                            @unless(Auth::user()->hasRole('salesmanager'))
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold text-muted small text-uppercase"><i class="fa fa-user-tie me-1"></i>Sales Manager</label>
+                                <select id="filter_sales_manager" class="form-select" style="border-radius: 8px;">
+                                    <option value="">All Sales Managers</option>
+                                    @foreach($salesManagers as $manager)
+                                        <option value="{{ $manager->id }}">{{ $manager->user->name ?? 'N/A' }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @endunless
+                            <div class="col-md-2">
+                                <button type="button" id="btn_filter_reset" class="btn btn-secondary w-100" style="height: 38px; border-radius: 8px;"><i class="fa fa-refresh me-1"></i>Reset</button>
+                            </div>
+                        </div>
+
                         <div class="table-responsive">
                             <table class="display table table-striped table-hover" id="fieldstaffs-table">
                                 <thead>
@@ -620,6 +639,7 @@
                     url: "{{ route('admin.field-staffs.index') }}",
                     data: function(d) {
                         d.status = $('#userStatusTabs button.active').data('status');
+                        d.sales_manager_id = $('#filter_sales_manager').val();
                     }
                 },
                 columns: [
@@ -675,6 +695,16 @@
 
             $('#userStatusTabs button').on('click', function() {
                 setTimeout(() => table.ajax.reload(), 50);
+            });
+
+            // Filter actions
+            $('#filter_sales_manager').on('change', function () {
+                table.ajax.reload();
+            });
+
+            $('#btn_filter_reset').on('click', function () {
+                $('#filter_sales_manager').val('');
+                table.ajax.reload();
             });
 
             // Handle View Button

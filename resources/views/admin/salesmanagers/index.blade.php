@@ -129,6 +129,7 @@
                                 </ul>
                             </div>
                         @endif
+
                         <div class="table-responsive">
                             <table class="display table table-striped table-hover" id="sales-managers-table">
                                 <thead>

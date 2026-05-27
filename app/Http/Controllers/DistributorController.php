@@ -30,6 +30,14 @@ class DistributorController extends Controller
                 });
             }
 
+            if ($request->filled('sales_manager_id')) {
+                $data->where('sales_manager_id', $request->sales_manager_id);
+            }
+
+            if ($request->filled('district_id')) {
+                $data->where('district_id', $request->district_id);
+            }
+
             $data->orderBy('distributors.id', 'desc');
             return DataTables::of($data)
                 ->addIndexColumn()

@@ -625,6 +625,10 @@
             color: var(--med-text-main) !important;
             border-radius: 10px !important;
             transition: all 0.3s ease;
+            height: 38px !important;
+            padding-top: 0.25rem !important;
+            padding-bottom: 0.25rem !important;
+            font-size: 0.9rem !important;
         }
 
         .form-control:focus,

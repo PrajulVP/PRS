@@ -86,6 +86,32 @@
                                 </ul>
                             </div>
                         @endif
+
+                        <!-- Advanced Filters -->
+                        <div class="row g-3 mb-4 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold text-muted small text-uppercase"><i class="fa fa-user-tie me-1"></i>Sales Manager</label>
+                                <select id="filter_sales_manager" class="form-select" style="border-radius: 8px;">
+                                    <option value="">All Sales Managers</option>
+                                    @foreach($salesManagers as $manager)
+                                        <option value="{{ $manager->id }}">{{ $manager->user->name ?? 'N/A' }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold text-muted small text-uppercase"><i class="fa fa-map me-1"></i>District</label>
+                                <select id="filter_district" class="form-select" style="border-radius: 8px;">
+                                    <option value="">All Districts</option>
+                                    @foreach($districts as $district)
+                                        <option value="{{ $district->id }}">{{ $district->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" id="btn_filter_reset" class="btn btn-secondary w-100" style="height: 38px; border-radius: 8px;"><i class="fa fa-refresh me-1"></i>Reset</button>
+                            </div>
+                        </div>
+
                         <div class="table-responsive">
                             <table class="display table table-striped table-hover" id="distributors-table">
                                 <thead>
@@ -449,6 +475,8 @@
                     url: "{{ route('admin.distributors.index') }}",
                     data: function(d) {
                         d.status = $('#userStatusTabs button.active').data('status');
+                        d.sales_manager_id = $('#filter_sales_manager').val();
+                        d.district_id = $('#filter_district').val();
                     }
                 },
                 columns: [
@@ -506,6 +534,17 @@
                         { extend: 'print', className: 'btn btn-dark btn-sm', text: '<i class="fa fa-print"></i> Print', exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] } }
                     ]
                 }
+            });
+
+            // Filter actions
+            $('#filter_sales_manager, #filter_district').on('change', function () {
+                table.ajax.reload();
+            });
+
+            $('#btn_filter_reset').on('click', function () {
+                $('#filter_sales_manager').val('');
+                $('#filter_district').val('');
+                table.ajax.reload();
             });
 
             // Handlers

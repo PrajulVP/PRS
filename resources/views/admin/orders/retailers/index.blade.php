@@ -971,6 +971,12 @@
                                 <span class="fw-bold text-secondary">₹${parseFloat(data).toFixed(2)}</span>
                                 <span class="text-muted" style="font-size: 0.65rem; font-weight: normal; margin-top: 1px;">(Est. Total)</span>
                             </div>`;
+                        } else if (status === 'cancelled' || status === 'rejected') {
+                            let estAmt = (row.metadata && row.metadata.estimated_amount !== undefined) ? parseFloat(row.metadata.estimated_amount).toFixed(2) : parseFloat(data).toFixed(2);
+                            return `<div class="d-flex flex-column">
+                                <span class="fw-bold text-muted" style="text-decoration: line-through;">₹${parseFloat(data).toFixed(2)}</span>
+                                <span class="text-muted small" style="font-size: 0.65rem; font-weight: 500; opacity: 0.85; margin-top: 2px;">Est: ₹${estAmt}</span>
+                            </div>`;
                         } else {
                             let estAmt = (row.metadata && row.metadata.estimated_amount !== undefined) ? parseFloat(row.metadata.estimated_amount).toFixed(2) : parseFloat(data).toFixed(2);
                             return `<div class="d-flex flex-column">

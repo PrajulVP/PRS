@@ -82,7 +82,18 @@
 
                             <div class="row g-3 mb-3">
                                 <div class="col-lg-12 col-md-12">
-                                    <label class="form-label fw-bold text-muted small text-uppercase mb-2">1. Select Product</label>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label class="form-label fw-bold text-muted small text-uppercase mb-0">1. Select Product</label>
+                                        <div class="d-flex align-items-center gap-1">
+                                            <span class="small text-muted font-outfit" style="font-size: 0.8rem;">Filter Brand:</span>
+                                            <select id="brandSelect" class="form-select form-select-sm border-0 bg-transparent text-primary fw-bold py-0 ps-1 pe-4" style="width: auto; height: auto !important; min-height: unset; font-size: 0.8rem !important; box-shadow: none !important; cursor: pointer; display: inline-block;">
+                                                <option value="">All Brands</option>
+                                                @foreach($brands as $brand)
+                                                    <option value="{{ $brand }}">{{ $brand }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
                                     <select id="productSelect" class="form-select select2">
                                         <option value="">Search Product...</option>
                                         @foreach($products as $p)
@@ -102,8 +113,8 @@
                                 <div class="col-lg-5 col-md-6" id="selectionDetails" style="display: none;">
                                     <label class="form-label fw-bold text-muted small text-uppercase mb-2">2. Enter Quantity</label>
                                     <div class="input-group">
-                                        <input type="number" id="qtyInput" class="form-control fw-bold border-end-0" min="1" style="height: 48px;">
-                                        <select class="form-select fw-bold bg-light" id="unitSelect" style="height: 48px; max-width: 100px; border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                                        <input type="number" id="qtyInput" class="form-control fw-bold border-end-0" min="1" style="height: 38px;">
+                                        <select class="form-select fw-bold bg-light" id="unitSelect" style="height: 38px; max-width: 100px; border-top-left-radius: 0; border-bottom-left-radius: 0;">
                                             <option value="Strips">Str</option>
                                             <option value="Box">Box</option>
                                             <option value="Nos">Nos</option>
@@ -119,7 +130,7 @@
                                                 <option value="">Select Product First</option>
                                             </select>
                                         </div>
-                                        <button type="button" class="btn btn-primary fw-bold shadow-sm font-outfit rounded-3 px-4" id="btnAddItem" style="height: 48px; background: var(--med-primary); opacity: 0.5;" disabled>
+                                        <button type="button" class="btn btn-primary fw-bold shadow-sm font-outfit rounded-3 px-4" id="btnAddItem" style="height: 38px; background: var(--med-primary); opacity: 0.5;" disabled>
                                             <i class="fa fa-plus me-1"></i> ADD
                                         </button>
                                     </div>
@@ -349,14 +360,14 @@
         }
 
         .select2-container .select2-selection--single {
-            height: 48px;
+            height: 38px;
             border-radius: 8px !important;
-            padding-top: 10px;
+            padding-top: 5px;
             border-color: #e2e8f0;
         }
 
         .select2-container--default .select2-selection--single .select2-selection__arrow {
-            height: 46px;
+            height: 36px;
         }
 
         @keyframes slideUpFade {
@@ -662,6 +673,36 @@
 
             $('.select2').select2({ placeholder: "Search...", allowClear: true });
 
+            $('#brandSelect').on('change', function() {
+                let brand = $(this).val();
+                $('#productDetailsCard').fadeOut(200);
+                $('#selectionDetails').hide();
+                $('#distributorContainer').hide();
+                $('#variantWrapper').hide();
+                $('#variantLevelsContainer').empty();
+                
+                $.ajax({
+                    url: "{{ route('admin.retailer-orders.get-products') }}",
+                    method: 'GET',
+                    data: { brand: brand },
+                    success: function(res) {
+                        let options = '<option value="">Search Product...</option>';
+                        res.forEach(function(p) {
+                            let packSuffix = (p.pack && p.pack.trim() !== '') ? ' (' + p.pack + ')' : '';
+                            let price = parseFloat(p.ptr).toFixed(2);
+                            options += `<option value="${p.id}" data-brand="${p.brand || ''}">${p.product_name}${packSuffix} - ₹${price}</option>`;
+                        });
+                        $('#productSelect').html(options).val(null).trigger('change');
+                    },
+                    error: function(xhr) {
+                        console.error(xhr);
+                        if (typeof showToast === 'function') {
+                            showToast('error', 'Failed to fetch products for the selected brand');
+                        }
+                    }
+                });
+            });
+
             $('#distributorSelect').select2({
                 placeholder: "Pick Distributor...",
                 templateResult: formatDistributor,
@@ -779,7 +820,7 @@
                         if (isCount) {
                             $unitSelect.empty().append('<option value="Nos">No.</option>').hide();
                             if ($('#unitText').length === 0) {
-                                $unitSelect.after('<span class="input-group-text fw-bold bg-light text-muted px-3" id="unitText" style="height: 48px;">No.</span>');
+                                $unitSelect.after('<span class="input-group-text fw-bold bg-light text-muted px-3" id="unitText" style="height: 38px;">No.</span>');
                             }
                             $('#ptrLabel').text(`PTR (Per No.)`);
                         } else {

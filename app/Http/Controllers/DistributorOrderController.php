@@ -287,6 +287,7 @@ class DistributorOrderController extends Controller
     public function create()
     {
         $products = Product::select('id', 'product_name', 'mrp', 'pts', 'pack', 'brand')->get();
+        $brands = Product::select('brand')->distinct()->whereNotNull('brand')->where('brand', '!=', '')->orderBy('brand')->pluck('brand');
         $distributors = collect();
         /** @var \App\Models\User $user */
         $user = Auth::user();
@@ -296,7 +297,18 @@ class DistributorOrderController extends Controller
             })->get();
         }
 
-        return view('admin.orders.distributors.create', compact('products', 'distributors'));
+        return view('admin.orders.distributors.create', compact('products', 'distributors', 'brands'));
+    }
+
+    public function getProducts(Request $request)
+    {
+        $brand = $request->get('brand');
+        $query = Product::select('id', 'product_name', 'mrp', 'pts', 'pack', 'brand');
+        if ($brand) {
+            $query->where('brand', $brand);
+        }
+        $products = $query->get();
+        return response()->json($products);
     }
 
     public function getProductDetails(Product $product)

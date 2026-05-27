@@ -53,6 +53,21 @@ class RetailerController extends Controller
                 }
             }
 
+            if ($request->filled('sales_manager_id') && !$currentUser->hasRole('salesmanager')) {
+                $query->where('sales_manager_id', $request->sales_manager_id);
+            }
+
+            if ($request->filled('field_staff_id') && !$currentUser->hasRole('fieldstaff')) {
+                $query->where('field_staff_id', $request->field_staff_id);
+            }
+            if ($request->filled('district_id')) {
+                $query->where('district_id', $request->district_id);
+            }
+
+            if ($request->filled('area_id')) {
+                $query->where('area_id', $request->area_id);
+            }
+
             $query->orderBy('retailers.id', 'desc');
 
             /** @var \App\Models\User $currentUser */

@@ -31,6 +31,10 @@ class FieldStaffController extends Controller
 
             if ($currentUser->hasRole('salesmanager')) {
                 $query->where('sales_manager_id', $currentUser->salesManager->id);
+            } else {
+                if ($request->filled('sales_manager_id')) {
+                    $query->where('sales_manager_id', $request->sales_manager_id);
+                }
             }
 
             $query->orderBy('fieldstaffs.id', 'desc');

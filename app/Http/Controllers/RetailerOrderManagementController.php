@@ -36,8 +36,20 @@ class RetailerOrderManagementController extends Controller
 
         // Revised: We will keep the products list for the dropdown, but minimal data.
         $products = Product::select('id', 'product_name', 'mrp', 'ptr', 'pack', 'brand')->get();
+        $brands = Product::select('brand')->distinct()->whereNotNull('brand')->where('brand', '!=', '')->orderBy('brand')->pluck('brand');
 
-        return view('admin.orders.retailers.create', compact('retailers', 'products'));
+        return view('admin.orders.retailers.create', compact('retailers', 'products', 'brands'));
+    }
+
+    public function getProducts(Request $request)
+    {
+        $brand = $request->get('brand');
+        $query = Product::select('id', 'product_name', 'mrp', 'ptr', 'pack', 'brand');
+        if ($brand) {
+            $query->where('brand', $brand);
+        }
+        $products = $query->get();
+        return response()->json($products);
     }
 
     public function getProductDetails(Request $request, Product $product)
@@ -48,7 +60,7 @@ class RetailerOrderManagementController extends Controller
         $side = $request->get('side');
         $size = $request->get('size');
         $minQuantity = (int)$request->get('quantity', 0);
-        
+
         // Filter distributors by the retailer's district
         $query = Distributor::with('user');
         if ($retailer && $retailer->district_id) {
@@ -59,16 +71,16 @@ class RetailerOrderManagementController extends Controller
         // Get current stock levels for this product (and specific variant if provided)
         $stockMap = DB::table('inventories')
             ->where('product_id', $product->id)
-            ->when(!empty($side), function($q) use ($side) {
+            ->when(!empty($side), function ($q) use ($side) {
                 return $q->where('side', $side);
             })
-            ->when(!empty($size), function($q) use ($size) {
+            ->when(!empty($size), function ($q) use ($size) {
                 return $q->where('size', $size);
             })
             ->selectRaw('distributor_id, SUM(stock) as total_stock')
             ->groupBy('distributor_id')
             ->having('total_stock', '>', 0)
-            ->when($minQuantity > 0, function($q) use ($minQuantity) {
+            ->when($minQuantity > 0, function ($q) use ($minQuantity) {
                 return $q->having('total_stock', '>=', $minQuantity);
             })
             ->pluck('total_stock', 'distributor_id');
@@ -88,7 +100,7 @@ class RetailerOrderManagementController extends Controller
         })->values();
 
         return response()->json([
-            'product' => $product->makeVisible(['box_size']), 
+            'product' => $product->makeVisible(['box_size']),
             'distributors' => $distributors
         ]);
     }
@@ -150,11 +162,11 @@ class RetailerOrderManagementController extends Controller
                 $totalQuantity = 0;
 
                 // Merge identical items before processing
-                $mergedItems = collect($items)->groupBy(function($i) {
+                $mergedItems = collect($items)->groupBy(function ($i) {
                     $side = isset($i['side']) ? trim(strtolower($i['side'])) : '';
                     $size = isset($i['size']) ? trim(strtolower($i['size'])) : '';
                     return $i['product_id'] . '-' . $side . '-' . $size;
-                })->map(function($group) {
+                })->map(function ($group) {
                     $first = $group->first();
                     $first['quantity'] = $group->sum('quantity');
                     $first['free_quantity'] = $group->sum('free_quantity');
@@ -172,7 +184,7 @@ class RetailerOrderManagementController extends Controller
 
                     $unit = $itemData['unit'] ?? 'Nos';
                     $qty = (int)$itemData['quantity'];
-                    
+
                     // Conversion logic using numeric fields
                     $multiplier = 1;
                     $normalizedUnit = strtolower($unit);
@@ -214,17 +226,17 @@ class RetailerOrderManagementController extends Controller
                         $totalStock = DB::table('inventories')
                             ->where('distributor_id', $distributor->id)
                             ->where('product_id', $product->id)
-                            ->when(!empty($iSide), function($q) use ($iSide) {
+                            ->when(!empty($iSide), function ($q) use ($iSide) {
                                 return $q->where('side', $iSide);
                             })
-                            ->when(!empty($iSize), function($q) use ($iSize) {
+                            ->when(!empty($iSize), function ($q) use ($iSize) {
                                 return $q->where('size', $iSize);
                             })
                             ->sum('stock');
 
                         if ($totalStock < $totalQtyNos) {
                             $vInfo = array_filter([$iSide, $iSize]);
-                            $vLabel = !empty($vInfo) ? " (".implode('/', $vInfo).")" : "";
+                            $vLabel = !empty($vInfo) ? " (" . implode('/', $vInfo) . ")" : "";
                             throw new \Exception("Insufficient stock for {$product->product_name}{$vLabel}. Please select another distributor.");
                         }
                     }
@@ -269,7 +281,7 @@ class RetailerOrderManagementController extends Controller
                 // Notify Field Staff
                 if ($order->fieldStaff && $order->fieldStaff->user) {
                     $order->fieldStaff->user->notify(new OrderActionRequired($order, "New order #{$order->order_code} assigned to you. Action required: Process or Cancel.", route('admin.approvals.retailer')));
-                    
+
                     // OneSignal Push
                     $this->sendOneSignalPush(
                         [$order->fieldStaff->user->id],
@@ -367,17 +379,17 @@ class RetailerOrderManagementController extends Controller
 
                 if ($request->has('fieldstaff_id') && !empty($request->fieldstaff_id)) {
                     $fsId = $request->fieldstaff_id;
-                    $query->where(function($q) use ($fsId) {
+                    $query->where(function ($q) use ($fsId) {
                         $q->where('retailer_orders.fieldstaff_id', $fsId)
-                          ->orWhereHas('retailer', function($subQ) use ($fsId) {
-                              $subQ->where('field_staff_id', $fsId);
-                          });
+                            ->orWhereHas('retailer', function ($subQ) use ($fsId) {
+                                $subQ->where('field_staff_id', $fsId);
+                            });
                     });
                 }
 
                 if ($request->has('sales_manager_id') && !empty($request->sales_manager_id)) {
                     $smId = $request->sales_manager_id;
-                    $query->where(function($q) use ($smId) {
+                    $query->where(function ($q) use ($smId) {
                         $q->whereHas('fieldStaff', function ($sub) use ($smId) {
                             $sub->where('sales_manager_id', $smId);
                         })->orWhereHas('retailer.fieldStaff', function ($sub) use ($smId) {
@@ -469,11 +481,11 @@ class RetailerOrderManagementController extends Controller
                 $length = $request->input('length', 10);
                 $orders = $query->offset($start)->limit($length)->get();
                 $formattedOrders = $orders->map(function ($order) {
-                    $groupedItems = $order->items->groupBy(function($item) {
+                    $groupedItems = $order->items->groupBy(function ($item) {
                         $side = $item->side ? trim(strtolower($item->side)) : '';
                         $size = $item->size ? trim(strtolower($item->size)) : '';
                         return $item->product_id . '-' . $side . '-' . $size;
-                    })->map(function($group) {
+                    })->map(function ($group) {
                         $first = $group->first();
                         return (object)[
                             'product_name' => $first->product_name ?? $first->product->product_name ?? $first->name ?? 'Product',
@@ -488,35 +500,35 @@ class RetailerOrderManagementController extends Controller
 
                     $productSummary = $groupedItems->map(function ($item) {
                         $pName = $item->product ? $item->product->product_name : $item->product_name;
-                        
+
                         // Clean up product name from any existing brackets to prevent duplication
                         if (str_contains($pName, '[')) {
                             $pName = trim(explode('[', $pName)[0]);
                         }
-                        
+
                         $vLabel = array_filter([$item->side, $item->size]);
                         $pBrand = $item->product ? $item->product->brand : null;
-                        
+
                         $pPack = $item->product ? $item->product->pack : null;
-                        
+
                         $summary = '<div class="product-summary-item mb-2" style="line-height: 1.35; width: 100%; white-space: normal; word-break: break-word; overflow-wrap: break-word;">';
                         $summary .= '<div style="display: block; margin-bottom: 2px;">';
-                        $summary .= '<span class="fw-bold" style="color: #334155; font-size: 0.85rem; word-break: break-word;">'.$pName.'</span>';
+                        $summary .= '<span class="fw-bold" style="color: #334155; font-size: 0.85rem; word-break: break-word;">' . $pName . '</span>';
                         if (!empty(trim($pPack)) && strtoupper(trim($pPack)) !== 'N/A') {
-                            $summary .= '<span class="small fw-semibold" style="color: #94a3b8; font-size: 0.75rem; white-space: nowrap; margin-left: 3px;">['.$pPack.']</span>';
+                            $summary .= '<span class="small fw-semibold" style="color: #94a3b8; font-size: 0.75rem; white-space: nowrap; margin-left: 3px;">[' . $pPack . ']</span>';
                         }
                         if (!empty($vLabel)) {
                             $summary .= ' <span class="badge rounded-pill align-middle" style="background: #e0f2fe; color: #0369a1; font-size: 0.65rem; padding: 2px 6.5px; font-weight: 700; letter-spacing: 0.3px; white-space: nowrap; margin-left: 4px; display: inline-block;">' . strtoupper(implode(' / ', $vLabel)) . '</span>';
                         }
                         $summary .= '</div>';
-                        
+
                         $meta = [];
                         $qtyText = $item->quantity . ' ' . ($item->unit ?? 'Nos');
                         if ($item->free_quantity > 0) {
                             $qtyText .= ' <span class="text-success" style="font-size: 0.7rem; font-weight: bold;">(+' . $item->free_quantity . ' Free)</span>';
                         }
                         $meta[] = '<span class="text-primary fw-bold" style="font-size: 0.75rem;">' . $qtyText . '</span>';
-                        
+
                         if (!empty($meta)) {
                             $summary .= '<div class="d-flex flex-wrap align-items-center gap-1 mt-1" style="word-break: break-word;">' . implode(' <span class="text-muted" style="font-size: 0.75rem; margin: 0 2px;">•</span> ', $meta) . '</div>';
                         }
@@ -547,7 +559,7 @@ class RetailerOrderManagementController extends Controller
                         'product_summary' => $productSummary,
                         'items' => $order->items->map(function ($item) use ($order) {
                             $pName = $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product';
-                            
+
                             // Find corresponding return request if any
                             $retReq = $order->returnRequests->where('product_id', $item->product_id)
                                 ->where('side', $item->side)
@@ -566,14 +578,14 @@ class RetailerOrderManagementController extends Controller
                                 'order_item_id' => $item->id,
                                 'product_id' => $item->product_id,
                                 'is_returnable' => $item->product?->is_returnable ?? true,
-                                
+
                                 'returned_qty' => (float)$order->returnRequests
                                     ->where('product_id', $item->product_id)
                                     ->where('side', $item->side)
                                     ->where('size', $item->size)
                                     ->where('status', 'completed')
                                     ->sum('quantity'),
-                                    
+
                                 'pending_return_qty' => (float)$order->returnRequests
                                     ->where('product_id', $item->product_id)
                                     ->where('side', $item->side)
@@ -659,12 +671,12 @@ class RetailerOrderManagementController extends Controller
     {
         $managerId = $request->manager_id;
         $query = FieldStaff::with('user');
-        
+
         if ($managerId) {
             $query->where('sales_manager_id', $managerId);
         }
-        
-        $fs = $query->get()->map(function($f) {
+
+        $fs = $query->get()->map(function ($f) {
             return ['id' => $f->id, 'name' => $f->user->name ?? 'N/A'];
         });
         return response()->json($fs);
@@ -679,9 +691,9 @@ class RetailerOrderManagementController extends Controller
             $query->where('field_staff_id', $fsId);
         }
 
-        $retailers = $query->get()->map(function($r) {
+        $retailers = $query->get()->map(function ($r) {
             return [
-                'id' => $r->id, 
+                'id' => $r->id,
                 'name' => ($r->shop_name ?? 'N/A') . ' (' . ($r->user->name ?? 'N/A') . ')'
             ];
         });
@@ -803,7 +815,7 @@ class RetailerOrderManagementController extends Controller
             // Notify Distributor
             if ($retailerOrder->distributor && $retailerOrder->distributor->user) {
                 $this->notifyUnique($retailerOrder->distributor->user, new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} has been processed and is ready for your approval.", route('admin.approvals.retailer'), 'retailer_order'));
-                
+
                 // OneSignal Push
                 $this->sendOneSignalPush(
                     [$retailerOrder->distributor->user->id],
@@ -947,7 +959,7 @@ class RetailerOrderManagementController extends Controller
                     if (!$request->filled('invoice_no')) {
                         throw new \Exception('Invoice Number is required for approval.');
                     }
-                    
+
                     $invoiceNo = $request->invoice_no;
 
                     $existsInDistOrders = \App\Models\DistributorOrder::where('distributor_id', $distributor->id)
@@ -966,7 +978,7 @@ class RetailerOrderManagementController extends Controller
                     $file = $request->file('invoice');
                     $filename = 'invoice_' . $retailerOrder->id . '_' . time() . '.' . $file->getClientOriginalExtension();
                     $path = $file->storeAs('retailer_invoices', $filename, 'public');
-                    
+
                     $updateData['invoice_path'] = $path;
                     $updateData['invoice_no'] = $invoiceNo; // Save invoice number
                 } else {
@@ -1001,7 +1013,7 @@ class RetailerOrderManagementController extends Controller
             // Notify Retailer
             if ($retailerOrder->retailer && $retailerOrder->retailer->user) {
                 $this->notifyUnique($retailerOrder->retailer->user, new OrderActionRequired($retailerOrder, "Your order #{$retailerOrder->order_code} has been accepted. Please confirm your order.", url('/retailer/orders'), 'retailer_order'));
-                
+
                 // OneSignal Push
                 $this->sendOneSignalPush(
                     [$retailerOrder->retailer->user->id],
@@ -1498,7 +1510,7 @@ class RetailerOrderManagementController extends Controller
             // Optional: Notify Field Staff / Distributor that order is closed
             if ($retailerOrder->fieldStaff && $retailerOrder->fieldStaff->user) {
                 $retailerOrder->fieldStaff->user->notify(new OrderActionRequired($retailerOrder, "Order #{$retailerOrder->order_code} has been successfully delivered and confirmed by the retailer.", route('fieldstaff.orders.index')));
-                
+
                 // OneSignal Push
                 $this->sendOneSignalPush(
                     [$retailerOrder->fieldStaff->user->id],

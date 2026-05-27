@@ -86,6 +86,55 @@
                                 </ul>
                             </div>
                         @endif
+
+                        <!-- Advanced Filters -->
+                        <div class="row g-3 mb-4 align-items-end">
+                            @unless(Auth::user()->hasRole('salesmanager'))
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold text-muted small text-uppercase"><i class="fa fa-user-tie me-1"></i>Sales Manager</label>
+                                <select id="filter_sales_manager" class="form-select" style="border-radius: 8px;">
+                                    <option value="">All Sales Managers</option>
+                                    @foreach($salesManagers as $manager)
+                                        <option value="{{ $manager->id }}">{{ $manager->user->name ?? 'N/A' }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @endunless
+
+                            @unless(Auth::user()->hasRole('fieldstaff'))
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold text-muted small text-uppercase"><i class="fa fa-users me-1"></i>Field Staff</label>
+                                <select id="filter_field_staff" class="form-select" style="border-radius: 8px;">
+                                    <option value="">All Field Staff</option>
+                                    @foreach($fieldStaffs as $staff)
+                                        <option value="{{ $staff->id }}">{{ $staff->user->name ?? 'N/A' }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @endunless
+
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold text-muted small text-uppercase"><i class="fa fa-map me-1"></i>District</label>
+                                <select id="filter_district" class="form-select" style="border-radius: 8px;">
+                                    <option value="">All Districts</option>
+                                    @foreach($districts as $district)
+                                        <option value="{{ $district->id }}">{{ $district->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold text-muted small text-uppercase"><i class="fa fa-map-pin me-1"></i>Area</label>
+                                <select id="filter_area" class="form-select" style="border-radius: 8px;">
+                                    <option value="">Select District First</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-2">
+                                <button type="button" id="btn_filter_reset" class="btn btn-secondary w-100" style="height: 38px; border-radius: 8px;"><i class="fa fa-refresh me-1"></i>Reset</button>
+                            </div>
+                        </div>
+
                         <div class="table-responsive">
                             <table class="display table table-striped table-hover" id="retailers-table">
                                 <thead>
@@ -599,7 +648,13 @@
                 processing: true, serverSide: true, order: [],
                 ajax: {
                     url: "{{ route('admin.retailers.index') }}",
-                    data: (d) => { d.status = $('#userStatusTabs button.active').data('status'); }
+                    data: (d) => {
+                        d.status = $('#userStatusTabs button.active').data('status');
+                        d.sales_manager_id = $('#filter_sales_manager').val();
+                        d.field_staff_id = $('#filter_field_staff').val();
+                        d.district_id = $('#filter_district').val();
+                        d.area_id = $('#filter_area').val();
+                    }
                 },
                 columns: [
                     { data: null, orderable: false, searchable: false, render: (d, t, r, m) => m.row + m.settings._iDisplayStart + 1 },
@@ -656,6 +711,30 @@
 
             $('.district-select').on('change', function () {
                 fetchAreas($(this).val(), $(this).closest('form').find('.area-select'));
+            });
+
+            // Filter actions
+            $('#filter_sales_manager, #filter_field_staff, #filter_area').on('change', function () {
+                table.ajax.reload();
+            });
+
+            $('#filter_district').on('change', function () {
+                let districtId = $(this).val();
+                let areaSelect = $('#filter_area');
+                if (districtId) {
+                    fetchAreas(districtId, areaSelect);
+                } else {
+                    areaSelect.html('<option value="">Select District First</option>');
+                }
+                table.ajax.reload();
+            });
+
+            $('#btn_filter_reset').on('click', function () {
+                $('#filter_sales_manager').val('');
+                $('#filter_field_staff').val('');
+                $('#filter_district').val('');
+                $('#filter_area').html('<option value="">Select District First</option>');
+                table.ajax.reload();
             });
 
             $('#retailers-table').on('click', '.edit-btn', function () {
