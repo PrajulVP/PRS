@@ -99,6 +99,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('distributor-insights/{id}', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getDistributorDetailInsight']);
         Route::get('distributor-orders', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getDistributorOrders']);
         Route::post('distributor-orders/{id}/approve', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'approveDistributorOrder']);
+        Route::put('distributor-orders/{id}', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'updateDistributorOrder']);
     });
 
     // Field Staff Dashboard & Orders
@@ -111,6 +112,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('retailer-orders', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'index']);
         Route::get('retailer-orders/{id}', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'show']);
         Route::post('retailer-orders/{id}/update-status', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'updateStatus']);
+        Route::put('retailer-orders/{id}', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'update']);
 
         // Tracking & Actions
         Route::get('punch', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'getPunchStatus']);

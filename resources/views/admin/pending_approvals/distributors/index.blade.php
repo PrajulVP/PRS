@@ -618,6 +618,7 @@
                     </div>
 
                     <div class="p-4 bg-body-theme">
+                        <div id="view_edit_banner"></div>
                         <h6 class="fw-bold mb-3 d-flex align-items-center text-main-theme">
                             <span class="bg-body-theme p-2 rounded me-2"><i class="fa fa-list-ul text-primary"></i></span>
                             Order Items
@@ -743,6 +744,7 @@
                         </div>
 
                         <div class="p-4 bg-body-theme">
+                            <div id="approve_edit_banner"></div>
                             <input type="hidden" id="approve_order_id" name="order_id">
 
                             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -878,6 +880,7 @@
                         </div>
 
                         <div class="p-4 bg-body-theme">
+                            <div id="process_edit_banner"></div>
                             <input type="hidden" id="process_order_id" name="order_id">
 
                             <!-- Action Error Alert -->
@@ -1115,6 +1118,99 @@
             </div>
         </div>
     </div>
+    @php
+        $products = \App\Models\Product::all();
+    @endphp
+
+    {{-- Edit Modal --}}
+    <div class="modal fade" id="editOrderModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow bg-card-theme" style="border-radius: 15px;">
+                <div class="modal-header border-0 py-3" style="background: linear-gradient(135deg, #1e293b, #0f172a); border-top-left-radius: 15px; border-top-right-radius: 15px;">
+                    <h5 class="modal-title fw-bold text-white mb-0" style="color: #ffffff !important;"><i class="fa fa-edit me-2"></i>Edit Order - <span id="edit_order_code" class="fw-bold text-warning"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editOrderForm" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body p-4 bg-body-theme text-main-theme">
+                        {{-- Hidden Fields --}}
+                        <input type="hidden" name="status" id="edit_status">
+                        <input type="hidden" name="distributor_id" id="edit_distributor_id_hidden">
+
+                        <div class="mb-4">
+                            <label class="form-label text-muted-theme small text-uppercase fw-bold">Distributor</label>
+                            <h5 class="mb-0 fw-bold text-primary" id="edit_distributor_name" style="color: var(--med-primary, #2563eb) !important;"></h5>
+                        </div>
+
+                        <div class="mb-4 p-4 rounded-3 border-0 bg-card-theme shadow-sm" style="border: 1px solid var(--med-border-light, #e2e8f0) !important;">
+                            <h6 class="fw-bold mb-3 text-main-theme"><i class="fa fa-shopping-cart me-2"></i>Add Products</h6>
+                            <div class="mb-2">
+                                <div class="d-flex gap-2 align-items-stretch">
+                                    <select id="edit_product_select" class="form-select bg-card-theme text-main-theme flex-grow-1" style="border-radius: 8px; border-color: var(--med-border-light);">
+                                        <option value="">Select a product to add...</option>
+                                        @foreach($products as $product)
+                                            <option value="{{ $product->id }}"
+                                                data-price="{{ $product->pts }}"
+                                                data-stock="{{ $product->stock }}"
+                                                data-pack="{{ $product->pack ?? '' }}"
+                                                data-code="{{ $product->product_code ?? '' }}"
+                                                data-boxsize="{{ $product->box_size ?? '' }}"
+                                                data-stripsperbox="{{ $product->strips_per_box ?? 10 }}"
+                                                data-variants="{{ $product->has_variants ? json_encode($product->variant_options) : '' }}">
+                                                {{ $product->product_name }} (Stock: {{ $product->stock }}) - ₹{{ $product->pts }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <button type="button" class="btn btn-primary fw-bold px-4" id="btn_add_product_edit" style="border-radius: 8px; background: var(--med-primary, #2563eb); border: none; white-space: nowrap;">
+                                        <i class="fa fa-plus me-1"></i> Add
+                                    </button>
+                                </div>
+                                {{-- Variant picker --}}
+                                <div id="edit_variant_picker_dist" class="mt-2" style="display:none;">
+                                    <div id="edit_variant_levels_dist"></div>
+                                    <input type="hidden" id="edit_selected_variant_dist" value="">
+                                    <small class="text-danger d-none" id="edit_variant_warn_dist">Please select a variant first.</small>
+                                </div>
+                            </div>
+                        </div>
+
+
+
+                        <div class="mb-4 p-4 rounded-3 border-0 bg-card-theme shadow-sm animate__animated animate__fadeIn" style="border: 1px solid var(--med-border-light, #e2e8f0) !important;">
+                            <h6 class="fw-bold mb-3 text-main-theme"><i class="fa fa-list me-2"></i>Order Items</h6>
+                            <div class="table-responsive">
+                                <table class="table align-middle table-hover text-main-theme" id="edit_items_table">
+                                    <thead style="background-color: #1e293b; color: #ffffff !important;">
+                                        <tr>
+                                            <th class="ps-3" style="color: #ffffff !important;">Product</th>
+                                            <th class="text-center" width="120" style="color: #ffffff !important;">Unit</th>
+                                            <th class="text-center" width="100" style="color: #ffffff !important;">Qty</th>
+                                            <th class="text-end" width="120" style="color: #ffffff !important;">Price (PTS)</th>
+                                            <th class="text-end" width="120" style="color: #ffffff !important;">Total</th>
+                                            <th class="text-center" width="60" style="color: #ffffff !important;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                    <tfoot>
+                                        <tr class="table-active">
+                                            <td colspan="4" class="text-end fw-bold text-main-theme">Grand Total:</td>
+                                            <td class="text-end fw-bold text-primary" style="color: var(--med-primary, #2563eb) !important;">₹<span id="edit_grand_total">0.00</span></td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top bg-card-theme" style="border-top: 1px solid var(--med-border-light, #e2e8f0) !important; border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;">
+                        <button type="button" class="btn btn-secondary fw-bold px-4" data-bs-dismiss="modal" style="border-radius: 8px; border: 1px solid var(--med-border-light); background: transparent; color: var(--med-text-main);">CANCEL</button>
+                        <button type="submit" class="btn btn-primary fw-bold px-4" style="border-radius: 8px; background: var(--med-primary, #2563eb); border: none;">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('styles')
@@ -1214,6 +1310,8 @@
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         const isAdmin = @json(Auth::user()->hasRole('admin') || Auth::user()->hasRole('superadmin'));
         const isSalesManager = @json(Auth::user()->hasRole('salesmanager'));
+        const authSalesManagerId = {{ Auth::user()->salesManager ? Auth::user()->salesManager->id : 'null' }};
+        const authDistributorId = {{ Auth::user()->distributor ? Auth::user()->distributor->id : 'null' }};
 
         $(document).ready(function () {
             // Fix for modal z-index issues (move to body)
@@ -1395,7 +1493,19 @@
                         orderable: false,
                         searchable: false
                     },
-                    { data: 'order_code', render: (d, t, r) => d },
+                    {
+                        data: 'order_code',
+                        render: function (data, type, row) {
+                            if (type !== 'display') return data;
+                            let html = `<span class="fw-bold">${data}</span>`;
+                            if (row.metadata && row.metadata.is_edited) {
+                                let lastEditor = row.metadata.last_edited_by || 'Staff';
+                                let lastTime = row.metadata.last_edited_at || '';
+                                html += ` <span class="badge bg-warning text-dark ms-1" style="font-size: 0.65rem; padding: 0.25em 0.5em; vertical-align: middle; cursor: help; border-radius: 4px;" title="Edited by ${lastEditor} on ${lastTime}"><i class="fa fa-pencil"></i> EDITED</span>`;
+                            }
+                            return html;
+                        }
+                    },
                     {
                         data: 'distributor_name',
                         render: function (data, type, row) {
@@ -1530,6 +1640,21 @@
                             let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
                             let invoiceUrl = "{{ route('admin.distributor-orders.invoice', ':id') }}".replace(':id', row.id);
                             let btns = `<div class="action-buttons">`;
+
+                            // Edit Order Button (Only inside approvals)
+                            let canEdit = false;
+                            let statusRaw = row.status ? row.status.toLowerCase().replace(/ /g, '_') : '';
+                            if (isAdmin) {
+                                canEdit = true;
+                            } else if (isSalesManager && (statusRaw === 'pending' || statusRaw === 'processing')) {
+                                if (row.sales_manager_id == authSalesManagerId || row.distributor_sm_id == authSalesManagerId) {
+                                    canEdit = true;
+                                }
+                            }
+
+                            if (canEdit && statusRaw !== 'delivered' && statusRaw !== 'cancelled' && statusRaw !== 'rejected') {
+                                btns += `<button class="btn btn-primary btn-sm edit-btn" data-row="${rowData}" title="Edit Order"><i class="fa fa-edit"></i></button>`;
+                            }
 
                             // View Details
                             btns += `<button class="btn btn-info btn-sm view-details-btn" data-row="${rowData}" title="View Details"><i class="fa fa-eye"></i></button>`;
@@ -1719,6 +1844,22 @@
             // View Details
             $(document).on('click', '.view-details-btn', function () {
                 let row = $(this).data('row');
+                $('#view_edit_banner').empty();
+                if (row.metadata && row.metadata.is_edited) {
+                    let lastEditor = row.metadata.last_edited_by || 'Staff';
+                    let lastTime = row.metadata.last_edited_at || '';
+                    $('#view_edit_banner').html(`
+                        <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-3" style="border-radius: 10px; background: rgba(255, 193, 7, 0.1); color: #856404;">
+                            <div class="me-3">
+                                <i class="fa fa-exclamation-triangle fa-2x"></i>
+                            </div>
+                            <div>
+                                <span class="fw-bold d-block" style="font-size: 0.9rem;">Order Edited Manually</span>
+                                <span class="small" style="font-size: 0.85rem;">This order was modified by <b>${lastEditor}</b> on <b>${lastTime}</b>.</span>
+                            </div>
+                        </div>
+                    `);
+                }
                 $('#view_order_code').text(row.order_code || '--');
                 $('#view_placed_at').text(row.placed_at || '--');
                 $('#view_invoice_no').text(row.invoice_no || '--');
@@ -1776,11 +1917,12 @@
                                         ${cleanedName} ${variantBadge}
                                     </div>
                                     <div class="small text-muted-theme" style="font-size: 0.7rem;">
-                                        (${item.brand || 'Generic'}) • <span class="fw-bold text-primary">${item.quantity} ${item.unit || 'Nos'}</span>
+                                        ${item.brand ? `<span class="fw-bold">(${item.brand})</span> •` : ''} <span class="fw-bold text-primary">${item.quantity} ${item.unit || 'Nos'}</span>
                                         ${item.free_quantity > 0 ? `<span class="text-success fw-bold ms-1" style="font-size: 0.65rem;">(+${item.free_quantity} Free)</span>` : ''}
                                     </div>
                                     <div class="d-flex gap-2 flex-wrap mt-0 opacity-75" style="font-size: 0.6rem;">
                                         ${item.generic_name ? `<span>${item.generic_name}</span>` : ''}
+                                        ${item.pack && item.pack.trim() ? `<span>• ${item.pack}</span>` : ''}
                                         ${item.product_code && item.product_code !== '---' && item.product_code !== 'N/A' ? `<span>Code: ${item.product_code}</span>` : ''}
                                     </div>
                                 </td>
@@ -1807,6 +1949,22 @@
                 let row = $(this).data('row');
 
                 const proceed = () => {
+                    $('#approve_edit_banner').empty();
+                    if (row.metadata && row.metadata.is_edited) {
+                        let lastEditor = row.metadata.last_edited_by || 'Staff';
+                        let lastTime = row.metadata.last_edited_at || '';
+                        $('#approve_edit_banner').html(`
+                            <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-3" style="border-radius: 10px; background: rgba(255, 193, 7, 0.1); color: #856404;">
+                                <div class="me-3">
+                                    <i class="fa fa-exclamation-triangle fa-2x"></i>
+                                </div>
+                                <div>
+                                    <span class="fw-bold d-block" style="font-size: 0.9rem;">Order Edited Manually</span>
+                                    <span class="small" style="font-size: 0.85rem;">This order was modified by <b>${lastEditor}</b> on <b>${lastTime}</b>.</span>
+                                </div>
+                            </div>
+                        `);
+                    }
                     $('#approve_order_id').val(id);
                     $('#approve_order_code_display').text(row.order_code);
                     $('#approve_order_date_display').text(row.placed_at ? row.placed_at.split(' ')[0] : '--');
@@ -1906,6 +2064,22 @@
                 let row = $(this).closest('tr').find('.view-details-btn').data('row');
 
                 const proceed = () => {
+                    $('#process_edit_banner').empty();
+                    if (row && row.metadata && row.metadata.is_edited) {
+                        let lastEditor = row.metadata.last_edited_by || 'Staff';
+                        let lastTime = row.metadata.last_edited_at || '';
+                        $('#process_edit_banner').html(`
+                            <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-3" style="border-radius: 10px; background: rgba(255, 193, 7, 0.1); color: #856404;">
+                                <div class="me-3">
+                                    <i class="fa fa-exclamation-triangle fa-2x"></i>
+                                </div>
+                                <div>
+                                    <span class="fw-bold d-block" style="font-size: 0.9rem;">Order Edited Manually</span>
+                                    <span class="small" style="font-size: 0.85rem;">This order was modified by <b>${lastEditor}</b> on <b>${lastTime}</b>.</span>
+                                </div>
+                            </div>
+                        `);
+                    }
                     $('#process_order_id').val(id);
                     $('#processOrderForm')[0].reset();
 
@@ -2737,6 +2911,278 @@
                     },
                     complete: function() {
                         $btn.prop('disabled', false).text('Submit Return');
+                    }
+                });
+            });
+            // --- Edit Order Logic ---
+            let editItems = {};
+
+            $(document).on('click', '.edit-btn', function () {
+                let row = JSON.parse($(this).attr('data-row'));
+                $('#edit_distributor_id_hidden').val(row.distributor_id);
+                $('#edit_distributor_name').text(row.distributor_name || '');
+                $('#edit_order_code').text(row.order_code || '');
+
+                let st = row.status ? row.status.toLowerCase().replace(/ /g, '_') : 'pending';
+                $('#edit_status').val(st);
+
+                editItems = {};
+                row.items.forEach(function (item) {
+                    editItems[item.product_id] = {
+                        id: item.product_id,
+                        name: item.product_name,
+                        price: parseFloat(item.unit_price),
+                        basePrice: parseFloat(item.unit_price),
+                        stock: 9999,
+                        quantity: item.quantity,
+                        unit: item.unit || 'Strips',
+                        orderItemId: item.order_item_id,
+                        pack: item.pack,
+                        box_size: item.box_size,
+                        product_code: item.product_code,
+                        brand: item.brand,
+                        generic_name: item.generic_name
+                    };
+                });
+                renderEditItems();
+
+                let url = "{{ route('admin.distributor-orders.update', ':id') }}".replace(':id', row.id);
+                $('#editOrderForm').attr('action', url);
+                $('#editOrderModal').modal('show');
+            });
+
+            // Variant picker for distributor edit modal
+            function buildEditVariantPickerDist(variantsJson) {
+                let $picker = $('#edit_variant_picker_dist');
+                let $levels = $('#edit_variant_levels_dist');
+                let $hidden = $('#edit_selected_variant_dist');
+                $picker.hide();
+                $levels.empty();
+                $hidden.val('');
+                if (!variantsJson) return;
+                let variants;
+                try { variants = JSON.parse(variantsJson); } catch(e) { return; }
+                if (!variants || Object.keys(variants).length === 0) return;
+
+                let attrNames = Object.keys(variants);
+                $picker.show();
+                attrNames.forEach(function(attr, idx) {
+                    let vals = variants[attr];
+                    let levelHtml = `<div class="mb-1 edit-var-level-dist" data-attr="${attr}" data-level="${idx}" ${idx > 0 ? 'style="display:none;"' : ''}>
+                        <span class="text-muted small text-uppercase fw-bold me-2" style="font-size:0.7rem;">${attr}:</span>
+                        <div class="d-inline-flex flex-wrap gap-1">
+                            ${vals.map(v => `<button type="button" class="btn btn-sm btn-outline-primary edit-var-btn-dist px-2 py-1 fw-bold" style="font-size:0.78rem;border-radius:6px;" data-attr="${attr}" data-value="${v}" data-level="${idx}">${v}</button>`).join('')}
+                        </div>
+                    </div>`;
+                    $levels.append(levelHtml);
+                });
+            }
+
+            $('#edit_product_select').on('change', function() {
+                let variantsRaw = $(this).find('option:selected').attr('data-variants') || '';
+                buildEditVariantPickerDist(variantsRaw || null);
+                $('#edit_variant_warn_dist').addClass('d-none');
+            });
+
+            $(document).on('click', '.edit-var-btn-dist', function() {
+                let $btn = $(this);
+                let level = parseInt($btn.data('level'));
+                $btn.closest('.edit-var-level-dist').find('.edit-var-btn-dist')
+                    .removeClass('active btn-primary text-white').addClass('btn-outline-primary');
+                $btn.removeClass('btn-outline-primary').addClass('active btn-primary text-white');
+                $('.edit-var-level-dist').each(function() {
+                    if (parseInt($(this).data('level')) > level) {
+                        $(this).hide().find('.edit-var-btn-dist')
+                            .removeClass('active btn-primary text-white').addClass('btn-outline-primary');
+                    }
+                });
+                let $next = $(`.edit-var-level-dist[data-level="${level + 1}"]`);
+                if ($next.length > 0) {
+                    $next.show();
+                    $('#edit_selected_variant_dist').val('');
+                } else {
+                    let parts = [];
+                    $('.edit-var-level-dist:visible .edit-var-btn-dist.active').each(function() {
+                        parts.push($(this).data('value'));
+                    });
+                    $('#edit_selected_variant_dist').val(parts.join(' - '));
+                }
+            });
+
+            $('#btn_add_product_edit').click(function () {
+                let selectEl = $('#edit_product_select');
+                let id = selectEl.val();
+                let selectedOption = selectEl.find('option:selected');
+
+                if (!id) {
+                    Swal.fire('Error', 'Please select a product to add.', 'error');
+                    return;
+                }
+
+                let pack = (selectedOption.data('pack') || '').toString().toLowerCase();
+                let code = (selectedOption.data('code') || '').toString().trim();
+                let boxSize = selectedOption.data('boxsize');
+                let stripsPerBox = parseInt(selectedOption.data('stripsperbox')) || 10;
+                let hasCode = code && code !== '---' && code !== '';
+                let isCount = hasCode || boxSize === '' || boxSize === null || pack.includes('nos') || pack.includes('count');
+
+                let variantsRaw = selectedOption.attr('data-variants') || '';
+                let hasVariants = variantsRaw && variantsRaw.trim() !== '';
+                let selectedVariant = $('#edit_selected_variant_dist').val();
+
+                if (hasVariants && !selectedVariant) {
+                    $('#edit_variant_warn_dist').removeClass('d-none');
+                    return;
+                }
+                $('#edit_variant_warn_dist').addClass('d-none');
+
+                let itemKey = id + (selectedVariant ? '-' + selectedVariant.replace(/ /g, '_') : '');
+                if (editItems[itemKey]) {
+                    editItems[itemKey].quantity += 1;
+                    renderEditItems();
+                    return;
+                }
+
+                editItems[itemKey] = {
+                    id: id,
+                    itemKey: itemKey,
+                    name: selectedOption.text().split('(Stock')[0].trim() + (selectedVariant ? ` [${selectedVariant}]` : ''),
+                    price: parseFloat(selectedOption.data('price')) || 0,
+                    basePrice: parseFloat(selectedOption.data('price')) || 0,
+                    stock: parseInt(selectedOption.data('stock')) || 0,
+                    quantity: 1,
+                    unit: isCount ? 'Nos' : 'Strips',
+                    stripsPerBox: stripsPerBox,
+                    isCount: isCount,
+                    orderItemId: null
+                };
+
+                buildEditVariantPickerDist(null);
+                selectEl.val('');
+                renderEditItems();
+            });
+
+
+            function computeUnitPrice(item, unit) {
+                let base = parseFloat(item.basePrice || item.price) || 0;
+                let spb = parseInt(item.stripsPerBox) || 10;
+                if (unit === 'Box') return base * spb;
+                if (unit === 'Nos') return base;
+                return base; // Strips
+            }
+
+            function renderEditItems() {
+                let tbody = $('#edit_items_table tbody');
+                tbody.empty();
+                let total = 0;
+                if (Object.keys(editItems).length === 0) {
+                    tbody.html('<tr><td colspan="6" class="text-center text-muted">No Items Added</td></tr>');
+                } else {
+                    $.each(editItems, function (key, item) {
+                        let pPack = (item.pack || '').toLowerCase();
+                        let hasCode = item.product_code && item.product_code !== '---' && item.product_code.trim() !== '';
+                        let isCount = item.isCount !== undefined ? item.isCount : (hasCode || item.box_size === '' || item.box_size === null || pPack.includes('nos') || pPack.includes('count'));
+
+                        let allowedUnits = isCount ? ['Nos'] : ['Strips', 'Box'];
+                        let unit = item.unit || (isCount ? 'Nos' : 'Strips');
+                        if (!allowedUnits.includes(unit)) unit = allowedUnits[0];
+
+                        let rowId = item.id;
+                        let price = computeUnitPrice(item, unit);
+                        let qty = parseInt(item.quantity) || 1;
+                        let sub = qty * price;
+                        total += sub;
+
+                        let options = '';
+                        allowedUnits.forEach(function (u) {
+                            let displayU = u === 'Nos' ? 'No.' : u;
+                            options += `<option value="${u}" ${unit === u ? 'selected' : ''}>${displayU}</option>`;
+                        });
+
+                        tbody.append(`
+                            <tr>
+                                <td>
+                                    <div class="fw-bold text-main-theme mb-0" style="font-size:0.88rem; line-height:1.2;">${item.name}</div>
+                                    <div class="small text-muted-theme" style="font-size:0.7rem;">
+                                        ${item.brand ? `<span class="fw-bold">(${item.brand})</span> •` : ''} <span class="fw-bold text-primary">${qty} ${unit === 'Nos' ? 'No.' : unit}</span>
+                                    </div>
+                                    <div class="d-flex gap-2 flex-wrap opacity-75" style="font-size:0.6rem;">
+                                        ${item.generic_name ? `<span>${item.generic_name}</span>` : ''}
+                                        ${item.pack && item.pack.trim() ? `<span>• ${item.pack}</span>` : ''}
+                                        ${item.product_code && item.product_code !== '---' && item.product_code !== 'N/A' ? `<span>Code: ${item.product_code}</span>` : ''}
+                                    </div>
+                                    <input type="hidden" name="items[${rowId}][product_id]" value="${item.id}">
+                                    ${item.orderItemId ? `<input type="hidden" name="items[${rowId}][order_item_id]" value="${item.orderItemId}">` : ''}
+                                </td>
+                                <td>
+                                    <select class="form-select form-select-sm unit-select-edit bg-card-theme text-main-theme" data-id="${rowId}" style="width: 90px; margin: 0 auto; border-color: var(--med-border-light);">
+                                        ${options}
+                                    </select>
+                                    <input type="hidden" name="items[${rowId}][unit]" value="${unit}">
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control form-control-sm qty-input-edit bg-card-theme text-main-theme text-center" 
+                                        data-id="${rowId}" value="${qty}" min="1" style="width:80px; margin: 0 auto; border-color: var(--med-border-light);">
+                                    <input type="hidden" name="items[${rowId}][quantity]" value="${qty}">
+                                </td>
+                                <td class="text-end">${price.toFixed(2)}<input type="hidden" name="items[${rowId}][unit_price]" value="${price.toFixed(2)}"></td>
+                                <td class="text-end">${sub.toFixed(2)}</td>
+                                <td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm remove-edit" data-id="${rowId}"><i class="fa fa-times"></i></button></td>
+                            </tr>
+                        `);
+                    });
+                }
+                $('#edit_grand_total').text(total.toFixed(2));
+            }
+
+            $(document).on('change', '.unit-select-edit', function () {
+                let id = $(this).data('id');
+                let val = $(this).val();
+                if (editItems[id]) {
+                    editItems[id].unit = val;
+                    $(`input[name="items[${id}][unit]"]`).val(val);
+                    renderEditItems(); // Recalculate price
+                }
+            });
+
+            $(document).on('change', '.qty-input-edit', function () {
+                let id = $(this).data('id');
+                let val = parseInt($(this).val());
+                if (val < 1) val = 1;
+                if (editItems[id]) {
+                    editItems[id].quantity = val;
+                    renderEditItems();
+                }
+            });
+
+            $(document).on('click', '.remove-edit', function () {
+                delete editItems[$(this).data('id')];
+                renderEditItems();
+            });
+
+            $('#editOrderForm').submit(function (e) {
+                e.preventDefault();
+                let form = $(this);
+                $.ajax({
+                    url: form.attr('action'),
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function (res) {
+                        if (res.success || res.message) {
+                            $('#editOrderModal').modal('hide');
+                            table.ajax.reload(null, false);
+                            if (window.updateSidebarCounts) window.updateSidebarCounts();
+                            Swal.fire('Success', res.success || res.message || 'Order updated successfully.', 'success');
+                        } else {
+                            Swal.fire('Error', res.error || 'Failed to update order.', 'error');
+                        }
+                    },
+                    error: function (xhr) {
+                        let err = 'An error occurred.';
+                        if (xhr.responseJSON) {
+                            err = xhr.responseJSON.message || xhr.responseJSON.error || err;
+                        }
+                        Swal.fire('Error', err, 'error');
                     }
                 });
             });

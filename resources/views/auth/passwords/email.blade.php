@@ -26,8 +26,13 @@
                         </div>
 
                         @if (session('status'))
-                            <div class="alert alert-success border-0 shadow-sm rounded-3 small fw-bold" role="alert">
+                            <div class="alert alert-success border-0 shadow-sm rounded-3 small fw-bold mb-3" role="alert">
                                 {{ session('status') }}
+                            </div>
+                            <div class="d-grid mb-4">
+                                <a href="{{ route('login') }}" class="btn btn-outline-primary fw-bold py-2">
+                                    <i class="fa fa-arrow-left me-2"></i> Go to Login
+                                </a>
                             </div>
                         @endif
 

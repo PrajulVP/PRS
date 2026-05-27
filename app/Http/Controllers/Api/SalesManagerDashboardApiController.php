@@ -1085,4 +1085,175 @@ class SalesManagerDashboardApiController extends Controller
 
         return response()->json(['message' => 'Expense verified and sent to Admin for final approval.']);
     }
+
+    /**
+     * @OA\Put(
+     *     path="/api/sales-manager/distributor-orders/{id}",
+     *     summary="Edit a distributor order",
+     *     description="Allows Sales Manager to edit items and delivery notes of a distributor order assigned to them (status must be pending or processing).",
+     *     tags={"Sales Manager Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"distributor_id", "items"},
+     *             @OA\Property(property="distributor_id", type="integer", example=1),
+     *             @OA\Property(property="delivery_notes", type="string", example="Deliver ASAP", nullable=true),
+     *             @OA\Property(
+     *                 property="items",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     required={"product_id", "quantity"},
+     *                     @OA\Property(property="product_id", type="integer", example=5),
+     *                     @OA\Property(property="quantity", type="integer", example=10),
+     *                     @OA\Property(property="unit", type="string", example="Box"),
+     *                     @OA\Property(property="side", type="string", example="Left", nullable=true),
+     *                     @OA\Property(property="size", type="string", example="M", nullable=true),
+     *                     @OA\Property(property="order_item_id", type="integer", example=12, description="Optional. Pass this to update an existing item instead of recreating it.")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Order updated successfully"),
+     *     @OA\Response(response=400, description="Invalid status or input data"),
+     *     @OA\Response(response=403, description="Unauthorized to edit this order"),
+     *     @OA\Response(response=422, description="Validation failed or invalid records")
+     * )
+     */
+    public function updateDistributorOrder(Request $request, $id)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager')) {
+            return response()->json(['error' => 'Unauthorized role.'], 403);
+        }
+
+        $salesManager = $user->salesManager;
+        if (!$salesManager) {
+            return response()->json(['error' => 'Sales manager record not found.'], 422);
+        }
+
+        $distributorOrder = DistributorOrder::findOrFail($id);
+
+        $isOwner = ($distributorOrder->sales_manager_id === $salesManager->id) || 
+                   ($distributorOrder->distributor && $distributorOrder->distributor->sales_manager_id === $salesManager->id);
+        if (!$isOwner) {
+            return response()->json(['error' => 'You are not authorized to edit this order.'], 403);
+        }
+
+        if (!in_array($distributorOrder->status, [DistributorOrder::STATUS_PENDING, DistributorOrder::STATUS_PROCESSING])) {
+            return response()->json(['error' => 'You can only edit pending or processing orders.'], 422);
+        }
+
+        $request->validate([
+            'distributor_id' => 'required|exists:distributors,id',
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|integer|min:1',
+        ]);
+
+        $metadata = $distributorOrder->metadata ?? [];
+        $metadata['is_edited'] = true;
+        $metadata['last_edited_by'] = $user->name . ' (Sales Manager)';
+        $metadata['last_edited_at'] = now()->toDateTimeString();
+        
+        $editLogs = $metadata['edit_history'] ?? [];
+        $editLogs[] = [
+            'edited_by' => $user->name,
+            'role' => 'salesmanager',
+            'edited_at' => now()->toDateTimeString(),
+            'original_total' => $distributorOrder->total_amount,
+        ];
+        $metadata['edit_history'] = $editLogs;
+
+        $distributorOrder->update([
+            'distributor_id' => $request->distributor_id,
+            'delivery_notes' => $request->delivery_notes,
+            'metadata' => $metadata,
+        ]);
+
+        $totalAmount = 0;
+        $totalItems = 0;
+        $totalQuantity = 0;
+        $requestItemIds = [];
+
+        try {
+            foreach ($request->items as $itemData) {
+                $product = \App\Models\Product::find($itemData['product_id']);
+                if (!$product) {
+                    return response()->json(['error' => 'Product ' . $itemData['product_id'] . ' not found.'], 404);
+                }
+
+                $unit = $itemData['unit'] ?? 'Box';
+                $newQuantity = $itemData['quantity'];
+
+                $multiplier = 1;
+                $normalizedUnit = strtolower($unit);
+                if ($normalizedUnit === 'box') {
+                    $multiplier = (int)($product->strips_per_box ?? 1);
+                } elseif ($normalizedUnit === 'carton') {
+                    $multiplier = (int)($product->boxes_per_carton ?? 1) * (int)($product->strips_per_box ?? 1);
+                } elseif ($normalizedUnit === 'nos' || $normalizedUnit === 'no' || $normalizedUnit === 'unit') {
+                    $multiplier = 1 / (max(1, (int)($product->units_per_strip ?? 1)));
+                }
+
+                $totalQtyNos = ceil($newQuantity * $multiplier);
+                $unitPrice = (float)$product->pts;
+                $itemTotalAmount = $totalQtyNos * $unitPrice;
+
+                $iSide = $itemData['side'] ?? null;
+                $iSize = $itemData['size'] ?? null;
+
+                $currentOrderItem = null;
+                if (isset($itemData['order_item_id'])) {
+                    $currentOrderItem = $distributorOrder->items()->find($itemData['order_item_id']);
+                }
+
+                if ($currentOrderItem) {
+                    $currentOrderItem->update([
+                        'quantity' => $newQuantity,
+                        'unit' => $unit,
+                        'price' => $unitPrice,
+                        'subtotal' => $itemTotalAmount,
+                        'side' => $iSide,
+                        'size' => $iSize,
+                    ]);
+                    $requestItemIds[] = $currentOrderItem->id;
+                } else {
+                    $newItem = $distributorOrder->items()->create([
+                        'product_id' => $product->id,
+                        'quantity' => $newQuantity,
+                        'unit' => $unit,
+                        'price' => $unitPrice,
+                        'subtotal' => $itemTotalAmount,
+                        'side' => $iSide,
+                        'size' => $iSize,
+                    ]);
+                    $requestItemIds[] = $newItem->id;
+                }
+
+                $totalAmount += $itemTotalAmount;
+                $totalItems++;
+                $totalQuantity += $totalQtyNos;
+            }
+
+            // Delete removed items
+            $distributorOrder->items()->whereNotIn('id', $requestItemIds)->delete();
+
+            $distributorOrder->update([
+                'total_amount' => $totalAmount,
+                'total_items' => $totalItems,
+                'total_quantity' => $totalQuantity
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order updated successfully.',
+            'order' => $distributorOrder->load('items')
+        ]);
+    }
 }

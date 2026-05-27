@@ -25,6 +25,12 @@
                             <p class="small" style="color: var(--login-muted);">Sign in to continue</p>
                         </div>
 
+                        @if (session('success'))
+                            <div class="alert alert-success border-0 shadow-sm rounded-3 small fw-bold mb-4" role="alert">
+                                {{ session('success') }}
+                            </div>
+                        @endif
+
                         <form id="login-form" method="POST" action="{{ route('login') }}" novalidate>
                             @csrf
 

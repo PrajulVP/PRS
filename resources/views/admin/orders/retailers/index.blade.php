@@ -518,14 +518,32 @@
                         {{-- Items Section --}}
                         <div class="mb-3 p-3 bg-light">
                             <h6>Items</h6>
-                            <div class="input-group mb-2">
-                                <select id="edit_product_select" class="form-control">
-                                    <option value="">Select Product</option>
-                                    @foreach($products as $p) <option value="{{ $p->id }}" data-price="{{ $p->mrp }}">
-                                        {{ $p->product_name }}
-                                    </option> @endforeach
-                                </select>
-                                <button type="button" class="btn btn-primary" id="btn_add_prod_edit">Add</button>
+                            <div class="mb-3">
+                                <div class="d-flex gap-2 align-items-stretch">
+                                    <select id="edit_product_select" class="form-select bg-card-theme text-main-theme flex-grow-1" style="border-radius: 8px; border-color: var(--med-border-light);">
+                                        <option value="">Select Product to Add</option>
+                                        @foreach($products as $p) <option
+                                            value="{{ $p->id }}"
+                                            data-price="{{ $p->ptr }}"
+                                            data-gst="{{ $p->gst ?? 0 }}"
+                                            data-pack="{{ $p->pack ?? '' }}"
+                                            data-code="{{ $p->product_code ?? '' }}"
+                                            data-boxsize="{{ $p->box_size ?? '' }}"
+                                            data-stripsperbox="{{ $p->strips_per_box ?? 10 }}"
+                                            data-variants="{{ $p->has_variants ? json_encode($p->variant_options) : '' }}">
+                                            {{ $p->product_name }}
+                                        </option> @endforeach
+                                    </select>
+                                    <button type="button" class="btn btn-primary fw-bold px-4" id="btn_add_prod_edit" style="border-radius: 8px; background: var(--med-primary, #2563eb); border: none; white-space: nowrap;">
+                                        <i class="fa fa-plus me-1"></i>Add
+                                    </button>
+                                </div>
+                                {{-- Variant picker shown dynamically --}}
+                                <div id="edit_variant_picker" class="mt-2" style="display:none;">
+                                    <div id="edit_variant_levels"></div>
+                                    <input type="hidden" id="edit_selected_variant" value="">
+                                    <small class="text-danger d-none" id="edit_variant_warn">Please select a variant first.</small>
+                                </div>
                             </div>
                             <table class="table table-bordered table-sm" id="edit_items_table">
                                 <thead>
@@ -768,6 +786,9 @@
         const canCancelRetailerOrder = {{ (Auth::user()->hasAnyRole(['admin', 'superadmin', 'retailer']) || Auth::user()->hasPermissionToCategory('retailer_orders', 'delete')) ? 'true' : 'false' }};
         const isRetailer = {{ Auth::user()->hasRole('retailer') ? 'true' : 'false' }};
         const isAdmin = {{ Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']) ? 'true' : 'false' }};
+        const isSuperAdminOrAdmin = {{ Auth::user()->hasAnyRole(['admin', 'superadmin']) ? 'true' : 'false' }};
+        const isFieldStaff = {{ Auth::user()->hasRole('fieldstaff') ? 'true' : 'false' }};
+        const authFieldStaffId = {{ Auth::user()->fieldStaff ? Auth::user()->fieldStaff->id : 'null' }};
 
         $(document).ready(function () {
             var editItems = {};
@@ -901,7 +922,17 @@
                 },
                 {
                     data: 'order_code',
-                    name: 'order_code'
+                    name: 'order_code',
+                    render: function (data, type, row) {
+                        if (type !== 'display') return data;
+                        let html = `<span class="fw-bold">${data}</span>`;
+                        if (row.metadata && row.metadata.is_edited) {
+                            let lastEditor = row.metadata.last_edited_by || 'Staff';
+                            let lastTime = row.metadata.last_edited_at || '';
+                            html += ` <span class="badge bg-warning text-dark ms-1" style="font-size: 0.65rem; padding: 0.25em 0.5em; vertical-align: middle; cursor: help; border-radius: 4px;" title="Edited by ${lastEditor} on ${lastTime}"><i class="fa fa-pencil"></i> EDITED</span>`;
+                        }
+                        return html;
+                    }
                 },
                 {
                     data: 'retailer_name',
@@ -1059,6 +1090,9 @@
 
                         let st = (row.status || '').toLowerCase().replace(/ /g, '_');
 
+                        // Edit Order Button disabled on main index
+                        let canEdit = false;
+
                         // Print Invoice
                         if (st === 'delivered') {
                             let invoiceUrl = "{{ route('admin.retailer.invoice', ':id') }}".replace(':id', row.id);
@@ -1181,16 +1215,29 @@
                 row.items.forEach(function (i) {
                     let vInfo = [i.side, i.size].filter(v => v).join(' / ');
                     let displayName = i.product_name || i.name;
-                    if (vInfo) displayName += ` [${vInfo}]`;
+                    if (displayName.includes('[')) {
+                        displayName = displayName.split('[')[0].trim();
+                    }
+                    let itemKey = i.product_id + (vInfo ? '-' + vInfo.replace(/ /g, '_') : '');
                     
-                    editItems[i.product_id] = {
+                    editItems[itemKey] = {
                         id: i.product_id,
-                        name: displayName,
+                        itemKey: itemKey,
+                        name: displayName + (vInfo ? ` [${vInfo}]` : ''),
                         side: i.side,
                         size: i.size,
                         qty: i.quantity || i.qty,
+                        unit: i.unit || 'Strips',
+                        basePrice: parseFloat(i.unit_price || i.price),
                         price: parseFloat(i.unit_price || i.price),
-                        order_item_id: i.order_item_id
+                        stripsPerBox: parseInt(i.strip_size) || 10,
+                        gst: parseFloat(i.gst) || 0,
+                        order_item_id: i.order_item_id,
+                        pack: i.pack,
+                        box_size: i.box_size,
+                        product_code: i.product_code,
+                        brand: i.brand,
+                        generic_name: i.generic_name
                     };
                 });
                 renderEditItems();
@@ -1198,19 +1245,145 @@
                 $('#editOrderModal').modal('show');
             });
 
+            // Variant picker logic for add-product in edit modal
+            function buildEditVariantPicker(variantsJson) {
+                let $picker = $('#edit_variant_picker');
+                let $levels = $('#edit_variant_levels');
+                let $hidden = $('#edit_selected_variant');
+                $picker.hide();
+                $levels.empty();
+                $hidden.val('');
+                if (!variantsJson) return;
+                let variants;
+                try { variants = JSON.parse(variantsJson); } catch(e) { return; }
+                if (!variants || Object.keys(variants).length === 0) return;
+
+                let attrNames = Object.keys(variants);
+                $picker.show();
+                attrNames.forEach(function(attr, idx) {
+                    let vals = variants[attr];
+                    let levelHtml = `<div class="mb-1 edit-variant-level" data-attr="${attr}" data-level="${idx}" ${idx > 0 ? 'style="display:none;"' : ''}>
+                        <span class="text-muted small text-uppercase fw-bold me-2" style="font-size:0.7rem;">${attr}:</span>
+                        <div class="d-inline-flex flex-wrap gap-1">
+                            ${vals.map(v => `<button type="button" class="btn btn-sm btn-outline-primary edit-var-btn px-2 py-1 fw-bold" style="font-size:0.78rem;border-radius:6px;" data-attr="${attr}" data-value="${v}" data-level="${idx}">${v}</button>`).join('')}
+                        </div>
+                    </div>`;
+                    $levels.append(levelHtml);
+                });
+            }
+
+            $('#edit_product_select').on('change', function() {
+                let sel = $(this).find('option:selected');
+                let variantsRaw = sel.attr('data-variants') || '';
+                buildEditVariantPicker(variantsRaw || null);
+                $('#edit_variant_warn').addClass('d-none');
+            });
+
+            $(document).on('click', '.edit-var-btn', function() {
+                let $btn = $(this);
+                let level = parseInt($btn.data('level'));
+
+                // Mark active in this level
+                $btn.closest('.edit-variant-level').find('.edit-var-btn')
+                    .removeClass('active btn-primary text-white').addClass('btn-outline-primary');
+                $btn.removeClass('btn-outline-primary').addClass('active btn-primary text-white');
+
+                // Hide/reset subsequent levels
+                $('.edit-variant-level').each(function() {
+                    if (parseInt($(this).data('level')) > level) {
+                        $(this).hide().find('.edit-var-btn')
+                            .removeClass('active btn-primary text-white').addClass('btn-outline-primary');
+                    }
+                });
+
+                // Show next level or finalise
+                let $nextLevel = $(`.edit-variant-level[data-level="${level + 1}"]`);
+                if ($nextLevel.length > 0) {
+                    $nextLevel.show();
+                    $('#edit_selected_variant').val('');
+                } else {
+                    let parts = [];
+                    $('.edit-variant-level:visible .edit-var-btn.active').each(function() {
+                        parts.push($(this).data('value'));
+                    });
+                    $('#edit_selected_variant').val(parts.join(' - '));
+                }
+            });
+
             $('#btn_add_prod_edit').click(function () {
                 let sel = $('#edit_product_select option:selected');
                 let id = sel.val();
                 if (!id) return;
-                if (editItems[id]) return alert('Already added');
-                editItems[id] = {
+
+                let pack = (sel.data('pack') || '').toString().toLowerCase();
+                let code = (sel.data('code') || '').toString().trim();
+                let boxSize = sel.data('boxsize');
+                let stripsPerBox = parseInt(sel.data('stripsperbox')) || 10;
+                let hasCode = code && code !== '---' && code !== '';
+                let isCount = hasCode || boxSize === '' || boxSize === null || pack.includes('nos') || pack.includes('count');
+
+                let variantsRaw = sel.attr('data-variants') || '';
+                let hasVariants = variantsRaw && variantsRaw.trim() !== '';
+                let selectedVariant = $('#edit_selected_variant').val();
+
+                if (hasVariants && !selectedVariant) {
+                    $('#edit_variant_warn').removeClass('d-none');
+                    return;
+                }
+                $('#edit_variant_warn').addClass('d-none');
+
+                // Parse variant into side/size fields
+                let side = null, size = null;
+                if (selectedVariant && hasVariants) {
+                    let variantParts = selectedVariant.split(' - ');
+                    let variantDef = {};
+                    try { variantDef = JSON.parse(variantsRaw); } catch(e) {}
+                    let attrNames = Object.keys(variantDef);
+                    attrNames.forEach(function(attr, idx) {
+                        let v = variantParts[idx] || null;
+                        let aLow = attr.toLowerCase();
+                        if (aLow === 'side') side = v;
+                        else if (aLow === 'size') size = v;
+                    });
+                }
+
+                // Use variant-aware unique key so same product with diff variants can coexist
+                let itemKey = id + (selectedVariant ? '-' + selectedVariant.replace(/ /g, '_') : '');
+                if (editItems[itemKey]) { editItems[itemKey].qty += 1; renderEditItems(); return; }
+
+                editItems[itemKey] = {
                     id: id,
-                    name: sel.text(),
+                    itemKey: itemKey,
+                    name: sel.text().trim() + (selectedVariant ? ` [${selectedVariant}]` : ''),
+                    side: side,
+                    size: size,
                     qty: 1,
-                    price: parseFloat(sel.data('price'))
+                    unit: isCount ? 'Nos' : 'Strips',
+                    basePrice: parseFloat(sel.data('price')),
+                    price: parseFloat(sel.data('price')),
+                    stripsPerBox: stripsPerBox,
+                    isCount: isCount,
+                    gst: parseFloat(sel.data('gst')) || 0,
+                    pack: sel.data('pack'),
+                    box_size: sel.data('boxsize'),
+                    product_code: sel.data('code'),
+                    brand: sel.data('brand'),
+                    generic_name: sel.data('generic') || ''
                 };
+
+                // Reset picker after adding
+                buildEditVariantPicker(null);
+                $('#edit_product_select').val('');
                 renderEditItems();
             });
+
+            function computeUnitPrice(item, unit) {
+                let base = parseFloat(item.basePrice || item.price) || 0;
+                let spb = parseInt(item.stripsPerBox) || 10;
+                if (unit === 'Box') return base * spb;
+                if (unit === 'Nos') return base;
+                return base; // Strips
+            }
 
             function renderEditItems() {
                 let tbody = $('#edit_items_table tbody');
@@ -1220,37 +1393,55 @@
                     tbody.html('<tr><td colspan="6" class="text-center text-muted">No Items Added</td></tr>');
                 } else {
                     $.each(editItems, function (id, item) {
-                        let price = parseFloat(item.price) || 0;
+                        let pPack = (item.pack || '').toLowerCase();
+                        let hasCode = item.product_code && item.product_code !== '---' && item.product_code.trim() !== '';
+                        let isCount = item.isCount !== undefined ? item.isCount : (hasCode || item.box_size === '' || item.box_size === null || pPack.includes('nos') || pPack.includes('count'));
+
+                        let allowedUnits = isCount ? ['Nos'] : ['Strips', 'Box'];
+                        let unit = item.unit || (isCount ? 'Nos' : 'Strips');
+                        if (!allowedUnits.includes(unit)) unit = allowedUnits[0];
+
+                        let price = computeUnitPrice(item, unit);
                         let qty = parseInt(item.qty) || 1;
                         let sub = price * qty;
                         total += sub;
-                        let unit = item.unit || 'Box';
+
                         let options = '';
-                        ['Box', 'Carton', 'Strips'].forEach(function (u) {
-                            options += `<option value="${u}" ${unit === u ? 'selected' : ''}>${u}</option>`;
+                        allowedUnits.forEach(function (u) {
+                            let displayU = u === 'Nos' ? 'No.' : u;
+                            options += `<option value="${u}" ${unit === u ? 'selected' : ''}>${displayU}</option>`;
                         });
 
                         tbody.append(`
-                                                                                                                                                                                                            <tr>
-                                                                                                                                                                                                                <td>${item.name}
-                                                                                                                                                                                                                    <input type="hidden" name="items[${id}][product_id]" value="${id}">
-                                                                                                                                                                                                                    <input type="hidden" name="items[${id}][side]" value="${item.side || ''}">
-                                                                                                                                                                                                                    <input type="hidden" name="items[${id}][size]" value="${item.size || ''}">
-                                                                                                                                                                                                                    ${item.order_item_id ? `<input type="hidden" name="items[${id}][order_item_id]" value="${item.order_item_id}">` : ''}
-                                                                                                                                                                                                                </td>
-                                                                                                                                                                                                                <td>
-                                                                                                                                                                                                                    <select class="form-select form-select-sm unit-select-edit" data-id="${id}" name="items[${id}][unit]" style="width:90px; margin: 0 auto;">
-                                                                                                                                                                                                                        ${options}
-                                                                                                                                                                                                                    </select>
-                                                                                                                                                                                                                </td>
-                                                                                                                                                                                                                <td>
-                                                                                                                                                                                                                    <input type="number" class="form-control form-control-sm edit-qty" data-id="${id}" value="${qty}" name="items[${id}][quantity]" min="1" style="width:80px; margin: 0 auto;">
-                                                                                                                                                                                                                </td>
-                                                                                                                                                                                                                <td class="text-end">${price.toFixed(2)}<input type="hidden" name="items[${id}][unit_price]" value="${price}"></td>
-                                                                                                                                                                                                                <td class="text-end">${sub.toFixed(2)}</td>
-                                                                                                                                                                                                                <td class="text-center"><button type="button" class="btn btn-danger btn-sm remove-edit" data-id="${id}">X</button></td>
-                                                                                                                                                                                                            </tr>
-                                                                                                                                                                                                            `);
+                            <tr>
+                                <td>
+                                    <div class="fw-bold text-main-theme mb-0" style="font-size:0.88rem; line-height:1.2;">${item.name}</div>
+                                    <div class="small text-muted-theme" style="font-size:0.7rem;">
+                                        ${item.brand ? `<span class="fw-bold">(${item.brand})</span> •` : ''} <span class="fw-bold text-primary">${qty} ${unit === 'Nos' ? 'No.' : unit}</span>
+                                    </div>
+                                    <div class="d-flex gap-2 flex-wrap opacity-75" style="font-size:0.6rem;">
+                                        ${item.generic_name ? `<span>${item.generic_name}</span>` : ''}
+                                        ${item.pack && item.pack.trim() ? `<span>• ${item.pack}</span>` : ''}
+                                        ${item.product_code && item.product_code !== '---' && item.product_code !== 'N/A' ? `<span>Code: ${item.product_code}</span>` : ''}
+                                    </div>
+                                    <input type="hidden" name="items[${id}][product_id]" value="${item.id}">
+                                    <input type="hidden" name="items[${id}][side]" value="${item.side || ''}">
+                                    <input type="hidden" name="items[${id}][size]" value="${item.size || ''}">
+                                    ${item.order_item_id ? `<input type="hidden" name="items[${id}][order_item_id]" value="${item.order_item_id}">` : ''}
+                                </td>
+                                <td>
+                                    <select class="form-select form-select-sm unit-select-edit" data-id="${id}" name="items[${id}][unit]" style="width:90px; margin: 0 auto;">
+                                        ${options}
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control form-control-sm edit-qty" data-id="${id}" value="${qty}" name="items[${id}][quantity]" min="1" style="width:80px; margin: 0 auto;">
+                                </td>
+                                <td class="text-end">${price.toFixed(2)}<input type="hidden" name="items[${id}][unit_price]" value="${price.toFixed(2)}"></td>
+                                <td class="text-end">${sub.toFixed(2)}</td>
+                                <td class="text-center"><button type="button" class="btn btn-danger btn-sm remove-edit" data-id="${id}">X</button></td>
+                            </tr>
+                        `);
                     });
                 }
                 $('#edit_grand_total').text(total.toFixed(2));
@@ -1258,7 +1449,7 @@
 
             $(document).on('change', '.edit-qty', function () {
                 let id = $(this).data('id');
-                editItems[id].qty = parseInt($(this).val());
+                editItems[id].qty = parseInt($(this).val()) || 1;
                 renderEditItems();
             });
 
@@ -1267,6 +1458,7 @@
                 let val = $(this).val();
                 if (editItems[id]) {
                     editItems[id].unit = val;
+                    renderEditItems();
                 }
             });
             $(document).on('click', '.remove-edit', function () {
@@ -1754,7 +1946,24 @@
                 let payBadgeClass = payStatus === 'paid' ? 'bg-success text-white' : 'bg-secondary text-white';
                 $('#modalOrderCode').html(`#${row.order_code} <span class="badge ${payBadgeClass} ms-2" style="font-size: 0.75rem; vertical-align: middle; padding: 0.3em 0.7em;">${payStatus.toUpperCase()}</span>`);
 
-                let detailsHtml = `
+                let editBanner = '';
+                if (row.metadata && row.metadata.is_edited) {
+                    let lastEditor = row.metadata.last_edited_by || 'Staff';
+                    let lastTime = row.metadata.last_edited_at || '';
+                    editBanner = `
+                        <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-3" style="border-radius: 10px; background: rgba(255, 193, 7, 0.1); color: #856404;">
+                            <div class="me-3">
+                                <i class="fa fa-exclamation-triangle fa-2x"></i>
+                            </div>
+                            <div>
+                                <span class="fw-bold d-block" style="font-size: 0.9rem;">Order Edited Manually</span>
+                                <span class="small" style="font-size: 0.85rem;">This order was modified by <b>${lastEditor}</b> on <b>${lastTime}</b>.</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                let detailsHtml = editBanner + `
                     <div class="row mb-3">
                         <div class="col-md-6 mb-2 mb-md-0">
                             <div class="card h-100 border-0 shadow-sm bg-card-theme" style="border-radius: 10px !important;">
@@ -1822,12 +2031,13 @@
                                             ${cleanedName} ${variantBadge}
                                         </div>
                                         <div class="small text-muted-theme" style="font-size: 0.7rem;">
-                                            (${i.brand || 'Generic'}) • <span class="fw-bold text-primary">${qty} ${i.unit || 'Nos'}</span>
+                                            ${i.brand ? `<span class="fw-bold">(${i.brand})</span> •` : ''} <span class="fw-bold text-primary">${qty} ${i.unit || 'Nos'}</span>
                                             ${i.free_quantity > 0 ? `<span class="text-success fw-bold ms-1" style="font-size: 0.65rem;">(+${i.free_quantity} Free)</span>` : ''}
                                         </div>
-                                        <div class="text-muted small mt-0 opacity-75 d-flex flex-wrap gap-2" style="font-size: 0.6rem;">
+                                        <div class="d-flex gap-2 flex-wrap mt-0 opacity-75" style="font-size: 0.6rem;">
                                             ${i.generic_name ? `<span>${i.generic_name}</span>` : ''}
-                                            ${i.product_code && i.product_code !== 'N/A' && i.product_code !== '---' ? `<span>Code: ${i.product_code}</span>` : ''}
+                                            ${i.pack && i.pack.trim() ? `<span>• ${i.pack}</span>` : ''}
+                                            ${i.product_code && i.product_code !== '---' && i.product_code !== 'N/A' ? `<span>Code: ${i.product_code}</span>` : ''}
                                         </div>
                                     </div>
                                 </div>
@@ -2016,23 +2226,24 @@
         padding: 0.375rem 0.75rem;
         font-size: 0.9rem;
         font-weight: 600;
-        border: 1.5px solid #ff9e88 !important;
-        color: #ff6f4c !important;
-        background-color: #ffe5dd !important;
+        border: 1.5px solid var(--med-primary, #00497a) !important;
+        color: var(--med-primary, #00497a) !important;
+        background-color: rgba(0, 73, 122, 0.07) !important;
         transition: all 0.2s ease;
     }
     .btn-clear-dates:hover {
-        background-color: #ff6f4c !important;
+        background-color: var(--med-primary, #00497a) !important;
         color: #ffffff !important;
+        border-color: var(--med-primary, #00497a) !important;
     }
 
     body.dark-only .btn-clear-dates {
-        border-color: rgba(239, 68, 68, 0.4) !important;
-        color: #f87171 !important;
-        background-color: rgba(239, 68, 68, 0.1) !important;
+        border-color: rgba(0, 73, 122, 0.5) !important;
+        color: #5db8f5 !important;
+        background-color: rgba(0, 73, 122, 0.15) !important;
     }
     body.dark-only .btn-clear-dates:hover {
-        background-color: #ef4444 !important;
+        background-color: var(--med-primary, #00497a) !important;
         color: #ffffff !important;
     }
 </style>

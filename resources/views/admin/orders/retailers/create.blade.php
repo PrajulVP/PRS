@@ -673,6 +673,18 @@
 
             $('.select2').select2({ placeholder: "Search...", allowClear: true });
 
+            $('#retailer_id').on('change', function() {
+                // Clear active product selection and hide details/variants/distributors
+                $('#productSelect').val(null).trigger('change');
+                $('#productDetailsCard').fadeOut(200);
+                $('#selectionDetails').hide();
+                $('#distributorContainer').hide();
+                $('#variantWrapper').hide();
+                $('#variantLevelsContainer').empty();
+                $('#qtyInput').val('');
+                lastFetchKey = null;
+            });
+
             $('#brandSelect').on('change', function() {
                 let brand = $(this).val();
                 $('#productDetailsCard').fadeOut(200);
@@ -897,6 +909,9 @@
                 let levelIdx = parseInt($btn.data('level'));
                 let levelVal = $btn.data('value');
 
+                // Clear cache on variant selection changes so it's forced to recheck
+                lastFetchKey = null;
+
                 // Toggle active class in current level
                 $btn.closest('.variant-level').find('.variant-btn').removeClass('active');
                 $btn.addClass('active');
@@ -924,12 +939,16 @@
 
                     $('#variantValue').val(finalVariant);
                     
-                    // Show quantity and wait for input to show distributor
+                    // Show quantity details
                     $('#selectionDetails').fadeIn(200);
-                    $('#distributorContainer').hide();
-                    $('#qtyInput').focus();
                     
-                    // Note: We no longer auto-fetch stock here, because we wait for the user to type the quantity.
+                    let qty = parseFloat($('#qtyInput').val());
+                    if (qty > 0) {
+                        triggerStockCheck();
+                    } else {
+                        $('#distributorContainer').hide();
+                        $('#qtyInput').focus();
+                    }
                 }
             });
 

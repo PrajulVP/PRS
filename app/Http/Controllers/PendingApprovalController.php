@@ -261,6 +261,7 @@ class PendingApprovalController extends Controller
                             'side' => $i->side,
                             'size' => $i->size,
                             'is_returnable' => $i->product?->is_returnable ?? true,
+                            'gst' => $i->product?->gst ?? 0,
                         ];
 
                         // Find corresponding return request if any
@@ -314,6 +315,8 @@ class PendingApprovalController extends Controller
                     $res['distributor_dl'] = $item->distributor->drug_license_no ?? '--';
                     $res['payment_status'] = $item->payment_status ?? 'pending';
                     $res['invoice_url'] = $item->invoice_path ? asset('storage/' . $item->invoice_path) : null;
+                    $res['sales_manager_id'] = $item->sales_manager_id;
+                    $res['distributor_sm_id'] = $item->distributor->sales_manager_id ?? null;
                 } elseif ($viewType === 'retailer') {
                     $res['retailer_id'] = $item->retailer_id;
                     $res['distributor_id'] = $item->distributor_id;
@@ -326,6 +329,10 @@ class PendingApprovalController extends Controller
                     $res['retailer_location'] = $item->retailer->address ?? '--';
                     $res['payment_status'] = $item->payment_status ?? 'pending';
                     $res['invoice_url'] = $item->invoice_path ? asset('storage/' . $item->invoice_path) : null;
+                    $res['fieldstaff_id'] = $item->fieldstaff_id;
+                    $res['retailer_fs_id'] = $item->retailer->field_staff_id ?? null;
+                    $res['sales_manager_id'] = $item->retailer->sales_manager_id ?? ($item->retailer->fieldStaff->sales_manager_id ?? null);
+                    $res['retailer_sm_id'] = $item->retailer->sales_manager_id ?? ($item->retailer->fieldStaff->sales_manager_id ?? null);
                     
                     // Added distributor details for popover as well
                     $res['distributor_name'] = $item->distributor->user->name ?? ($item->distributor->name ?? 'N/A');

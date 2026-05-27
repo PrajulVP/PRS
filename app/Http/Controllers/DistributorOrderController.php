@@ -187,6 +187,8 @@ class DistributorOrderController extends Controller
                         'distributor_dl' => $order->distributor?->drug_license_no ?? '',
                         'distributor_id' => $order->distributor_id,
                         'sales_manager_name' => $order->salesManager?->user?->name ?? 'N/A',
+                        'sales_manager_id' => $order->sales_manager_id,
+                        'distributor_sm_id' => $order->distributor?->sales_manager_id,
                         'total_items' => $order->total_items,
                         'total_quantity' => $order->total_quantity,
                         'total_amount' => $order->total_amount,
@@ -448,22 +450,38 @@ class DistributorOrderController extends Controller
 
     public function update(Request $request, distributorOrder $distributorOrder)
     {
-        // For standard update (status, notes), use this.
-        // For complex item editing, logic is preserved.
-
-        $request->validate([
-            'items' => 'sometimes|array|min:1',
-            // We use 'sometimes' because status update might not act on items, 
-            // but the modal form submits items.
-        ]);
-
-        // ... (Update logic for Items similar to original file, adapted if needed)
-        // Since I'm essentially copying the Controller logic for update, I'll assume full logic is needed.
-        // The original update was quite complex handling item diffs.
-        // I will simplify: If status change only, simple update.
-        // If items are present, handle item update.
-
-        // Actually, I'll implement the previous logic fully to ensure robustness.
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if ($user->hasRole('salesmanager')) {
+            $salesManager = $user->salesManager;
+            if (!$salesManager) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['error' => 'Sales manager record not found.'], 422);
+                }
+                return back()->withErrors(['error' => 'Sales manager record not found.']);
+            }
+            $isOwner = ($distributorOrder->sales_manager_id === $salesManager->id) || 
+                       ($distributorOrder->distributor && $distributorOrder->distributor->sales_manager_id === $salesManager->id);
+            if (!$isOwner) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['error' => 'You are not authorized to edit this order.'], 403);
+                }
+                return back()->withErrors(['error' => 'You are not authorized to edit this order.']);
+            }
+            if (!in_array($distributorOrder->status, [DistributorOrder::STATUS_PENDING, DistributorOrder::STATUS_PROCESSING])) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['error' => 'You can only edit pending or processing orders.'], 422);
+                }
+                return back()->withErrors(['error' => 'You can only edit pending or processing orders.']);
+            }
+            // Sales manager cannot change status
+            $request->merge(['status' => $distributorOrder->status]);
+        } elseif (!$user->hasAnyRole(['admin', 'superadmin'])) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['error' => 'Unauthorized action.'], 403);
+            }
+            return back()->withErrors(['error' => 'Unauthorized action.']);
+        }
 
         $request->validate([
             'distributor_id' => 'required|exists:distributors,id',
@@ -471,10 +489,27 @@ class DistributorOrderController extends Controller
             'items' => 'required|array',
         ]);
 
+        $metadata = $distributorOrder->metadata ?? [];
+        if ($user->hasRole('salesmanager')) {
+            $metadata['is_edited'] = true;
+            $metadata['last_edited_by'] = $user->name . ' (Sales Manager)';
+            $metadata['last_edited_at'] = now()->toDateTimeString();
+            
+            $editLogs = $metadata['edit_history'] ?? [];
+            $editLogs[] = [
+                'edited_by' => $user->name,
+                'role' => 'salesmanager',
+                'edited_at' => now()->toDateTimeString(),
+                'original_total' => $distributorOrder->total_amount,
+            ];
+            $metadata['edit_history'] = $editLogs;
+        }
+
         $distributorOrder->update([
             'distributor_id' => $request->distributor_id,
             'status' => $request->status,
             'delivery_notes' => $request->delivery_notes,
+            'metadata' => $metadata,
         ]);
 
         $totalAmount = 0;

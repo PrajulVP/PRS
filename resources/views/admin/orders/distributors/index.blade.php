@@ -544,8 +544,17 @@
                                 <select id="edit_product_select" class="form-control select2-modal">
                                     <option value="">Select a product to add...</option>
                                     @foreach($products as $product)
-                                        <option value="{{ $product->id }}" data-price="{{ $product->mrp }}"
-                                            data-stock="{{ $product->stock }}">
+                                        <option value="{{ $product->id }}" 
+                                            data-price="{{ $product->mrp }}"
+                                            data-stock="{{ $product->stock }}"
+                                            data-gst="{{ $product->gst ?? 0 }}"
+                                            data-pack="{{ $product->pack ?? '' }}"
+                                            data-code="{{ $product->product_code ?? '' }}"
+                                            data-boxsize="{{ $product->box_size ?? '' }}"
+                                            data-stripsperbox="{{ $product->strips_per_box ?? 10 }}"
+                                            data-brand="{{ $product->brand ?? '' }}"
+                                            data-generic="{{ $product->generic_name ?? '' }}"
+                                            data-variants="{{ $product->has_variants ? json_encode($product->variant_options) : '' }}">
                                             {{ $product->product_name }} (Stock: {{ $product->stock }}) - ₹{{ $product->mrp }}
                                         </option>
                                     @endforeach
@@ -553,6 +562,12 @@
                                 <button type="button" class="btn btn-primary" id="btn_add_product_edit">
                                     <i class="fa fa-plus"></i> Add
                                 </button>
+                            </div>
+                            {{-- Variant picker container for edit modal --}}
+                            <div id="edit_variant_picker" class="mt-2" style="display:none;">
+                                <div id="edit_variant_levels"></div>
+                                <input type="hidden" id="edit_selected_variant" value="">
+                                <small class="text-danger d-none" id="edit_variant_warn">Please select a variant first.</small>
                             </div>
                         </div>
 
@@ -717,6 +732,8 @@
             const isDistributor = {{ Auth::user()->hasRole('distributor') ? 'true' : 'false' }};
             const isSalesManager = {{ Auth::user()->hasRole('salesmanager') ? 'true' : 'false' }};
             const isAdmin = {{ Auth::user()->hasRole('admin') ? 'true' : 'false' }};
+            const isSuperAdminOrAdmin = {{ Auth::user()->hasAnyRole(['admin', 'superadmin']) ? 'true' : 'false' }};
+            const authSalesManagerId = {{ Auth::user()->salesManager ? Auth::user()->salesManager->id : 'null' }};
             // --- Data Variables ---
             var createItems = {}; // { productId: { id, name, price, stock, quantity } }
             var editItems = {}; // { productId: { id, name, price, stock, quantity, orderItemId } }
@@ -791,7 +808,17 @@
                 },
                 {
                     data: 'order_code',
-                    name: 'order_code'
+                    name: 'order_code',
+                    render: function (data, type, row) {
+                        if (type !== 'display') return data;
+                        let html = `<span class="fw-bold">${data}</span>`;
+                        if (row.metadata && row.metadata.is_edited) {
+                            let lastEditor = row.metadata.last_edited_by || 'Staff';
+                            let lastTime = row.metadata.last_edited_at || '';
+                            html += ` <span class="badge bg-warning text-dark ms-1" style="font-size: 0.65rem; padding: 0.25em 0.5em; vertical-align: middle; cursor: help; border-radius: 4px;" title="Edited by ${lastEditor} on ${lastTime}"><i class="fa fa-pencil"></i> EDITED</span>`;
+                        }
+                        return html;
+                    }
                 },
                     @if(!Auth::user()->hasRole('distributor')) {
                             data: 'name',
@@ -934,6 +961,9 @@
                         let btns = `<div class="action-buttons">`;
                         // View Button (Always visible)
                         btns += `<button class="btn btn-info btn-sm view-btn" title="View Details"><i class="fa fa-eye"></i></button>`;
+
+                        // Edit Order Button disabled on main index
+                        let canEdit = false;
 
                         // System Invoice Button
                         if (st === 'delivered') {
@@ -1498,7 +1528,24 @@
                 let payStatus = (row.payment_status || 'pending').toLowerCase();
                 let payBadgeClass = payStatus === 'paid' ? 'bg-success text-white' : 'bg-secondary text-white';
                 $('#modalOrderCode').html(`#${row.order_code} <span class="badge ${payBadgeClass} ms-2" style="font-size: 0.75rem; vertical-align: middle; padding: 0.3em 0.7em;">${payStatus.toUpperCase()}</span>`);
-                let detailsHtml = `
+                let editBanner = '';
+                if (row.metadata && row.metadata.is_edited) {
+                    let lastEditor = row.metadata.last_edited_by || 'Staff';
+                    let lastTime = row.metadata.last_edited_at || '';
+                    editBanner = `
+                        <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-3" style="border-radius: 10px; background: rgba(255, 193, 7, 0.1); color: #856404;">
+                            <div class="me-3">
+                                <i class="fa fa-exclamation-triangle fa-2x"></i>
+                            </div>
+                            <div>
+                                <span class="fw-bold d-block" style="font-size: 0.9rem;">Order Edited Manually</span>
+                                <span class="small" style="font-size: 0.85rem;">This order was modified by <b>${lastEditor}</b> on <b>${lastTime}</b>.</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                let detailsHtml = editBanner + `
                     <div class="row mb-3">
                         <div class="col-md-6 mb-2 mb-md-0">
                             <div class="card h-100 border-0 shadow-sm bg-card-theme" style="border-radius: 10px !important;">
@@ -1563,16 +1610,17 @@
                                 <div class="d-flex align-items-start">
                                     <div class="ms-0 w-100">
                                         <div class="text-main-theme fw-bold mb-0" style="font-size: 0.9rem; white-space: normal; line-height: 1.2;">
-                                            ${cleanedName} ${variantBadge}
-                                        </div>
-                                        <div class="small text-muted-theme" style="font-size: 0.7rem;">
-                                            (${i.brand || 'Generic'}) • <span class="fw-bold text-primary">${qty} ${i.unit || 'Nos'}</span>
-                                            ${i.free_quantity > 0 ? `<span class="text-success fw-bold ms-1" style="font-size: 0.65rem;">(+${i.free_quantity} Free)</span>` : ''}
-                                        </div>
-                                        <div class="text-muted small mt-0 opacity-75 d-flex flex-wrap gap-2" style="font-size: 0.6rem;">
-                                            ${i.generic_name ? `<span>${i.generic_name}</span>` : ''}
-                                            ${i.product_code && i.product_code !== 'N/A' && i.product_code !== '---' ? `<span>Code: ${i.product_code}</span>` : ''}
-                                        </div>
+                                             ${cleanedName} ${variantBadge}
+                                         </div>
+                                         <div class="small text-muted-theme" style="font-size: 0.7rem;">
+                                             ${i.brand ? `<span class="fw-bold">(${i.brand})</span> •` : ''} <span class="fw-bold text-primary">${qty} ${i.unit || 'Nos'}</span>
+                                             ${i.free_quantity > 0 ? `<span class="text-success fw-bold ms-1" style="font-size: 0.65rem;">(+${i.free_quantity} Free)</span>` : ''}
+                                         </div>
+                                         <div class="d-flex gap-2 flex-wrap mt-0 opacity-75" style="font-size: 0.6rem;">
+                                             ${i.generic_name ? `<span>${i.generic_name}</span>` : ''}
+                                             ${i.pack && i.pack.trim() ? `<span>• ${i.pack}</span>` : ''}
+                                             ${i.product_code && i.product_code !== '---' && i.product_code !== 'N/A' ? `<span>Code: ${i.product_code}</span>` : ''}
+                                         </div>
                                     </div>
                                 </div>
                             </td>
@@ -1894,23 +1942,24 @@
         padding: 0.375rem 0.75rem;
         font-size: 0.9rem;
         font-weight: 600;
-        border: 1.5px solid #ff9e88 !important;
-        color: #ff6f4c !important;
-        background-color: #ffe5dd !important;
+        border: 1.5px solid var(--med-primary, #00497a) !important;
+        color: var(--med-primary, #00497a) !important;
+        background-color: rgba(0, 73, 122, 0.07) !important;
         transition: all 0.2s ease;
     }
     .btn-clear-dates:hover {
-        background-color: #ff6f4c !important;
+        background-color: var(--med-primary, #00497a) !important;
         color: #ffffff !important;
+        border-color: var(--med-primary, #00497a) !important;
     }
 
     body.dark-only .btn-clear-dates {
-        border-color: rgba(239, 68, 68, 0.4) !important;
-        color: #f87171 !important;
-        background-color: rgba(239, 68, 68, 0.1) !important;
+        border-color: rgba(0, 73, 122, 0.5) !important;
+        color: #5db8f5 !important;
+        background-color: rgba(0, 73, 122, 0.15) !important;
     }
     body.dark-only .btn-clear-dates:hover {
-        background-color: #ef4444 !important;
+        background-color: var(--med-primary, #00497a) !important;
         color: #ffffff !important;
     }
 </style>

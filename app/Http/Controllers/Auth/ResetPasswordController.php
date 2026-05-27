@@ -25,7 +25,7 @@ class ResetPasswordController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = '/dashboard';
+    protected $redirectTo = '/login';
 
     /**
      * Get the password reset validation rules.
@@ -39,5 +39,35 @@ class ResetPasswordController extends Controller
             'email' => 'required|email',
             'password' => 'required|confirmed|min:6',
         ];
+    }
+
+    /**
+     * Reset the given user's password.
+     *
+     * @param  \Illuminate\Contracts\Auth\CanResetPassword  $user
+     * @param  string  $password
+     * @return void
+     */
+    protected function resetPassword($user, $password)
+    {
+        $user->password = \Illuminate\Support\Facades\Hash::make($password);
+
+        $user->setRememberToken(\Illuminate\Support\Str::random(60));
+
+        $user->save();
+
+        event(new \Illuminate\Auth\Events\PasswordReset($user));
+    }
+
+    /**
+     * Get the response for a successful password reset.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  string  $response
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
+     */
+    protected function sendResetResponse(\Illuminate\Http\Request $request, $response)
+    {
+        return redirect()->route('login')->with('success', trans($response));
     }
 }

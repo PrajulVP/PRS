@@ -556,6 +556,9 @@ class RetailerOrderManagementController extends Controller
                         'distributor_id' => $order->distributor_id,
                         'distributor_name' => $order->distributor?->name ?? $order->distributor?->user?->name ?? 'N/A',
                         'distributor_phone' => $order->distributor?->contact_no ?? $order->distributor?->phone ?? '',
+                        'fieldstaff_id' => $order->fieldstaff_id,
+                        'retailer_fs_id' => $order->retailer?->field_staff_id,
+                        'metadata' => $order->metadata,
                         'product_summary' => $productSummary,
                         'items' => $order->items->map(function ($item) use ($order) {
                             $pName = $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product';
@@ -1108,9 +1111,42 @@ class RetailerOrderManagementController extends Controller
         return response()->json(['success' => 'Field staff assigned successfully!']);
     }
 
-    // Update (Admin Edit)
+    // Update (Admin Edit / Fieldstaff Edit)
     public function update(Request $request, RetailerOrder $retailerOrder)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if ($user->hasRole('fieldstaff')) {
+            $fieldStaff = $user->fieldStaff;
+            if (!$fieldStaff) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['error' => 'Field staff record not found.'], 422);
+                }
+                return back()->withErrors(['error' => 'Field staff record not found.']);
+            }
+            $isOwner = ($retailerOrder->fieldstaff_id === $fieldStaff->id) || 
+                       ($retailerOrder->retailer && $retailerOrder->retailer->field_staff_id === $fieldStaff->id);
+            if (!$isOwner) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['error' => 'You are not authorized to edit this order.'], 403);
+                }
+                return back()->withErrors(['error' => 'You are not authorized to edit this order.']);
+            }
+            if (!in_array($retailerOrder->status, [RetailerOrder::STATUS_PENDING, RetailerOrder::STATUS_PROCESSING])) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['error' => 'You can only edit pending or processing orders.'], 422);
+                }
+                return back()->withErrors(['error' => 'You can only edit pending or processing orders.']);
+            }
+            // Field staff cannot change status
+            $request->merge(['status' => $retailerOrder->status]);
+        } elseif (!$user->hasAnyRole(['admin', 'superadmin'])) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['error' => 'Unauthorized action.'], 403);
+            }
+            return back()->withErrors(['error' => 'Unauthorized action.']);
+        }
+
         $request->validate([
             'retailer_id' => 'required|exists:retailers,id',
             'distributor_id' => 'nullable|exists:distributors,id',
@@ -1118,9 +1154,21 @@ class RetailerOrderManagementController extends Controller
             'items' => 'required|array|min:1',
         ]);
 
-        // Original logic for stock adjustment is complex.
-        // We will retain the robust logic from previous implementation.
-        // Since I am overwriting, I will paste the core logic back.
+        $metadata = $retailerOrder->metadata ?? [];
+        if ($user->hasRole('fieldstaff')) {
+            $metadata['is_edited'] = true;
+            $metadata['last_edited_by'] = $user->name . ' (Field Staff)';
+            $metadata['last_edited_at'] = now()->toDateTimeString();
+            
+            $editLogs = $metadata['edit_history'] ?? [];
+            $editLogs[] = [
+                'edited_by' => $user->name,
+                'role' => 'fieldstaff',
+                'edited_at' => now()->toDateTimeString(),
+                'original_total' => $retailerOrder->total_amount,
+            ];
+            $metadata['edit_history'] = $editLogs;
+        }
 
         $retailerOrder->update([
             'retailer_id' => $request->retailer_id,
@@ -1128,6 +1176,7 @@ class RetailerOrderManagementController extends Controller
             'status' => $request->status,
             'delivery_notes' => $request->delivery_notes,
             'delivered_at' => ($request->status === 'delivered') ? now() : null,
+            'metadata' => $metadata,
         ]);
 
         $distributor = $retailerOrder->distributor; // Reload in case ID changed
@@ -1177,9 +1226,16 @@ class RetailerOrderManagementController extends Controller
                 $taxableSubtotal = $qty * $price;
                 $subtotalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
 
+                $unit = $itemData['unit'] ?? 'Box';
+                $side = $itemData['side'] ?? null;
+                $size = $itemData['size'] ?? null;
+
                 if ($currentOrderItem) {
                     $currentOrderItem->update([
                         'quantity' => $qty,
+                        'unit' => $unit,
+                        'side' => $side,
+                        'size' => $size,
                         'unit_price' => $price,
                         'total_amount' => $subtotalWithGst
                     ]);
@@ -1188,6 +1244,9 @@ class RetailerOrderManagementController extends Controller
                     $newItem = $retailerOrder->items()->create([
                         'product_id' => $itemData['product_id'],
                         'quantity' => $qty,
+                        'unit' => $unit,
+                        'side' => $side,
+                        'size' => $size,
                         'unit_price' => $price, // Assuming PTR
                         'total_amount' => $subtotalWithGst
                     ]);
@@ -1207,10 +1266,16 @@ class RetailerOrderManagementController extends Controller
                 'total_quantity' => $totalQuantity
             ]);
         } catch (\Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['error' => $e->getMessage()], 500);
+            }
             return back()->withErrors(['items' => $e->getMessage()]);
         }
 
-        return redirect()->route('admin.retailer-orders.index')->with('success', 'Order updated.');
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => 'Order updated successfully.']);
+        }
+        return redirect()->route('admin.retailer.index')->with('success', 'Order updated.');
     }
 
     public function requestCancellation(Request $request, RetailerOrder $retailerOrder)
@@ -1305,7 +1370,7 @@ class RetailerOrderManagementController extends Controller
                 return response()->json(['success' => 'Order deleted successfully!']);
             }
 
-            return redirect()->route('admin.retailer-orders.index')->with('success', 'Order deleted.');
+            return redirect()->route('admin.retailer.index')->with('success', 'Order deleted.');
         } catch (\Exception $e) {
             if ($request->ajax()) return response()->json(['error' => $e->getMessage()], 500);
             return back()->with('error', $e->getMessage());

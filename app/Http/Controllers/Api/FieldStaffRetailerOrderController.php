@@ -179,6 +179,167 @@ class FieldStaffRetailerOrderController extends Controller
         return response()->json(['message' => 'Order status updated to ' . $order->status . '.']);
     }
 
+    /**
+     * @OA\Put(
+     *     path="/api/field-staff/retailer-orders/{id}",
+     *     summary="Edit a retailer order",
+     *     description="Allows Field Staff to edit items and delivery notes of a retailer order assigned to them (status must be pending or processing).",
+     *     tags={"Field Staff Retailer Orders"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"retailer_id", "items"},
+     *             @OA\Property(property="retailer_id", type="integer", example=1),
+     *             @OA\Property(property="distributor_id", type="integer", example=2, nullable=true),
+     *             @OA\Property(property="delivery_notes", type="string", example="Deliver during morning hours", nullable=true),
+     *             @OA\Property(
+     *                 property="items",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     required={"product_id", "quantity"},
+     *                     @OA\Property(property="product_id", type="integer", example=5),
+     *                     @OA\Property(property="quantity", type="integer", example=10),
+     *                     @OA\Property(property="order_item_id", type="integer", example=12, description="Optional. Pass this to update an existing item instead of recreating it.")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Order updated successfully"),
+     *     @OA\Response(response=400, description="Invalid status or input data"),
+     *     @OA\Response(response=403, description="Unauthorized to edit this order"),
+     *     @OA\Response(response=442, description="Validation failed or invalid records")
+     * )
+     */
+    public function update(Request $request, $id)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('fieldstaff')) {
+            return response()->json(['error' => 'Unauthorized role.'], 403);
+        }
+
+        $fieldStaff = $user->fieldStaff;
+        if (!$fieldStaff) {
+            return response()->json(['error' => 'Field staff record not found.'], 422);
+        }
+
+        $retailerOrder = RetailerOrder::findOrFail($id);
+
+        $isOwner = ($retailerOrder->fieldstaff_id === $fieldStaff->id) || 
+                   ($retailerOrder->retailer && $retailerOrder->retailer->field_staff_id === $fieldStaff->id);
+        if (!$isOwner) {
+            return response()->json(['error' => 'You are not authorized to edit this order.'], 403);
+        }
+
+        if (!in_array($retailerOrder->status, [RetailerOrder::STATUS_PENDING, RetailerOrder::STATUS_PROCESSING])) {
+            return response()->json(['error' => 'You can only edit pending or processing orders.'], 422);
+        }
+
+        $request->validate([
+            'retailer_id' => 'required|exists:retailers,id',
+            'distributor_id' => 'nullable|exists:distributors,id',
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|integer|min:1',
+        ]);
+
+        $metadata = $retailerOrder->metadata ?? [];
+        $metadata['is_edited'] = true;
+        $metadata['last_edited_by'] = $user->name . ' (Field Staff)';
+        $metadata['last_edited_at'] = now()->toDateTimeString();
+        
+        $editLogs = $metadata['edit_history'] ?? [];
+        $editLogs[] = [
+            'edited_by' => $user->name,
+            'role' => 'fieldstaff',
+            'edited_at' => now()->toDateTimeString(),
+            'original_total' => $retailerOrder->total_amount,
+        ];
+        $metadata['edit_history'] = $editLogs;
+
+        $retailerOrder->update([
+            'retailer_id' => $request->retailer_id,
+            'distributor_id' => $request->distributor_id,
+            'delivery_notes' => $request->delivery_notes,
+            'metadata' => $metadata,
+        ]);
+
+        $distributor = $retailerOrder->distributor;
+
+        $totalAmount = 0;
+        $totalItems = 0;
+        $totalQuantity = 0;
+        $requestItemIds = [];
+
+        try {
+            foreach ($request->items as $itemData) {
+                $product = null;
+                if ($distributor) {
+                    $product = $distributor->products()->where('product_id', $itemData['product_id'])->first();
+                    if (!$product) {
+                        return response()->json(['error' => 'Product ' . $itemData['product_id'] . ' is not available from the assigned distributor.'], 422);
+                    }
+                } else {
+                    $product = \App\Models\Product::find($itemData['product_id']);
+                }
+
+                if (!$product) {
+                    return response()->json(['error' => 'Product ' . $itemData['product_id'] . ' not found.'], 404);
+                }
+
+                $qty = $itemData['quantity'];
+                $price = (float)$product->ptr;
+                $gstRate = (float)($product->gst ?? 0);
+                $taxableSubtotal = $qty * $price;
+                $subtotalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
+
+                $currentOrderItem = null;
+                if (isset($itemData['order_item_id'])) {
+                    $currentOrderItem = $retailerOrder->items()->find($itemData['order_item_id']);
+                }
+
+                if ($currentOrderItem) {
+                    $currentOrderItem->update([
+                        'quantity' => $qty,
+                        'unit_price' => $price,
+                        'total_amount' => $subtotalWithGst
+                    ]);
+                    $requestItemIds[] = $currentOrderItem->id;
+                } else {
+                    $newItem = $retailerOrder->items()->create([
+                        'product_id' => $itemData['product_id'],
+                        'quantity' => $qty,
+                        'unit_price' => $price,
+                        'total_amount' => $subtotalWithGst
+                    ]);
+                    $requestItemIds[] = $newItem->id;
+                }
+                $totalAmount += $subtotalWithGst;
+                $totalItems++;
+                $totalQuantity += $qty;
+            }
+
+            // Delete removed items
+            $retailerOrder->items()->whereNotIn('id', $requestItemIds)->delete();
+
+            $retailerOrder->update([
+                'total_amount' => $totalAmount,
+                'total_items' => $totalItems,
+                'total_quantity' => $totalQuantity
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order updated successfully.',
+            'order' => $retailerOrder->load('items')
+        ]);
+    }
+
     private function clearOrderNotifications($orderId, $type)
     {
         if (method_exists($this, 'deleteOrderNotifications')) {
