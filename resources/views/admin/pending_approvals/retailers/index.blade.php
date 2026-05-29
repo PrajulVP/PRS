@@ -1185,6 +1185,24 @@
         $products = \App\Models\Product::all();
     @endphp
 
+    {{-- Edit History Modal --}}
+    <div class="modal fade" id="editHistoryModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content border-0 shadow bg-card-theme" style="border-radius: 15px;">
+                <div class="modal-header border-0 py-3" style="background: linear-gradient(135deg, #1e293b, #0f172a); border-top-left-radius: 15px; border-top-right-radius: 15px;">
+                    <h5 class="modal-title fw-bold text-white mb-0" style="color: #ffffff !important;"><i class="fa fa-history me-2"></i>Edit History - <span id="history_order_code" class="fw-bold text-warning"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 bg-body-theme text-main-theme">
+                    <div id="edit_history_content"></div>
+                </div>
+                <div class="modal-footer border-0 bg-body-theme" style="border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Admin Edit Modal --}}
     <div class="modal fade" id="editOrderModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -1479,7 +1497,14 @@
                     data: 'order_code',
                     name: 'order_code',
                     render: function (data, type, row) {
-                        return data;
+                        if (type !== 'display') return data;
+                        let html = `<span class="fw-bold">${data}</span>`;
+                        if (row.metadata && row.metadata.is_edited) {
+                            let lastEditor = row.metadata.last_edited_by || 'Staff';
+                            let lastTime = row.metadata.last_edited_at || '';
+                            html += ` <span class="badge bg-warning text-dark ms-1 view-edit-history" style="font-size: 0.65rem; padding: 0.25em 0.5em; vertical-align: middle; cursor: pointer; border-radius: 4px;" title="Click to view edit history" data-id="${row.id}"><i class="fa fa-pencil"></i> EDITED</span>`;
+                        }
+                        return html;
                     }
                 },
                 {
@@ -2449,8 +2474,15 @@
                         if (res.success) {
                             $('#approveRetailerOrderModal').modal('hide');
                             table.ajax.reload(null, false);
-                            // showToast('success', res.success);
                             if (window.updateSidebarCounts) window.updateSidebarCounts();
+                            
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: res.success || 'Order approved successfully.',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
                         } else {
                             showToast('error', res.error || 'Failed to approve order');
                         }
@@ -2885,6 +2917,7 @@
                 let identifiedCount = 0;
                 let matchedProducts = [];
                 let missingProducts = [];
+                window.qtyMismatchProducts = [];
                 let invoiceProducts = [...(data.line_items || [])];
                 let totalInvoiceNet = 0;
                 let totalInvoiceTaxable = 0;
@@ -2958,6 +2991,17 @@
                         let billedQty = safeParse(matchedInvoiceItem.qty);
                         let freeQty = safeParse(matchedInvoiceItem.free) || safeParse(matchedInvoiceItem.sch) || safeParse(matchedInvoiceItem.scheme) || safeParse(matchedInvoiceItem.offer);
 
+                        // Correct AI extracting total (billed + free) as billedQty
+                        if (billedQty > orderedQty && freeQty > 0 && billedQty === (orderedQty + freeQty)) {
+                            billedQty = billedQty - freeQty;
+                        } else if (extRate > 0 && (safeParse(matchedInvoiceItem.taxable_amt) || safeParse(matchedInvoiceItem.amount)) > 0) {
+                            // If taxable and rate exist, use math to determine true billed quantity
+                            let calcQty = Math.round((safeParse(matchedInvoiceItem.taxable_amt) || safeParse(matchedInvoiceItem.amount)) / extRate);
+                            if (calcQty > 0 && calcQty < billedQty && billedQty === (calcQty + freeQty)) {
+                                billedQty = calcQty;
+                            }
+                        }
+
                         let extTaxable = safeParse(matchedInvoiceItem.taxable_amt) || safeParse(matchedInvoiceItem.amount);
                         if (extTaxable === 0 && billedQty > 0 && extRate > 0) {
                             extTaxable = billedQty * extRate;
@@ -3010,6 +3054,9 @@
                             if (billedQty !== orderedQty) {
                                 let diffClass = billedQty > orderedQty ? 'text-primary' : 'text-danger';
                                 displayQty += ` <br><small class="${diffClass} fw-bold" style="font-size: 0.65rem;">(Ord: ${orderedQty})</small>`;
+                                if (billedQty > orderedQty) {
+                                    window.qtyMismatchProducts.push(`You ordered ${orderedQty} but the invoiced quantity is ${billedQty} for item: ${productName}`);
+                                }
                             }
                             vRow.find('.v-qty-display').html(displayQty);
 
@@ -3074,20 +3121,23 @@
                 $('#taxable_amount_input').val(totalInvoiceTaxable.toFixed(2));
 
                 // STRICT MATCH BLOCKING: Only enable if no missing AND no extra items
-                if (missingProducts.length === 0 && invoiceProducts.length === 0) {
+                if (missingProducts.length === 0 && invoiceProducts.length === 0 && window.qtyMismatchProducts.length === 0) {
                     $('#automation_error_state').hide();
                     $('#automation_success_state').fadeIn();
                     $('#btnSubmitDistributorApprove').prop('disabled', false);
                 } else {
                     $('#automation_error_state').removeClass('d-none').show();
-                    $('#automation_error_state h5').text('Invoice Content Mismatch');
+                    $('#automation_error_state h5').text('Action Required');
                     
                     let msg = '';
                     if (missingProducts.length > 0) {
-                        msg = `This document is <b>missing ${missingProducts.length} ordered items</b>. `;
+                        msg = `This document is <b>missing ${missingProducts.length} ordered items</b>. <br>`;
                     }
                     if (invoiceProducts.length > 0) {
-                        msg += `It also contains <b>${invoiceProducts.length} extra items</b> not in the order. `;
+                        msg += `It also contains <b>${invoiceProducts.length} extra items</b> not in the order. <br>`;
+                    }
+                    if (window.qtyMismatchProducts.length > 0) {
+                        msg += window.qtyMismatchProducts.join('<br>') + '<br>';
                     }
                     
                     $('#automation_error_state p').html(`${msg} Please upload a perfect match invoice to proceed.`);
@@ -3537,11 +3587,92 @@
                 renderEditItems();
             });
 
+            $(document).on('click', '.view-edit-history', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                let rowId = $(this).data('id');
+                let rowData = table.row($(this).closest('tr')).data();
+                if (!rowData || !rowData.metadata || !rowData.metadata.edit_history) return;
+
+                $('#history_order_code').text(rowData.order_code);
+                let historyHtml = '';
+                
+                let history = rowData.metadata.edit_history;
+                // Reverse to show latest first
+                let reversedHistory = [...history].reverse();
+
+                reversedHistory.forEach(function(log, index) {
+                    let snapshotHtml = '<div class="text-muted small">No item snapshot available for this edit.</div>';
+                    
+                    if (log.snapshot && Array.isArray(log.snapshot)) {
+                        snapshotHtml = `
+                            <div class="table-responsive mt-2">
+                                <table class="table table-sm table-bordered mb-0" style="font-size: 0.8rem;">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th>Product</th>
+                                            <th class="text-center">Qty</th>
+                                            <th class="text-end">Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${log.snapshot.map(s => {
+                                            let variantInfo = '';
+                                            if (s.side || s.size) {
+                                                variantInfo = `<br><span class="text-muted" style="font-size:0.7rem;">[${[s.side, s.size].filter(Boolean).join(' - ')}]</span>`;
+                                            }
+                                            return `
+                                                <tr>
+                                                    <td>
+                                                        <span class="fw-bold">${s.product_name}</span>
+                                                        ${variantInfo}
+                                                    </td>
+                                                    <td class="text-center">${s.quantity} ${s.unit === 'Nos' ? 'No.' : s.unit}</td>
+                                                    <td class="text-end">₹${parseFloat(s.subtotal).toFixed(2)}</td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                    }
+
+                    historyHtml += `
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-header bg-card-theme border-bottom-0 py-2 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="badge bg-primary me-2">Edit ${history.length - index}</span>
+                                    <span class="fw-bold text-main-theme">${log.edited_by}</span> 
+                                    <span class="text-muted small">(${log.role})</span>
+                                </div>
+                                <span class="text-muted small"><i class="fa fa-clock me-1"></i>${log.edited_at}</span>
+                            </div>
+                            <div class="card-body py-2">
+                                <div class="mb-2">
+                                    <span class="fw-bold text-muted small">Original Total:</span> 
+                                    <span class="text-danger fw-bold">₹${parseFloat(log.original_total).toFixed(2)}</span>
+                                </div>
+                                <div class="fw-bold text-main-theme small mb-1">State Before Edit:</div>
+                                ${snapshotHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                $('#edit_history_content').html(historyHtml);
+                $('#editHistoryModal').modal('show');
+            });
+
             $('#editOrderForm').submit(function (e) {
                 e.preventDefault();
                 let form = $(this);
                 let url = form.attr('action');
                 let data = form.serialize();
+
+                let $btn = form.find('button[type="submit"]');
+                let oldText = $btn.html();
+                $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Updating...');
 
                 $.ajax({
                     url: url,
@@ -3577,6 +3708,9 @@
                             title: 'Error',
                             text: err
                         });
+                    },
+                    complete: function () {
+                        $btn.prop('disabled', false).html(oldText);
                     }
                 });
             });

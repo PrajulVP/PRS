@@ -25,7 +25,7 @@ class Setting extends Model
     /**
      * Helper to set setting value by slug
      */
-    public static function setValue(string $slug, $value, string $name = null, string $description = null)
+    public static function setValue(string $slug, $value, ?string $name = null, ?string $description = null)
     {
         return static::updateOrCreate(
             ['slug' => $slug],

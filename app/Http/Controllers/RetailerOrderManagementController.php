@@ -851,6 +851,33 @@ class RetailerOrderManagementController extends Controller
                 // 1. Batch Allocation Logic
                 if ($request->has('items_batches')) {
                     $itemsBatches = $request->items_batches; // Expected: [ {order_item_id: X, batches: [ {id: Y, quantity: Z} ]} ]
+                    
+                    // Validate allocations first
+                    $qtyErrors = [];
+                    foreach ($itemsBatches as $allocation) {
+                        $orderItem = $retailerOrder->items()->findOrFail($allocation['order_item_id']);
+                        $product = $orderItem->product;
+                        $totalAllocated = 0;
+                        foreach ($allocation['batches'] as $batchData) {
+                            $totalAllocated += (float)$batchData['quantity'];
+                        }
+                        $pName = $product->product_name;
+                        $vLabel = array_filter([$orderItem->side, $orderItem->size]);
+                        if (!empty($vLabel)) {
+                            $pName .= ' [' . implode('/', $vLabel) . ']';
+                        }
+                        
+                        $expectedTotal = $orderItem->quantity + ($orderItem->free_quantity ?? 0);
+                        if ($totalAllocated > $expectedTotal) {
+                            $qtyErrors[] = "You ordered {$expectedTotal} (incl. free) but the invoiced quantity is {$totalAllocated} for item: " . $pName;
+                        } elseif ($totalAllocated < $expectedTotal) {
+                            $qtyErrors[] = "Total allocated quantity ({$totalAllocated}) is less than expected quantity ({$expectedTotal}) for item: " . $pName;
+                        }
+                    }
+
+                    if (!empty($qtyErrors)) {
+                        throw new \Exception(implode("<br>", $qtyErrors));
+                    }
 
                     foreach ($itemsBatches as $allocation) {
                         $orderItem = $retailerOrder->items()->findOrFail($allocation['order_item_id']);
@@ -865,9 +892,23 @@ class RetailerOrderManagementController extends Controller
                             $invId = isset($batchData['inventory_id']) ? str_replace(['"', "'"], '', $batchData['inventory_id']) : null;
 
                             $invQuery = \App\Models\Inventory::where('distributor_id', $distributor->id)
-                                ->where('product_id', $product->id)
-                                ->where('side', $orderItem->side) // Strict Side Matching
-                                ->where('size', $orderItem->size); // Strict Size Matching
+                                ->where('product_id', $product->id);
+
+                            if (empty($orderItem->side)) {
+                                $invQuery->where(function($q) {
+                                    $q->whereNull('side')->orWhere('side', '');
+                                });
+                            } else {
+                                $invQuery->where('side', $orderItem->side);
+                            }
+
+                            if (empty($orderItem->size)) {
+                                $invQuery->where(function($q) {
+                                    $q->whereNull('size')->orWhere('size', '');
+                                });
+                            } else {
+                                $invQuery->where('size', $orderItem->size);
+                            }
 
                             if ($invId) {
                                 $inventory = $invQuery->findOrFail($invId);
@@ -903,10 +944,6 @@ class RetailerOrderManagementController extends Controller
 
                             $totalAllocated += $batchData['quantity'];
                         }
-
-                        if ($totalAllocated < $orderItem->quantity) {
-                            throw new \Exception("Total allocated quantity ({$totalAllocated}) is less than ordered quantity ({$orderItem->quantity}) for {$product->product_name}");
-                        }
                     }
                 } else {
                     // Fallback to FEFO if no manual batches provided (Optional: Remove if you want to FORCE manual allocation)
@@ -918,11 +955,26 @@ class RetailerOrderManagementController extends Controller
 
                         $neededStrips = $orderItem->quantity * $multiplier;
 
-                        $inventories = \App\Models\Inventory::where('distributor_id', $distributor->id)
-                            ->where('product_id', $product->id)
-                            ->where('side', $orderItem->side) // Strict Side Matching
-                            ->where('size', $orderItem->size) // Strict Size Matching
-                            ->where('stock', '>', 0)
+                        $invQuery = \App\Models\Inventory::where('distributor_id', $distributor->id)
+                            ->where('product_id', $product->id);
+
+                        if (empty($orderItem->side)) {
+                            $invQuery->where(function($q) {
+                                $q->whereNull('side')->orWhere('side', '');
+                            });
+                        } else {
+                            $invQuery->where('side', $orderItem->side);
+                        }
+
+                        if (empty($orderItem->size)) {
+                            $invQuery->where(function($q) {
+                                $q->whereNull('size')->orWhere('size', '');
+                            });
+                        } else {
+                            $invQuery->where('size', $orderItem->size);
+                        }
+
+                        $inventories = $invQuery->where('stock', '>', 0)
                             ->orderBy('expiry_date', 'asc')
                             ->get();
 
@@ -1155,20 +1207,36 @@ class RetailerOrderManagementController extends Controller
         ]);
 
         $metadata = $retailerOrder->metadata ?? [];
-        if ($user->hasRole('fieldstaff')) {
-            $metadata['is_edited'] = true;
-            $metadata['last_edited_by'] = $user->name . ' (Field Staff)';
-            $metadata['last_edited_at'] = now()->toDateTimeString();
-            
-            $editLogs = $metadata['edit_history'] ?? [];
-            $editLogs[] = [
-                'edited_by' => $user->name,
-                'role' => 'fieldstaff',
-                'edited_at' => now()->toDateTimeString(),
-                'original_total' => $retailerOrder->total_amount,
+        $roleName = 'Admin';
+        if ($user->hasRole('fieldstaff')) $roleName = 'Field Staff';
+        if ($user->hasRole('salesmanager')) $roleName = 'Sales Manager';
+        if ($user->hasRole('superadmin')) $roleName = 'Super Admin';
+
+        $metadata['is_edited'] = true;
+        $metadata['last_edited_by'] = $user->name . " ($roleName)";
+        $metadata['last_edited_at'] = now()->toDateTimeString();
+
+        $snapshot = $retailerOrder->items->map(function($item) {
+            return [
+                'product_name' => $item->product_name ?? ($item->product ? $item->product->product_name : 'Unknown Product'),
+                'quantity' => $item->quantity,
+                'unit' => $item->unit,
+                'price' => $item->unit_price,
+                'subtotal' => $item->total_amount,
+                'side' => $item->side,
+                'size' => $item->size,
             ];
-            $metadata['edit_history'] = $editLogs;
-        }
+        })->toArray();
+
+        $editLogs = $metadata['edit_history'] ?? [];
+        $editLogs[] = [
+            'edited_by' => $user->name,
+            'role' => strtolower(str_replace(' ', '', $roleName)),
+            'edited_at' => now()->toDateTimeString(),
+            'original_total' => $retailerOrder->total_amount,
+            'snapshot' => $snapshot,
+        ];
+        $metadata['edit_history'] = $editLogs;
 
         $retailerOrder->update([
             'retailer_id' => $request->retailer_id,
@@ -1243,6 +1311,7 @@ class RetailerOrderManagementController extends Controller
                 } else {
                     $newItem = $retailerOrder->items()->create([
                         'product_id' => $itemData['product_id'],
+                        'product_name' => $product->product_name,
                         'quantity' => $qty,
                         'unit' => $unit,
                         'side' => $side,

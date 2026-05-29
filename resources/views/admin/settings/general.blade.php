@@ -238,9 +238,6 @@
             <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
                 <div class="modal-header border-0 bg-light rounded-top-4 pb-3">
                     <div class="d-flex align-items-center">
-                        <div class="bg-primary p-2 rounded-3 me-3">
-                            <i class="fa fa-boxes text-white"></i>
-                        </div>
                         <div>
                             <h5 class="modal-title fw-bold mb-0" id="modalBrandTitle">Brand Products</h5>
                             <p class="text-muted small mb-0">Toggle returnability for individual products.</p>
@@ -346,6 +343,9 @@
             $(document).on('change', '.returnable-toggle', function() {
                 let brand = $(this).data('brand');
                 let isChecked = $(this).is(':checked');
+                let $manageBtn = $(`.manage-products-btn[data-brand="${brand}"]`);
+                
+                $manageBtn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i>Syncing...');
                 
                 if (isChecked) {
                     if (!returnableBrands.includes(brand)) returnableBrands.push(brand);
@@ -376,8 +376,17 @@
                             },
                             success: function(res) {
                                 showToast('success', 'Sync Successful', `Products for ${brand} are now ${isChecked ? 'returnable' : 'non-returnable'}.`);
+                                $manageBtn.prop('disabled', false).html('<i class="fa fa-list-ul me-1"></i>Manage Products');
+                            },
+                            error: function() {
+                                showToast('error', 'Sync Failed', 'Could not sync products.');
+                                $manageBtn.prop('disabled', false).html('<i class="fa fa-list-ul me-1"></i>Manage Products');
                             }
                         });
+                    },
+                    error: function() {
+                        showToast('error', 'Settings Failed', 'Could not save returnable brands setting.');
+                        $manageBtn.prop('disabled', false).html('<i class="fa fa-list-ul me-1"></i>Manage Products');
                     }
                 });
             });
@@ -441,8 +450,13 @@
                 $('#brandProductsTableBody').html('<tr><td colspan="2" class="text-center py-5"><i class="fa fa-spinner fa-spin fa-2x mb-2 d-block"></i>Loading products...</td></tr>');
                 $('#manageBrandProductsModal').modal('show');
                 
-                $.get(`/products/get-by-brand/${encodeURIComponent(brand)}`, function(products) {
-                    renderBrandProducts(products);
+                $.ajax({
+                    url: `/products/get-by-brand/${encodeURIComponent(brand)}`,
+                    method: 'GET',
+                    cache: false,
+                    success: function(products) {
+                        renderBrandProducts(products);
+                    }
                 });
             });
 

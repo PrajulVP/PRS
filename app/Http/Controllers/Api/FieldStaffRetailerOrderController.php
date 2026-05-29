@@ -250,12 +250,25 @@ class FieldStaffRetailerOrderController extends Controller
         $metadata['last_edited_by'] = $user->name . ' (Field Staff)';
         $metadata['last_edited_at'] = now()->toDateTimeString();
         
+        $snapshot = $retailerOrder->items->map(function($item) {
+            return [
+                'product_name' => $item->product_name ?? ($item->product ? $item->product->product_name : 'Unknown Product'),
+                'quantity' => $item->quantity,
+                'unit' => $item->unit,
+                'price' => $item->unit_price,
+                'subtotal' => $item->total_amount,
+                'side' => $item->side,
+                'size' => $item->size,
+            ];
+        })->toArray();
+
         $editLogs = $metadata['edit_history'] ?? [];
         $editLogs[] = [
             'edited_by' => $user->name,
             'role' => 'fieldstaff',
             'edited_at' => now()->toDateTimeString(),
             'original_total' => $retailerOrder->total_amount,
+            'snapshot' => $snapshot,
         ];
         $metadata['edit_history'] = $editLogs;
 
@@ -290,6 +303,10 @@ class FieldStaffRetailerOrderController extends Controller
                 }
 
                 $qty = $itemData['quantity'];
+                $unit = $itemData['unit'] ?? 'Nos';
+                $side = $itemData['side'] ?? null;
+                $size = $itemData['size'] ?? null;
+                
                 $price = (float)$product->ptr;
                 $gstRate = (float)($product->gst ?? 0);
                 $taxableSubtotal = $qty * $price;
@@ -303,6 +320,9 @@ class FieldStaffRetailerOrderController extends Controller
                 if ($currentOrderItem) {
                     $currentOrderItem->update([
                         'quantity' => $qty,
+                        'unit' => $unit,
+                        'side' => $side,
+                        'size' => $size,
                         'unit_price' => $price,
                         'total_amount' => $subtotalWithGst
                     ]);
@@ -310,7 +330,11 @@ class FieldStaffRetailerOrderController extends Controller
                 } else {
                     $newItem = $retailerOrder->items()->create([
                         'product_id' => $itemData['product_id'],
+                        'product_name' => $product->product_name,
                         'quantity' => $qty,
+                        'unit' => $unit,
+                        'side' => $side,
+                        'size' => $size,
                         'unit_price' => $price,
                         'total_amount' => $subtotalWithGst
                     ]);

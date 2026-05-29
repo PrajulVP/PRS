@@ -175,6 +175,14 @@ class ProductController extends Controller
         ]);
 
         $data = $request->all();
+        
+        $returnableBrandsStr = \App\Models\Setting::where('slug', 'returnable_brands')->value('value');
+        $returnableBrands = $returnableBrandsStr ? explode(',', $returnableBrandsStr) : [];
+        $isBrandReturnable = (!empty($request->brand) && in_array(trim($request->brand), $returnableBrands)) ? 1 : 0;
+        
+        if (!isset($data['is_returnable'])) {
+            $data['is_returnable'] = $isBrandReturnable;
+        }
 
         // Sync numeric fields
         $data['units_per_strip'] = $this->parseNumber($request->strip_size);
@@ -371,6 +379,9 @@ class ProductController extends Controller
             while (($data = fgetcsv($handle, 0, ",")) !== FALSE) {
                 $rowCount++;
                 
+                $returnableBrandsStr = \App\Models\Setting::where('slug', 'returnable_brands')->value('value');
+                $returnableBrands = $returnableBrandsStr ? explode(',', $returnableBrandsStr) : [];
+                
                 // Handle trailing empty columns in data or header
                 if (count($header) > count($data)) {
                     $data = array_pad($data, count($header), null);
@@ -498,6 +509,13 @@ class ProductController extends Controller
                             'loyalty_point_percentage' => !empty($productData['loyalty_point_percentage']) ? (float)$productData['loyalty_point_percentage'] : 0,
                         ]
                     );
+
+                    // If it was newly created, set its returnable status based on the brand
+                    if ($p->wasRecentlyCreated) {
+                        $isBrandReturnable = (!empty($productData['brand']) && in_array(trim($productData['brand']), $returnableBrands)) ? 1 : 0;
+                        $p->is_returnable = $isBrandReturnable;
+                        $p->save();
+                    }
                     $successCount++;
 
                     // Auto-register imported brand in settings if it is new
@@ -527,7 +545,7 @@ class ProductController extends Controller
     public function getByBrand($brand)
     {
         $products = Product::where('brand', $brand)
-            ->select('id', 'product_name', 'product_code', 'is_returnable')
+            ->select('id', 'product_name', 'product_code', 'is_returnable', 'brand')
             ->orderBy('product_name')
             ->get();
         return response()->json($products);

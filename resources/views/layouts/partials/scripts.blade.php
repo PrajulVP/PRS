@@ -67,6 +67,28 @@
 <script>
     new WOW().init();
 
+    // Inject CSS to fix SweetAlert2 icon alignment globally
+    const swalStyle = document.createElement('style');
+    swalStyle.innerHTML = `
+        .swal2-icon {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        .swal2-icon .swal2-icon-content {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            line-height: 1 !important;
+        }
+        .swal2-icon.swal2-error [class^='swal2-x-mark'] {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+    `;
+    document.head.appendChild(swalStyle);
+
     // Global Toast Function (Premium SweetAlert2 Toast)
     function showToast(type, message) {
         // Map 'danger' to 'error' for SweetAlert2 compatibility

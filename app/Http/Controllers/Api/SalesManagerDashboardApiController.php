@@ -1158,12 +1158,25 @@ class SalesManagerDashboardApiController extends Controller
         $metadata['last_edited_by'] = $user->name . ' (Sales Manager)';
         $metadata['last_edited_at'] = now()->toDateTimeString();
         
+        $snapshot = $distributorOrder->items->map(function($item) {
+            return [
+                'product_name' => $item->product_name ?? ($item->product ? $item->product->product_name : 'Unknown Product'),
+                'quantity' => $item->quantity,
+                'unit' => $item->unit,
+                'price' => $item->price,
+                'subtotal' => $item->subtotal,
+                'side' => $item->side,
+                'size' => $item->size,
+            ];
+        })->toArray();
+
         $editLogs = $metadata['edit_history'] ?? [];
         $editLogs[] = [
             'edited_by' => $user->name,
             'role' => 'salesmanager',
             'edited_at' => now()->toDateTimeString(),
             'original_total' => $distributorOrder->total_amount,
+            'snapshot' => $snapshot,
         ];
         $metadata['edit_history'] = $editLogs;
 
@@ -1223,6 +1236,7 @@ class SalesManagerDashboardApiController extends Controller
                 } else {
                     $newItem = $distributorOrder->items()->create([
                         'product_id' => $product->id,
+                        'product_name' => $product->product_name,
                         'quantity' => $newQuantity,
                         'unit' => $unit,
                         'price' => $unitPrice,

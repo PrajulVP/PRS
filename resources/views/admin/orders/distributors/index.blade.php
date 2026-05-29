@@ -1155,7 +1155,7 @@
                         $('#uploadInvoiceModal').modal('hide');
                         table.ajax.reload(null, false);
                         if (window.updateSidebarCounts) window.updateSidebarCounts();
-                        // // showToast('success', res.success || 'Invoice uploaded successfully');
+                        // showToast('success', res.success || 'Invoice uploaded successfully');
                     },
                     error: function (xhr) {
                         let err = 'Upload failed';
@@ -1191,7 +1191,7 @@
                         if (res.success) {
                             table.ajax.reload();
                             if (window.updateSidebarCounts) window.updateSidebarCounts();
-                            // // showToast('success', res.success || 'Order deleted successfully');
+                            // showToast('success', res.success || 'Order deleted successfully');
                         } else {
                             showToast('error', res.error || 'Failed to delete order');
                         }
@@ -1232,7 +1232,7 @@
                             $('#uploadInvoiceModal').modal('hide');
                             table.ajax.reload();
                             if (window.updateSidebarCounts) window.updateSidebarCounts();
-                            // showToast('success', res.success);
+                            showToast('success', res.success);
                         } else {
                             showToast('error', res.error || 'Failed to upload invoice');
                         }
@@ -1288,7 +1288,7 @@
                             $('#createOrderModal').modal('hide');
                             table.ajax.reload();
                             if (window.updateSidebarCounts) window.updateSidebarCounts();
-                            // showToast('success', res.success || res.message);
+                            showToast('success', res.success || res.message);
                         } else {
                             showToast('error', res.error);
                         }
@@ -1425,7 +1425,7 @@
                             $('#editOrderModal').modal('hide');
                             table.ajax.reload();
                             if (window.updateSidebarCounts) window.updateSidebarCounts();
-                            // showToast('success', res.success || res.message);
+                            showToast('success', res.success || res.message);
                         } else {
                             showToast('error', res.error);
                         }
@@ -1729,7 +1729,7 @@
                             if (res.success) {
                                 table.ajax.reload();
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                // // showToast('success', res.success);
+                                // showToast('success', res.success);
                             } else showToast('error', res.error);
                         }).fail(function () {
                             showToast('error', 'Request failed');
@@ -1769,7 +1769,7 @@
                     if (res.success) {
                         table.ajax.reload();
                         if (window.updateSidebarCounts) window.updateSidebarCounts();
-                        // showToast('success', res.success);
+                        showToast('success', res.success);
                     } else showToast('error', res.error);
                 }).fail(function (xhr) {
                     $('#cancelConfirmModal').modal('hide');
@@ -1802,7 +1802,7 @@
                             if (res.success) {
                                 table.ajax.reload();
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                // // showToast('success', res.success);
+                                // showToast('success', res.success);
                             } else showToast('error', res.error);
                         });
                     }
@@ -1825,7 +1825,7 @@
                             if (res.success) {
                                 table.ajax.reload();
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                // // showToast('success', res.success);
+                                // showToast('success', res.success);
                             } else showToast('error', res.error);
                         });
                     }
@@ -1857,7 +1857,7 @@
                         if (res.success) {
                             table.ajax.reload();
                             if (window.updateSidebarCounts) window.updateSidebarCounts();
-                            // showToast('success', res.success);
+                            showToast('success', res.success);
                         } else showToast('error', res.error);
                     },
                     error: function (xhr) {
@@ -1898,7 +1898,7 @@
                             if (res.success) {
                                 table.ajax.reload();
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                // // showToast('success', res.success);
+                                // showToast('success', res.success);
                             } else showToast('error', res.error);
                         });
                     }
@@ -1923,7 +1923,7 @@
                             if (res.success) {
                                 table.ajax.reload();
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                // // showToast('success', res.success);
+                                // showToast('success', res.success);
                             } else showToast('error', res.error);
                         });
                     }

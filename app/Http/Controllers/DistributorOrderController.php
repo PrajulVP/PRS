@@ -490,20 +490,35 @@ class DistributorOrderController extends Controller
         ]);
 
         $metadata = $distributorOrder->metadata ?? [];
-        if ($user->hasRole('salesmanager')) {
-            $metadata['is_edited'] = true;
-            $metadata['last_edited_by'] = $user->name . ' (Sales Manager)';
-            $metadata['last_edited_at'] = now()->toDateTimeString();
-            
-            $editLogs = $metadata['edit_history'] ?? [];
-            $editLogs[] = [
-                'edited_by' => $user->name,
-                'role' => 'salesmanager',
-                'edited_at' => now()->toDateTimeString(),
-                'original_total' => $distributorOrder->total_amount,
+        $roleName = 'Admin';
+        if ($user->hasRole('salesmanager')) $roleName = 'Sales Manager';
+        if ($user->hasRole('superadmin')) $roleName = 'Super Admin';
+
+        $metadata['is_edited'] = true;
+        $metadata['last_edited_by'] = $user->name . " ($roleName)";
+        $metadata['last_edited_at'] = now()->toDateTimeString();
+
+        $snapshot = $distributorOrder->items->map(function($item) {
+            return [
+                'product_name' => $item->product_name ?? ($item->product ? $item->product->product_name : 'Unknown Product'),
+                'quantity' => $item->quantity,
+                'unit' => $item->unit,
+                'price' => $item->price,
+                'subtotal' => $item->subtotal,
+                'side' => $item->side,
+                'size' => $item->size,
             ];
-            $metadata['edit_history'] = $editLogs;
-        }
+        })->toArray();
+
+        $editLogs = $metadata['edit_history'] ?? [];
+        $editLogs[] = [
+            'edited_by' => $user->name,
+            'role' => strtolower(str_replace(' ', '', $roleName)),
+            'edited_at' => now()->toDateTimeString(),
+            'original_total' => $distributorOrder->total_amount,
+            'snapshot' => $snapshot,
+        ];
+        $metadata['edit_history'] = $editLogs;
 
         $distributorOrder->update([
             'distributor_id' => $request->distributor_id,
@@ -563,6 +578,7 @@ class DistributorOrderController extends Controller
                 } else {
                     $newItem = $distributorOrder->items()->create([
                         'product_id' => $product->id,
+                        'product_name' => $product->product_name,
                         'quantity' => $newQuantity,
                         'unit' => $unit,
                         'price' => $unitPrice,
@@ -730,6 +746,7 @@ class DistributorOrderController extends Controller
             $distributorOrder->update($updateData);
 
             // Save Batch Details
+            $qtyErrors = [];
             foreach ($request->batches as $itemId => $batches) {
                 $orderItem = $distributorOrder->items()->find($itemId);
                 if (!$orderItem) continue;
@@ -741,8 +758,18 @@ class DistributorOrderController extends Controller
                 }
 
                 if ($totalInvoicedQty > $orderItem->quantity) {
-                    throw new \Exception("Invoiced quantity ({$totalInvoicedQty}) cannot exceed the ordered quantity ({$orderItem->quantity}) for item: {$orderItem->product_name}");
+                    $qtyErrors[] = "You ordered {$orderItem->quantity} but the invoiced quantity is {$totalInvoicedQty} for item: {$orderItem->product_name}";
                 }
+            }
+
+            if (!empty($qtyErrors)) {
+                throw new \Exception(implode("<br>", $qtyErrors));
+            }
+
+            // If no errors, proceed to save
+            foreach ($request->batches as $itemId => $batches) {
+                $orderItem = $distributorOrder->items()->find($itemId);
+                if (!$orderItem) continue;
 
                 // Delete existing batches if re-approving (though usually direct approved)
                 $orderItem->batches()->delete();
@@ -1110,8 +1137,8 @@ class DistributorOrderController extends Controller
                     'product_id' => $product->id,
                     'batch_no' => $batch->batch_no,
                     'expiry_date' => $batch->expiry_date,
-                    'side' => $item->side, // Strict Side Matching
-                    'size' => $item->size  // Strict Size Matching
+                    'side' => empty($item->side) ? null : $item->side,
+                    'size' => empty($item->size) ? null : $item->size
                 ]);
 
                 if (!$inventory->exists) {
