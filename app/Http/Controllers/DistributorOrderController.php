@@ -734,6 +734,16 @@ class DistributorOrderController extends Controller
                 $orderItem = $distributorOrder->items()->find($itemId);
                 if (!$orderItem) continue;
 
+                // Cross-check: Invoiced quantity should not exceed ordered quantity
+                $totalInvoicedQty = 0;
+                foreach ($batches as $batchData) {
+                    $totalInvoicedQty += (int)$batchData['quantity'];
+                }
+
+                if ($totalInvoicedQty > $orderItem->quantity) {
+                    throw new \Exception("Invoiced quantity ({$totalInvoicedQty}) cannot exceed the ordered quantity ({$orderItem->quantity}) for item: {$orderItem->product_name}");
+                }
+
                 // Delete existing batches if re-approving (though usually direct approved)
                 $orderItem->batches()->delete();
 

@@ -290,6 +290,7 @@ class ProductController extends Controller
             'pack',
             'sides',
             'sizes',
+            'brand',
             'hsn_code',
             'strip_size',
             'box_size',
@@ -343,6 +344,7 @@ class ProductController extends Controller
                 'pts' => 'pts',
                 'ptr' => 'ptr',
                 'mrp' => 'mrp',
+                'brand' => 'brand',
                 'hsn_code' => 'hsn_code',
                 'strip_size' => 'strip_size',
                 'box_size' => 'box_size',
@@ -497,6 +499,17 @@ class ProductController extends Controller
                         ]
                     );
                     $successCount++;
+
+                    // Auto-register imported brand in settings if it is new
+                    $importedBrand = !empty($productData['brand']) ? trim($productData['brand']) : null;
+                    if ($importedBrand) {
+                        $brandsRaw = \App\Models\Setting::getValue('product_brands', 'Atomets,Atomshield,Sudhneelgiri');
+                        $brandsArr = array_map('trim', explode(',', $brandsRaw));
+                        if (!in_array($importedBrand, $brandsArr)) {
+                            $brandsArr[] = $importedBrand;
+                            \App\Models\Setting::setValue('product_brands', implode(',', $brandsArr));
+                        }
+                    }
                 } catch (\Exception $e) {
                     $errors[] = "Row $rowCount: " . $e->getMessage();
                 }

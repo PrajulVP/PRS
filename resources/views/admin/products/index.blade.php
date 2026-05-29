@@ -37,29 +37,180 @@
     .product-detail-premium {
         font-family: 'Inter', sans-serif;
     }
-    .detail-badge {
-        background: #fff;
-        padding: 10px 24px;
+    
+    .detail-card-panel {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
         border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        border: 1px solid #eee;
+        padding: 12px 16px;
+        transition: all 0.2s ease;
+    }
+    
+    body.dark-only .detail-card-panel {
+        background-color: rgba(255, 255, 255, 0.04) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .detail-badge-pill {
+        font-size: 0.72rem;
+        padding: 6px 14px;
+        background: #f1f5f9;
+        color: #475569;
+        border-radius: 100px;
+        border: 1px solid #e2e8f0;
         font-weight: 600;
-        color: #333;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    body.dark-only .detail-badge-pill {
+        background: rgba(255, 255, 255, 0.08) !important;
+        color: #cbd5e1 !important;
+        border-color: rgba(255, 255, 255, 0.12) !important;
+    }
+
+    .detail-meta-item {
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #64748b;
+    }
+    
+    .detail-meta-item .meta-icon {
+        width: 26px;
+        height: 26px;
+        border-radius: 6px;
+        background: rgba(var(--bs-primary-rgb), 0.1);
+        color: var(--bs-primary);
         display: flex;
         align-items: center;
-        font-size: 0.95rem;
+        justify-content: center;
+        margin-right: 8px;
     }
-    .detail-badge i { color: var(--bs-primary); }
-    .detail-badge.secondary i { color: var(--bs-info); }
-    .detail-badge.success i { color: var(--bs-success); }
-    .detail-badge.danger i { color: var(--bs-danger); }
+    
+    .detail-meta-item .meta-val {
+        color: #0f172a;
+        margin-left: 4px;
+        font-weight: 700;
+    }
+    
+    body.dark-only .detail-meta-item { color: #94a3b8 !important; }
+    body.dark-only .detail-meta-item .meta-val { color: #f1f5f9 !important; }
+
+    .detail-icon-box {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    .detail-text-title {
+        color: #64748b;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.65rem;
+        letter-spacing: 0.5px;
+    }
+    
+    body.dark-only .detail-text-title {
+        color: #94a3b8 !important;
+    }
+    
+    .detail-text-value {
+        color: #0f172a;
+        font-weight: 800;
+    }
+    
+    body.dark-only .detail-text-value {
+        color: #f1f5f9 !important;
+    }
+    
+    .detail-section-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: #1e293b;
+        border-left: 4px solid var(--bs-primary);
+        padding-left: 10px;
+    }
+    
+    body.dark-only .detail-section-title {
+        color: #f1f5f9 !important;
+    }
+
+    .detail-generic-formulation {
+        background: #f8fafc;
+        border: 1px dashed #e2e8f0;
+        border-radius: 10px;
+    }
+    
+    body.dark-only .detail-generic-formulation {
+        background: rgba(255, 255, 255, 0.03) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .detail-variant-pill {
+        font-size: 0.75rem;
+        border-radius: 6px;
+        background: #ffffff;
+        color: #334155;
+        border: 1px solid #e2e8f0;
+        font-weight: 700;
+    }
+
+    body.dark-only .detail-variant-pill {
+        background: rgba(255, 255, 255, 0.08) !important;
+        color: #f1f5f9 !important;
+        border-color: rgba(255, 255, 255, 0.12) !important;
+    }
+
+    .icon-box-blue { background: #e0f2fe; color: #0284c7; }
+    .icon-box-green { background: #dcfce7; color: #16a34a; }
+    .icon-box-amber { background: #fef3c7; color: #d97706; }
+    .icon-box-indigo { background: #e0e7ff; color: #4f46e5; }
+    
+    body.dark-only .icon-box-blue { background: rgba(2, 132, 199, 0.15) !important; color: #38bdf8 !important; }
+    body.dark-only .icon-box-green { background: rgba(22, 163, 74, 0.15) !important; color: #4ade80 !important; }
+    body.dark-only .icon-box-amber { background: rgba(217, 119, 6, 0.15) !important; color: #fbbf24 !important; }
+    body.dark-only .icon-box-indigo { background: rgba(79, 70, 229, 0.15) !important; color: #818cf8 !important; }
+    
+    /* Support modal header styling */
+    body.dark-only #showProductModal .modal-content {
+        background-color: #1d2a3a !important;
+        color: #f1f5f9 !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    body.dark-only #showProductModal .modal-header {
+        border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    body.dark-only #showProductModal .modal-footer {
+        border-top-color: rgba(255, 255, 255, 0.1) !important;
+    }
     
     .bg-soft-primary {
         background-color: rgba(var(--bs-primary-rgb), 0.1);
     }
     .font-outfit { font-family: 'Outfit', sans-serif; }
 
-
+    #createProductTypeTabs .nav-link, #editProductTypeTabs .nav-link {
+        background: #f8fafc;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        transition: all 0.2s ease-in-out;
+    }
+    #createProductTypeTabs .nav-link.active, #editProductTypeTabs .nav-link.active {
+        background: var(--bs-primary);
+        color: #ffffff;
+        border-color: var(--bs-primary);
+        box-shadow: 0 4px 12px rgba(var(--bs-primary-rgb), 0.2);
+    }
 </style>
 
 @section('page-body')
@@ -188,27 +339,43 @@
                 <form action="{{ route('products.store') }}" method="POST">
                     @csrf
                     <div class="modal-body">
+                        <!-- Product Type Pill Navigation -->
+                        <div class="mb-4 text-center">
+                            <label class="form-label fw-bold text-muted mb-2 text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Select Product Type</label>
+                            <div class="nav nav-pills justify-content-center gap-2" id="createProductTypeTabs" role="tablist">
+                                <button class="nav-link active fw-bold px-4 py-2 border shadow-sm" id="tab-create-medical" data-bs-toggle="pill" type="button" data-type="medical">
+                                    <i class="fa fa-flask me-2"></i>Medical Products
+                                </button>
+                                <button class="nav-link fw-bold px-4 py-2 border shadow-sm" id="tab-create-ortho" data-bs-toggle="pill" type="button" data-type="ortho">
+                                    <i class="fa fa-universal-access me-2"></i>Orthopedic & Supports
+                                </button>
+                                <button class="nav-link fw-bold px-4 py-2 border shadow-sm" id="tab-create-general" data-bs-toggle="pill" type="button" data-type="general">
+                                    <i class="fa fa-leaf me-2"></i>Herbal & OTC
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- General Info -->
                         <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">General Information</h6>
                         <div class="row g-3 mb-4">
-                            <div class="col-md-4">
+                            <div class="col-md-3" id="create_product_code_container">
                                 <label for="create_product_code" class="form-label fw-medium">Product Code</label>
                                 <input type="text" name="product_code" id="create_product_code" class="form-control">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3" id="create_product_name_container">
                                 <label for="create_product_name" class="form-label fw-medium">Product Name</label>
                                 <input type="text" name="product_name" id="create_product_name" class="form-control"
                                     required>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-3" id="create_generic_name_container">
                                 <label for="create_generic_name" class="form-label fw-medium">Generic Name</label>
                                 <input type="text" name="generic_name" id="create_generic_name" class="form-control">
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-3" id="create_hsn_code_container">
                                 <label for="create_hsn_code" class="form-label fw-medium">HSN Code</label>
                                 <input type="text" name="hsn_code" id="create_hsn_code" class="form-control">
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-3 d-none" id="create_brand_container">
                                 <label for="create_brand" class="form-label fw-medium">Brand</label>
                                 <select name="brand" id="create_brand" class="form-select">
                                     <option value="">Auto-Identify</option>
@@ -222,20 +389,20 @@
 
                         <div class="row g-4 mb-4">
                             <!-- Left Column: Stock & Packaging -->
-                            <div class="col-md-6 border-end">
+                            <div class="col-md-6 border-end" id="create_packaging_section">
                                 <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Stock & Packaging</h6>
                                 <div class="row g-3">
-                                    <div class="col-md-12">
+                                    <div class="col-md-12" id="create_pack_container">
                                         <label for="create_pack" class="form-label fw-medium">Pack</label>
                                         <input type="text" name="pack" id="create_pack" class="form-control"
                                             placeholder="e.g. 10x10, 30ml">
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-6" id="create_strip_size_container">
                                         <label for="create_strip_size" class="form-label fw-medium">Tablet / Strip</label>
                                         <input type="text" name="strip_size" id="create_strip_size" class="form-control"
                                             placeholder="Tablets per strips">
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-6" id="create_box_size_container">
                                         <label for="create_box_size" class="form-label fw-medium">Strip / Box</label>
                                         <input type="number" name="box_size" id="create_box_size" class="form-control"
                                             placeholder="Strips per box">
@@ -244,7 +411,7 @@
                             </div>
 
                             <!-- Right Column: Pricing -->
-                            <div class="col-md-6">
+                            <div class="col-md-6" id="create_pricing_section">
                                 <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Pricing Details</h6>
                                 <div class="row g-3">
                                     <div class="col-md-6">
@@ -262,7 +429,7 @@
                                         <input type="number" step="0.01" name="pts" id="create_pts" class="form-control"
                                             required>
                                     </div>
-                                    <div class="col-md-12">
+                                    <div class="col-md-6">
                                         <label for="create_loyalty_point_percentage" class="form-label fw-medium">Loyalty %</label>
                                         <input type="number" step="0.01" name="loyalty_point_percentage"
                                             id="create_loyalty_point_percentage" class="form-control" placeholder="0.00">
@@ -272,19 +439,20 @@
                         </div>
 
                         <!-- Variant Configuration -->
-                        <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Variant Configuration (Optional)</h6>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-medium small">Sides (comma separated)</label>
-                                <input type="hidden" name="variant_name_1" value="Side">
-                                <input type="text" name="variant_values_1" class="form-control" placeholder="e.g. LEFT, RIGHT">
+                        <div id="create_variant_section" class="d-none">
+                            <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Variant Configuration (Optional)</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium small">Sides (comma separated)</label>
+                                    <input type="hidden" name="variant_name_1" value="Side">
+                                    <input type="text" name="variant_values_1" id="create_variant_values_1" class="form-control" placeholder="e.g. LEFT, RIGHT">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium small">Sizes (comma separated)</label>
+                                    <input type="hidden" name="variant_name_2" value="Size">
+                                    <input type="text" name="variant_values_2" id="create_variant_values_2" class="form-control" placeholder="e.g. S, M, L, XL">
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-medium small">Sizes (comma separated)</label>
-                                <input type="hidden" name="variant_name_2" value="Size">
-                                <input type="text" name="variant_values_2" class="form-control" placeholder="e.g. S, M, L, XL">
-                            </div>
-
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -308,26 +476,42 @@
                     @csrf
                     @method('PUT')
                     <div class="modal-body">
+                        <!-- Product Type Pill Navigation -->
+                        <div class="mb-4 text-center">
+                            <label class="form-label fw-bold text-muted mb-2 text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Product Type</label>
+                            <div class="nav nav-pills justify-content-center gap-2" id="editProductTypeTabs" role="tablist">
+                                <button class="nav-link active fw-bold px-4 py-2 border shadow-sm" id="tab-edit-medical" data-bs-toggle="pill" type="button" data-type="medical">
+                                    <i class="fa fa-flask me-2"></i>Medical Products
+                                </button>
+                                <button class="nav-link fw-bold px-4 py-2 border shadow-sm" id="tab-edit-ortho" data-bs-toggle="pill" type="button" data-type="ortho">
+                                    <i class="fa fa-universal-access me-2"></i>Orthopedic & Supports
+                                </button>
+                                <button class="nav-link fw-bold px-4 py-2 border shadow-sm" id="tab-edit-general" data-bs-toggle="pill" type="button" data-type="general">
+                                    <i class="fa fa-leaf me-2"></i>Herbal & OTC
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- General Info -->
                         <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">General Information</h6>
                         <div class="row g-3 mb-4">
-                            <div class="col-md-4">
+                            <div class="col-md-3" id="edit_product_code_container">
                                 <label for="edit_product_code" class="form-label fw-medium">Product Code</label>
                                 <input type="text" name="product_code" id="edit_product_code" class="form-control">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3" id="edit_product_name_container">
                                 <label for="edit_product_name" class="form-label fw-medium">Product Name</label>
                                 <input type="text" name="product_name" id="edit_product_name" class="form-control" required>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-3" id="edit_generic_name_container">
                                 <label for="edit_generic_name" class="form-label fw-medium">Generic Name</label>
                                 <input type="text" name="generic_name" id="edit_generic_name" class="form-control">
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-3" id="edit_hsn_code_container">
                                 <label for="edit_hsn_code" class="form-label fw-medium">HSN Code</label>
                                 <input type="text" name="hsn_code" id="edit_hsn_code" class="form-control">
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-3 d-none" id="edit_brand_container">
                                 <label for="edit_brand" class="form-label fw-medium">Brand</label>
                                 <select name="brand" id="edit_brand" class="form-select">
                                     @foreach($availableBrands as $brand)
@@ -340,20 +524,20 @@
 
                         <div class="row g-4 mb-4">
                             <!-- Left Column: Stock & Packaging -->
-                            <div class="col-md-6 border-end">
+                            <div class="col-md-6 border-end" id="edit_packaging_section">
                                 <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Stock & Packaging</h6>
                                 <div class="row g-3">
-                                    <div class="col-md-12">
+                                    <div class="col-md-12" id="edit_pack_container">
                                         <label for="edit_pack" class="form-label fw-medium">Pack</label>
                                         <input type="text" name="pack" id="edit_pack" class="form-control"
                                             placeholder="e.g. 10x10, 30ml">
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-6" id="edit_strip_size_container">
                                         <label for="edit_strip_size" class="form-label fw-medium">Tablet / Strip</label>
                                         <input type="text" name="strip_size" id="edit_strip_size" class="form-control"
                                             placeholder="Tablets per strips">
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-6" id="edit_box_size_container">
                                         <label for="edit_box_size" class="form-label fw-medium">Strip / Box</label>
                                         <input type="number" name="box_size" id="edit_box_size" class="form-control"
                                             placeholder="Strips per box">
@@ -362,7 +546,7 @@
                             </div>
 
                             <!-- Right Column: Pricing -->
-                            <div class="col-md-6">
+                            <div class="col-md-6" id="edit_pricing_section">
                                 <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Pricing Details</h6>
                                 <div class="row g-3">
                                     <div class="col-md-6">
@@ -380,9 +564,8 @@
                                         <input type="number" step="0.01" name="pts" id="edit_pts" class="form-control"
                                             required>
                                     </div>
-                                    <div class="col-md-12">
-                                        <label for="edit_loyalty_point_percentage" class="form-label fw-medium">Loyalty
-                                            %</label>
+                                    <div class="col-md-6">
+                                        <label for="edit_loyalty_point_percentage" class="form-label fw-medium">Loyalty %</label>
                                         <input type="number" step="0.01" name="loyalty_point_percentage"
                                             id="edit_loyalty_point_percentage" class="form-control" placeholder="0.00">
                                     </div>
@@ -391,19 +574,20 @@
                         </div>
 
                         <!-- Variant Configuration -->
-                        <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Variant Configuration (Optional)</h6>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-medium small">Sides (comma separated)</label>
-                                <input type="hidden" name="variant_name_1" value="Side">
-                                <input type="text" name="variant_values_1" id="edit_variant_values_1" class="form-control" placeholder="e.g. LEFT, RIGHT">
+                        <div id="edit_variant_section" class="d-none">
+                            <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Variant Configuration (Optional)</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium small">Sides (comma separated)</label>
+                                    <input type="hidden" name="variant_name_1" value="Side">
+                                    <input type="text" name="variant_values_1" id="edit_variant_values_1" class="form-control" placeholder="e.g. LEFT, RIGHT">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium small">Sizes (comma separated)</label>
+                                    <input type="hidden" name="variant_name_2" value="Size">
+                                    <input type="text" name="variant_values_2" id="edit_variant_values_2" class="form-control" placeholder="e.g. S, M, L, XL">
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-medium small">Sizes (comma separated)</label>
-                                <input type="hidden" name="variant_name_2" value="Size">
-                                <input type="text" name="variant_values_2" id="edit_variant_values_2" class="form-control" placeholder="e.g. S, M, L, XL">
-                            </div>
-
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -445,13 +629,8 @@
                 <form action="{{ route('products.import') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="modal-body p-4">
-                        <div class="alert alert-info small mb-4">
+                        <div class="alert alert-info small mb-4 text-center">
                             <strong>Note:</strong> Download the template to ensure your CSV is formatted correctly.
-                            <ul class="mb-0 mt-2 text-start">
-                                <li><strong>Required fields:</strong> Product Name, MRP</li>
-                                <li>If a Product Code is provided and already exists, it will be automatically <strong>updated</strong>.
-                                </li>
-                            </ul>
                         </div>
                         <div class="text-center mb-4">
                             <a href="{{ route('products.download-template') }}" class="btn btn-outline-primary btn-sm">
@@ -626,6 +805,96 @@
                 }
             });
 
+            // Helper function to switch product creation/edit types dynamically
+            function switchProductType(modalPrefix, type) {
+                let codeCol = $(`#${modalPrefix}_product_code_container`);
+                let nameCol = $(`#${modalPrefix}_product_name_container`);
+                let hsnCol = $(`#${modalPrefix}_hsn_code_container`);
+                let brandCol = $(`#${modalPrefix}_brand_container`);
+                let genericCol = $(`#${modalPrefix}_generic_name_container`);
+
+                let brandVal = '';
+                if (type === 'medical') {
+                    brandVal = 'Atomets';
+                    
+                    // Column grid adjustments
+                    codeCol.addClass('d-none');
+                    nameCol.removeClass('col-md-3 col-md-4').addClass('col-md-3');
+                    genericCol.removeClass('col-md-3 col-md-4 d-none').addClass('col-md-3');
+                    hsnCol.removeClass('col-md-3 col-md-4').addClass('col-md-3');
+                    brandCol.removeClass('d-none').removeClass('col-md-3 col-md-4').addClass('col-md-3');
+
+                    // Visibility toggling
+                    $(`#${modalPrefix}_packaging_section`).removeClass('d-none');
+                    $(`#${modalPrefix}_pack_container`).addClass('d-none');
+                    $(`#${modalPrefix}_strip_size_container`).removeClass('d-none');
+                    $(`#${modalPrefix}_box_size_container`).removeClass('d-none');
+                    $(`#${modalPrefix}_pricing_section`).removeClass('col-md-12').addClass('col-md-6');
+                    $(`#${modalPrefix}_variant_section`).addClass('d-none');
+                } else if (type === 'ortho') {
+                    brandVal = 'Atomshield';
+
+                    // Column grid adjustments
+                    codeCol.removeClass('d-none').removeClass('col-md-3 col-md-4').addClass('col-md-3');
+                    nameCol.removeClass('col-md-3 col-md-4').addClass('col-md-3');
+                    genericCol.addClass('d-none');
+                    hsnCol.removeClass('col-md-3 col-md-4').addClass('col-md-3');
+                    brandCol.removeClass('d-none').removeClass('col-md-3 col-md-4').addClass('col-md-3');
+
+                    // Visibility toggling
+                    $(`#${modalPrefix}_packaging_section`).addClass('d-none');
+                    $(`#${modalPrefix}_pricing_section`).removeClass('col-md-6').addClass('col-md-12');
+                    $(`#${modalPrefix}_variant_section`).removeClass('d-none');
+                } else { // general
+                    brandVal = 'Sudhneelgiri';
+
+                    // Column grid adjustments
+                    codeCol.removeClass('d-none').removeClass('col-md-3 col-md-4').addClass('col-md-3');
+                    nameCol.removeClass('col-md-3 col-md-4').addClass('col-md-3');
+                    genericCol.addClass('d-none');
+                    hsnCol.removeClass('col-md-3 col-md-4').addClass('col-md-3');
+                    brandCol.removeClass('d-none').removeClass('col-md-3 col-md-4').addClass('col-md-3');
+
+                    // Visibility toggling
+                    $(`#${modalPrefix}_packaging_section`).removeClass('d-none');
+                    $(`#${modalPrefix}_pack_container`).removeClass('d-none');
+                    $(`#${modalPrefix}_strip_size_container`).addClass('d-none');
+                    $(`#${modalPrefix}_box_size_container`).addClass('d-none');
+                    $(`#${modalPrefix}_pricing_section`).removeClass('col-md-12').addClass('col-md-6');
+                    $(`#${modalPrefix}_variant_section`).addClass('d-none');
+                }
+
+                // Set select dropdown value
+                $(`#${modalPrefix}_brand`).val(brandVal);
+
+                // Update active tab buttons
+                $(`#${modalPrefix}ProductTypeTabs button`).removeClass('active');
+                if (modalPrefix === 'create') {
+                    $(`#tab-create-${type}`).addClass('active');
+                } else {
+                    $(`#tab-edit-${type}`).addClass('active');
+                }
+            }
+
+            // Default initial state for product creation
+            switchProductType('create', 'medical');
+
+            // Reset create modal type to medical on open
+            $('#createProductModal').on('show.bs.modal', function () {
+                switchProductType('create', 'medical');
+            });
+
+            // Click handlers for switching tabs
+            $('#createProductTypeTabs button').on('click', function() {
+                let type = $(this).data('type');
+                switchProductType('create', type);
+            });
+
+            $('#editProductTypeTabs button').on('click', function() {
+                let type = $(this).data('type');
+                switchProductType('edit', type);
+            });
+
             // Handle Edit Button Click
             $('#products-table').on('click', '.edit-btn', function () {
                 var product = $(this).data('product'); // This might be an object if processed by jQuery, or string
@@ -637,6 +906,15 @@
                 function removeCommas(value) {
                     return value ? value.toString().replace(/,/g, '') : '';
                 }
+
+                // Map brand to tab type first to adjust field visibility
+                let productType = 'general';
+                if (product.brand === 'Atomets') {
+                    productType = 'medical';
+                } else if (product.brand === 'Atomshield') {
+                    productType = 'ortho';
+                }
+                switchProductType('edit', productType);
 
                 // Populate fields
                 $('#edit_product_code').val(product.product_code);
@@ -725,45 +1003,45 @@
                 if (isStripBased) {
                     packagingHtml = `
                         <div class="mb-4">
-                            <h5 class="fw-bold mb-3 text-dark border-start border-4 border-secondary ps-2.5 d-flex align-items-center" style="font-size: 0.95rem;">
-                                <i class="fa fa-cubes text-secondary me-2" style="font-size: 0.95rem;"></i> Stock & Packaging
+                            <h5 class="fw-bold mb-3 detail-section-title d-flex align-items-center">
+                                Stock & Packaging
                             </h5>
                             <div class="row g-2">
                                 <div class="col-12">
-                                    <div class="p-2.5 rounded-3 d-flex align-items-center justify-content-between border" style="background: #f8fafc; border-color: #e2e8f0 !important;">
+                                    <div class="detail-card-panel d-flex align-items-center justify-content-between">
                                         <div class="d-flex align-items-center">
-                                            <div class="p-2 rounded-3 me-3 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #e0f2fe; color: #0284c7;">
+                                            <div class="detail-icon-box icon-box-blue me-3">
                                                 <i class="fa fa-dot-circle-o" style="font-size: 0.95rem;"></i>
                                             </div>
                                             <div>
-                                                <div class="text-muted fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">Tablets Per Strip</div>
-                                                <div class="fw-bold text-dark fs-6" style="line-height: 1.1;">${stripVal} <span class="text-muted" style="font-weight: 500; font-size: 0.7rem;">Tabs</span></div>
+                                                <div class="detail-text-title">Tablets Per Strip</div>
+                                                <div class="detail-text-value fs-6" style="line-height: 1.1;">${stripVal} <span class="text-muted small" style="font-weight: 500;">Tabs</span></div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-12">
-                                    <div class="p-2.5 rounded-3 d-flex align-items-center justify-content-between border" style="background: #f8fafc; border-color: #e2e8f0 !important;">
+                                    <div class="detail-card-panel d-flex align-items-center justify-content-between">
                                         <div class="d-flex align-items-center">
-                                            <div class="p-2 rounded-3 me-3 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #dcfce7; color: #16a34a;">
+                                            <div class="detail-icon-box icon-box-green me-3">
                                                 <i class="fa fa-cube" style="font-size: 0.95rem;"></i>
                                             </div>
                                             <div>
-                                                <div class="text-muted fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">Strips Per Box</div>
-                                                <div class="fw-bold text-dark fs-6" style="line-height: 1.1;">${boxVal} <span class="text-muted" style="font-weight: 500; font-size: 0.7rem;">Strips</span></div>
+                                                <div class="detail-text-title">Strips Per Box</div>
+                                                <div class="detail-text-value fs-6" style="line-height: 1.1;">${boxVal} <span class="text-muted small" style="font-weight: 500;">Strips</span></div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-12">
-                                    <div class="p-2.5 rounded-3 d-flex align-items-center justify-content-between border" style="background: #f8fafc; border-color: #e2e8f0 !important;">
+                                    <div class="detail-card-panel d-flex align-items-center justify-content-between">
                                         <div class="d-flex align-items-center">
-                                            <div class="p-2 rounded-3 me-3 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #fef3c7; color: #d97706;">
+                                            <div class="detail-icon-box icon-box-amber me-3">
                                                 <i class="fa fa-archive" style="font-size: 0.95rem;"></i>
                                             </div>
                                             <div>
-                                                <div class="text-muted fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">Boxes Per Carton</div>
-                                                <div class="fw-bold text-dark fs-6" style="line-height: 1.1;">${cartonVal || '1'} <span class="text-muted" style="font-weight: 500; font-size: 0.7rem;">Boxes</span></div>
+                                                <div class="detail-text-title">Boxes Per Carton</div>
+                                                <div class="detail-text-value fs-6" style="line-height: 1.1;">${cartonVal || '1'} <span class="text-muted small" style="font-weight: 500;">Boxes</span></div>
                                             </div>
                                         </div>
                                     </div>
@@ -777,13 +1055,13 @@
                 if (isValid(product.generic_name)) {
                     genericNameHtml = `
                         <div class="col-12 mb-3">
-                            <div class="p-2.5 bg-light rounded d-flex align-items-center" style="background: #f8fafc !important; border: 1px dashed #e2e8f0; border-radius: 8px;">
-                                <div class="p-2 rounded-3 me-3 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: #e0f2fe; color: #0284c7;">
+                            <div class="p-2.5 detail-generic-formulation d-flex align-items-center">
+                                <div class="detail-icon-box icon-box-blue me-3">
                                     <i class="fa fa-flask" style="font-size: 0.9rem;"></i>
                                 </div>
                                 <div>
-                                    <div class="text-muted fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px; line-height: 1;">Generic Formulation</div>
-                                    <div class="fw-bold text-dark fs-7" style="line-height: 1.1;">${product.generic_name}</div>
+                                    <div class="detail-text-title" style="line-height: 1;">Generic Formulation</div>
+                                    <div class="detail-text-value fs-7" style="line-height: 1.1;">${product.generic_name}</div>
                                 </div>
                             </div>
                         </div>
@@ -792,32 +1070,32 @@
 
                 let commercialsHtml = `
                     <div class="mb-4">
-                        <h5 class="fw-bold mb-3 text-dark border-start border-4 border-secondary ps-2.5 d-flex align-items-center" style="font-size: 0.95rem;">
-                            <i class="fa fa-tag text-secondary me-2" style="font-size: 0.95rem;"></i> Commercials
+                        <h5 class="fw-bold mb-3 detail-section-title d-flex align-items-center">
+                            Commercials
                         </h5>
                         <div class="row g-2">
                             <div class="col-6">
-                                <div class="p-2.5 rounded-3 border" style="background: #f8fafc; border-color: #e2e8f0 !important;">
-                                    <div class="text-muted fw-bold text-uppercase mb-0.5" style="font-size: 0.6rem; letter-spacing: 0.5px;">MRP</div>
-                                    <div class="fw-extrabold text-dark fs-5">₹${parseFloat(product.mrp || 0).toFixed(2)}</div>
+                                <div class="detail-card-panel">
+                                    <div class="detail-text-title mb-1">MRP</div>
+                                    <div class="fs-5 detail-text-value">₹${parseFloat(product.mrp || 0).toFixed(2)}</div>
                                 </div>
                             </div>
                             <div class="col-6">
-                                <div class="p-2.5 rounded-3 border" style="background: #f8fafc; border-color: #e2e8f0 !important;">
-                                    <div class="text-muted fw-bold text-uppercase mb-0.5" style="font-size: 0.6rem; letter-spacing: 0.5px;">PTR</div>
-                                    <div class="fw-bold text-dark fs-5">₹${parseFloat(product.ptr || 0).toFixed(2)}</div>
+                                <div class="detail-card-panel">
+                                    <div class="detail-text-title mb-1">PTR</div>
+                                    <div class="fs-5 detail-text-value">₹${parseFloat(product.ptr || 0).toFixed(2)}</div>
                                 </div>
                             </div>
                             <div class="col-6">
-                                <div class="p-2.5 rounded-3 border" style="background: #f8fafc; border-color: #e2e8f0 !important;">
-                                    <div class="text-muted fw-bold text-uppercase mb-0.5" style="font-size: 0.6rem; letter-spacing: 0.5px;">PTS</div>
-                                    <div class="fw-bold text-dark fs-5">₹${parseFloat(product.pts || 0).toFixed(2)}</div>
+                                <div class="detail-card-panel">
+                                    <div class="detail-text-title mb-1">PTS</div>
+                                    <div class="fs-5 detail-text-value">₹${parseFloat(product.pts || 0).toFixed(2)}</div>
                                 </div>
                             </div>
                             <div class="col-6">
-                                <div class="p-2.5 rounded-3 border" style="background: #f8fafc; border-color: #e2e8f0 !important;">
-                                    <div class="text-muted fw-bold text-uppercase mb-0.5" style="font-size: 0.6rem; letter-spacing: 0.5px;">Loyalty Points</div>
-                                    <div class="fw-bold text-dark fs-5">${parseFloat(product.loyalty_point_percentage || 0).toFixed(2)}%</div>
+                                <div class="detail-card-panel">
+                                    <div class="detail-text-title mb-1">Loyalty Points</div>
+                                    <div class="fs-5 detail-text-value">${parseFloat(product.loyalty_point_percentage || 0).toFixed(2)}%</div>
                                 </div>
                             </div>
                         </div>
@@ -826,32 +1104,32 @@
 
                 let commercialsHtmlFull = `
                     <div class="mb-3">
-                        <h5 class="fw-bold mb-3 text-dark border-start border-4 border-secondary ps-2.5 d-flex align-items-center" style="font-size: 0.95rem;">
-                            <i class="fa fa-tag text-secondary me-2" style="font-size: 0.95rem;"></i> Commercials
+                        <h5 class="fw-bold mb-3 detail-section-title d-flex align-items-center">
+                            Commercials
                         </h5>
                         <div class="row g-3">
-                            <div class="col-6">
-                                <div class="p-3 rounded-3 border h-100 bg-light-subtle" style="border-color: #e2e8f0 !important;">
-                                    <div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.6rem; letter-spacing: 0.5px;">MRP</div>
-                                    <div class="fw-bold text-dark fs-5">₹${parseFloat(product.mrp || 0).toFixed(2)}</div>
+                            <div class="col-md-3 col-6">
+                                <div class="detail-card-panel h-100">
+                                    <div class="detail-text-title mb-1">MRP</div>
+                                    <div class="fs-5 detail-text-value">₹${parseFloat(product.mrp || 0).toFixed(2)}</div>
                                 </div>
                             </div>
-                            <div class="col-6">
-                                <div class="p-3 rounded-3 border h-100 bg-light-subtle" style="border-color: #e2e8f0 !important;">
-                                    <div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.6rem; letter-spacing: 0.5px;">PTR</div>
-                                    <div class="fw-bold text-dark fs-5">₹${parseFloat(product.ptr || 0).toFixed(2)}</div>
+                            <div class="col-md-3 col-6">
+                                <div class="detail-card-panel h-100">
+                                    <div class="detail-text-title mb-1">PTR</div>
+                                    <div class="fs-5 detail-text-value">₹${parseFloat(product.ptr || 0).toFixed(2)}</div>
                                 </div>
                             </div>
-                            <div class="col-6">
-                                <div class="p-3 rounded-3 border h-100 bg-light-subtle" style="border-color: #e2e8f0 !important;">
-                                    <div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.6rem; letter-spacing: 0.5px;">PTS</div>
-                                    <div class="fw-bold text-dark fs-5">₹${parseFloat(product.pts || 0).toFixed(2)}</div>
+                            <div class="col-md-3 col-6">
+                                <div class="detail-card-panel h-100">
+                                    <div class="detail-text-title mb-1">PTS</div>
+                                    <div class="fs-5 detail-text-value">₹${parseFloat(product.pts || 0).toFixed(2)}</div>
                                 </div>
                             </div>
-                            <div class="col-6">
-                                <div class="p-3 rounded-3 border h-100 bg-light-subtle" style="border-color: #e2e8f0 !important;">
-                                    <div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.6rem; letter-spacing: 0.5px;">Loyalty Points</div>
-                                    <div class="fw-bold text-dark fs-5">${parseFloat(product.loyalty_point_percentage || 0).toFixed(2)}%</div>
+                            <div class="col-md-3 col-6">
+                                <div class="detail-card-panel h-100">
+                                    <div class="detail-text-title mb-1">Loyalty Points</div>
+                                    <div class="fs-5 detail-text-value">${parseFloat(product.loyalty_point_percentage || 0).toFixed(2)}%</div>
                                 </div>
                             </div>
                         </div>
@@ -884,23 +1162,23 @@
                 if (product.variant_options && typeof product.variant_options === 'object' && Object.keys(product.variant_options).length > 0) {
                     variantsHtml = `
                         <div class="mt-3 pt-3 border-top">
-                            <h5 class="fw-bold mb-3 text-dark border-start border-4 border-secondary ps-2.5 d-flex align-items-center" style="font-size: 0.95rem;">
-                                <i class="fa fa-cogs text-secondary me-2" style="font-size: 0.95rem;"></i> Structured Product Variants
+                            <h5 class="fw-bold mb-3 detail-section-title d-flex align-items-center">
+                                Structured Product Variants
                             </h5>
                             <div class="row g-2">
                                 ${Object.entries(product.variant_options).map(([key, vals]) => `
                                     <div class="col-md-12">
-                                        <div class="card border border-light" style="border-radius: 8px; background: #f8fafc;">
-                                            <div class="card-body p-2.5">
+                                        <div class="detail-card-panel">
+                                            <div class="d-flex flex-column">
                                                 <div class="d-flex align-items-center mb-2">
-                                                    <div class="p-1.5 rounded-3 me-2 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; background: #e2e8f0; color: #475569;">
+                                                    <div class="detail-icon-box icon-box-indigo me-2" style="width: 28px; height: 28px;">
                                                         <i class="fa ${key.toLowerCase() === 'side' ? 'fa-arrows-h' : 'fa-arrows-v'}" style="font-size: 0.95rem;"></i>
                                                     </div>
-                                                    <span class="text-uppercase fw-bold text-secondary" style="font-size: 0.65rem; letter-spacing: 0.5px;">${key} Options</span>
+                                                    <span class="detail-text-title">${key} Options</span>
                                                 </div>
                                                 <div class="d-flex flex-wrap gap-1.5">
                                                     ${vals.map(v => `
-                                                        <span class="badge px-2.5 py-1.5 fw-bold text-dark border" style="font-size: 0.72rem; border-radius: 6px; background: #ffffff; border-color: #e2e8f0 !important;">
+                                                        <span class="badge detail-variant-pill px-2.5 py-1.5 border text-dark">
                                                             ${v}
                                                         </span>
                                                     `).join('')}
@@ -919,12 +1197,12 @@
                 let html = `
                     <div class="product-detail-premium">
                         <div class="text-center mb-3 pb-3 border-bottom">
-                            <h3 class="fw-bold text-primary text-uppercase mb-2" style="letter-spacing: 0.5px; font-size: 1.35rem;">${pName}</h3>
-                            <div class="d-flex flex-wrap justify-content-center gap-2 mt-2">
-                                ${isValid(product.product_code) ? `<div class="detail-badge shadow-none" style="font-size: 0.7rem; padding: 3px 10px; background: #f1f5f9; color: #475569; border-radius: 100px; border: 1px solid #e2e8f0;"><i class="fa fa-tag me-1.5 text-secondary"></i>Code: ${product.product_code}</div>` : ''}
-                                ${isValid(product.pack) ? `<div class="detail-badge shadow-none" style="font-size: 0.7rem; padding: 3px 10px; background: #f1f5f9; color: #475569; border-radius: 100px; border: 1px solid #e2e8f0;"><i class="fa fa-box me-1.5 text-secondary"></i>Pack: ${product.pack}</div>` : ''}
-                                ${isValid(product.hsn_code) ? `<div class="detail-badge shadow-none" style="font-size: 0.7rem; padding: 3px 10px; background: #f1f5f9; color: #475569; border-radius: 100px; border: 1px solid #e2e8f0;"><i class="fa fa-barcode me-1.5 text-secondary"></i>HSN: ${product.hsn_code}</div>` : ''}
-                                ${isValid(product.brand) ? `<div class="detail-badge shadow-none" style="font-size: 0.7rem; padding: 3px 10px; background: #f1f5f9; color: #475569; border-radius: 100px; border: 1px solid #e2e8f0;"><i class="fa fa-building me-1.5 text-secondary"></i>Brand: ${product.brand}</div>` : ''}
+                            <h3 class="fw-bold text-primary text-uppercase mb-2 font-outfit" style="letter-spacing: 0.5px; font-size: 1.35rem;">${pName}</h3>
+                            <div class="d-flex flex-wrap justify-content-center gap-4 mt-3 mb-2">
+                                ${isValid(product.product_code) ? `<div class="detail-meta-item"><div class="meta-icon"><i class="fa fa-tag" style="font-size: 0.75rem;"></i></div>Code: <span class="meta-val">${product.product_code}</span></div>` : ''}
+                                ${isValid(product.pack) ? `<div class="detail-meta-item"><div class="meta-icon"><i class="fa fa-archive" style="font-size: 0.75rem;"></i></div>Pack: <span class="meta-val">${product.pack}</span></div>` : ''}
+                                ${isValid(product.hsn_code) ? `<div class="detail-meta-item"><div class="meta-icon"><i class="fa fa-barcode" style="font-size: 0.75rem;"></i></div>HSN: <span class="meta-val">${product.hsn_code}</span></div>` : ''}
+                                ${isValid(product.brand) ? `<div class="detail-meta-item"><div class="meta-icon"><i class="fa fa-building" style="font-size: 0.75rem;"></i></div>Brand: <span class="meta-val">${product.brand}</span></div>` : ''}
                             </div>
                         </div>
 
@@ -935,11 +1213,9 @@
                         ${variantsHtml}
                     </div>
                 `;
-                if (isStripBased) {
-                    $('#showProductModal .modal-dialog').removeClass('modal-md').addClass('modal-lg');
-                } else {
-                    $('#showProductModal .modal-dialog').removeClass('modal-lg').addClass('modal-md');
-                }
+                
+                // Maintain consistent modal-lg size exactly like the Create Product modal
+                $('#showProductModal .modal-dialog').removeClass('modal-md').addClass('modal-lg');
 
                 $('#showProductTableBody').html(html);
                 $('#showProductModal').modal('show');

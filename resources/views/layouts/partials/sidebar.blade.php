@@ -28,6 +28,35 @@
         transform: translateY(-50%) !important;
         right: 20px !important;
     }
+
+    /* Custom Whitish Sidebar Scrollbar Visible Only on Hover & Drag */
+    .sidebar-wrapper .simplebar-scrollbar:before {
+        background-color: rgba(255, 255, 255, 0.45) !important;
+        opacity: 0 !important;
+        width: 8px !important;
+        border-radius: 4px !important;
+        transition: opacity 0.3s ease, background-color 0.3s ease !important;
+        right: 1px !important;
+        left: auto !important;
+    }
+    
+    .sidebar-wrapper:hover .simplebar-scrollbar:before,
+    .sidebar-wrapper .simplebar-scrollbar.simplebar-visible:before,
+    .simplebar-dragging .simplebar-scrollbar:before {
+        opacity: 0.65 !important;
+    }
+    
+    .sidebar-wrapper .simplebar-scrollbar:hover:before,
+    .sidebar-wrapper .simplebar-scrollbar.simplebar-visible:hover:before {
+        background-color: rgba(255, 255, 255, 0.85) !important;
+    }
+    
+    .sidebar-wrapper .simplebar-track.simplebar-vertical {
+        width: 10px !important;
+        right: 3px !important;
+        background: transparent !important;
+        z-index: 1000 !important;
+    }
   </style>
   {{-- <div class="logo-icon-wrapper"><a href="{{ route('dashboard') }}"><img class="img-fluid" src="{{ asset('admin/assets/images/logo/atom-logo-main-white.png') }}" width="170" alt=""></a></div> --}}
   <nav class="sidebar-main">
