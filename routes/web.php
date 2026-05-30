@@ -143,6 +143,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('retailer/{retailerOrder}/upload-invoice', [RetailerOrderManagementController::class, 'uploadInvoice'])->name('retailer.upload-invoice');
         Route::post('retailer/{retailerOrder}/remove-invoice', [RetailerOrderManagementController::class, 'removeInvoice'])->name('retailer.remove-invoice');
         Route::post('retailer/{retailerOrder}/confirm-receipt', [RetailerOrderManagementController::class, 'confirmReceipt'])->name('retailer.confirm-receipt');
+        Route::post('retailer/validate-batches', [RetailerOrderManagementController::class, 'validateBatches'])->name('retailer.validate-batches');
 
         
         Route::post('retailer/{retailerOrder}/reject', [RetailerOrderManagementController::class, 'rejectOrder'])->name('retailer.reject');

@@ -2177,7 +2177,7 @@
                             let rowHtml = `
                                 <div data-item-id="${item.order_item_id}" data-ordered-qty="${item.quantity}">
                                     <div class="d-none">
-                                        <div class="fw-bold product-name-marker">${item.product_name}</div>
+                                        <div class="fw-bold product-name-marker">${item.product_name} ${(item.side && item.side !== '-' && item.side !== 'N/A') ? '['+item.side+']' : ''} ${(item.size && item.size !== '-' && item.size !== 'N/A') ? '['+item.size+']' : ''}</div>
                                         <input type="number" name="batches[${item.order_item_id}][0][quantity]" value="${item.quantity}">
                                     </div>
                                     <div class="d-none" id="batches_for_${item.order_item_id}">
@@ -2192,6 +2192,7 @@
                                         <input type="hidden" name="batches[${item.order_item_id}][0][sgst]" class="hidden-sgst-val">
                                         <input type="hidden" name="batches[${item.order_item_id}][0][igst]" class="hidden-igst-val">
                                         <input type="hidden" name="batches[${item.order_item_id}][0][net_amount]" class="hidden-net-val">
+                                        <input type="hidden" name="free_quantity[${item.order_item_id}]" class="hidden-free-val">
                                     </div>
                                 </div>
                             `;
@@ -2545,20 +2546,34 @@
                             normItemName.includes(normDesc);
                     });
 
-                    // 2. Fallback to word-based intersection check
+                    // 2. Fallback to scoring word-based intersection check (picks BEST match)
                     if (matchedIdx === -1) {
-                        let itemWords = normItemName.split(' ').filter(w => w.length >= 2);
-                        matchedIdx = invoiceProducts.findIndex(p => {
-                            if (!p.description) return false;
+                        let itemWords = normItemName.split(' ').filter(w => w.length > 0);
+                        let bestScore = 0;
+                        let bestIdx = -1;
+                        let threshold = Math.max(1, Math.ceil(itemWords.length * 0.6));
+
+                        invoiceProducts.forEach((p, idx) => {
+                            if (!p.description) return;
                             let normDesc = normalize(p.description);
                             let matchCount = 0;
+                            let descWords = normDesc.split(' ');
                             itemWords.forEach(word => {
-                                if (normDesc.includes(word)) matchCount++;
+                                // Match word exactly if it's a short size variant, otherwise includes
+                                if (word.length <= 2) {
+                                    if (descWords.includes(word)) matchCount++;
+                                } else {
+                                    if (normDesc.includes(word)) matchCount++;
+                                }
                             });
-                            // Threshold: 60% of words or 1 word minimum
-                            let threshold = Math.max(1, Math.ceil(itemWords.length * 0.6));
-                            return matchCount >= threshold;
+                            
+                            if (matchCount >= threshold && matchCount > bestScore) {
+                                bestScore = matchCount;
+                                bestIdx = idx;
+                            }
                         });
+
+                        matchedIdx = bestIdx;
                     }
 
                     // 3. Last fallback (start-of-string prefix match)
@@ -2656,6 +2671,7 @@
                         $(`#batches_for_${item.id} .hidden-cgst-val`).val(extCgst);
                         $(`#batches_for_${item.id} .hidden-sgst-val`).val(extSgst);
                         $(`#batches_for_${item.id} .hidden-igst-val`).val(extIgst);
+                        $(`#batches_for_${item.id} .hidden-free-val`).val(freeQty);
 
                         // If individual GST components are missing but total GST amt exists
                         let extTotalGst = extCgst + extSgst + extIgst;
@@ -2978,9 +2994,19 @@
 
                 editItems = {};
                 row.items.forEach(function (item) {
-                    editItems[item.product_id] = {
+                    let vParts = [];
+                    if (item.side && item.side !== '-' && item.side !== 'N/A') vParts.push(item.side);
+                    if (item.size && item.size !== '-' && item.size !== 'N/A') vParts.push(item.size);
+                    let vLabel = vParts.join(' / ');
+                    let itemKey = item.product_id + (vLabel ? '-' + vLabel.replace(/ /g, '_') : '');
+                    
+                    let displayName = item.product_name;
+                    if (vLabel) displayName += ` [${vLabel}]`;
+
+                    editItems[itemKey] = {
                         id: item.product_id,
-                        name: item.product_name,
+                        itemKey: itemKey,
+                        name: displayName,
                         price: parseFloat(item.unit_price),
                         basePrice: parseFloat(item.unit_price),
                         stock: 9999,
@@ -2991,7 +3017,9 @@
                         box_size: item.box_size,
                         product_code: item.product_code,
                         brand: item.brand,
-                        generic_name: item.generic_name
+                        generic_name: item.generic_name,
+                        side: item.side,
+                        size: item.size
                     };
                 });
                 renderEditItems();

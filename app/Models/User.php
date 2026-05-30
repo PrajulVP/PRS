@@ -235,6 +235,13 @@ class User extends Authenticatable implements JWTSubject
                 ->count();
         }
 
+        // Distributor Orders (Orders to confirm receipt)
+        if ($this->hasRole('distributor') && $this->distributor) {
+            $counts['distributor_orders'] = \App\Models\DistributorOrder::where('distributor_id', $this->distributor->id)
+                ->where('status', \App\Models\DistributorOrder::STATUS_APPROVED)
+                ->count();
+        }
+
         // 5. Inactive Users (for Activation)
         if ($this->hasRole('superadmin')) {
             $counts['inactive_sales_managers'] = User::where('status', 'inactive')->where('role', 'salesmanager')->count();

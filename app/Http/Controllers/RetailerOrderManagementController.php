@@ -770,6 +770,63 @@ class RetailerOrderManagementController extends Controller
         return response()->json(['success' => 'Order rejected.']);
     }
 
+    public function validateBatches(Request $request)
+    {
+        $itemsBatches = $request->items_batches;
+        if (!$itemsBatches) return response()->json(['success' => true]);
+
+        $orderId = $request->order_id;
+        $order = \App\Models\RetailerOrder::find($orderId);
+        if (!$order) return response()->json(['success' => true]);
+
+        $distributorId = $order->distributor_id;
+        $errors = [];
+
+        foreach ($itemsBatches as $allocation) {
+            $orderItem = $order->items()->find($allocation['order_item_id']);
+            if (!$orderItem) continue;
+
+            $product = $orderItem->product;
+            foreach ($allocation['batches'] as $batchData) {
+                if (empty($batchData['batch_no'])) continue;
+
+                $invQuery = \App\Models\Inventory::where('distributor_id', $distributorId)
+                    ->where('product_id', $product->id);
+
+                if (empty($orderItem->side)) {
+                    $invQuery->where(function($q) {
+                        $q->whereNull('side')->orWhere('side', '');
+                    });
+                } else {
+                    $invQuery->where('side', $orderItem->side);
+                }
+
+                if (empty($orderItem->size)) {
+                    $invQuery->where(function($q) {
+                        $q->whereNull('size')->orWhere('size', '');
+                    });
+                } else {
+                    $invQuery->where('size', $orderItem->size);
+                }
+
+                $inventory = $invQuery->where('batch_no', $batchData['batch_no'])->first();
+                if (!$inventory) {
+                    $vLabel = array_filter([$orderItem->side, $orderItem->size]);
+                    $pName = $product->product_name;
+                    if (!empty($vLabel)) {
+                        $pName .= ' [' . implode('/', $vLabel) . ']';
+                    }
+                    $errors[] = "Could not find batch '{$batchData['batch_no']}' in your inventory for {$pName}.";
+                }
+            }
+        }
+
+        if (count($errors) > 0) {
+            return response()->json(['success' => false, 'errors' => $errors]);
+        }
+
+        return response()->json(['success' => true]);
+    }
     public function acceptOrder(Request $request, RetailerOrder $retailerOrder)
     {
         /** @var \App\Models\User $user */
@@ -867,6 +924,11 @@ class RetailerOrderManagementController extends Controller
                             $pName .= ' [' . implode('/', $vLabel) . ']';
                         }
                         
+                        $extractedFree = isset($allocation['free_quantity']) ? (float)$allocation['free_quantity'] : 0;
+                        if ($extractedFree > 0 && $extractedFree != $orderItem->free_quantity) {
+                            $orderItem->update(['free_quantity' => $extractedFree]);
+                        }
+
                         $expectedTotal = $orderItem->quantity + ($orderItem->free_quantity ?? 0);
                         if ($totalAllocated > $expectedTotal) {
                             $qtyErrors[] = "You ordered {$expectedTotal} (incl. free) but the invoiced quantity is {$totalAllocated} for item: " . $pName;

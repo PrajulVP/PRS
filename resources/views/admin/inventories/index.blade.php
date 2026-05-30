@@ -514,7 +514,6 @@
                                             <th>Distributor</th>
                                         @endif
                                         <th>Stock (Total)</th>
-                                        <th>Breakdown</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -1653,28 +1652,18 @@
                             displayVal = Math.round(data * unitsPerStrip);
                         }
 
-                        return `<span class="fw-bold ${data > 0 ? 'text-success' : 'text-danger'}">${displayVal}</span>`;
+                        let html = `<span class="fw-bold ${data > 0 ? 'text-success' : 'text-danger'}">${displayVal}</span>`;
+
+                        // Add breakdown if exists
+                        const pData = row.product_details || {};
+                        const displayStr = window.formatStockBreakdown(data, pData, isNos, unitsPerStrip);
+                        if (displayStr && displayStr !== displayVal.toString() && displayStr !== (displayVal + ' Nos')) {
+                            html += `<div class="small text-muted-theme opacity-75 mt-1" style="font-size: 0.75rem;">${displayStr}</div>`;
+                        }
+
+                        return html;
                     },
                     className: 'text-center'
-                },
-                {
-                    data: 'stock',
-                    name: 'breakdown',
-                    orderable: false,
-                    searchable: false,
-                    className: 'text-center',
-                    render: function (data, type, row) {
-                        if (!row.product_details) return '-';
-                        const pData = row.product_details || {};
-                        const isNos = window.checkIsNos(row.product_name, pData.pack, pData.box_size);
-                        const unitsPerStrip = pData.units_per_strip || 1;
-                        
-                        const displayStr = window.formatStockBreakdown(data, pData, isNos, unitsPerStrip);
-                        
-                        return `<div class="breakdown-container view-batches-btn text-primary fw-bold" style="cursor: pointer;">
-                                    <span>${displayStr} <i class="fa fa-external-link-alt ms-1 small opacity-50"></i></span>
-                                </div>`;
-                    }
                 },
                 {
                     data: null,
@@ -1830,7 +1819,8 @@
                 const medType = window.getMedicineType(row.product_name, pData);
                 const isTablet = medType === 'Tablet/Capsule';
                 
-                $('#batchListProductName').html(`${row.product_name} <span class="badge bg-soft-primary text-primary ms-2 rounded-pill" style="font-size: 0.65rem; vertical-align: middle;">${medType}</span>`);
+                const brandDisplay = pData.brand ? pData.brand : 'Other';
+                $('#batchListProductName').html(`${row.product_name} <span class="badge bg-soft-primary text-primary ms-2 rounded-pill" style="font-size: 0.65rem; vertical-align: middle;">${brandDisplay}</span>`);
                 
                 // Add Packaging Info as subtitle for context
                 let packParts = [];
@@ -1857,6 +1847,19 @@
                 let html = '';
                 row.batches.forEach(b => {
                     const displayStr = window.formatStockBreakdown(b.stock, pData, isNos, unitsPerStrip);
+                    let displayVal = b.stock;
+                    if (isNos) {
+                        displayVal = Math.round(b.stock * unitsPerStrip);
+                    }
+                    
+                    let stockHtml = `<span class="badge ${b.stock > 0 ? 'bg-soft-success text-success' : 'bg-soft-danger text-danger'} rounded-pill px-3 fw-bold" style="font-size: 0.85rem; border: 1px solid rgba(0,0,0,0.05);">
+                                        ${displayVal}
+                                     </span>`;
+                    
+                    if (displayStr && displayStr !== displayVal.toString() && displayStr !== (displayVal + ' Nos')) {
+                        stockHtml += `<div class="small text-muted opacity-75 mt-1" style="font-size: 0.75rem;">${displayStr}</div>`;
+                    }
+
                     html += `<tr>
                         <td class="ps-4 align-middle">
                             <span class="fw-bold text-dark">${b.batch_no}</span>
@@ -1869,10 +1872,7 @@
                         </td>
                         <td class="align-middle fw-600 text-muted" style="font-size: 0.85rem;">${b.expiry_date}</td>
                         <td class="text-center align-middle">
-                            <span class="badge ${b.stock > 0 ? 'bg-soft-success text-success' : 'bg-soft-danger text-danger'} rounded-pill px-3 fw-bold" style="font-size: 0.85rem; border: 1px solid rgba(0,0,0,0.05);">
-                                ${displayStr}
-                                ${isTablet ? `<span class="opacity-50 ms-1 fw-normal" style="font-size: 0.75rem;">(${unitsPerStrip}s)</span>` : ''}
-                            </span>
+                            ${stockHtml}
                         </td>
                         {{-- 
                         <td class="text-end pe-4 align-middle">

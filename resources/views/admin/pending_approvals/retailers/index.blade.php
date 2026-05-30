@@ -1215,14 +1215,14 @@
                     @csrf @method('PUT')
                     <div class="modal-body p-4 bg-body-theme text-main-theme">
                         <div class="row">
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold text-muted-theme small">Retailer</label>
                                 <select name="retailer_id" id="edit_retailer_id" class="form-select bg-card-theme text-main-theme" required style="border-radius: 8px; border-color: var(--med-border-light);">
                                     @foreach($retailers as $r) <option value="{{ $r->id }}">{{ $r->shop_name }} ({{ $r->user->name ?? 'N/A' }})</option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold text-muted-theme small">Distributor</label>
                                 <select name="distributor_id" id="edit_distributor_id" class="form-select bg-card-theme text-main-theme" style="border-radius: 8px; border-color: var(--med-border-light);">
                                     <option value="">-- None --</option>
@@ -1230,14 +1230,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold text-muted-theme small">Status</label>
-                                <select name="status" id="edit_status" class="form-select bg-card-theme text-main-theme" required style="border-radius: 8px; border-color: var(--med-border-light);">
-                                    @foreach(['pending', 'processing', 'approved', 'delivered', 'cancelled'] as $st)
-                                        <option value="{{ $st }}">{{ ucfirst($st) }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                            <input type="hidden" name="status" id="edit_status">
                         </div>
 
                         {{-- Items Section --}}
@@ -2586,7 +2579,7 @@
                         let rowHtml = `
                                                                                                                                                                                 <div data-item-id="${orderItemId}" class="product-row" data-ordered-qty="${orderedQty}">
                                                                                                                                                                                     <div class="d-none">
-                                                                                                                                                                                        <div class="fw-bold product-name-marker">${item.product_name}</div>
+                                                                                                                                                                                        <div class="fw-bold product-name-marker">${item.product_name} ${(item.side && item.side !== '-' && item.side !== 'N/A') ? '['+item.side+']' : ''} ${(item.size && item.size !== '-' && item.size !== 'N/A') ? '['+item.size+']' : ''}</div>
                                                                                                                                                                                         <input type="number" name="items[${orderItemId}][quantity]" value="${orderedQty}">
                                                                                                                                                                                         <input type="hidden" name="items[${orderItemId}][product_id]" value="${productId}">
                                                                                                                                                                                         <input type="hidden" name="items_batches[${orderItemId}][order_item_id]" value="${orderItemId}">
@@ -2595,6 +2588,7 @@
                                                                                                                                                                                         <input type="text" name="items_batches[${orderItemId}][batches][0][batch_no]" class="hidden-batch-val" required>
                                                                                                                                                                                         <input type="date" name="items_batches[${orderItemId}][batches][0][expiry_date]" class="hidden-expiry-val" required>
                                                                                                                                                                                         <input type="number" name="items_batches[${orderItemId}][batches][0][quantity]" class="hidden-qty-val" value="${orderedQty}" required>
+                                                                                                                                                                                        <input type="hidden" name="items_batches[${orderItemId}][free_quantity]" class="hidden-free-val" value="0">
                                                                                                                                                                                         <input type="hidden" name="batches[${orderItemId}][0][mrp]" class="hidden-mrp-val">
                                                                                                                                                                                         <input type="hidden" name="batches[${orderItemId}][0][ptr]" class="hidden-ptr-val">
                                                                                                                                                                                         <input type="hidden" name="batches[${orderItemId}][0][pts]" class="hidden-pts-val">
@@ -2951,19 +2945,34 @@
                         return normDesc === normProductName || normDesc.includes(normProductName) || normProductName.includes(normDesc);
                     });
 
-                    // 2. Fallback to word-based intersection check
+                    // 2. Fallback to scoring word-based intersection check (picks BEST match)
                     if (matchedIdx === -1) {
-                        let productWords = normProductName.split(' ').filter(w => w.length > 2);
-                        matchedIdx = invoiceProducts.findIndex(p => {
-                            if (!p.description) return false;
+                        let productWords = normProductName.split(' ').filter(w => w.length > 0);
+                        let bestScore = 0;
+                        let bestIdx = -1;
+                        let threshold = Math.max(1, Math.ceil(productWords.length * 0.6));
+
+                        invoiceProducts.forEach((p, idx) => {
+                            if (!p.description) return;
                             let normDesc = normalize(p.description);
                             let matchCount = 0;
+                            let descWords = normDesc.split(' ');
                             productWords.forEach(word => {
-                                if (normDesc.includes(word)) matchCount++;
+                                // Match word exactly if it's a short size variant, otherwise includes
+                                if (word.length <= 2) {
+                                    if (descWords.includes(word)) matchCount++;
+                                } else {
+                                    if (normDesc.includes(word)) matchCount++;
+                                }
                             });
-                            let threshold = Math.max(1, Math.ceil(productWords.length * 0.6));
-                            return matchCount >= threshold;
+                            
+                            if (matchCount >= threshold && matchCount > bestScore) {
+                                bestScore = matchCount;
+                                bestIdx = idx;
+                            }
                         });
+
+                        matchedIdx = bestIdx;
                     }
 
                     // 3. Last fallback (start-of-string prefix match)
@@ -3072,6 +3081,7 @@
                             if (extExpiry) hContainer.find('.hidden-expiry-val').val(parseExpiryToDate(extExpiry));
 
                             hContainer.find('.hidden-qty-val').val(totalQty);
+                            hContainer.find('.hidden-free-val').val(freeQty);
                             hContainer.find('.hidden-mrp-val').val(extMrp);
                             hContainer.find('.hidden-ptr-val').val(extPtr);
                             hContainer.find('.hidden-taxable-val').val(extTaxable);
@@ -3122,9 +3132,36 @@
 
                 // STRICT MATCH BLOCKING: Only enable if no missing AND no extra items
                 if (missingProducts.length === 0 && invoiceProducts.length === 0 && window.qtyMismatchProducts.length === 0) {
+                    
+                    // NEW: Validate Batches against Backend Inventory dynamically
                     $('#automation_error_state').hide();
-                    $('#automation_success_state').fadeIn();
-                    $('#btnSubmitDistributorApprove').prop('disabled', false);
+                    $('#automation_success_state').hide();
+                    $('#btnSubmitDistributorApprove').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Validating Inventory...');
+                    
+                    $.ajax({
+                        url: "{{ route('admin.retailer.validate-batches') }}",
+                        type: "POST",
+                        data: $('#distributorApproveForm').serialize() + '&_token={{ csrf_token() }}',
+                        success: function(valRes) {
+                            if (valRes.success) {
+                                $('#automation_success_state').fadeIn();
+                                $('#btnSubmitDistributorApprove').prop('disabled', false).html('Accept Order');
+                            } else {
+                                $('#automation_error_state').removeClass('d-none').show();
+                                $('#automation_error_state h5').text('Inventory Mismatch Detected');
+                                let msg = valRes.errors.join('<br>');
+                                $('#automation_error_state p').html(`${msg} <br>Please resolve inventory shortages before approving.`);
+                                $('#btnSubmitDistributorApprove').prop('disabled', true).html('Accept Order');
+                            }
+                        },
+                        error: function() {
+                            $('#automation_error_state').removeClass('d-none').show();
+                            $('#automation_error_state h5').text('Validation Error');
+                            $('#automation_error_state p').html('Failed to validate inventory batches. Please try again.');
+                            $('#btnSubmitDistributorApprove').prop('disabled', true).html('Accept Order');
+                        }
+                    });
+
                 } else {
                     $('#automation_error_state').removeClass('d-none').show();
                     $('#automation_error_state h5').text('Action Required');
@@ -3142,7 +3179,7 @@
                     
                     $('#automation_error_state p').html(`${msg} Please upload a perfect match invoice to proceed.`);
                     $('#automation_success_state').hide();
-                    $('#btnSubmitDistributorApprove').prop('disabled', true);
+                    $('#btnSubmitDistributorApprove').prop('disabled', true).html('Accept Order');
                 }
 
                 // COMPREHENSIVE SUMMARY ALERT
@@ -3342,8 +3379,11 @@
                     let displayName = i.product_name || i.name;
                     if (vInfo) displayName += ` [${vInfo}]`;
                     
-                    editItems[i.product_id] = {
+                    let itemKey = i.product_id + (vInfo ? '-' + vInfo.replace(/ /g, '_') : '');
+                    
+                    editItems[itemKey] = {
                         id: i.product_id,
+                        itemKey: itemKey,
                         name: displayName,
                         side: i.side,
                         size: i.size,

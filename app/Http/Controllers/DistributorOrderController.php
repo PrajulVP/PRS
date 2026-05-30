@@ -771,6 +771,11 @@ class DistributorOrderController extends Controller
                 $orderItem = $distributorOrder->items()->find($itemId);
                 if (!$orderItem) continue;
 
+                if ($request->has("free_quantity.{$itemId}")) {
+                    $orderItem->free_quantity = $request->input("free_quantity.{$itemId}");
+                    $orderItem->save();
+                }
+
                 // Delete existing batches if re-approving (though usually direct approved)
                 $orderItem->batches()->delete();
 

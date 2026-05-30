@@ -242,6 +242,9 @@
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-form"></use>
             </svg><span>My Orders</span>
+            @if(isset($actionCounts['retailer_orders']) && $actionCounts['retailer_orders'] > 0)
+                <span id="badge-retailer-orders" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; margin-left: 8px;">{{ $actionCounts['retailer_orders'] }}</span>
+            @endif
           </a>
         </li>
         @endif
@@ -268,6 +271,9 @@
             <svg class="fill-icon">
               <use href="{{ $iconSprite }}#fill-form"></use>
             </svg><span>My Orders</span>
+            @if(isset($actionCounts['distributor_orders']) && $actionCounts['distributor_orders'] > 0)
+                <span id="badge-distributor-orders" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; margin-left: 8px;">{{ $actionCounts['distributor_orders'] }}</span>
+            @endif
           </a>
         </li>
         @endif
