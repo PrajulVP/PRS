@@ -178,7 +178,7 @@
              $hasApprovalRoles)
         <li class="sidebar-main-title">
           <div>
-            <h6 class="lan-15">Approvals</h6>
+            <h6 class="lan-15">Order Approvals</h6>
           </div>
         </li>
 

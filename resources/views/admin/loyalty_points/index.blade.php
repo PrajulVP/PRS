@@ -603,7 +603,7 @@
                     { data: 'region_area', name: 'region_area' },
                     { data: 'total_orders', name: 'total_orders', className: 'text-center', searchable: false },
                     { data: 'last_order', name: 'last_order', className: 'text-center', searchable: false },
-                    { data: 'dynamic_loyalty_points', name: 'dynamic_loyalty_points', className: 'text-center', searchable: false },
+                    { data: 'dynamic_loyalty_points', name: 'dynamic_loyalty_points', className: 'text-center', orderable: false, searchable: false },
                     { data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center' }
                 ],
                 buttons: [
