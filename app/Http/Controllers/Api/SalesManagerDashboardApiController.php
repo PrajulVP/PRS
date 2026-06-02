@@ -673,6 +673,8 @@ class SalesManagerDashboardApiController extends Controller
             return [
                 'id' => $order->id,
                 'order_code' => $order->order_code,
+                'retailer_id' => $order->retailer_id,
+                'distributor_id' => $order->distributor_id,
                 'retailer_name' => $order->retailer->user->name ?? 'N/A',
                 'field_staff_name' => $order->fieldStaff->user->name ?? 'N/A',
                 'total_amount' => $order->total_amount,
@@ -1147,7 +1149,7 @@ class SalesManagerDashboardApiController extends Controller
         }
 
         $request->validate([
-            'distributor_id' => 'required|exists:distributors,id',
+            'distributor_id' => 'nullable|exists:distributors,id',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
@@ -1180,11 +1182,16 @@ class SalesManagerDashboardApiController extends Controller
         ];
         $metadata['edit_history'] = $editLogs;
 
-        $distributorOrder->update([
-            'distributor_id' => $request->distributor_id,
+        $updateData = [
             'delivery_notes' => $request->delivery_notes,
             'metadata' => $metadata,
-        ]);
+        ];
+
+        if ($request->has('distributor_id') && $request->distributor_id) {
+            $updateData['distributor_id'] = $request->distributor_id;
+        }
+
+        $distributorOrder->update($updateData);
 
         $totalAmount = 0;
         $totalItems = 0;

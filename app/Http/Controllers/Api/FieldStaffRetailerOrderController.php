@@ -48,6 +48,8 @@ class FieldStaffRetailerOrderController extends Controller
             return [
                 'id' => $order->id,
                 'order_code' => $order->order_code,
+                'retailer_id' => $order->retailer_id,
+                'distributor_id' => $order->distributor_id,
                 'retailer_name' => $order->retailer->user->name ?? 'N/A',
                 'total_amount' => $order->total_amount,
                 'status' => $order->status,
@@ -238,7 +240,7 @@ class FieldStaffRetailerOrderController extends Controller
         }
 
         $request->validate([
-            'retailer_id' => 'required|exists:retailers,id',
+            'retailer_id' => 'nullable|exists:retailers,id',
             'distributor_id' => 'nullable|exists:distributors,id',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
@@ -272,12 +274,20 @@ class FieldStaffRetailerOrderController extends Controller
         ];
         $metadata['edit_history'] = $editLogs;
 
-        $retailerOrder->update([
-            'retailer_id' => $request->retailer_id,
-            'distributor_id' => $request->distributor_id,
+        $updateData = [
             'delivery_notes' => $request->delivery_notes,
             'metadata' => $metadata,
-        ]);
+        ];
+
+        if ($request->has('retailer_id') && $request->retailer_id) {
+            $updateData['retailer_id'] = $request->retailer_id;
+        }
+
+        if ($request->has('distributor_id') && $request->distributor_id) {
+            $updateData['distributor_id'] = $request->distributor_id;
+        }
+
+        $retailerOrder->update($updateData);
 
         $distributor = $retailerOrder->distributor;
 

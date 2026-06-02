@@ -2078,6 +2078,98 @@
                         "bearerAuth": []
                     }
                 ]
+            },
+            "put": {
+                "tags": [
+                    "Field Staff Retailer Orders"
+                ],
+                "summary": "Edit a retailer order",
+                "description": "Allows Field Staff to edit items and delivery notes of a retailer order assigned to them (status must be pending or processing).",
+                "operationId": "7a100836f3ddeb92d82dbca5626f3e14",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "retailer_id",
+                                    "items"
+                                ],
+                                "properties": {
+                                    "retailer_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "distributor_id": {
+                                        "type": "integer",
+                                        "example": 2,
+                                        "nullable": true
+                                    },
+                                    "delivery_notes": {
+                                        "type": "string",
+                                        "example": "Deliver during morning hours",
+                                        "nullable": true
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "product_id",
+                                                "quantity"
+                                            ],
+                                            "properties": {
+                                                "product_id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "order_item_id": {
+                                                    "description": "Optional. Pass this to update an existing item instead of recreating it.",
+                                                    "type": "integer",
+                                                    "example": 12
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Order updated successfully"
+                    },
+                    "400": {
+                        "description": "Invalid status or input data"
+                    },
+                    "403": {
+                        "description": "Unauthorized to edit this order"
+                    },
+                    "442": {
+                        "description": "Validation failed or invalid records"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/field-staff/retailer-orders/{id}/update-status": {
@@ -4444,6 +4536,109 @@
                 "responses": {
                     "200": {
                         "description": "Expense approved by manager"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/sales-manager/distributor-orders/{id}": {
+            "put": {
+                "tags": [
+                    "Sales Manager Dashboard"
+                ],
+                "summary": "Edit a distributor order",
+                "description": "Allows Sales Manager to edit items and delivery notes of a distributor order assigned to them (status must be pending or processing).",
+                "operationId": "e3167f5a913a60780064e18a8d3cd228",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "distributor_id",
+                                    "items"
+                                ],
+                                "properties": {
+                                    "distributor_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "delivery_notes": {
+                                        "type": "string",
+                                        "example": "Deliver ASAP",
+                                        "nullable": true
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "product_id",
+                                                "quantity"
+                                            ],
+                                            "properties": {
+                                                "product_id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "unit": {
+                                                    "type": "string",
+                                                    "example": "Box"
+                                                },
+                                                "side": {
+                                                    "type": "string",
+                                                    "example": "Left",
+                                                    "nullable": true
+                                                },
+                                                "size": {
+                                                    "type": "string",
+                                                    "example": "M",
+                                                    "nullable": true
+                                                },
+                                                "order_item_id": {
+                                                    "description": "Optional. Pass this to update an existing item instead of recreating it.",
+                                                    "type": "integer",
+                                                    "example": 12
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Order updated successfully"
+                    },
+                    "400": {
+                        "description": "Invalid status or input data"
+                    },
+                    "403": {
+                        "description": "Unauthorized to edit this order"
+                    },
+                    "422": {
+                        "description": "Validation failed or invalid records"
                     }
                 },
                 "security": [
