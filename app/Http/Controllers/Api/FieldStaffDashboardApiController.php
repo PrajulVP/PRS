@@ -204,7 +204,10 @@ class FieldStaffDashboardApiController extends Controller
                     'address' => $retailer->address,
                     'city' => $retailer->district->name ?? 'N/A',
                     'pincode' => $retailer->pincode,
-                    'loyalty_points' => number_format($points, 2, '.', '')
+                    'loyalty_points' => number_format($points, 2, '.', ''),
+                    'status' => $retailer->user->status ?? 'inactive',
+                    'district_id' => $retailer->district_id,
+                    'area_id' => $retailer->area_id
                 ];
             });
 
