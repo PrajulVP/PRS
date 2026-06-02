@@ -145,9 +145,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
-        $fieldStaffIds = \App\Models\FieldStaff::where(function($q) use ($salesManager) {
+        $fieldStaffIds = \App\Models\FieldStaff::where(function ($q) use ($salesManager) {
             $q->where('sales_manager_id', $salesManager->id)
-              ->orWhere('sales_manager_id', $salesManager->user_id);
+                ->orWhere('sales_manager_id', $salesManager->user_id);
         })->pluck('id');
 
         $pendingRetailers = Retailer::with(['user', 'fieldStaff.user', 'district', 'area'])
@@ -181,12 +181,12 @@ class SalesManagerDashboardApiController extends Controller
         if (!$salesManager) {
             return response()->json(['error' => 'Sales Manager profile not found'], 404);
         }
-        
+
         // Inconsistent data: some field staff are assigned by SalesManager ID, others by SalesManager User ID
         $staffUsers = \App\Models\FieldStaff::with(['user'])
-            ->where(function($q) use ($salesManager) {
+            ->where(function ($q) use ($salesManager) {
                 $q->where('sales_manager_id', $salesManager->id)
-                  ->orWhere('sales_manager_id', $salesManager->user_id);
+                    ->orWhere('sales_manager_id', $salesManager->user_id);
             })
             ->get();
 
@@ -208,7 +208,7 @@ class SalesManagerDashboardApiController extends Controller
                 $lastLoc = \App\Models\LocationLog::where('user_id', $fsUser->id)
                     ->orderByDesc('timestamp')
                     ->first();
-                
+
                 $status = 'online';
                 if ($lastLoc) {
                     $diffInMins = $lastLoc->timestamp->diffInMinutes(now());
@@ -216,7 +216,7 @@ class SalesManagerDashboardApiController extends Controller
                         $status = 'idle';
                     }
                 }
-                
+
                 $ongoingVisit = \App\Models\VisitLog::where('user_id', $fsUser->id)
                     ->whereDate('check_in_at', $today)
                     ->whereNull('check_out_at')
@@ -276,11 +276,11 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
-        
+
         $query = \App\Models\FieldStaff::with(['user', 'salesManager.user'])
-            ->where(function($q) use ($salesManager) {
+            ->where(function ($q) use ($salesManager) {
                 $q->where('sales_manager_id', $salesManager->id)
-                  ->orWhere('sales_manager_id', $salesManager->user_id);
+                    ->orWhere('sales_manager_id', $salesManager->user_id);
             });
 
         if ($request->has('user_id') && !empty($request->user_id)) {
@@ -320,17 +320,17 @@ class SalesManagerDashboardApiController extends Controller
             $distance = \App\Models\LocationLog::calculateDailyDistance($fsUser->id, $today);
 
             $status = 'offline';
-            
+
             if ($lastAttendance && $lastAttendance->type === 'punch_in') {
                 $status = 'online';
-                
+
                 if ($lastLoc) {
                     $diffInMins = $lastLoc->timestamp->diffInMinutes(now());
                     if ($diffInMins > 45) {
                         $status = 'idle';
                     }
                 }
-                
+
                 if ($ongoingVisit) {
                     $status = 'visiting';
                 }
@@ -447,9 +447,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
-        $fieldStaffIds = \App\Models\FieldStaff::where(function($q) use ($salesManager) {
+        $fieldStaffIds = \App\Models\FieldStaff::where(function ($q) use ($salesManager) {
             $q->where('sales_manager_id', $salesManager->id)
-              ->orWhere('sales_manager_id', $salesManager->user_id);
+                ->orWhere('sales_manager_id', $salesManager->user_id);
         })->pluck('id');
 
         $retailer = Retailer::whereIn('field_staff_id', $fieldStaffIds)->findOrFail($id);
@@ -484,9 +484,9 @@ class SalesManagerDashboardApiController extends Controller
 
         $salesManager = $user->salesManager;
         $fieldStaffs = \App\Models\FieldStaff::with('user')
-            ->where(function($q) use ($salesManager) {
+            ->where(function ($q) use ($salesManager) {
                 $q->where('sales_manager_id', $salesManager->id)
-                  ->orWhere('sales_manager_id', $salesManager->user_id);
+                    ->orWhere('sales_manager_id', $salesManager->user_id);
             })
             ->get();
 
@@ -509,9 +509,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
-        $fieldStaffIds = \App\Models\FieldStaff::where(function($q) use ($salesManager) {
+        $fieldStaffIds = \App\Models\FieldStaff::where(function ($q) use ($salesManager) {
             $q->where('sales_manager_id', $salesManager->id)
-              ->orWhere('sales_manager_id', $salesManager->user_id);
+                ->orWhere('sales_manager_id', $salesManager->user_id);
         })->pluck('id');
 
         $retailers = Retailer::with(['user', 'district', 'area'])
@@ -537,9 +537,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
-        $fieldStaffIds = \App\Models\FieldStaff::where(function($q) use ($salesManager) {
+        $fieldStaffIds = \App\Models\FieldStaff::where(function ($q) use ($salesManager) {
             $q->where('sales_manager_id', $salesManager->id)
-              ->orWhere('sales_manager_id', $salesManager->user_id);
+                ->orWhere('sales_manager_id', $salesManager->user_id);
         })->pluck('id');
 
         $retailers = Retailer::with('fieldStaff.user')
@@ -870,7 +870,6 @@ class SalesManagerDashboardApiController extends Controller
                 'message' => 'Field Staff created successfully and is pending admin approval.',
                 'field_staff' => $fieldstaff->load('user')
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['error' => 'Failed to create field staff. ' . $e->getMessage()], 500);
@@ -1138,8 +1137,8 @@ class SalesManagerDashboardApiController extends Controller
 
         $distributorOrder = DistributorOrder::findOrFail($id);
 
-        $isOwner = ($distributorOrder->sales_manager_id === $salesManager->id) || 
-                   ($distributorOrder->distributor && $distributorOrder->distributor->sales_manager_id === $salesManager->id);
+        $isOwner = ($distributorOrder->sales_manager_id === $salesManager->id) ||
+            ($distributorOrder->distributor && $distributorOrder->distributor->sales_manager_id === $salesManager->id);
         if (!$isOwner) {
             return response()->json(['error' => 'You are not authorized to edit this order.'], 403);
         }
@@ -1159,9 +1158,11 @@ class SalesManagerDashboardApiController extends Controller
         $metadata['is_edited'] = true;
         $metadata['last_edited_by'] = $user->name . ' (Sales Manager)';
         $metadata['last_edited_at'] = now()->toDateTimeString();
-        
-        $snapshot = $distributorOrder->items->map(function($item) {
+
+        $snapshot = $distributorOrder->items->map(function ($item) {
             return [
+                'id' => $item->id,
+                'product_id' => $item->product_id,
                 'product_name' => $item->product_name ?? ($item->product ? $item->product->product_name : 'Unknown Product'),
                 'quantity' => $item->quantity,
                 'unit' => $item->unit,
@@ -1232,6 +1233,7 @@ class SalesManagerDashboardApiController extends Controller
 
                 if ($currentOrderItem) {
                     $currentOrderItem->update([
+                        'product_id' => $product->id,
                         'quantity' => $newQuantity,
                         'unit' => $unit,
                         'price' => $unitPrice,
@@ -1275,6 +1277,207 @@ class SalesManagerDashboardApiController extends Controller
             'success' => true,
             'message' => 'Order updated successfully.',
             'order' => $distributorOrder->load('items')
+        ]);
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/api/sales-manager/retailer-orders/{id}",
+     *     summary="Edit a retailer order as a Sales Manager",
+     *     description="Allows Sales Manager to edit items and delivery notes of a retailer order assigned to their team (status must be pending or processing).",
+     *     tags={"Sales Manager Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"items"},
+     *             @OA\Property(property="retailer_id", type="integer", example=1, nullable=true),
+     *             @OA\Property(property="distributor_id", type="integer", example=2, nullable=true),
+     *             @OA\Property(property="delivery_notes", type="string", example="Deliver ASAP", nullable=true),
+     *             @OA\Property(
+     *                 property="items",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     required={"product_id", "quantity"},
+     *                     @OA\Property(property="product_id", type="integer", example=5),
+     *                     @OA\Property(property="quantity", type="integer", example=10),
+     *                     @OA\Property(property="unit", type="string", example="Box"),
+     *                     @OA\Property(property="side", type="string", example="Left", nullable=true),
+     *                     @OA\Property(property="size", type="string", example="M", nullable=true),
+     *                     @OA\Property(property="order_item_id", type="integer", example=12, description="Optional. Pass this to update an existing item instead of recreating it.")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Order updated successfully"),
+     *     @OA\Response(response=400, description="Invalid status or input data"),
+     *     @OA\Response(response=403, description="Unauthorized to edit this order"),
+     *     @OA\Response(response=422, description="Validation failed or invalid records")
+     * )
+     */
+    public function updateRetailerOrder(Request $request, $id)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager')) {
+            return response()->json(['error' => 'Unauthorized role.'], 403);
+        }
+
+        $salesManager = $user->salesManager;
+        if (!$salesManager) {
+            return response()->json(['error' => 'Sales manager record not found.'], 422);
+        }
+
+        $retailerOrder = RetailerOrder::findOrFail($id);
+
+        $fieldStaffIds = $salesManager->fieldStaffs->pluck('id')->toArray();
+        $isOwner = in_array($retailerOrder->fieldstaff_id, $fieldStaffIds) || 
+                   ($retailerOrder->retailer && in_array($retailerOrder->retailer->field_staff_id, $fieldStaffIds));
+
+        if (!$isOwner) {
+            return response()->json(['error' => 'You are not authorized to edit this order.'], 403);
+        }
+
+        if (!in_array($retailerOrder->status, [RetailerOrder::STATUS_PENDING, RetailerOrder::STATUS_PROCESSING])) {
+            return response()->json(['error' => 'You can only edit pending or processing orders.'], 422);
+        }
+
+        $request->validate([
+            'retailer_id' => 'nullable|exists:retailers,id',
+            'distributor_id' => 'nullable|exists:distributors,id',
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|integer|min:1',
+        ]);
+
+        $metadata = $retailerOrder->metadata ?? [];
+        $metadata['is_edited'] = true;
+        $metadata['last_edited_by'] = $user->name . ' (Sales Manager)';
+        $metadata['last_edited_at'] = now()->toDateTimeString();
+        
+        $snapshot = $retailerOrder->items->map(function($item) {
+            return [
+                'id' => $item->id,
+                'product_id' => $item->product_id,
+                'product_name' => $item->product_name ?? ($item->product ? $item->product->product_name : 'Unknown Product'),
+                'quantity' => $item->quantity,
+                'unit' => $item->unit,
+                'price' => $item->unit_price,
+                'subtotal' => $item->total_amount,
+                'side' => $item->side,
+                'size' => $item->size,
+            ];
+        })->toArray();
+
+        $editLogs = $metadata['edit_history'] ?? [];
+        $editLogs[] = [
+            'edited_by' => $user->name,
+            'role' => 'salesmanager',
+            'edited_at' => now()->toDateTimeString(),
+            'original_total' => $retailerOrder->total_amount,
+            'snapshot' => $snapshot,
+        ];
+        $metadata['edit_history'] = $editLogs;
+
+        $updateData = [
+            'delivery_notes' => $request->delivery_notes,
+            'metadata' => $metadata,
+        ];
+
+        if ($request->has('retailer_id') && $request->retailer_id) {
+            $updateData['retailer_id'] = $request->retailer_id;
+        }
+
+        if ($request->has('distributor_id') && $request->distributor_id) {
+            $updateData['distributor_id'] = $request->distributor_id;
+        }
+
+        $retailerOrder->update($updateData);
+
+        $distributor = $retailerOrder->distributor;
+
+        $totalAmount = 0;
+        $totalItems = 0;
+        $totalQuantity = 0;
+        $requestItemIds = [];
+
+        try {
+            foreach ($request->items as $itemData) {
+                $product = null;
+                if ($distributor) {
+                    $product = $distributor->products()->where('product_id', $itemData['product_id'])->first();
+                    if (!$product) {
+                        return response()->json(['error' => 'Product ' . $itemData['product_id'] . ' is not available from the assigned distributor.'], 422);
+                    }
+                } else {
+                    $product = \App\Models\Product::find($itemData['product_id']);
+                }
+
+                if (!$product) {
+                    return response()->json(['error' => 'Product ' . $itemData['product_id'] . ' not found.'], 404);
+                }
+
+                $qty = $itemData['quantity'];
+                $unit = $itemData['unit'] ?? 'Nos';
+                $side = $itemData['side'] ?? null;
+                $size = $itemData['size'] ?? null;
+                
+                $price = (float)$product->ptr;
+                $gstRate = (float)($product->gst ?? 0);
+                $taxableSubtotal = $qty * $price;
+                $subtotalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
+
+                $currentOrderItem = null;
+                if (isset($itemData['order_item_id'])) {
+                    $currentOrderItem = $retailerOrder->items()->find($itemData['order_item_id']);
+                }
+
+                if ($currentOrderItem) {
+                    $currentOrderItem->update([
+                        'product_id' => $itemData['product_id'],
+                        'quantity' => $qty,
+                        'unit' => $unit,
+                        'side' => $side,
+                        'size' => $size,
+                        'unit_price' => $price,
+                        'total_amount' => $subtotalWithGst
+                    ]);
+                    $requestItemIds[] = $currentOrderItem->id;
+                } else {
+                    $newItem = $retailerOrder->items()->create([
+                        'product_id' => $itemData['product_id'],
+                        'product_name' => $product->product_name,
+                        'quantity' => $qty,
+                        'unit' => $unit,
+                        'side' => $side,
+                        'size' => $size,
+                        'unit_price' => $price,
+                        'total_amount' => $subtotalWithGst
+                    ]);
+                    $requestItemIds[] = $newItem->id;
+                }
+                $totalAmount += $subtotalWithGst;
+                $totalItems++;
+                $totalQuantity += $qty;
+            }
+
+            // Delete removed items
+            $retailerOrder->items()->whereNotIn('id', $requestItemIds)->delete();
+
+            $retailerOrder->update([
+                'total_amount' => $totalAmount,
+                'total_items' => $totalItems,
+                'total_quantity' => $totalQuantity
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order updated successfully.',
+            'order' => $retailerOrder->load('items')
         ]);
     }
 }

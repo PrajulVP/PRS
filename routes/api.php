@@ -92,6 +92,7 @@ Route::middleware('auth:api')->group(function () {
 
         // Manage Retailer Orders
         Route::get('retailer-orders', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getRetailerOrders']);
+        Route::put('retailer-orders/{id}', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'updateRetailerOrder']);
 
         // Distributor Hub
         Route::get('distributors', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getDistributors']);

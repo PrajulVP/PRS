@@ -56,6 +56,8 @@ class FieldStaffRetailerOrderController extends Controller
                 'placed_at' => $order->placed_at,
                 'items' => $order->items->map(function ($item) {
                     return [
+                        'id' => $item->id,
+                        'product_id' => $item->product_id,
                         'product_name' => $item->product_name ?? $item->product->product_name ?? 'N/A',
                         'quantity' => $item->quantity,
                         'free_quantity' => $item->free_quantity,
@@ -254,6 +256,8 @@ class FieldStaffRetailerOrderController extends Controller
         
         $snapshot = $retailerOrder->items->map(function($item) {
             return [
+                'id' => $item->id,
+                'product_id' => $item->product_id,
                 'product_name' => $item->product_name ?? ($item->product ? $item->product->product_name : 'Unknown Product'),
                 'quantity' => $item->quantity,
                 'unit' => $item->unit,
@@ -329,6 +333,7 @@ class FieldStaffRetailerOrderController extends Controller
 
                 if ($currentOrderItem) {
                     $currentOrderItem->update([
+                        'product_id' => $itemData['product_id'],
                         'quantity' => $qty,
                         'unit' => $unit,
                         'side' => $side,

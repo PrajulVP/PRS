@@ -4648,6 +4648,114 @@
                 ]
             }
         },
+        "/api/sales-manager/retailer-orders/{id}": {
+            "put": {
+                "tags": [
+                    "Sales Manager Dashboard"
+                ],
+                "summary": "Edit a retailer order as a Sales Manager",
+                "description": "Allows Sales Manager to edit items and delivery notes of a retailer order assigned to their team (status must be pending or processing).",
+                "operationId": "1f69fadf5c85880187d5fa61500b8f6b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "items"
+                                ],
+                                "properties": {
+                                    "retailer_id": {
+                                        "type": "integer",
+                                        "example": 1,
+                                        "nullable": true
+                                    },
+                                    "distributor_id": {
+                                        "type": "integer",
+                                        "example": 2,
+                                        "nullable": true
+                                    },
+                                    "delivery_notes": {
+                                        "type": "string",
+                                        "example": "Deliver ASAP",
+                                        "nullable": true
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "product_id",
+                                                "quantity"
+                                            ],
+                                            "properties": {
+                                                "product_id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "unit": {
+                                                    "type": "string",
+                                                    "example": "Box"
+                                                },
+                                                "side": {
+                                                    "type": "string",
+                                                    "example": "Left",
+                                                    "nullable": true
+                                                },
+                                                "size": {
+                                                    "type": "string",
+                                                    "example": "M",
+                                                    "nullable": true
+                                                },
+                                                "order_item_id": {
+                                                    "description": "Optional. Pass this to update an existing item instead of recreating it.",
+                                                    "type": "integer",
+                                                    "example": 12
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Order updated successfully"
+                    },
+                    "400": {
+                        "description": "Invalid status or input data"
+                    },
+                    "403": {
+                        "description": "Unauthorized to edit this order"
+                    },
+                    "422": {
+                        "description": "Validation failed or invalid records"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/user/player-id": {
             "post": {
                 "tags": [
