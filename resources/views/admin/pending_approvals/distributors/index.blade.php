@@ -805,7 +805,7 @@
                                 style="color: rgba(255,255,255,0.85) !important;"></p>
                         </div>
                     </div>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    <button type="button" class="btn-close btn-close-white" style="filter: invert(1) grayscale(100%) brightness(200%);" data-bs-dismiss="modal"
                         aria-label="Close"></button>
                 </div>
                 <form id="rejectOrderForm">
@@ -1077,7 +1077,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-danger py-3">
                     <h5 class="modal-title fw-bold text-white">Confirm Invoice Removal</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    <button type="button" class="btn-close btn-close-white" style="filter: invert(1) grayscale(100%) brightness(200%);" data-bs-dismiss="modal"
                         aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -1097,7 +1097,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-primary py-3">
                     <h5 class="modal-title fw-bold text-white">Payment Status</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" style="filter: invert(1) grayscale(100%) brightness(200%);" data-bs-dismiss="modal"></button>
                 </div>
                 <form id="paymentStatusForm">
                     <div class="modal-body">
@@ -1128,7 +1128,7 @@
             <div class="modal-content border-0 shadow bg-card-theme" style="border-radius: 15px;">
                 <div class="modal-header border-0 py-3" style="background: linear-gradient(135deg, #1e293b, #0f172a); border-top-left-radius: 15px; border-top-right-radius: 15px;">
                     <h5 class="modal-title fw-bold text-white mb-0" style="color: #ffffff !important;"><i class="fa fa-history me-2"></i>Edit History - <span id="history_order_code" class="fw-bold text-warning"></span></h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" style="filter: invert(1) grayscale(100%) brightness(200%);" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4 bg-body-theme text-main-theme">
                     <div id="edit_history_content"></div>
@@ -1146,7 +1146,7 @@
             <div class="modal-content border-0 shadow bg-card-theme" style="border-radius: 15px;">
                 <div class="modal-header border-0 py-3" style="background: linear-gradient(135deg, #1e293b, #0f172a); border-top-left-radius: 15px; border-top-right-radius: 15px;">
                     <h5 class="modal-title fw-bold text-white mb-0" style="color: #ffffff !important;"><i class="fa fa-edit me-2"></i>Edit Order - <span id="edit_order_code" class="fw-bold text-warning"></span></h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" style="filter: invert(1) grayscale(100%) brightness(200%);" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form id="editOrderForm" method="POST">
                     @csrf

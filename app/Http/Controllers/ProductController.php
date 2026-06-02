@@ -184,6 +184,10 @@ class ProductController extends Controller
             $data['is_returnable'] = $isBrandReturnable;
         }
 
+        if (!isset($data['loyalty_point_percentage']) || $data['loyalty_point_percentage'] === null) {
+            $data['loyalty_point_percentage'] = 0;
+        }
+
         // Sync numeric fields
         $data['units_per_strip'] = $this->parseNumber($request->strip_size);
         $data['strips_per_box'] = $this->parseNumber($request->box_size);
@@ -248,6 +252,10 @@ class ProductController extends Controller
 
         $data = $request->all();
         
+        if (!isset($data['loyalty_point_percentage']) || $data['loyalty_point_percentage'] === null) {
+            $data['loyalty_point_percentage'] = 0;
+        }
+
         // Sync numeric fields
         $data['units_per_strip'] = $this->parseNumber($request->strip_size);
         $data['strips_per_box'] = $this->parseNumber($request->box_size);

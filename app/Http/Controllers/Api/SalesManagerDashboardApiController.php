@@ -682,6 +682,8 @@ class SalesManagerDashboardApiController extends Controller
                 'placed_at' => $order->placed_at,
                 'items' => $order->items->map(function ($item) {
                     return [
+                        'id' => $item->id,
+                        'product_id' => $item->product_id,
                         'product_name' => $item->product_name ?? $item->product->product_name ?? 'N/A',
                         'quantity' => $item->quantity,
                         'free_quantity' => $item->free_quantity,
