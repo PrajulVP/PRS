@@ -894,7 +894,7 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
-        $distributors = \App\Models\Distributor::with('user')
+        $distributors = \App\Models\Distributor::with(['user', 'district', 'area'])
             ->where('sales_manager_id', $salesManager->id)
             ->get();
 
@@ -1278,7 +1278,7 @@ class SalesManagerDashboardApiController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Order updated successfully.',
-            'order' => $distributorOrder->load('items')
+            'order' => $distributorOrder->load(['items', 'distributor.district', 'distributor.area'])
         ]);
     }
 
@@ -1479,7 +1479,7 @@ class SalesManagerDashboardApiController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Order updated successfully.',
-            'order' => $retailerOrder->load('items')
+            'order' => $retailerOrder->load(['items', 'retailer.district', 'retailer.area'])
         ]);
     }
 }

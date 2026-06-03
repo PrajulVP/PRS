@@ -183,7 +183,7 @@ class FieldStaffDashboardApiController extends Controller
 
         $fieldStaffId = $user->fieldStaff->id;
 
-        $retailers = Retailer::with(['user', 'district'])
+        $retailers = Retailer::with(['user', 'district', 'area'])
             ->where('field_staff_id', $fieldStaffId)
             ->get()
             ->map(function ($retailer) {
@@ -207,7 +207,8 @@ class FieldStaffDashboardApiController extends Controller
                     'loyalty_points' => number_format($points, 2, '.', ''),
                     'status' => $retailer->user->status ?? 'inactive',
                     'district_id' => $retailer->district_id,
-                    'area_id' => $retailer->area_id
+                    'area_id' => $retailer->area_id,
+                    'area_name' => $retailer->area->name ?? 'N/A'
                 ];
             });
 
