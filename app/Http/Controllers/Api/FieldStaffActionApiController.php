@@ -163,9 +163,13 @@ class FieldStaffActionApiController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             @OA\Property(property="latitude", type="number"),
-     *             @OA\Property(property="longitude", type="number"),
-     *             @OA\Property(property="is_mock", type="boolean")
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="latitude", type="number"),
+     *                 @OA\Property(property="longitude", type="number"),
+     *                 @OA\Property(property="is_mock", type="boolean"),
+     *                 @OA\Property(property="timestamp", type="string", format="date-time", description="Optional. Original time of ping.")
+     *             )
      *         )
      *     ),
      *     @OA\Parameter(
@@ -175,16 +179,30 @@ class FieldStaffActionApiController extends Controller
      *         description="Unique Device identifier for binding",
      *         @OA\Schema(type="string")
      *     ),
-     *     @OA\Response(response=200, description="Location ping saved and broadcasted")
+     *     @OA\Response(response=200, description="Location pings saved and broadcasted")
      * )
      */
     public function pingLocation(Request $request)
     {
-        $request->validate([
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
-            'is_mock' => 'boolean',
+        $data = $request->all();
+        // Support both single object (legacy) and array of objects
+        if (is_array($data) && !isset($data[0])) {
+            $data = [$data];
+        }
+
+        $validator = \Illuminate\Support\Facades\Validator::make($data, [
+            '*' => 'required|array',
+            '*.latitude' => 'required|numeric',
+            '*.longitude' => 'required|numeric',
+            '*.is_mock' => 'boolean',
+            '*.timestamp' => 'nullable|date',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 422);
+        }
+
+        $locations = $validator->validated();
 
         $user = auth('api')->user();
 
@@ -194,23 +212,34 @@ class FieldStaffActionApiController extends Controller
             return response()->json(['error' => 'Device mismatch.'], 403);
         }
 
-        $log = LocationLog::create([
-            'user_id' => $user->id,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-            'is_mock_location' => $request->is_mock ?? false,
-            'timestamp' => now(),
+        $logs = [];
+        foreach ($locations as $loc) {
+            $timestamp = isset($loc['timestamp']) ? \Carbon\Carbon::parse($loc['timestamp']) : now();
+            $log = LocationLog::create([
+                'user_id' => $user->id,
+                'latitude' => $loc['latitude'],
+                'longitude' => $loc['longitude'],
+                'is_mock_location' => $loc['is_mock'] ?? false,
+                'timestamp' => $timestamp,
+            ]);
+            $logs[] = $log;
+        }
+
+        // Broadcast the update for real-time tracking (broadcast the latest one)
+        if (!empty($logs)) {
+            $latest = end($logs);
+            broadcast(new \App\Events\LocationUpdated(
+                $user->id, 
+                (float)$latest->latitude, 
+                (float)$latest->longitude, 
+                $latest->timestamp->toDateTimeString()
+            ));
+        }
+
+        return response()->json([
+            'message' => count($logs) . ' pings received.', 
+            'logs' => $logs
         ]);
-
-        // Broadcast the update for real-time tracking
-        broadcast(new \App\Events\LocationUpdated(
-            $user->id, 
-            (float)$request->latitude, 
-            (float)$request->longitude, 
-            now()->toDateTimeString()
-        ));
-
-        return response()->json(['message' => 'Ping received.', 'id' => $log->id, 'flagged' => $request->is_mock ?? false]);
     }
 
     /**
