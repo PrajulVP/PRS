@@ -31,11 +31,8 @@ class FieldStaffRetailerOrderController extends Controller
         $fieldStaffId = $user->fieldStaff->id;
 
         $query = RetailerOrder::with(['retailer.user', 'items.product', 'distributor.user'])
-            ->where(function ($q) use ($fieldStaffId) {
-                $q->where('fieldstaff_id', $fieldStaffId)
-                    ->orWhereHas('retailer', function ($qr) use ($fieldStaffId) {
-                        $qr->where('field_staff_id', $fieldStaffId);
-                    });
+            ->whereHas('retailer', function ($qr) use ($fieldStaffId) {
+                $qr->where('field_staff_id', $fieldStaffId);
             });
 
         if ($request->has('status') && !empty($request->status)) {
@@ -90,11 +87,8 @@ class FieldStaffRetailerOrderController extends Controller
         $fieldStaffId = $user->fieldStaff->id;
 
         $order = RetailerOrder::with(['retailer.user', 'items.product', 'distributor.user'])
-            ->where(function ($q) use ($fieldStaffId) {
-                $q->where('fieldstaff_id', $fieldStaffId)
-                    ->orWhereHas('retailer', function ($qr) use ($fieldStaffId) {
-                        $qr->where('field_staff_id', $fieldStaffId);
-                    });
+            ->whereHas('retailer', function ($qr) use ($fieldStaffId) {
+                $qr->where('field_staff_id', $fieldStaffId);
             })->findOrFail($id);
 
         return response()->json($order);
@@ -129,11 +123,8 @@ class FieldStaffRetailerOrderController extends Controller
         ]);
 
         $fieldStaffId = $user->fieldStaff->id;
-        $order = RetailerOrder::where(function ($q) use ($fieldStaffId) {
-            $q->where('fieldstaff_id', $fieldStaffId)
-                ->orWhereHas('retailer', function ($qr) use ($fieldStaffId) {
-                    $qr->where('field_staff_id', $fieldStaffId);
-                });
+        $order = RetailerOrder::whereHas('retailer', function ($qr) use ($fieldStaffId) {
+            $qr->where('field_staff_id', $fieldStaffId);
         })->findOrFail($id);
 
         if ($order->status !== RetailerOrder::STATUS_PENDING) {
@@ -231,8 +222,7 @@ class FieldStaffRetailerOrderController extends Controller
 
         $retailerOrder = RetailerOrder::findOrFail($id);
 
-        $isOwner = ($retailerOrder->fieldstaff_id === $fieldStaff->id) || 
-                   ($retailerOrder->retailer && $retailerOrder->retailer->field_staff_id === $fieldStaff->id);
+        $isOwner = $retailerOrder->retailer && $retailerOrder->retailer->field_staff_id === $fieldStaff->id;
         if (!$isOwner) {
             return response()->json(['error' => 'You are not authorized to edit this order.'], 403);
         }
