@@ -1602,25 +1602,33 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "properties": {
-                                    "latitude": {
-                                        "type": "number"
+                                "type": "array",
+                                "items": {
+                                    "properties": {
+                                        "latitude": {
+                                            "type": "number"
+                                        },
+                                        "longitude": {
+                                            "type": "number"
+                                        },
+                                        "is_mock": {
+                                            "type": "boolean"
+                                        },
+                                        "timestamp": {
+                                            "description": "Optional. Original time of ping.",
+                                            "type": "string",
+                                            "format": "date-time"
+                                        }
                                     },
-                                    "longitude": {
-                                        "type": "number"
-                                    },
-                                    "is_mock": {
-                                        "type": "boolean"
-                                    }
-                                },
-                                "type": "object"
+                                    "type": "object"
+                                }
                             }
                         }
                     }
                 },
                 "responses": {
                     "200": {
-                        "description": "Location ping saved and broadcasted"
+                        "description": "Location pings saved and broadcasted"
                     }
                 }
             }

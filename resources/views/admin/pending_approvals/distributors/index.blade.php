@@ -1670,7 +1670,7 @@
                                 }
                             }
 
-                            if (canEdit && statusRaw !== 'delivered' && statusRaw !== 'cancelled' && statusRaw !== 'rejected') {
+                            if (canEdit && statusRaw !== 'delivered' && statusRaw !== 'cancelled' && statusRaw !== 'rejected' && statusRaw !== 'approved') {
                                 btns += `<button class="btn btn-primary btn-sm edit-btn" data-row="${rowData}" title="Edit Order"><i class="fa fa-edit"></i></button>`;
                             }
 

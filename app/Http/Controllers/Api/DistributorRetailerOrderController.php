@@ -375,11 +375,13 @@ class DistributorRetailerOrderController extends Controller
         $fileHash = md5_file($file->getRealPath());
 
         // Check for duplicates across BOTH roles
-        $existingRetailer = RetailerOrder::where('id', '!=', $retailerOrder->id)
+        $existingRetailer = RetailerOrder::whereNotNull('metadata')
+            ->where('id', '!=', $retailerOrder->id)
             ->whereJsonContains('metadata->invoice_hash', $fileHash)
             ->first();
         
-        $existingDistributor = \App\Models\DistributorOrder::whereJsonContains('metadata->invoice_hash', $fileHash)
+        $existingDistributor = \App\Models\DistributorOrder::whereNotNull('metadata')
+            ->whereJsonContains('metadata->invoice_hash', $fileHash)
             ->first();
 
         if ($existingRetailer || $existingDistributor) {

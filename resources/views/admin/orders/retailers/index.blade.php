@@ -492,13 +492,6 @@
                     <div class="modal-body">
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label>Retailer</label>
-                                <select name="retailer_id" id="edit_retailer_id" class="form-select" required>
-                                    @foreach($retailers as $r) <option value="{{ $r->id }}">{{ $r->user->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
                                 <label>Distributor</label>
                                 <select name="distributor_id" id="edit_distributor_id" class="form-select">
                                     <option value="">-- None --</option>
@@ -506,6 +499,7 @@
                                     @endforeach
                                 </select>
                             </div>
+                            <input type="hidden" name="retailer_id" id="edit_retailer_id">
                             <div class="col-md-6 mb-3">
                                 <select name="status" id="edit_status" class="form-select" required>
                                     @foreach(['pending', 'processing', 'approved', 'delivered', 'cancelled'] as $st)

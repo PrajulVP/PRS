@@ -996,9 +996,10 @@ class DistributorOrderController extends Controller
             $fileHash = md5_file($file->getRealPath());
 
             // Check retail orders for the same hash
-            $existingRetailer = \App\Models\RetailerOrder::whereJsonContains('metadata->invoice_hash', $fileHash)->first();
+            $existingRetailer = \App\Models\RetailerOrder::whereNotNull('metadata')->whereJsonContains('metadata->invoice_hash', $fileHash)->first();
             // Check dist orders for the same hash
-            $existingDistributor = DistributorOrder::where('id', '!=', $distributorOrder->id)
+            $existingDistributor = DistributorOrder::whereNotNull('metadata')
+                ->where('id', '!=', $distributorOrder->id)
                 ->whereJsonContains('metadata->invoice_hash', $fileHash)
                 ->first();
 

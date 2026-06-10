@@ -1215,14 +1215,7 @@
                     @csrf @method('PUT')
                     <div class="modal-body p-4 bg-body-theme text-main-theme">
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold text-muted-theme small">Retailer</label>
-                                <select name="retailer_id" id="edit_retailer_id" class="form-select bg-card-theme text-main-theme" required style="border-radius: 8px; border-color: var(--med-border-light);">
-                                    @foreach($retailers as $r) <option value="{{ $r->id }}">{{ $r->shop_name }} ({{ $r->user->name ?? 'N/A' }})</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-12 mb-3">
                                 <label class="form-label fw-bold text-muted-theme small">Distributor</label>
                                 <select name="distributor_id" id="edit_distributor_id" class="form-select bg-card-theme text-main-theme" style="border-radius: 8px; border-color: var(--med-border-light);">
                                     <option value="">-- None --</option>
@@ -1230,6 +1223,7 @@
                                     @endforeach
                                 </select>
                             </div>
+                            <input type="hidden" name="retailer_id" id="edit_retailer_id">
                             <input type="hidden" name="status" id="edit_status">
                         </div>
 
@@ -1692,7 +1686,7 @@
                             }
                         }
 
-                        if (canEdit && statusRaw !== 'delivered' && statusRaw !== 'cancelled' && statusRaw !== 'rejected') {
+                        if (canEdit && statusRaw !== 'delivered' && statusRaw !== 'cancelled' && statusRaw !== 'rejected' && statusRaw !== 'approved') {
                             btns += `<button class="btn btn-primary btn-sm edit-btn" data-row="${rowData}" title="Edit Order"><i class="fa fa-edit"></i></button>`;
                         }
 
