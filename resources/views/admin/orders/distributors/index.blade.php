@@ -1577,7 +1577,7 @@
                                             <th class="py-2 px-3 text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em; width: 200px;">Pharmaceutical Item</th>
                                             <th class="py-2 px-3 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Standard Batch</th>
                                             <th class="py-2 px-3 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Order Qty</th>
-                                            <th class="py-2 px-3 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Bonus</th>
+                                            <th class="py-2 px-3 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Free</th>
                                             <th class="py-2 px-3 text-end text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Price (₹)</th>
                                             <th class="py-2 px-3 text-end text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Total (₹)</th>
                                         </tr>
@@ -1614,7 +1614,6 @@
                                          </div>
                                          <div class="small text-muted-theme" style="font-size: 0.7rem;">
                                              ${i.brand ? `<span class="fw-bold">(${i.brand})</span> •` : ''} <span class="fw-bold text-primary">${qty} ${i.unit || 'Nos'}</span>
-                                             ${i.free_quantity > 0 ? `<span class="text-success fw-bold ms-1" style="font-size: 0.65rem;">(+${i.free_quantity} Free)</span>` : ''}
                                          </div>
                                          <div class="d-flex gap-2 flex-wrap mt-0 opacity-75" style="font-size: 0.6rem;">
                                              ${i.generic_name ? `<span>${i.generic_name}</span>` : ''}

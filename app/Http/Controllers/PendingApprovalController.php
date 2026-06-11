@@ -218,9 +218,7 @@ class PendingApprovalController extends Controller
                     
                     $meta = [];
                     $qtyStr = $i->quantity . ' ' . ($i->unit ?? 'Nos');
-                    if (($i->free_quantity ?? 0) > 0) {
-                        $qtyStr .= ' <span class="text-success" style="font-size: 0.7rem; font-weight: bold;">(+' . $i->free_quantity . ' Free)</span>';
-                    }
+                    
                     $meta[] = '<span class="text-primary fw-bold" style="font-size: 0.75rem;">' . $qtyStr . '</span>';
                     
                     if (!empty($meta)) {

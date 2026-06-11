@@ -157,9 +157,7 @@ class DistributorOrderController extends Controller
                         
                         $meta = [];
                         $qtyText = $item->quantity . ' ' . ($item->unit ?? 'Nos');
-                        if ($item->free_quantity > 0) {
-                            $qtyText .= ' <span class="text-success" style="font-size: 0.7rem; font-weight: bold;">(+' . $item->free_quantity . ' Free)</span>';
-                        }
+                        
                         $meta[] = '<span class="text-primary fw-bold" style="font-size: 0.75rem;">' . $qtyText . '</span>';
                         
                         if (!empty($meta)) {

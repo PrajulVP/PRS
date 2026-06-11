@@ -631,6 +631,7 @@
                                             <th class="ps-3 text-muted-theme" style="font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Product Details</th>
                                             <th class="text-muted-theme" style="font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Batch Details</th>
                                             <th class="text-center text-muted-theme" style="font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Quantity</th>
+                                            <th class="text-center text-muted-theme" style="font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Free</th>
                                             <th class="text-end pe-3 text-muted-theme" style="font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Total Price</th>
                                         </tr>
                                     </thead>
@@ -759,6 +760,7 @@
                                 <div class="invoice-list-header bg-dark text-white border-0 py-2">
                                     <div style="flex: 2;" class="ps-3 text-white">Product Name</div>
                                     <div style="flex: 1;" class="text-center text-white">Quantity</div>
+                                    <div style="flex: 1;" class="text-center text-white">Free</div>
                                     <div style="flex: 1;" class="text-end pe-3 text-white">Value (PTS)</div>
                                 </div>
                                 <div id="approve_items_list">
@@ -1004,6 +1006,7 @@
                                             <div class="ai-col-batch text-white">Batch</div>
                                             <div class="ai-col-expiry text-white">Expiry</div>
                                             <div class="ai-col-qty text-white text-center">Qty</div>
+                                            <div class="ai-col-qty text-white text-center">Free</div>
                                             <div class="ai-col-value text-white text-end pe-3">Net Amt</div>
                                         </div>
                                         <div id="verification_table_body">
@@ -1936,7 +1939,6 @@
                                     </div>
                                     <div class="small text-muted-theme" style="font-size: 0.7rem;">
                                         ${item.brand ? `<span class="fw-bold">(${item.brand})</span> •` : ''} <span class="fw-bold text-primary">${item.quantity} ${item.unit || 'Nos'}</span>
-                                        ${item.free_quantity > 0 ? `<span class="text-success fw-bold ms-1" style="font-size: 0.65rem;">(+${item.free_quantity} Free)</span>` : ''}
                                     </div>
                                     <div class="d-flex gap-2 flex-wrap mt-0 opacity-75" style="font-size: 0.6rem;">
                                         ${item.generic_name ? `<span>${item.generic_name}</span>` : ''}
@@ -1947,16 +1949,18 @@
                                 <td>
                                     ${batchInfo}
                                 </td>
-                                <td class="text-center">
-                                    <div class="fw-bold text-primary" style="font-size: 0.85rem;">${item.quantity}</div>
-                                    <div class="small opacity-75" style="font-size: 0.65rem;">${item.unit || 'Nos'}</div>
+                                <td class="text-center fw-bold text-primary" style="font-size: 0.85rem;">
+                                    ${item.quantity}
+                                </td>
+                                <td class="text-center fw-bold text-success" style="font-size: 0.85rem;">
+                                    ${item.free_quantity > 0 ? item.free_quantity : '-'}
                                 </td>
                                 <td class="text-end pe-3 fw-bold text-main-theme" style="font-size: 0.85rem;">₹${totalAmtFormatted}</td>
                             </tr>
                         `);
                     });
                 } else {
-                    list.append('<tr><td colspan="4" class="text-center py-3 text-muted">No items</td></tr>');
+                    list.append('<tr><td colspan="5" class="text-center py-3 text-muted">No items</td></tr>');
                 }
                 $('#viewOrderModal').modal('show');
             });
@@ -2026,7 +2030,9 @@
                                     </div>
                                     <div style="flex: 1;" class="fw-bold text-primary text-center">
                                         ${item.quantity} ${item.unit || 'Nos'}
-                                        ${item.free_quantity > 0 ? `<div class="text-success small fw-bold">+${item.free_quantity} Free</div>` : ''}
+                                    </div>
+                                    <div style="flex: 1;" class="fw-bold text-success text-center">
+                                        ${item.free_quantity > 0 ? item.free_quantity : '-'}
                                     </div>
                                     <div style="flex: 1;" class="fw-bold text-main-theme text-end pe-3">₹${item.total_amount}</div>
                                 </div>
@@ -2219,7 +2225,9 @@
                                     </div>
                                     <div class="ai-col-qty fw-bold text-primary text-center v-qty-display" data-original-unit="${item.unit || 'Nos'}">
                                         ${item.quantity} ${item.unit || 'Nos'}
-                                        ${item.free_quantity > 0 ? `<div class="text-success small fw-bold">+${item.free_quantity} Free</div>` : ''}
+                                    </div>
+                                    <div class="ai-col-qty fw-bold text-success text-center v-free-display">
+                                        ${item.free_quantity > 0 ? item.free_quantity : '-'}
                                     </div>
                                     <div class="ai-col-value fw-bold text-main-theme text-end pe-3 v-taxable-display">--</div>
                                 </div>
@@ -2649,8 +2657,6 @@
                             let unitStr = $(`#v_row_${item.id} .v-qty-display`).data('original-unit') || '';
                             let displayHtml = `<strong>${billedQty}</strong> ${unitStr}`;
                             
-                            if (freeQty > 0) displayHtml += ` <small class="text-success ms-1">(+${freeQty} Free)</small>`;
-                            
                             // Visual cue if quantity differs from ordered
                             if (billedQty !== item.orderedQty) {
                                 let diffClass = billedQty > item.orderedQty ? 'text-primary' : 'text-danger';
@@ -2661,6 +2667,7 @@
                             }
                             
                             $(`#v_row_${item.id} .v-qty-display`).html(displayHtml);
+                            $(`#v_row_${item.id} .v-free-display`).text(freeQty > 0 ? freeQty : '-');
                         }
 
                         // Update Hidden Values

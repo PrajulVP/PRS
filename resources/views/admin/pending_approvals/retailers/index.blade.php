@@ -645,12 +645,10 @@
                                     <tr>
                                         <th class="border-0 small text-muted-theme text-uppercase fw-bold py-3 ps-4" style="width: 240px;">Product</th>
                                         <th class="border-0 small text-muted-theme text-uppercase fw-bold py-3">Batch/Exp</th>
-                                        <th class="border-0 small text-muted-theme text-uppercase fw-bold py-3 text-center">Qty
-                                        </th>
-                                        <th class="border-0 small text-muted-theme text-uppercase fw-bold py-3 text-end">Price
-                                        </th>
-                                        <th class="border-0 small text-muted-theme text-uppercase fw-bold py-3 text-end pe-4">
-                                            Total</th>
+                                        <th class="border-0 small text-muted-theme text-uppercase fw-bold py-3 text-center">Qty</th>
+                                        <th class="border-0 small text-muted-theme text-uppercase fw-bold py-3 text-center">Free</th>
+                                        <th class="border-0 small text-muted-theme text-uppercase fw-bold py-3 text-end">Price</th>
+                                        <th class="border-0 small text-muted-theme text-uppercase fw-bold py-3 text-end pe-4">Total</th>
                                     </tr>
                                 </thead>
                                 <tbody id="view_items_body">
@@ -833,6 +831,7 @@
                                 <div class="invoice-list-header">
                                     <div style="flex: 2; max-width: 240px;">Product Name</div>
                                     <div style="flex: 1;" class="text-center">Quantity</div>
+                                    <div style="flex: 1;" class="text-center">Free</div>
                                     <div style="flex: 1;" class="text-end">Value (PTR)</div>
                                 </div>
                                 <div id="retailer_approve_items_list">
@@ -2280,8 +2279,7 @@
                                                                     ${cleanedName} ${variantBadge}
                                                                 </div>
                                                                 <div class="small text-muted-theme" style="font-size: 0.7rem;">
-                                                                    ${item.brand ? `<span class="fw-bold">(${item.brand})</span> •` : ''} <span class="fw-bold text-primary">${item.quantity} ${item.unit || 'Nos'}</span>
-                                                                    ${item.free_quantity > 0 ? `<span class="text-success fw-bold ms-1" style="font-size: 0.65rem;">(+${item.free_quantity} Free)</span>` : ''}
+                                                                    ${item.brand ? `<span class="fw-bold">(${item.brand})</span> •` : ''} 
                                                                 </div>
                                                                 <div class="d-flex gap-2 flex-wrap mt-0 opacity-75" style="font-size: 0.6rem;">
                                                                     ${item.generic_name ? `<span>${item.generic_name}</span>` : ''}
@@ -2290,17 +2288,19 @@
                                                                 </div>
                                                             </td>
                                                             <td class="text-main-theme" style="font-size: 0.75rem;">${batchInfo}</td>
-                                                            <td class="text-center text-main-theme">
-                                                                <div class="fw-bold" style="font-size: 0.85rem;">${item.quantity}</div>
-                                                                <div class="small opacity-75" style="font-size: 0.65rem;">${item.unit || 'Nos'}</div>
+                                                            <td class="text-center fw-bold text-primary" style="font-size: 0.85rem;">
+                                                                ${item.quantity} ${item.unit || 'Nos'}
                                                             </td>
-                                                            <td class="text-end text-main-theme" style="font-size: 0.75rem;">₹${parseFloat(item.unit_price).toFixed(2)}</td>
-                                                            <td class="text-end fw-bold text-primary pe-4" style="font-size: 0.85rem;">₹${parseFloat(item.total_amount).toFixed(2)}</td>
+                                                            <td class="text-center fw-bold text-success" style="font-size: 0.85rem;">
+                                                                ${item.free_quantity > 0 ? item.free_quantity : '-'}
+                                                            </td>
+                                                            <td class="text-end fw-bold text-main-theme" style="font-size: 0.85rem;">₹${parseFloat(item.unit_price).toFixed(2)}</td>
+                                                            <td class="text-end pe-4 fw-bold text-main-theme" style="font-size: 0.85rem;">₹${parseFloat(item.total_amount).toFixed(2)}</td>
                                                         </tr>
                                                     `);
                     });
                 } else {
-                    tbody.html('<tr><td colspan="5" class="text-center py-4 text-muted-theme italic">No items found in this order</td></tr>');
+                    tbody.html('<tr><td colspan="6" class="text-center py-4 text-muted-theme italic">No items found in this order</td></tr>');
                 }
 
                 $('#view_grand_total').text(`₹${parseFloat(row.total_amount).toFixed(2)}`);
@@ -2373,7 +2373,9 @@
                                     </div>
                                     <div style="flex: 1;" class="text-center text-muted-theme small">
                                         ${item.quantity} ${item.unit || 'Box'}
-                                        ${item.free_quantity > 0 ? `<div class="text-success fw-bold">+${item.free_quantity} Free</div>` : ''}
+                                    </div>
+                                    <div style="flex: 1;" class="text-center fw-bold text-success small">
+                                        ${item.free_quantity > 0 ? item.free_quantity : '-'}
                                     </div>
                                     <div style="flex: 1;" class="text-end fw-bold text-success">₹${item.total_amount}</div>
                                 </div>
@@ -2607,8 +2609,8 @@
                                                                                                                                                                                     <div class="ai-col-expiry v-expiry-display text-muted small" data-id="${orderItemId}">--</div>
                                                                                                                                                                                     <div class="ai-col-qty fw-bold text-primary v-qty-display" data-original-unit="${item.unit || ''}">
                                                                                                                                                                                         ${orderedQty} ${item.unit || ''}
-                                                                                                                                                                                        ${item.free_quantity > 0 ? `<div class="text-success small fw-bold">+${item.free_quantity} Free</div>` : ''}
                                                                                                                                                                                     </div>
+                                                                                                                                                                                    <div class="ai-col-free fw-bold text-success v-free-display" data-id="${orderItemId}">-</div>
                                                                                                                                                                                     <div class="ai-col-value text-end small text-dark fw-bold v-taxable-display">--</div>
                                                                                                                                                                                     <div class="ai-col-value text-end small text-muted v-gst-display">--</div>
                                                                                                                                                                                     <div class="ai-col-value text-end fw-bold v-net-display">--</div>
@@ -3051,8 +3053,6 @@
                             let origUnit = vRow.find('.v-qty-display').data('original-unit') || '';
                             let displayQty = `<strong>${billedQty}</strong> ${origUnit}`;
                             
-                            if (freeQty > 0) displayQty += ` <span class="text-success small">(+${freeQty} Free)</span>`;
-                            
                             // Visual cue if quantity differs from ordered
                             if (billedQty !== orderedQty) {
                                 let diffClass = billedQty > orderedQty ? 'text-primary' : 'text-danger';
@@ -3062,6 +3062,7 @@
                                 }
                             }
                             vRow.find('.v-qty-display').html(displayQty);
+                            vRow.find('.v-free-display').text(freeQty > 0 ? freeQty : '-');
 
                             vRow.find('.v-taxable-display').text(`₹${extTaxable.toFixed(2)}`);
                             vRow.find('.v-gst-display').text(`₹${extGst.toFixed(2)}`);
