@@ -4764,6 +4764,32 @@
                 ]
             }
         },
+        "/api/settings/google-maps-api-key": {
+            "get": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Get Google Maps API Key",
+                "operationId": "b55a49f4b894e58dbd6271bf199df429",
+                "responses": {
+                    "200": {
+                        "description": "Google Maps API Key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "google_maps_api_key": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/user/player-id": {
             "post": {
                 "tags": [
@@ -5009,6 +5035,10 @@
         {
             "name": "Sales Manager Dashboard",
             "description": "Sales Manager Dashboard"
+        },
+        {
+            "name": "Settings",
+            "description": "Settings"
         },
         {
             "name": "User",

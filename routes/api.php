@@ -7,11 +7,14 @@ use App\Http\Controllers\Api\RetailerOrderController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\DistributorController;
 use App\Http\Controllers\Api\PrescriptionApiController;
+use App\Http\Controllers\Api\SettingsApiController;
 
 //add a prefix to all routes
 Route::post('login', [AuthApiController::class, 'login']);
 Route::post('send-otp', [AuthApiController::class, 'sendOtp']);
 Route::post('login-otp', [AuthApiController::class, 'loginWithOtp']);
+
+Route::get('settings/google-maps-api-key', [SettingsApiController::class, 'getGoogleMapsApiKey']);
 
 // Location APIs wrapper (open to authenticated users)
 Route::middleware('auth:api')->group(function () {
