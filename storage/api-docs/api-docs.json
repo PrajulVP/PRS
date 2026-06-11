@@ -2057,6 +2057,84 @@
                         "bearerAuth": []
                     }
                 ]
+            },
+            "post": {
+                "tags": [
+                    "Field Staff Retailer Orders"
+                ],
+                "summary": "Place new retailer order(s)",
+                "description": "Items will be grouped by distributor_id into separate orders.",
+                "operationId": "e90ed46b05038b3894e90985f80d3c07",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "retailer_id",
+                                    "items"
+                                ],
+                                "properties": {
+                                    "retailer_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "delivery_notes": {
+                                        "type": "string",
+                                        "example": "Urgent order"
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "product_id",
+                                                "quantity"
+                                            ],
+                                            "properties": {
+                                                "product_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "unit": {
+                                                    "type": "string",
+                                                    "example": "Box"
+                                                },
+                                                "side": {
+                                                    "type": "string",
+                                                    "example": "Left"
+                                                },
+                                                "size": {
+                                                    "type": "string",
+                                                    "example": "XL"
+                                                },
+                                                "distributor_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Orders placed successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/field-staff/retailer-orders/{id}": {
@@ -2171,6 +2249,51 @@
                     },
                     "442": {
                         "description": "Validation failed or invalid records"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/field-staff/retailer-orders/calculate-price": {
+            "get": {
+                "tags": [
+                    "Field Staff Retailer Orders"
+                ],
+                "summary": "Calculate price for a product before placing an order",
+                "operationId": "d46bae267c86c45eafd0c458c6663afa",
+                "parameters": [
+                    {
+                        "name": "product_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "quantity",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "distributor_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Price calculation"
                     }
                 },
                 "security": [

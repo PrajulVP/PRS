@@ -95,6 +95,211 @@ class FieldStaffRetailerOrderController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/field-staff/retailer-orders/calculate-price",
+     *     summary="Calculate price for a product before placing an order",
+     *     tags={"Field Staff Retailer Orders"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="product_id", in="query", required=true, @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="quantity", in="query", required=true, @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="distributor_id", in="query", required=false, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Price calculation")
+     * )
+     */
+    public function calculatePrice(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user->hasRole('fieldstaff')) return response()->json(['error' => 'Unauthorized'], 403);
+
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|integer|min:1',
+            'distributor_id' => 'nullable|exists:distributors,id'
+        ]);
+
+        $productId = $request->product_id;
+        $quantity = $request->quantity;
+        $distributorId = $request->distributor_id;
+
+        $product = \App\Models\Product::find($productId);
+        if (!$product) {
+            return response()->json(['error' => 'Product not found.'], 404);
+        }
+        
+        if ($distributorId) {
+            $distributor = \App\Models\Distributor::find($distributorId);
+            if ($distributor) {
+                $distProduct = $distributor->products()->where('product_id', $productId)->first();
+                if (!$distProduct) {
+                    return response()->json(['error' => 'Product not available from selected distributor'], 422);
+                }
+            }
+        }
+
+        $price = (float)$product->ptr;
+        $gstRate = (float)($product->gst ?? 0);
+        $taxableSubtotal = $quantity * $price;
+        $subtotalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
+
+        return response()->json([
+            'unit_price' => $price,
+            'quantity' => $quantity,
+            'gst_percentage' => $gstRate,
+            'subtotal' => $taxableSubtotal,
+            'total_amount' => $subtotalWithGst
+        ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/field-staff/retailer-orders",
+     *     summary="Place new retailer order(s)",
+     *     description="Items will be grouped by distributor_id into separate orders.",
+     *     tags={"Field Staff Retailer Orders"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"retailer_id", "items"},
+     *             @OA\Property(property="retailer_id", type="integer", example=1),
+     *             @OA\Property(property="delivery_notes", type="string", example="Urgent order"),
+     *             @OA\Property(
+     *                 property="items",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     required={"product_id", "quantity"},
+     *                     @OA\Property(property="product_id", type="integer", example=1),
+     *                     @OA\Property(property="quantity", type="integer", example=10),
+     *                     @OA\Property(property="unit", type="string", example="Box"),
+     *                     @OA\Property(property="side", type="string", example="Left"),
+     *                     @OA\Property(property="size", type="string", example="XL"),
+     *                     @OA\Property(property="distributor_id", type="integer", example=2)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=201, description="Orders placed successfully")
+     * )
+     */
+    public function store(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user->hasRole('fieldstaff')) return response()->json(['error' => 'Unauthorized'], 403);
+
+        $request->validate([
+            'retailer_id' => 'required|exists:retailers,id',
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.distributor_id' => 'nullable|exists:distributors,id',
+            'delivery_notes' => 'nullable|string'
+        ]);
+
+        $fieldStaffId = $user->fieldStaff->id;
+        
+        $retailer = \App\Models\Retailer::where('id', $request->retailer_id)
+            ->where('field_staff_id', $fieldStaffId)
+            ->first();
+
+        if (!$retailer) {
+            return response()->json(['error' => 'Retailer not assigned to you or invalid.'], 403);
+        }
+
+        // Group items by distributor_id
+        $groupedItems = collect($request->items)->groupBy('distributor_id');
+        $createdOrders = [];
+
+        \DB::beginTransaction();
+        try {
+            foreach ($groupedItems as $distributorId => $items) {
+                // If distributorId is an empty string, make it null
+                $distributorId = $distributorId === "" ? null : $distributorId;
+
+                $totalAmount = 0;
+                $totalQuantity = 0;
+                $totalItems = count($items);
+
+                // Create Order
+                $orderCode = 'RO-' . strtoupper(uniqid());
+                $order = RetailerOrder::create([
+                    'order_code' => $orderCode,
+                    'retailer_id' => $retailer->id,
+                    'distributor_id' => $distributorId,
+                    'status' => RetailerOrder::STATUS_PENDING,
+                    'payment_status' => 'pending',
+                    'total_amount' => 0, // Will update below
+                    'total_items' => $totalItems,
+                    'total_quantity' => 0, // Will update below
+                    'delivery_notes' => $request->delivery_notes,
+                    'placed_at' => now(),
+                    'metadata' => [
+                        'placed_by' => 'fieldstaff',
+                        'field_staff_id' => $fieldStaffId,
+                        'field_staff_name' => $user->name
+                    ]
+                ]);
+
+                foreach ($items as $itemData) {
+                    $product = \App\Models\Product::find($itemData['product_id']);
+                    if (!$product) continue;
+
+                    $qty = $itemData['quantity'];
+                    $price = (float)$product->ptr;
+                    $gstRate = (float)($product->gst ?? 0);
+                    $taxableSubtotal = $qty * $price;
+                    $subtotalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
+
+                    $order->items()->create([
+                        'product_id' => $product->id,
+                        'product_name' => $product->product_name,
+                        'quantity' => $qty,
+                        'unit' => $itemData['unit'] ?? 'Nos',
+                        'side' => $itemData['side'] ?? null,
+                        'size' => $itemData['size'] ?? null,
+                        'unit_price' => $price,
+                        'total_amount' => $subtotalWithGst
+                    ]);
+
+                    $totalAmount += $subtotalWithGst;
+                    $totalQuantity += $qty;
+                }
+
+                $order->update([
+                    'total_amount' => $totalAmount,
+                    'total_quantity' => $totalQuantity
+                ]);
+
+                // Notify Distributor if assigned
+                if ($distributorId) {
+                    $distributor = \App\Models\Distributor::find($distributorId);
+                    if ($distributor && $distributor->user) {
+                        $this->notifyUnique($distributor->user, new \App\Notifications\OrderActionRequired($order, "New Retailer Order #{$order->order_code} assigned to you.", url('/distributor/orders'), 'retailer_order'));
+                        $this->sendOneSignalPush([$distributor->user->id], "New Retailer Order #{$order->order_code} assigned to you.", ['order_id' => $order->id, 'type' => 'retailer_order'], 'New Order Received');
+                    }
+                } else {
+                    // Notify Sales Manager if no distributor
+                    $salesManager = $user->fieldStaff->salesManager ?? null;
+                    if ($salesManager && $salesManager->user) {
+                        $this->notifyUnique($salesManager->user, new \App\Notifications\OrderActionRequired($order, "New Retailer Order #{$order->order_code} needs a distributor assignment.", url('/approvals/retailers'), 'retailer_order'));
+                        $this->sendOneSignalPush([$salesManager->user->id], "New Retailer Order #{$order->order_code} needs a distributor assignment.", ['order_id' => $order->id, 'type' => 'retailer_order'], 'Distributor Assignment Required');
+                    }
+                }
+
+                $createdOrders[] = $order->load('items');
+            }
+            \DB::commit();
+
+            return response()->json([
+                'message' => 'Orders placed successfully',
+                'orders' => $createdOrders
+            ], 201);
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return response()->json(['error' => 'Error creating orders: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * @OA\Post(
      *     path="/api/field-staff/retailer-orders/{id}/update-status",
      *     summary="Accept, reject, or cancel a retailer order",

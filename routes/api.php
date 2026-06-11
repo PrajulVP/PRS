@@ -114,7 +114,9 @@ Route::middleware('auth:api')->group(function () {
         Route::post('retailers', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'storeRetailer']);
         Route::get('retailers/{id}/loyalty-points', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'getRetailerLoyaltyDetails']);
         Route::get('retailer-orders', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'index']);
+        Route::get('retailer-orders/calculate-price', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'calculatePrice']);
         Route::get('retailer-orders/{id}', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'show']);
+        Route::post('retailer-orders', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'store']);
         Route::post('retailer-orders/{id}/update-status', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'updateStatus']);
         Route::put('retailer-orders/{id}', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'update']);
 
