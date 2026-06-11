@@ -458,6 +458,13 @@
 
                 if (!bounds.isEmpty()) {
                 map.fitBounds(bounds);
+                
+                // Prevent extreme zoom level when there is only one point or points are very close
+                google.maps.event.addListenerOnce(map, "idle", function() { 
+                    if (map.getZoom() > 15) {
+                        map.setZoom(15);
+                    }
+                });
             }
         }
 
