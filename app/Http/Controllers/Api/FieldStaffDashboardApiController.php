@@ -69,8 +69,7 @@ class FieldStaffDashboardApiController extends Controller
         $fieldStaffId = $fieldStaff->id;
 
         // 1. Basic Stats
-        $retailerOrderQuery = RetailerOrder::where('fieldstaff_id', $fieldStaffId)
-            ->whereBetween('created_at', [$startDate, $endDate]);
+        $retailerOrderQuery = RetailerOrder::where('fieldstaff_id', $fieldStaffId);
 
         $orderStats = [
             'total' => (clone $retailerOrderQuery)->count(),

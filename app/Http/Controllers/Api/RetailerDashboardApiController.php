@@ -61,8 +61,7 @@ class RetailerDashboardApiController extends Controller
                 break;
         }
 
-        $baseQuery = RetailerOrder::where('retailer_id', $retailerId)
-            ->whereBetween('created_at', [$startDate, $endDate]);
+        $baseQuery = RetailerOrder::where('retailer_id', $retailerId);
 
         $totalOrders = (clone $baseQuery)->count();
         $pendingOrders = (clone $baseQuery)->where('status', RetailerOrder::STATUS_PENDING)->count();
