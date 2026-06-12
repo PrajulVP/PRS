@@ -30,8 +30,12 @@ class DistributorController extends Controller
                 });
             }
 
-            if ($request->filled('sales_manager_id')) {
-                $data->where('sales_manager_id', $request->sales_manager_id);
+            if ($currentUser->hasRole('salesmanager')) {
+                $data->where('sales_manager_id', $currentUser->salesManager->id);
+            } else {
+                if ($request->filled('sales_manager_id')) {
+                    $data->where('sales_manager_id', $request->sales_manager_id);
+                }
             }
 
             if ($request->filled('district_id')) {
@@ -94,10 +98,17 @@ class DistributorController extends Controller
         $districts = District::orderBy('name', 'asc')->get();
         $salesManagers = SalesManager::with('user')->get();
 
+        $currentUser = Auth::user();
+        $statsQuery = Distributor::query();
+
+        if ($currentUser && $currentUser->hasRole('salesmanager')) {
+            $statsQuery->where('sales_manager_id', $currentUser->salesManager->id);
+        }
+
         $stats = [
-            'total' => Distributor::count(),
-            'active' => Distributor::whereHas('user', fn($q) => $q->where('status', 'active'))->count(),
-            'inactive' => Distributor::whereHas('user', fn($q) => $q->where('status', 'inactive'))->count(),
+            'total' => (clone $statsQuery)->count(),
+            'active' => (clone $statsQuery)->whereHas('user', fn($q) => $q->where('status', 'active'))->count(),
+            'inactive' => (clone $statsQuery)->whereHas('user', fn($q) => $q->where('status', 'inactive'))->count(),
         ];
 
         return view('admin.distributors.index', compact('districts', 'salesManagers', 'stats'));

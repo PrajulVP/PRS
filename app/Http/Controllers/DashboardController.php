@@ -138,6 +138,7 @@ class DashboardController extends Controller
                 });
 
                 $distributorQuery->where('sales_manager_id', $salesManager->id);
+                $fieldStaffQuery->where('sales_manager_id', $salesManager->id);
                 $distributorOrderQuery->whereHas('distributor', function ($q) use ($salesManager) {
                     $q->where('sales_manager_id', $salesManager->id);
                 });

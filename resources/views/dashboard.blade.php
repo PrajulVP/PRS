@@ -932,7 +932,7 @@
                                 ['label' => 'Distributors', 'value' => $counts['distributors'], 'icon' => 'briefcase', 'color' => 'var(--med-primary)', 'bg' => 'rgba(var(--med-primary-rgb), 0.1)', 'route' => route('admin.distributors.index')],
                                 ['label' => 'Retailers', 'value' => $counts['retailers'], 'icon' => 'shopping-bag', 'color' => '#10b981', 'bg' => 'rgba(16, 185, 129, 0.1)', 'route' => route('admin.retailers.index')],
                                 ['label' => 'Field Staff', 'value' => $counts['field_staff'], 'icon' => 'users', 'color' => '#f59e0b', 'bg' => 'rgba(245, 158, 11, 0.1)', 'route' => route('admin.field-staffs.index')],
-                                ['label' => 'Products', 'value' => $counts['products'], 'icon' => 'box', 'color' => '#8b5cf6', 'bg' => 'rgba(139, 92, 246, 0.1)', 'route' => route('admin.reports.products')]
+                                ['label' => 'Products', 'value' => $counts['products'], 'icon' => 'box', 'color' => '#8b5cf6', 'bg' => 'rgba(139, 92, 246, 0.1)', 'route' => route('products.index')]
                             ];
 
                             if (Auth::user()->hasAnyRole(['admin', 'superadmin'])) {
