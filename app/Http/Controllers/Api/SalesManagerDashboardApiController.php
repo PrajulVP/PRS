@@ -72,11 +72,16 @@ class SalesManagerDashboardApiController extends Controller
             return response()->json(['error' => 'Sales Manager profile not found'], 404);
         }
 
-        $fieldStaffIds = $salesManager->fieldStaffs->pluck('id');
+        $fieldStaffIds = \App\Models\FieldStaff::where(function ($q) use ($salesManager) {
+            $q->where('sales_manager_id', $salesManager->id)
+                ->orWhere('sales_manager_id', $salesManager->user_id);
+        })->pluck('id');
 
-        // 1. Retailer Order Stats (Orders under this SM's fieldstaff)
-        $retailerOrderQuery = RetailerOrder::whereHas('retailer', function ($q) use ($fieldStaffIds) {
-            $q->whereIn('field_staff_id', $fieldStaffIds);
+        // 1. Retailer Order Stats (Orders under this SM's fieldstaff or placed by them)
+        $retailerOrderQuery = RetailerOrder::where(function ($q) use ($fieldStaffIds) {
+            $q->whereHas('retailer', function ($q2) use ($fieldStaffIds) {
+                $q2->whereIn('field_staff_id', $fieldStaffIds);
+            })->orWhereIn('fieldstaff_id', $fieldStaffIds);
         })->whereBetween('created_at', [$startDate, $endDate]);
 
         $retailerOrderStats = [

@@ -225,6 +225,7 @@ class FieldStaffRetailerOrderController extends Controller
                     'order_code' => $orderCode,
                     'retailer_id' => $retailer->id,
                     'distributor_id' => $distributorId,
+                    'fieldstaff_id' => $fieldStaffId,
                     'status' => RetailerOrder::STATUS_PENDING,
                     'payment_status' => 'pending',
                     'total_amount' => 0, // Will update below
@@ -284,6 +285,10 @@ class FieldStaffRetailerOrderController extends Controller
                         $this->sendOneSignalPush([$salesManager->user->id], "New Retailer Order #{$order->order_code} needs a distributor assignment.", ['order_id' => $order->id, 'type' => 'retailer_order'], 'Distributor Assignment Required');
                     }
                 }
+
+                // Notify Field Staff
+                $this->notifyUnique($user, new \App\Notifications\OrderActionRequired($order, "Your Retailer Order #{$order->order_code} has been successfully placed.", '/retailer-orders', 'retailer_order'));
+                $this->sendOneSignalPush([$user->id], "Your Retailer Order #{$order->order_code} has been successfully placed.", ['order_id' => $order->id, 'type' => 'retailer_order'], 'Order Placed Successfully');
 
                 $createdOrders[] = $order->load('items');
             }
