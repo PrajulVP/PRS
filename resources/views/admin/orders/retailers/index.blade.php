@@ -1675,7 +1675,7 @@
                             if (res.success) {
                                 table.ajax.reload(null, false);
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                // // showToast('success', res.success);
+                                showToast('success', res.success);
                                 if (res.new_points) {
                                     $('.notification-box .badge').text(parseFloat(res.new_points).toFixed(2));
                                 }
@@ -1884,7 +1884,7 @@
                             if (res.success) {
                                 table.ajax.reload();
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                // // showToast('success', res.success || 'Order approved successfully.');
+                                showToast('success', res.success || 'Order approved successfully.');
                                 table.ajax.reload(null, false);
                             } else {
                                 showToast('error', res.error || 'Error accepting order');

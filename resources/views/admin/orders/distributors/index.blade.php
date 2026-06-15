@@ -1728,7 +1728,7 @@
                             if (res.success) {
                                 table.ajax.reload();
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                // showToast('success', res.success);
+                                showToast('success', res.success);
                             } else showToast('error', res.error);
                         }).fail(function () {
                             showToast('error', 'Request failed');
@@ -1801,7 +1801,7 @@
                             if (res.success) {
                                 table.ajax.reload();
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                // showToast('success', res.success);
+                                showToast('success', res.success);
                             } else showToast('error', res.error);
                         });
                     }
@@ -1824,7 +1824,7 @@
                             if (res.success) {
                                 table.ajax.reload();
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                // showToast('success', res.success);
+                                showToast('success', res.success);
                             } else showToast('error', res.error);
                         });
                     }
@@ -1897,7 +1897,7 @@
                             if (res.success) {
                                 table.ajax.reload();
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                // showToast('success', res.success);
+                                showToast('success', res.success);
                             } else showToast('error', res.error);
                         });
                     }
@@ -1922,7 +1922,7 @@
                             if (res.success) {
                                 table.ajax.reload();
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                // showToast('success', res.success);
+                                showToast('success', res.success);
                             } else showToast('error', res.error);
                         });
                     }

@@ -1795,7 +1795,7 @@
                     processData: false,
                     contentType: false,
                     success: function (res) {
-                        // showToast('success', res.success);
+                        showToast('success', res.success);
                         table.ajax.reload(null, false);
                         if (window.updateSidebarCounts) window.updateSidebarCounts();
                     },
@@ -1816,7 +1816,7 @@
                 $.post(url, { _token: '{{ csrf_token() }}' }, function (res) {
                     $('#removeInvoiceConfirmModal').modal('hide');
                     if (res.success) {
-                        // showToast('success', res.success);
+                        showToast('success', res.success);
                         table.ajax.reload(null, false);
                         if (window.updateSidebarCounts) window.updateSidebarCounts();
                     }
@@ -1849,7 +1849,7 @@
                     },
                     success: function (res) {
                         $('#paymentStatusModal').modal('hide');
-                        // showToast('success', res.success || 'Updated');
+                        showToast('success', res.success || 'Updated');
                         table.ajax.reload(null, false);
                         if (window.updateSidebarCounts) window.updateSidebarCounts();
                     },

@@ -1816,7 +1816,7 @@
                         if (res.success) {
                             $('#distributorApproveModal').modal('hide');
                             table.ajax.reload(null, false);
-                            // showToast('success', res.success);
+                            showToast('success', res.success);
                             if (window.updateSidebarCounts) window.updateSidebarCounts();
                             Swal.fire({
                                 icon: 'success',
@@ -1858,7 +1858,7 @@
                         $.post(url, { _token: '{{ csrf_token() }}' }, function (res) {
                             if (res.success) {
                                 table.ajax.reload(null, false);
-                                // // showToast('success', res.success);
+                                showToast('success', res.success);
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
                             } else {
                                 showToast('error', res.error || 'Failed to confirm order');
@@ -1983,7 +1983,7 @@
                     },
                     success: function (res) {
                         $('#retailerPaymentStatusModal').modal('hide');
-                        // // showToast('success', res.success || 'Updated');
+                        showToast('success', res.success || 'Updated');
                         table.ajax.reload(null, false);
                         if (window.updateSidebarCounts) window.updateSidebarCounts();
                     },
@@ -2057,7 +2057,7 @@
 
                         $select.addClass(newClass);
                         $select.data('original', newStatus);
-                        // showToast('success', res.success);
+                        showToast('success', res.success);
                         if (window.updateSidebarCounts) window.updateSidebarCounts();
                     } else {
                         showToast('error', res.error || 'Failed to update status');
@@ -2098,7 +2098,7 @@
                         $select.addClass(newClass);
                         $select.data('original', newStatus);
 
-                        // showToast('success', res.success);
+                        showToast('success', res.success);
                     } else {
                         showToast('error', res.error || 'Failed to update payment status');
                         $select.val(originalStatus);
@@ -2136,7 +2136,7 @@
                     processData: false,
                     contentType: false,
                     success: function (res) {
-                        // showToast('success', res.success);
+                        showToast('success', res.success);
                         table.ajax.reload(null, false);
                         if (window.updateSidebarCounts) window.updateSidebarCounts();
                     },
@@ -2214,7 +2214,7 @@
                 }, function (res) {
                     $('#removeInvoiceConfirmModal').modal('hide');
                     if (res.success) {
-                        // showToast('success', res.success);
+                        showToast('success', res.success);
                         table.ajax.reload(null, false);
                     } else {
                         showToast('error', res.error || 'Failed to remove invoice');
