@@ -379,8 +379,10 @@ class ReturnController extends Controller
                 } else {
                     // Create inventory record if it doesn't exist? 
                     // Usually it should exist if they bought it before, but for safety:
+                    $returnedProduct = \App\Models\Product::find($returnRequest->product_id);
                     Inventory::create([
                         'distributor_id' => $returnRequest->distributor_id,
+                        'distributor_product_code' => $returnedProduct ? ($returnedProduct->product_code ?? '---') : '---',
                         'product_id' => $returnRequest->product_id,
                         'product_name' => $returnRequest->product_name,
                         'side' => $returnRequest->side,

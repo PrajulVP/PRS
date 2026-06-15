@@ -1146,7 +1146,7 @@ class DistributorOrderController extends Controller
                 ]);
 
                 if (!$inventory->exists) {
-                    $inventory->distributor_product_code = $product->product_code;
+                    $inventory->distributor_product_code = $product->product_code ?? '---';
                     $inventory->product_name = $item->product_name;
                     $inventory->stock = 0;
                 }
