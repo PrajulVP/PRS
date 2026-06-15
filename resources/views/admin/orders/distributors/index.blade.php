@@ -1922,8 +1922,16 @@
                             if (res.success) {
                                 table.ajax.reload();
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                showToast('success', res.success);
-                            } else showToast('error', res.error);
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: res.success || 'Order confirmed successfully.',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            } else {
+                                Swal.fire('Error', res.error || 'Failed to confirm receipt', 'error');
+                            }
                         });
                     }
                 });

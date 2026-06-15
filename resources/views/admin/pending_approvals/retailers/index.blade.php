@@ -1858,13 +1858,19 @@
                         $.post(url, { _token: '{{ csrf_token() }}' }, function (res) {
                             if (res.success) {
                                 table.ajax.reload(null, false);
-                                showToast('success', res.success);
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: res.success || 'Order confirmed successfully.',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
                             } else {
-                                showToast('error', res.error || 'Failed to confirm order');
+                                Swal.fire('Error', res.error || 'Failed to confirm order', 'error');
                             }
                         }).fail(function (xhr) {
-                            showToast('error', 'Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Request failed'));
+                            Swal.fire('Error', 'Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Request failed'), 'error');
                         });
                     }
                 });
@@ -2537,8 +2543,9 @@
                     window.checkRetailerApprovalReadiness = function() {
                         let paySelected = $('input[name="payment_status"]:checked').length > 0;
                         let fileUploaded = $('#scan_retailer_file_input')[0].files.length > 0 || $('#batch_allocation_table_container').not('.d-none').length > 0;
+                        let ocrMismatch = $('#retailer_invoice_no_input').data('ocr-has-mismatch') === true;
                         
-                        if (paySelected && fileUploaded) {
+                        if (paySelected && fileUploaded && !ocrMismatch) {
                             $('#retailer_approval_error_alert').addClass('d-none');
                             $('#btnSubmitDistributorApprove').prop('disabled', false);
                         } else {
@@ -2549,6 +2556,7 @@
                             if (!paySelected && !fileUploaded) msg = "Please select payment status and upload the finalized invoice to proceed.";
                             else if (!paySelected) msg = "Please select the payment status manually to continue.";
                             else if (!fileUploaded) msg = "Please upload and scan the invoice to continue.";
+                            else if (ocrMismatch) msg = "Please resolve the invoice mismatch to continue.";
                             $('#retailer_approval_error_message').text(msg);
                         }
                     };
@@ -3127,6 +3135,7 @@
 
                 // STRICT MATCH BLOCKING: Only enable if no missing AND no extra items
                 if (missingProducts.length === 0 && invoiceProducts.length === 0 && window.qtyMismatchProducts.length === 0) {
+                    $('#retailer_invoice_no_input').data('ocr-has-mismatch', false);
                     
                     // NEW: Validate Batches against Backend Inventory dynamically
                     $('#automation_error_state').hide();
@@ -3158,6 +3167,7 @@
                     });
 
                 } else {
+                    $('#retailer_invoice_no_input').data('ocr-has-mismatch', true);
                     $('#automation_error_state').removeClass('d-none').show();
                     $('#automation_error_state h5').text('Action Required');
                     
@@ -3266,7 +3276,8 @@
                     $(this).data('items-filled', false);
                 }
 
-                $('#btnSubmitDistributorApprove').prop('disabled', hasError || !entered);
+                let ocrMismatch = $(this).data('ocr-has-mismatch') === true;
+                $('#btnSubmitDistributorApprove').prop('disabled', hasError || !entered || ocrMismatch);
             });
             $(document).on('click', '.init-return-btn', function() {
                 let data = $(this).data();

@@ -185,7 +185,7 @@ class InventoryController extends Controller
                         return [
                             'id' => $b->id,
                             'batch_no' => $b->batch_no,
-                            'stock' => $b->stock,
+                            'stock' => (float) $b->stock,
                             'side' => $b->side,
                             'size' => $b->size,
                             'expiry_date' => $b->expiry_date ? $b->expiry_date->format('d-m-Y') : 'N/A',
@@ -201,7 +201,7 @@ class InventoryController extends Controller
                         'product_id' => $i->product_id,
                         'distributor_id' => $i->distributor_id,
                         'distributor_name' => $i->distributor?->user?->name ?? 'N/A',
-                        'stock' => $i->stock,
+                        'stock' => (float) $i->stock,
                         'side' => $i->side,
                         'size' => $i->size,
                         'batches' => $batches,

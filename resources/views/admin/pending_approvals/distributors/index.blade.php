@@ -2081,7 +2081,7 @@
                         });
                     },
                     error: function (xhr) {
-                        showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Failed to approve order');
+                        Swal.fire('Error', xhr.responseJSON ? xhr.responseJSON.error : 'Failed to approve order', 'error');
                     },
                     complete: function () {
                         $btn.prop('disabled', false).text(oldText);
@@ -2151,8 +2151,9 @@
                     window.checkDistributorApprovalReadiness = function() {
                         let paySelected = $('input[name="payment_status"]:checked').length > 0;
                         let fileUploaded = $('#scan_file_input')[0].files.length > 0 || $('#verification_table_body').children().not('.invoice-list-row.justify-content-center').length > 0;
+                        let ocrMismatch = $('#invoice_no_input').data('ocr-has-mismatch') === true;
                         
-                        if (paySelected && fileUploaded) {
+                        if (paySelected && fileUploaded && !ocrMismatch) {
                             $('#distributor_approval_error_alert').addClass('d-none');
                             $('#btn_approve_order').prop('disabled', false);
                         } else {
@@ -2163,6 +2164,7 @@
                             if (!paySelected && !fileUploaded) msg = "Please select payment status and upload the finalized invoice to proceed.";
                             else if (!paySelected) msg = "Please select the payment status manually to continue.";
                             else if (!fileUploaded) msg = "Please upload and scan the invoice to continue.";
+                            else if (ocrMismatch) msg = "Please resolve the invoice mismatch to continue.";
                             $('#distributor_approval_error_message').text(msg);
                         }
                     };
@@ -2727,10 +2729,12 @@
                     
                     // STRICT MATCH BLOCKING: Only enable if no missing AND no extra items
                     if (missingProducts.length === 0 && invoiceProducts.length === 0 && window.qtyMismatchProducts.length === 0) {
+                        $('#invoice_no_input').data('ocr-has-mismatch', false);
                         $('#automation_error_state').hide();
                         $('#automation_success_state').fadeIn();
                         $('#btn_approve_order').prop('disabled', false);
                     } else {
+                        $('#invoice_no_input').data('ocr-has-mismatch', true);
                         $('#automation_error_state').removeClass('d-none').show();
                         $('#automation_error_state h5').text('Action Required');
                         
@@ -2895,7 +2899,8 @@
                     $(this).data('items-filled', false);
                 }
 
-                $('#btn_approve_order').prop('disabled', hasError || !entered);
+                let ocrMismatch = $(this).data('ocr-has-mismatch') === true;
+                $('#btn_approve_order').prop('disabled', hasError || !entered || ocrMismatch);
             });
 
             $(document).on('click', '.init-return-btn', function() {

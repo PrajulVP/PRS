@@ -398,7 +398,10 @@ class ReturnApiController extends Controller
                 if ($inventory) {
                     $inventory->increment('stock', $returnRequest->quantity);
                 } else {
+                    $product = \App\Models\Product::find($returnRequest->product_id);
+                    $code = $product ? $product->product_code : null;
                     \App\Models\Inventory::create([
+                        'distributor_product_code' => empty($code) ? '---' : $code,
                         'distributor_id' => $returnRequest->distributor_id,
                         'product_id' => $returnRequest->product_id,
                         'product_name' => $returnRequest->product_name,
