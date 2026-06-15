@@ -75,7 +75,8 @@ class DistributorDashboardApiController extends Controller
         $retailerOrderStats = $this->calculateOrderStatusDistribution($distributorId, $startDate, $endDate);
 
         // 3. Distributor Order Stats
-        $distributorOrderQuery = DistributorOrder::where('distributor_id', $distributorId);
+        $distributorOrderQuery = DistributorOrder::where('distributor_id', $distributorId)
+            ->whereBetween('created_at', [$startDate, $endDate]);
         $distributorOrderStats = [
             'total' => (clone $distributorOrderQuery)->count(),
             'pending' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_PENDING)->count(),
@@ -271,6 +272,9 @@ class DistributorDashboardApiController extends Controller
     private function calculateOrderStatusDistribution($distributorId, $startDate = null, $endDate = null)
     {
         $query = RetailerOrder::where('distributor_id', $distributorId);
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        }
         return [
             'total' => (clone $query)->count(),
             'pending' => (clone $query)->where('status', RetailerOrder::STATUS_PENDING)->count(),

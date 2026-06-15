@@ -69,7 +69,12 @@ class FieldStaffDashboardApiController extends Controller
         $fieldStaffId = $fieldStaff->id;
 
         // 1. Basic Stats
-        $retailerOrderQuery = RetailerOrder::where('fieldstaff_id', $fieldStaffId);
+        $retailerOrderQuery = RetailerOrder::where(function ($q) use ($fieldStaffId) {
+            $q->where('fieldstaff_id', $fieldStaffId)
+                ->orWhereHas('retailer', function ($qr) use ($fieldStaffId) {
+                    $qr->where('field_staff_id', $fieldStaffId);
+                });
+        })->whereBetween('created_at', [$startDate, $endDate]);
 
         $orderStats = [
             'total' => (clone $retailerOrderQuery)->count(),
@@ -91,9 +96,13 @@ class FieldStaffDashboardApiController extends Controller
             ->first();
 
         // Achievement (Sum of unit_price * quantity for delivered orders this month)
-        $achievementValue = DB::table('retailer_orders')
-            ->join('retailer_order_items', 'retailer_orders.id', '=', 'retailer_order_items.retailer_order_id')
-            ->where('retailer_orders.fieldstaff_id', $fieldStaffId)
+        $achievementValue = RetailerOrder::join('retailer_order_items', 'retailer_orders.id', '=', 'retailer_order_items.retailer_order_id')
+            ->where(function ($q) use ($fieldStaffId) {
+                $q->where('retailer_orders.fieldstaff_id', $fieldStaffId)
+                    ->orWhereHas('retailer', function ($qr) use ($fieldStaffId) {
+                        $qr->where('field_staff_id', $fieldStaffId);
+                    });
+            })
             ->where('retailer_orders.status', RetailerOrder::STATUS_DELIVERED)
             ->whereMonth('retailer_orders.delivered_at', now()->month)
             ->whereYear('retailer_orders.delivered_at', now()->year)
@@ -109,9 +118,13 @@ class FieldStaffDashboardApiController extends Controller
                 ->where('year', $year)
                 ->value('amount') ?? 0;
 
-            $staffAchievementValue = DB::table('retailer_orders')
-                ->join('retailer_order_items', 'retailer_orders.id', '=', 'retailer_order_items.retailer_order_id')
-                ->where('retailer_orders.fieldstaff_id', $staff->id)
+            $staffAchievementValue = RetailerOrder::join('retailer_order_items', 'retailer_orders.id', '=', 'retailer_order_items.retailer_order_id')
+                ->where(function ($q) use ($staff) {
+                    $q->where('retailer_orders.fieldstaff_id', $staff->id)
+                        ->orWhereHas('retailer', function ($qr) use ($staff) {
+                            $qr->where('field_staff_id', $staff->id);
+                        });
+                })
                 ->where('retailer_orders.status', RetailerOrder::STATUS_DELIVERED)
                 ->whereMonth('retailer_orders.delivered_at', now()->month)
                 ->whereYear('retailer_orders.delivered_at', now()->year)
@@ -128,7 +141,12 @@ class FieldStaffDashboardApiController extends Controller
         $myRank = $allStaffStats->search(fn($s) => $s['id'] === $fieldStaffId) + 1;
 
         // 4. Outstanding Alerts
-        $outstandingAmount = RetailerOrder::where('fieldstaff_id', $fieldStaffId)
+        $outstandingAmount = RetailerOrder::where(function ($q) use ($fieldStaffId) {
+                $q->where('fieldstaff_id', $fieldStaffId)
+                    ->orWhereHas('retailer', function ($qr) use ($fieldStaffId) {
+                        $qr->where('field_staff_id', $fieldStaffId);
+                    });
+            })
             ->where('status', RetailerOrder::STATUS_DELIVERED)
             ->where('payment_status', '!=', 'paid')
             ->sum('total_amount');

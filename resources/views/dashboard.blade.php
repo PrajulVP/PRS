@@ -411,15 +411,15 @@
                     <div class="retailer-hero-glass d-flex align-items-center justify-content-between flex-wrap gap-4">
                         <div class="d-flex align-items-center gap-4">
                             <div class="profile-avatar">
-                                {{ strtoupper(substr($user->name, 0, 1)) }}
+                                {{ strtoupper(substr($user->retailer->shop_name ?? $user->name, 0, 1)) }}
                             </div>
                             <div>
                                 <span class="badge bg-soft-primary text-primary px-3 py-2 mb-2 fw-700" style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; border-radius: 8px;">Retailer</span>
-                                <h5 class="fw-800 mb-2" style="color: var(--med-primary); letter-spacing: -0.3px; margin-top: 2px;">{{ $user->name }}</h5>
+                                <h5 class="fw-800 mb-2" style="color: var(--med-primary); letter-spacing: -0.3px; margin-top: 2px;">{{ $user->retailer->shop_name ?? 'Medical Store' }}</h5>
                                 <div class="d-flex flex-wrap gap-2 mb-3">
                                     <div class="profile-info-item">
-                                        <i data-feather="home"></i>
-                                        <span>{{ $user->retailer->shop_name ?? 'Medical Store' }}</span>
+                                        <i data-feather="user"></i>
+                                        <span>{{ $user->name }}</span>
                                     </div>
                                     <div class="profile-info-item text-success" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2);">
                                         <i data-feather="award"></i>

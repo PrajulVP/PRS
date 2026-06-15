@@ -82,7 +82,7 @@ class SalesManagerDashboardApiController extends Controller
             $q->whereHas('retailer', function ($q2) use ($fieldStaffIds) {
                 $q2->whereIn('field_staff_id', $fieldStaffIds);
             })->orWhereIn('fieldstaff_id', $fieldStaffIds);
-        });
+        })->whereBetween('created_at', [$startDate, $endDate]);
 
         $retailerOrderStats = [
             'total' => (clone $retailerOrderQuery)->count(),
@@ -96,7 +96,7 @@ class SalesManagerDashboardApiController extends Controller
         // 2. Distributor Order Stats (Orders by distributors assigned to this SM)
         $distributorOrderQuery = DistributorOrder::whereHas('distributor', function ($q) use ($salesManager) {
             $q->where('sales_manager_id', $salesManager->id);
-        });
+        })->whereBetween('created_at', [$startDate, $endDate]);
 
         $distributorOrderStats = [
             'total' => (clone $distributorOrderQuery)->count(),

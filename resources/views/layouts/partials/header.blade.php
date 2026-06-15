@@ -195,7 +195,14 @@
                                                                     ?>
 
             <?php  if (Auth::guard('web')->check()): ?>
-            <h4 class="fs-4">Welcome <?php    echo e(Auth::guard('web')->user()->name); ?></h4><img class="mt-0"
+            <h4 class="fs-4">Welcome <?php 
+              $user = Auth::guard('web')->user();
+              if ($user->hasRole('retailer') && $user->retailer) {
+                  echo e($user->retailer->shop_name);
+              } else {
+                  echo e($user->name);
+              }
+            ?></h4><img class="mt-0"
               src="<?php    echo e(asset('admin/assets/images/hand.gif')); ?>" alt="hand-gif">
             <?php  endif; ?>
           </div>
@@ -421,11 +428,15 @@
                   alt="Profile Picture">
                 <div class="media-body d-xxl-block d-none box-col-none">
                   @if(Auth::guard('web')->check())
+                      @php 
+                          $user = Auth::guard('web')->user(); 
+                          $isRetailer = $user->hasRole('retailer') && $user->retailer;
+                      @endphp
                       <div class="d-flex align-items-center justify-content-between gap-2 pt-1">
-                      <span style="color: var(--med-text-main);">{{ Auth::guard('web')->user()->name }}</span>
+                      <span style="color: var(--med-text-main);">{{ $isRetailer ? $user->retailer->shop_name : $user->name }}</span>
                       <i class="middle fa fa-angle-down" style="color: var(--med-text-main);"></i>
                     </div>
-                      <p class="mb-0 font-roboto"><?php    echo e($loggedInRole); ?></p>
+                      <p class="mb-0 font-roboto">{{ $isRetailer ? $user->name : $loggedInRole }}</p>
                   @endif
                 </div>
               </div>
