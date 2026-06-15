@@ -67,9 +67,8 @@ trait ManagesInventory
                     $pName .= ' [' . implode('/', $vLabel) . ']';
                 }
 
-                $code = $product->product_code;
                 $inventory = Inventory::create([
-                    'distributor_product_code' => empty($code) ? ('NA-' . $product->id) : $code,
+                    'distributor_product_code' => $product->product_code ?? 'NA-' . $product->id,
                     'product_id' => $product->id,
                     'product_name' => $pName,
                     'distributor_id' => $distributorId,

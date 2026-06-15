@@ -2081,7 +2081,7 @@
                         });
                     },
                     error: function (xhr) {
-                        Swal.fire('Error', xhr.responseJSON ? xhr.responseJSON.error : 'Failed to approve order', 'error');
+                        showToast('error', xhr.responseJSON ? xhr.responseJSON.error : 'Failed to approve order');
                     },
                     complete: function () {
                         $btn.prop('disabled', false).text(oldText);
@@ -2151,9 +2151,8 @@
                     window.checkDistributorApprovalReadiness = function() {
                         let paySelected = $('input[name="payment_status"]:checked').length > 0;
                         let fileUploaded = $('#scan_file_input')[0].files.length > 0 || $('#verification_table_body').children().not('.invoice-list-row.justify-content-center').length > 0;
-                        let ocrMismatch = $('#invoice_no_input').data('ocr-has-mismatch') === true;
                         
-                        if (paySelected && fileUploaded && !ocrMismatch) {
+                        if (paySelected && fileUploaded) {
                             $('#distributor_approval_error_alert').addClass('d-none');
                             $('#btn_approve_order').prop('disabled', false);
                         } else {
@@ -2164,7 +2163,6 @@
                             if (!paySelected && !fileUploaded) msg = "Please select payment status and upload the finalized invoice to proceed.";
                             else if (!paySelected) msg = "Please select the payment status manually to continue.";
                             else if (!fileUploaded) msg = "Please upload and scan the invoice to continue.";
-                            else if (ocrMismatch) msg = "Please resolve the invoice mismatch to continue.";
                             $('#distributor_approval_error_message').text(msg);
                         }
                     };
@@ -2372,9 +2370,6 @@
                                     let identifiedCount = parseAndFillOCRResponse(res.data);
 
                                     if (identifiedCount > 0) {
-                                        $('#automation_idle_state').addClass('d-none');
-                                        $('#automation_error_state').addClass('d-none');
-                                        $('#automation_success_state').removeClass('d-none').hide().fadeIn(400);
                                         $('#extracted_metadata_section').show();
                                         $('#processed_summary_text').text(`${identifiedCount} items auto-filled from Invoice.`);
                                         if (typeof window.checkDistributorApprovalReadiness === 'function') {
@@ -2729,12 +2724,10 @@
                     
                     // STRICT MATCH BLOCKING: Only enable if no missing AND no extra items
                     if (missingProducts.length === 0 && invoiceProducts.length === 0 && window.qtyMismatchProducts.length === 0) {
-                        $('#invoice_no_input').data('ocr-has-mismatch', false);
                         $('#automation_error_state').hide();
                         $('#automation_success_state').fadeIn();
                         $('#btn_approve_order').prop('disabled', false);
                     } else {
-                        $('#invoice_no_input').data('ocr-has-mismatch', true);
                         $('#automation_error_state').removeClass('d-none').show();
                         $('#automation_error_state h5').text('Action Required');
                         
@@ -2880,16 +2873,9 @@
                 if (!hasError && entered && !$(this).data('items-filled')) {
                     let ocrData = $(this).data('ocr-data');
                     if (ocrData) {
-                        let identifiedCount = fillDistributorProducts(ocrData);
-                        if (identifiedCount > 0) {
-                            $('#automation_error_state').addClass('d-none');
-                            $('#automation_success_state').removeClass('d-none').hide().fadeIn(400);
-                            $('#extracted_metadata_section').show();
-                            $('#processed_summary_text').text(`${identifiedCount} items auto-filled from Invoice.`);
-                        }
+                        fillDistributorProducts(ocrData);
                     }
                 } else if (!entered || hasError) {
-                } else {
                     $('#verification_table_footer').addClass('d-none');
                     $('#automation_success_state').hide();
                     $('#extracted_metadata_section').hide();
@@ -2897,10 +2883,8 @@
                     $('#automation_error_state h5').text('Invoice Number Required');
                     $('#automation_error_state p').text('Please enter the invoice number to unlock and verify data.');
                     $(this).data('items-filled', false);
+                    $('#btn_approve_order').prop('disabled', true);
                 }
-
-                let ocrMismatch = $(this).data('ocr-has-mismatch') === true;
-                $('#btn_approve_order').prop('disabled', hasError || !entered || ocrMismatch);
             });
 
             $(document).on('click', '.init-return-btn', function() {

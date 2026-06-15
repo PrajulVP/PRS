@@ -34,11 +34,11 @@ class ReturnController extends Controller
         } elseif ($user->hasRole('distributor')) {
             $distributor = $user->distributor;
             if ($distributor) {
-                $query->where(function($q) use ($user, $distributor) {
+                $query->where(function ($q) use ($user, $distributor) {
                     // Returns from this distributor to admin
                     $q->where('user_id', $user->id)->where('order_type', 'distributor')
-                    // OR Returns from retailers assigned to this distributor
-                    ->orWhere('distributor_id', $distributor->id);
+                        // OR Returns from retailers assigned to this distributor
+                        ->orWhere('distributor_id', $distributor->id);
                 });
             }
         } elseif ($user->hasRole('fieldstaff')) {
@@ -141,7 +141,7 @@ class ReturnController extends Controller
                     ->where('size', $request->size)
                     ->firstOrFail();
                 $price = $item->unit_price ?? 0;
-                
+
                 $distributorId = $order->distributor_id;
                 // If order doesn't have it (orphaned), fallback to retailer's current distributor as last resort
                 if (!$distributorId) {
@@ -149,10 +149,10 @@ class ReturnController extends Controller
                 }
 
                 $fieldStaffId = $order->fieldstaff_id ?? $order->retailer?->field_staff_id;
-                
+
                 // Priority: Use the Retailer's assigned Sales Manager first
                 $salesManagerId = $order->retailer?->sales_manager_id;
-                
+
                 // Fallback: If retailer has no manager, use the Distributor's manager
                 if (!$salesManagerId && $distributorId) {
                     $salesManagerId = \App\Models\Distributor::find($distributorId)?->sales_manager_id;
@@ -178,7 +178,7 @@ class ReturnController extends Controller
                 ->where('size', $request->size)
                 ->where('status', '!=', 'rejected')
                 ->sum('quantity');
-            
+
             $remainingQty = $item->quantity - $existingReturnQty;
 
             if ($request->quantity > $remainingQty) {
@@ -229,7 +229,7 @@ class ReturnController extends Controller
                         $fsUser->notify(new \App\Notifications\ReturnRequestNotification($returnRequest, 'created', $user));
                     }
                 }
-                
+
                 // Also notify Distributor (Tier 2/Stakeholder)
                 if ($returnRequest->distributor_id) {
                     $distUser = \App\Models\Distributor::find($returnRequest->distributor_id)?->user;
@@ -284,8 +284,7 @@ class ReturnController extends Controller
                     ]);
                     $this->generateCreditNote($returnRequest);
                     $this->adjustStockForReturn($returnRequest);
-                }
-                else {
+                } else {
                     throw new \Exception('Unauthorized or invalid status for approval.');
                 }
             } else { // distributor return
@@ -306,8 +305,7 @@ class ReturnController extends Controller
                     ]);
                     $this->generateCreditNote($returnRequest);
                     $this->adjustStockForReturn($returnRequest);
-                }
-                else {
+                } else {
                     throw new \Exception('Unauthorized or invalid status for approval.');
                 }
             }
@@ -318,7 +316,7 @@ class ReturnController extends Controller
             if ($returnRequest->status === 'verified') {
                 $nextRecipient = null;
                 if ($returnRequest->order_type === 'retailer' && $returnRequest->distributor_id) {
-                    $nextRecipient = \App\Models\User::where('id', function($q) use ($returnRequest) {
+                    $nextRecipient = \App\Models\User::where('id', function ($q) use ($returnRequest) {
                         $q->select('user_id')->from('distributors')->where('id', $returnRequest->distributor_id);
                     })->first();
                 } elseif ($returnRequest->order_type === 'distributor') {
@@ -364,7 +362,7 @@ class ReturnController extends Controller
                     $inventory->decrement('stock', $returnRequest->quantity);
                     Log::info("Reduced stock for Distributor {$returnRequest->distributor_id} by {$returnRequest->quantity} for product {$returnRequest->product_id} after return completion.");
                 }
-            } 
+            }
             // If it's a retailer return to distributor, the distributor's stock increases
             elseif ($returnRequest->order_type === 'retailer') {
                 $inventory = Inventory::where('distributor_id', $returnRequest->distributor_id)
@@ -429,7 +427,7 @@ class ReturnController extends Controller
     {
         $refundAmount = $returnRequest->refund_amount;
         $creditCode = 'CN-' . strtoupper(Str::random(10));
-        
+
         $creditNote = CreditNote::create([
             'credit_code' => $creditCode,
             'user_id' => $returnRequest->user_id,
@@ -476,11 +474,11 @@ class ReturnController extends Controller
             ->where('status', 'delivered')
             ->with(['items.product', 'returnRequests', 'distributor.user'])
             ->first();
-        
+
         if ($retailerOrder) {
             $isRetailer = $user->hasRole('retailer') && $retailerOrder->retailer_id === $user->retailer?->id;
             $isDistributor = $user->hasRole('distributor') && $retailerOrder->distributor_id === $user->distributor?->id;
-            
+
             if ($isRetailer || $isDistributor) {
                 return response()->json([
                     'success' => true,
@@ -558,36 +556,36 @@ class ReturnController extends Controller
         $distributorId = $request->distributor_id;
         $startDate = $request->start_date;
         $endDate = $request->end_date;
-        
+
         if ($user->hasRole('retailer')) {
             $retailer = $user->retailer;
             if (!$retailer) return response()->json(['data' => []]);
-            
+
             $query = RetailerOrder::where('retailer_id', $retailer->id)
                 ->where('status', 'delivered')
                 ->with(['items.product', 'distributor.user']);
-                
+
             if ($search) {
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('order_code', 'like', "%{$search}%")
-                      ->orWhereHas('items.product', function($pq) use ($search) {
-                          $pq->where('product_name', 'like', "%{$search}%")
-                            ->orWhere('brand', 'like', "%{$search}%");
-                      })
-                      ->orWhereHas('distributor.user', function($dq) use ($search) {
-                          $dq->where('name', 'like', "%{$search}%");
-                      });
+                        ->orWhereHas('items.product', function ($pq) use ($search) {
+                            $pq->where('product_name', 'like', "%{$search}%")
+                                ->orWhere('brand', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('distributor.user', function ($dq) use ($search) {
+                            $dq->where('name', 'like', "%{$search}%");
+                        });
                 });
             }
 
             if ($brand) {
-                $query->whereHas('items.product', function($q) use ($brand) {
+                $query->whereHas('items.product', function ($q) use ($brand) {
                     $q->where('brand', $brand);
                 });
             }
 
             if ($productId) {
-                $query->whereHas('items', function($q) use ($productId) {
+                $query->whereHas('items', function ($q) use ($productId) {
                     $q->where('product_id', $productId);
                 });
             }
@@ -602,10 +600,10 @@ class ReturnController extends Controller
             if ($endDate) {
                 $query->whereDate('delivered_at', '<=', $endDate);
             }
-            
+
             $orders = $query->latest()->paginate(10);
-            
-            $formatted = $orders->getCollection()->map(function($o) {
+
+            $formatted = $orders->getCollection()->map(function ($o) {
                 return [
                     'id' => $o->id,
                     'order_code' => $o->order_code,
@@ -615,7 +613,7 @@ class ReturnController extends Controller
                     'distributor' => $o->distributor?->user?->name ?? 'N/A'
                 ];
             });
-            
+
             return response()->json([
                 'data' => $formatted,
                 'meta' => [
@@ -624,33 +622,32 @@ class ReturnController extends Controller
                     'total' => $orders->total()
                 ]
             ]);
-            
         } elseif ($user->hasRole('distributor')) {
             $distributor = $user->distributor;
             if (!$distributor) return response()->json(['data' => []]);
-            
+
             $query = DistributorOrder::where('distributor_id', $distributor->id)
                 ->where('status', 'delivered')
                 ->with(['items.product']);
-                
+
             if ($search) {
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('order_code', 'like', "%{$search}%")
-                      ->orWhereHas('items.product', function($pq) use ($search) {
-                          $pq->where('product_name', 'like', "%{$search}%")
-                            ->orWhere('brand', 'like', "%{$search}%");
-                      });
+                        ->orWhereHas('items.product', function ($pq) use ($search) {
+                            $pq->where('product_name', 'like', "%{$search}%")
+                                ->orWhere('brand', 'like', "%{$search}%");
+                        });
                 });
             }
 
             if ($brand) {
-                $query->whereHas('items.product', function($q) use ($brand) {
+                $query->whereHas('items.product', function ($q) use ($brand) {
                     $q->where('brand', $brand);
                 });
             }
 
             if ($productId) {
-                $query->whereHas('items', function($q) use ($productId) {
+                $query->whereHas('items', function ($q) use ($productId) {
                     $q->where('product_id', $productId);
                 });
             }
@@ -661,10 +658,10 @@ class ReturnController extends Controller
             if ($endDate) {
                 $query->whereDate('delivered_at', '<=', $endDate);
             }
-            
+
             $orders = $query->latest()->paginate(10);
-            
-            $formatted = $orders->getCollection()->map(function($o) {
+
+            $formatted = $orders->getCollection()->map(function ($o) {
                 return [
                     'id' => $o->id,
                     'order_code' => $o->order_code,
@@ -674,7 +671,7 @@ class ReturnController extends Controller
                     'distributor' => 'Self'
                 ];
             });
-            
+
             return response()->json([
                 'data' => $formatted,
                 'meta' => [
@@ -684,7 +681,7 @@ class ReturnController extends Controller
                 ]
             ]);
         }
-        
+
         return response()->json(['data' => []]);
     }
 
@@ -695,15 +692,15 @@ class ReturnController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        
+
         $brands = Product::whereNotNull('brand')->distinct()->pluck('brand')->sort()->values();
-        
+
         $productQuery = Product::select('id', 'product_name');
         if ($request->filled('brand')) {
             $productQuery->where('brand', $request->brand);
         }
         $products = $productQuery->orderBy('product_name')->get();
-        
+
         $distributors = [];
         if ($user->hasRole('retailer')) {
             // Get distributors that have delivered orders to this retailer
@@ -712,18 +709,18 @@ class ReturnController extends Controller
                 ->whereNotNull('distributor_id')
                 ->distinct()
                 ->pluck('distributor_id');
-                
+
             $distributors = Distributor::whereIn('id', $distributorIds)
                 ->with('user')
                 ->get()
-                ->map(function($d) {
+                ->map(function ($d) {
                     return [
                         'id' => $d->id,
                         'name' => $d->user?->name ?? 'N/A'
                     ];
                 });
         }
-        
+
         return response()->json([
             'brands' => $brands,
             'products' => $products,

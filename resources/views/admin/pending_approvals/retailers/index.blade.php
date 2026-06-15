@@ -1858,19 +1858,13 @@
                         $.post(url, { _token: '{{ csrf_token() }}' }, function (res) {
                             if (res.success) {
                                 table.ajax.reload(null, false);
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Success!',
-                                    text: res.success || 'Order confirmed successfully.',
-                                    timer: 2000,
-                                    showConfirmButton: false
-                                });
+                                showToast('success', res.success);
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
                             } else {
-                                Swal.fire('Error', res.error || 'Failed to confirm order', 'error');
+                                showToast('error', res.error || 'Failed to confirm order');
                             }
                         }).fail(function (xhr) {
-                            Swal.fire('Error', 'Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Request failed'), 'error');
+                            showToast('error', 'Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Request failed'));
                         });
                     }
                 });
@@ -2543,9 +2537,8 @@
                     window.checkRetailerApprovalReadiness = function() {
                         let paySelected = $('input[name="payment_status"]:checked').length > 0;
                         let fileUploaded = $('#scan_retailer_file_input')[0].files.length > 0 || $('#batch_allocation_table_container').not('.d-none').length > 0;
-                        let ocrMismatch = $('#retailer_invoice_no_input').data('ocr-has-mismatch') === true;
                         
-                        if (paySelected && fileUploaded && !ocrMismatch) {
+                        if (paySelected && fileUploaded) {
                             $('#retailer_approval_error_alert').addClass('d-none');
                             $('#btnSubmitDistributorApprove').prop('disabled', false);
                         } else {
@@ -2556,7 +2549,6 @@
                             if (!paySelected && !fileUploaded) msg = "Please select payment status and upload the finalized invoice to proceed.";
                             else if (!paySelected) msg = "Please select the payment status manually to continue.";
                             else if (!fileUploaded) msg = "Please upload and scan the invoice to continue.";
-                            else if (ocrMismatch) msg = "Please resolve the invoice mismatch to continue.";
                             $('#retailer_approval_error_message').text(msg);
                         }
                     };
@@ -2730,10 +2722,7 @@
                             let identifiedCount = parseRetailerOCRResponse(res.data);
 
                             if (identifiedCount > 0) {
-                                $('#automation_idle_state').hide();
                                 $('#results_loading_spinner').addClass('d-none');
-                                $('#automation_success_state').fadeIn();
-                                $('#automation_success_footer').removeClass('d-none');
                                 $('#batch_allocation_table_container').removeClass('d-none'); // Show grid
                                 $('#processed_summary_text').text(`${identifiedCount} products mapped from Invoice.`);
                                 window.checkRetailerApprovalReadiness();
@@ -3135,7 +3124,6 @@
 
                 // STRICT MATCH BLOCKING: Only enable if no missing AND no extra items
                 if (missingProducts.length === 0 && invoiceProducts.length === 0 && window.qtyMismatchProducts.length === 0) {
-                    $('#retailer_invoice_no_input').data('ocr-has-mismatch', false);
                     
                     // NEW: Validate Batches against Backend Inventory dynamically
                     $('#automation_error_state').hide();
@@ -3167,7 +3155,6 @@
                     });
 
                 } else {
-                    $('#retailer_invoice_no_input').data('ocr-has-mismatch', true);
                     $('#automation_error_state').removeClass('d-none').show();
                     $('#automation_error_state h5').text('Action Required');
                     
@@ -3251,12 +3238,6 @@
                     let ocrData = $(this).data('ocr-data');
                     if (ocrData) {
                         fillRetailerProducts(ocrData);
-                        
-                        // Show success UI
-                        $('#automation_error_state').addClass('d-none');
-                        $('#automation_success_state').fadeIn();
-                        $('#automation_success_footer').removeClass('d-none');
-                        $('#batch_allocation_table_container').removeClass('d-none');
                     }
                 } else if (!entered || hasError) {
                     // Hide products if empty or error
@@ -3274,10 +3255,8 @@
                         $('#automation_error_state p').text('The entered number does not match the AI scan. Products hidden for safety.');
                     }
                     $(this).data('items-filled', false);
+                    $('#btnSubmitDistributorApprove').prop('disabled', true);
                 }
-
-                let ocrMismatch = $(this).data('ocr-has-mismatch') === true;
-                $('#btnSubmitDistributorApprove').prop('disabled', hasError || !entered || ocrMismatch);
             });
             $(document).on('click', '.init-return-btn', function() {
                 let data = $(this).data();

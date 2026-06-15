@@ -1675,21 +1675,15 @@
                             if (res.success) {
                                 table.ajax.reload(null, false);
                                 if (window.updateSidebarCounts) window.updateSidebarCounts();
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Success!',
-                                    text: res.success || 'Order confirmed successfully.',
-                                    timer: 2000,
-                                    showConfirmButton: false
-                                });
+                                showToast('success', res.success);
                                 if (res.new_points) {
                                     $('.notification-box .badge').text(parseFloat(res.new_points).toFixed(2));
                                 }
                             } else {
-                                Swal.fire('Error', res.error || 'Failed to confirm order', 'error');
+                                showToast('error', res.error || 'Failed to confirm order');
                             }
                         }).fail(function (xhr) {
-                            Swal.fire('Error', 'Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Request failed'), 'error');
+                            showToast('error', 'Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Request failed'));
                         });
                     }
                 });
