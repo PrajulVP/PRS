@@ -935,7 +935,7 @@
                     searchable: false,
                     render: function (data, type, row) {
                         let st = (row.status || '').toLowerCase().replace(/ /g, '_');
-                        if (data && st === 'delivered') {
+                        if (data) {
                             let ext = data.split('.').pop().toLowerCase();
                             let icon = ext === 'pdf' ? 'fa-file-pdf-o' : 'fa-file-image-o';
 
@@ -966,7 +966,7 @@
                         let canEdit = false;
 
                         // System Invoice Button
-                        if (st === 'delivered') {
+                        if (st === 'delivered' || st === 'approved') {
                             let invoiceUrl = "{{ route('admin.distributor-orders.invoice', ':id') }}".replace(':id', row.id);
                             btns += `<a href="${invoiceUrl}" target="_blank" class="btn btn-dark btn-sm" title="System Invoice"><i class="fa fa-print"></i></a>`;
                         }
