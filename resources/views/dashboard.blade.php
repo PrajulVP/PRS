@@ -1490,7 +1490,7 @@
                                     var brandLabels = @json($brandSalesDistribution['labels']);
                                     
                                     // Sort brands alphabetically to maintain consistent order and color mapping
-                                    let brandZip = brandLabels.map((l, i) => ({ label: l, value: brandValues[i] }));
+                                    let brandZip = brandLabels.map((l, i) => ({ label: l.toUpperCase(), value: brandValues[i] }));
                                     brandZip.sort((a, b) => a.label.localeCompare(b.label));
                                     brandLabels = brandZip.map(z => z.label);
                                     brandValues = brandZip.map(z => z.value);
@@ -1641,7 +1641,7 @@
                                         const brandData = data.brandSalesDistribution;
                                          
                                          // Sort brands alphabetically to maintain consistent order and color mapping
-                                         let brandZip = brandData.labels.map((l, i) => ({ label: l, value: brandData.values[i] }));
+                                         let brandZip = brandData.labels.map((l, i) => ({ label: l.toUpperCase(), value: brandData.values[i] }));
                                          brandZip.sort((a, b) => a.label.localeCompare(b.label));
                                          const brandLabels = brandZip.map(z => z.label);
                                          const brandValues = brandZip.map(z => z.value);

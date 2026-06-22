@@ -85,9 +85,9 @@
                 { 
                     data: 'brand', 
                     name: 'brand',
-                    className: 'fw-bold text-dark',
+                    className: 'fw-bold text-dark text-uppercase',
                     render: function(data) {
-                        return `<i class="fa fa-bookmark text-primary me-2 shadow-sm"></i>${data}`;
+                        return `<i class="fa fa-bookmark text-primary me-2 shadow-sm"></i>${data ? data.toUpperCase() : ''}`;
                     }
                 },
                 { 

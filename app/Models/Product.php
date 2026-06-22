@@ -101,5 +101,10 @@ class Product extends Model
         $returnableBrands = array_map('trim', explode(',', $returnableBrandsRaw));
         return in_array($this->brand, $returnableBrands);
     }
+
+    public function getBrandAttribute($value)
+    {
+        return $value ? strtoupper($value) : $value;
+    }
 }
 
