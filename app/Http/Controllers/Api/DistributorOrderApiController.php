@@ -582,7 +582,7 @@ class DistributorOrderApiController extends Controller
             'status' => $order->status,
             'payment_status' => $order->payment_status,
             'cancellation_reason' => $order->cancellation_reason,
-            'placed_at' => $order->placed_at,
+            'placed_at' => $order->placed_at ? $order->placed_at->format('Y-m-d H:i:s') : null,
             'invoice_url' => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
             'items' => $order->items->groupBy(function($item) {
                 $side = $item->side ? trim(strtolower($item->side)) : '';

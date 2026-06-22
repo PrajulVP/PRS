@@ -248,8 +248,8 @@ class ProductController extends Controller
                 'longitude' => $d->longitude,
                 'district_id' => $d->district_id,
                 'area_id' => $d->area_id,
-                'created_at' => $d->created_at,
-                'updated_at' => $d->updated_at,
+                'created_at' => $d->created_at ? $d->created_at->format('Y-m-d H:i:s') : null,
+                'updated_at' => $d->updated_at ? $d->updated_at->format('Y-m-d H:i:s') : null,
                 'stock' => $formattedStock,
             ];
         });

@@ -50,7 +50,7 @@ class FieldStaffRetailerOrderController extends Controller
                 'retailer_name' => $order->retailer->user->name ?? 'N/A',
                 'total_amount' => $order->total_amount,
                 'status' => $order->status,
-                'placed_at' => $order->placed_at,
+                'placed_at' => $order->placed_at ? $order->placed_at->format('Y-m-d H:i:s') : null,
                 'items' => $order->items->map(function ($item) {
                     return [
                         'id' => $item->id,

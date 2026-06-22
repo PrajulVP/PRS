@@ -95,9 +95,12 @@ class DistributorDashboardApiController extends Controller
             ->get()
             ->map(function($order) {
                 $orderArray = $order->toArray();
+                $orderArray['placed_at'] = $order->placed_at ? $order->placed_at->format('Y-m-d H:i:s') : null;
+                $orderArray['delivered_at'] = $order->delivered_at ? $order->delivered_at->format('Y-m-d H:i:s') : null;
+                $orderArray['created_at'] = $order->created_at ? $order->created_at->format('Y-m-d H:i:s') : null;
+                $orderArray['updated_at'] = $order->updated_at ? $order->updated_at->format('Y-m-d H:i:s') : null;
                 $placedAt = $order->placed_at ?? $order->created_at;
                 $deliveredAt = $order->delivered_at;
-                
                 if ($deliveredAt) {
                     $days = $placedAt->diffInDays($deliveredAt);
                     $orderArray['supply_chain_track'] = [

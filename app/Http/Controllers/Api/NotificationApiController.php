@@ -42,7 +42,7 @@ class NotificationApiController extends Controller
                 'action_url' => $notification->data['action_url'] ?? '#',
                 'order_code' => $notification->data['order_code'] ?? null,
                 'is_pending_action' => $is_pending,
-                'read_at' => $notification->read_at,
+                'read_at' => $notification->read_at ? $notification->read_at->format('Y-m-d H:i:s') : null,
                 'created_at_human' => $notification->created_at->diffForHumans(),
                 'created_at' => $notification->created_at->toDateTimeString(),
             ];

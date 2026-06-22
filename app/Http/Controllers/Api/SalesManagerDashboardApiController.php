@@ -684,7 +684,7 @@ class SalesManagerDashboardApiController extends Controller
                 'field_staff_name' => $order->fieldStaff->user->name ?? 'N/A',
                 'total_amount' => $order->total_amount,
                 'status' => $order->status,
-                'placed_at' => $order->placed_at,
+                'placed_at' => $order->placed_at ? $order->placed_at->format('Y-m-d H:i:s') : null,
                 'items' => $order->items->map(function ($item) {
                     return [
                         'id' => $item->id,
@@ -781,7 +781,7 @@ class SalesManagerDashboardApiController extends Controller
                     'field_staff_name' => $order->fieldStaff->user->name ?? 'N/A',
                     'total_amount' => $order->total_amount,
                     'status' => $order->status,
-                    'placed_at' => $order->placed_at,
+                    'placed_at' => $order->placed_at ? $order->placed_at->format('Y-m-d H:i:s') : null,
                     'categorization' => $isUnderMyFieldStaff ? 'Internal (Under My Field Staff)' : 'External (Other Sales Manager)',
                 ];
             });
