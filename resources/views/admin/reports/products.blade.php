@@ -132,7 +132,7 @@
                         return `<div class="fw-bold">${data}</div><div class="small text-muted">${subLabel}</div>`;
                     }
                 },
-                { data: 'brand_display', name: 'brand', className: 'text-primary fw-bold small text-uppercase' },
+                { data: 'brand_display', name: 'brand', className: 'text-primary fw-bold small' },
                 @role('admin|salesmanager')
                 { data: 'pricing', name: 'pricing', className: 'small text-muted', searchable: false },
                 @endrole

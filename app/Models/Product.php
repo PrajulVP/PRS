@@ -104,7 +104,20 @@ class Product extends Model
 
     public function getBrandAttribute($value)
     {
-        return $value ? strtoupper($value) : $value;
+        if (!$value) {
+            return $value;
+        }
+
+        $masterBrandsRaw = \App\Models\Setting::getValue('product_brands', '');
+        $masterBrands = array_filter(array_map('trim', explode(',', $masterBrandsRaw)));
+
+        foreach ($masterBrands as $masterBrand) {
+            if (strcasecmp($masterBrand, $value) === 0) {
+                return $masterBrand;
+            }
+        }
+
+        return $value;
     }
 }
 

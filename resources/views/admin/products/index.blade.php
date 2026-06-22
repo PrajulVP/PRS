@@ -380,9 +380,9 @@
                                 <select name="brand" id="create_brand" class="form-select">
                                     <option value="">Auto-Identify</option>
                                     @foreach($availableBrands as $brand)
-                                        <option value="{{ $brand }}">{{ strtoupper($brand) }}</option>
+                                        <option value="{{ $brand }}">{{ $brand }}</option>
                                     @endforeach
-                                    <option value="Other">OTHER</option>
+                                    <option value="Other">Other</option>
                                 </select>
                             </div>
                         </div>
@@ -515,9 +515,9 @@
                                 <label for="edit_brand" class="form-label fw-medium">Brand</label>
                                 <select name="brand" id="edit_brand" class="form-select">
                                     @foreach($availableBrands as $brand)
-                                        <option value="{{ $brand }}">{{ strtoupper($brand) }}</option>
+                                        <option value="{{ $brand }}">{{ $brand }}</option>
                                     @endforeach
-                                    <option value="Other">OTHER</option>
+                                    <option value="Other">Other</option>
                                 </select>
                             </div>
                         </div>
@@ -736,7 +736,7 @@
                     data: 'brand',
                     name: 'brand',
                     render: function(data) {
-                        return data ? data.toUpperCase() : '<span class="text-muted">N/A</span>';
+                        return data ? data : '<span class="text-muted">N/A</span>';
                     }
                 },
 
