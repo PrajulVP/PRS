@@ -22,13 +22,26 @@ class SettingsController extends Controller
         $da_hq_rate = Setting::getValue('da_hq_rate', '250');
         $da_outstation_rate = Setting::getValue('da_outstation_rate', '500');
         $hq_radius_km = Setting::getValue('hq_radius_km', '15');
-        $product_brands = Setting::getValue('product_brands', 'Atomets,Atomshield,Sudhneelgiri');
+        
+        $brands = \App\Models\Brand::orderBy('id')->get();
+        $product_brands = $brands->pluck('name')->implode(',');
         $returnable_brands = Setting::getValue('returnable_brands', '');
+
+        $type_medical_title = Setting::getValue('type_medical_title', 'ATOMEDS');
+        $type_medical_desc = Setting::getValue('type_medical_desc', 'Medicines');
+        $type_ortho_title = Setting::getValue('type_ortho_title', 'ATOMSHIELD');
+        $type_ortho_desc = Setting::getValue('type_ortho_desc', 'Surgical and Orthopedic Supports');
+        $type_general_title = Setting::getValue('type_general_title', 'SUDHNEELGIRI');
+        $type_general_desc = Setting::getValue('type_general_desc', 'Herbals');
 
         return view('admin.settings.general', compact(
             'value', 'cgst', 'sgst', 
             'geofence_radius', 'ta_rate_per_km', 'da_hq_rate', 'da_outstation_rate',
-            'hq_radius_km', 'product_brands', 'returnable_brands'
+            'hq_radius_km', 'product_brands', 'returnable_brands',
+            'type_medical_title', 'type_medical_desc',
+            'type_ortho_title', 'type_ortho_desc',
+            'type_general_title', 'type_general_desc',
+            'brands'
         ));
     }
 
@@ -86,6 +99,24 @@ class SettingsController extends Controller
         } elseif ($data['slug'] === 'returnable_brands') {
             $title = 'Returnable Brands';
             $desc = 'Comma-separated list of brands eligible for returns.';
+        } elseif ($data['slug'] === 'type_medical_title') {
+            $title = 'Medical Product Type Title';
+            $desc = 'Main title for Medical Products tab in modal.';
+        } elseif ($data['slug'] === 'type_medical_desc') {
+            $title = 'Medical Product Type Description';
+            $desc = 'Sub-description for Medical Products tab.';
+        } elseif ($data['slug'] === 'type_ortho_title') {
+            $title = 'Ortho Product Type Title';
+            $desc = 'Main title for Orthopedic Products tab in modal.';
+        } elseif ($data['slug'] === 'type_ortho_desc') {
+            $title = 'Ortho Product Type Description';
+            $desc = 'Sub-description for Orthopedic Products tab.';
+        } elseif ($data['slug'] === 'type_general_title') {
+            $title = 'General Product Type Title';
+            $desc = 'Main title for Herbal/General Products tab.';
+        } elseif ($data['slug'] === 'type_general_desc') {
+            $title = 'General Product Type Description';
+            $desc = 'Sub-description for Herbal/General Products tab.';
         }
 
         $setting = Setting::setValue(
@@ -103,5 +134,77 @@ class SettingsController extends Controller
         }
 
         return response()->json(['message' => 'Setting saved', 'setting' => $setting]);
+    }
+
+    public function saveBrand(Request $request)
+    {
+        $request->validate([
+            'id' => 'nullable|integer|exists:brands,id',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:255',
+            'icon' => 'nullable|string|max:255',
+            'layout_type' => 'required|string|in:medical,ortho,general,custom',
+            'custom_fields' => 'nullable|array',
+        ]);
+
+        $name = trim($request->name);
+        $id = $request->id;
+
+        // Check uniqueness manually to support edit case-insensitively
+        $existing = \App\Models\Brand::where('name', $name)->first();
+        if ($existing && $existing->id != $id) {
+            return response()->json(['message' => 'Brand name already exists.'], 422);
+        }
+
+        $customFields = $request->layout_type === 'custom' ? $request->custom_fields : null;
+
+        if ($id) {
+            $brand = \App\Models\Brand::find($id);
+            $oldName = $brand->name;
+            $brand->update([
+                'name' => $name,
+                'description' => $request->description,
+                'icon' => $request->icon ?: 'fa-tag',
+                'layout_type' => $request->layout_type,
+                'custom_fields' => $customFields,
+            ]);
+
+            // Sync product table if renamed
+            if (strcasecmp($oldName, $name) !== 0) {
+                Product::where('brand', $oldName)->update(['brand' => $name]);
+            }
+        } else {
+            $brand = \App\Models\Brand::create([
+                'name' => $name,
+                'description' => $request->description,
+                'icon' => $request->icon ?: 'fa-tag',
+                'layout_type' => $request->layout_type,
+                'custom_fields' => $customFields,
+            ]);
+        }
+
+        // Sync legacy product_brands setting
+        $names = \App\Models\Brand::pluck('name')->implode(',');
+        Setting::setValue('product_brands', $names);
+
+        return response()->json(['message' => 'Brand saved successfully', 'brand' => $brand]);
+    }
+
+    public function deleteBrand(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|integer|exists:brands,id',
+        ]);
+
+        $brand = \App\Models\Brand::find($request->id);
+        if ($brand) {
+            $brand->delete();
+        }
+
+        // Sync legacy product_brands setting
+        $names = \App\Models\Brand::pluck('name')->implode(',');
+        Setting::setValue('product_brands', $names);
+
+        return response()->json(['message' => 'Brand deleted successfully']);
     }
 }

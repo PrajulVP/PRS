@@ -108,8 +108,7 @@ class Product extends Model
             return $value;
         }
 
-        $masterBrandsRaw = \App\Models\Setting::getValue('product_brands', '');
-        $masterBrands = array_filter(array_map('trim', explode(',', $masterBrandsRaw)));
+        $masterBrands = \App\Models\Brand::pluck('name')->toArray();
 
         foreach ($masterBrands as $masterBrand) {
             if (strcasecmp($masterBrand, $value) === 0) {

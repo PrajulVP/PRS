@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use App\Models\RetailerOrder;
+use App\Models\RetailerOrderItem;
 use App\Models\Retailer;
 use App\Models\User;
 use App\Models\FieldStaff;
@@ -15,6 +16,8 @@ use App\Models\SalesTarget;
 use App\Models\IncentiveSlab;
 use App\Models\LocationLog;
 use App\Models\VisitLog;
+use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class FieldStaffDashboardApiController extends Controller
 {
@@ -485,5 +488,243 @@ class FieldStaffDashboardApiController extends Controller
             'period' => $period,
             'trend' => $trend
         ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/field-staff/reports/sales-orders",
+     *     summary="Generate a Sales Orders Report (Excel/CSV or PDF) for the logged-in Field Staff",
+     *     tags={"Field Staff Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="format", in="query", required=false, description="Output format: 'excel' (CSV) or 'pdf'", @OA\Schema(type="string", enum={"excel","pdf"}, default="excel")),
+     *     @OA\Parameter(name="start_date", in="query", required=false, description="From date (YYYY-MM-DD)", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="end_date", in="query", required=false, description="To date (YYYY-MM-DD)", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="retailer_ids", in="query", required=false, description="Comma-separated retailer IDs", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="area_ids", in="query", required=false, description="Comma-separated area IDs", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="brands", in="query", required=false, description="Comma-separated brand names", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="product_ids", in="query", required=false, description="Comma-separated product IDs", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="status", in="query", required=false, description="Order status filter", @OA\Schema(type="string")),
+     *     @OA\Response(response=200, description="Report file download")
+     * )
+     */
+    public function generateSalesOrdersReport(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user->hasRole('fieldstaff')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $fieldStaff   = $user->fieldStaff;
+        $fieldStaffId = $fieldStaff->id;
+
+        // --- Build base query scoped to this field staff ---
+        $query = RetailerOrder::with([
+            'retailer.user',
+            'retailer.area',
+            'retailer.district',
+            'items.product',
+            'distributor.user',
+        ])->where(function ($q) use ($fieldStaffId) {
+            $q->where('fieldstaff_id', $fieldStaffId)
+              ->orWhereHas('retailer', function ($qr) use ($fieldStaffId) {
+                  $qr->where('field_staff_id', $fieldStaffId);
+              });
+        });
+
+        // --- Apply optional filters ---
+        if ($request->filled('start_date')) {
+            $query->where('placed_at', '>=', Carbon::parse($request->start_date)->startOfDay());
+        }
+        if ($request->filled('end_date')) {
+            $query->where('placed_at', '<=', Carbon::parse($request->end_date)->endOfDay());
+        }
+        if ($request->filled('retailer_ids')) {
+            $ids = array_filter(array_map('intval', explode(',', $request->retailer_ids)));
+            if (!empty($ids)) $query->whereIn('retailer_id', $ids);
+        }
+        if ($request->filled('area_ids')) {
+            $areaIds = array_filter(array_map('intval', explode(',', $request->area_ids)));
+            if (!empty($areaIds)) {
+                $query->whereHas('retailer', fn($q) => $q->whereIn('area_id', $areaIds));
+            }
+        }
+        if ($request->filled('brands')) {
+            $brands = array_filter(array_map('trim', explode(',', $request->brands)));
+            if (!empty($brands)) {
+                $query->whereHas('items.product', fn($q) => $q->whereIn('brand', $brands));
+            }
+        }
+        if ($request->filled('product_ids')) {
+            $pIds = array_filter(array_map('intval', explode(',', $request->product_ids)));
+            if (!empty($pIds)) {
+                $query->whereHas('items', fn($q) => $q->whereIn('product_id', $pIds));
+            }
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $orders = $query->orderBy('placed_at', 'desc')->get();
+
+        // --- Compute summary metrics ---
+        $totalRevenue    = $orders->sum('total_amount');
+        $totalOrderCount = $orders->count();
+        $totalQty        = $orders->sum(fn($o) => $o->items->sum('quantity'));
+        $uniqueRetailers = $orders->pluck('retailer_id')->unique()->count();
+
+        $format = strtolower($request->get('format', 'excel'));
+        $reportTitle = 'Sales Orders Report';
+        $staffName   = $user->name ?? 'Field Staff';
+        $dateRange   = ($request->start_date ?? 'All') . ' to ' . ($request->end_date ?? 'Now');
+
+        // ======================= PDF FORMAT =======================
+        if ($format === 'pdf') {
+            $pdf = Pdf::loadView('reports.fieldstaff_sales_orders', [
+                'orders'          => $orders,
+                'staffName'       => $staffName,
+                'dateRange'       => $dateRange,
+                'totalRevenue'    => $totalRevenue,
+                'totalOrderCount' => $totalOrderCount,
+                'totalQty'        => $totalQty,
+                'uniqueRetailers' => $uniqueRetailers,
+                'generatedAt'     => now()->format('d M Y, h:i A'),
+                'filters'         => array_filter([
+                    'Start Date'  => $request->start_date,
+                    'End Date'    => $request->end_date,
+                    'Brands'      => $request->brands,
+                    'Status'      => $request->status,
+                ]),
+            ])->setPaper('a4', 'landscape');
+
+            $filename = 'fieldstaff_sales_orders_' . now()->format('Ymd_His') . '.pdf';
+            return $pdf->download($filename);
+        }
+
+        // ==================== EXCEL / CSV FORMAT ====================
+        $filename = 'fieldstaff_sales_orders_' . now()->format('Ymd_His') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Cache-Control'       => 'no-cache, no-store, must-revalidate',
+            'Pragma'              => 'no-cache',
+            'Expires'             => '0',
+        ];
+
+        $callback = function () use ($orders, $staffName, $dateRange, $totalRevenue, $totalOrderCount, $totalQty, $uniqueRetailers) {
+            $file = fopen('php://output', 'w');
+
+            // BOM for Excel UTF-8 compatibility
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            // Report Header
+            fputcsv($file, ['Field Staff Sales Orders Report']);
+            fputcsv($file, ['Staff:', $staffName]);
+            fputcsv($file, ['Date Range:', $dateRange]);
+            fputcsv($file, ['Generated At:', now()->format('d M Y, h:i A')]);
+            fputcsv($file, []);
+
+            // Summary Row
+            fputcsv($file, ['SUMMARY']);
+            fputcsv($file, ['Total Orders', 'Total Revenue (₹)', 'Total Qty Sold', 'Unique Retailers']);
+            fputcsv($file, [
+                $totalOrderCount,
+                number_format($totalRevenue, 2),
+                $totalQty,
+                $uniqueRetailers,
+            ]);
+            fputcsv($file, []);
+
+            // Column Headers
+            fputcsv($file, [
+                'Order Code',
+                'Order Date',
+                'Retailer Name',
+                'Shop Name',
+                'Area',
+                'District',
+                'Distributor',
+                'Product Code',
+                'Product Name',
+                'Brand',
+                'Qty',
+                'Free Qty',
+                'Unit',
+                'Side',
+                'Size',
+                'Unit Price (₹)',
+                'Line Total (₹)',
+                'MRP (₹)',
+                'Loyalty Points',
+                'Order Total (₹)',
+                'Status',
+                'Payment Status',
+                'Placed At',
+                'Delivered At',
+            ]);
+
+            // Data Rows — one row per order item
+            foreach ($orders as $order) {
+                $retailerName = $order->retailer->user->name ?? 'N/A';
+                $shopName     = $order->retailer->shop_name ?? 'N/A';
+                $area         = $order->retailer->area->name ?? 'N/A';
+                $district     = $order->retailer->district->name ?? 'N/A';
+                $distributor  = $order->distributor->user->name ?? 'N/A';
+
+                if ($order->items->isEmpty()) {
+                    // Write an empty order row
+                    fputcsv($file, [
+                        $order->order_code,
+                        $order->placed_at ? $order->placed_at->format('d M Y H:i') : 'N/A',
+                        $retailerName, $shopName, $area, $district, $distributor,
+                        '', '', '', '', '', '', '', '',
+                        '', '', '', '',
+                        number_format($order->total_amount, 2),
+                        $order->status,
+                        $order->payment_status ?? 'N/A',
+                        $order->placed_at ? $order->placed_at->format('d M Y H:i') : 'N/A',
+                        $order->delivered_at ? $order->delivered_at->format('d M Y H:i') : 'Pending',
+                    ]);
+                } else {
+                    $firstItem = true;
+                    foreach ($order->items as $item) {
+                        $product = $item->product;
+                        fputcsv($file, [
+                            $firstItem ? $order->order_code : '',
+                            $firstItem ? ($order->placed_at ? $order->placed_at->format('d M Y H:i') : 'N/A') : '',
+                            $firstItem ? $retailerName : '',
+                            $firstItem ? $shopName : '',
+                            $firstItem ? $area : '',
+                            $firstItem ? $district : '',
+                            $firstItem ? $distributor : '',
+                            $product->product_code ?? 'N/A',
+                            $product->product_name ?? 'Unknown',
+                            $product->brand ?? 'N/A',
+                            $item->quantity,
+                            $item->free_quantity ?? 0,
+                            $item->unit ?? 'Nos',
+                            $item->side ?? '',
+                            $item->size ?? '',
+                            number_format($item->unit_price, 2),
+                            number_format($item->total_amount, 2),
+                            number_format($product->mrp ?? 0, 2),
+                            $firstItem ? ($order->loyalty_points_earned ?? 0) : '',
+                            $firstItem ? number_format($order->total_amount, 2) : '',
+                            $firstItem ? $order->status : '',
+                            $firstItem ? ($order->payment_status ?? 'N/A') : '',
+                            $firstItem ? ($order->placed_at ? $order->placed_at->format('d M Y H:i') : 'N/A') : '',
+                            $firstItem ? ($order->delivered_at ? $order->delivered_at->format('d M Y H:i') : 'Pending') : '',
+                        ]);
+                        $firstItem = false;
+                    }
+                }
+            }
+
+            fputcsv($file, []);
+            fputcsv($file, ['--- End of Report ---']);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

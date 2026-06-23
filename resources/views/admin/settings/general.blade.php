@@ -83,6 +83,83 @@
             background-color: #38bdf8 !important;
             color: #000000 !important;
         }
+
+        /* === SweetAlert2 Light & Dark Theme Adjustments === */
+        .swal2-popup {
+            background-color: #ffffff !important;
+            color: #1e293b !important;
+            border-radius: 16px !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+        }
+        .swal2-title {
+            color: #1e293b !important;
+            font-weight: 700 !important;
+        }
+        .swal2-html-container {
+            color: #334155 !important;
+        }
+        .swal2-html-container label.form-label {
+            color: #475569 !important;
+            font-weight: 600 !important;
+        }
+        .swal2-html-container .form-check-label {
+            color: #475569 !important;
+        }
+        .swal2-html-container input.form-control,
+        .swal2-html-container select.form-select {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            border: 1px solid #cbd5e1 !important;
+        }
+        .swal2-html-container input.form-control::placeholder {
+            color: #94a3b8 !important;
+        }
+        .swal2-html-container #swal_custom_fields_container {
+            background-color: #f8fafc !important;
+            border-color: #cbd5e1 !important;
+        }
+        .swal2-html-container #swal_custom_fields_container .text-muted {
+            color: #64748b !important;
+        }
+        
+        /* Dark mode overrides for SweetAlert2 */
+        body.dark-only .swal2-popup {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+        body.dark-only .swal2-title {
+            color: #f8fafc !important;
+        }
+        body.dark-only .swal2-html-container {
+            color: #cbd5e1 !important;
+        }
+        body.dark-only .swal2-html-container label.form-label {
+            color: #cbd5e1 !important;
+        }
+        body.dark-only .swal2-html-container .form-check-label {
+            color: #cbd5e1 !important;
+        }
+        body.dark-only .swal2-html-container input.form-control,
+        body.dark-only .swal2-html-container select.form-select {
+            background-color: #1e293b !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        }
+        body.dark-only .swal2-html-container input.form-control::placeholder {
+            color: #64748b !important;
+        }
+        body.dark-only .swal2-html-container #swal_custom_fields_container {
+            background-color: #1e293b !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        body.dark-only .swal2-html-container #swal_custom_fields_container .text-muted {
+            color: #94a3b8 !important;
+        }
+        body.dark-only .swal2-cancel {
+            background-color: #334155 !important;
+            color: #ffffff !important;
+        }
     </style>
     <div class="container-fluid">
         <div class="row">
@@ -196,32 +273,122 @@
                             <div class="col-md-12 mb-4">
                                 <div class="card border-dark shadow-sm h-100">
                                     <div class="card-body">
-                                        <h6 class="card-title text-dark"><i class="fa fa-tags me-2"></i>Product Brands Master</h6>
-                                        <p class="text-muted small">Enter available brands separated by commas (e.g. Atomets, Atomshield, etc.)</p>
-                                        <form class="setting-form" id="brands_form">
-                                            @csrf
-                                            <input type="hidden" name="slug" value="product_brands">
-                                            <input type="hidden" name="value" id="brands_final_value" value="{{ $product_brands }}">
-                                            
-                                            <div class="mb-4">
-                                                <label class="form-label fw-bold">Add New Brand</label>
-                                                <div class="input-group">
-                                                    <input type="text" class="form-control border-dark" id="new_brand_name" placeholder="Enter brand name (e.g. Atomed)">
-                                                    <button type="button" class="btn btn-dark" id="add_brand_btn"><i class="fa fa-plus me-2"></i>Add Brand</button>
-                                                </div>
-                                            </div>
+                                         <div class="d-flex align-items-center justify-content-between mb-3">
+                                             <h6 class="card-title text-dark mb-0"><i class="fa fa-tags me-2"></i>Product Brands Master</h6>
+                                             <button type="button" class="btn btn-dark btn-sm rounded-pill px-3" id="add_brand_btn">
+                                                 <i class="fa fa-plus me-1"></i>Add New Brand
+                                             </button>
+                                         </div>
+                                         <p class="text-muted small">Manage the list of active product brands. Each brand can have its own description, icon, and custom layout behavior (Medical, Orthopedic, or General).</p>
+                                         
+                                         <form class="setting-form" id="brands_form">
+                                             @csrf
+                                             <input type="hidden" name="slug" value="product_brands">
+                                             <input type="hidden" name="value" id="brands_final_value" value="{{ $product_brands }}">
+                                             
+                                             <label class="form-label fw-bold">Active Brands</label>
+                                             <div id="brands_tag_container" class="d-flex flex-wrap gap-3 p-3 bg-light rounded border shadow-inner" style="min-height: 80px;">
+                                                 <!-- Tags filled by JS -->
+                                             </div>
+                                         </form>
+                                    </div>
+                                </div>
+                            </div>
 
-                                            <label class="form-label fw-bold">Current Active Brands</label>
-                                            <div id="brands_tag_container" class="d-flex flex-wrap gap-3 p-3 bg-light rounded border shadow-inner" style="min-height: 80px;">
-                                                <!-- Tags filled by JS -->
+                            <!-- Product Type Configuration -->
+                            <div class="col-md-12 mb-4">
+                                <div class="card border-primary shadow-sm h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-primary"><i class="fa fa-sliders-h me-2"></i>Product Type Configurations (Create/Edit Modal)</h6>
+                                        <p class="text-muted small">Configure the titles and descriptions for the three product types. Changes will reflect exactly in the creation and edit modals (case-sensitive).</p>
+                                        
+                                        <!-- Medical Type Configuration -->
+                                        <div class="row border-bottom pb-3 mb-3">
+                                            <div class="col-md-12">
+                                                <span class="badge bg-primary mb-2">Medical Type (ATOMEDS)</span>
                                             </div>
-                                            
-                                            <div class="mt-4 text-end">
-                                                <button type="button" class="btn btn-primary px-4 save-setting-btn" id="save_brands_btn" style="display: none;">
-                                                    <i class="fa fa-save me-2"></i>Apply Changes
-                                                </button>
+                                            <div class="col-md-6">
+                                                <form class="setting-form">
+                                                    @csrf
+                                                    <input type="hidden" name="slug" value="type_medical_title">
+                                                    <label class="form-label fw-bold small text-uppercase">Title</label>
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control" name="value" value="{{ $type_medical_title }}">
+                                                        <button type="button" class="btn btn-primary save-setting-btn">Save</button>
+                                                    </div>
+                                                </form>
                                             </div>
-                                        </form>
+                                            <div class="col-md-6">
+                                                <form class="setting-form">
+                                                    @csrf
+                                                    <input type="hidden" name="slug" value="type_medical_desc">
+                                                    <label class="form-label fw-bold small text-uppercase">Description</label>
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control" name="value" value="{{ $type_medical_desc }}">
+                                                        <button type="button" class="btn btn-primary save-setting-btn">Save</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+
+                                        <!-- Ortho Type Configuration -->
+                                        <div class="row border-bottom pb-3 mb-3">
+                                            <div class="col-md-12">
+                                                <span class="badge bg-success mb-2">Orthopedic/Surgical Type (ATOMSHIELD)</span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <form class="setting-form">
+                                                    @csrf
+                                                    <input type="hidden" name="slug" value="type_ortho_title">
+                                                    <label class="form-label fw-bold small text-uppercase">Title</label>
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control" name="value" value="{{ $type_ortho_title }}">
+                                                        <button type="button" class="btn btn-success save-setting-btn">Save</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <form class="setting-form">
+                                                    @csrf
+                                                    <input type="hidden" name="slug" value="type_ortho_desc">
+                                                    <label class="form-label fw-bold small text-uppercase">Description</label>
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control" name="value" value="{{ $type_ortho_desc }}">
+                                                        <button type="button" class="btn btn-success save-setting-btn">Save</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+
+                                        <!-- General Type Configuration -->
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <span class="badge bg-warning text-dark mb-2">Herbal/General Type (SUDHNEELGIRI)</span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <form class="setting-form">
+                                                    @csrf
+                                                    <input type="hidden" name="slug" value="type_general_title">
+                                                    <label class="form-label fw-bold small text-uppercase">Title</label>
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control" name="value" value="{{ $type_general_title }}">
+                                                        <button type="button" class="btn btn-warning text-white save-setting-btn">Save</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <form class="setting-form">
+                                                    @csrf
+                                                    <input type="hidden" name="slug" value="type_general_desc">
+                                                    <label class="form-label fw-bold small text-uppercase">Description</label>
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control" name="value" value="{{ $type_general_desc }}">
+                                                        <button type="button" class="btn btn-warning text-white save-setting-btn">Save</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+
                                     </div>
                                 </div>
                             </div>
@@ -295,26 +462,71 @@
             }
 
             // Brand Management Logic
-            let currentBrands = $('#brands_final_value').val().split(',').map(s => s.trim()).filter(s => s.length > 0);
+            let brandsData = @json($brands);
             let returnableBrands = '{{ $returnable_brands }}'.split(',').map(s => s.trim()).filter(s => s.length > 0);
+
+            function getBrandFieldsList(brandObj) {
+                let layout = brandObj.layout_type;
+                let fields = brandObj.custom_fields || [];
+                let activeFields = [];
+                if (layout === 'medical') {
+                    activeFields = ['generic_name', 'hsn_code', 'strip_size', 'box_size'];
+                } else if (layout === 'ortho') {
+                    activeFields = ['product_code', 'hsn_code', 'variants'];
+                } else if (layout === 'general') {
+                    activeFields = ['product_code', 'hsn_code', 'pack'];
+                } else {
+                    activeFields = fields;
+                }
+
+                let fieldNamesMap = {
+                    'product_code': 'Product Code',
+                    'generic_name': 'Generic Name',
+                    'hsn_code': 'HSN Code',
+                    'pack': 'Pack Size',
+                    'strip_size': 'Tablets/Strip',
+                    'box_size': 'Strips/Box',
+                    'variants': 'Variants'
+                };
+
+                return activeFields.map(f => fieldNamesMap[f] || f);
+            }
 
             function renderBrands() {
                 let html = '';
-                if (currentBrands.length === 0) {
+                if (brandsData.length === 0) {
                     html = '<div class="text-muted small w-100 text-center py-2">No brands added yet.</div>';
                 } else {
-                    currentBrands.forEach((brand, index) => {
+                    brandsData.forEach((brandObj, index) => {
+                        let brand = brandObj.name;
                         let isReturnable = returnableBrands.includes(brand);
+                        let fieldsList = getBrandFieldsList(brandObj);
+
                         html += `
-                            <div class="brand-tag-wrapper d-inline-flex flex-column rounded p-3" style="min-width: 220px;">
+                            <div class="brand-tag-wrapper d-inline-flex flex-column rounded p-3" style="min-width: 260px; max-width: 320px;">
                                 <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
-                                    <span class="brand-name text-truncate me-2" title="${brand}"><i class="fa fa-tag me-1 small"></i>${brand}</span>
+                                    <span class="brand-name text-truncate me-2 fw-bold" title="${brand}">
+                                        <i class="fa ${brandObj.icon || 'fa-tag'} me-1 text-primary"></i>${brand}
+                                    </span>
                                     <div class="d-flex gap-1 flex-shrink-0">
                                         <button type="button" class="btn btn-outline-info p-0 d-flex align-items-center justify-content-center edit-brand-btn" data-index="${index}" style="width: 28px; height: 28px;" title="Edit"><i class="fa fa-edit small"></i></button>
                                         <button type="button" class="btn btn-outline-danger p-0 d-flex align-items-center justify-content-center delete-brand-btn" data-index="${index}" style="width: 28px; height: 28px;" title="Delete"><i class="fa fa-trash small"></i></button>
                                     </div>
                                 </div>
-                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="mb-2">
+                                    <span class="small text-muted d-block">Description:</span>
+                                    <span class="small fw-semibold text-dark">${brandObj.description || 'No description'}</span>
+                                </div>
+                                <div class="mb-2 border-top pt-2">
+                                    <span class="small text-muted d-block mb-1">Visible Fields:</span>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        ${fieldsList.length === 0 
+                                            ? '<span class="text-muted small">None (Common only)</span>' 
+                                            : fieldsList.map(f => `<span class="badge bg-light text-dark border px-2 py-1 small" style="font-size: 0.68rem; font-weight: 500;">${f}</span>`).join('')
+                                        }
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between mb-2 border-top pt-2">
                                     <span class="small text-muted">Returnable</span>
                                     <div class="form-check form-switch mb-0">
                                         <input class="form-check-input returnable-toggle" type="checkbox" data-brand="${brand}" ${isReturnable ? 'checked' : ''}>
@@ -330,7 +542,8 @@
                     });
                 }
                 $('#brands_tag_container').html(html);
-                $('#brands_final_value').val(currentBrands.join(','));
+                let brandNames = brandsData.map(b => b.name);
+                $('#brands_final_value').val(brandNames.join(','));
                 
                 // Update hidden input for returnable_brands
                 if ($('#returnable_brands_input').length === 0) {
@@ -395,54 +608,269 @@
             renderBrands();
 
             $('#add_brand_btn').on('click', function() {
-                let name = $('#new_brand_name').val().trim();
-                if (name && !currentBrands.includes(name)) {
-                    currentBrands.push(name);
-                    $('#new_brand_name').val('');
-                    $('#save_brands_btn').show();
-                    renderBrands();
-                } else if (currentBrands.includes(name)) {
-                    showToast('warning', 'Duplicate', 'This brand already exists');
-                }
+                Swal.fire({
+                    title: 'Add New Brand',
+                    html: `
+                        <div class="text-start mb-3">
+                            <label class="form-label fw-bold small">Brand Name</label>
+                            <input type="text" id="swal_brand_name" class="form-control" placeholder="e.g. ATOMEDS">
+                        </div>
+                        <div class="text-start mb-3">
+                            <label class="form-label fw-bold small">Description</label>
+                            <input type="text" id="swal_brand_desc" class="form-control" placeholder="e.g. Medicines">
+                        </div>
+                        <div id="swal_custom_fields_container" class="mt-3 p-3 border rounded bg-light text-start">
+                            <div class="fw-bold mb-2 small text-muted">Select Visible Fields:</div>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input swal-custom-field-chk" type="checkbox" value="product_code" id="chk_product_code" checked>
+                                        <label class="form-check-label small" for="chk_product_code">Product Code</label>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input swal-custom-field-chk" type="checkbox" value="generic_name" id="chk_generic_name">
+                                        <label class="form-check-label small" for="chk_generic_name">Generic Name</label>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input swal-custom-field-chk" type="checkbox" value="hsn_code" id="chk_hsn_code" checked>
+                                        <label class="form-check-label small" for="chk_hsn_code">HSN Code</label>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input swal-custom-field-chk" type="checkbox" value="pack" id="chk_pack" checked>
+                                        <label class="form-check-label small" for="chk_pack">Pack Size</label>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input swal-custom-field-chk" type="checkbox" value="strip_size" id="chk_strip_size">
+                                        <label class="form-check-label small" for="chk_strip_size">Tablets / Strip</label>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input swal-custom-field-chk" type="checkbox" value="box_size" id="chk_box_size">
+                                        <label class="form-check-label small" for="chk_box_size">Strips / Box</label>
+                                    </div>
+                                </div>
+                                <div class="col-12 mt-2 pt-2 border-top">
+                                    <div class="form-check">
+                                        <input class="form-check-input swal-custom-field-chk" type="checkbox" value="variants" id="chk_variants">
+                                        <label class="form-check-label small" for="chk_variants">Variants (Sides/Sizes)</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3 pt-2 border-top text-muted small" style="font-size: 0.72rem; line-height: 1.35;">
+                                <i class="fa fa-info-circle text-info me-1"></i> Commercial/pricing fields (MRP, PTR, PTS, Loyalty %) are common across all brands and are always displayed.
+                            </div>
+                        </div>
+                    `,
+                    focusConfirm: false,
+                    showCancelButton: true,
+                    confirmButtonText: 'Add Brand',
+                    didOpen: (modal) => {
+                        $(modal).find('.swal2-icon').remove();
+                    },
+                    preConfirm: () => {
+                        let name = document.getElementById('swal_brand_name').value.trim();
+                        let desc = document.getElementById('swal_brand_desc').value.trim();
+                        if (!name) {
+                            Swal.showValidationMessage('Brand Name is required');
+                            return false;
+                        }
+                        let customFields = [];
+                        $('.swal-custom-field-chk:checked').each(function() {
+                            customFields.push($(this).val());
+                        });
+                        return { name, description: desc, icon: 'fa-tag', layout_type: 'custom', custom_fields: customFields };
+                    }
+                }).then((result) => {
+                    if (result.value) {
+                        let brandData = result.value;
+                        $.ajax({
+                            url: '{{ route('admin.settings.brands.save') }}',
+                            method: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}',
+                                name: brandData.name,
+                                description: brandData.description,
+                                icon: brandData.icon,
+                                layout_type: brandData.layout_type,
+                                custom_fields: brandData.custom_fields
+                            },
+                            success: function(res) {
+                                brandsData.push(res.brand);
+                                renderBrands();
+                                showToast('success', 'Added', 'Brand added successfully');
+                            },
+                            error: function(xhr) {
+                                let msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Could not add brand.';
+                                showToast('error', 'Error', msg);
+                            }
+                        });
+                    }
+                });
             });
 
             $(document).on('click', '.delete-brand-btn', function() {
                 let index = $(this).data('index');
-                let name = currentBrands[index];
+                let brandObj = brandsData[index];
                 Swal.fire({
                     title: 'Remove Brand?',
-                    text: `Are you sure you want to remove "${name}"?`,
+                    text: `Are you sure you want to remove "${brandObj.name}"? This will not delete its products, but they will revert to General layout.`,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#d33',
                     confirmButtonText: 'Yes, remove it'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        currentBrands.splice(index, 1);
-                        $('#save_brands_btn').show();
-                        renderBrands();
+                        $.ajax({
+                            url: '{{ route('admin.settings.brands.delete') }}',
+                            method: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}',
+                                id: brandObj.id
+                            },
+                            success: function() {
+                                brandsData.splice(index, 1);
+                                renderBrands();
+                                showToast('success', 'Removed', 'Brand removed successfully');
+                            },
+                            error: function(xhr) {
+                                showToast('error', 'Error', 'Could not remove brand.');
+                            }
+                        });
                     }
                 });
             });
 
             $(document).on('click', '.edit-brand-btn', function() {
                 let index = $(this).data('index');
-                let oldName = currentBrands[index];
+                let brandObj = brandsData[index];
+                
+                // Determine which fields should be checked based on layout_type & custom_fields (for backward compatibility)
+                let customFieldsList = [];
+                if (brandObj.layout_type === 'medical') {
+                    customFieldsList = ['generic_name', 'hsn_code', 'strip_size', 'box_size'];
+                } else if (brandObj.layout_type === 'ortho') {
+                    customFieldsList = ['product_code', 'hsn_code', 'variants'];
+                } else if (brandObj.layout_type === 'general') {
+                    customFieldsList = ['product_code', 'hsn_code', 'pack'];
+                } else if (brandObj.layout_type === 'custom') {
+                    customFieldsList = brandObj.custom_fields || [];
+                }
+                
                 Swal.fire({
-                    title: 'Edit Brand Name',
-                    input: 'text',
-                    inputValue: oldName,
+                    title: 'Edit Brand Layout',
+                    html: `
+                        <div class="text-start mb-3">
+                            <label class="form-label fw-bold small">Brand Name</label>
+                            <input type="text" id="swal_brand_name" class="form-control" value="${brandObj.name}" placeholder="e.g. ATOMEDS">
+                        </div>
+                        <div class="text-start mb-3">
+                            <label class="form-label fw-bold small">Description</label>
+                            <input type="text" id="swal_brand_desc" class="form-control" value="${brandObj.description || ''}" placeholder="e.g. Medicines">
+                        </div>
+                        <div id="swal_custom_fields_container" class="mt-3 p-3 border rounded bg-light text-start">
+                            <div class="fw-bold mb-2 small text-muted">Select Visible Fields:</div>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input swal-custom-field-chk" type="checkbox" value="product_code" id="chk_product_code" ${customFieldsList.includes('product_code') ? 'checked' : ''}>
+                                        <label class="form-check-label small" for="chk_product_code">Product Code</label>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input swal-custom-field-chk" type="checkbox" value="generic_name" id="chk_generic_name" ${customFieldsList.includes('generic_name') ? 'checked' : ''}>
+                                        <label class="form-check-label small" for="chk_generic_name">Generic Name</label>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input swal-custom-field-chk" type="checkbox" value="hsn_code" id="chk_hsn_code" ${customFieldsList.includes('hsn_code') ? 'checked' : ''}>
+                                        <label class="form-check-label small" for="chk_hsn_code">HSN Code</label>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input swal-custom-field-chk" type="checkbox" value="pack" id="chk_pack" ${customFieldsList.includes('pack') ? 'checked' : ''}>
+                                        <label class="form-check-label small" for="chk_pack">Pack Size</label>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input swal-custom-field-chk" type="checkbox" value="strip_size" id="chk_strip_size" ${customFieldsList.includes('strip_size') ? 'checked' : ''}>
+                                        <label class="form-check-label small" for="chk_strip_size">Tablets / Strip</label>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input swal-custom-field-chk" type="checkbox" value="box_size" id="chk_box_size" ${customFieldsList.includes('box_size') ? 'checked' : ''}>
+                                        <label class="form-check-label small" for="chk_box_size">Strips / Box</label>
+                                    </div>
+                                </div>
+                                <div class="col-12 mt-2 pt-2 border-top">
+                                    <div class="form-check">
+                                        <input class="form-check-input swal-custom-field-chk" type="checkbox" value="variants" id="chk_variants" ${customFieldsList.includes('variants') ? 'checked' : ''}>
+                                        <label class="form-check-label small" for="chk_variants">Variants (Sides/Sizes)</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3 pt-2 border-top text-muted small" style="font-size: 0.72rem; line-height: 1.35;">
+                                <i class="fa fa-info-circle text-info me-1"></i> Commercial/pricing fields (MRP, PTR, PTS, Loyalty %) are common across all brands and are always displayed.
+                            </div>
+                        </div>
+                    `,
+                    focusConfirm: false,
                     showCancelButton: true,
-                    confirmButtonText: 'Update',
-                }).then((result) => {
-                    if (result.value && result.value.trim().length > 0) {
-                        let newName = result.value.trim();
-                        if (newName !== oldName) {
-                            currentBrands[index] = newName;
-                            $('#brands_form').append(`<input type="hidden" name="renamed_brands[${oldName}]" value="${newName}">`);
-                            $('#save_brands_btn').show();
-                            renderBrands();
+                    confirmButtonText: 'Update Brand',
+                    didOpen: (modal) => {
+                        $(modal).find('.swal2-icon').remove();
+                    },
+                    preConfirm: () => {
+                        let name = document.getElementById('swal_brand_name').value.trim();
+                        let desc = document.getElementById('swal_brand_desc').value.trim();
+                        if (!name) {
+                            Swal.showValidationMessage('Brand Name is required');
+                            return false;
                         }
+                        let customFields = [];
+                        $('.swal-custom-field-chk:checked').each(function() {
+                            customFields.push($(this).val());
+                        });
+                        return { id: brandObj.id, name, description: desc, icon: brandObj.icon || 'fa-tag', layout_type: 'custom', custom_fields: customFields };
+                    }
+                }).then((result) => {
+                    if (result.value) {
+                        let brandData = result.value;
+                        $.ajax({
+                            url: '{{ route('admin.settings.brands.save') }}',
+                            method: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}',
+                                id: brandData.id,
+                                name: brandData.name,
+                                description: brandData.description,
+                                icon: brandData.icon,
+                                layout_type: brandData.layout_type,
+                                custom_fields: brandData.custom_fields
+                            },
+                            success: function(res) {
+                                brandsData[index] = res.brand;
+                                renderBrands();
+                                showToast('success', 'Updated', 'Brand updated successfully');
+                            },
+                            error: function(xhr) {
+                                let msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Could not update brand.';
+                                showToast('error', 'Error', msg);
+                            }
+                        });
                     }
                 });
             });

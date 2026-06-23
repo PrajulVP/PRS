@@ -248,18 +248,30 @@
     .font-outfit { font-family: 'Outfit', sans-serif; }
 
     #createProductTypeTabs .nav-link, #editProductTypeTabs .nav-link {
-        background: #f8fafc;
-        color: #475569;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        font-size: 0.85rem;
-        transition: all 0.2s ease-in-out;
+        background: #f8fafc !important;
+        color: #475569 !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 8px !important;
+        font-size: 0.85rem !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+    body.dark-only #createProductTypeTabs .nav-link, 
+    body.dark-only #editProductTypeTabs .nav-link {
+        background: #1d2a3a !important;
+        color: #94a3b8 !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
     }
     #createProductTypeTabs .nav-link.active, #editProductTypeTabs .nav-link.active {
-        background: var(--bs-primary);
-        color: #ffffff;
-        border-color: var(--bs-primary);
-        box-shadow: 0 4px 12px rgba(var(--bs-primary-rgb), 0.2);
+        background: var(--bs-primary) !important;
+        color: #ffffff !important;
+        border-color: var(--bs-primary) !important;
+        box-shadow: 0 4px 12px rgba(var(--bs-primary-rgb), 0.2) !important;
+    }
+    body.dark-only #createProductTypeTabs .nav-link.active, 
+    body.dark-only #editProductTypeTabs .nav-link.active {
+        background: var(--bs-primary) !important;
+        color: #ffffff !important;
+        border-color: var(--bs-primary) !important;
     }
 </style>
 
@@ -391,17 +403,15 @@
                     <div class="modal-body">
                         <!-- Product Type Pill Navigation -->
                         <div class="mb-4 text-center">
-                            <label class="form-label fw-bold text-muted mb-2 text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Select Product Type</label>
+                            <label class="form-label fw-bold text-muted mb-2 text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Select Brand / Layout</label>
                             <div class="nav nav-pills justify-content-center gap-2" id="createProductTypeTabs" role="tablist">
-                                <button class="nav-link active fw-bold px-4 py-2 border shadow-sm" id="tab-create-medical" data-bs-toggle="pill" type="button" data-type="medical">
-                                    <i class="fa fa-flask me-2"></i>Medical Products
-                                </button>
-                                <button class="nav-link fw-bold px-4 py-2 border shadow-sm" id="tab-create-ortho" data-bs-toggle="pill" type="button" data-type="ortho">
-                                    <i class="fa fa-universal-access me-2"></i>Orthopedic & Supports
-                                </button>
-                                <button class="nav-link fw-bold px-4 py-2 border shadow-sm" id="tab-create-general" data-bs-toggle="pill" type="button" data-type="general">
-                                    <i class="fa fa-leaf me-2"></i>Herbal & OTC
-                                </button>
+                                @foreach($brands as $brand)
+                                    <button class="nav-link {{ $loop->first ? 'active' : '' }} fw-bold px-3 py-1.5 border shadow-sm d-flex flex-column align-items-center justify-content-center" id="tab-create-{{ strtolower(preg_replace('/[^a-zA-Z0-9]/', '-', $brand->name)) }}" data-bs-toggle="pill" type="button" data-type="{{ $brand->layout_type }}" data-brand-name="{{ $brand->name }}">
+                                        <span class="fs-6"><i class="fa {{ $brand->icon || 'fa-tag' }} mb-1"></i></span>
+                                        <span style="font-size: 0.85rem; font-weight: 700;">{{ $brand->description ?: $brand->name }}</span>
+                                        <span style="font-size: 0.68rem; opacity: 0.75; font-weight: 500;">{{ $brand->name }}</span>
+                                    </button>
+                                @endforeach
                             </div>
                         </div>
 
@@ -540,17 +550,15 @@
                     <div class="modal-body">
                         <!-- Product Type Pill Navigation -->
                         <div class="mb-4 text-center">
-                            <label class="form-label fw-bold text-muted mb-2 text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Product Type</label>
+                            <label class="form-label fw-bold text-muted mb-2 text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Product Brand / Layout</label>
                             <div class="nav nav-pills justify-content-center gap-2" id="editProductTypeTabs" role="tablist">
-                                <button class="nav-link active fw-bold px-4 py-2 border shadow-sm" id="tab-edit-medical" data-bs-toggle="pill" type="button" data-type="medical">
-                                    <i class="fa fa-flask me-2"></i>Medical Products
-                                </button>
-                                <button class="nav-link fw-bold px-4 py-2 border shadow-sm" id="tab-edit-ortho" data-bs-toggle="pill" type="button" data-type="ortho">
-                                    <i class="fa fa-universal-access me-2"></i>Orthopedic & Supports
-                                </button>
-                                <button class="nav-link fw-bold px-4 py-2 border shadow-sm" id="tab-edit-general" data-bs-toggle="pill" type="button" data-type="general">
-                                    <i class="fa fa-leaf me-2"></i>Herbal & OTC
-                                </button>
+                                @foreach($brands as $brand)
+                                    <button class="nav-link {{ $loop->first ? 'active' : '' }} fw-bold px-3 py-1.5 border shadow-sm d-flex flex-column align-items-center justify-content-center" id="tab-edit-{{ strtolower(preg_replace('/[^a-zA-Z0-9]/', '-', $brand->name)) }}" data-bs-toggle="pill" type="button" data-type="{{ $brand->layout_type }}" data-brand-name="{{ $brand->name }}">
+                                        <span class="fs-6"><i class="fa {{ $brand->icon || 'fa-tag' }} mb-1"></i></span>
+                                        <span style="font-size: 0.85rem; font-weight: 700;">{{ $brand->description ?: $brand->name }}</span>
+                                        <span style="font-size: 0.68rem; opacity: 0.75; font-weight: 500;">{{ $brand->name }}</span>
+                                    </button>
+                                @endforeach
                             </div>
                         </div>
 
@@ -878,103 +886,176 @@
                 }
             });
 
+            // Build a JS list of all brands from Database settings
+            const brandsList = @json($brands);
+
             // Helper function to switch product creation/edit types dynamically
-            function switchProductType(modalPrefix, type) {
+            function switchProductType(modalPrefix, brandVal) {
                 let codeCol = $(`#${modalPrefix}_product_code_container`);
                 let nameCol = $(`#${modalPrefix}_product_name_container`);
                 let hsnCol = $(`#${modalPrefix}_hsn_code_container`);
                 let brandCol = $(`#${modalPrefix}_brand_container`);
                 let genericCol = $(`#${modalPrefix}_generic_name_container`);
 
-                let activeBrands = @json($availableBrands);
-                let brandVal = '';
-                if (type === 'medical') {
-                    brandVal = activeBrands.length > 0 ? activeBrands[0] : 'Atomets';
-                    
-                    // Column grid adjustments
-                    codeCol.addClass('d-none');
-                    nameCol.removeClass('col-md-3 col-md-4').addClass('col-md-3');
-                    genericCol.removeClass('col-md-3 col-md-4 d-none').addClass('col-md-3');
-                    hsnCol.removeClass('col-md-3 col-md-4').addClass('col-md-3');
-                    brandCol.removeClass('d-none').removeClass('col-md-3 col-md-4').addClass('col-md-3');
+                // Find the brand object from brandsList
+                let brandObj = brandsList.find(b => b.name.toLowerCase() === (brandVal || '').toLowerCase());
+                
+                // Defaults if brandObj not found
+                let layoutType = brandObj ? brandObj.layout_type : 'general';
+                let customFields = brandObj ? (brandObj.custom_fields || []) : [];
 
-                    // Visibility toggling
-                    $(`#${modalPrefix}_packaging_section`).removeClass('d-none');
-                    $(`#${modalPrefix}_pack_container`).addClass('d-none');
-                    $(`#${modalPrefix}_strip_size_container`).removeClass('d-none');
-                    $(`#${modalPrefix}_box_size_container`).removeClass('d-none');
-                    $(`#${modalPrefix}_pricing_section`).removeClass('col-md-12').addClass('col-md-6');
-                    $(`#${modalPrefix}_variant_section`).addClass('d-none');
-                } else if (type === 'ortho') {
-                    brandVal = activeBrands.length > 1 ? activeBrands[1] : 'Atomshield';
+                let showProductCode = true;
+                let showGenericName = false;
+                let showHsnCode = true;
+                let showPack = true;
+                let showStripSize = false;
+                let showBoxSize = false;
+                let showVariants = false;
 
-                    // Column grid adjustments
-                    codeCol.removeClass('d-none').removeClass('col-md-3 col-md-4').addClass('col-md-3');
-                    nameCol.removeClass('col-md-3 col-md-4').addClass('col-md-3');
-                    genericCol.addClass('d-none');
-                    hsnCol.removeClass('col-md-3 col-md-4').addClass('col-md-3');
-                    brandCol.removeClass('d-none').removeClass('col-md-3 col-md-4').addClass('col-md-3');
-
-                    // Visibility toggling
-                    $(`#${modalPrefix}_packaging_section`).addClass('d-none');
-                    $(`#${modalPrefix}_pricing_section`).removeClass('col-md-6').addClass('col-md-12');
-                    $(`#${modalPrefix}_variant_section`).removeClass('d-none');
-                } else { // general
-                    brandVal = activeBrands.length > 2 ? activeBrands[2] : 'Sudhneelgiri';
-
-                    // Column grid adjustments
-                    codeCol.removeClass('d-none').removeClass('col-md-3 col-md-4').addClass('col-md-3');
-                    nameCol.removeClass('col-md-3 col-md-4').addClass('col-md-3');
-                    genericCol.addClass('d-none');
-                    hsnCol.removeClass('col-md-3 col-md-4').addClass('col-md-3');
-                    brandCol.removeClass('d-none').removeClass('col-md-3 col-md-4').addClass('col-md-3');
-
-                    // Visibility toggling
-                    $(`#${modalPrefix}_packaging_section`).removeClass('d-none');
-                    $(`#${modalPrefix}_pack_container`).removeClass('d-none');
-                    $(`#${modalPrefix}_strip_size_container`).addClass('d-none');
-                    $(`#${modalPrefix}_box_size_container`).addClass('d-none');
-                    $(`#${modalPrefix}_pricing_section`).removeClass('col-md-12').addClass('col-md-6');
-                    $(`#${modalPrefix}_variant_section`).addClass('d-none');
+                if (layoutType === 'medical') {
+                    showProductCode = false;
+                    showGenericName = true;
+                    showHsnCode = true;
+                    showPack = false;
+                    showStripSize = true;
+                    showBoxSize = true;
+                    showVariants = false;
+                } else if (layoutType === 'ortho') {
+                    showProductCode = true;
+                    showGenericName = false;
+                    showHsnCode = true;
+                    showPack = false;
+                    showStripSize = false;
+                    showBoxSize = false;
+                    showVariants = true;
+                } else if (layoutType === 'custom') {
+                    showProductCode = customFields.includes('product_code');
+                    showGenericName = customFields.includes('generic_name');
+                    showHsnCode = customFields.includes('hsn_code');
+                    showPack = customFields.includes('pack');
+                    showStripSize = customFields.includes('strip_size');
+                    showBoxSize = customFields.includes('box_size');
+                    showVariants = customFields.includes('variants');
                 }
 
-                // Set select dropdown value (case-insensitive)
-                let brandSelect = $(`#${modalPrefix}_brand`);
-                let matchedOption = brandSelect.find('option').filter(function() {
-                    return $(this).val().toLowerCase() === brandVal.toLowerCase();
-                });
-                if (matchedOption.length > 0) {
-                    brandSelect.val(matchedOption.val());
+                // Brand select container is always hidden because we set it automatically via the tabs/pills
+                brandCol.addClass('d-none'); 
+
+                // Let's decide column sizes based on how many columns are visible
+                let topRowCols = [];
+                
+                if (showProductCode) {
+                    codeCol.removeClass('d-none');
+                    topRowCols.push(codeCol);
                 } else {
-                    brandSelect.val(brandVal);
+                    codeCol.addClass('d-none');
+                }
+
+                // Product Name is always visible
+                nameCol.removeClass('d-none');
+                topRowCols.push(nameCol);
+
+                if (showGenericName) {
+                    genericCol.removeClass('d-none');
+                    topRowCols.push(genericCol);
+                } else {
+                    genericCol.addClass('d-none');
+                }
+
+                if (showHsnCode) {
+                    hsnCol.removeClass('d-none');
+                    topRowCols.push(hsnCol);
+                } else {
+                    hsnCol.addClass('d-none');
+                }
+
+                let colClass = 'col-md-3';
+                if (topRowCols.length === 3) {
+                    colClass = 'col-md-4';
+                }
+                
+                topRowCols.forEach(col => {
+                    col.removeClass('col-md-3 col-md-4 col-md-6 col-md-12').addClass(colClass);
+                });
+
+                // Apply Packaging Section Visibility
+                let showPackaging = showPack || showStripSize || showBoxSize;
+                if (showPackaging) {
+                    $(`#${modalPrefix}_packaging_section`).removeClass('d-none');
+                    
+                    if (showPack) {
+                        $(`#${modalPrefix}_pack_container`).removeClass('d-none');
+                    } else {
+                        $(`#${modalPrefix}_pack_container`).addClass('d-none');
+                    }
+                    
+                    if (showStripSize) {
+                        $(`#${modalPrefix}_strip_size_container`).removeClass('d-none');
+                    } else {
+                        $(`#${modalPrefix}_strip_size_container`).addClass('d-none');
+                    }
+                    
+                    if (showBoxSize) {
+                        $(`#${modalPrefix}_box_size_container`).removeClass('d-none');
+                    } else {
+                        $(`#${modalPrefix}_box_size_container`).addClass('d-none');
+                    }
+                } else {
+                    $(`#${modalPrefix}_packaging_section`).addClass('d-none');
+                }
+
+                // Apply Variants & Pricing Layout
+                if (showVariants) {
+                    $(`#${modalPrefix}_variant_section`).removeClass('d-none');
+                    $(`#${modalPrefix}_pricing_section`).removeClass('col-md-6').addClass('col-md-12');
+                } else {
+                    $(`#${modalPrefix}_variant_section`).addClass('d-none');
+                    $(`#${modalPrefix}_pricing_section`).removeClass('col-md-12').addClass('col-md-6');
+                }
+
+                // Set select dropdown value (case-insensitive) or set input value
+                let brandSelect = $(`#${modalPrefix}_brand`);
+                if (brandSelect.length > 0) {
+                    let brandToSelect = brandObj ? brandObj.name : brandVal;
+                    let matchedOption = brandSelect.find('option').filter(function() {
+                        return $(this).val().toLowerCase() === (brandToSelect || '').toLowerCase();
+                    });
+                    if (matchedOption.length > 0) {
+                        matchedOption.prop('selected', true);
+                    } else {
+                        brandSelect.val(brandToSelect);
+                    }
                 }
 
                 // Update active tab buttons
                 $(`#${modalPrefix}ProductTypeTabs button`).removeClass('active');
-                if (modalPrefix === 'create') {
-                    $(`#tab-create-${type}`).addClass('active');
-                } else {
-                    $(`#tab-edit-${type}`).addClass('active');
+                if (brandObj) {
+                    let btnId = `#tab-${modalPrefix}-${brandObj.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+                    $(btnId).addClass('active');
                 }
             }
 
             // Default initial state for product creation
-            switchProductType('create', 'medical');
+            if (brandsList.length > 0) {
+                switchProductType('create', brandsList[0].name);
+            }
 
-            // Reset create modal type to medical on open
+            // Reset create modal type to default on open
             $('#createProductModal').on('show.bs.modal', function () {
-                switchProductType('create', 'medical');
+                if (brandsList.length > 0) {
+                    switchProductType('create', brandsList[0].name);
+                }
             });
 
             // Click handlers for switching tabs
-            $('#createProductTypeTabs button').on('click', function() {
-                let type = $(this).data('type');
-                switchProductType('create', type);
+            $(document).on('click', '#createProductTypeTabs button', function() {
+                let brandName = $(this).data('brand-name');
+                switchProductType('create', brandName);
             });
 
-            $('#editProductTypeTabs button').on('click', function() {
-                let type = $(this).data('type');
-                switchProductType('edit', type);
+            $(document).on('click', '#editProductTypeTabs button', function() {
+                let brandName = $(this).data('brand-name');
+                switchProductType('edit', brandName);
             });
 
             // Handle Edit Button Click
@@ -989,24 +1070,8 @@
                     return value ? value.toString().replace(/,/g, '') : '';
                 }
 
-                // Map brand to tab type first to adjust field visibility
-                let productType = 'general';
-                let pBrand = (product.brand || '').toLowerCase();
-                let activeBrands = @json($availableBrands);
-                
-                if (activeBrands.length > 0 && pBrand === (activeBrands[0] || '').toLowerCase()) {
-                    productType = 'medical';
-                } else if (activeBrands.length > 1 && pBrand === (activeBrands[1] || '').toLowerCase()) {
-                    productType = 'ortho';
-                } else if (activeBrands.length > 2 && pBrand === (activeBrands[2] || '').toLowerCase()) {
-                    productType = 'general';
-                } else if (pBrand === 'atomets') { // Fallbacks
-                    productType = 'medical';
-                } else if (pBrand === 'atomshield') {
-                    productType = 'ortho';
-                }
-                
-                switchProductType('edit', productType);
+                let pBrand = product.brand || '';
+                switchProductType('edit', pBrand);
 
                 // Populate fields
                 $('#edit_product_code').val(product.product_code);

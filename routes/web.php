@@ -208,6 +208,8 @@ Route::middleware(['auth'])->group(function () {
         // Master settings
         Route::get('settings/general', [SettingsController::class, 'general'])->name('settings.general');
         Route::post('settings', [SettingsController::class, 'save'])->name('settings.save');
+        Route::post('settings/brands/save', [SettingsController::class, 'saveBrand'])->name('settings.brands.save');
+        Route::post('settings/brands/delete', [SettingsController::class, 'deleteBrand'])->name('settings.brands.delete');
 
         // Reports
         Route::prefix('reports')->name('reports.')->group(function () {

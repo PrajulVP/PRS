@@ -110,6 +110,7 @@ Route::middleware('auth:api')->group(function () {
     Route::prefix('field-staff')->middleware(['device.binding'])->group(function () {
         Route::get('dashboard', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'index']);
         Route::get('performance-trend', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'performanceTrend']);
+        Route::get('reports/sales-orders', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'generateSalesOrdersReport']);
         Route::get('retailers', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'getRetailers']);
         Route::post('retailers', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'storeRetailer']);
         Route::get('retailers/{id}/loyalty-points', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'getRetailerLoyaltyDetails']);

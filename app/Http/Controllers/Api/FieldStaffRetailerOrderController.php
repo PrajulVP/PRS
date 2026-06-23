@@ -226,7 +226,7 @@ class FieldStaffRetailerOrderController extends Controller
                     'retailer_id' => $retailer->id,
                     'distributor_id' => $distributorId,
                     'fieldstaff_id' => $fieldStaffId,
-                    'status' => RetailerOrder::STATUS_PENDING,
+                    'status' => RetailerOrder::STATUS_PROCESSING,
                     'payment_status' => 'pending',
                     'total_amount' => 0, // Will update below
                     'total_items' => $totalItems,

@@ -126,8 +126,8 @@ class ProductController extends Controller
             ]);
         }
 
-        $brandsRaw = \App\Models\Setting::getValue('product_brands', 'Atomets,Atomshield,Sudhneelgiri');
-        $availableBrands = array_map('trim', explode(',', $brandsRaw));
+        $brands = \App\Models\Brand::orderBy('id')->get();
+        $availableBrands = $brands->pluck('name')->toArray();
 
         $brandStats = Product::select('brand', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
             ->groupBy('brand')
@@ -141,7 +141,20 @@ class ProductController extends Controller
 
         $totalProducts = Product::count();
 
-        return view('admin.products.index', compact('availableBrands', 'brandStats', 'totalProducts'));
+        $type_medical_title = \App\Models\Setting::getValue('type_medical_title', 'ATOMEDS');
+        $type_medical_desc = \App\Models\Setting::getValue('type_medical_desc', 'Medicines');
+        $type_ortho_title = \App\Models\Setting::getValue('type_ortho_title', 'ATOMSHIELD');
+        $type_ortho_desc = \App\Models\Setting::getValue('type_ortho_desc', 'Surgical and Orthopedic Supports');
+        $type_general_title = \App\Models\Setting::getValue('type_general_title', 'SUDHNEELGIRI');
+        $type_general_desc = \App\Models\Setting::getValue('type_general_desc', 'Herbals');
+
+        return view('admin.products.index', compact(
+            'availableBrands', 'brandStats', 'totalProducts',
+            'type_medical_title', 'type_medical_desc',
+            'type_ortho_title', 'type_ortho_desc',
+            'type_general_title', 'type_general_desc',
+            'brands'
+        ));
     }
 
     /**
@@ -530,14 +543,21 @@ class ProductController extends Controller
                     }
                     $successCount++;
 
-                    // Auto-register imported brand in settings if it is new
+                    // Auto-register imported brand in DB if it is new
                     $importedBrand = !empty($productData['brand']) ? trim($productData['brand']) : null;
                     if ($importedBrand) {
-                        $brandsRaw = \App\Models\Setting::getValue('product_brands', 'Atomets,Atomshield,Sudhneelgiri');
-                        $brandsArr = array_map('trim', explode(',', $brandsRaw));
-                        if (!in_array($importedBrand, $brandsArr)) {
-                            $brandsArr[] = $importedBrand;
-                            \App\Models\Setting::setValue('product_brands', implode(',', $brandsArr));
+                        $exists = \App\Models\Brand::where('name', $importedBrand)->exists();
+                        if (!$exists) {
+                            \App\Models\Brand::create([
+                                'name' => $importedBrand,
+                                'description' => 'Imported Brand',
+                                'icon' => 'fa-tag',
+                                'layout_type' => 'general'
+                            ]);
+                            
+                            // Sync legacy product_brands setting
+                            $names = \App\Models\Brand::pluck('name')->implode(',');
+                            \App\Models\Setting::setValue('product_brands', $names);
                         }
                     }
                 } catch (\Exception $e) {
