@@ -567,6 +567,8 @@
                                 <th>Invoice</th>
                                 <th>Actions</th>
                                 <th class="d-none">Shop Name</th>
+                                <th class="d-none">Area</th>
+                                <th class="d-none">District</th>
                                 <th class="d-none">Sales Manager</th>
                                 <th class="d-none">Field Staff</th>
                                 <th class="d-none">Phone</th>
@@ -1316,28 +1318,36 @@
             const isSalesManager = {{ Auth::user()->hasRole('salesmanager') ? 'true' : 'false' }};
             const isAdmin = {{ Auth::user()->hasAnyRole(['admin', 'superadmin']) ? 'true' : 'false' }};
 
+            let exportCols = [1, 2, 3, 13, 14, 15, 16, 17, 18, 19, 20, 8, 4, 5, 6, 7, 9, 10];
             let exportOptions = {
-                columns: [1, 2, 3, 13, 14, 15, 16, 17, 18, 8, 4, 5, 6, 7, 9, 10],
+                columns: exportCols,
                 format: {
                     body: function(data, row, column, node) {
-                        if (column === 3) {
-                            let tableApi = $('#retailer-approval-table').DataTable();
-                            let rowData = tableApi.row(row).data();
-                            return rowData ? (rowData.retailer_name || '').trim() : '';
+                        let originalColIdx = exportCols[column];
+                        let tableApi = $('#retailer-approval-table').DataTable();
+                        let rowData = null;
+                        try {
+                            rowData = tableApi.row(row).data();
+                        } catch(e) {}
+                        
+                        if (originalColIdx === 3) {
+                            if (rowData) return (rowData.retailer_name || '').trim();
+                            let temp = document.createElement('div');
+                            temp.innerHTML = data;
+                            let span = temp.querySelector('span.text-primary');
+                            return span ? span.innerText.trim() : temp.innerText.trim();
                         }
-                        if (column === 4) {
-                            let tableApi = $('#retailer-approval-table').DataTable();
-                            let rowData = tableApi.row(row).data();
+                        if (originalColIdx === 4) {
                             if (rowData && rowData.product_summary) {
                                 return rowData.product_summary.split('|||').map(it => it.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim()).join('\n');
                             }
+                            return data ? data.toString().replace(/<\/div>/gi, '\n').replace(/<[^>]*>?/gm, '').trim() : '';
                         }
-                        if (column === 5) {
-                            let tableApi = $('#retailer-approval-table').DataTable();
-                            let rowData = tableApi.row(row).data();
+                        if (originalColIdx === 5) {
                             if (rowData && rowData.brand_summary) {
                                 return rowData.brand_summary.split('|||').join('\n');
                             }
+                            return data ? data.toString().replace(/<\/div>/gi, '\n').replace(/<[^>]*>?/gm, '').trim() : '';
                         }
                         if (typeof data === 'string') {
                             let clean = data.replace(/<[^>]*>?/gm, '').trim();
@@ -1498,7 +1508,11 @@
                     name: 'retailer.user.name',
                     render: function(data, type, row) {
                         if (type !== 'display') return data;
-                        return `<span class="fw-bold text-primary">${data}</span>`;
+                        let html = `<div class="d-flex flex-column">
+                                        <span class="fw-bold text-primary">${data}</span>
+                                        <span class="small text-muted" style="font-size: 0.7rem;"><i class="fa fa-map-marker-alt"></i> ${row.retailer_area || 'N/A'}, ${row.retailer_district || 'N/A'}</span>
+                                    </div>`;
+                        return html;
                     }
                 },
                 {
@@ -1705,6 +1719,16 @@
                 },
                 {
                     data: 'retailer_shop',
+                    visible: false,
+                    render: function(d) { return d || '-'; }
+                },
+                {
+                    data: 'retailer_area',
+                    visible: false,
+                    render: function(d) { return d || '-'; }
+                },
+                {
+                    data: 'retailer_district',
                     visible: false,
                     render: function(d) { return d || '-'; }
                 },

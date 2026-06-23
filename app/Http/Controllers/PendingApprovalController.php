@@ -104,7 +104,7 @@ class PendingApprovalController extends Controller
                 $totalCount = array_sum($statusCounts);
             } elseif ($viewType === 'retailer') {
                 // Fetch Retailer Orders
-                $query = \App\Models\RetailerOrder::with(['retailer.user', 'retailer.salesManager.user', 'retailer.fieldStaff.user', 'items.product', 'items.batches', 'distributor.user', 'fieldStaff.user', 'returnRequests']);
+                $query = \App\Models\RetailerOrder::with(['retailer.user', 'retailer.area', 'retailer.district', 'retailer.salesManager.user', 'retailer.fieldStaff.user', 'items.product', 'items.batches', 'distributor.user', 'fieldStaff.user', 'returnRequests']);
 
                 if ($user->hasRole('distributor') && $user->distributor) {
                     $query->where('distributor_id', $user->distributor->id);
@@ -322,6 +322,8 @@ class PendingApprovalController extends Controller
                     $res['retailer_sm_name'] = $item->retailer->salesManager->user->name ?? 'N/A';
                     $res['retailer_fs_name'] = $item->retailer->fieldStaff->user->name ?? 'N/A';
                     $res['retailer_phone'] = $item->retailer->contact_no ?? '--';
+                    $res['retailer_area'] = $item->retailer->area->name ?? 'N/A';
+                    $res['retailer_district'] = $item->retailer->district->name ?? 'N/A';
                     $res['retailer_gst'] = $item->retailer->gst ?? '--';
                     $res['retailer_dl'] = $item->retailer->drug_license_no ?? '--';
                     $res['retailer_location'] = $item->retailer->address ?? '--';

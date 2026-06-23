@@ -320,7 +320,7 @@ class RetailerOrderManagementController extends Controller
         if ($request->ajax()) {
             try {
                 // Determine query based on role
-                $query = RetailerOrder::with(['retailer.user', 'retailer.salesManager.user', 'retailer.fieldStaff.user', 'fieldStaff.user', 'items.product', 'distributor.user', 'returnRequests']);
+                $query = RetailerOrder::with(['retailer.user', 'retailer.area', 'retailer.district', 'retailer.salesManager.user', 'retailer.fieldStaff.user', 'fieldStaff.user', 'items.product', 'distributor.user', 'returnRequests']);
                 Log::info("RetailerOrderManagementController@index: User ID " . $user->id . " Role " . ($user->hasRole('retailer') ? 'retailer' : 'other'));
 
                 if ($user->hasRole('distributor')) {
@@ -550,6 +550,8 @@ class RetailerOrderManagementController extends Controller
                         'retailer_shop' => $order->retailer?->shop_name ?? '',
                         'retailer_phone' => $order->retailer?->contact_no ?? $order->retailer?->phone ?? '',
                         'retailer_address' => trim(($order->retailer?->address ?? '') . ' ' . ($order->retailer?->pincode ?? '')),
+                        'retailer_area' => $order->retailer?->area?->name ?? 'N/A',
+                        'retailer_district' => $order->retailer?->district?->name ?? 'N/A',
                         'retailer_gst' => $order->retailer?->gst ?? 'N/A',
                         'retailer_dl' => $order->retailer?->drug_license_no ?? 'N/A',
                         'retailer_id' => $order->retailer_id,

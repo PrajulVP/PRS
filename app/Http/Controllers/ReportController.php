@@ -1335,17 +1335,27 @@ class ReportController extends Controller
     {
         switch ($type) {
             case 'orders':
-                $query = RetailerOrder::with([
-                    'retailer.user',
-                    'retailer.area',
-                    'retailer.district',
-                    'retailer.fieldStaff.user',
-                    'retailer.fieldStaff.salesManager.user',
-                    'distributor.user',
-                    'fieldStaff.user',
-                    'fieldStaff.salesManager.user',
-                    'items.product',
-                ]);
+                if ($request->order_type === 'distributor') {
+                    $query = DistributorOrder::with([
+                        'distributor.user',
+                        'distributor.area',
+                        'distributor.district',
+                        'salesManager.user',
+                        'items.product'
+                    ]);
+                } else {
+                    $query = RetailerOrder::with([
+                        'retailer.user',
+                        'retailer.area',
+                        'retailer.district',
+                        'retailer.fieldStaff.user',
+                        'retailer.fieldStaff.salesManager.user',
+                        'distributor.user',
+                        'fieldStaff.user',
+                        'fieldStaff.salesManager.user',
+                        'items.product',
+                    ]);
+                }
                 return $this->applyGlobalFilters($query, $request);
             case 'distributors':
                 $query = Distributor::with('user');
@@ -1550,20 +1560,7 @@ class ReportController extends Controller
         $callback = function() use($data, $type, $filters, $title) {
             $file = fopen('php://output', 'w');
             
-            // Add Title if provided
-            if ($title) {
-                fputcsv($file, ["REPORT: " . strtoupper($title)]);
-                fputcsv($file, []); // Spacer
-            }
-
-            // Add filter context as a professional summary block
-            if (!empty($filters)) {
-                fputcsv($file, ["REPORT PARAMETERS:"]);
-                foreach ($filters as $key => $val) {
-                    fputcsv($file, [" - {$key}: {$val}"]);
-                }
-                fputcsv($file, []); // Spacer
-            }
+            // No headers as per request
 
             if ($type === 'orders') {
                 fputcsv($file, [
@@ -1593,34 +1590,50 @@ class ReportController extends Controller
                     'Fulfillment Time',
                 ]);
                 foreach ($data as $idx => $row) {
-                    // Retailer info
-                    $retailerName = $row->retailer->user->name ?? 'N/A';
-                    $shopName     = $row->retailer->shop_name ?? 'N/A';
-                    $area         = $row->retailer->area->name ?? 'N/A';
-                    $district     = $row->retailer->district->name ?? 'N/A';
+                    $isDistributorOrder = $row instanceof \App\Models\DistributorOrder;
 
-                    // Staff – prefer fieldStaff on order, fall back to retailer's assigned fieldStaff
-                    $fieldStaffName  = $row->fieldStaff->user->name
-                        ?? $row->retailer->fieldStaff->user->name
-                        ?? 'N/A';
-                    $salesManagerName = $row->fieldStaff->salesManager->user->name
-                        ?? $row->retailer->fieldStaff->salesManager->user->name
-                        ?? 'N/A';
+                    if ($isDistributorOrder) {
+                        $retailerName = 'N/A';
+                        $shopName     = 'N/A';
+                        $area         = $row->distributor->area->name ?? 'N/A';
+                        $district     = $row->distributor->district->name ?? 'N/A';
+                        $fieldStaffName = 'N/A';
+                        $salesManagerName = $row->salesManager->user->name ?? 'N/A';
+                        $distributor  = $row->distributor->user->name ?? 'N/A';
+                        $gst          = $row->distributor->gst ?? 'N/A';
+                        $dl           = $row->distributor->drug_license_no ?? 'N/A';
+                    } else {
+                        // Retailer info
+                        $retailerName = $row->retailer->user->name ?? 'N/A';
+                        $shopName     = $row->retailer->shop_name ?? 'N/A';
+                        $area         = $row->retailer->area->name ?? 'N/A';
+                        $district     = $row->retailer->district->name ?? 'N/A';
 
-                    $distributor  = $row->distributor->user->name ?? 'N/A';
-                    $gst          = $row->retailer->gst ?? 'N/A';
-                    $dl           = $row->retailer->drug_license_no ?? 'N/A';
+                        // Staff – prefer fieldStaff on order, fall back to retailer's assigned fieldStaff
+                        $fieldStaffName  = $row->fieldStaff->user->name
+                            ?? $row->retailer->fieldStaff->user->name
+                            ?? 'N/A';
+                        $salesManagerName = $row->fieldStaff->salesManager->user->name
+                            ?? $row->retailer->fieldStaff->salesManager->user->name
+                            ?? 'N/A';
+
+                        $distributor  = $row->distributor->user->name ?? 'N/A';
+                        $gst          = $row->retailer->gst ?? 'N/A';
+                        $dl           = $row->retailer->drug_license_no ?? 'N/A';
+                    }
 
                     // Products & brands summary
                     $productsSummary = $row->items->map(function($item) {
                         $name = $item->product->product_name ?? 'Unknown';
                         $variant = array_filter([$item->side ?? null, $item->size ?? null]);
                         $vTxt = !empty($variant) ? '[' . implode('/', $variant) . ']' : '';
-                        return "{$name}{$vTxt} x{$item->quantity}";
+                        return "{$name} {$vTxt} x{$item->quantity}";
                     })->implode('; ');
+                    $productsSummary = str_replace('"', '', $productsSummary);
 
                     $brands = $row->items->map(fn($i) => $i->product->brand ?? 'N/A')
                         ->unique()->filter()->implode(', ');
+                    $brands = str_replace('"', '', $brands);
 
                     $totalUnits = $row->items->sum('quantity');
                     $totalSku   = $row->items->count();
@@ -1634,7 +1647,7 @@ class ReportController extends Controller
                             : $row->placed_at->diffForHumans($row->delivered_at, true))
                         : 'Pending';
 
-                    fputcsv($file, [
+                    $rowData = [
                         $idx + 1,
                         $row->order_code,
                         $row->invoice_no ?? 'N/A',
@@ -1652,14 +1665,21 @@ class ReportController extends Controller
                         $brands ?: 'N/A',
                         $totalUnits,
                         $totalSku,
-                        number_format($row->total_amount, 2),
-                        number_format($tax, 2),
+                        number_format($row->total_amount, 2, '.', ''),
+                        number_format($tax, 2, '.', ''),
                         ucfirst($row->status),
                         ucfirst($row->payment_status ?? 'N/A'),
                         $row->placed_at ? $row->placed_at->format('d M Y H:i') : 'N/A',
                         $row->delivered_at ? $row->delivered_at->format('d M Y H:i') : 'Pending',
                         $fulfillment,
-                    ]);
+                    ];
+
+                    $cleanRowData = array_map(function($val) {
+                        return is_string($val) ? str_replace('"', '', $val) : $val;
+                    }, $rowData);
+
+                    fputcsv($file, $cleanRowData);
+
                 }
             } elseif ($type === 'distributors') {
                 fputcsv($file, ['Rank', 'Distributor Name', 'Email', 'Active Network (Retailers)', 'Total Orders', 'Total Sales Volume']);

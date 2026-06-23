@@ -53,9 +53,28 @@ class RetailerOrder extends Model
         parent::boot();
 
         static::creating(function ($order) {
+            $month = (int)date('n');
+            $year = (int)date('y');
+            if ($month < 4) {
+                $year = $year - 1;
+            }
+            $prefix = 'RO-' . str_pad($year, 2, '0', STR_PAD_LEFT);
+
+            $latestOrder = static::where('order_code', 'like', $prefix . '%')
+                ->orderByRaw('LENGTH(order_code) DESC')
+                ->orderBy('order_code', 'desc')
+                ->first();
+
+            $sequence = 0;
+            if ($latestOrder) {
+                $sequence = (int)substr($latestOrder->order_code, 5);
+            }
+
             do {
-                $orderCode = 'RO-' . Str::upper(Str::random(6)); // Example: RO-X9Y8Z7
-            } while (RetailerOrder::where('order_code', $orderCode)->exists());
+                $sequence++;
+                $orderCode = $prefix . str_pad($sequence, 5, '0', STR_PAD_LEFT);
+            } while (static::where('order_code', $orderCode)->exists());
+
             $order->order_code = $orderCode;
         });
     }

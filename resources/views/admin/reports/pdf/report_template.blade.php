@@ -60,15 +60,25 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
+            table-layout: fixed;
+            word-wrap: break-word;
+        }
+        table.data-table th, table.data-table td {
+            padding: 4px;
+            border: 1px solid #e2e8f0;
+            font-size: 7.5pt;
+            vertical-align: top;
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
         table.data-table th {
             background-color: #f8fafc;
             color: #00497a;
             text-align: left;
-            padding: 10px;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 2px solid #cbd5e1;
             text-transform: uppercase;
-            font-size: 8pt;
+            font-size: 7pt;
+            font-weight: bold;
         }
         table.data-table tr:nth-child(even) {
             background-color: #fafbfc;
@@ -223,17 +233,30 @@
                 <tr>
                     @if($type === 'orders')
                         @php
-                            $retailerName   = $row->retailer->user->name ?? 'N/A';
-                            $shopName       = $row->retailer->shop_name ?? 'N/A';
-                            $area           = $row->retailer->area->name ?? 'N/A';
-                            $district       = $row->retailer->district->name ?? 'N/A';
-                            $salesManager   = $row->fieldStaff->salesManager->user->name
-                                ?? $row->retailer->fieldStaff->salesManager->user->name
-                                ?? 'N/A';
-                            $fieldStaffName = $row->fieldStaff->user->name
-                                ?? $row->retailer->fieldStaff->user->name
-                                ?? 'N/A';
-                            $distributor    = $row->distributor->user->name ?? 'N/A';
+                            $isDistributorOrder = $row instanceof \App\Models\DistributorOrder;
+
+                            if ($isDistributorOrder) {
+                                $retailerName   = 'N/A';
+                                $shopName       = 'N/A';
+                                $area           = $row->distributor->area->name ?? 'N/A';
+                                $district       = $row->distributor->district->name ?? 'N/A';
+                                $salesManager   = $row->salesManager->user->name ?? 'N/A';
+                                $fieldStaffName = 'N/A';
+                                $distributor    = $row->distributor->user->name ?? 'N/A';
+                            } else {
+                                $retailerName   = $row->retailer->user->name ?? 'N/A';
+                                $shopName       = $row->retailer->shop_name ?? 'N/A';
+                                $area           = $row->retailer->area->name ?? 'N/A';
+                                $district       = $row->retailer->district->name ?? 'N/A';
+                                $salesManager   = $row->fieldStaff->salesManager->user->name
+                                    ?? $row->retailer->fieldStaff->salesManager->user->name
+                                    ?? 'N/A';
+                                $fieldStaffName = $row->fieldStaff->user->name
+                                    ?? $row->retailer->fieldStaff->user->name
+                                    ?? 'N/A';
+                                $distributor    = $row->distributor->user->name ?? 'N/A';
+                            }
+
                             $productsSummary = $row->items->map(function($item) {
                                 $name = $item->product->product_name ?? 'Unknown';
                                 $variant = array_filter([$item->side ?? null, $item->size ?? null]);

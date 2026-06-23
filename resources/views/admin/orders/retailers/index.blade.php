@@ -878,7 +878,7 @@
                         action: function (e, dt, button, config) {
                             let rows = dt.rows({ search: 'applied' }).data().toArray();
                             let csvContent = "\uFEFF"; // UTF-8 BOM
-                            csvContent += "No.,Order Code,Retailer,Shop Name,Distributor,Sales Manager,Field Staff,Phone,GST,Drug License,Product Code,Product Name,Brand,Variant,Qty,Free Qty,Unit,Unit Price,Total Amount,Status,Placed At,Delivered At,Payment Status\n";
+                            csvContent += "No.,Order Code,Retailer,Shop Name,Area,District,Distributor,Sales Manager,Field Staff,Phone,GST,Drug License,Product Code,Product Name,Brand,Variant,Qty,Free Qty,Unit,Unit Price,Total Amount,Status,Placed At,Delivered At,Payment Status\n";
                             let slNo = 1;
                             rows.forEach(function(row) {
                                 let baseData = [
@@ -886,6 +886,8 @@
                                     row.order_code,
                                     row.retailer_name || '',
                                     row.retailer_shop || '',
+                                    row.retailer_area || '',
+                                    row.retailer_district || '',
                                     row.distributor_name || '',
                                     row.retailer_sm_name || '',
                                     row.retailer_fs_name || '',
@@ -934,7 +936,7 @@
                         action: function (e, dt, button, config) {
                             let rows = dt.rows({ search: 'applied' }).data().toArray();
                             let csvContent = "\uFEFF"; // UTF-8 BOM
-                            csvContent += "No.,Order Code,Retailer,Shop Name,Distributor,Sales Manager,Field Staff,Phone,GST,Drug License,Product Code,Product Name,Brand,Variant,Qty,Free Qty,Unit,Unit Price,Total Amount,Status,Placed At,Delivered At,Payment Status\n";
+                            csvContent += "No.,Order Code,Retailer,Shop Name,Area,District,Distributor,Sales Manager,Field Staff,Phone,GST,Drug License,Product Code,Product Name,Brand,Variant,Qty,Free Qty,Unit,Unit Price,Total Amount,Status,Placed At,Delivered At,Payment Status\n";
                             let slNo = 1;
                             rows.forEach(function(row) {
                                 let baseData = [
@@ -942,6 +944,8 @@
                                     row.order_code,
                                     row.retailer_name || '',
                                     row.retailer_shop || '',
+                                    row.retailer_area || '',
+                                    row.retailer_district || '',
                                     row.distributor_name || '',
                                     row.retailer_sm_name || '',
                                     row.retailer_fs_name || '',
@@ -1049,6 +1053,7 @@
                                         ${data}
                                     </span>
                                     <span class="small text-muted">${row.retailer_shop}</span>
+                                    <span class="small text-muted" style="font-size: 0.7rem;"><i class="fa fa-map-marker-alt"></i> ${row.retailer_area || 'N/A'}, ${row.retailer_district || 'N/A'}</span>
                                 </div>`;
                     }
                 },
