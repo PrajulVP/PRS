@@ -403,7 +403,7 @@
                     <div class="modal-body">
                         <!-- Product Type Pill Navigation -->
                         <div class="mb-4 text-center">
-                            <label class="form-label fw-bold text-muted mb-2 text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Select Brand / Layout</label>
+                            <label class="form-label fw-bold text-muted mb-2 text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Select Brand</label>
                             <div class="nav nav-pills justify-content-center gap-2" id="createProductTypeTabs" role="tablist">
                                 @foreach($brands as $brand)
                                     <button class="nav-link {{ $loop->first ? 'active' : '' }} fw-bold px-3 py-1.5 border shadow-sm d-flex flex-column align-items-center justify-content-center" id="tab-create-{{ strtolower(preg_replace('/[^a-zA-Z0-9]/', '-', $brand->name)) }}" data-bs-toggle="pill" type="button" data-type="{{ $brand->layout_type }}" data-brand-name="{{ $brand->name }}">
@@ -550,7 +550,7 @@
                     <div class="modal-body">
                         <!-- Product Type Pill Navigation -->
                         <div class="mb-4 text-center">
-                            <label class="form-label fw-bold text-muted mb-2 text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Product Brand / Layout</label>
+                            <label class="form-label fw-bold text-muted mb-2 text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Product Brand</label>
                             <div class="nav nav-pills justify-content-center gap-2" id="editProductTypeTabs" role="tablist">
                                 @foreach($brands as $brand)
                                     <button class="nav-link {{ $loop->first ? 'active' : '' }} fw-bold px-3 py-1.5 border shadow-sm d-flex flex-column align-items-center justify-content-center" id="tab-edit-{{ strtolower(preg_replace('/[^a-zA-Z0-9]/', '-', $brand->name)) }}" data-bs-toggle="pill" type="button" data-type="{{ $brand->layout_type }}" data-brand-name="{{ $brand->name }}">
