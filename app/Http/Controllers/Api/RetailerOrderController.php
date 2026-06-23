@@ -70,16 +70,23 @@ class RetailerOrderController extends Controller
             return response()->json(['message' => 'User is not a retailer'], 403);
         }
 
-        $orders = RetailerOrder::with(['items.product', 'distributor.user'])
+        $orders = RetailerOrder::with(['items.product', 'distributor.user', 'distributor.area', 'distributor.district', 'retailer.user', 'retailer.fieldStaff.user', 'retailer.fieldStaff.salesManager.user'])
             ->where('retailer_id', $user->retailer->id)
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($order) {
+                $distributor = $order->distributor;
                 return [
                     'id'             => $order->id,
                     'order_code'     => $order->order_code,
                     'distributor_id' => $order->distributor_id,
-                    'distributor_name' => $order->distributor?->user?->name ?? 'N/A',
+                    'retailer_name'  => $order->retailer->user->name ?? 'N/A',
+                    'retailer_shop'  => $order->retailer->shop_name ?? 'N/A',
+                    'field_staff_name' => $order->retailer->fieldStaff->user->name ?? 'N/A',
+                    'sales_manager'  => $order->retailer->fieldStaff->salesManager->user->name ?? 'N/A',
+                    'distributor_name' => $distributor->user->name ?? 'N/A',
+                    'distributor_contact' => $distributor->contact_no ?? $distributor->user->contact_no ?? null,
+                    'distributor_address' => $distributor->user->address ?? null,
                     'status'         => $order->status,
                     'payment_status' => $order->payment_status,
                     'cancellation_reason' => $order->cancellation_reason,

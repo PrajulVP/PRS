@@ -1335,7 +1335,17 @@ class ReportController extends Controller
     {
         switch ($type) {
             case 'orders':
-                $query = RetailerOrder::with(['retailer.user', 'retailer.area', 'retailer.district', 'distributor.user', 'fieldStaff.user', 'items.product']);
+                $query = RetailerOrder::with([
+                    'retailer.user',
+                    'retailer.area',
+                    'retailer.district',
+                    'retailer.fieldStaff.user',
+                    'retailer.fieldStaff.salesManager.user',
+                    'distributor.user',
+                    'fieldStaff.user',
+                    'fieldStaff.salesManager.user',
+                    'items.product',
+                ]);
                 return $this->applyGlobalFilters($query, $request);
             case 'distributors':
                 $query = Distributor::with('user');
@@ -1352,7 +1362,7 @@ class ReportController extends Controller
                     $this->applyGlobalFilters($q, $request);
                 }]);
             case 'retailers':
-                $query = Retailer::with(['user', 'fieldStaff.user']);
+                $query = Retailer::with(['user', 'area', 'district', 'fieldStaff.user', 'fieldStaff.salesManager.user']);
                 $this->applyGlobalFilters($query, $request, null);
                 return $query->withSum(['orders as total_sales' => function($q) use ($request) {
                     $this->applyGlobalFilters($q, $request);
@@ -1556,22 +1566,99 @@ class ReportController extends Controller
             }
 
             if ($type === 'orders') {
-                fputcsv($file, ['Order Code', 'Invoice No', 'Date', 'Retailer', 'Distributor', 'Staff', 'Volume (Units)', 'SKUs', 'Total Revenue', 'Tax Component', 'Status', 'Fulfillment Time']);
-                foreach ($data as $row) {
-                    $tax = $row->items->sum(fn($i) => ($i->product->gst / 100) * ($i->product->taxable_value * $i->quantity));
+                fputcsv($file, [
+                    'No.',
+                    'Order Code',
+                    'Invoice No',
+                    'Order Date',
+                    'Retailer Name',
+                    'Shop Name',
+                    'Area',
+                    'District',
+                    'Sales Manager',
+                    'Field Staff',
+                    'GST Number',
+                    'Drug License',
+                    'Distributor',
+                    'Products Summary',
+                    'Brand(s)',
+                    'Total Units',
+                    'Total SKUs',
+                    'Total Amount (INR)',
+                    'Tax Component (Est.)',
+                    'Order Status',
+                    'Payment Status',
+                    'Placed At',
+                    'Delivered At',
+                    'Fulfillment Time',
+                ]);
+                foreach ($data as $idx => $row) {
+                    // Retailer info
+                    $retailerName = $row->retailer->user->name ?? 'N/A';
+                    $shopName     = $row->retailer->shop_name ?? 'N/A';
+                    $area         = $row->retailer->area->name ?? 'N/A';
+                    $district     = $row->retailer->district->name ?? 'N/A';
+
+                    // Staff – prefer fieldStaff on order, fall back to retailer's assigned fieldStaff
+                    $fieldStaffName  = $row->fieldStaff->user->name
+                        ?? $row->retailer->fieldStaff->user->name
+                        ?? 'N/A';
+                    $salesManagerName = $row->fieldStaff->salesManager->user->name
+                        ?? $row->retailer->fieldStaff->salesManager->user->name
+                        ?? 'N/A';
+
+                    $distributor  = $row->distributor->user->name ?? 'N/A';
+                    $gst          = $row->retailer->gst ?? 'N/A';
+                    $dl           = $row->retailer->drug_license_no ?? 'N/A';
+
+                    // Products & brands summary
+                    $productsSummary = $row->items->map(function($item) {
+                        $name = $item->product->product_name ?? 'Unknown';
+                        $variant = array_filter([$item->side ?? null, $item->size ?? null]);
+                        $vTxt = !empty($variant) ? '[' . implode('/', $variant) . ']' : '';
+                        return "{$name}{$vTxt} x{$item->quantity}";
+                    })->implode('; ');
+
+                    $brands = $row->items->map(fn($i) => $i->product->brand ?? 'N/A')
+                        ->unique()->filter()->implode(', ');
+
+                    $totalUnits = $row->items->sum('quantity');
+                    $totalSku   = $row->items->count();
+
+                    $tax = $row->items->sum(fn($i) =>
+                        (($i->product->gst ?? 0) / 100) * (($i->product->taxable_value ?? 0) * $i->quantity));
+
+                    $fulfillment = $row->delivered_at
+                        ? ($row->placed_at->diffInDays($row->delivered_at) >= 1
+                            ? $row->placed_at->diffInDays($row->delivered_at) . ' day(s)'
+                            : $row->placed_at->diffForHumans($row->delivered_at, true))
+                        : 'Pending';
+
                     fputcsv($file, [
+                        $idx + 1,
                         $row->order_code,
                         $row->invoice_no ?? 'N/A',
-                        $row->placed_at->format('Y-m-d H:i'),
-                        $row->retailer->user->name ?? 'N/A',
-                        $row->distributor->user->name ?? 'N/A',
-                        $row->fieldStaff->user->name ?? 'N/A',
-                        $row->total_quantity,
-                        $row->total_items,
-                        $row->total_amount,
+                        $row->placed_at ? $row->placed_at->format('d M Y') : 'N/A',
+                        $retailerName,
+                        $shopName,
+                        $area,
+                        $district,
+                        $salesManagerName,
+                        $fieldStaffName,
+                        $gst,
+                        $dl,
+                        $distributor,
+                        $productsSummary ?: 'No Items',
+                        $brands ?: 'N/A',
+                        $totalUnits,
+                        $totalSku,
+                        number_format($row->total_amount, 2),
                         number_format($tax, 2),
-                        $row->status,
-                        $row->delivered_at ? ($row->placed_at->diffInDays($row->delivered_at) >= 1 ? ($d = $row->placed_at->diffInDays($row->delivered_at)) . ' ' . ($d == 1 ? 'day' : 'days') : $row->placed_at->diffForHumans($row->delivered_at, true)) : 'Pending'
+                        ucfirst($row->status),
+                        ucfirst($row->payment_status ?? 'N/A'),
+                        $row->placed_at ? $row->placed_at->format('d M Y H:i') : 'N/A',
+                        $row->delivered_at ? $row->delivered_at->format('d M Y H:i') : 'Pending',
+                        $fulfillment,
                     ]);
                 }
             } elseif ($type === 'distributors') {
@@ -1589,17 +1676,19 @@ class ReportController extends Controller
                     ]);
                 }
             } elseif ($type === 'retailers') {
-                fputcsv($file, ['Rank', 'Shop Name', 'Location/Area', 'Field Staff', 'GST Number', 'Drug License', 'Total Orders', 'Total Sales']);
+                fputcsv($file, ['Rank', 'Retailer Name', 'Shop Name', 'Location/Area', 'District', 'Field Staff', 'GST Number', 'Drug License', 'Total Orders', 'Total Sales']);
                 foreach ($data as $i => $row) {
                     fputcsv($file, [
-                        $i+1, 
-                        $row->shop_name, 
+                        $i+1,
+                        $row->user->name ?? 'N/A',
+                        $row->shop_name,
                         $row->area->name ?? 'N/A',
-                        $row->fieldStaff->name ?? 'N/A', 
-                        $row->gst,
-                        $row->drug_license_no,
-                        $row->total_orders, 
-                        $row->total_sales
+                        $row->district->name ?? 'N/A',
+                        $row->fieldStaff->user->name ?? 'N/A',
+                        $row->gst ?? 'N/A',
+                        $row->drug_license_no ?? 'N/A',
+                        $row->total_orders,
+                        number_format($row->total_sales ?? 0, 2),
                     ]);
                 }
             } elseif ($type === 'products') {

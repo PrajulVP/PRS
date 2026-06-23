@@ -659,7 +659,7 @@ class SalesManagerDashboardApiController extends Controller
         $salesManager = $user->salesManager;
         $fieldStaffIds = $salesManager->fieldStaffs->pluck('id');
 
-        $query = RetailerOrder::with(['retailer.user', 'fieldStaff.user', 'items.product', 'distributor.user'])
+        $query = RetailerOrder::with(['retailer.user', 'fieldStaff.user', 'items.product', 'distributor.user', 'distributor.area', 'distributor.district'])
             ->whereHas('retailer', function ($q) use ($fieldStaffIds) {
                 $q->whereIn('field_staff_id', $fieldStaffIds);
             })->orWhereIn('fieldstaff_id', $fieldStaffIds);
@@ -675,21 +675,29 @@ class SalesManagerDashboardApiController extends Controller
         $orders = $query->latest()->get();
 
         return response()->json($orders->map(function ($order) {
+            $distributor = $order->distributor;
             return [
                 'id' => $order->id,
                 'order_code' => $order->order_code,
                 'retailer_id' => $order->retailer_id,
                 'distributor_id' => $order->distributor_id,
                 'retailer_name' => $order->retailer->user->name ?? 'N/A',
+                'retailer_shop' => $order->retailer->shop_name ?? 'N/A',
                 'field_staff_name' => $order->fieldStaff->user->name ?? 'N/A',
+                'sales_manager' => $order->fieldStaff->salesManager->user->name ?? 'N/A',
+                'distributor_name' => $distributor->user->name ?? 'N/A',
+                'distributor_contact' => $distributor->contact_no ?? $distributor->user->contact_no ?? null,
+                'distributor_address' => $distributor->user->address ?? null,
                 'total_amount' => $order->total_amount,
                 'status' => $order->status,
+                'payment_status' => $order->payment_status ?? null,
                 'placed_at' => $order->placed_at ? $order->placed_at->format('Y-m-d H:i:s') : null,
                 'items' => $order->items->map(function ($item) {
                     return [
                         'id' => $item->id,
                         'product_id' => $item->product_id,
                         'product_name' => $item->product_name ?? $item->product->product_name ?? 'N/A',
+                        'brand' => $item->product->brand ?? null,
                         'quantity' => $item->quantity,
                         'free_quantity' => $item->free_quantity,
                         'unit' => $item->unit ?? 'Nos',

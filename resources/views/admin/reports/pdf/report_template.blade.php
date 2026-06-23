@@ -144,16 +144,25 @@
         <thead>
             @if($type === 'orders')
                 <tr>
-                    <th>Ref Code</th>
+                    <th>#</th>
+                    <th>Order Code</th>
                     <th>Invoice No</th>
-                    <th>Order Date</th>
-                    <th>Retailer / Distributor</th>
-                    <th class="text-right">Volume (Qty/SKU)</th>
-                    <th class="text-right">Sales Value (₹)</th>
+                    <th>Date</th>
+                    <th>Retailer Name</th>
+                    <th>Shop Name</th>
+                    <th>Area / District</th>
+                    <th>Sales Manager</th>
+                    <th>Field Staff</th>
+                    <th>Distributor</th>
+                    <th>Products</th>
+                    <th>Brand(s)</th>
+                    <th class="text-right">Units / SKUs</th>
+                    <th class="text-right">Amount (₹)</th>
                     @if($isManagement)
-                    <th class="text-right">Tax (Est.)</th>
+                    <th class="text-right">Tax (₹)</th>
                     @endif
-                    <th class="text-right">Status / Fulfillment</th>
+                    <th>Status</th>
+                    <th>Payment</th>
                 </tr>
             @elseif($type === 'distributors')
                 <tr>
@@ -167,11 +176,12 @@
             @elseif($type === 'retailers')
                 <tr>
                     <th>No.</th>
-                    <th>Shop & Location</th>
+                    <th>Retailer Name / Shop</th>
+                    <th>Area / District</th>
                     @if($isManagement)
                     <th>Regulatory Profile</th>
                     @endif
-                    <th>Personnel</th>
+                    <th>Field Staff</th>
                     <th class="text-right">Orders</th>
                     <th class="text-right">Revenue (₹)</th>
                 </tr>
@@ -212,30 +222,58 @@
             @foreach($data as $index => $row)
                 <tr>
                     @if($type === 'orders')
+                        @php
+                            $retailerName   = $row->retailer->user->name ?? 'N/A';
+                            $shopName       = $row->retailer->shop_name ?? 'N/A';
+                            $area           = $row->retailer->area->name ?? 'N/A';
+                            $district       = $row->retailer->district->name ?? 'N/A';
+                            $salesManager   = $row->fieldStaff->salesManager->user->name
+                                ?? $row->retailer->fieldStaff->salesManager->user->name
+                                ?? 'N/A';
+                            $fieldStaffName = $row->fieldStaff->user->name
+                                ?? $row->retailer->fieldStaff->user->name
+                                ?? 'N/A';
+                            $distributor    = $row->distributor->user->name ?? 'N/A';
+                            $productsSummary = $row->items->map(function($item) {
+                                $name = $item->product->product_name ?? 'Unknown';
+                                $variant = array_filter([$item->side ?? null, $item->size ?? null]);
+                                $vTxt = !empty($variant) ? ' ['.implode('/', $variant).']' : '';
+                                return $name . $vTxt . ' x' . $item->quantity;
+                            })->implode(', ');
+                            $brands = $row->items->map(fn($i) => $i->product->brand ?? null)->unique()->filter()->implode(', ');
+                            $totalUnits = $row->items->sum('quantity');
+                            $totalSku   = $row->items->count();
+                            $tax = $row->items->sum(fn($i) => (($i->product->gst ?? 0) / 100) * (($i->product->taxable_value ?? 0) * $i->quantity));
+                        @endphp
+                        <td>{{ $index + 1 }}</td>
                         <td class="fw-bold">{{ $row->order_code }}</td>
-                        <td class="fw-bold" style="color: #00497a;">{{ $row->invoice_no ?? 'N/A' }}</td>
-                        <td>{{ $row->placed_at->format('M d, Y') }}</td>
+                        <td style="color: #00497a;">{{ $row->invoice_no ?? 'N/A' }}</td>
+                        <td>{{ $row->placed_at ? $row->placed_at->format('M d, Y') : 'N/A' }}</td>
+                        <td class="fw-bold">{{ $retailerName }}</td>
+                        <td>{{ $shopName }}</td>
                         <td>
-                            <div class="fw-bold">{{ $row->retailer->user->name ?? 'N/A' }}</div>
-                            <div style="font-size: 8pt; color: #666;">via {{ $row->distributor->user->name ?? 'N/A' }}</div>
+                            <div>{{ $area }}</div>
+                            <div style="font-size: 7pt; color: #666;">{{ $district }}</div>
                         </td>
+                        <td>{{ $salesManager }}</td>
+                        <td>{{ $fieldStaffName }}</td>
+                        <td>{{ $distributor }}</td>
+                        <td style="font-size: 7pt;">{{ $productsSummary ?: 'No Items' }}</td>
+                        <td style="font-size: 7pt;">{{ $brands ?: 'N/A' }}</td>
                         <td class="text-right">
-                            <span class="fw-bold">{{ $row->total_quantity }} Units</span><br>
-                            <span style="font-size: 8pt; color: #666;">{{ $row->total_items }} SKUs</span>
+                            <span class="fw-bold">{{ $totalUnits }} Units</span><br>
+                            <span style="font-size: 7pt; color: #666;">{{ $totalSku }} SKUs</span>
                         </td>
                         <td class="text-right fw-bold">{{ number_format($row->total_amount, 2) }}</td>
                         @if($isManagement)
-                        <td class="text-right" style="font-size: 8pt; color: #666;">
-                            @php 
-                                $tax = $row->items->sum(fn($i) => ($i->product->gst / 100) * ($i->product->taxable_value * $i->quantity));
-                            @endphp
+                        <td class="text-right" style="font-size: 7pt; color: #666;">
                             ₹{{ number_format($tax, 2) }}
                         </td>
                         @endif
-                        <td class="text-right">
-                             <span class="badge status-{{ $row->status }}">{{ strtoupper($row->status) }}</span><br>
-                             <small style="color: #666;">{{ $row->delivered_at ? ($row->placed_at->diffInDays($row->delivered_at) >= 1 ? ($d = $row->placed_at->diffInDays($row->delivered_at)) . ' ' . ($d == 1 ? 'day' : 'days') : $row->placed_at->diffForHumans($row->delivered_at, true)) : 'Pending' }}</small>
+                        <td>
+                            <span class="badge status-{{ $row->status }}">{{ strtoupper($row->status) }}</span>
                         </td>
+                        <td style="font-size: 7pt;">{{ ucfirst($row->payment_status ?? 'N/A') }}</td>
                     @elseif($type === 'distributors')
                         <td>{{ $index + 1 }}</td>
                         <td class="fw-bold">{{ $row->user->name ?? $row->name }}</td>
@@ -253,8 +291,12 @@
                     @elseif($type === 'retailers')
                         <td>{{ $index + 1 }}</td>
                         <td>
-                            <div class="fw-bold">{{ $row->shop_name }}</div>
-                            <div style="font-size: 8pt; color: #666;">{{ $row->area->name ?? 'N/A' }}</div>
+                            <div class="fw-bold">{{ $row->user->name ?? 'N/A' }}</div>
+                            <div style="font-size: 8pt; color: #666;">{{ $row->shop_name }}</div>
+                        </td>
+                        <td>
+                            <div>{{ $row->area->name ?? 'N/A' }}</div>
+                            <div style="font-size: 8pt; color: #666;">{{ $row->district->name ?? 'N/A' }}</div>
                         </td>
                         @if($isManagement)
                         <td style="font-size: 8pt; line-height: 1.2;">

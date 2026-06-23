@@ -30,7 +30,7 @@ class FieldStaffRetailerOrderController extends Controller
 
         $fieldStaffId = $user->fieldStaff->id;
 
-        $query = RetailerOrder::with(['retailer.user', 'items.product', 'distributor.user'])
+        $query = RetailerOrder::with(['retailer.user', 'items.product', 'distributor.user', 'distributor.area', 'distributor.district'])
             ->whereHas('retailer', function ($qr) use ($fieldStaffId) {
                 $qr->where('field_staff_id', $fieldStaffId);
             });
@@ -42,29 +42,38 @@ class FieldStaffRetailerOrderController extends Controller
         $orders = $query->latest()->get();
 
         return response()->json($orders->map(function ($order) {
+            $distributor = $order->distributor;
             return [
-                'id' => $order->id,
-                'order_code' => $order->order_code,
-                'retailer_id' => $order->retailer_id,
+                'id'             => $order->id,
+                'order_code'     => $order->order_code,
+                'retailer_id'    => $order->retailer_id,
                 'distributor_id' => $order->distributor_id,
-                'retailer_name' => $order->retailer->user->name ?? 'N/A',
-                'total_amount' => $order->total_amount,
-                'status' => $order->status,
-                'placed_at' => $order->placed_at ? $order->placed_at->format('Y-m-d H:i:s') : null,
-                'items' => $order->items->map(function ($item) {
+                'retailer_name'  => $order->retailer->user->name ?? 'N/A',
+                'retailer_shop'  => $order->retailer->shop_name ?? 'N/A',
+                'field_staff_name' => $order->retailer->fieldStaff->user->name ?? 'N/A',
+                'sales_manager'  => $order->retailer->fieldStaff->salesManager->user->name ?? 'N/A',
+                'distributor_name' => $distributor->user->name ?? 'N/A',
+                'distributor_contact' => $distributor->contact_no ?? $distributor->user->contact_no ?? null,
+                'distributor_address' => $distributor->user->address ?? null,
+                'total_amount'   => $order->total_amount,
+                'status'         => $order->status,
+                'payment_status' => $order->payment_status ?? null,
+                'placed_at'      => $order->placed_at ? $order->placed_at->format('Y-m-d H:i:s') : null,
+                'items'          => $order->items->map(function ($item) {
                     return [
-                        'id' => $item->id,
-                        'product_id' => $item->product_id,
+                        'id'           => $item->id,
+                        'product_id'   => $item->product_id,
                         'product_name' => $item->product_name ?? $item->product->product_name ?? 'N/A',
-                        'quantity' => $item->quantity,
+                        'brand'        => $item->product->brand ?? null,
+                        'quantity'     => $item->quantity,
                         'free_quantity' => $item->free_quantity,
-                        'unit' => $item->unit ?? 'Nos',
-                        'side' => $item->side,
-                        'size' => $item->size,
-                        'unit_price' => $item->unit_price,
-                        'total_amount' => $item->total_amount
+                        'unit'         => $item->unit ?? 'Nos',
+                        'side'         => $item->side,
+                        'size'         => $item->size,
+                        'unit_price'   => $item->unit_price,
+                        'total_amount' => $item->total_amount,
                     ];
-                })
+                }),
             ];
         }));
     }
@@ -86,12 +95,58 @@ class FieldStaffRetailerOrderController extends Controller
 
         $fieldStaffId = $user->fieldStaff->id;
 
-        $order = RetailerOrder::with(['retailer.user', 'items.product', 'distributor.user'])
+        $order = RetailerOrder::with(['retailer.user', 'retailer.area', 'retailer.district', 'items.product', 'distributor.user', 'distributor.area', 'distributor.district'])
             ->whereHas('retailer', function ($qr) use ($fieldStaffId) {
                 $qr->where('field_staff_id', $fieldStaffId);
             })->findOrFail($id);
 
-        return response()->json($order);
+        $distributor = $order->distributor;
+
+        return response()->json([
+            'id'             => $order->id,
+            'order_code'     => $order->order_code,
+            'retailer_id'    => $order->retailer_id,
+            'distributor_id' => $order->distributor_id,
+            'retailer_name'  => $order->retailer->user->name ?? 'N/A',
+            'retailer_shop'  => $order->retailer->shop_name ?? 'N/A',
+            'field_staff_name' => $order->retailer->fieldStaff->user->name ?? 'N/A',
+            'sales_manager'  => $order->retailer->fieldStaff->salesManager->user->name ?? 'N/A',
+            'distributor_name' => $distributor->user->name ?? 'N/A',
+            'distributor_contact' => $distributor->contact_no ?? $distributor->user->contact_no ?? null,
+            'distributor_address' => $distributor->user->address ?? null,
+            'retailer'       => [
+                'id'         => $order->retailer->id,
+                'name'       => $order->retailer->user->name ?? 'N/A',
+                'shop_name'  => $order->retailer->shop_name ?? 'N/A',
+                'contact'    => $order->retailer->contact_no ?? $order->retailer->user->contact_no ?? null,
+                'area'       => $order->retailer->area->name ?? null,
+                'district'   => $order->retailer->district->name ?? null,
+            ],
+            'total_amount'   => $order->total_amount,
+            'status'         => $order->status,
+            'payment_status' => $order->payment_status ?? null,
+            'placed_at'      => $order->placed_at ? $order->placed_at->format('Y-m-d H:i:s') : null,
+            'delivered_at'   => $order->delivered_at ? $order->delivered_at->format('Y-m-d H:i:s') : null,
+            'delivery_notes' => $order->delivery_notes ?? null,
+            'invoice_url'    => $order->invoice_url ?? null,
+            'items'          => $order->items->map(function ($item) {
+                return [
+                    'id'            => $item->id,
+                    'product_id'    => $item->product_id,
+                    'product_name'  => $item->product_name ?? $item->product->product_name ?? 'N/A',
+                    'product_code'  => $item->product->product_code ?? null,
+                    'brand'         => $item->product->brand ?? null,
+                    'quantity'      => $item->quantity,
+                    'free_quantity' => $item->free_quantity,
+                    'unit'          => $item->unit ?? 'Nos',
+                    'side'          => $item->side,
+                    'size'          => $item->size,
+                    'unit_price'    => $item->unit_price,
+                    'total_amount'  => $item->total_amount,
+                    'mrp'           => $item->product->mrp ?? null,
+                ];
+            }),
+        ]);
     }
 
     /**
