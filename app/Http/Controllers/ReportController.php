@@ -284,7 +284,7 @@ class ReportController extends Controller
                 $query = DistributorOrder::with(['distributor.user', 'salesManager.user', 'items.product'])
                     ->select('distributor_orders.*');
             } else {
-                $query = RetailerOrder::with(['retailer.user', 'distributor.user', 'fieldStaff.user', 'items.product'])
+                $query = RetailerOrder::with(['retailer.user', 'retailer.area', 'retailer.district', 'distributor.user', 'fieldStaff.user', 'items.product'])
                     ->select('retailer_orders.*');
             }
 
@@ -601,24 +601,100 @@ class ReportController extends Controller
         abort_if(!$user->hasPermissionToCategory('retailer_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
         
         if ($request->ajax()) {
+            [$fromDate, $toDate] = $this->getFilterDates($request);
+
             $query = Area::query()
                 ->leftJoin('districts', 'areas.district_id', '=', 'districts.id')
                 ->select('areas.*', 'districts.name as district_name')
-                ->withCount('retailers');
+                ->whereHas('retailers', function($q) use ($request) {
+                    if ($request->sales_manager_id) {
+                        $q->whereHas('fieldStaff', function($fsQ) use ($request) {
+                            $fsQ->where('sales_manager_id', $request->sales_manager_id);
+                        });
+                    }
+                    if ($request->fieldstaff_id) {
+                        $q->where('field_staff_id', $request->fieldstaff_id);
+                    }
+                    if ($request->distributor_id) {
+                        $q->where('distributor_id', $request->distributor_id);
+                    }
+                    if ($request->retailer_id) {
+                        $q->where('id', $request->retailer_id);
+                    }
+                })
+                ->withCount(['retailers' => function($q) use ($request) {
+                    if ($request->sales_manager_id) {
+                        $q->whereHas('fieldStaff', function($fsQ) use ($request) {
+                            $fsQ->where('sales_manager_id', $request->sales_manager_id);
+                        });
+                    }
+                    if ($request->fieldstaff_id) {
+                        $q->where('field_staff_id', $request->fieldstaff_id);
+                    }
+                    if ($request->distributor_id) {
+                        $q->where('distributor_id', $request->distributor_id);
+                    }
+                    if ($request->retailer_id) {
+                        $q->where('id', $request->retailer_id);
+                    }
+                }]);
             
             return DataTables::of($query)
                 ->addColumn('retailer_count', fn($area) => $area->retailers_count)
-                ->addColumn('total_revenue', function($area) use ($request) {
-                    $orderQuery = RetailerOrder::whereHas('retailer', function($q) use ($area) {
-                        $q->where('area_id', $area->id);
-                    })->where('status', RetailerOrder::STATUS_DELIVERED);
-                    
-                    [$f, $t] = $this->getFilterDates($request);
-                    if ($f && $t) {
-                        $orderQuery->whereBetween('created_at', [$f, $t]);
+                ->addColumn('total_revenue', function($area) use ($request, $fromDate, $toDate) {
+                    if ($request->brand) {
+                        $total = \App\Models\RetailerOrderItem::whereHas('retailerOrder', function($q) use ($area, $request, $fromDate, $toDate) {
+                            $q->where('status', RetailerOrder::STATUS_DELIVERED);
+                            if ($fromDate && $toDate) {
+                                $q->whereBetween('placed_at', [$fromDate, $toDate]);
+                            }
+                            $q->whereHas('retailer', function($retQ) use ($area, $request) {
+                                $retQ->where('area_id', $area->id);
+                                if ($request->sales_manager_id) {
+                                    $retQ->whereHas('fieldStaff', function($fsQ) use ($request) {
+                                        $fsQ->where('sales_manager_id', $request->sales_manager_id);
+                                    });
+                                }
+                                if ($request->fieldstaff_id) {
+                                    $retQ->where('field_staff_id', $request->fieldstaff_id);
+                                }
+                                if ($request->distributor_id) {
+                                    $retQ->where('distributor_id', $request->distributor_id);
+                                }
+                                if ($request->retailer_id) {
+                                    $retQ->where('id', $request->retailer_id);
+                                }
+                            });
+                        })
+                        ->whereHas('product', function($prodQ) use ($request) {
+                            $prodQ->where('brand', $request->brand);
+                        })
+                        ->sum('total_amount');
+                    } else {
+                        $orderQuery = RetailerOrder::whereHas('retailer', function($q) use ($area, $request) {
+                            $q->where('area_id', $area->id);
+                            if ($request->sales_manager_id) {
+                                $q->whereHas('fieldStaff', function($fsQ) use ($request) {
+                                    $fsQ->where('sales_manager_id', $request->sales_manager_id);
+                                });
+                            }
+                            if ($request->fieldstaff_id) {
+                                $q->where('field_staff_id', $request->fieldstaff_id);
+                            }
+                            if ($request->distributor_id) {
+                                $q->where('distributor_id', $request->distributor_id);
+                            }
+                            if ($request->retailer_id) {
+                                $q->where('id', $request->retailer_id);
+                            }
+                        })->where('status', RetailerOrder::STATUS_DELIVERED);
+                        
+                        if ($fromDate && $toDate) {
+                            $orderQuery->whereBetween('placed_at', [$fromDate, $toDate]);
+                        }
+                        
+                        $total = $orderQuery->sum('total_amount');
                     }
-                    
-                    $total = $orderQuery->sum('total_amount');
                     return '₹' . number_format($total, 2);
                 })
                 ->rawColumns(['total_revenue'])
@@ -626,7 +702,12 @@ class ReportController extends Controller
         }
 
         $salesManagers = SalesManager::with('user')->get();
-        return view('admin.reports.areas', compact('salesManagers'));
+        $distributors = Distributor::with('user')->get();
+        $fieldStaffs = FieldStaff::with('user')->get();
+        $retailers = Retailer::with('user')->get();
+        $availableBrands = array_filter(array_map('trim', explode(',', \App\Models\Setting::getValue('product_brands') ?? '')));
+        
+        return view('admin.reports.areas', compact('salesManagers', 'distributors', 'fieldStaffs', 'retailers', 'availableBrands'));
     }
 
     public function fieldStaffReports(Request $request)
@@ -1208,6 +1289,10 @@ class ReportController extends Controller
             'fieldstaffs' => [
                 'title' => 'Personnel Performance & Productivity Matrix',
                 'subtitle' => 'Comprehensive analysis of staff productivity, retailer coverage, and revenue'
+            ],
+            'areas' => [
+                'title' => 'Territory Sales Intelligence Report',
+                'subtitle' => 'Geographical sales distribution and outlet coverage analysis by area'
             ]
         ];
 
@@ -1250,7 +1335,7 @@ class ReportController extends Controller
     {
         switch ($type) {
             case 'orders':
-                $query = RetailerOrder::with(['retailer.user', 'distributor.user', 'fieldStaff.user', 'items.product']);
+                $query = RetailerOrder::with(['retailer.user', 'retailer.area', 'retailer.district', 'distributor.user', 'fieldStaff.user', 'items.product']);
                 return $this->applyGlobalFilters($query, $request);
             case 'distributors':
                 $query = Distributor::with('user');
@@ -1329,6 +1414,43 @@ class ReportController extends Controller
                 }], 'total_amount')->withCount(['retailerOrders as total_orders' => function($q) use ($request) {
                     $this->applyGlobalFilters($q, $request);
                 }])->withCount(['retailers as total_retailers']);
+            case 'areas':
+                $query = Area::query()
+                    ->leftJoin('districts', 'areas.district_id', '=', 'districts.id')
+                    ->select('areas.*', 'districts.name as district_name')
+                    ->whereHas('retailers', function($q) use ($request) {
+                        if ($request->sales_manager_id) {
+                            $q->whereHas('fieldStaff', function($fsQ) use ($request) {
+                                $fsQ->where('sales_manager_id', $request->sales_manager_id);
+                            });
+                        }
+                        if ($request->fieldstaff_id) {
+                            $q->where('field_staff_id', $request->fieldstaff_id);
+                        }
+                        if ($request->distributor_id) {
+                            $q->where('distributor_id', $request->distributor_id);
+                        }
+                        if ($request->retailer_id) {
+                            $q->where('id', $request->retailer_id);
+                        }
+                    })
+                    ->withCount(['retailers' => function($q) use ($request) {
+                        if ($request->sales_manager_id) {
+                            $q->whereHas('fieldStaff', function($fsQ) use ($request) {
+                                $fsQ->where('sales_manager_id', $request->sales_manager_id);
+                            });
+                        }
+                        if ($request->fieldstaff_id) {
+                            $q->where('field_staff_id', $request->fieldstaff_id);
+                        }
+                        if ($request->distributor_id) {
+                            $q->where('distributor_id', $request->distributor_id);
+                        }
+                        if ($request->retailer_id) {
+                            $q->where('id', $request->retailer_id);
+                        }
+                    }]);
+                return $query;
             default:
                 return RetailerOrder::query();
         }
@@ -1392,6 +1514,12 @@ class ReportController extends Controller
                     3 => 'total_retailers',
                     4 => 'total_orders',
                     5 => 'total_revenue'
+                ];
+            case 'areas':
+                return [
+                    1 => 'areas.name',
+                    2 => 'districts.name',
+                    3 => 'retailers_count'
                 ];
             default:
                 return [];
@@ -1516,6 +1644,72 @@ class ReportController extends Controller
                         $row->total_orders ? number_format($row->total_revenue / $row->total_orders, 2) : 0,
                         $row->total_orders,
                         $row->total_revenue
+                    ]);
+                }
+            } elseif ($type === 'areas') {
+                fputcsv($file, ['No.', 'Area Name', 'District', 'Retailer Base', 'Aggregate Revenue']);
+                [$fromDate, $toDate] = $this->getFilterDates(request());
+                foreach ($data as $i => $row) {
+                    if (request()->brand) {
+                        $total = RetailerOrderItem::whereHas('retailerOrder', function($q) use ($row, $fromDate, $toDate) {
+                            $q->where('status', RetailerOrder::STATUS_DELIVERED);
+                            if ($fromDate && $toDate) {
+                                $q->whereBetween('placed_at', [$fromDate, $toDate]);
+                            }
+                            $q->whereHas('retailer', function($retQ) use ($row) {
+                                $retQ->where('area_id', $row->id);
+                                if (request()->sales_manager_id) {
+                                    $retQ->whereHas('fieldStaff', function($fsQ) {
+                                        $fsQ->where('sales_manager_id', request()->sales_manager_id);
+                                    });
+                                }
+                                if (request()->fieldstaff_id) {
+                                    $retQ->where('field_staff_id', request()->fieldstaff_id);
+                                }
+                                if (request()->distributor_id) {
+                                    $retQ->where('distributor_id', request()->distributor_id);
+                                }
+                                if (request()->retailer_id) {
+                                    $retQ->where('id', request()->retailer_id);
+                                }
+                            });
+                        })
+                        ->whereHas('product', function($prodQ) {
+                            $prodQ->where('brand', request()->brand);
+                        })
+                        ->sum('total_amount');
+                    } else {
+                        $orderQuery = RetailerOrder::whereHas('retailer', function($q) use ($row) {
+                            $q->where('area_id', $row->id);
+                            if (request()->sales_manager_id) {
+                                $q->whereHas('fieldStaff', function($fsQ) {
+                                    $fsQ->where('sales_manager_id', request()->sales_manager_id);
+                                });
+                            }
+                            if (request()->fieldstaff_id) {
+                                $q->where('field_staff_id', request()->fieldstaff_id);
+                            }
+                            if (request()->distributor_id) {
+                                $q->where('distributor_id', request()->distributor_id);
+                            }
+                            if (request()->retailer_id) {
+                                $q->where('id', request()->retailer_id);
+                            }
+                        })->where('status', RetailerOrder::STATUS_DELIVERED);
+                        
+                        if ($fromDate && $toDate) {
+                            $orderQuery->whereBetween('placed_at', [$fromDate, $toDate]);
+                        }
+                        
+                        $total = $orderQuery->sum('total_amount');
+                    }
+
+                    fputcsv($file, [
+                        $i+1,
+                        $row->name,
+                        $row->district_name ?? 'N/A',
+                        $row->retailers_count . ' Outlets',
+                        '₹' . number_format($total, 2)
                     ]);
                 }
             }

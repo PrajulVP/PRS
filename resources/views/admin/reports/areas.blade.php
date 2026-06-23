@@ -24,10 +24,14 @@
     @include('admin.reports.partials._filters', [
         'reportType' => 'areas',
         'salesManagers' => $salesManagers,
-        'showManager' => false,
-        'showDistributor' => false,
-        'showRetailer' => false,
-        'showStaff' => false,
+        'fieldStaffs' => $fieldStaffs,
+        'retailers' => $retailers,
+        'distributors' => $distributors,
+        'availableBrands' => $availableBrands,
+        'showManager' => true,
+        'showDistributor' => true,
+        'showRetailer' => true,
+        'showStaff' => true,
         'showStatus' => false
     ])
 
@@ -70,6 +74,10 @@
                     d.from_date = $('#from_date').val();
                     d.to_date = $('#to_date').val();
                     d.sales_manager_id = $('#sales_manager_id').val();
+                    d.fieldstaff_id = $('#fieldstaff_id').val();
+                    d.distributor_id = $('#distributor_id').val();
+                    d.retailer_id = $('#retailer_id').val();
+                    d.brand = $('#brand').val();
                     d.period = $('.preset-btn.active').data('range');
                 }
             },

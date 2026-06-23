@@ -198,6 +198,14 @@
                     <th class="text-right">Orders</th>
                     <th class="text-right">Revenue (₹)</th>
                 </tr>
+            @elseif($type === 'areas')
+                <tr>
+                    <th>No.</th>
+                    <th>Area Name</th>
+                    <th>District</th>
+                    <th class="text-right">Retailer Base</th>
+                    <th class="text-right">Aggregate Revenue (₹)</th>
+                </tr>
             @endif
         </thead>
         <tbody>
@@ -303,6 +311,72 @@
                         <td class="text-right fw-bold text-primary">₹{{ $row->total_orders ? number_format($row->total_revenue / $row->total_orders, 2) : '0.00' }}</td>
                         <td class="text-right">{{ $row->total_orders ?? 0 }}</td>
                         <td class="text-right fw-bold">{{ number_format($row->total_revenue ?? 0, 2) }}</td>
+                    @elseif($type === 'areas')
+                        <td>{{ $index + 1 }}</td>
+                        <td class="fw-bold">{{ $row->name }}</td>
+                        <td>{{ $row->district_name ?? 'N/A' }}</td>
+                        <td class="text-right">
+                            <span class="fw-bold">{{ $row->retailers_count ?? 0 }} Outlets</span>
+                        </td>
+                        <td class="text-right fw-bold">
+                            @php
+                                [$fromDate, $toDate] = (new \App\Http\Controllers\ReportController)->getFilterDates(request());
+                                if (request('brand')) {
+                                    $total = \App\Models\RetailerOrderItem::whereHas('retailerOrder', function($q) use ($row, $fromDate, $toDate) {
+                                        $q->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED);
+                                        if ($fromDate && $toDate) {
+                                            $q->whereBetween('placed_at', [$fromDate, $toDate]);
+                                        }
+                                        $q->whereHas('retailer', function($retQ) use ($row) {
+                                            $retQ->where('area_id', $row->id);
+                                            if (request('sales_manager_id')) {
+                                                $retQ->whereHas('fieldStaff', function($fsQ) {
+                                                    $fsQ->where('sales_manager_id', request('sales_manager_id'));
+                                                });
+                                            }
+                                            if (request('fieldstaff_id')) {
+                                                $retQ->where('field_staff_id', request('fieldstaff_id'));
+                                            }
+                                            if (request('distributor_id')) {
+                                                $retQ->where('distributor_id', request('distributor_id'));
+                                            }
+                                            if (request('retailer_id')) {
+                                                $retQ->where('id', request('retailer_id'));
+                                            }
+                                        });
+                                    })
+                                    ->whereHas('product', function($prodQ) {
+                                        $prodQ->where('brand', request('brand'));
+                                    })
+                                    ->sum('total_amount');
+                                } else {
+                                    $orderQuery = \App\Models\RetailerOrder::whereHas('retailer', function($q) use ($row) {
+                                        $q->where('area_id', $row->id);
+                                        if (request('sales_manager_id')) {
+                                            $q->whereHas('fieldStaff', function($fsQ) {
+                                                $fsQ->where('sales_manager_id', request('sales_manager_id'));
+                                            });
+                                        }
+                                        if (request('fieldstaff_id')) {
+                                            $q->where('field_staff_id', request('fieldstaff_id'));
+                                        }
+                                        if (request('distributor_id')) {
+                                            $q->where('distributor_id', request('distributor_id'));
+                                        }
+                                        if (request('retailer_id')) {
+                                            $q->where('id', request('retailer_id'));
+                                        }
+                                    })->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED);
+                                    
+                                    if ($fromDate && $toDate) {
+                                        $orderQuery->whereBetween('placed_at', [$fromDate, $toDate]);
+                                    }
+                                    
+                                    $total = $orderQuery->sum('total_amount');
+                                }
+                            @endphp
+                            ₹{{ number_format($total, 2) }}
+                        </td>
                     @endif
                 </tr>
             @endforeach

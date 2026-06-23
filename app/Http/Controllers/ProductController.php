@@ -197,11 +197,13 @@ class ProductController extends Controller
         $variantOptions = [];
         if ($request->filled('variant_name_1') && $request->filled('variant_values_1')) {
             $data['has_variants'] = true;
-            $vals = array_map('trim', explode(',', $request->variant_values_1));
+            $v1 = $request->variant_values_1;
+            $vals = is_array($v1) ? array_map('trim', $v1) : array_map('trim', explode(',', $v1));
             $variantOptions[trim($request->variant_name_1)] = $vals;
 
             if ($request->filled('variant_name_2') && $request->filled('variant_values_2')) {
-                $vals2 = array_map('trim', explode(',', $request->variant_values_2));
+                $v2 = $request->variant_values_2;
+                $vals2 = is_array($v2) ? array_map('trim', $v2) : array_map('trim', explode(',', $v2));
                 $variantOptions[trim($request->variant_name_2)] = $vals2;
             }
         }
@@ -265,11 +267,13 @@ class ProductController extends Controller
         $variantOptions = [];
         if ($request->filled('variant_name_1') && $request->filled('variant_values_1')) {
             $data['has_variants'] = true;
-            $vals = array_map('trim', explode(',', $request->variant_values_1));
+            $v1 = $request->variant_values_1;
+            $vals = is_array($v1) ? array_map('trim', $v1) : array_map('trim', explode(',', $v1));
             $variantOptions[trim($request->variant_name_1)] = $vals;
 
             if ($request->filled('variant_name_2') && $request->filled('variant_values_2')) {
-                $vals2 = array_map('trim', explode(',', $request->variant_values_2));
+                $v2 = $request->variant_values_2;
+                $vals2 = is_array($v2) ? array_map('trim', $v2) : array_map('trim', explode(',', $v2));
                 $variantOptions[trim($request->variant_name_2)] = $vals2;
             }
         } else {

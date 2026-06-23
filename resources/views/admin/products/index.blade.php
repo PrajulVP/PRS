@@ -139,6 +139,56 @@
     
     body.dark-only .detail-section-title {
         color: #f1f5f9 !important;
+        border-left-color: var(--bs-primary) !important;
+    }
+    
+    /* Fix Select2 Double Scrollbar in Modals */
+    .select2-container--open {
+        z-index: 9999999 !important;
+    }
+
+    /* Select2 Modern Tags UI */
+    .select2-container--default .select2-selection--multiple {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        min-height: 42px;
+        padding: 4px 6px;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: var(--bs-primary) !important;
+        border: none !important;
+        color: white !important;
+        border-radius: 50rem !important;
+        padding: 4px 12px !important;
+        margin-top: 4px !important;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-flex !important;
+        align-items: center;
+        flex-direction: row-reverse; /* Put remove button on right */
+        gap: 6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        color: rgba(255, 255, 255, 0.7) !important;
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        position: static !important;
+        font-size: 1.1rem !important;
+        font-weight: 400;
+        line-height: 1;
+        margin: 0 !important;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+        color: white !important;
+        background: transparent !important;
+    }
+    .select2-container--default.select2-container--focus .select2-selection--multiple {
+        border-color: #86b7fe;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
     }
 
     .detail-generic-formulation {
@@ -443,14 +493,26 @@
                             <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Variant Configuration (Optional)</h6>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label fw-medium small">Sides (comma separated)</label>
+                                    <label class="form-label fw-medium small">Sides</label>
                                     <input type="hidden" name="variant_name_1" value="Side">
-                                    <input type="text" name="variant_values_1" id="create_variant_values_1" class="form-control" placeholder="e.g. LEFT, RIGHT">
+                                    <select name="variant_values_1[]" id="create_variant_values_1" class="form-select select2-variants" multiple="multiple" data-placeholder="Select Sides (e.g. LEFT, RIGHT)">
+                                        <option value="LEFT">LEFT</option>
+                                        <option value="RIGHT">RIGHT</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label fw-medium small">Sizes (comma separated)</label>
+                                    <label class="form-label fw-medium small">Sizes</label>
                                     <input type="hidden" name="variant_name_2" value="Size">
-                                    <input type="text" name="variant_values_2" id="create_variant_values_2" class="form-control" placeholder="e.g. S, M, L, XL">
+                                    <select name="variant_values_2[]" id="create_variant_values_2" class="form-select select2-variants" multiple="multiple" data-placeholder="Select Sizes (e.g. S, M, L, XL)">
+                                        <option value="S">S</option>
+                                        <option value="M">M</option>
+                                        <option value="L">L</option>
+                                        <option value="XL">XL</option>
+                                        <option value="XXL">XXL</option>
+                                        <option value="XXXL">XXXL</option>
+                                        <option value="UNIVERSAL">UNIVERSAL</option>
+                                        <option value="FREE SIZE">FREE SIZE</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -517,7 +579,6 @@
                                     @foreach($availableBrands as $brand)
                                         <option value="{{ $brand }}">{{ $brand }}</option>
                                     @endforeach
-                                    <option value="Other">Other</option>
                                 </select>
                             </div>
                         </div>
@@ -578,14 +639,26 @@
                             <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Variant Configuration (Optional)</h6>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label fw-medium small">Sides (comma separated)</label>
+                                    <label class="form-label fw-medium small">Sides</label>
                                     <input type="hidden" name="variant_name_1" value="Side">
-                                    <input type="text" name="variant_values_1" id="edit_variant_values_1" class="form-control" placeholder="e.g. LEFT, RIGHT">
+                                    <select name="variant_values_1[]" id="edit_variant_values_1" class="form-select select2-variants" multiple="multiple" data-placeholder="Select Sides (e.g. LEFT, RIGHT)">
+                                        <option value="LEFT">LEFT</option>
+                                        <option value="RIGHT">RIGHT</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label fw-medium small">Sizes (comma separated)</label>
+                                    <label class="form-label fw-medium small">Sizes</label>
                                     <input type="hidden" name="variant_name_2" value="Size">
-                                    <input type="text" name="variant_values_2" id="edit_variant_values_2" class="form-control" placeholder="e.g. S, M, L, XL">
+                                    <select name="variant_values_2[]" id="edit_variant_values_2" class="form-select select2-variants" multiple="multiple" data-placeholder="Select Sizes (e.g. S, M, L, XL)">
+                                        <option value="S">S</option>
+                                        <option value="M">M</option>
+                                        <option value="L">L</option>
+                                        <option value="XL">XL</option>
+                                        <option value="XXL">XXL</option>
+                                        <option value="XXXL">XXXL</option>
+                                        <option value="UNIVERSAL">UNIVERSAL</option>
+                                        <option value="FREE SIZE">FREE SIZE</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -813,9 +886,10 @@
                 let brandCol = $(`#${modalPrefix}_brand_container`);
                 let genericCol = $(`#${modalPrefix}_generic_name_container`);
 
+                let activeBrands = @json($availableBrands);
                 let brandVal = '';
                 if (type === 'medical') {
-                    brandVal = 'Atomets';
+                    brandVal = activeBrands.length > 0 ? activeBrands[0] : 'Atomets';
                     
                     // Column grid adjustments
                     codeCol.addClass('d-none');
@@ -832,7 +906,7 @@
                     $(`#${modalPrefix}_pricing_section`).removeClass('col-md-12').addClass('col-md-6');
                     $(`#${modalPrefix}_variant_section`).addClass('d-none');
                 } else if (type === 'ortho') {
-                    brandVal = 'Atomshield';
+                    brandVal = activeBrands.length > 1 ? activeBrands[1] : 'Atomshield';
 
                     // Column grid adjustments
                     codeCol.removeClass('d-none').removeClass('col-md-3 col-md-4').addClass('col-md-3');
@@ -846,7 +920,7 @@
                     $(`#${modalPrefix}_pricing_section`).removeClass('col-md-6').addClass('col-md-12');
                     $(`#${modalPrefix}_variant_section`).removeClass('d-none');
                 } else { // general
-                    brandVal = 'Sudhneelgiri';
+                    brandVal = activeBrands.length > 2 ? activeBrands[2] : 'Sudhneelgiri';
 
                     // Column grid adjustments
                     codeCol.removeClass('d-none').removeClass('col-md-3 col-md-4').addClass('col-md-3');
@@ -864,8 +938,16 @@
                     $(`#${modalPrefix}_variant_section`).addClass('d-none');
                 }
 
-                // Set select dropdown value
-                $(`#${modalPrefix}_brand`).val(brandVal);
+                // Set select dropdown value (case-insensitive)
+                let brandSelect = $(`#${modalPrefix}_brand`);
+                let matchedOption = brandSelect.find('option').filter(function() {
+                    return $(this).val().toLowerCase() === brandVal.toLowerCase();
+                });
+                if (matchedOption.length > 0) {
+                    brandSelect.val(matchedOption.val());
+                } else {
+                    brandSelect.val(brandVal);
+                }
 
                 // Update active tab buttons
                 $(`#${modalPrefix}ProductTypeTabs button`).removeClass('active');
@@ -909,11 +991,21 @@
 
                 // Map brand to tab type first to adjust field visibility
                 let productType = 'general';
-                if (product.brand === 'Atomets') {
+                let pBrand = (product.brand || '').toLowerCase();
+                let activeBrands = @json($availableBrands);
+                
+                if (activeBrands.length > 0 && pBrand === (activeBrands[0] || '').toLowerCase()) {
                     productType = 'medical';
-                } else if (product.brand === 'Atomshield') {
+                } else if (activeBrands.length > 1 && pBrand === (activeBrands[1] || '').toLowerCase()) {
+                    productType = 'ortho';
+                } else if (activeBrands.length > 2 && pBrand === (activeBrands[2] || '').toLowerCase()) {
+                    productType = 'general';
+                } else if (pBrand === 'atomets') { // Fallbacks
+                    productType = 'medical';
+                } else if (pBrand === 'atomshield') {
                     productType = 'ortho';
                 }
+                
                 switchProductType('edit', productType);
 
                 // Populate fields
@@ -936,16 +1028,16 @@
 
 
                 // Variant Options
-                $('#edit_variant_values_1').val('');
-                $('#edit_variant_values_2').val('');
+                $('#edit_variant_values_1').val(null).trigger('change');
+                $('#edit_variant_values_2').val(null).trigger('change');
 
                 if (product.variant_options) {
                     // Explicit Mapping
                     if (product.variant_options.Side) {
-                        $('#edit_variant_values_1').val(product.variant_options.Side.join(', '));
+                        $('#edit_variant_values_1').val(product.variant_options.Side).trigger('change');
                     }
                     if (product.variant_options.Size) {
-                        $('#edit_variant_values_2').val(product.variant_options.Size.join(', '));
+                        $('#edit_variant_values_2').val(product.variant_options.Size).trigger('change');
                     }
                 }
 
@@ -1225,6 +1317,22 @@
 
 
 
+            // Disable Modal enforceFocus to allow Select2 search to work without dropdownParent
+            $.fn.modal.Constructor.prototype.enforceFocus = function() {};
+
+            // Initialize Select2 for Variants
+            $('#create_variant_values_1, #create_variant_values_2').select2({
+                tags: true,
+                tokenSeparators: [',', ' '],
+                width: '100%'
+            });
+
+            $('#edit_variant_values_1, #edit_variant_values_2').select2({
+                tags: true,
+                tokenSeparators: [',', ' '],
+                width: '100%'
+            });
+            
             // Auto-calculation logic removed since tax info isn't on product level anymore.
         });
     </script>

@@ -1881,6 +1881,9 @@
                     // Fallback to hidden input if clicked from inside a modal that sets #approve_order_id
                     id = $('#approve_order_id').val();
                 }
+                if (!id) {
+                    id = $('#distributor_approve_order_id').val();
+                }
                 
                 if (!id) {
                     showToast('error', 'Order ID not found for rejection.');
@@ -1894,14 +1897,6 @@
                 // Hide any open approval modals if they exist
                 $('#approveRetailerOrderModal').modal('hide');
                 $('#distributorApproveModal').modal('hide');
-                $('#rejectRetailerOrderModal').modal('show');
-            });
-
-            $(document).on('click', '.reject-retailer-btn', function () {
-                let orderId = $('#distributor_approve_order_id').val();
-                $('#distributorApproveModal').modal('hide');
-                
-                $('#reject_retailer_order_id').val(orderId);
                 $('#rejectRetailerOrderModal').modal('show');
             });
 

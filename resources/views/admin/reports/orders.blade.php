@@ -161,16 +161,18 @@
                     }
                 },
                 {
-                    extend: 'excel',
                     text: '<i class="fa fa-file-excel-o me-1"></i> Excel',
                     className: 'btn btn-sm btn-success',
-                    exportOptions: { columns: ':visible' }
+                    action: function (e, dt, button, config) {
+                        exportProductWiseCSV(dt);
+                    }
                 },
                 {
-                    extend: 'csv',
                     text: '<i class="fa fa-file-text-o me-1"></i> CSV',
                     className: 'btn btn-sm btn-secondary',
-                    exportOptions: { columns: ':visible' }
+                    action: function (e, dt, button, config) {
+                        exportProductWiseCSV(dt);
+                    }
                 }
             ],
             pageLength: 25,
@@ -181,6 +183,122 @@
                 searchPlaceholder: "Search report data..."
             }
         });
+
+        function exportProductWiseCSV(dt) {
+            let orderType = $('input[name="order_type"]').val() || 'retailer';
+            let rows = dt.rows({ search: 'applied' }).data().toArray();
+            let csvContent = "\uFEFF"; // UTF-8 BOM
+            
+            if (orderType === 'retailer') {
+                csvContent += "No.,Order Code,Retailer,Shop Name,District,Area,Distributor,Sales Manager,Field Staff,Phone,GST,Drug License,Product Code,Product Name,Brand,Variant,Qty,Free Qty,Unit,Unit Price,Total Amount,Status,Placed At,Delivered At,Payment Status\n";
+                let slNo = 1;
+                rows.forEach(function(row) {
+                    let baseData = [
+                        slNo++,
+                        row.order_code,
+                        row.retailer_name || (row.retailer && row.retailer.user ? row.retailer.user.name : ''),
+                        row.retailer && row.retailer.shop_name ? row.retailer.shop_name : '',
+                        row.retailer && row.retailer.district ? (row.retailer.district.name || '') : '',
+                        row.retailer && row.retailer.area ? (row.retailer.area.name || '') : '',
+                        row.distributor_name || (row.distributor && row.distributor.user ? row.distributor.user.name : ''),
+                        row.sales_manager_name || (row.sales_manager && row.sales_manager.user ? row.sales_manager.user.name : '') || (row.retailer && row.retailer.field_staff && row.retailer.field_staff.sales_manager && row.retailer.field_staff.sales_manager.user ? row.retailer.field_staff.sales_manager.user.name : ''),
+                        row.fieldstaff_name || (row.field_staff && row.field_staff.user ? row.field_staff.user.name : ''),
+                        row.retailer ? (row.retailer.contact_no || row.retailer.phone || '') : '',
+                        row.retailer ? (row.retailer.gst || '') : '',
+                        row.retailer ? (row.retailer.drug_license_no || '') : ''
+                    ];
+                    if (row.items && row.items.length > 0) {
+                        row.items.forEach(function(item) {
+                            let variantStr = (item.side ? item.side + ' ' : '') + (item.size || '');
+                            let productCode = item.product_code || (item.product ? item.product.product_code : '');
+                            let productName = item.product_name || item.name || (item.product ? item.product.product_name : '');
+                            let brandName = item.brand || (item.product ? item.product.brand : '');
+                            let qty = item.quantity || 0;
+                            let freeQty = item.free_quantity || 0;
+                            let unit = item.unit || 'Strips';
+                            let unitPrice = item.unit_price || (item.product ? item.product.unit_price : 0);
+                            let totalAmount = item.total_amount || (qty * unitPrice) || 0;
+                            
+                            let itemData = [
+                                productCode,
+                                productName,
+                                brandName,
+                                variantStr,
+                                qty,
+                                freeQty,
+                                unit,
+                                unitPrice,
+                                totalAmount,
+                                row.status || '',
+                                row.placed_at || '',
+                                row.delivered_at || '',
+                                row.payment_status || 'Pending'
+                            ];
+                            csvContent += baseData.concat(itemData).map(val => `"${(val === null || val === undefined ? '' : val).toString().replace(/"/g, '""')}"`).join(",") + "\n";
+                        });
+                    } else {
+                        let itemData = ['', '', '', '', '', '', '', '', '', '', row.status || '', row.placed_at || '', row.delivered_at || '', row.payment_status || 'Pending'];
+                        csvContent += baseData.concat(itemData).map(val => `"${(val === null || val === undefined ? '' : val).toString().replace(/"/g, '""')}"`).join(",") + "\n";
+                    }
+                });
+            } else {
+                csvContent += "No.,Order Code,Distributor,Email,Phone,GST,Drug License,Sales Manager,Product Code,Product Name,Brand,Variant,Qty,Unit,Unit Price,Total Amount,Status,Placed At,Delivered At,Payment Status\n";
+                let slNo = 1;
+                rows.forEach(function(row) {
+                    let baseData = [
+                        slNo++,
+                        row.order_code,
+                        row.distributor_name || (row.distributor && row.distributor.user ? row.distributor.user.name : ''),
+                        row.distributor ? (row.distributor.email || (row.distributor.user ? row.distributor.user.email : '')) : '',
+                        row.distributor ? (row.distributor.contact_no || row.distributor.phone || '') : '',
+                        row.distributor ? (row.distributor.gst || '') : '',
+                        row.distributor ? (row.distributor.drug_license_no || '') : '',
+                        row.sales_manager_name || (row.sales_manager && row.sales_manager.user ? row.sales_manager.user.name : '') || (row.distributor && row.distributor.sales_manager && row.distributor.sales_manager.user ? row.distributor.sales_manager.user.name : '')
+                    ];
+                    if (row.items && row.items.length > 0) {
+                        row.items.forEach(function(item) {
+                            let variantStr = (item.side ? item.side + ' ' : '') + (item.size || '');
+                            let productCode = item.product_code || (item.product ? item.product.product_code : '');
+                            let productName = item.product_name || item.name || (item.product ? item.product.product_name : '');
+                            let brandName = item.brand || (item.product ? item.product.brand : '');
+                            let qty = item.quantity || 0;
+                            let unit = item.unit || 'Strips';
+                            let unitPrice = item.unit_price || (item.product ? item.product.unit_price : 0);
+                            let totalAmount = item.total_amount || (qty * unitPrice) || 0;
+                            
+                            let itemData = [
+                                productCode,
+                                productName,
+                                brandName,
+                                variantStr,
+                                qty,
+                                unit,
+                                unitPrice,
+                                totalAmount,
+                                row.status || '',
+                                row.placed_at || '',
+                                row.delivered_at || '',
+                                row.payment_status || 'Pending'
+                            ];
+                            csvContent += baseData.concat(itemData).map(val => `"${(val === null || val === undefined ? '' : val).toString().replace(/"/g, '""')}"`).join(",") + "\n";
+                        });
+                    } else {
+                        let itemData = ['', '', '', '', '', '', '', '', row.status || '', row.placed_at || '', row.delivered_at || '', row.payment_status || 'Pending'];
+                        csvContent += baseData.concat(itemData).map(val => `"${(val === null || val === undefined ? '' : val).toString().replace(/"/g, '""')}"`).join(",") + "\n";
+                    }
+                });
+            }
+            
+            let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            let url = URL.createObjectURL(blob);
+            let link = document.createElement("a");
+            link.setAttribute("href", url);
+            let filename = orderType === 'retailer' ? 'Retailer_Orders_Report_' : 'Distributor_Orders_Report_';
+            link.setAttribute("download", `${filename}${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
 
         window.reportsTable = table;
 

@@ -469,6 +469,7 @@
                                 <th class="d-none">Phone</th>
                                 <th class="d-none">GST</th>
                                 <th class="d-none">Drug License</th>
+                                <th class="d-none">Delivered At</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -797,7 +798,7 @@
             }
 
             let exportOptions = {
-                columns: [0, 1, 2, 12, 13, 4, 5, 14, 15, 16, 17, 3, 6, 7, 8, 9],
+                columns: [0, 1, 2, 12, 13, 4, 5, 14, 15, 16, 17, 3, 6, 7, 8, 18, 9],
                 format: {
                     body: function(data, row, column, node) {
                         if (column === 2) {
@@ -819,16 +820,20 @@
                                 return rowData.brand_summary.split('|||').join('\n');
                             }
                         }
-                        if (column === 14) {
+                        if (column === 6) { // Total amount column
                             let tableApi = $('#orders-table').DataTable();
                             let rowData = tableApi.row(row).data();
-                            if (rowData) {
-                                let st = (rowData.status || '').toLowerCase();
-                                if (st === 'delivered' && rowData.delivered_at) {
-                                    return `Placed: ${rowData.placed_at}\nDelivered: ${rowData.delivered_at}`;
-                                }
-                                return `Placed: ${rowData.placed_at}`;
-                            }
+                            return rowData ? parseFloat(rowData.total_amount).toFixed(2) : '0.00';
+                        }
+                        if (column === 8) { // Placed At
+                            let tableApi = $('#orders-table').DataTable();
+                            let rowData = tableApi.row(row).data();
+                            return rowData ? rowData.placed_at : '';
+                        }
+                        if (column === 18) { // Delivered At
+                            let tableApi = $('#orders-table').DataTable();
+                            let rowData = tableApi.row(row).data();
+                            return rowData && rowData.delivered_at ? rowData.delivered_at : '';
                         }
                         if (typeof data === 'string') {
                             let clean = data.replace(/<[^>]*>?/gm, '').trim();
@@ -868,16 +873,116 @@
                         exportOptions: exportOptions
                     },
                     {
-                        extend: 'csv',
-                        className: 'btn btn-info btn-sm text-white',
                         text: '<i class="fa fa-file-csv"></i> CSV',
-                        exportOptions: exportOptions
+                        className: 'btn btn-info btn-sm text-white',
+                        action: function (e, dt, button, config) {
+                            let rows = dt.rows({ search: 'applied' }).data().toArray();
+                            let csvContent = "\uFEFF"; // UTF-8 BOM
+                            csvContent += "No.,Order Code,Retailer,Shop Name,Distributor,Sales Manager,Field Staff,Phone,GST,Drug License,Product Code,Product Name,Brand,Variant,Qty,Free Qty,Unit,Unit Price,Total Amount,Status,Placed At,Delivered At,Payment Status\n";
+                            let slNo = 1;
+                            rows.forEach(function(row) {
+                                let baseData = [
+                                    slNo++,
+                                    row.order_code,
+                                    row.retailer_name || '',
+                                    row.retailer_shop || '',
+                                    row.distributor_name || '',
+                                    row.retailer_sm_name || '',
+                                    row.retailer_fs_name || '',
+                                    row.retailer_phone || '',
+                                    row.retailer_gst || '',
+                                    row.retailer_dl || ''
+                                ];
+                                if (row.items && row.items.length > 0) {
+                                    row.items.forEach(function(item) {
+                                        let variantStr = (item.side ? item.side + ' ' : '') + (item.size || '');
+                                        let itemData = [
+                                            item.product_code || '',
+                                            item.product_name || item.name || '',
+                                            item.brand || '',
+                                            variantStr,
+                                            item.quantity || 0,
+                                            item.free_quantity || 0,
+                                            item.unit || 'Strips',
+                                            item.unit_price || 0,
+                                            item.total_amount || 0,
+                                            row.status || '',
+                                            row.placed_at || '',
+                                            row.delivered_at || '',
+                                            row.payment_status || 'Pending'
+                                        ];
+                                        csvContent += baseData.concat(itemData).map(val => `"${(val === null || val === undefined ? '' : val).toString().replace(/"/g, '""')}"`).join(",") + "\n";
+                                    });
+                                } else {
+                                    let itemData = ['', '', '', '', '', '', '', '', '', row.status || '', row.placed_at || '', row.delivered_at || '', row.payment_status || 'Pending'];
+                                    csvContent += baseData.concat(itemData).map(val => `"${(val === null || val === undefined ? '' : val).toString().replace(/"/g, '""')}"`).join(",") + "\n";
+                                }
+                            });
+                            let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                            let url = URL.createObjectURL(blob);
+                            let link = document.createElement("a");
+                            link.setAttribute("href", url);
+                            link.setAttribute("download", `Retailer_Orders_${new Date().toISOString().slice(0,10)}.csv`);
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        }
                     },
                     {
-                        extend: 'excel',
-                        className: 'btn btn-success btn-sm',
                         text: '<i class="fa fa-file-excel"></i> Excel',
-                        exportOptions: exportOptions
+                        className: 'btn btn-success btn-sm',
+                        action: function (e, dt, button, config) {
+                            let rows = dt.rows({ search: 'applied' }).data().toArray();
+                            let csvContent = "\uFEFF"; // UTF-8 BOM
+                            csvContent += "No.,Order Code,Retailer,Shop Name,Distributor,Sales Manager,Field Staff,Phone,GST,Drug License,Product Code,Product Name,Brand,Variant,Qty,Free Qty,Unit,Unit Price,Total Amount,Status,Placed At,Delivered At,Payment Status\n";
+                            let slNo = 1;
+                            rows.forEach(function(row) {
+                                let baseData = [
+                                    slNo++,
+                                    row.order_code,
+                                    row.retailer_name || '',
+                                    row.retailer_shop || '',
+                                    row.distributor_name || '',
+                                    row.retailer_sm_name || '',
+                                    row.retailer_fs_name || '',
+                                    row.retailer_phone || '',
+                                    row.retailer_gst || '',
+                                    row.retailer_dl || ''
+                                ];
+                                if (row.items && row.items.length > 0) {
+                                    row.items.forEach(function(item) {
+                                        let variantStr = (item.side ? item.side + ' ' : '') + (item.size || '');
+                                        let itemData = [
+                                            item.product_code || '',
+                                            item.product_name || item.name || '',
+                                            item.brand || '',
+                                            variantStr,
+                                            item.quantity || 0,
+                                            item.free_quantity || 0,
+                                            item.unit || 'Strips',
+                                            item.unit_price || 0,
+                                            item.total_amount || 0,
+                                            row.status || '',
+                                            row.placed_at || '',
+                                            row.delivered_at || '',
+                                            row.payment_status || 'Pending'
+                                        ];
+                                        csvContent += baseData.concat(itemData).map(val => `"${(val === null || val === undefined ? '' : val).toString().replace(/"/g, '""')}"`).join(",") + "\n";
+                                    });
+                                } else {
+                                    let itemData = ['', '', '', '', '', '', '', '', '', row.status || '', row.placed_at || '', row.delivered_at || '', row.payment_status || 'Pending'];
+                                    csvContent += baseData.concat(itemData).map(val => `"${(val === null || val === undefined ? '' : val).toString().replace(/"/g, '""')}"`).join(",") + "\n";
+                                }
+                            });
+                            let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                            let url = URL.createObjectURL(blob);
+                            let link = document.createElement("a");
+                            link.setAttribute("href", url);
+                            link.setAttribute("download", `Retailer_Orders_${new Date().toISOString().slice(0,10)}.csv`);
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        }
                     },
                     {
                         extend: 'pdf',
@@ -1134,6 +1239,11 @@
                 },
                 {
                     data: 'retailer_dl',
+                    visible: false,
+                    render: function(d) { return d || '-'; }
+                },
+                {
+                    data: 'delivered_at',
                     visible: false,
                     render: function(d) { return d || '-'; }
                 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Setting;
+use App\Models\Product;
 
 class SettingsController extends Controller
 {
@@ -93,6 +94,13 @@ class SettingsController extends Controller
             $title,
             $desc
         );
+
+        // Handle brand renames in products table
+        if ($data['slug'] === 'product_brands' && $request->has('renamed_brands') && is_array($request->renamed_brands)) {
+            foreach ($request->renamed_brands as $oldName => $newName) {
+                Product::where('brand', $oldName)->update(['brand' => $newName]);
+            }
+        }
 
         return response()->json(['message' => 'Setting saved', 'setting' => $setting]);
     }

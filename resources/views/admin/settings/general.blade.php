@@ -436,9 +436,13 @@
                     confirmButtonText: 'Update',
                 }).then((result) => {
                     if (result.value && result.value.trim().length > 0) {
-                        currentBrands[index] = result.value.trim();
-                        $('#save_brands_btn').show();
-                        renderBrands();
+                        let newName = result.value.trim();
+                        if (newName !== oldName) {
+                            currentBrands[index] = newName;
+                            $('#brands_form').append(`<input type="hidden" name="renamed_brands[${oldName}]" value="${newName}">`);
+                            $('#save_brands_btn').show();
+                            renderBrands();
+                        }
                     }
                 });
             });
