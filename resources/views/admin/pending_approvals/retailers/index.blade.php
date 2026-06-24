@@ -1317,6 +1317,8 @@
             const isRetailer = {{ Auth::user()->hasRole('retailer') ? 'true' : 'false' }};
             const isSalesManager = {{ Auth::user()->hasRole('salesmanager') ? 'true' : 'false' }};
             const isAdmin = {{ Auth::user()->hasAnyRole(['admin', 'superadmin']) ? 'true' : 'false' }};
+            const authFieldStaffId = {{ Auth::user()->hasRole('fieldstaff') && Auth::user()->fieldStaff ? Auth::user()->fieldStaff->id : 'null' }};
+            const authSalesManagerId = {{ Auth::user()->hasRole('salesmanager') && Auth::user()->salesManager ? Auth::user()->salesManager->id : 'null' }};
 
             let exportCols = [1, 2, 3, 13, 14, 15, 16, 17, 18, 19, 20, 8, 4, 5, 6, 7, 9, 10];
             let exportOptions = {
