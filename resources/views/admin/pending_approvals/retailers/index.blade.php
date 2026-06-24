@@ -3567,7 +3567,9 @@
                         let allowedUnits = isCount ? ['Nos'] : ['Strips', 'Box'];
                         let unit = item.unit || (isCount ? 'Nos' : 'Strips');
                         // Ensure unit is valid for this product
-                        if (!allowedUnits.includes(unit)) unit = allowedUnits[0];
+                        if (!allowedUnits.includes(unit)) {
+                            allowedUnits.push(unit);
+                        }
 
                         let price = computeUnitPrice(item, unit);
                         let qty = parseInt(item.qty) || 1;

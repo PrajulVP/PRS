@@ -1600,9 +1600,15 @@
                         // Ensure ID is passed as string to avoid type confusion
                         let rowId = item.id;
                         let unit = item.unit || 'Box';
+                        let allowedUnits = ['Box', 'Carton', 'Strips', 'Nos'];
+                        if (!allowedUnits.includes(unit)) {
+                            allowedUnits.push(unit);
+                        }
+                        
                         let options = '';
-                        ['Box', 'Carton', 'Strips'].forEach(function (u) {
-                            options += `<option value="${u}" ${unit === u ? 'selected' : ''}>${u}</option>`;
+                        allowedUnits.forEach(function (u) {
+                            let displayU = u === 'Nos' ? 'No.' : u;
+                            options += `<option value="${u}" ${unit === u ? 'selected' : ''}>${displayU}</option>`;
                         });
 
                         tbody.append(`
