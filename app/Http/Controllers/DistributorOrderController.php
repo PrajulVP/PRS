@@ -493,9 +493,13 @@ class DistributorOrderController extends Controller
         if ($user->hasRole('superadmin')) $roleName = 'Super Admin';
 
         $hasChanges = false;
-        if ((string)$distributorOrder->distributor_id !== (string)$request->distributor_id) $hasChanges = true;
-        if ((string)$distributorOrder->status !== (string)$request->status) $hasChanges = true;
-        if ((string)$distributorOrder->delivery_notes !== (string)$request->delivery_notes) $hasChanges = true;
+        
+        $dbNotes = $distributorOrder->delivery_notes === null ? '' : (string)$distributorOrder->delivery_notes;
+        $reqNotes = $request->delivery_notes === null ? '' : (string)$request->delivery_notes;
+
+        if ((string)$distributorOrder->distributor_id !== (string)$request->distributor_id) { $hasChanges = true; \Log::info("Change: distributor_id"); }
+        if ((string)$distributorOrder->status !== (string)$request->status) { $hasChanges = true; \Log::info("Change: status"); }
+        if ($dbNotes !== $reqNotes) { $hasChanges = true; \Log::info("Change: delivery_notes '{$dbNotes}' !== '{$reqNotes}'"); }
 
         $requestItemsCount = count($request->items ?? []);
         if ($distributorOrder->items->count() !== $requestItemsCount) {
@@ -511,12 +515,28 @@ class DistributorOrderController extends Controller
                     break;
                 }
                 
-                if ((string)$existingItem->product_id !== (string)$itemData['product_id']) $hasChanges = true;
-                if ((float)$existingItem->quantity !== (float)$itemData['quantity']) $hasChanges = true;
-                if ((float)$existingItem->free_quantity !== (float)($itemData['free_quantity'] ?? 0)) $hasChanges = true;
-                if (strtolower(trim($existingItem->unit ?? '')) !== strtolower(trim($itemData['unit'] ?? 'Box'))) $hasChanges = true;
-                if ((string)$existingItem->side !== (string)($itemData['side'] ?? null)) $hasChanges = true;
-                if ((string)$existingItem->size !== (string)($itemData['size'] ?? null)) $hasChanges = true;
+                if ((string)$existingItem->product_id !== (string)$itemData['product_id']) { $hasChanges = true; \Log::info("Change: product_id {$existingItem->product_id} !== {$itemData['product_id']}"); }
+                
+                if (round((float)$existingItem->quantity, 2) !== round((float)$itemData['quantity'], 2)) { $hasChanges = true; \Log::info("Change: quantity {$existingItem->quantity} !== {$itemData['quantity']}"); }
+                
+                if (isset($itemData['free_quantity'])) {
+                    if (round((float)$existingItem->free_quantity, 2) !== round((float)$itemData['free_quantity'], 2)) { $hasChanges = true; \Log::info("Change: free_quantity {$existingItem->free_quantity} !== " . $itemData['free_quantity']); }
+                }
+
+                $dbUnit = strtolower(trim($existingItem->unit ?? ''));
+                if ($dbUnit === '') $dbUnit = 'strips'; // Assume Strips if missing, matches UI default
+                $reqUnit = isset($itemData['unit']) ? strtolower(trim($itemData['unit'])) : 'strips';
+                if ($dbUnit !== $reqUnit && !($dbUnit === 'box' && $reqUnit === 'strips')) { // Some products might be box vs strips, but let's strictly compare the lower-cased defaults
+                    $hasChanges = true; \Log::info("Change: unit {$dbUnit} !== {$reqUnit}"); 
+                }
+                
+                $existingSide = $existingItem->side === null ? '' : strtolower(trim((string)$existingItem->side));
+                $newSide = empty($itemData['side']) ? '' : strtolower(trim((string)$itemData['side']));
+                if ($existingSide !== $newSide) { $hasChanges = true; \Log::info("Change: side {$existingSide} !== {$newSide}"); }
+
+                $existingSize = $existingItem->size === null ? '' : strtolower(trim((string)$existingItem->size));
+                $newSize = empty($itemData['size']) ? '' : strtolower(trim((string)$itemData['size']));
+                if ($existingSize !== $newSize) { $hasChanges = true; \Log::info("Change: size {$existingSize} !== {$newSize}"); }
                 
                 if ($hasChanges) break;
             }
