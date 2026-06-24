@@ -1327,7 +1327,8 @@
                         let tableApi = $('#retailer-approval-table').DataTable();
                         let rowData = null;
                         try {
-                            rowData = tableApi.row(row).data();
+                            let rowsData = tableApi.rows({ search: 'applied', order: 'applied' }).data().toArray();
+                            rowData = rowsData[row];
                         } catch(e) {}
                         
                         if (originalColIdx === 3) {
@@ -1350,7 +1351,10 @@
                             return data ? data.toString().replace(/<\/div>/gi, '\n').replace(/<[^>]*>?/gm, '').trim() : '';
                         }
                         if (typeof data === 'string') {
-                            let clean = data.replace(/<[^>]*>?/gm, '').trim();
+                            let clean = data.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
+                            if (clean.endsWith('EDITED')) {
+                                clean = clean.replace(/EDITED$/i, '').trim();
+                            }
                             if (clean.includes('₹') || clean.includes('â‚¹')) {
                                 clean = clean.replace(/₹/g, '').replace(/â‚¹/g, '').replace(/,/g, '').trim();
                             }

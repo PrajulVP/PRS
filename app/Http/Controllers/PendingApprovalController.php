@@ -318,7 +318,8 @@ class PendingApprovalController extends Controller
                 } elseif ($viewType === 'retailer') {
                     $res['retailer_id'] = $item->retailer_id;
                     $res['distributor_id'] = $item->distributor_id;
-                    $res['retailer_name'] = $item->retailer->shop_name ?? ($item->retailer->user->name ?? 'N/A');
+                    $res['retailer_name'] = $item->retailer->user->name ?? 'N/A';
+                    $res['retailer_shop'] = $item->retailer->shop_name ?? 'N/A';
                     $res['retailer_sm_name'] = $item->retailer->salesManager->user->name ?? 'N/A';
                     $res['retailer_fs_name'] = $item->retailer->fieldStaff->user->name ?? 'N/A';
                     $res['retailer_phone'] = $item->retailer->contact_no ?? '--';

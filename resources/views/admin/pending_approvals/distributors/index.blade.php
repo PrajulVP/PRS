@@ -1351,7 +1351,11 @@
                     body: function(data, row, column, node) {
                         let tableApi = $('#distributor-approval-table').DataTable();
                         let colIdx = column;
-                        let rowData = tableApi.row(row).data();
+                        let rowData = null;
+                        try {
+                            let rowsData = tableApi.rows({ search: 'applied', order: 'applied' }).data().toArray();
+                            rowData = rowsData[row];
+                        } catch(e) {}
 
                         if (colIdx === 4 && rowData && rowData.product_summary) {
                             return rowData.product_summary.split('|||').map(it => it.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim()).join('\n');
@@ -1360,7 +1364,10 @@
                             return rowData.brand_summary.split('|||').join('\n');
                         }
                         if (typeof data === 'string') {
-                            let clean = data.replace(/<[^>]*>?/gm, '').trim();
+                            let clean = data.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
+                            if (clean.endsWith('EDITED')) {
+                                clean = clean.replace(/EDITED$/i, '').trim();
+                            }
                             if (clean.includes('₹') || clean.includes('â‚¹')) {
                                 clean = clean.replace(/₹/g, '').replace(/â‚¹/g, '').replace(/,/g, '').trim();
                             }

@@ -492,31 +492,63 @@ class DistributorOrderController extends Controller
         if ($user->hasRole('salesmanager')) $roleName = 'Sales Manager';
         if ($user->hasRole('superadmin')) $roleName = 'Super Admin';
 
-        $metadata['is_edited'] = true;
-        $metadata['last_edited_by'] = $user->name . " ($roleName)";
-        $metadata['last_edited_at'] = now()->toDateTimeString();
+        $hasChanges = false;
+        if ((string)$distributorOrder->distributor_id !== (string)$request->distributor_id) $hasChanges = true;
+        if ((string)$distributorOrder->status !== (string)$request->status) $hasChanges = true;
+        if ((string)$distributorOrder->delivery_notes !== (string)$request->delivery_notes) $hasChanges = true;
 
-        $snapshot = $distributorOrder->items->map(function($item) {
-            return [
-                'product_name' => $item->product_name ?? ($item->product ? $item->product->product_name : 'Unknown Product'),
-                'quantity' => $item->quantity,
-                'unit' => $item->unit,
-                'price' => $item->price,
-                'subtotal' => $item->subtotal,
-                'side' => $item->side,
-                'size' => $item->size,
+        $requestItemsCount = count($request->items ?? []);
+        if ($distributorOrder->items->count() !== $requestItemsCount) {
+            $hasChanges = true;
+        } else {
+            foreach ($request->items as $itemData) {
+                $existingItem = null;
+                if (!empty($itemData['order_item_id'])) {
+                    $existingItem = $distributorOrder->items->find($itemData['order_item_id']);
+                }
+                if (!$existingItem) {
+                    $hasChanges = true;
+                    break;
+                }
+                
+                if ((string)$existingItem->product_id !== (string)$itemData['product_id']) $hasChanges = true;
+                if ((float)$existingItem->quantity !== (float)$itemData['quantity']) $hasChanges = true;
+                if ((float)$existingItem->free_quantity !== (float)($itemData['free_quantity'] ?? 0)) $hasChanges = true;
+                if (strtolower(trim($existingItem->unit ?? '')) !== strtolower(trim($itemData['unit'] ?? 'Box'))) $hasChanges = true;
+                if ((string)$existingItem->side !== (string)($itemData['side'] ?? null)) $hasChanges = true;
+                if ((string)$existingItem->size !== (string)($itemData['size'] ?? null)) $hasChanges = true;
+                
+                if ($hasChanges) break;
+            }
+        }
+
+        if ($hasChanges) {
+            $metadata['is_edited'] = true;
+            $metadata['last_edited_by'] = $user->name . " ($roleName)";
+            $metadata['last_edited_at'] = now()->toDateTimeString();
+
+            $snapshot = $distributorOrder->items->map(function($item) {
+                return [
+                    'product_name' => $item->product_name ?? ($item->product ? $item->product->product_name : 'Unknown Product'),
+                    'quantity' => $item->quantity,
+                    'unit' => $item->unit,
+                    'price' => $item->price,
+                    'subtotal' => $item->subtotal,
+                    'side' => $item->side,
+                    'size' => $item->size,
+                ];
+            })->toArray();
+
+            $editLogs = $metadata['edit_history'] ?? [];
+            $editLogs[] = [
+                'edited_by' => $user->name,
+                'role' => strtolower(str_replace(' ', '', $roleName)),
+                'edited_at' => now()->toDateTimeString(),
+                'original_total' => $distributorOrder->total_amount,
+                'snapshot' => $snapshot,
             ];
-        })->toArray();
-
-        $editLogs = $metadata['edit_history'] ?? [];
-        $editLogs[] = [
-            'edited_by' => $user->name,
-            'role' => strtolower(str_replace(' ', '', $roleName)),
-            'edited_at' => now()->toDateTimeString(),
-            'original_total' => $distributorOrder->total_amount,
-            'snapshot' => $snapshot,
-        ];
-        $metadata['edit_history'] = $editLogs;
+            $metadata['edit_history'] = $editLogs;
+        }
 
         $distributorOrder->update([
             'distributor_id' => $request->distributor_id,
