@@ -20,73 +20,82 @@
         margin-left: 10px !important;
     }
 
-        /* Segmented Control for Payment Filter */
-        .segmented-control {
-            display: flex !important;
-            flex-direction: row !important;
-            background-color: var(--med-border, #e2e8f0);
-            border-radius: 50px;
-            padding: 4px;
-            position: relative;
-            width: 100%;
-            max-width: 260px;
-            min-width: 220px;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
-            overflow: hidden;
-        }
-        .segmented-control input {
-            display: none;
-        }
-        .segmented-control label {
-            flex: 1 !important;
-            width: 33.33% !important;
-            text-align: center;
-            padding: 8px 0;
-            margin: 0;
-            font-size: 0.7rem;
-            font-weight: 800;
-            color: var(--med-text-muted, #64748b);
-            cursor: pointer;
-            position: relative;
-            z-index: 2;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-        }
-        .segmented-control input:checked + label {
-            color: var(--med-text-main, #0f172a);
-        }
-        #pay_paid:checked + label {
-            color: var(--med-paid-text, #15803d);
-        }
-        #pay_pending:checked + label {
-            color: var(--med-pending-text, #b45309);
-        }
-        .selection-indicator {
-            position: absolute;
-            top: 4px;
-            bottom: 4px;
-            left: 4px;
-            width: calc(33.333% - 2.66px);
-            background: var(--med-bg-card, #ffffff);
-            border-radius: 50px;
-            z-index: 1;
-            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-        #pay_all:checked ~ .selection-indicator {
-            transform: translateX(0);
-            background: var(--med-bg-card, #ffffff);
-        }
-        #pay_paid:checked ~ .selection-indicator {
-            transform: translateX(100%);
-            background: var(--med-paid-bg, #dcfce7);
-        }
-        #pay_pending:checked ~ .selection-indicator {
-            transform: translateX(200%);
-            background: var(--med-pending-bg, #fef9c3);
-        }
+    /* Segmented Control for Payment Filter */
+    .segmented-control {
+        display: flex !important;
+        flex-direction: row !important;
+        background-color: var(--med-border, #e2e8f0);
+        border-radius: 50px;
+        padding: 4px;
+        position: relative;
+        width: 100%;
+        max-width: 260px;
+        min-width: 220px;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+    }
+
+    .segmented-control input {
+        display: none;
+    }
+
+    .segmented-control label {
+        flex: 1 !important;
+        width: 33.33% !important;
+        text-align: center;
+        padding: 8px 0;
+        margin: 0;
+        font-size: 0.7rem;
+        font-weight: 800;
+        color: var(--med-text-muted, #64748b);
+        cursor: pointer;
+        position: relative;
+        z-index: 2;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    .segmented-control input:checked+label {
+        color: var(--med-text-main, #0f172a);
+    }
+
+    #pay_paid:checked+label {
+        color: var(--med-paid-text, #15803d);
+    }
+
+    #pay_pending:checked+label {
+        color: var(--med-pending-text, #b45309);
+    }
+
+    .selection-indicator {
+        position: absolute;
+        top: 4px;
+        bottom: 4px;
+        left: 4px;
+        width: calc(33.333% - 2.66px);
+        background: var(--med-bg-card, #ffffff);
+        border-radius: 50px;
+        z-index: 1;
+        transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    #pay_all:checked~.selection-indicator {
+        transform: translateX(0);
+        background: var(--med-bg-card, #ffffff);
+    }
+
+    #pay_paid:checked~.selection-indicator {
+        transform: translateX(100%);
+        background: var(--med-paid-bg, #dcfce7);
+    }
+
+    #pay_pending:checked~.selection-indicator {
+        transform: translateX(200%);
+        background: var(--med-pending-bg, #fef9c3);
+    }
 
     .dataTables_length {
         text-align: left !important;
@@ -104,12 +113,16 @@
         overflow-x: auto !important;
         overflow-y: hidden !important;
         -webkit-overflow-scrolling: touch;
-        scrollbar-width: none; /* Firefox */
+        scrollbar-width: none;
+        /* Firefox */
         padding-bottom: 2px;
     }
+
     #orderStatusTabs::-webkit-scrollbar {
-        display: none; /* Chrome/Safari */
+        display: none;
+        /* Chrome/Safari */
     }
+
     #orderStatusTabs .nav-item {
         flex-shrink: 0;
     }
@@ -121,6 +134,7 @@
             gap: 10px;
             margin-bottom: 0;
         }
+
         .dataTables_filter input {
             width: 100% !important;
             max-width: 200px;
@@ -143,19 +157,24 @@
     }
 
     @media (max-width: 767px) {
-        .dataTables_filter, .dataTables_length {
+
+        .dataTables_filter,
+        .dataTables_length {
             text-align: center !important;
             margin-bottom: 10px;
         }
+
         .dataTables_filter input {
             max-width: 100% !important;
             margin-left: 0 !important;
         }
+
         .segmented-control {
             width: 100% !important;
             max-width: 280px;
             margin: 10px auto !important;
         }
+
         .payment-filter-container {
             justify-content: center !important;
             margin: 15px 0 !important;
@@ -241,6 +260,7 @@
         margin-bottom: 20px;
         padding-left: 0;
     }
+
     .order-timeline::before {
         content: '';
         position: absolute;
@@ -251,6 +271,7 @@
         background: #e2e8f0;
         z-index: 0;
     }
+
     .timeline-item {
         position: relative;
         z-index: 1;
@@ -258,6 +279,7 @@
         text-align: center;
         margin-bottom: 0;
     }
+
     .timeline-marker {
         width: 20px;
         height: 20px;
@@ -268,14 +290,17 @@
         margin: 0 auto 10px;
         transition: all 0.3s ease;
     }
+
     .timeline-item.active .timeline-marker {
         background: var(--med-primary, #00497a);
         box-shadow: 0 0 0 2px rgba(0, 73, 122, 0.2);
         transform: scale(1.2);
     }
+
     .timeline-content {
         padding-left: 0;
     }
+
     .timeline-content h6 {
         font-size: 0.75rem;
         font-weight: 700;
@@ -284,12 +309,14 @@
         text-transform: uppercase;
         letter-spacing: 0.02em;
     }
+
     .timeline-content span {
         font-size: 0.65rem;
         color: var(--med-text-muted);
         display: block;
         line-height: 1.2;
     }
+
     .variant-highlight {
         font-weight: 800;
         color: #0ea5e9;
@@ -302,20 +329,50 @@
         vertical-align: middle;
         letter-spacing: 0.04em;
     }
+
     /* --- End New Order View UI Styles --- */
     #submitReturnModal {
         background: rgba(0, 0, 0, 0.2);
         backdrop-filter: blur(5px);
         -webkit-backdrop-filter: blur(5px);
     }
-    .bg-soft-success { background-color: rgba(22, 163, 74, 0.1) !important; color: #16a34a !important; }
-    .bg-soft-warning { background-color: rgba(202, 138, 4, 0.1) !important; color: #ca8a04 !important; }
-    .bg-soft-danger { background-color: rgba(220, 38, 38, 0.1) !important; color: #dc2626 !important; }
-    .bg-soft-info { background-color: rgba(8, 145, 178, 0.1) !important; color: #0891b2 !important; }
-    .bg-soft-primary { background-color: rgba(0, 73, 122, 0.1) !important; color: #00497a !important; }
-    .text-main-theme { color: var(--med-text-main, #0f172a) !important; }
-    .text-muted-theme { color: var(--med-text-muted, #64748b) !important; }
-    .bg-card-theme { background-color: var(--med-bg-card, #ffffff) !important; }
+
+    .bg-soft-success {
+        background-color: rgba(22, 163, 74, 0.1) !important;
+        color: #16a34a !important;
+    }
+
+    .bg-soft-warning {
+        background-color: rgba(202, 138, 4, 0.1) !important;
+        color: #ca8a04 !important;
+    }
+
+    .bg-soft-danger {
+        background-color: rgba(220, 38, 38, 0.1) !important;
+        color: #dc2626 !important;
+    }
+
+    .bg-soft-info {
+        background-color: rgba(8, 145, 178, 0.1) !important;
+        color: #0891b2 !important;
+    }
+
+    .bg-soft-primary {
+        background-color: rgba(0, 73, 122, 0.1) !important;
+        color: #00497a !important;
+    }
+
+    .text-main-theme {
+        color: var(--med-text-main, #0f172a) !important;
+    }
+
+    .text-muted-theme {
+        color: var(--med-text-muted, #64748b) !important;
+    }
+
+    .bg-card-theme {
+        background-color: var(--med-bg-card, #ffffff) !important;
+    }
 </style>
 
 @section('page-body')
@@ -330,28 +387,35 @@
                                 class="fa fa-plus"></i> Create Order</a>
                     @endif
                 </div>
-                
+
                 <ul class="nav nav-tabs border-bottom-0" id="orderStatusTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active px-4 fw-bold text-primary border-bottom-0" id="tab-all" data-bs-toggle="tab" data-status="" type="button" role="tab">All</button>
+                        <button class="nav-link active px-4 fw-bold text-primary border-bottom-0" id="tab-all"
+                            data-bs-toggle="tab" data-status="" type="button" role="tab">All</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link px-4 fw-bold text-muted" id="tab-pending" data-bs-toggle="tab" data-status="pending" type="button" role="tab">Pending</button>
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-pending" data-bs-toggle="tab"
+                            data-status="pending" type="button" role="tab">Pending</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link px-4 fw-bold text-muted" id="tab-processing" data-bs-toggle="tab" data-status="processing" type="button" role="tab">Processing</button>
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-processing" data-bs-toggle="tab"
+                            data-status="processing" type="button" role="tab">Processing</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link px-4 fw-bold text-muted" id="tab-approved" data-bs-toggle="tab" data-status="approved" type="button" role="tab">Approved</button>
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-approved" data-bs-toggle="tab"
+                            data-status="approved" type="button" role="tab">Approved</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link px-4 fw-bold text-muted" id="tab-delivered" data-bs-toggle="tab" data-status="delivered" type="button" role="tab">Delivered</button>
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-delivered" data-bs-toggle="tab"
+                            data-status="delivered" type="button" role="tab">Delivered</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link px-4 fw-bold text-muted" id="tab-cancelled" data-bs-toggle="tab" data-status="cancelled" type="button" role="tab">Cancelled</button>
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-cancelled" data-bs-toggle="tab"
+                            data-status="cancelled" type="button" role="tab">Cancelled</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link px-4 fw-bold text-muted" id="tab-rejected" data-bs-toggle="tab" data-status="rejected" type="button" role="tab">Rejected</button>
+                        <button class="nav-link px-4 fw-bold text-muted" id="tab-rejected" data-bs-toggle="tab"
+                            data-status="rejected" type="button" role="tab">Rejected</button>
                     </li>
                 </ul>
             </div>
@@ -370,17 +434,22 @@
                             <label class="form-label fw-bold small text-muted text-uppercase mb-1">
                                 <i class="fa fa-calendar text-primary me-1"></i> Placed From
                             </label>
-                            <input type="text" id="start_date_filter" class="form-control bg-transparent flatpickr-input" placeholder="Select Start Date" readonly style="border-radius: 8px; border: 1.5px solid var(--med-border); font-size: 0.9rem; font-weight: 600; color: var(--med-text-main);">
+                            <input type="text" id="start_date_filter" class="form-control bg-transparent flatpickr-input"
+                                placeholder="Select Start Date" readonly
+                                style="border-radius: 8px; border: 1.5px solid var(--med-border); font-size: 0.9rem; font-weight: 600; color: var(--med-text-main);">
                         </div>
                         <div class="col-12 col-md-4">
                             <label class="form-label fw-bold small text-muted text-uppercase mb-1">
                                 <i class="fa fa-calendar text-primary me-1"></i> Placed To
                             </label>
-                            <input type="text" id="end_date_filter" class="form-control bg-transparent flatpickr-input" placeholder="Select End Date" readonly style="border-radius: 8px; border: 1.5px solid var(--med-border); font-size: 0.9rem; font-weight: 600; color: var(--med-text-main);">
+                            <input type="text" id="end_date_filter" class="form-control bg-transparent flatpickr-input"
+                                placeholder="Select End Date" readonly
+                                style="border-radius: 8px; border: 1.5px solid var(--med-border); font-size: 0.9rem; font-weight: 600; color: var(--med-text-main);">
                         </div>
                         <div class="col-12 col-md-4">
                             <label class="form-label d-none d-md-block mb-1">&nbsp;</label>
-                            <button type="button" id="clear_dates_btn" class="btn btn-clear-dates w-100 fw-bold d-flex align-items-center justify-content-center gap-2">
+                            <button type="button" id="clear_dates_btn"
+                                class="btn btn-clear-dates w-100 fw-bold d-flex align-items-center justify-content-center gap-2">
                                 <i class="fa fa-refresh"></i> Clear Dates
                             </button>
                         </div>
@@ -394,13 +463,13 @@
                         <div class="segmented-control" id="payment_status_filter_group">
                             <input type="radio" name="payment_status" id="pay_all" value="" checked>
                             <label for="pay_all">All</label>
-                            
+
                             <input type="radio" name="payment_status" id="pay_paid" value="paid">
                             <label for="pay_paid">Paid</label>
-                            
+
                             <input type="radio" name="payment_status" id="pay_pending" value="pending">
                             <label for="pay_pending">Pending</label>
-                            
+
                             <div class="selection-indicator"></div>
                         </div>
                     </div>
@@ -545,10 +614,8 @@
                                 <select id="edit_product_select" class="form-control select2-modal">
                                     <option value="">Select a product to add...</option>
                                     @foreach($products as $product)
-                                        <option value="{{ $product->id }}" 
-                                            data-price="{{ $product->mrp }}"
-                                            data-stock="{{ $product->stock }}"
-                                            data-gst="{{ $product->gst ?? 0 }}"
+                                        <option value="{{ $product->id }}" data-price="{{ $product->mrp }}"
+                                            data-stock="{{ $product->stock }}" data-gst="{{ $product->gst ?? 0 }}"
                                             data-pack="{{ $product->pack ?? '' }}"
                                             data-code="{{ $product->product_code ?? '' }}"
                                             data-boxsize="{{ $product->box_size ?? '' }}"
@@ -568,7 +635,8 @@
                             <div id="edit_variant_picker" class="mt-2" style="display:none;">
                                 <div id="edit_variant_levels"></div>
                                 <input type="hidden" id="edit_selected_variant" value="">
-                                <small class="text-danger d-none" id="edit_variant_warn">Please select a variant first.</small>
+                                <small class="text-danger d-none" id="edit_variant_warn">Please select a variant
+                                    first.</small>
                             </div>
                         </div>
 
@@ -623,7 +691,7 @@
         </div>
     </div>
 
-        </div>
+    </div>
     </div>
 
     {{-- Delete Confirmation Modal --}}
@@ -643,7 +711,7 @@
                 </div>
             </div>
         </div>
-    </div>    {{-- Cancel Confirmation Modal --}}
+    </div> {{-- Cancel Confirmation Modal --}}
     <div class="modal fade" id="cancelConfirmModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
@@ -653,31 +721,39 @@
                             <i class="fa fa-exclamation-triangle fs-4 text-white"></i>
                         </div>
                         <div>
-                            <h5 class="modal-title fw-bold text-white mb-0" style="color: #ffffff !important;">Cancel Order</h5>
-                            <p class="small text-white text-opacity-85 mb-0" id="cancel_order_code_display" style="color: rgba(255,255,255,0.85) !important;"></p>
+                            <h5 class="modal-title fw-bold text-white mb-0" style="color: #ffffff !important;">Cancel Order
+                            </h5>
+                            <p class="small text-white text-opacity-85 mb-0" id="cancel_order_code_display"
+                                style="color: rgba(255,255,255,0.85) !important;"></p>
                         </div>
                     </div>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <div class="p-3 rounded-3 mb-4 d-flex align-items-start bg-secondary-subtle border border-secondary border-opacity-25">
+                    <div
+                        class="p-3 rounded-3 mb-4 d-flex align-items-start bg-secondary-subtle border border-secondary border-opacity-25">
                         <i class="fa fa-info-circle text-secondary mt-1 me-3"></i>
                         <div>
                             <h6 class="fw-bold mb-1 text-secondary-emphasis">Are you sure?</h6>
-                            <p class="text-body-secondary small mb-0">This distributor order will be permanently cancelled. This action cannot be reversed.</p>
+                            <p class="text-body-secondary small mb-0">This distributor order will be permanently cancelled.
+                                This action cannot be reversed.</p>
                         </div>
                     </div>
-                    
+
                     <div class="mb-0">
-                        <label class="form-label fw-bold small text-uppercase" style="color: var(--med-text-main);">Cancellation Reason <span class="text-danger">*</span></label>
-                        <textarea id="cancel_reason_input" class="form-control border-0 bg-light shadow-none" rows="4" required
-                            placeholder="E.g., Stock issues, distributor request, clerical error..." 
+                        <label class="form-label fw-bold small text-uppercase"
+                            style="color: var(--med-text-main);">Cancellation Reason <span
+                                class="text-danger">*</span></label>
+                        <textarea id="cancel_reason_input" class="form-control border-0 bg-light shadow-none" rows="4"
+                            required placeholder="E.g., Stock issues, distributor request, clerical error..."
                             style="border-radius: 12px; resize: none;"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer border-0 px-4 pb-4 pt-0">
-                    <button type="button" class="btn btn-link text-muted fw-bold text-decoration-none px-4" data-bs-dismiss="modal">Keep Order</button>
-                    <button type="button" class="btn px-4 py-2 fw-bold shadow-sm" id="confirmCancelBtn" 
+                    <button type="button" class="btn btn-link text-muted fw-bold text-decoration-none px-4"
+                        data-bs-dismiss="modal">Keep Order</button>
+                    <button type="button" class="btn px-4 py-2 fw-bold shadow-sm" id="confirmCancelBtn"
                         style="border-radius: 10px; background-color: #1e293b; color: #fff;">
                         Yes, Cancel Order
                     </button>
@@ -685,38 +761,38 @@
             </div>
         </div>
     </div>
-      {{-- Upload Invoice Modal --}}
-        <div class="modal fade" id="uploadInvoiceModal" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content border-0 shadow-lg">
-                    <div class="modal-header bg-dark text-white">
-                        <h5 class="modal-title text-white">Upload / Change Invoice</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <form id="uploadInvoiceForm">
-                        @csrf
-                        <input type="hidden" id="upload_invoice_order_id">
-                        <div class="modal-body p-4">
-                            <div class="mb-3">
-                                <label class="form-label fw-bold" style="color: var(--med-text-main);">Invoice Document</label>
-                                <div class="premium-dropzone" id="invoice_dropzone">
-                                    <i class="fa fa-file-invoice"></i>
-                                    <h5 class="fw-bold mb-1">Upload Invoice File</h5>
-                                    <p class="text-muted small mb-0">PDF, JPG, PNG (Max 5MB)</p>
-                                    <div id="dropzone_filename" class="mt-2 fw-bold text-success d-none"></div>
-                                </div>
-                                <input type="file" name="invoice" id="invoice_file_input" class="d-none"
-                                    accept=".pdf,.jpg,.jpeg,.png" required>
-                            </div>
-                        </div>
-                        <div class="modal-footer bg-light">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="submit" class="btn btn-primary px-4">Upload Invoice</button>
-                        </div>
-                    </form>
+    {{-- Upload Invoice Modal --}}
+    <div class="modal fade" id="uploadInvoiceModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title text-white">Upload / Change Invoice</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
+                <form id="uploadInvoiceForm">
+                    @csrf
+                    <input type="hidden" id="upload_invoice_order_id">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold" style="color: var(--med-text-main);">Invoice Document</label>
+                            <div class="premium-dropzone" id="invoice_dropzone">
+                                <i class="fa fa-file-invoice"></i>
+                                <h5 class="fw-bold mb-1">Upload Invoice File</h5>
+                                <p class="text-muted small mb-0">PDF, JPG, PNG (Max 5MB)</p>
+                                <div id="dropzone_filename" class="mt-2 fw-bold text-success d-none"></div>
+                            </div>
+                            <input type="file" name="invoice" id="invoice_file_input" class="d-none"
+                                accept=".pdf,.jpg,.jpeg,.png" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary px-4">Upload Invoice</button>
+                    </div>
+                </form>
             </div>
         </div>
+    </div>
     </div>
     </div>
 
@@ -742,11 +818,11 @@
             let exportOptions = {
                 columns: ':not(.no-export)',
                 format: {
-                    body: function(data, row, column, node) {
+                    body: function (data, row, column, node) {
                         let tableApi = $('#distributor-orders-table').DataTable();
                         let colIdx = column;
                         let rowData = tableApi.row(row).data();
-                        
+
                         let isProductCol = (isDistributor && colIdx === 2) || (!isDistributor && colIdx === 3);
                         let isBrandCol = (isDistributor && colIdx === 3) || (!isDistributor && colIdx === 4);
                         let isPlacedAtCol = (isDistributor && colIdx === 7) || (!isDistributor && colIdx === 8);
@@ -828,7 +904,7 @@
                     @if(!Auth::user()->hasRole('distributor')) {
                             data: 'name',
                             name: 'distributor.user.name',
-                            render: function(data, type, row) {
+                            render: function (data, type, row) {
                                 if (type !== 'display') return data;
                                 return `<span class="fw-bold text-primary">${data}</span>`;
                             }
@@ -870,21 +946,21 @@
                         let isEstimated = status.includes('pending') || status.includes('processing');
                         if (isEstimated) {
                             return `<div class="d-flex flex-column">
-                                <span class="fw-bold text-secondary">₹${data}</span>
-                                <span class="text-muted" style="font-size: 0.65rem; font-weight: normal; margin-top: 1px;">(Est. Total)</span>
-                            </div>`;
+                                    <span class="fw-bold text-secondary">₹${data}</span>
+                                    <span class="text-muted" style="font-size: 0.65rem; font-weight: normal; margin-top: 1px;">(Est. Total)</span>
+                                </div>`;
                         } else if (status === 'cancelled' || status === 'rejected') {
                             let estAmt = (row.metadata && row.metadata.estimated_amount !== undefined) ? parseFloat(row.metadata.estimated_amount).toFixed(2) : data;
                             return `<div class="d-flex flex-column">
-                                <span class="fw-bold text-muted" style="text-decoration: line-through;">₹${data}</span>
-                                <span class="text-muted small" style="font-size: 0.65rem; font-weight: 500; opacity: 0.85; margin-top: 2px;">Est: ₹${estAmt}</span>
-                            </div>`;
+                                    <span class="fw-bold text-muted" style="text-decoration: line-through;">₹${data}</span>
+                                    <span class="text-muted small" style="font-size: 0.65rem; font-weight: 500; opacity: 0.85; margin-top: 2px;">Est: ₹${estAmt}</span>
+                                </div>`;
                         } else {
                             let estAmt = (row.metadata && row.metadata.estimated_amount !== undefined) ? parseFloat(row.metadata.estimated_amount).toFixed(2) : data;
                             return `<div class="d-flex flex-column">
-                                <span class="fw-bold text-success">₹${data} <small class="badge bg-success-subtle text-success border border-success rounded-pill px-2 py-0 ms-1" style="font-size: 0.55rem; font-weight: bold; vertical-align: middle;">INVOICED</small></span>
-                                <span class="text-muted small" style="font-size: 0.65rem; font-weight: 500; opacity: 0.85; margin-top: 2px;">Est: ₹${estAmt}</span>
-                            </div>`;
+                                    <span class="fw-bold text-success">₹${data} <small class="badge bg-success-subtle text-success border border-success rounded-pill px-2 py-0 ms-1" style="font-size: 0.55rem; font-weight: bold; vertical-align: middle;">INVOICED</small></span>
+                                    <span class="text-muted small" style="font-size: 0.65rem; font-weight: 500; opacity: 0.85; margin-top: 2px;">Est: ₹${estAmt}</span>
+                                </div>`;
                         }
                     }
                 },
@@ -997,7 +1073,7 @@
                 {
                     data: 'delivered_at',
                     visible: false,
-                    render: function(d) { return d || '-'; }
+                    render: function (d) { return d || '-'; }
                 }
                 ],
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
@@ -1030,12 +1106,12 @@
                             $.ajax({
                                 url: dt.ajax.url(),
                                 data: params,
-                                success: function(res) {
+                                success: function (res) {
                                     let rows = res.data;
                                     let csvContent = "\uFEFF"; // UTF-8 BOM
                                     csvContent += "No.,Order Code,Distributor,Email,Phone,GST,Drug License,Sales Manager,Product Code,Product Name,Brand,Variant,Qty,Unit,Unit Price,Total Amount,Status,Placed At,Delivered At,Payment Status\n";
                                     let slNo = 1;
-                                    rows.forEach(function(row) {
+                                    rows.forEach(function (row) {
                                         let baseData = [
                                             slNo++,
                                             row.order_code,
@@ -1047,7 +1123,7 @@
                                             row.sales_manager_name || ''
                                         ];
                                         if (row.items && row.items.length > 0) {
-                                            row.items.forEach(function(item) {
+                                            row.items.forEach(function (item) {
                                                 let variantStr = (item.side ? item.side + ' ' : '') + (item.size || '');
                                                 let itemData = [
                                                     item.product_code || '',
@@ -1074,14 +1150,14 @@
                                     let url = URL.createObjectURL(blob);
                                     let link = document.createElement("a");
                                     link.setAttribute("href", url);
-                                    link.setAttribute("download", `Distributor_Orders_${new Date().toISOString().slice(0,10)}.csv`);
+                                    link.setAttribute("download", `Distributor_Orders_${new Date().toISOString().slice(0, 10)}.csv`);
                                     document.body.appendChild(link);
                                     link.click();
                                     document.body.removeChild(link);
                                     button.html(oldHtml);
                                     button.prop('disabled', false);
                                 },
-                                error: function() {
+                                error: function () {
                                     button.html(oldHtml);
                                     button.prop('disabled', false);
                                     alert('Export failed. Please try again.');
@@ -1103,12 +1179,12 @@
                             $.ajax({
                                 url: dt.ajax.url(),
                                 data: params,
-                                success: function(res) {
+                                success: function (res) {
                                     let rows = res.data;
                                     let csvContent = "\uFEFF"; // UTF-8 BOM
                                     csvContent += "No.,Order Code,Distributor,Email,Phone,GST,Drug License,Sales Manager,Product Code,Product Name,Brand,Variant,Qty,Unit,Unit Price,Total Amount,Status,Placed At,Delivered At,Payment Status\n";
                                     let slNo = 1;
-                                    rows.forEach(function(row) {
+                                    rows.forEach(function (row) {
                                         let baseData = [
                                             slNo++,
                                             row.order_code,
@@ -1120,7 +1196,7 @@
                                             row.sales_manager_name || ''
                                         ];
                                         if (row.items && row.items.length > 0) {
-                                            row.items.forEach(function(item) {
+                                            row.items.forEach(function (item) {
                                                 let variantStr = (item.side ? item.side + ' ' : '') + (item.size || '');
                                                 let itemData = [
                                                     item.product_code || '',
@@ -1147,14 +1223,14 @@
                                     let url = URL.createObjectURL(blob);
                                     let link = document.createElement("a");
                                     link.setAttribute("href", url);
-                                    link.setAttribute("download", `Distributor_Orders_${new Date().toISOString().slice(0,10)}.csv`);
+                                    link.setAttribute("download", `Distributor_Orders_${new Date().toISOString().slice(0, 10)}.csv`);
                                     document.body.appendChild(link);
                                     link.click();
                                     document.body.removeChild(link);
                                     button.html(oldHtml);
                                     button.prop('disabled', false);
                                 },
-                                error: function() {
+                                error: function () {
                                     button.html(oldHtml);
                                     button.prop('disabled', false);
                                     alert('Export failed. Please try again.');
@@ -1176,7 +1252,7 @@
                     }
                     ]
                 },
-                drawCallback: function() {
+                drawCallback: function () {
                     $('[data-bs-toggle="popover"]').popover();
                 }
             });
@@ -1187,21 +1263,21 @@
             // Initialize Flatpickr for Date Filters
             const startPicker = flatpickr("#start_date_filter", {
                 dateFormat: "Y-m-d",
-                onChange: function(selectedDates, dateStr, instance) {
+                onChange: function (selectedDates, dateStr, instance) {
                     endPicker.set('minDate', dateStr);
                     table.ajax.reload();
                 }
             });
             const endPicker = flatpickr("#end_date_filter", {
                 dateFormat: "Y-m-d",
-                onChange: function(selectedDates, dateStr, instance) {
+                onChange: function (selectedDates, dateStr, instance) {
                     startPicker.set('maxDate', dateStr);
                     table.ajax.reload();
                 }
             });
 
             // Clear Date Filters
-            $('#clear_dates_btn').click(function() {
+            $('#clear_dates_btn').click(function () {
                 startPicker.clear();
                 endPicker.clear();
                 startPicker.set('maxDate', null);
@@ -1215,7 +1291,7 @@
             });
 
             // Tab Click
-            $('#orderStatusTabs .nav-link').on('click', function(e) {
+            $('#orderStatusTabs .nav-link').on('click', function (e) {
                 e.preventDefault();
                 $('#orderStatusTabs .nav-link').removeClass('active text-primary border-bottom-0').addClass('text-muted');
                 $(this).removeClass('text-muted').addClass('active text-primary border-bottom-0');
@@ -1458,19 +1534,19 @@
                         let sub = item.quantity * item.price;
                         total += sub;
                         tbody.append(`
-                                                                                                                                                                                            <tr>
-                                                                                                                                                                                                <td>${item.name}<input type="hidden" name="items[${id}][product_id]" value="${id}"></td>
-                                                                                                                                                                                                                                                            <td>${item.stock}</td>
-                                                                                                                                                                                                                                                            <td>
-                                                                                                                                                                                                                                                                <input type="number" class="form-control form-control-sm qty-input-create" 
-                                                                                                                                                                                                                                                                data-id="${id}" value="${item.quantity}" min="1" max="${item.stock}" style="width:80px">
-                                                                                                                                                                                                                                                                <input type="hidden" name="items[${id}][quantity]" value="${item.quantity}">
-                                                                                                                                                                                                                                                            </td>
-                                                                                                                                                                                                                                                            <td>${item.price}</td>
-                                                                                                                                                                                                                                                            <td>${sub.toFixed(2)}</td>
-                                                                                                                                                                                                                                                            <td><button type="button" class="btn btn-danger btn-sm remove-create" data-id="${id}">X</button></td>
-                                                                                                                                                                                                                                                        </tr>
-                                                                                                                                                                                                                                                    `);
+                                                                                                                                                                                                <tr>
+                                                                                                                                                                                                    <td>${item.name}<input type="hidden" name="items[${id}][product_id]" value="${id}"></td>
+                                                                                                                                                                                                                                                                <td>${item.stock}</td>
+                                                                                                                                                                                                                                                                <td>
+                                                                                                                                                                                                                                                                    <input type="number" class="form-control form-control-sm qty-input-create" 
+                                                                                                                                                                                                                                                                    data-id="${id}" value="${item.quantity}" min="1" max="${item.stock}" style="width:80px">
+                                                                                                                                                                                                                                                                    <input type="hidden" name="items[${id}][quantity]" value="${item.quantity}">
+                                                                                                                                                                                                                                                                </td>
+                                                                                                                                                                                                                                                                <td>${item.price}</td>
+                                                                                                                                                                                                                                                                <td>${sub.toFixed(2)}</td>
+                                                                                                                                                                                                                                                                <td><button type="button" class="btn btn-danger btn-sm remove-create" data-id="${id}">X</button></td>
+                                                                                                                                                                                                                                                            </tr>
+                                                                                                                                                                                                                                                        `);
                     });
                 }
                 $('#create_grand_total').text(total.toFixed(2));
@@ -1528,7 +1604,7 @@
                 let url = "{{ route('admin.distributor-orders.update', ':id') }}".replace(':id', row.id);
                 $('#editOrderForm').attr('action', url);
                 $('#editOrderModal').modal('show');
-                
+
                 setTimeout(() => {
                     window.initialEditFormData = $('#editOrderForm').serialize();
                 }, 100);
@@ -1564,7 +1640,7 @@
             $('#editOrderForm').submit(function (e) {
                 e.preventDefault();
                 let form = $(this);
-                
+
                 let currentFormData = form.serialize();
                 if (window.initialEditFormData === currentFormData) {
                     Swal.fire({
@@ -1621,7 +1697,7 @@
                         if (!allowedUnits.includes(unit)) {
                             allowedUnits.push(unit);
                         }
-                        
+
                         let options = '';
                         allowedUnits.forEach(function (u) {
                             let displayU = u === 'Nos' ? 'No.' : u;
@@ -1629,27 +1705,27 @@
                         });
 
                         tbody.append(`
-                                                                                                                                                                                                                                                        <tr>
-                                                                                                                                                                                                                                                            <td>${item.name}
-                                                                                                                                                                                                                                                                <input type="hidden" name="items[${rowId}][product_id]" value="${rowId}">
-                                                                                                                                                                                                                                                                ${item.orderItemId ? `<input type="hidden" name="items[${rowId}][order_item_id]" value="${item.orderItemId}">` : ''}
-                                                                                                                                                                                                                                                            </td>
-                                                                                                                                                                                                                                                            <td>
-                                                                                                                                                                                                                                                                <select class="form-select form-select-sm unit-select-edit" data-id="${rowId}" style="width: 90px; margin: 0 auto;">
-                                                                                                                                                                                                                                                                    ${options}
-                                                                                                                                                                                                                                                                </select>
-                                                                                                                                                                                                                                                                <input type="hidden" name="items[${rowId}][unit]" value="${unit}">
-                                                                                                                                                                                                                                                            </td>
-                                                                                                                                                                                                                                                            <td>
-                                                                                                                                                                                                                                                                <input type="number" class="form-control form-control-sm qty-input-edit" 
-                                                                                                                                                                                                                                                                data-id="${rowId}" value="${qty}" min="1" style="width:80px; margin: 0 auto;">
-                                                                                                                                                                                                                                                                <input type="hidden" name="items[${rowId}][quantity]" value="${qty}">
-                                                                                                                                                                                                                                                            </td>
-                                                                                                                                                                                                                                                            <td class="text-end">${price.toFixed(2)}</td>
-                                                                                                                                                                                                                                                            <td class="text-end">${sub.toFixed(2)}</td>
-                                                                                                                                                                                                                                                            <td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm remove-edit" data-id="${rowId}"><i class="fa fa-times"></i></button></td>
-                                                                                                                                                                                                                                                        </tr>
-                                                                                                                                                                                                                                                    `);
+                                                                                                                                                                                                                                                            <tr>
+                                                                                                                                                                                                                                                                <td>${item.name}
+                                                                                                                                                                                                                                                                    <input type="hidden" name="items[${rowId}][product_id]" value="${rowId}">
+                                                                                                                                                                                                                                                                    ${item.orderItemId ? `<input type="hidden" name="items[${rowId}][order_item_id]" value="${item.orderItemId}">` : ''}
+                                                                                                                                                                                                                                                                </td>
+                                                                                                                                                                                                                                                                <td>
+                                                                                                                                                                                                                                                                    <select class="form-select form-select-sm unit-select-edit" data-id="${rowId}" style="width: 90px; margin: 0 auto;">
+                                                                                                                                                                                                                                                                        ${options}
+                                                                                                                                                                                                                                                                    </select>
+                                                                                                                                                                                                                                                                    <input type="hidden" name="items[${rowId}][unit]" value="${unit}">
+                                                                                                                                                                                                                                                                </td>
+                                                                                                                                                                                                                                                                <td>
+                                                                                                                                                                                                                                                                    <input type="number" class="form-control form-control-sm qty-input-edit" 
+                                                                                                                                                                                                                                                                    data-id="${rowId}" value="${qty}" min="1" style="width:80px; margin: 0 auto;">
+                                                                                                                                                                                                                                                                    <input type="hidden" name="items[${rowId}][quantity]" value="${qty}">
+                                                                                                                                                                                                                                                                </td>
+                                                                                                                                                                                                                                                                <td class="text-end">${price.toFixed(2)}</td>
+                                                                                                                                                                                                                                                                <td class="text-end">${sub.toFixed(2)}</td>
+                                                                                                                                                                                                                                                                <td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm remove-edit" data-id="${rowId}"><i class="fa fa-times"></i></button></td>
+                                                                                                                                                                                                                                                            </tr>
+                                                                                                                                                                                                                                                        `);
                     });
                 }
                 $('#edit_grand_total').text(total.toFixed(2));
@@ -1700,57 +1776,57 @@
                     let lastEditor = row.metadata.last_edited_by || 'Staff';
                     let lastTime = row.metadata.last_edited_at || '';
                     editBanner = `
-                        <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-3" style="border-radius: 10px; background: rgba(255, 193, 7, 0.1); color: #856404;">
-                            <div class="me-3">
-                                <i class="fa fa-exclamation-triangle fa-2x"></i>
+                            <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-3" style="border-radius: 10px; background: rgba(255, 193, 7, 0.1); color: #856404;">
+                                <div class="me-3">
+                                    <i class="fa fa-exclamation-triangle fa-2x"></i>
+                                </div>
+                                <div>
+                                    <span class="fw-bold d-block" style="font-size: 0.9rem;">Order Edited Manually</span>
+                                    <span class="small" style="font-size: 0.85rem;">This order was modified by <b>${lastEditor}</b> on <b>${lastTime}</b>.</span>
+                                </div>
                             </div>
-                            <div>
-                                <span class="fw-bold d-block" style="font-size: 0.9rem;">Order Edited Manually</span>
-                                <span class="small" style="font-size: 0.85rem;">This order was modified by <b>${lastEditor}</b> on <b>${lastTime}</b>.</span>
-                            </div>
-                        </div>
-                    `;
+                        `;
                 }
 
                 let detailsHtml = editBanner + `
-                    <div class="row mb-3">
-                        <div class="col-md-6 mb-2 mb-md-0">
-                            <div class="card h-100 border-0 shadow-sm bg-card-theme" style="border-radius: 10px !important;">
-                                <div class="card-body py-2 px-3">
-                                    <h6 class="text-uppercase text-muted-theme fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 0.05em;"><i class="fa fa-building me-2"></i>Distributor Info</h6>
-                                    <h5 class="fw-bold mb-0 text-main-theme" style="font-size: 1rem;">${row.distributor_name || 'N/A'}</h5>
-                                    <div class="d-flex align-items-center mb-0 text-main-theme"><i class="fa fa-phone text-muted-theme me-2" style="width: 12px; font-size: 0.75rem;"></i> <span class="small" style="font-size: 0.8rem;">${row.distributor_phone || 'N/A'}</span></div>
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-2 mb-md-0">
+                                <div class="card h-100 border-0 shadow-sm bg-card-theme" style="border-radius: 10px !important;">
+                                    <div class="card-body py-2 px-3">
+                                        <h6 class="text-uppercase text-muted-theme fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 0.05em;"><i class="fa fa-building me-2"></i>Distributor Info</h6>
+                                        <h5 class="fw-bold mb-0 text-main-theme" style="font-size: 1rem;">${row.distributor_name || 'N/A'}</h5>
+                                        <div class="d-flex align-items-center mb-0 text-main-theme"><i class="fa fa-phone text-muted-theme me-2" style="width: 12px; font-size: 0.75rem;"></i> <span class="small" style="font-size: 0.8rem;">${row.distributor_phone || 'N/A'}</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100 border-0 shadow-sm bg-card-theme" style="border-radius: 10px !important;">
+                                    <div class="card-body py-2 px-3">
+                                        <h6 class="text-uppercase text-muted-theme fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 0.05em;"><i class="fa fa-building-columns me-2"></i>Company Info</h6>
+                                        <h5 class="fw-bold mb-1 text-main-theme" style="font-size: 1rem;">${row.company_name || 'PRS Company'}</h5>
+                                        <div class="d-flex align-items-center mb-0 text-main-theme text-muted-theme small" style="font-size: 0.75rem;"><i class="fa fa-user me-2" style="width: 12px;"></i> Sales Manager: ${row.sales_manager_name || 'Test Manager'}</div>
+                                        <div class="d-flex align-items-center mb-0 text-main-theme"><i class="fa fa-envelope text-muted-theme me-2" style="width: 12px; font-size: 0.75rem;"></i> <span class="small" style="font-size: 0.8rem;">${row.company_email || 'info@prs.com'}</span></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="card h-100 border-0 shadow-sm bg-card-theme" style="border-radius: 10px !important;">
-                                <div class="card-body py-2 px-3">
-                                    <h6 class="text-uppercase text-muted-theme fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 0.05em;"><i class="fa fa-building-columns me-2"></i>Company Info</h6>
-                                    <h5 class="fw-bold mb-1 text-main-theme" style="font-size: 1rem;">${row.company_name || 'PRS Company'}</h5>
-                                    <div class="d-flex align-items-center mb-0 text-main-theme text-muted-theme small" style="font-size: 0.75rem;"><i class="fa fa-user me-2" style="width: 12px;"></i> Sales Manager: ${row.sales_manager_name || 'Test Manager'}</div>
-                                    <div class="d-flex align-items-center mb-0 text-main-theme"><i class="fa fa-envelope text-muted-theme me-2" style="width: 12px; font-size: 0.75rem;"></i> <span class="small" style="font-size: 0.8rem;">${row.company_email || 'info@prs.com'}</span></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="card border-0 shadow-sm mb-3 bg-card-theme" style="border-radius: 12px !important; overflow: hidden;">
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table mb-0 align-middle">
-                                    <thead style="background: rgba(var(--med-primary-rgb), 0.02); border-bottom: 1px solid var(--med-border);">
-                                        <tr>
-                                            <th class="py-2 px-3 text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em; width: 200px;">Pharmaceutical Item</th>
-                                            <th class="py-2 px-3 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Standard Batch</th>
-                                            <th class="py-2 px-3 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Order Qty</th>
-                                            <th class="py-2 px-3 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Free</th>
-                                            <th class="py-2 px-3 text-end text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Price (₹)</th>
-                                            <th class="py-2 px-3 text-end text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Total (₹)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="border-0">
-                `;
+                        <div class="card border-0 shadow-sm mb-3 bg-card-theme" style="border-radius: 12px !important; overflow: hidden;">
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table mb-0 align-middle">
+                                        <thead style="background: rgba(var(--med-primary-rgb), 0.02); border-bottom: 1px solid var(--med-border);">
+                                            <tr>
+                                                <th class="py-2 px-3 text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em; width: 200px;">Pharmaceutical Item</th>
+                                                <th class="py-2 px-3 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Standard Batch</th>
+                                                <th class="py-2 px-3 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Order Qty</th>
+                                                <th class="py-2 px-3 text-center text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Free</th>
+                                                <th class="py-2 px-3 text-end text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Price (₹)</th>
+                                                <th class="py-2 px-3 text-end text-muted-theme fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.1em;">Total (₹)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="border-0">
+                    `;
 
                 (row.items || []).forEach(function (i) {
                     let pName = i.product_name || i.name || '-';
@@ -1761,116 +1837,116 @@
                     let batchHtml = '<span class="text-muted small">N/A</span>';
                     if (i.batches && i.batches.length > 0) {
                         batchHtml = i.batches.map(b => `
-                            <div class="mb-1 last-child-mb-0">
-                                <span class="badge bg-soft-info text-info border-0 px-2 py-1" style="font-size: 0.85rem; font-weight: 800; letter-spacing: 0.5px;">${b.batch_no}</span>
-                                <div class="text-muted d-block" style="font-size: 0.75rem; margin-top: 1px;">Exp: ${b.expiry_date}</div>
-                            </div>
-                        `).join('');
+                                <div class="mb-1 last-child-mb-0">
+                                    <span class="badge bg-soft-info text-info border-0 px-2 py-1" style="font-size: 0.85rem; font-weight: 800; letter-spacing: 0.5px;">${b.batch_no}</span>
+                                    <div class="text-muted d-block" style="font-size: 0.75rem; margin-top: 1px;">Exp: ${b.expiry_date}</div>
+                                </div>
+                            `).join('');
                     }
 
                     let cleanedName = window.cleanProductName(pName, i.side, i.size);
                     let variantBadge = window.renderProductVariantBadge(i);
 
                     detailsHtml += `
-                        <tr style="border-bottom: 1px solid var(--med-border-light, #f1f5f9);">
-                            <td class="py-2 px-3">
-                                <div class="d-flex align-items-start">
-                                    <div class="ms-0 w-100">
-                                        <div class="text-main-theme fw-bold mb-0" style="font-size: 0.9rem; white-space: normal; line-height: 1.2;">
-                                             ${cleanedName} ${variantBadge}
-                                         </div>
-                                         <div class="small text-muted-theme" style="font-size: 0.7rem;">
-                                             ${i.brand ? `<span class="fw-bold">(${i.brand})</span> •` : ''} <span class="fw-bold text-primary">${qty} ${i.unit || 'Nos'}</span>
-                                         </div>
-                                         <div class="d-flex gap-2 flex-wrap mt-0 opacity-75" style="font-size: 0.6rem;">
-                                             ${i.generic_name ? `<span>${i.generic_name}</span>` : ''}
-                                             ${i.pack && i.pack.trim() ? `<span>• ${i.pack}</span>` : ''}
-                                             ${i.product_code && i.product_code !== '---' && i.product_code !== 'N/A' ? `<span>Code: ${i.product_code}</span>` : ''}
-                                         </div>
+                            <tr style="border-bottom: 1px solid var(--med-border-light, #f1f5f9);">
+                                <td class="py-2 px-3">
+                                    <div class="d-flex align-items-start">
+                                        <div class="ms-0 w-100">
+                                            <div class="text-main-theme fw-bold mb-0" style="font-size: 0.9rem; white-space: normal; line-height: 1.2;">
+                                                 ${cleanedName} ${variantBadge}
+                                             </div>
+                                             <div class="small text-muted-theme" style="font-size: 0.7rem;">
+                                                 ${i.brand ? `<span class="fw-bold">(${i.brand})</span> •` : ''} <span class="fw-bold text-primary">${qty} ${i.unit || 'Nos'}</span>
+                                             </div>
+                                             <div class="d-flex gap-2 flex-wrap mt-0 opacity-75" style="font-size: 0.6rem;">
+                                                 ${i.generic_name ? `<span>${i.generic_name}</span>` : ''}
+                                                 ${i.pack && i.pack.trim() ? `<span>• ${i.pack}</span>` : ''}
+                                                 ${i.product_code && i.product_code !== '---' && i.product_code !== 'N/A' ? `<span>Code: ${i.product_code}</span>` : ''}
+                                             </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </td>
-                            <td class="py-2 px-3 text-center">${batchHtml}</td>
-                            <td class="py-2 px-3 text-center">
-                                <div class="fw-bold" style="font-size: 0.85rem;">${qty}</div>
-                                <div class="text-muted small" style="font-size: 0.6rem;">${i.unit || 'Units'}</div>
-                            </td>
-                            <td class="py-2 px-3 text-center">
-                                ${i.free_quantity > 0 ? `<div class="badge bg-soft-success text-success border-0 px-2 py-1" style="font-size: 0.7rem;">+${i.free_quantity}</div>` : '<span class="text-muted small">-</span>'}
-                            </td>
-                            <td class="py-2 px-3 text-end">
-                                <div class="text-muted small" style="font-size: 0.75rem;">${unitPrice.toFixed(2)}</div>
-                            </td>
-                             <td class="py-2 px-3 text-end">
-                                <div class="fw-bold text-primary" style="font-size: 0.85rem;">${totalAmt.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-                            </td>
-                        </tr>
-                    `;
+                                </td>
+                                <td class="py-2 px-3 text-center">${batchHtml}</td>
+                                <td class="py-2 px-3 text-center">
+                                    <div class="fw-bold" style="font-size: 0.85rem;">${qty}</div>
+                                    <div class="text-muted small" style="font-size: 0.6rem;">${i.unit || 'Units'}</div>
+                                </td>
+                                <td class="py-2 px-3 text-center">
+                                    ${i.free_quantity > 0 ? `<div class="badge bg-soft-success text-success border-0 px-2 py-1" style="font-size: 0.7rem;">+${i.free_quantity}</div>` : '<span class="text-muted small">-</span>'}
+                                </td>
+                                <td class="py-2 px-3 text-end">
+                                    <div class="text-muted small" style="font-size: 0.75rem;">${unitPrice.toFixed(2)}</div>
+                                </td>
+                                 <td class="py-2 px-3 text-end">
+                                    <div class="fw-bold text-primary" style="font-size: 0.85rem;">${totalAmt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                </td>
+                            </tr>
+                        `;
                 });
 
                 detailsHtml += `
-                                    </tbody>
-                                    <tfoot style="background: rgba(var(--med-primary-rgb), 0.01);">
-                                        <tr>
-                                            <td colspan="5" class="text-end py-3 px-3 text-uppercase fw-bold text-muted" style="font-size: 0.7rem; letter-spacing: 0.05em;">Grand Total:</td>
-                                            <td class="py-3 px-3 text-end">
-                                                <div class="fw-bold text-success fs-5" style="letter-spacing: -0.02em;">₹${parseFloat(row.total_amount).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-                                            </td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
+                                        </tbody>
+                                        <tfoot style="background: rgba(var(--med-primary-rgb), 0.01);">
+                                            <tr>
+                                                <td colspan="5" class="text-end py-3 px-3 text-uppercase fw-bold text-muted" style="font-size: 0.7rem; letter-spacing: 0.05em;">Grand Total:</td>
+                                                <td class="py-3 px-3 text-end">
+                                                    <div class="fw-bold text-success fs-5" style="letter-spacing: -0.02em;">₹${parseFloat(row.total_amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
 
 
-                    <div class="card border-0 shadow-sm bg-card-theme" style="border-radius: 12px !important;">
-                        <div class="card-body py-3 px-3">
-                            <h6 class="text-uppercase text-muted-theme fw-bold mb-3" style="font-size: 0.65rem; letter-spacing: 0.08em;"><i class="fa fa-history me-2"></i>Order Lifecycle Progress</h6>
-                            <div class="order-timeline">
-                                ${(() => {
-                                    const status = (row.status || '').toLowerCase();
-                                    const steps = [
-                                        { key: 'pending', label: 'Order Placed', desc: `Initial request at ${row.placed_at || 'N/A'}` },
-                                        { key: 'processing', label: 'Processing', desc: 'Laboratory processing' },
-                                        { key: 'approved', label: 'Approved', desc: 'Cleared for dispatch' },
-                                        { key: 'delivered', label: 'Delivered', desc: `Fulfillment confirmed ${row.delivered_at ? 'at ' + row.delivered_at : ''}` }
-                                    ];
+                        <div class="card border-0 shadow-sm bg-card-theme" style="border-radius: 12px !important;">
+                            <div class="card-body py-3 px-3">
+                                <h6 class="text-uppercase text-muted-theme fw-bold mb-3" style="font-size: 0.65rem; letter-spacing: 0.08em;"><i class="fa fa-history me-2"></i>Order Lifecycle Progress</h6>
+                                <div class="order-timeline">
+                                    ${(() => {
+                        const status = (row.status || '').toLowerCase();
+                        const steps = [
+                            { key: 'pending', label: 'Order Placed', desc: `Initial request at ${row.placed_at || 'N/A'}` },
+                            { key: 'processing', label: 'Processing', desc: 'Laboratory processing' },
+                            { key: 'approved', label: 'Approved', desc: 'Cleared for dispatch' },
+                            { key: 'delivered', label: 'Delivered', desc: `Fulfillment confirmed ${row.delivered_at ? 'at ' + row.delivered_at : ''}` }
+                        ];
 
-                                    let activeIdx = 0;
-                                    if (status === 'processing') activeIdx = 1;
-                                    else if (status === 'approved') activeIdx = 2;
-                                    else if (status === 'delivered') activeIdx = 3;
+                        let activeIdx = 0;
+                        if (status === 'processing') activeIdx = 1;
+                        else if (status === 'approved') activeIdx = 2;
+                        else if (status === 'delivered') activeIdx = 3;
 
-                                    let html = steps.map((step, idx) => `
-                                        <div class="timeline-item ${idx <= activeIdx ? 'active' : ''}">
-                                            <div class="timeline-marker"></div>
-                                            <div class="timeline-content">
-                                                <h6>${step.label}</h6>
-                                                <span>${step.desc || ''}</span>
-                                                ${idx === activeIdx ? '<div class="badge bg-soft-primary text-primary border-0 mt-1" style="font-size: 0.6rem;">Current</div>' : ''}
-                                            </div>
-                                        </div>
-                                    `).join('');
-
-                                    if (status === 'cancelled' || status === 'rejected') {
-                                        html += `
-                                            <div class="timeline-item active">
-                                                <div class="timeline-marker" style="background: #ef4444 !important; border-color: #ef4444 !important; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;"></div>
+                        let html = steps.map((step, idx) => `
+                                            <div class="timeline-item ${idx <= activeIdx ? 'active' : ''}">
+                                                <div class="timeline-marker"></div>
                                                 <div class="timeline-content">
-                                                    <h6 class="text-danger">${status.toUpperCase()}</h6>
-                                                    <span>Reason: ${row.cancellation_reason || 'The order process was terminated.'}</span>
+                                                    <h6>${step.label}</h6>
+                                                    <span>${step.desc || ''}</span>
+                                                    ${idx === activeIdx ? '<div class="badge bg-soft-primary text-primary border-0 mt-1" style="font-size: 0.6rem;">Current</div>' : ''}
                                                 </div>
                                             </div>
-                                        `;
-                                    }
-                                    return html;
-                                })()}
+                                        `).join('');
+
+                        if (status === 'cancelled' || status === 'rejected') {
+                            html += `
+                                                <div class="timeline-item active">
+                                                    <div class="timeline-marker" style="background: #ef4444 !important; border-color: #ef4444 !important; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;"></div>
+                                                    <div class="timeline-content">
+                                                        <h6 class="text-danger">${status.toUpperCase()}</h6>
+                                                        <span>Reason: ${row.cancellation_reason || 'The order process was terminated.'}</span>
+                                                    </div>
+                                                </div>
+                                            `;
+                        }
+                        return html;
+                    })()}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `;
+                    `;
 
                 $('#showOrderContent').html(detailsHtml);
                 $('#showOrderModal').modal('show');
@@ -2102,31 +2178,33 @@
 @endpush
 
 @push('styles')
-<style>
-    .btn-clear-dates {
-        border-radius: 8px;
-        padding: 0.375rem 0.75rem;
-        font-size: 0.9rem;
-        font-weight: 600;
-        border: 1.5px solid var(--med-primary, #00497a) !important;
-        color: var(--med-primary, #00497a) !important;
-        background-color: rgba(0, 73, 122, 0.07) !important;
-        transition: all 0.2s ease;
-    }
-    .btn-clear-dates:hover {
-        background-color: var(--med-primary, #00497a) !important;
-        color: #ffffff !important;
-        border-color: var(--med-primary, #00497a) !important;
-    }
+    <style>
+        .btn-clear-dates {
+            border-radius: 8px;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1.5px solid var(--med-primary, #00497a) !important;
+            color: var(--med-primary, #00497a) !important;
+            background-color: rgba(0, 73, 122, 0.07) !important;
+            transition: all 0.2s ease;
+        }
 
-    body.dark-only .btn-clear-dates {
-        border-color: rgba(0, 73, 122, 0.5) !important;
-        color: #5db8f5 !important;
-        background-color: rgba(0, 73, 122, 0.15) !important;
-    }
-    body.dark-only .btn-clear-dates:hover {
-        background-color: var(--med-primary, #00497a) !important;
-        color: #ffffff !important;
-    }
-</style>
+        .btn-clear-dates:hover {
+            background-color: var(--med-primary, #00497a) !important;
+            color: #ffffff !important;
+            border-color: var(--med-primary, #00497a) !important;
+        }
+
+        body.dark-only .btn-clear-dates {
+            border-color: rgba(0, 73, 122, 0.5) !important;
+            color: #5db8f5 !important;
+            background-color: rgba(0, 73, 122, 0.15) !important;
+        }
+
+        body.dark-only .btn-clear-dates:hover {
+            background-color: var(--med-primary, #00497a) !important;
+            color: #ffffff !important;
+        }
+    </style>
 @endpush

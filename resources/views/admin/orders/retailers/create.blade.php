@@ -1019,6 +1019,7 @@
                 
                 // Reset variants
                 $('#variantWrapper').hide();
+                $('#variantLevelsContainer').empty();
                 $('.variant-btn').removeClass('active');
                 $('#variantValue').val('');
                 

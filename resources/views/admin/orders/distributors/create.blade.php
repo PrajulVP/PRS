@@ -709,6 +709,9 @@
                 }
                 renderTable(key);
                 $('#productSelect').val(null).trigger('change');
+                $('#variantWrapper').hide();
+                $('#variantLevelsContainer').empty();
+                $('#variantValue').val('');
                 $('#productDetailsCard').fadeOut(300);
                 $('#qtyInput').val(1);
                 currentProductDetails = null;
