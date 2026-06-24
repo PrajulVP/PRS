@@ -1392,6 +1392,10 @@
                 renderEditItems();
                 $('#editOrderForm').attr('action', `/admin/retailer/${row.id}`);
                 $('#editOrderModal').modal('show');
+                
+                setTimeout(() => {
+                    window.initialEditFormData = $('#editOrderForm').serialize();
+                }, 100);
             });
 
             // Variant picker logic for add-product in edit modal
@@ -1622,6 +1626,19 @@
             $('#editOrderForm').submit(function (e) {
                 e.preventDefault();
                 let form = $(this);
+                
+                let currentFormData = form.serialize();
+                if (window.initialEditFormData === currentFormData) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'No Changes',
+                        text: 'You have not made any changes to the order.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    return;
+                }
+
                 let url = form.attr('action');
                 let data = form.serialize();
 

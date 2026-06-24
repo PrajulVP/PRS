@@ -3030,6 +3030,10 @@
                 let url = "{{ route('admin.distributor-orders.update', ':id') }}".replace(':id', row.id);
                 $('#editOrderForm').attr('action', url);
                 $('#editOrderModal').modal('show');
+                
+                setTimeout(() => {
+                    window.initialEditFormData = $('#editOrderForm').serialize();
+                }, 100);
             });
 
             // Variant picker for distributor edit modal
@@ -3343,6 +3347,19 @@
             $('#editOrderForm').submit(function (e) {
                 e.preventDefault();
                 let form = $(this);
+                
+                let currentFormData = form.serialize();
+                if (window.initialEditFormData === currentFormData) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'No Changes',
+                        text: 'You have not made any changes to the order.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    return;
+                }
+
                 let $btn = form.find('button[type="submit"]');
                 let oldText = $btn.html();
                 $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Updating...');
