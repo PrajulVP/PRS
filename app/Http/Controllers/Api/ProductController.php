@@ -71,6 +71,9 @@ class ProductController extends Controller
             'pts' => (float)$product->pts,
             'gst' => (float)$product->gst,
             'mrp' => (float)$product->mrp,
+            'is_free' => (bool)$product->is_free_eligible,
+            'free_item_threshold' => $product->free_qty_buy,
+            'free_item_quantity' => $product->free_qty_get,
             'image' => $product->image ? asset('storage/' . $product->image) : null,
             'debug_fix_applied' => true,
         ]);
@@ -100,7 +103,10 @@ class ProductController extends Controller
      *                 @OA\Property(property="pts", type="string", example="12.00"),
      *                 @OA\Property(property="gst", type="string", example="12.00"),
      *                 @OA\Property(property="brand", type="string", example="BrandName"),
-     *                 @OA\Property(property="net_amount", type="string", example="18.00")
+     *                 @OA\Property(property="net_amount", type="string", example="18.00"),
+     *                 @OA\Property(property="is_free", type="boolean", example=true),
+     *                 @OA\Property(property="free_item_threshold", type="integer", nullable=true, example=10),
+     *                 @OA\Property(property="free_item_quantity", type="integer", nullable=true, example=2)
      *             )
      *         )
      *     ),
@@ -112,7 +118,22 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $products = Product::all();
+        $products = Product::all()->map(function ($product) {
+            $data = $product->toArray();
+            
+            // Map the free item attributes to match API requirements
+            $data['is_free'] = (bool)$product->is_free_eligible;
+            $data['free_item_threshold'] = $product->free_qty_buy;
+            $data['free_item_quantity'] = $product->free_qty_get;
+            
+            // Remove legacy internal field names from response
+            unset($data['is_free_eligible']);
+            unset($data['free_qty_buy']);
+            unset($data['free_qty_get']);
+            
+            return $data;
+        });
+        
         return response()->json($products);
     }
 

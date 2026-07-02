@@ -660,6 +660,16 @@
                                                     "type": "boolean",
                                                     "example": false,
                                                     "nullable": true
+                                                },
+                                                "free_item_quantity": {
+                                                    "type": "integer",
+                                                    "example": 2,
+                                                    "nullable": true
+                                                },
+                                                "free_item_threshold": {
+                                                    "type": "integer",
+                                                    "example": 10,
+                                                    "nullable": true
                                                 }
                                             },
                                             "type": "object"
@@ -3136,6 +3146,20 @@
                                             "net_amount": {
                                                 "type": "string",
                                                 "example": "18.00"
+                                            },
+                                            "is_free": {
+                                                "type": "boolean",
+                                                "example": true
+                                            },
+                                            "free_item_threshold": {
+                                                "type": "integer",
+                                                "example": 10,
+                                                "nullable": true
+                                            },
+                                            "free_item_quantity": {
+                                                "type": "integer",
+                                                "example": 2,
+                                                "nullable": true
                                             }
                                         },
                                         "type": "object"
@@ -3562,6 +3586,16 @@
                                                 "is_free": {
                                                     "type": "boolean",
                                                     "example": false,
+                                                    "nullable": true
+                                                },
+                                                "free_item_quantity": {
+                                                    "type": "integer",
+                                                    "example": 2,
+                                                    "nullable": true
+                                                },
+                                                "free_item_threshold": {
+                                                    "type": "integer",
+                                                    "example": 10,
                                                     "nullable": true
                                                 },
                                                 "distributor_id": {

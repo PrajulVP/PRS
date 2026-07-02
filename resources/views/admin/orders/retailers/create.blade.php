@@ -1725,6 +1725,39 @@
 
             $('#createOrderForm').submit(function (e) {
                 e.preventDefault();
+                
+                // Validate free item variants
+                let hasIncompleteFree = false;
+                $.each(addedItems, function(key, item) {
+                    let getQty = 1;
+                    let fpInfo = eligibleFreeProducts.find(p => p.id == item.id);
+                    if (fpInfo && fpInfo.free_qty_get) getQty = fpInfo.free_qty_get;
+                    let freeAmt = (item.free_qty_buy > 0 && item.qty >= item.free_qty_buy) ? Math.floor(item.qty / item.free_qty_buy) * getQty : 0;
+                    
+                    if (freeAmt > 0 && fpInfo && fpInfo.variant_options) {
+                        let attrs = Object.keys(fpInfo.variant_options);
+                        if (attrs.length > 0) {
+                            let totalSelected = 0;
+                            if (item.free_selections) {
+                                attrs.forEach(attr => {
+                                    let attrTotal = 0;
+                                    if (item.free_selections[attr]) {
+                                        Object.values(item.free_selections[attr]).forEach(q => attrTotal += parseInt(q) || 0);
+                                    }
+                                    if (attrTotal < freeAmt) hasIncompleteFree = true;
+                                });
+                            } else {
+                                hasIncompleteFree = true;
+                            }
+                        }
+                    }
+                });
+
+                if (hasIncompleteFree) {
+                    showToast('warning', 'Please complete all variant selections for your free items before placing the order.');
+                    return false;
+                }
+
                 let btn = $('#btnSubmitOrder');
                 if (btn.prop('disabled')) return;
                 btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-2"></i> processing...');

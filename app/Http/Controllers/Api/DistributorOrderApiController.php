@@ -213,7 +213,9 @@ class DistributorOrderApiController extends Controller
      *                 @OA\Property(property="unit", type="string", enum={"Nos", "Strips", "Box", "Carton"}, example="Box"),
      *                 @OA\Property(property="side", type="string", nullable=true, example="Left"),
      *                 @OA\Property(property="size", type="string", nullable=true, example="XL"),
-     *                 @OA\Property(property="is_free", type="boolean", nullable=true, example=false)
+     *                 @OA\Property(property="is_free", type="boolean", nullable=true, example=false),
+     *                 @OA\Property(property="free_item_quantity", type="integer", nullable=true, example=2),
+     *                 @OA\Property(property="free_item_threshold", type="integer", nullable=true, example=10)
      *             )),
      *             @OA\Property(property="delivery_notes", type="string", nullable=true, example="Urgent distributor order")
      *         )
@@ -257,6 +259,8 @@ class DistributorOrderApiController extends Controller
             'items.*.side' => 'nullable|string',
             'items.*.size' => 'nullable|string',
             'items.*.is_free' => 'nullable|boolean',
+            'items.*.free_item_quantity' => 'nullable|integer|min:0',
+            'items.*.free_item_threshold' => 'nullable|integer|min:0',
             'delivery_notes' => 'nullable|string',
         ]);
 
@@ -314,6 +318,22 @@ class DistributorOrderApiController extends Controller
                 $unitPrice = $product->pts;
                 $unit = $itemData['unit'] ?? 'Box';
                 $qty = (float)$itemData['quantity'];
+                $iSide = $itemData['side'] ?? null;
+                $iSize = $itemData['size'] ?? null;
+
+                // STRICT VALIDATION: Ensure variants are provided if product has them
+                if ($product->has_variants && !empty($product->variant_options)) {
+                    $requiredOptions = array_map('strtolower', array_keys((array)$product->variant_options));
+                    
+                    $isFreeStr = isset($itemData['is_free']) && $itemData['is_free'] ? 'free' : 'paid';
+                    
+                    if (in_array('side', $requiredOptions) && empty($iSide)) {
+                        throw new \Exception("The product '{$product->product_name}' requires a valid side selection for {$isFreeStr} items.");
+                    }
+                    if (in_array('size', $requiredOptions) && empty($iSize)) {
+                        throw new \Exception("The product '{$product->product_name}' requires a valid size selection for {$isFreeStr} items.");
+                    }
+                }
 
                 // Conversion logic
                 $multiplier = 1;

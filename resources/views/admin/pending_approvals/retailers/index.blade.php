@@ -3089,7 +3089,23 @@
                                 }
                             }
                             vRow.find('.v-qty-display').html(displayQty);
-                            vRow.find('.v-free-display').text(freeQty > 0 ? freeQty : '-');
+                            
+                            // Maintain existing variant badges if present, just update the number
+                            if (freeQty > 0) {
+                                let existingVariantHtml = '';
+                                let $existingFree = vRow.find('.v-free-display');
+                                if ($existingFree.find('.bg-primary-subtle').length > 0) {
+                                    existingVariantHtml = $existingFree.find('.bg-primary-subtle')[0].outerHTML;
+                                }
+                                vRow.find('.v-free-display').html(`
+                                    <div class="d-flex flex-column align-items-center justify-content-center gap-1 mt-1">
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.7rem;"><i class="fa fa-gift me-1"></i>${freeQty}</span>
+                                        ${existingVariantHtml}
+                                    </div>
+                                `);
+                            } else {
+                                vRow.find('.v-free-display').html('-');
+                            }
 
                             vRow.find('.v-taxable-display').text(`₹${extTaxable.toFixed(2)}`);
                             vRow.find('.v-gst-display').text(`₹${extGst.toFixed(2)}`);

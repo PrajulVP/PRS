@@ -2671,23 +2671,39 @@
                             $(`#batches_for_${item.id} .hidden-expiry-val`).val(parsedExp || cleanDisplay);
                         }
 
-                        if (billedQty > 0) {
-                            $(`input[name="batches[${item.id}][0][quantity]"]`).val(billedQty);
-                            let unitStr = $(`#v_row_${item.id} .v-qty-display`).data('original-unit') || '';
-                            let displayHtml = `<strong>${billedQty}</strong> ${unitStr}`;
-                            
-                            // Visual cue if quantity differs from ordered
-                            if (billedQty !== item.orderedQty) {
-                                let diffClass = billedQty > item.orderedQty ? 'text-primary' : 'text-danger';
-                                displayHtml += ` <br><small class="${diffClass} fw-bold" style="font-size: 0.65rem;">(Ord: ${item.orderedQty})</small>`;
-                                if (billedQty > item.orderedQty) {
-                                    window.qtyMismatchProducts.push(`You ordered ${item.orderedQty} but the invoiced quantity is ${billedQty} for item: ${item.name}`);
+                            if (billedQty > 0) {
+                                $(`input[name="batches[${item.id}][0][quantity]"]`).val(billedQty);
+                                let unitStr = $(`#v_row_${item.id} .v-qty-display`).data('original-unit') || '';
+                                let displayHtml = `<strong>${billedQty}</strong> ${unitStr}`;
+                                
+                                // Visual cue if quantity differs from ordered
+                                if (billedQty !== item.orderedQty) {
+                                    let diffClass = billedQty > item.orderedQty ? 'text-primary' : 'text-danger';
+                                    displayHtml += ` <br><small class="${diffClass} fw-bold" style="font-size: 0.65rem;">(Ord: ${item.orderedQty})</small>`;
+                                    if (billedQty > item.orderedQty) {
+                                        window.qtyMismatchProducts.push(`You ordered ${item.orderedQty} but the invoiced quantity is ${billedQty} for item: ${item.name}`);
+                                    }
+                                }
+                                
+                                $(`#v_row_${item.id} .v-qty-display`).html(displayHtml);
+                                
+                                // Maintain existing variant badges if present, just update the number
+                                if (freeQty > 0) {
+                                    let existingVariantHtml = '';
+                                    let $existingFree = $(`#v_row_${item.id} .v-free-display`);
+                                    if ($existingFree.find('.bg-primary-subtle').length > 0) {
+                                        existingVariantHtml = $existingFree.find('.bg-primary-subtle')[0].outerHTML;
+                                    }
+                                    $(`#v_row_${item.id} .v-free-display`).html(`
+                                        <div class="d-flex flex-column align-items-center justify-content-center gap-1 mt-1">
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.7rem;"><i class="fa fa-gift me-1"></i>${freeQty}</span>
+                                            ${existingVariantHtml}
+                                        </div>
+                                    `);
+                                } else {
+                                    $(`#v_row_${item.id} .v-free-display`).html('-');
                                 }
                             }
-                            
-                            $(`#v_row_${item.id} .v-qty-display`).html(displayHtml);
-                            $(`#v_row_${item.id} .v-free-display`).text(freeQty > 0 ? freeQty : '-');
-                        }
 
                         // Update Hidden Values
                         $(`#batches_for_${item.id} .hidden-mrp-val`).val(extMrp);
