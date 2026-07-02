@@ -2317,7 +2317,12 @@
                                                                 ${item.quantity} ${item.unit || 'Nos'}
                                                             </td>
                                                             <td class="text-center fw-bold text-success" style="font-size: 0.85rem;">
-                                                                ${item.free_quantity > 0 ? item.free_quantity : '-'}
+                                                                ${item.free_quantity > 0 ? 
+                                                                    `<div class="d-flex flex-column align-items-center justify-content-center gap-1">
+                                                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.75rem; letter-spacing: 0.5px;"><i class="fa fa-gift me-1"></i>${item.free_quantity} Free</span>
+                                                                        ${(item.free_side || item.free_size) ? `<span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 0.65rem; letter-spacing: 0.5px; padding: 0.25em 0.6em;">${[item.free_side, item.free_size].filter(Boolean).join(' / ').toUpperCase()}</span>` : ''}
+                                                                    </div>` 
+                                                                : '-'}
                                                             </td>
                                                             <td class="text-end fw-bold text-main-theme" style="font-size: 0.85rem;">₹${parseFloat(item.unit_price).toFixed(2)}</td>
                                                             <td class="text-end pe-4 fw-bold text-main-theme" style="font-size: 0.85rem;">₹${parseFloat(item.total_amount).toFixed(2)}</td>

@@ -114,13 +114,15 @@
             text-transform: uppercase;
             letter-spacing: 0.3px;
             font-weight: bold;
-            white-space: nowrap;
         }
         table.data-table td {
             padding: 5px 5px;
             border: 1px solid #e2e8f0;
             vertical-align: top;
             font-size: 7.5pt;
+        }
+        table.data-table tbody tr {
+            page-break-inside: avoid !important;
         }
         table.data-table tbody tr:nth-child(even) { background: #f8fafc; }
         table.data-table tbody tr:hover { background: #eff6ff; }
@@ -242,26 +244,30 @@
 
     {{-- ── Orders Table ─────────────────────────────────────────── --}}
     <table class="data-table">
+        <colgroup>
+            <col style="width: 10%;">
+            <col style="width: 15%;">
+            <col style="width: 11%;">
+            <col style="width: 16%;">
+            <col style="width: 8%;">
+            <col style="width: 8%;">
+            <col style="width: 8%;">
+            <col style="width: 8%;">
+            <col style="width: 8%;">
+            <col style="width: 8%;">
+        </colgroup>
         <thead>
             <tr>
-                <th>#</th>
-                <th>Order Code</th>
-                <th>Date</th>
-                <th>Retailer / Shop</th>
-                <th>Area / District</th>
+                <th>Order Code / Date</th>
+                <th>Retailer / Location</th>
                 <th>Distributor</th>
-                <th>Product</th>
-                <th>Brand</th>
-                <th class="text-center">Qty</th>
-                <th class="text-center">Free</th>
+                <th>Product / Brand</th>
+                <th class="text-center">Qty (Free)</th>
                 <th>Unit / Variant</th>
-                <th class="text-right">Unit Price</th>
+                <th class="text-right">Price / MRP</th>
                 <th class="text-right">Line Total</th>
-                <th class="text-right">MRP</th>
                 <th class="text-right">Order Total</th>
-                <th class="text-center">Loyalty Pts</th>
-                <th class="text-center">Status</th>
-                <th class="text-center">Payment</th>
+                <th class="text-center">Status / Payment</th>
             </tr>
         </thead>
         <tbody>
@@ -284,76 +290,91 @@
                 @endphp
                 @if($order->items->isEmpty())
                     <tr>
-                        <td class="text-center muted">{{ $rowNum++ }}</td>
-                        <td class="order-code">{{ $order->order_code }}</td>
-                        <td>{{ $order->placed_at ? $order->placed_at->format('d M Y') : 'N/A' }}<br><span class="muted">{{ $order->placed_at ? $order->placed_at->format('H:i') : '' }}</span></td>
-                        <td><strong>{{ $retailerName }}</strong><br><span class="muted">{{ $shopName }}</span></td>
-                        <td>{{ $area }}<br><span class="muted">{{ $district }}</span></td>
+                        <td>
+                            {{ $rowNum++ }}<br>
+                            <span class="order-code">{{ $order->order_code }}</span><br>
+                            <span class="muted">{{ $order->placed_at ? $order->placed_at->format('d M Y') : 'N/A' }}</span>
+                        </td>
+                        <td>
+                            <strong>{{ $retailerName }}</strong><br>
+                            <span class="muted">{{ $shopName }}</span><br>
+                            <span class="muted">{{ $area }} / {{ $district }}</span>
+                        </td>
                         <td>{{ $distributor }}</td>
-                        <td colspan="8" class="muted text-center">No Items</td>
-                        <td class="text-right"><strong>&#8377;{{ number_format($order->total_amount, 2) }}</strong></td>
-                        <td class="text-center">{{ $order->loyalty_points_earned ?? 0 }}</td>
-                        <td class="text-center"><span class="badge {{ $badgeClass }}">{{ strtoupper($order->status) }}</span></td>
-                        <td class="text-center"><span class="muted">{{ ucfirst($order->payment_status ?? 'N/A') }}</span></td>
+                        <td colspan="5" class="muted text-center" style="vertical-align: middle;">No Items</td>
+                        <td class="text-right" style="vertical-align: middle;">
+                            <strong>&#8377;{{ number_format($order->total_amount, 2) }}</strong>
+                        </td>
+                        <td class="text-center" style="vertical-align: middle;">
+                            <span class="badge {{ $badgeClass }}">{{ strtoupper($order->status) }}</span><br>
+                            <span class="muted">{{ ucfirst($order->payment_status ?? 'N/A') }}</span>
+                        </td>
                     </tr>
                 @else
                     @foreach($order->items as $idx => $item)
                         @php $product = $item->product; @endphp
                         <tr>
                             @if($idx === 0)
-                                <td class="text-center muted" rowspan="{{ $order->items->count() }}">{{ $rowNum++ }}</td>
-                                <td class="order-code" rowspan="{{ $order->items->count() }}">{{ $order->order_code }}</td>
-                                <td rowspan="{{ $order->items->count() }}">
-                                    {{ $order->placed_at ? $order->placed_at->format('d M Y') : 'N/A' }}<br>
-                                    <span class="muted">{{ $order->placed_at ? $order->placed_at->format('H:i') : '' }}</span>
+                                <td>
+                                    {{ $rowNum++ }}<br>
+                                    <span class="order-code">{{ $order->order_code }}</span><br>
+                                    <span class="muted">{{ $order->placed_at ? $order->placed_at->format('d M Y') : 'N/A' }}</span>
                                 </td>
-                                <td rowspan="{{ $order->items->count() }}">
+                                <td>
                                     <strong>{{ $retailerName }}</strong><br>
-                                    <span class="muted">{{ $shopName }}</span>
+                                    <span class="muted">{{ $shopName }}</span><br>
+                                    <span class="muted">{{ $area }} / {{ $district }}</span>
                                 </td>
-                                <td rowspan="{{ $order->items->count() }}">
-                                    {{ $area }}<br>
-                                    <span class="muted">{{ $district }}</span>
-                                </td>
-                                <td rowspan="{{ $order->items->count() }}">{{ $distributor }}</td>
+                                <td>{{ $distributor }}</td>
+                            @else
+                                <td></td>
+                                <td></td>
+                                <td></td>
                             @endif
                             <td>
                                 <div class="product-name">{{ $product->product_name ?? 'Unknown' }}</div>
                                 <div class="muted">{{ $product->product_code ?? '' }}</div>
+                                <div class="muted">{{ $product->brand ?? 'N/A' }}</div>
                             </td>
-                            <td class="muted">{{ $product->brand ?? 'N/A' }}</td>
-                            <td class="text-center"><strong>{{ $item->quantity }}</strong></td>
-                            <td class="text-center muted">{{ $item->free_quantity ?? 0 }}</td>
+                            <td class="text-center">
+                                <strong>{{ $item->quantity }}</strong><br>
+                                <span class="muted">({{ $item->free_quantity ?? 0 }} Free)</span>
+                            </td>
                             <td>
                                 {{ $item->unit ?? 'Nos' }}
                                 @if($item->side || $item->size)
                                     <br><span class="muted">{{ implode('/', array_filter([$item->side, $item->size])) }}</span>
                                 @endif
                             </td>
-                            <td class="text-right">&#8377;{{ number_format($item->unit_price, 2) }}</td>
-                            <td class="text-right"><strong>&#8377;{{ number_format($item->total_amount, 2) }}</strong></td>
-                            <td class="text-right muted">&#8377;{{ number_format($product->mrp ?? 0, 2) }}</td>
+                            <td class="text-right">
+                                &#8377;{{ number_format($item->unit_price, 2) }}<br>
+                                <span class="muted">MRP: &#8377;{{ number_format($product->mrp ?? 0, 2) }}</span>
+                            </td>
+                            <td class="text-right">
+                                <strong>&#8377;{{ number_format($item->total_amount, 2) }}</strong>
+                            </td>
                             @if($idx === 0)
-                                <td class="text-right" rowspan="{{ $order->items->count() }}">
-                                    <strong>&#8377;{{ number_format($order->total_amount, 2) }}</strong>
+                                <td class="text-right">
+                                    <strong>&#8377;{{ number_format($order->total_amount, 2) }}</strong><br>
+                                    <span class="muted">{{ $order->loyalty_points_earned ?? 0 }} Pts</span>
                                 </td>
-                                <td class="text-center" rowspan="{{ $order->items->count() }}">{{ $order->loyalty_points_earned ?? 0 }}</td>
-                                <td class="text-center" rowspan="{{ $order->items->count() }}">
-                                    <span class="badge {{ $badgeClass }}">{{ strtoupper($order->status) }}</span>
+                                <td class="text-center">
+                                    <span class="badge {{ $badgeClass }}">{{ strtoupper($order->status) }}</span><br>
+                                    <span class="muted">{{ ucfirst($order->payment_status ?? 'N/A') }}</span>
                                     @if($order->delivered_at)
-                                        <br><span class="muted">{{ $order->delivered_at->format('d M') }}</span>
+                                        <br><span class="muted">Del: {{ $order->delivered_at->format('d M') }}</span>
                                     @endif
                                 </td>
-                                <td class="text-center" rowspan="{{ $order->items->count() }}">
-                                    <span class="muted">{{ ucfirst($order->payment_status ?? 'N/A') }}</span>
-                                </td>
+                            @else
+                                <td></td>
+                                <td></td>
                             @endif
                         </tr>
                     @endforeach
                 @endif
             @empty
                 <tr>
-                    <td colspan="18" class="text-center muted" style="padding: 20px;">No orders found for the selected filters.</td>
+                    <td colspan="10" class="text-center muted" style="padding: 20px;">No orders found for the selected filters.</td>
                 </tr>
             @endforelse
         </tbody>

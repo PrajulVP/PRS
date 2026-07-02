@@ -129,6 +129,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('retailer/{retailerOrder}/assign-fieldstaff', [RetailerOrderManagementController::class, 'assignFieldStaff'])->name('retailer.assignFieldStaff');
         Route::post('orders/{order}/assign-distributor', [RetailerOrderManagementController::class, 'assignDistributor'])->name('orders.assign_distributor');
         Route::get('retailer/product/{product}', [RetailerOrderManagementController::class, 'getProductDetails'])->name('retailer.product-details');
+        Route::get('retailer/product/{product}/distributor-variants', [RetailerOrderManagementController::class, 'getDistributorProductVariants'])->name('retailer.distributor-variants');
         Route::get('retailer/get-field-staffs-by-manager', [RetailerOrderManagementController::class, 'getFieldStaffsByManager'])->name('retailer.get-field-staffs-by-manager');
         Route::get('retailer/get-retailers-by-field-staff', [RetailerOrderManagementController::class, 'getRetailersByFieldStaff'])->name('retailer.get-retailers-by-field-staff');
 
@@ -152,6 +153,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('distributor-orders/get-products', [DistributorOrderController::class, 'getProducts'])->name('distributor-orders.get-products');
         Route::resource('distributor-orders', DistributorOrderController::class);
         Route::get('distributor-orders/product/{product}', [DistributorOrderController::class, 'getProductDetails'])->name('distributor-orders.product-details');
+        Route::get('distributor-orders/product/{product}/distributor-variants', [DistributorOrderController::class, 'getDistributorProductVariants'])->name('distributor-orders.distributor-variants');
 
         Route::post('distributor-orders/{distributor_order}/accept-by-admin', [DistributorOrderController::class, 'acceptByAdmin'])
             ->name('distributor-orders.accept-by-admin');

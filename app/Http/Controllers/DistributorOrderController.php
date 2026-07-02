@@ -160,6 +160,15 @@ class DistributorOrderController extends Controller
                         
                         $meta[] = '<span class="text-primary fw-bold" style="font-size: 0.75rem;">' . $qtyText . '</span>';
                         
+                        if ($item->free_quantity > 0) {
+                            $freeLabel = array_filter([$item->free_side, $item->free_size]);
+                            $freeStr = '&nbsp;<i class="fa fa-gift" style="font-size:0.7rem;"></i> ' . $item->free_quantity . ' Free';
+                            if (!empty($freeLabel)) {
+                                $freeStr .= ' <span style="font-size: 0.65rem; color: #0369a1; background: #e0f2fe; padding: 1px 6px; border-radius: 10px; margin-left: 3px; font-weight: 700; letter-spacing: 0.2px;">' . strtoupper(implode(' / ', $freeLabel)) . '</span>';
+                            }
+                            $meta[] = '<span class="text-success fw-bold d-inline-flex align-items-center" style="font-size: 0.75rem;">+' . $freeStr . '</span>';
+                        }
+                        
                         if (!empty($meta)) {
                             $summary .= '<div class="d-flex flex-wrap align-items-center gap-1 mt-1" style="word-break: break-word;">' . implode(' <span class="text-muted" style="font-size: 0.75rem; margin: 0 2px;">•</span> ', $meta) . '</div>';
                         }
@@ -296,8 +305,9 @@ class DistributorOrderController extends Controller
                 $q->where('status', 'active');
             })->get();
         }
+        $eligibleFreeProducts = Product::where('is_free_eligible', true)->get();
 
-        return view('admin.orders.distributors.create', compact('products', 'distributors', 'brands'));
+        return view('admin.orders.distributors.create', compact('products', 'distributors', 'brands', 'eligibleFreeProducts'));
     }
 
     public function getProducts(Request $request)
@@ -317,6 +327,26 @@ class DistributorOrderController extends Controller
             'product' => $product,
             'strips_per_box' => $product->strips_per_box,
             'boxes_per_carton' => $product->boxes_per_carton,
+        ]);
+    }
+
+    public function getDistributorProductVariants(Request $request, Product $product)
+    {
+        $distributorId = $request->get('distributor_id');
+
+        if (!$distributorId) {
+            return response()->json(['variants' => []]);
+        }
+
+        $stockData = DB::table('inventories')
+            ->where('product_id', $product->id)
+            ->where('distributor_id', $distributorId)
+            ->where('stock', '>', 0)
+            ->select('side', 'size', 'stock')
+            ->get();
+
+        return response()->json([
+            'variants' => $stockData
         ]);
     }
 
@@ -405,11 +435,36 @@ class DistributorOrderController extends Controller
                     $finalProductName .= ' [' . implode('/', $vInfo) . ']';
                 }
 
+                $freeQty = 0;
+                $freeProductId = null;
+                $freeSide = null;
+                $freeSize = null;
+
+                if ($product->free_qty_buy > 0 && $product->free_qty_get > 0) {
+                    $eligibleFree = floor($qty / $product->free_qty_buy) * $product->free_qty_get;
+                    if ($eligibleFree > 0) {
+                        $freeQty = $eligibleFree;
+                        if (isset($itemData['free_product_id'])) {
+                            $selectedFreeProduct = Product::find($itemData['free_product_id']);
+                            if ($selectedFreeProduct && $selectedFreeProduct->is_free_eligible) {
+                                $freeProductId = $selectedFreeProduct->id;
+                                $freeSide = $itemData['free_side'] ?? null;
+                                $freeSize = $itemData['free_size'] ?? null;
+                            }
+                        }
+                    }
+                } elseif (strcasecmp($product->brand, 'Atomeds') === 0 || strcasecmp($product->brand, 'Atomets') === 0) {
+                    $freeQty = floor($qty / 10) * 2;
+                }
+
                 $order->items()->create([
                     'product_id' => $product->id,
                     'product_name' => $finalProductName,
                     'quantity' => $qty,
-                    'free_quantity' => $itemData['free_quantity'] ?? 0,
+                    'free_quantity' => $freeQty,
+                    'free_product_id' => $freeProductId,
+                    'free_side' => $freeSide,
+                    'free_size' => $freeSize,
                     'unit' => $unit,
                     'price' => $unitPrice,
                     'subtotal' => $itemTotalWithGst,

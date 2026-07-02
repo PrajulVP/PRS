@@ -190,6 +190,7 @@ class RetailerOrderController extends Controller
      *                 @OA\Property(property="unit", type="string", enum={"Nos", "Strips", "Box", "Carton"}, example="Box"),
      *                 @OA\Property(property="side", type="string", nullable=true, example="Left"),
      *                 @OA\Property(property="size", type="string", nullable=true, example="XL"),
+     *                 @OA\Property(property="is_free", type="boolean", nullable=true, example=false),
      *                 @OA\Property(property="distributor_id", type="integer", nullable=true, example=2)
      *             )),
      *             @OA\Property(property="delivery_notes", type="string", nullable=true, example="Urgent order")
@@ -217,6 +218,7 @@ class RetailerOrderController extends Controller
             'items.*.side' => 'nullable|string',
             'items.*.size' => 'nullable|string',
             'items.*.distributor_id' => 'nullable|exists:distributors,id',
+            'items.*.is_free' => 'nullable|boolean',
             'delivery_notes' => 'nullable|string',
         ]);
 
@@ -257,7 +259,8 @@ class RetailerOrderController extends Controller
                 $mergedItems = collect($items)->groupBy(function($i) {
                     $side = isset($i['side']) ? trim(strtolower($i['side'])) : '';
                     $size = isset($i['size']) ? trim(strtolower($i['size'])) : '';
-                    return $i['product_id'] . '-' . $side . '-' . $size;
+                    $isFree = isset($i['is_free']) && filter_var($i['is_free'], FILTER_VALIDATE_BOOLEAN) ? 'free' : 'paid';
+                    return $i['product_id'] . '-' . $side . '-' . $size . '-' . $isFree;
                 })->map(function($group) {
                     $first = $group->first();
                     $first['quantity'] = $group->sum('quantity');
@@ -266,6 +269,7 @@ class RetailerOrderController extends Controller
                     // Keep normalized values for later creation
                     $first['side'] = isset($first['side']) ? trim($first['side']) : null;
                     $first['size'] = isset($first['size']) ? trim($first['size']) : null;
+                    $first['is_free'] = isset($first['is_free']) ? filter_var($first['is_free'], FILTER_VALIDATE_BOOLEAN) : false;
                     
                     return $first;
                 });
@@ -321,17 +325,15 @@ class RetailerOrderController extends Controller
                             ->when(!empty($iSide), function($q) use ($iSide) {
                                 return $q->where(function($sq) use ($iSide) {
                                     $sq->where('side', $iSide)
-                                       ->when(strtoupper($iSide) === 'UNIVERSAL', function($ssq) {
-                                           return $ssq->orWhereNull('side');
-                                       });
+                                       ->orWhereNull('side')
+                                       ->orWhere('side', '');
                                 });
                             })
                             ->when(!empty($iSize), function($q) use ($iSize) {
                                 return $q->where(function($sq) use ($iSize) {
                                     $sq->where('size', $iSize)
-                                       ->when(strtoupper($iSize) === 'UNIVERSAL', function($ssq) {
-                                           return $ssq->orWhereNull('size');
-                                       });
+                                       ->orWhereNull('size')
+                                       ->orWhere('size', '');
                                 });
                             })
                             ->sum('stock');
@@ -343,10 +345,49 @@ class RetailerOrderController extends Controller
                         }
                     }
 
-                    $price = (float)$product->ptr; // Retailers buy at PTR
-                    $gstRate = (float)($product->gst ?? 0);
-                    $taxableSubtotal = $totalQtyNos * $price;
-                    $subtotalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
+                    $isFree = $itemData['is_free'] ?? false;
+
+                    if ($isFree) {
+                        $price = 0;
+                        $subtotalWithGst = 0;
+                        $freeQty = $qty;
+                        $qty = 0; // The actual billed quantity is 0
+                    } else {
+                        $price = (float)$product->ptr; // Retailers buy at PTR
+                        $gstRate = (float)($product->gst ?? 0);
+                        $taxableSubtotal = $totalQtyNos * $price;
+                        $subtotalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
+
+                        // --- FREE PRODUCT SCHEME LOGIC (Fallback for old app) ---
+                        $freeQty = $itemData['free_quantity'] ?? 0;
+                        $freeProductId = null;
+                        $freeSide = null;
+                        $freeSize = null;
+        
+                        if ($freeQty == 0) {
+                            if ($product->free_qty_buy > 0 && $product->free_qty_get > 0) {
+                                $eligibleFree = floor($qty / $product->free_qty_buy) * $product->free_qty_get;
+                                if ($eligibleFree > 0) {
+                                    $freeQty = $eligibleFree;
+                                    if (isset($itemData['free_product_id'])) {
+                                        $selectedFreeProduct = Product::find($itemData['free_product_id']);
+                                        if ($selectedFreeProduct && $selectedFreeProduct->is_free_eligible) {
+                                            $freeProductId = $selectedFreeProduct->id;
+                                            $freeSide = $itemData['free_side'] ?? null;
+                                            $freeSize = $itemData['free_size'] ?? null;
+                                        }
+                                    }
+                                }
+                            } elseif (strcasecmp($product->brand, 'Atomeds') === 0 || strcasecmp($product->brand, 'Atomets') === 0) {
+                                $calculatedFree = floor($qty / 10) * 2;
+                                if ($retailer->can_configure_free_strips) {
+                                    $freeQty = isset($itemData['free_quantity']) ? (int)$itemData['free_quantity'] : $calculatedFree;
+                                } else {
+                                    $freeQty = $calculatedFree;
+                                }
+                            }
+                        }
+                    }
 
                     // Append variant to product name if provided
                     $finalProductName = $product->product_name;
@@ -358,7 +399,10 @@ class RetailerOrderController extends Controller
                         'product_id' => $product->id,
                         'product_name' => $finalProductName,
                         'quantity' => $qty,
-                        'free_quantity' => $itemData['free_quantity'] ?? 0,
+                        'free_quantity' => $freeQty,
+                        'free_product_id' => $freeProductId ?? null,
+                        'free_side' => $freeSide ?? null,
+                        'free_size' => $freeSize ?? null,
                         'unit' => $unit,
                         'unit_price' => $price,
                         'total_amount' => $subtotalWithGst,

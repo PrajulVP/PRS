@@ -172,13 +172,47 @@ class RetailerOrderController extends Controller
                 // Append variant to product name if provided
                 $finalProductName = $product->product_name;
 
+                // --- FREE PRODUCT SCHEME LOGIC ---
+                $freeQty = 0;
+                $freeProductId = null;
+                $freeSide = null;
+                $freeSize = null;
+
+                if ($product->free_qty_buy > 0 && $product->free_qty_get > 0) {
+                    $eligibleFree = floor($qty / $product->free_qty_buy) * $product->free_qty_get;
+                    if ($eligibleFree > 0) {
+                        $freeQty = $eligibleFree;
+                        if (isset($item['free_product_id'])) {
+                            $selectedFreeProduct = Product::find($item['free_product_id']);
+                            if ($selectedFreeProduct && $selectedFreeProduct->is_free_eligible) {
+                                $freeProductId = $selectedFreeProduct->id;
+                                $freeSide = $item['free_side'] ?? null;
+                                $freeSize = $item['free_size'] ?? null;
+                            }
+                        }
+                    }
+                } elseif (strcasecmp($product->brand, 'Atomeds') === 0 || strcasecmp($product->brand, 'Atomets') === 0) {
+                    // Atomeds: Every 10 strips -> 2 free strips (Legacy fallback if not set in DB).
+                    $calculatedFree = floor($qty / 10) * 2;
+                    
+                    if ($retailer->can_configure_free_strips) {
+                        $freeQty = isset($item['free_quantity']) ? (int)$item['free_quantity'] : $calculatedFree;
+                    } else {
+                        $freeQty = $calculatedFree;
+                    }
+                }
+
                 $order->items()->create([
                     'product_id' => $product->id,
                     'product_name' => $finalProductName,
                     'quantity' => $qty,
+                    'free_quantity' => $freeQty,
+                    'free_product_id' => $freeProductId,
+                    'free_side' => $freeSide,
+                    'free_size' => $freeSize,
                     'unit' => $unit,
-                    'price' => $price,
-                    'subtotal' => $subtotalWithGst,
+                    'unit_price' => $price,
+                    'total_amount' => $subtotalWithGst,
                     'side' => $item['side'] ?? null,
                     'size' => $item['size'] ?? null,
                 ]);

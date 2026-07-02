@@ -221,6 +221,15 @@ class PendingApprovalController extends Controller
                     
                     $meta[] = '<span class="text-primary fw-bold" style="font-size: 0.75rem;">' . $qtyStr . '</span>';
                     
+                    if ($i->free_quantity > 0) {
+                        $freeLabel = array_filter([$i->free_side, $i->free_size]);
+                        $freeStr = '&nbsp;<i class="fa fa-gift" style="font-size:0.7rem;"></i> ' . $i->free_quantity . ' Free';
+                        if (!empty($freeLabel)) {
+                            $freeStr .= ' <span style="font-size: 0.65rem; color: #0369a1; background: #e0f2fe; padding: 1px 6px; border-radius: 10px; margin-left: 3px; font-weight: 700; letter-spacing: 0.2px;">' . strtoupper(implode(' / ', $freeLabel)) . '</span>';
+                        }
+                        $meta[] = '<span class="text-success fw-bold d-inline-flex align-items-center" style="font-size: 0.75rem;">+' . $freeStr . '</span>';
+                    }
+                    
                     if (!empty($meta)) {
                         $summary .= '<div class="d-flex flex-wrap align-items-center gap-1 mt-1" style="word-break: break-word;">' . implode(' <span class="text-muted" style="font-size: 0.75rem; margin: 0 2px;">•</span> ', $meta) . '</div>';
                     }
@@ -258,6 +267,8 @@ class PendingApprovalController extends Controller
                             'carton_size' => $i->product?->carton_size,
                             'side' => $i->side,
                             'size' => $i->size,
+                            'free_side' => $i->free_side,
+                            'free_size' => $i->free_size,
                             'is_returnable' => $i->product?->is_returnable ?? true,
                             'gst' => $i->product?->gst ?? 0,
                         ];

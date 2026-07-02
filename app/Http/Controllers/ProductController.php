@@ -114,6 +114,9 @@ class ProductController extends Controller
                     'variant_options' => $product->variant_options,
                     'brand' => $product->brand,
                     'is_returnable' => $product->is_returnable,
+                    'is_free_eligible' => $product->is_free_eligible,
+                    'free_qty_buy' => $product->free_qty_buy,
+                    'free_qty_get' => $product->free_qty_get,
                     'actions' => null,
                 ];
             });
@@ -185,6 +188,9 @@ class ProductController extends Controller
             'loyalty_point_percentage' => 'nullable|numeric|min:0',
             'brand' => 'nullable|string|max:255',
             'is_returnable' => 'nullable|boolean',
+            'is_free_eligible' => 'nullable|boolean',
+            'free_qty_buy' => 'nullable|integer|min:0',
+            'free_qty_get' => 'nullable|integer|min:0',
         ]);
 
         $data = $request->all();
@@ -201,25 +207,37 @@ class ProductController extends Controller
             $data['loyalty_point_percentage'] = 0;
         }
 
+        $data['is_free_eligible'] = $request->has('is_free_eligible');
+        if (!$data['is_free_eligible']) {
+            $data['free_qty_buy'] = null;
+            $data['free_qty_get'] = null;
+        }
+
+
         // Sync numeric fields
         $data['units_per_strip'] = $this->parseNumber($request->strip_size);
         $data['strips_per_box'] = $this->parseNumber($request->box_size);
         $data['boxes_per_carton'] = $this->parseNumber($request->carton_size);
 
-        // Process variant options
+        // Process variant options — Side and Size are independent; either can exist without the other
         $variantOptions = [];
         if ($request->filled('variant_name_1') && $request->filled('variant_values_1')) {
-            $data['has_variants'] = true;
             $v1 = $request->variant_values_1;
             $vals = is_array($v1) ? array_map('trim', $v1) : array_map('trim', explode(',', $v1));
-            $variantOptions[trim($request->variant_name_1)] = $vals;
-
-            if ($request->filled('variant_name_2') && $request->filled('variant_values_2')) {
-                $v2 = $request->variant_values_2;
-                $vals2 = is_array($v2) ? array_map('trim', $v2) : array_map('trim', explode(',', $v2));
-                $variantOptions[trim($request->variant_name_2)] = $vals2;
+            $vals = array_filter($vals);
+            if (!empty($vals)) {
+                $variantOptions[trim($request->variant_name_1)] = array_values($vals);
             }
         }
+        if ($request->filled('variant_name_2') && $request->filled('variant_values_2')) {
+            $v2 = $request->variant_values_2;
+            $vals2 = is_array($v2) ? array_map('trim', $v2) : array_map('trim', explode(',', $v2));
+            $vals2 = array_filter($vals2);
+            if (!empty($vals2)) {
+                $variantOptions[trim($request->variant_name_2)] = array_values($vals2);
+            }
+        }
+        $data['has_variants'] = !empty($variantOptions);
         $data['variant_options'] = !empty($variantOptions) ? $variantOptions : null;
 
         Product::create($data);
@@ -263,6 +281,9 @@ class ProductController extends Controller
             'loyalty_point_percentage' => 'nullable|numeric|min:0',
             'brand' => 'nullable|string|max:255',
             'is_returnable' => 'nullable|boolean',
+            'is_free_eligible' => 'nullable|boolean',
+            'free_qty_buy' => 'nullable|integer|min:0',
+            'free_qty_get' => 'nullable|integer|min:0',
         ]);
 
         $data = $request->all();
@@ -271,28 +292,37 @@ class ProductController extends Controller
             $data['loyalty_point_percentage'] = 0;
         }
 
+        $data['is_free_eligible'] = $request->has('is_free_eligible');
+        if (!$data['is_free_eligible']) {
+            $data['free_qty_buy'] = null;
+            $data['free_qty_get'] = null;
+        }
+
+
         // Sync numeric fields
         $data['units_per_strip'] = $this->parseNumber($request->strip_size);
         $data['strips_per_box'] = $this->parseNumber($request->box_size);
         $data['boxes_per_carton'] = $this->parseNumber($request->carton_size);
 
-        // Process variant options
+        // Process variant options — Side and Size are independent; either can exist without the other
         $variantOptions = [];
         if ($request->filled('variant_name_1') && $request->filled('variant_values_1')) {
-            $data['has_variants'] = true;
             $v1 = $request->variant_values_1;
             $vals = is_array($v1) ? array_map('trim', $v1) : array_map('trim', explode(',', $v1));
-            $variantOptions[trim($request->variant_name_1)] = $vals;
-
-            if ($request->filled('variant_name_2') && $request->filled('variant_values_2')) {
-                $v2 = $request->variant_values_2;
-                $vals2 = is_array($v2) ? array_map('trim', $v2) : array_map('trim', explode(',', $v2));
-                $variantOptions[trim($request->variant_name_2)] = $vals2;
+            $vals = array_filter($vals);
+            if (!empty($vals)) {
+                $variantOptions[trim($request->variant_name_1)] = array_values($vals);
             }
-        } else {
-            // Keep current has_variants value or reset if no structured data
-            $data['has_variants'] = $request->has('has_variants') ? true : false;
         }
+        if ($request->filled('variant_name_2') && $request->filled('variant_values_2')) {
+            $v2 = $request->variant_values_2;
+            $vals2 = is_array($v2) ? array_map('trim', $v2) : array_map('trim', explode(',', $v2));
+            $vals2 = array_filter($vals2);
+            if (!empty($vals2)) {
+                $variantOptions[trim($request->variant_name_2)] = array_values($vals2);
+            }
+        }
+        $data['has_variants'] = !empty($variantOptions);
         $data['variant_options'] = !empty($variantOptions) ? $variantOptions : null;
 
         $product->update($data);

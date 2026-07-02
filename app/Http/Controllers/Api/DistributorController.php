@@ -34,6 +34,20 @@ class DistributorController extends Controller
      *         required=true,
      *         @OA\Schema(type="integer")
      *     ),
+     *     @OA\Parameter(
+     *         name="side",
+     *         in="query",
+     *         description="Filter stock by specific side variant (e.g. Left/Right)",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="size",
+     *         in="query",
+     *         description="Filter stock by specific size variant (e.g. M/L/XL)",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Product availability status",
@@ -50,7 +64,7 @@ class DistributorController extends Controller
      *     )
      * )
      */
-    public function checkProductAvailability($distributorId, $productId)
+    public function checkProductAvailability(Request $request, $distributorId, $productId)
     {
         $distributor = Distributor::find($distributorId);
         if (!$distributor) {
@@ -62,18 +76,34 @@ class DistributorController extends Controller
             return response()->json(['message' => 'Product not found'], 404);
         }
 
-        // Check inventory
-        $inventory = DB::table('inventories')
-            ->where('distributor_id', $distributorId)
-            ->where('product_id', $productId)
-            ->first();
+        $side = $request->query('side');
+        $size = $request->query('size');
 
-        if ($inventory) {
+        // Check inventory
+        $query = DB::table('inventories')
+            ->where('distributor_id', $distributorId)
+            ->where('product_id', $productId);
+
+        if (!empty($side)) {
+            $query->where(function($q) use ($side) {
+                $q->where('side', $side)->orWhereNull('side')->orWhere('side', '');
+            });
+        }
+        
+        if (!empty($size)) {
+            $query->where(function($q) use ($size) {
+                $q->where('size', $size)->orWhereNull('size')->orWhere('size', '');
+            });
+        }
+
+        $totalStock = $query->sum('stock');
+
+        if ($totalStock > 0) {
             return response()->json([
                 'distributor_id' => (int)$distributorId,
                 'product_id' => (int)$productId,
-                'available' => $inventory->stock > 0,
-                'stock' => null
+                'available' => true,
+                'stock' => $totalStock
             ]);
         }
 

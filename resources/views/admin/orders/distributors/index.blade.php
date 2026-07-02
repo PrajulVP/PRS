@@ -1872,7 +1872,12 @@
                                     <div class="text-muted small" style="font-size: 0.6rem;">${i.unit || 'Units'}</div>
                                 </td>
                                 <td class="py-2 px-3 text-center">
-                                    ${i.free_quantity > 0 ? `<div class="badge bg-soft-success text-success border-0 px-2 py-1" style="font-size: 0.7rem;">+${i.free_quantity}</div>` : '<span class="text-muted small">-</span>'}
+                                    ${i.free_quantity > 0 ? 
+                                        `<div class="d-flex flex-column align-items-center justify-content-center gap-1">
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.75rem; letter-spacing: 0.5px;"><i class="fa fa-gift me-1"></i>${i.free_quantity} Free</span>
+                                            ${(i.free_side || i.free_size) ? `<span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 0.65rem; letter-spacing: 0.5px; padding: 0.25em 0.6em;">${[i.free_side, i.free_size].filter(Boolean).join(' / ').toUpperCase()}</span>` : ''}
+                                        </div>` 
+                                    : '<span class="text-muted small">-</span>'}
                                 </td>
                                 <td class="py-2 px-3 text-end">
                                     <div class="text-muted small" style="font-size: 0.75rem;">${unitPrice.toFixed(2)}</div>

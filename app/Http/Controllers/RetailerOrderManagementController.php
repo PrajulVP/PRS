@@ -37,8 +37,9 @@ class RetailerOrderManagementController extends Controller
         // Revised: We will keep the products list for the dropdown, but minimal data.
         $products = Product::select('id', 'product_name', 'mrp', 'ptr', 'pack', 'brand')->get();
         $brands = Product::select('brand')->distinct()->whereNotNull('brand')->where('brand', '!=', '')->orderBy('brand')->pluck('brand');
+        $eligibleFreeProducts = Product::where('is_free_eligible', true)->get();
 
-        return view('admin.orders.retailers.create', compact('retailers', 'products', 'brands'));
+        return view('admin.orders.retailers.create', compact('retailers', 'products', 'brands', 'eligibleFreeProducts'));
     }
 
     public function getProducts(Request $request)
@@ -60,6 +61,7 @@ class RetailerOrderManagementController extends Controller
         $side = $request->get('side');
         $size = $request->get('size');
         $minQuantity = (int)$request->get('quantity', 0);
+        $unit = $request->get('unit', 'Strips');
 
         // Filter distributors by the retailer's district
         $query = Distributor::with('user');
@@ -68,20 +70,39 @@ class RetailerOrderManagementController extends Controller
         }
         $allDistributors = $query->get();
 
+        // Convert quantity to base unit (Strips/Nos) for correct DB query filtering
+        $multiplier = 1.0;
+        if ($unit === 'Box') {
+            $multiplier = (double)($product->strips_per_box ?: 1);
+        } elseif ($unit === 'Carton') {
+            $multiplier = (double)($product->strips_per_box ?: 1) * (double)($product->boxes_per_carton ?: 1);
+        } elseif ($unit === 'Nos') {
+            $multiplier = 1.0 / max(1, (int)($product->units_per_strip ?: 1));
+        }
+        $minQuantityBase = (double)$minQuantity * $multiplier;
+
         // Get current stock levels for this product (and specific variant if provided)
         $stockMap = DB::table('inventories')
             ->where('product_id', $product->id)
             ->when(!empty($side), function ($q) use ($side) {
-                return $q->where('side', $side);
+                return $q->where(function ($sq) use ($side) {
+                    $sq->where('side', $side)
+                       ->orWhereNull('side')
+                       ->orWhere('side', '');
+                });
             })
             ->when(!empty($size), function ($q) use ($size) {
-                return $q->where('size', $size);
+                return $q->where(function ($sq) use ($size) {
+                    $sq->where('size', $size)
+                       ->orWhereNull('size')
+                       ->orWhere('size', '');
+                });
             })
             ->selectRaw('distributor_id, SUM(stock) as total_stock')
             ->groupBy('distributor_id')
             ->having('total_stock', '>', 0)
-            ->when($minQuantity > 0, function ($q) use ($minQuantity) {
-                return $q->having('total_stock', '>=', $minQuantity);
+            ->when($minQuantityBase > 0, function ($q) use ($minQuantityBase) {
+                return $q->having('total_stock', '>=', $minQuantityBase);
             })
             ->pluck('total_stock', 'distributor_id');
 
@@ -102,6 +123,26 @@ class RetailerOrderManagementController extends Controller
         return response()->json([
             'product' => $product->makeVisible(['box_size']),
             'distributors' => $distributors
+        ]);
+    }
+
+    public function getDistributorProductVariants(Request $request, Product $product)
+    {
+        $distributorId = $request->get('distributor_id');
+
+        if (!$distributorId) {
+            return response()->json(['variants' => []]);
+        }
+
+        $stockData = DB::table('inventories')
+            ->where('product_id', $product->id)
+            ->where('distributor_id', $distributorId)
+            ->where('stock', '>', 0)
+            ->select('side', 'size', 'stock')
+            ->get();
+
+        return response()->json([
+            'variants' => $stockData
         ]);
     }
 
@@ -227,10 +268,18 @@ class RetailerOrderManagementController extends Controller
                             ->where('distributor_id', $distributor->id)
                             ->where('product_id', $product->id)
                             ->when(!empty($iSide), function ($q) use ($iSide) {
-                                return $q->where('side', $iSide);
+                                return $q->where(function ($sq) use ($iSide) {
+                                    $sq->where('side', $iSide)
+                                       ->orWhereNull('side')
+                                       ->orWhere('side', '');
+                                });
                             })
                             ->when(!empty($iSize), function ($q) use ($iSize) {
-                                return $q->where('size', $iSize);
+                                return $q->where(function ($sq) use ($iSize) {
+                                    $sq->where('size', $iSize)
+                                       ->orWhereNull('size')
+                                       ->orWhere('size', '');
+                                });
                             })
                             ->sum('stock');
 
@@ -265,6 +314,9 @@ class RetailerOrderManagementController extends Controller
                         'total_amount' => $subtotalWithGst,
                         'side' => $iSide,
                         'size' => $iSize,
+                        'free_product_id' => $itemData['free_product_id'] ?? null,
+                        'free_side' => $itemData['free_side'] ?? null,
+                        'free_size' => $itemData['free_size'] ?? null,
                     ]);
 
                     $totalAmount += $subtotalWithGst;
@@ -963,7 +1015,11 @@ class RetailerOrderManagementController extends Controller
                                     $q->whereNull('side')->orWhere('side', '');
                                 });
                             } else {
-                                $invQuery->where('side', $orderItem->side);
+                                $invQuery->where(function($q) use ($orderItem) {
+                                    $q->where('side', $orderItem->side)
+                                      ->orWhereNull('side')
+                                      ->orWhere('side', '');
+                                });
                             }
 
                             if (empty($orderItem->size)) {
@@ -971,7 +1027,11 @@ class RetailerOrderManagementController extends Controller
                                     $q->whereNull('size')->orWhere('size', '');
                                 });
                             } else {
-                                $invQuery->where('size', $orderItem->size);
+                                $invQuery->where(function($q) use ($orderItem) {
+                                    $q->where('size', $orderItem->size)
+                                      ->orWhereNull('size')
+                                      ->orWhere('size', '');
+                                });
                             }
 
                             if ($invId) {
@@ -1027,7 +1087,11 @@ class RetailerOrderManagementController extends Controller
                                 $q->whereNull('side')->orWhere('side', '');
                             });
                         } else {
-                            $invQuery->where('side', $orderItem->side);
+                            $invQuery->where(function($q) use ($orderItem) {
+                                $q->where('side', $orderItem->side)
+                                  ->orWhereNull('side')
+                                  ->orWhere('side', '');
+                            });
                         }
 
                         if (empty($orderItem->size)) {
@@ -1035,7 +1099,11 @@ class RetailerOrderManagementController extends Controller
                                 $q->whereNull('size')->orWhere('size', '');
                             });
                         } else {
-                            $invQuery->where('size', $orderItem->size);
+                            $invQuery->where(function($q) use ($orderItem) {
+                                $q->where('size', $orderItem->size)
+                                  ->orWhereNull('size')
+                                  ->orWhere('size', '');
+                            });
                         }
 
                         $inventories = $invQuery->where('stock', '>', 0)

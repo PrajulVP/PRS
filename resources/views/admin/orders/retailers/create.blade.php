@@ -262,8 +262,26 @@
                         </div>
                     </div>
                 </div>
-
+            </div>
         </form>
+    </div>
+
+    <!-- Free Variant Modal -->
+    <div class="modal fade" id="freeVariantModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+                <div class="modal-header bg-light border-bottom-0">
+                    <h5 class="modal-title fw-bold text-dark font-outfit"><i class="fa fa-gift text-primary me-2"></i>Select Free Variants</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 bg-white" id="freeVariantModalBody">
+                    <!-- Dynamic variants builder will be injected here -->
+                </div>
+                <div class="modal-footer border-top-0 bg-light">
+                    <button type="button" class="btn btn-primary fw-bold px-4 rounded-pill" data-bs-dismiss="modal">Done</button>
+                </div>
+            </div>
+        </div>
     </div>
 @endsection
 
@@ -465,6 +483,16 @@
             font-size: 1rem;
             opacity: 1;
         }
+
+        /* Hide number arrows for custom inputs */
+        .free-variant-input::-webkit-outer-spin-button,
+        .free-variant-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .free-variant-input {
+            -moz-appearance: textfield;
+        }
     </style>
 
     <script>
@@ -512,8 +540,7 @@
                             let stock = d.pivot ? parseFloat(d.pivot.stock) : 0;
                             
                             // Deduct quantity already in the bundle (cart)
-                            let variantStr = (side || size) ? [side, size].filter(Boolean).join(' - ') : null;
-                            let key = prodId + '-' + d.id + (variantStr ? '-' + variantStr : '');
+                            let key = prodId + '-' + d.id;
                             if (addedItems[key]) {
                                 stock -= (addedItems[key].qty * addedItems[key].multiplier);
                             }
@@ -537,7 +564,7 @@
                             $distSelect.append(optionsHtml);
                         }
                     } else {
-                        $distSelect.append('<option value="empty" disabled selected>⚠️ No stockists found in area</option>');
+                        $distSelect.append('<option value="empty" disabled selected>🚫 No distributor available for this product</option>');
                     }
                     
                     $distSelect.prop('disabled', false).trigger('change.select2');
@@ -742,6 +769,8 @@
                 return opt.text;
             }
 
+            const eligibleFreeProducts = @json($eligibleFreeProducts);
+
             // var currentProductDetails = null; // Moved up
 
             $('#productSelect').on('select2:select', function (e) {
@@ -764,7 +793,7 @@
                 lastFetchKey = null; // Reset fetch cache
 
                 // Set loading state without triggering redundant change events
-                $('#distributorSelect').prop('disabled', true).empty().append('<option value="">Searching Stockists...</option>');
+                $('#distributorSelect').prop('disabled', true).empty().append('<option value="">Searching Distributors...</option>');
                 $('#selectionDetails').hide();
                 $('#distributorContainer').hide();
                 $('#productDetailsCard').hide();
@@ -968,7 +997,7 @@
                 if (!prodId || !distId || qty <= 0) return showToast('info', 'Complete selections first');
 
                 let distName = distOption.text();
-                let key = prodId + '-' + distId + (variant ? '-' + variant : '');
+                let key = prodId + '-' + distId;
                 
                 let stripsPerBox = parseInt(currentProductDetails.strips_per_box || 1);
                 let boxesPerCarton = parseInt(currentProductDetails.boxes_per_carton || 1);
@@ -986,22 +1015,27 @@
                 }
 
                 let prodFullName = currentProductDetails.product_name;
+                let side = $('.variant-btn.active[data-attr="Side"]').data('value') || null;
+                let size = $('.variant-btn.active[data-attr="Size"]').data('value') || null;
 
                 if (addedItems[key]) {
+                    let existingVarIndex = addedItems[key].variants.findIndex(v => v.side === side && v.size === size && v.variant === variant);
+                    if (existingVarIndex !== -1) {
+                        addedItems[key].variants[existingVarIndex].qty += qty;
+                    } else {
+                        addedItems[key].variants.push({ side: side, size: size, variant: variant, qty: qty });
+                    }
                     addedItems[key].qty += qty;
+                    addedItems[key].unit = unit; // update to latest unit
                 } else {
-                    let side = $('.variant-btn.active[data-attr="Side"]').data('value') || null;
-                    let size = $('.variant-btn.active[data-attr="Size"]').data('value') || null;
-
                     addedItems[key] = {
                         id: prodId, distId: distId, distName: distName,
                         name: prodFullName,
-                        variant: variant,
-                        side: side,
-                        size: size,
+                        variants: [{ side: side, size: size, variant: variant, qty: qty }],
                         price: parseFloat(currentProductDetails.ptr),
                         qty: qty, unit: unit, multiplier: mul,
                         brand: currentProductDetails.brand,
+                        free_qty_buy: currentProductDetails.free_qty_buy,
                         strips_per_box: stripsPerBox,
                         boxes_per_carton: boxesPerCarton,
                         units_per_strip: currentProductDetails.units_per_strip,
@@ -1237,9 +1271,24 @@
                                                     <td>
                                                         <div class="fw-bold text-dark font-outfit" style="max-width:250px; white-space:normal; line-height:1.2;">
                                                             ${item.name} 
-                                                            ${item.side ? `<span class="badge bg-primary ms-1">${item.side}</span>` : ''}
-                                                            ${item.size ? `<span class="badge bg-info ms-1">${item.size}</span>` : ''}
-                                                            ${item.variant && !item.side && !item.size ? `<span class="badge bg-primary ms-1">${item.variant}</span>` : ''}
+                                                        </div>
+                                                        <div class="mt-2">
+                                                            ${item.variants.map((v, vIdx) => {
+                                                                let parts = [];
+                                                                if (v.side) parts.push(v.side);
+                                                                if (v.size) parts.push(v.size);
+                                                                if (v.variant && !v.side && !v.size) parts.push(v.variant);
+                                                                let vLabel = parts.length > 0 ? parts.join('/') : 'Reg';
+                                                                return `
+                                                                <div class="d-inline-flex align-items-center gap-1 bg-light border rounded-pill px-2 py-1 shadow-sm mb-1 me-2" style="border-color: rgba(0,0,0,0.08) !important;">
+                                                                    <span class="text-primary fw-bold" style="font-size: 0.7rem;">${vLabel}</span>
+                                                                    <div class="bg-secondary opacity-25 mx-1" style="width: 1px; height: 10px;"></div>
+                                                                    <span class="text-dark fw-bold me-1" style="font-size: 0.7rem;">${v.qty}</span>
+                                                                    <div class="remove-variant-btn d-flex align-items-center justify-content-center bg-danger rounded-circle shadow-sm" data-key="${key}" data-vidx="${vIdx}" style="width: 14px; height: 14px; cursor: pointer; opacity: 0.85; transition: opacity 0.2s;">
+                                                                        <i class="fa fa-times text-white" style="font-size: 0.45rem;"></i>
+                                                                    </div>
+                                                                </div>`;
+                                                            }).join('')}
                                                         </div>
                                                         <div class="small text-muted mt-1 font-outfit">
                                                             ${item.brand ? `<span class="me-2"><i class="fa fa-tag me-1 text-secondary"></i>${item.brand}</span>` : ''}
@@ -1247,20 +1296,102 @@
                                                             ${!item.is_count && item.units_per_strip ? `<span class="me-2"><i class="fa fa-pills me-1 text-primary"></i>${item.units_per_strip} Tab/Str</span>` : ''}
                                                             ${!item.is_count && item.strips_per_box ? `<span class="me-2"><i class="fa fa-layer-group me-1 text-info"></i>${item.strips_per_box} Str/Box</span>` : ''}
                                                         </div>
-                                                        <input type="hidden" name="items[${key}][product_id]" value="${item.id}">
-                                                        ${item.side ? `<input type="hidden" name="items[${key}][side]" value="${item.side}">` : ''}
-                                                        ${item.size ? `<input type="hidden" name="items[${key}][size]" value="${item.size}">` : ''}
-                                                        ${item.variant ? `<input type="hidden" name="items[${key}][variant]" value="${item.variant}">` : ''}
-                                                        <input type="hidden" name="items[${key}][distributor_id]" value="${item.distId}">
                                                     </td>
                                                     <td class="small fw-medium text-muted">${item.distName}</td>
                                                     <td class="text-center">
                                                         <div class="py-2">
                                                             <span class="fw-extrabold text-dark font-outfit h6 mb-0">${item.qty}</span>
                                                             <span class="text-muted small ms-1">${item.unit}</span>
+                                                            ${(item.brand === 'Atomeds' || item.brand === 'Atomets' || item.brand === 'Sudhneelgiri') ? 
+                                                                `<div class="text-success small fw-bold mt-1"><i class="fa fa-gift"></i> + Auto Free</div>` 
+                                                            : ''}
+                                                            ${(() => {
+                                                                if (!(item.free_qty_buy > 0 && item.qty >= item.free_qty_buy)) return '';
+                                                                
+                                                                let getQty = 1;
+                                                                let fpInfo = eligibleFreeProducts.find(p => p.id == item.id);
+                                                                if (fpInfo && fpInfo.free_qty_get) getQty = fpInfo.free_qty_get;
+                                                                let freeAmt = Math.floor(item.qty / item.free_qty_buy) * getQty;
+                                                                if (freeAmt <= 0) return '';
+                                                                
+                                                                let totalSelected = 0;
+                                                                let summaries = [];
+                                                                if (item.free_selections) {
+                                                                    Object.keys(item.free_selections).forEach(attr => {
+                                                                        let attrGroup = [];
+                                                                        Object.entries(item.free_selections[attr]).forEach(([v, q]) => {
+                                                                            if (q > 0) {
+                                                                                totalSelected += q;
+                                                                                attrGroup.push(`${q}x${v}`);
+                                                                            }
+                                                                        });
+                                                                        if (attrGroup.length > 0) {
+                                                                            summaries.push(attr.toUpperCase() + ': ' + attrGroup.join(', '));
+                                                                        }
+                                                                    });
+                                                                }
+                                                                
+                                                                let isComplete = totalSelected >= freeAmt;
+                                                                let btnClass = isComplete ? 'btn-outline-success' : 'btn-outline-primary';
+                                                                let iconHtml = isComplete ? '<i class="fa fa-check-circle me-1"></i>' : '<i class="fa fa-gift me-1"></i>';
+                                                                
+                                                                return `
+                                                                    <div class="mt-2 text-center">
+                                                                        <span class="badge bg-success text-white px-2 py-1 shadow-sm mb-2 d-inline-block" style="font-size: 0.75rem; letter-spacing: 0.3px; border-radius: 6px;">
+                                                                            <i class="fa fa-gift me-1"></i>+ ${freeAmt} FREE
+                                                                        </span><br>
+                                                                        <button type="button" class="btn btn-sm ${btnClass} fw-bold open-free-variant-modal mb-1 px-3 shadow-sm font-outfit" data-key="${key}" style="border-radius: 8px;">
+                                                                            ${iconHtml} Click to Select
+                                                                        </button>
+                                                                        ${summaries.length > 0 ? `<div class="small fw-bold mt-1" style="color: #6c757d; font-size: 0.7rem; line-height: 1.2;">${summaries.join('<br>')}</div>` : ''}
+                                                                    </div>
+                                                                `;
+                                                            })()}
                                                         </div>
-                                                        <input type="hidden" name="items[${key}][quantity]" value="${item.qty}">
-                                                        <input type="hidden" name="items[${key}][unit]" value="${item.unit}">
+                                                        ${(() => {
+                                                            let inputsHtml = '';
+                                                            let freeAttached = false;
+                                                            let getQty = 1;
+                                                            let fpInfo = eligibleFreeProducts.find(p => p.id == item.id);
+                                                            if (fpInfo && fpInfo.free_qty_get) getQty = fpInfo.free_qty_get;
+                                                            let freeAmt = (item.free_qty_buy > 0 && item.qty >= item.free_qty_buy) ? Math.floor(item.qty / item.free_qty_buy) * getQty : 0;
+                                                            
+                                                            item.variants.forEach((v, vIdx) => {
+                                                                let subKey = key + '_' + vIdx;
+                                                                inputsHtml += `
+                                                                    <input type="hidden" name="items[${subKey}][product_id]" value="${item.id}">
+                                                                    <input type="hidden" name="items[${subKey}][distributor_id]" value="${item.distId}">
+                                                                    ${v.side ? `<input type="hidden" name="items[${subKey}][side]" value="${v.side}">` : ''}
+                                                                    ${v.size ? `<input type="hidden" name="items[${subKey}][size]" value="${v.size}">` : ''}
+                                                                    ${v.variant ? `<input type="hidden" name="items[${subKey}][variant]" value="${v.variant}">` : ''}
+                                                                    <input type="hidden" name="items[${subKey}][quantity]" value="${v.qty}">
+                                                                    <input type="hidden" name="items[${subKey}][unit]" value="${item.unit}">
+                                                                `;
+                                                                if (!freeAttached && freeAmt > 0) {
+                                                                    inputsHtml += `<input type="hidden" name="items[${subKey}][free_product_id]" value="${item.id}">`;
+                                                                    inputsHtml += `<input type="hidden" name="items[${subKey}][free_quantity]" value="${freeAmt}">`;
+                                                                    let fSideStr = [];
+                                                                    if (item.free_selections && item.free_selections['side']) {
+                                                                        Object.entries(item.free_selections['side']).forEach(([v, q]) => {
+                                                                            if (q > 0) fSideStr.push(`${q}x${v}`);
+                                                                        });
+                                                                    }
+                                                                    let fSizeStr = [];
+                                                                    if (item.free_selections && item.free_selections['size']) {
+                                                                        Object.entries(item.free_selections['size']).forEach(([v, q]) => {
+                                                                            if (q > 0) fSizeStr.push(`${q}x${v}`);
+                                                                        });
+                                                                    }
+                                                                    let finalSide = fSideStr.join(', ');
+                                                                    let finalSize = fSizeStr.join(', ');
+                                                                    
+                                                                    if (finalSide) inputsHtml += `<input type="hidden" name="items[${subKey}][free_side]" value="${finalSide}">`;
+                                                                    if (finalSize) inputsHtml += `<input type="hidden" name="items[${subKey}][free_size]" value="${finalSize}">`;
+                                                                    freeAttached = true;
+                                                                }
+                                                            });
+                                                            return inputsHtml;
+                                                        })()}
                                                     </td>
                                                     <td class="fw-medium">₹${item.price.toFixed(2)}</td>
                                                     <td class="fw-bold text-primary font-outfit">₹${lineTotal.toFixed(2)}</td>
@@ -1307,6 +1438,282 @@
                 }
 
                 renderTable();
+            });
+
+            $(document).on('change', '.free-product-select', function() {
+                let key = $(this).data('key');
+                let val = $(this).val();
+                let item = addedItems[key];
+                item.free_product_id = val;
+                item.free_side = null;
+                item.free_size = null;
+                renderTable();
+            });
+            
+            // --- New Modal Logic ---
+            let currentFreeVariantKey = null;
+            let currentFreeVariantAvailable = null;
+
+            function renderFreeVariantModal(key, availableVariantsData = null) {
+                if (availableVariantsData !== null) {
+                    currentFreeVariantAvailable = availableVariantsData;
+                }
+                let availableData = currentFreeVariantAvailable;
+                
+                let availableSides = new Set();
+                let availableSizes = new Set();
+                if (availableData) {
+                    availableData.forEach(v => {
+                        if (v.side) availableSides.add(v.side.toUpperCase());
+                        if (v.size) availableSizes.add(v.size.toUpperCase());
+                    });
+                }
+
+                let item = addedItems[key];
+                if (!item) return;
+
+                let getQty = 1;
+                let fpInfo = eligibleFreeProducts.find(p => p.id == item.id);
+                if (fpInfo && fpInfo.free_qty_get) getQty = fpInfo.free_qty_get;
+                let freeAmt = Math.floor(item.qty / item.free_qty_buy) * getQty;
+
+                let variantsHtml = '';
+                let fp = eligibleFreeProducts.find(p => p.id == item.id);
+                if (fp) {
+                    let pName = (fp.product_name || '').toLowerCase();
+                    let dynamicVariants = [];
+                    let match = pName.match(/\(([^)]+)\)/g);
+                    if (match) {
+                        let lastMatch = match[match.length - 1].replace('(', '').replace(')', '');
+                        if (lastMatch.includes('/')) {
+                            dynamicVariants = lastMatch.split('/').map(s => s.trim().toUpperCase());
+                        }
+                    }
+                    let hasV = fp.has_variants || dynamicVariants.length > 0 || (fp.variant_options && Object.keys(fp.variant_options).length > 0);
+                    if (hasV) {
+                        variantsHtml += `<div class="free-variants-container" id="free_variants_${key}">`;
+                        
+                        let allocated = 0;
+                        if (item.free_selections) {
+                            Object.values(item.free_selections).forEach(attrObj => {
+                                Object.values(attrObj).forEach(q => allocated += q);
+                            });
+                        }
+                        
+                        variantsHtml += `
+                            <div class="alert alert-info py-2 px-3 mb-3 d-flex justify-content-between align-items-center" style="border-radius: 12px; font-size: 0.85rem;">
+                                <span><i class="fa fa-info-circle me-1"></i> Allocated: <strong>${allocated}</strong> of <strong>${freeAmt}</strong></span>
+                            </div>
+                        `;
+
+                        let unavailableVariants = [];
+
+                        if (fp.variant_options && Object.keys(fp.variant_options).length > 0) {
+                            Object.keys(fp.variant_options).forEach(attrName => {
+                                let options = fp.variant_options[attrName];
+                                let purged = false;
+                                if (availableData) {
+                                    options = options.filter(v => {
+                                        let valid = true;
+                                        if (attrName.toUpperCase() === 'SIDE') valid = availableSides.has(v.toUpperCase());
+                                        if (attrName.toUpperCase() === 'SIZE') valid = availableSizes.has(v.toUpperCase());
+                                        if (!valid) {
+                                            unavailableVariants.push(v);
+                                            if (item.free_selections && item.free_selections[attrName.toLowerCase()] && item.free_selections[attrName.toLowerCase()][v]) {
+                                                delete item.free_selections[attrName.toLowerCase()][v];
+                                                purged = true;
+                                            }
+                                        }
+                                        return valid;
+                                    });
+                                }
+                                if (purged) renderTable();
+                                if (options.length === 0) return;
+
+                                let currentVals = item.free_selections && item.free_selections[attrName.toLowerCase()] ? item.free_selections[attrName.toLowerCase()] : {};
+                                variantsHtml += `
+                                    <div class="d-flex flex-column align-items-start mb-2 p-2 rounded bg-light dark-bg-dark border border-light-dark w-100">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div style="width: 3px; height: 12px; background-color: var(--bs-primary); margin-right: 6px; border-radius: 2px;"></div>
+                                            <span class="fw-bold text-uppercase text-secondary" style="font-size: 0.7rem; letter-spacing: 0.5px;">${attrName}</span>
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-2 w-100">
+                                            ${options.map(v => {
+                                                let cQty = currentVals[v] || '';
+                                                return `
+                                                <div class="d-flex align-items-center bg-white dark-bg-transparent border border-light-dark rounded shadow-sm" style="flex: 1 1 calc(50% - 0.5rem); min-width: 110px; padding: 4px;">
+                                                    <span class="fw-bold text-center ms-1 me-2 text-dark dark-text-light" style="font-size: 0.75rem; min-width: 24px;">${v}</span>
+                                                    <div class="d-flex align-items-center rounded bg-light dark-bg-dark border border-light-dark ms-auto" style="overflow: hidden;">
+                                                        <button type="button" class="btn btn-sm btn-light border-0 p-0 free-qty-btn d-flex align-items-center justify-content-center" data-action="minus" data-key="${key}" data-attr="${attrName.toLowerCase()}" data-val="${v}" style="width: 26px; height: 26px; border-radius: 0; background: transparent;">
+                                                            <i class="fa fa-minus text-secondary" style="font-size: 0.6rem;"></i>
+                                                        </button>
+                                                        <span class="fw-bold text-primary text-center px-1 border-start border-end border-light-dark bg-white dark-bg-transparent" style="font-size: 0.8rem; line-height: 26px; min-width: 26px;">${cQty || 0}</span>
+                                                        <button type="button" class="btn btn-sm btn-light border-0 p-0 free-qty-btn d-flex align-items-center justify-content-center" data-action="plus" data-key="${key}" data-attr="${attrName.toLowerCase()}" data-val="${v}" style="width: 26px; height: 26px; border-radius: 0; background: transparent;">
+                                                            <i class="fa fa-plus text-secondary" style="font-size: 0.6rem;"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>`;
+                                            }).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                        } else {
+                            let variantsToUse = dynamicVariants.length > 0 ? dynamicVariants : ['S', 'M', 'L', 'XL'];
+                            let purged = false;
+                            if (availableData) {
+                                variantsToUse = variantsToUse.filter(v => {
+                                    let valid = availableSizes.has(v.toUpperCase());
+                                    if (!valid) {
+                                        unavailableVariants.push(v);
+                                        if (item.free_selections && item.free_selections['size'] && item.free_selections['size'][v]) {
+                                            delete item.free_selections['size'][v];
+                                            purged = true;
+                                        }
+                                    }
+                                    return valid;
+                                });
+                            }
+                            if (purged) renderTable();
+                            if (variantsToUse.length > 0) {
+                                let currentVals = item.free_selections && item.free_selections['size'] ? item.free_selections['size'] : {};
+                                variantsHtml += `
+                                    <div class="d-flex flex-column align-items-start mb-2 p-2 rounded bg-light dark-bg-dark border border-light-dark w-100">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div style="width: 3px; height: 12px; background-color: var(--bs-primary); margin-right: 6px; border-radius: 2px;"></div>
+                                            <span class="fw-bold text-uppercase text-secondary" style="font-size: 0.7rem; letter-spacing: 0.5px;">SIZE</span>
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-2 w-100">
+                                            ${variantsToUse.map(v => {
+                                                let cQty = currentVals[v] || '';
+                                                return `
+                                                <div class="d-flex align-items-center bg-white dark-bg-transparent border border-light-dark rounded shadow-sm" style="flex: 1 1 calc(50% - 0.5rem); min-width: 110px; padding: 4px;">
+                                                    <span class="fw-bold text-center ms-1 me-2 text-dark dark-text-light" style="font-size: 0.75rem; min-width: 24px;">${v}</span>
+                                                    <div class="d-flex align-items-center rounded bg-light dark-bg-dark border border-light-dark ms-auto" style="overflow: hidden;">
+                                                        <button type="button" class="btn btn-sm btn-light border-0 p-0 free-qty-btn d-flex align-items-center justify-content-center" data-action="minus" data-key="${key}" data-attr="size" data-val="${v}" style="width: 26px; height: 26px; border-radius: 0; background: transparent;">
+                                                            <i class="fa fa-minus text-secondary" style="font-size: 0.6rem;"></i>
+                                                        </button>
+                                                        <span class="fw-bold text-primary text-center px-1 border-start border-end border-light-dark bg-white dark-bg-transparent" style="font-size: 0.8rem; line-height: 26px; min-width: 26px;">${cQty || 0}</span>
+                                                        <button type="button" class="btn btn-sm btn-light border-0 p-0 free-qty-btn d-flex align-items-center justify-content-center" data-action="plus" data-key="${key}" data-attr="size" data-val="${v}" style="width: 26px; height: 26px; border-radius: 0; background: transparent;">
+                                                            <i class="fa fa-plus text-secondary" style="font-size: 0.6rem;"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>`;
+                                            }).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        }
+                        variantsHtml += `</div>`;
+                        
+                        if (unavailableVariants.length > 0) {
+                            let uniqueUnavailable = [...new Set(unavailableVariants)];
+                            variantsHtml += `<div class="text-muted small mt-2 font-outfit" style="font-size: 0.75rem; line-height: 1.4;">These variants are currently out of stock for this distributor: <strong class="text-dark dark-text-light">${uniqueUnavailable.join(', ')}</strong></div>`;
+                        }
+
+                        if (variantsHtml.indexOf('d-flex flex-column align-items-start') === -1) {
+                            variantsHtml = `<div class="alert alert-warning mb-0 font-outfit"><i class="fa fa-exclamation-triangle me-1"></i> The distributor does not have any variants in stock for this free product.</div>`;
+                        }
+                    } else {
+                        variantsHtml = `<div class="alert alert-secondary mb-0">No variants available for this free product.</div>`;
+                    }
+                }
+                $('#freeVariantModalBody').html(variantsHtml);
+            }
+
+            $(document).on('click', '.open-free-variant-modal', function() {
+                let key = $(this).data('key');
+                let item = addedItems[key];
+                if (!item) return;
+
+                let btn = $(this);
+                let originalHtml = btn.html();
+                btn.html('<i class="fa fa-spinner fa-spin me-1"></i> Loading...').prop('disabled', true);
+                
+                let distId = $('#distributorSelect').val(); // Retailer selects distributor
+                if (!distId && item.distId) distId = item.distId; // fallback
+                let fpInfo = eligibleFreeProducts.find(p => p.id == item.id);
+                let fpId = fpInfo ? fpInfo.id : item.id;
+                
+                $.ajax({
+                    url: "{{ route('admin.retailer.distributor-variants', ':id') }}".replace(':id', fpId),
+                    type: 'GET',
+                    data: { distributor_id: distId },
+                    success: function(response) {
+                        currentFreeVariantKey = key;
+                        let availableVariants = response.variants || [];
+                        renderFreeVariantModal(key, availableVariants);
+                        let modal = new bootstrap.Modal(document.getElementById('freeVariantModal'));
+                        modal.show();
+                    },
+                    error: function() {
+                        if (typeof showToast === 'function') showToast('error', 'Failed to fetch available variants.');
+                        // Fallback to render without filter
+                        currentFreeVariantKey = key;
+                        renderFreeVariantModal(key, null);
+                        let modal = new bootstrap.Modal(document.getElementById('freeVariantModal'));
+                        modal.show();
+                    },
+                    complete: function() {
+                        btn.html(originalHtml).prop('disabled', false);
+                    }
+                });
+            });
+            // --- End Modal Logic ---
+
+            $(document).on('click', '.free-qty-btn', function() {
+                let key = $(this).data('key');
+                let attr = $(this).data('attr');
+                let val = $(this).data('val').toString();
+                let action = $(this).data('action');
+                
+                let item = addedItems[key];
+                if (!item.free_selections) item.free_selections = {};
+                if (!item.free_selections[attr]) item.free_selections[attr] = {};
+                
+                let fpInfo = eligibleFreeProducts.find(p => p.id == item.id);
+                let getQty = fpInfo && fpInfo.free_qty_get ? fpInfo.free_qty_get : 1;
+                let freeAmt = (item.free_qty_buy > 0 && item.qty >= item.free_qty_buy) ? Math.floor(item.qty / item.free_qty_buy) * getQty : 0;
+                
+                let currentQty = item.free_selections[attr][val] || 0;
+                
+                let allocated = 0;
+                Object.values(item.free_selections).forEach(attrObj => {
+                    Object.values(attrObj).forEach(q => allocated += q);
+                });
+                
+                if (action === 'plus') {
+                    if (allocated < freeAmt) {
+                        item.free_selections[attr][val] = currentQty + 1;
+                    } else {
+                        if (typeof showToast === 'function') showToast('error', `You only have ${freeAmt} free items available.`);
+                    }
+                } else if (action === 'minus') {
+                    if (currentQty > 0) {
+                        item.free_selections[attr][val] = currentQty - 1;
+                    }
+                }
+                
+                renderTable(); // Update the main table silently
+                renderFreeVariantModal(key); // Refresh the modal body
+            });
+
+            $(document).on('click', '.remove-variant-btn', function() {
+                let key = $(this).data('key');
+                let vIdx = $(this).data('vidx');
+                let item = addedItems[key];
+                
+                if (item) {
+                    let removedVariant = item.variants[vIdx];
+                    item.qty -= removedVariant.qty; 
+                    item.variants.splice(vIdx, 1);
+                    
+                    if (item.variants.length === 0 || item.qty <= 0) {
+                        delete addedItems[key];
+                    }
+                    renderTable();
+                }
             });
 
             $(document).on('click', '.remove-btn', function () {
@@ -1444,6 +1851,7 @@
                         qty: qty,
                         unit: unit,
                         brand: p.brand,
+                        free_qty_buy: p.free_qty_buy,
                         multiplier: mul,
                         strips_per_box: stripsPerBox,
                         boxes_per_carton: boxesPerCarton,

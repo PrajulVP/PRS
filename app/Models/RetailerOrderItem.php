@@ -18,6 +18,9 @@ class RetailerOrderItem extends Model
         'total_amount',
         'side',
         'size',
+        'free_product_id',
+        'free_side',
+        'free_size',
     ];
 
     public function retailerOrder(): BelongsTo
@@ -28,6 +31,11 @@ class RetailerOrderItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function freeProduct(): BelongsTo
+    {
+        return $this->belongsTo(Product::class, 'free_product_id');
     }
 
     public function batches()

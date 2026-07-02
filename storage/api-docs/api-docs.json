@@ -323,6 +323,24 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "name": "side",
+                        "in": "query",
+                        "description": "Filter stock by specific side variant (e.g. Left/Right)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "size",
+                        "in": "query",
+                        "description": "Filter stock by specific size variant (e.g. M/L/XL)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
@@ -636,6 +654,11 @@
                                                 "size": {
                                                     "type": "string",
                                                     "example": "XL",
+                                                    "nullable": true
+                                                },
+                                                "is_free": {
+                                                    "type": "boolean",
+                                                    "example": false,
                                                     "nullable": true
                                                 }
                                             },
@@ -2021,6 +2044,104 @@
                 "responses": {
                     "200": {
                         "description": "Chart labels and counts"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/field-staff/reports/sales-orders": {
+            "get": {
+                "tags": [
+                    "Field Staff Dashboard"
+                ],
+                "summary": "Generate a Sales Orders Report (Excel/CSV or PDF) for the logged-in Field Staff",
+                "operationId": "413f7d9a8e0f0f22382cc87b2903e030",
+                "parameters": [
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "description": "Output format: 'excel' (CSV) or 'pdf'",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "excel",
+                            "enum": [
+                                "excel",
+                                "pdf"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "From date (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "To date (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "retailer_ids",
+                        "in": "query",
+                        "description": "Comma-separated retailer IDs",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "area_ids",
+                        "in": "query",
+                        "description": "Comma-separated area IDs",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "brands",
+                        "in": "query",
+                        "description": "Comma-separated brand names",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "product_ids",
+                        "in": "query",
+                        "description": "Comma-separated product IDs",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Order status filter",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Report file download"
                     }
                 },
                 "security": [
@@ -3436,6 +3557,11 @@
                                                 "size": {
                                                     "type": "string",
                                                     "example": "XL",
+                                                    "nullable": true
+                                                },
+                                                "is_free": {
+                                                    "type": "boolean",
+                                                    "example": false,
                                                     "nullable": true
                                                 },
                                                 "distributor_id": {

@@ -32,6 +32,9 @@ class Product extends Model
         'has_variants',
         'variant_options',
         'is_returnable',
+        'is_free_eligible',
+        'free_qty_buy',
+        'free_qty_get',
     ];
 
     protected $casts = [
@@ -44,6 +47,9 @@ class Product extends Model
         'loyalty_point_percentage' => 'decimal:2',
         'variant_options' => 'array',
         'is_returnable' => 'boolean',
+        'is_free_eligible' => 'boolean',
+        'free_qty_buy' => 'integer',
+        'free_qty_get' => 'integer',
     ];
 
     /**

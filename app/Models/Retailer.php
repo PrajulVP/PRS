@@ -29,12 +29,17 @@ class Retailer extends Model
         'longitude',
         'loyalty_points',
         'credit_balance',
+        'can_configure_free_strips',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
     }
+
+    protected $casts = [
+        'can_configure_free_strips' => 'boolean',
+    ];
 
     public function distributor()
     {

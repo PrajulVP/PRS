@@ -212,7 +212,8 @@ class DistributorOrderApiController extends Controller
      *                 @OA\Property(property="quantity", type="integer", example=10),
      *                 @OA\Property(property="unit", type="string", enum={"Nos", "Strips", "Box", "Carton"}, example="Box"),
      *                 @OA\Property(property="side", type="string", nullable=true, example="Left"),
-     *                 @OA\Property(property="size", type="string", nullable=true, example="XL")
+     *                 @OA\Property(property="size", type="string", nullable=true, example="XL"),
+     *                 @OA\Property(property="is_free", type="boolean", nullable=true, example=false)
      *             )),
      *             @OA\Property(property="delivery_notes", type="string", nullable=true, example="Urgent distributor order")
      *         )
@@ -255,6 +256,7 @@ class DistributorOrderApiController extends Controller
             'items.*.unit' => 'nullable|string|in:Box,Carton,Strip,Nos,no',
             'items.*.side' => 'nullable|string',
             'items.*.size' => 'nullable|string',
+            'items.*.is_free' => 'nullable|boolean',
             'delivery_notes' => 'nullable|string',
         ]);
 
@@ -292,7 +294,8 @@ class DistributorOrderApiController extends Controller
             $mergedItems = collect($request->items)->groupBy(function($i) {
                 $side = isset($i['side']) ? trim(strtolower($i['side'])) : '';
                 $size = isset($i['size']) ? trim(strtolower($i['size'])) : '';
-                return $i['product_id'] . '-' . $side . '-' . $size;
+                $isFree = isset($i['is_free']) && filter_var($i['is_free'], FILTER_VALIDATE_BOOLEAN) ? 'free' : 'paid';
+                return $i['product_id'] . '-' . $side . '-' . $size . '-' . $isFree;
             })->map(function($group) {
                 $first = $group->first();
                 $first['quantity'] = $group->sum('quantity');
@@ -301,6 +304,7 @@ class DistributorOrderApiController extends Controller
                 // Keep normalized values
                 $first['side'] = isset($first['side']) ? trim($first['side']) : null;
                 $first['size'] = isset($first['size']) ? trim($first['size']) : null;
+                $first['is_free'] = isset($first['is_free']) ? filter_var($first['is_free'], FILTER_VALIDATE_BOOLEAN) : false;
                 
                 return $first;
             });
@@ -324,15 +328,26 @@ class DistributorOrderApiController extends Controller
 
                 $totalQtyStrips = $qty * $multiplier;
 
-                $gstRate = (float)($product->gst ?? 0);
-                $taxableSubtotal = $totalQtyStrips * $unitPrice;
-                $subtotalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
+                $isFree = $itemData['is_free'] ?? false;
+
+                if ($isFree) {
+                    $unitPrice = 0;
+                    $subtotalWithGst = 0;
+                    $freeQty = $qty;
+                    $qty = 0; // Billed quantity is 0
+                } else {
+                    $unitPrice = $product->pts;
+                    $gstRate = (float)($product->gst ?? 0);
+                    $taxableSubtotal = $totalQtyStrips * $unitPrice;
+                    $subtotalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
+                    $freeQty = $itemData['free_quantity'] ?? 0;
+                }
 
                 $order->items()->create([
                     'product_id' => $product->id,
                     'product_name' => $product->product_name,
                     'quantity' => $qty,
-                    'free_quantity' => $itemData['free_quantity'] ?? 0,
+                    'free_quantity' => $freeQty,
                     'unit' => $unit,
                     'price' => (float)$unitPrice,
                     'subtotal' => $subtotalWithGst,

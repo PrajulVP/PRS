@@ -1960,7 +1960,12 @@
                                     ${item.quantity}
                                 </td>
                                 <td class="text-center fw-bold text-success" style="font-size: 0.85rem;">
-                                    ${item.free_quantity > 0 ? item.free_quantity : '-'}
+                                    ${item.free_quantity > 0 ? 
+                                        `<div class="d-flex flex-column align-items-center justify-content-center gap-1">
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.75rem; letter-spacing: 0.5px;"><i class="fa fa-gift me-1"></i>${item.free_quantity} Free</span>
+                                            ${(item.free_side || item.free_size) ? `<span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 0.65rem; letter-spacing: 0.5px; padding: 0.25em 0.6em;">${[item.free_side, item.free_size].filter(Boolean).join(' / ').toUpperCase()}</span>` : ''}
+                                        </div>` 
+                                    : '-'}
                                 </td>
                                 <td class="text-end pe-3 fw-bold text-main-theme" style="font-size: 0.85rem;">₹${totalAmtFormatted}</td>
                             </tr>
@@ -2039,7 +2044,12 @@
                                         ${item.quantity} ${item.unit || 'Nos'}
                                     </div>
                                     <div style="flex: 1;" class="fw-bold text-success text-center">
-                                        ${item.free_quantity > 0 ? item.free_quantity : '-'}
+                                        ${item.free_quantity > 0 ? 
+                                            `<div class="d-flex flex-column align-items-center justify-content-center gap-1 mt-1">
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.7rem;"><i class="fa fa-gift me-1"></i>${item.free_quantity}</span>
+                                                ${(item.free_side || item.free_size) ? `<span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 0.6rem; padding: 0.2em 0.5em;">${[item.free_side, item.free_size].filter(Boolean).join('/').toUpperCase()}</span>` : ''}
+                                            </div>` 
+                                        : '-'}
                                     </div>
                                     <div style="flex: 1;" class="fw-bold text-main-theme text-end pe-3">₹${item.total_amount}</div>
                                 </div>
@@ -2234,7 +2244,12 @@
                                         ${item.quantity} ${item.unit || 'Nos'}
                                     </div>
                                     <div class="ai-col-qty fw-bold text-success text-center v-free-display">
-                                        ${item.free_quantity > 0 ? item.free_quantity : '-'}
+                                        ${item.free_quantity > 0 ? 
+                                            `<div class="d-flex flex-column align-items-center justify-content-center gap-1 mt-1">
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.7rem;"><i class="fa fa-gift me-1"></i>${item.free_quantity}</span>
+                                                ${(item.free_side || item.free_size) ? `<span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 0.6rem; padding: 0.2em 0.5em;">${[item.free_side, item.free_size].filter(Boolean).join('/').toUpperCase()}</span>` : ''}
+                                            </div>` 
+                                        : '-'}
                                     </div>
                                     <div class="ai-col-value fw-bold text-main-theme text-end pe-3 v-taxable-display">--</div>
                                 </div>

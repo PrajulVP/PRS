@@ -80,6 +80,9 @@
             font-size: 7pt;
             font-weight: bold;
         }
+        table.data-table tbody tr {
+            page-break-inside: avoid !important;
+        }
         table.data-table tr:nth-child(even) {
             background-color: #fafbfc;
         }
@@ -151,28 +154,31 @@
     </div>
 
     <table class="data-table">
+        @if($type === 'orders')
+        <colgroup>
+            <col style="width: 3%;">
+            <col style="width: 12%;">
+            <col style="width: 17%;">
+            <col style="width: 12%;">
+            <col style="width: 10%;">
+            <col style="width: 25%;">
+            <col style="width: 7%;">
+            <col style="width: 8%;">
+            <col style="width: 6%;">
+        </colgroup>
+        @endif
         <thead>
             @if($type === 'orders')
                 <tr>
                     <th>#</th>
-                    <th>Order Code</th>
-                    <th>Invoice No</th>
-                    <th>Date</th>
-                    <th>Retailer Name</th>
-                    <th>Shop Name</th>
-                    <th>Area / District</th>
-                    <th>Sales Manager</th>
-                    <th>Field Staff</th>
+                    <th>Order Details</th>
+                    <th>Retailer / Shop Details</th>
+                    <th>Staff Assigned</th>
                     <th>Distributor</th>
-                    <th>Products</th>
-                    <th>Brand(s)</th>
+                    <th>Products / Brands</th>
                     <th class="text-right">Units / SKUs</th>
                     <th class="text-right">Amount (₹)</th>
-                    @if($isManagement)
-                    <th class="text-right">Tax (₹)</th>
-                    @endif
-                    <th>Status</th>
-                    <th>Payment</th>
+                    <th>Status / Payment</th>
                 </tr>
             @elseif($type === 'distributors')
                 <tr>
@@ -203,8 +209,6 @@
                     <th class="text-right">PTR / MRP</th>
                     @endif
                     <th class="text-right">Units Solid</th>
-                    <th class="text-right">Intensity</th>
-                    <th class="text-right">Orders</th>
                     <th class="text-right">Revenue (₹)</th>
                 </tr>
             @elseif($type === 'fieldstaffs')
@@ -269,34 +273,41 @@
                             $tax = $row->items->sum(fn($i) => (($i->product->gst ?? 0) / 100) * (($i->product->taxable_value ?? 0) * $i->quantity));
                         @endphp
                         <td>{{ $index + 1 }}</td>
-                        <td class="fw-bold">{{ $row->order_code }}</td>
-                        <td style="color: #00497a;">{{ $row->invoice_no ?? 'N/A' }}</td>
-                        <td>{{ $row->placed_at ? $row->placed_at->format('M d, Y') : 'N/A' }}</td>
-                        <td class="fw-bold">{{ $retailerName }}</td>
-                        <td>{{ $shopName }}</td>
                         <td>
-                            <div>{{ $area }}</div>
-                            <div style="font-size: 7pt; color: #666;">{{ $district }}</div>
+                            <div class="fw-bold">{{ $row->order_code }}</div>
+                            <div style="font-size: 7pt; color: #00497a;">Inv: {{ $row->invoice_no ?? 'N/A' }}</div>
+                            <div style="font-size: 7pt; color: #666;">{{ $row->placed_at ? $row->placed_at->format('M d, Y') : 'N/A' }}</div>
                         </td>
-                        <td>{{ $salesManager }}</td>
-                        <td>{{ $fieldStaffName }}</td>
+                        <td>
+                            <div class="fw-bold">{{ $retailerName }}</div>
+                            <div style="font-size: 7pt; color: #444;">{{ $shopName }}</div>
+                            <div style="font-size: 7pt; color: #666;">{{ $area }} / {{ $district }}</div>
+                        </td>
+                        <td>
+                            <div>Mgr: {{ $salesManager }}</div>
+                            <div style="font-size: 7pt; color: #666;">FS: {{ $fieldStaffName }}</div>
+                        </td>
                         <td>{{ $distributor }}</td>
-                        <td style="font-size: 7pt;">{{ $productsSummary ?: 'No Items' }}</td>
-                        <td style="font-size: 7pt;">{{ $brands ?: 'N/A' }}</td>
+                        <td style="font-size: 7.5pt;">
+                            <div>{{ $productsSummary ?: 'No Items' }}</div>
+                            @if($brands)
+                                <div style="font-size: 7pt; color: #00497a; margin-top: 2px;">Brands: {{ $brands }}</div>
+                            @endif
+                        </td>
                         <td class="text-right">
                             <span class="fw-bold">{{ $totalUnits }} Units</span><br>
                             <span style="font-size: 7pt; color: #666;">{{ $totalSku }} SKUs</span>
                         </td>
-                        <td class="text-right fw-bold">{{ number_format($row->total_amount, 2) }}</td>
-                        @if($isManagement)
-                        <td class="text-right" style="font-size: 7pt; color: #666;">
-                            ₹{{ number_format($tax, 2) }}
+                        <td class="text-right">
+                            <div class="fw-bold">&#8377;{{ number_format($row->total_amount, 2) }}</div>
+                            @if($isManagement)
+                                <div style="font-size: 7pt; color: #666;">Tax: &#8377;{{ number_format($tax, 2) }}</div>
+                            @endif
                         </td>
-                        @endif
                         <td>
-                            <span class="badge status-{{ $row->status }}">{{ strtoupper($row->status) }}</span>
+                            <span class="badge status-{{ $row->status }}">{{ strtoupper($row->status) }}</span><br>
+                            <span style="font-size: 7pt; color: #666; margin-top: 2px; display: inline-block;">{{ ucfirst($row->payment_status ?? 'N/A') }}</span>
                         </td>
-                        <td style="font-size: 7pt;">{{ ucfirst($row->payment_status ?? 'N/A') }}</td>
                     @elseif($type === 'distributors')
                         <td>{{ $index + 1 }}</td>
                         <td class="fw-bold">{{ $row->user->name ?? $row->name }}</td>

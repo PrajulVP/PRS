@@ -526,6 +526,27 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Free Scheme Configuration -->
+                        <div id="create_free_scheme_section" class="mt-4 border-top pt-3 d-none">
+                            <h6 class="text-primary fw-bold mb-3 pb-2">Free Scheme Configuration</h6>
+                            <div class="row g-3">
+                                <div class="col-md-4" id="create_is_free_eligible_container">
+                                    <div class="form-check form-switch mt-4">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="create_is_free_eligible" name="is_free_eligible" value="1">
+                                        <label class="form-check-label fw-medium" for="create_is_free_eligible">Eligible for Free Selection</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4" id="create_free_qty_buy_container">
+                                    <label class="form-label fw-medium small">Buy Qty</label>
+                                    <input type="number" name="free_qty_buy" id="create_free_qty_buy" class="form-control" placeholder="e.g. 5">
+                                </div>
+                                <div class="col-md-4" id="create_free_qty_get_container">
+                                    <label class="form-label fw-medium small">Get Free Qty</label>
+                                    <input type="number" name="free_qty_get" id="create_free_qty_get" class="form-control" placeholder="e.g. 2">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -667,6 +688,27 @@
                                         <option value="UNIVERSAL">UNIVERSAL</option>
                                         <option value="FREE SIZE">FREE SIZE</option>
                                     </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Free Scheme Configuration -->
+                        <div id="edit_free_scheme_section" class="mt-4 border-top pt-3 d-none">
+                            <h6 class="text-primary fw-bold mb-3 pb-2">Free Scheme Configuration</h6>
+                            <div class="row g-3">
+                                <div class="col-md-4" id="edit_is_free_eligible_container">
+                                    <div class="form-check form-switch mt-4">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="edit_is_free_eligible" name="is_free_eligible" value="1">
+                                        <label class="form-check-label fw-medium" for="edit_is_free_eligible">Eligible for Free Selection</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4" id="edit_free_qty_buy_container">
+                                    <label class="form-label fw-medium small">Buy Qty</label>
+                                    <input type="number" name="free_qty_buy" id="edit_free_qty_buy" class="form-control" placeholder="e.g. 5">
+                                </div>
+                                <div class="col-md-4" id="edit_free_qty_get_container">
+                                    <label class="form-label fw-medium small">Get Free Qty</label>
+                                    <input type="number" name="free_qty_get" id="edit_free_qty_get" class="form-control" placeholder="e.g. 2">
                                 </div>
                             </div>
                         </div>
@@ -911,6 +953,9 @@
                 let showStripSize = false;
                 let showBoxSize = false;
                 let showVariants = false;
+                
+                let showFreeEligible = true;
+                let showFreeQtyBuyGet = true;
 
                 if (layoutType === 'medical') {
                     showProductCode = false;
@@ -1013,6 +1058,28 @@
                     $(`#${modalPrefix}_pricing_section`).removeClass('col-md-12').addClass('col-md-6');
                 }
 
+                // Apply Free Scheme Visibility
+                if (showFreeEligible || showFreeQtyBuyGet) {
+                    $(`#${modalPrefix}_free_scheme_section`).removeClass('d-none');
+                    if (showFreeEligible) {
+                        $(`#${modalPrefix}_is_free_eligible_container`).removeClass('d-none');
+                    } else {
+                        $(`#${modalPrefix}_is_free_eligible_container`).addClass('d-none');
+                    }
+                    
+                    let isEligibleChecked = $(`#${modalPrefix}_is_free_eligible`).is(':checked');
+                    
+                    if (showFreeQtyBuyGet && isEligibleChecked) {
+                        $(`#${modalPrefix}_free_qty_buy_container`).removeClass('d-none');
+                        $(`#${modalPrefix}_free_qty_get_container`).removeClass('d-none');
+                    } else {
+                        $(`#${modalPrefix}_free_qty_buy_container`).addClass('d-none');
+                        $(`#${modalPrefix}_free_qty_get_container`).addClass('d-none');
+                    }
+                } else {
+                    $(`#${modalPrefix}_free_scheme_section`).addClass('d-none');
+                }
+
                 // Set select dropdown value (case-insensitive) or set input value
                 let brandSelect = $(`#${modalPrefix}_brand`);
                 if (brandSelect.length > 0) {
@@ -1090,6 +1157,10 @@
                 // Offer and discount fields removed
                 $('#edit_loyalty_point_percentage').val(product.loyalty_point_percentage);
                 $('#edit_brand').val(product.brand || '');
+
+                $('#edit_is_free_eligible').prop('checked', product.is_free_eligible == 1).trigger('change');
+                $('#edit_free_qty_buy').val(product.free_qty_buy || '');
+                $('#edit_free_qty_get').val(product.free_qty_get || '');
 
 
                 // Variant Options
@@ -1398,6 +1469,18 @@
                 width: '100%'
             });
             
+            $('#create_is_free_eligible, #edit_is_free_eligible').on('change', function() {
+                let isChecked = $(this).is(':checked');
+                let prefix = $(this).attr('id').startsWith('create') ? 'create' : 'edit';
+                if (isChecked) {
+                    $(`#${prefix}_free_qty_buy_container`).removeClass('d-none');
+                    $(`#${prefix}_free_qty_get_container`).removeClass('d-none');
+                } else {
+                    $(`#${prefix}_free_qty_buy_container`).addClass('d-none');
+                    $(`#${prefix}_free_qty_get_container`).addClass('d-none');
+                }
+            });
+
             // Auto-calculation logic removed since tax info isn't on product level anymore.
         });
     </script>

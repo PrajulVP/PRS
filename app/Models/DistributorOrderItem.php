@@ -18,6 +18,9 @@ class DistributorOrderItem extends Model
         'subtotal',
         'side',
         'size',
+        'free_product_id',
+        'free_side',
+        'free_size',
     ];
 
     public function distributorOrder(): BelongsTo
