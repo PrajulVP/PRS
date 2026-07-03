@@ -1278,7 +1278,7 @@
                                                                 if (v.side) parts.push(v.side);
                                                                 if (v.size) parts.push(v.size);
                                                                 if (v.variant && !v.side && !v.size) parts.push(v.variant);
-                                                                let vLabel = parts.length > 0 ? parts.join('/') : 'Reg';
+                                                                let vLabel = parts.length > 0 ? parts.join('/') : (item.unit || 'Reg');
                                                                 return `
                                                                 <div class="d-inline-flex align-items-center gap-1 bg-light border rounded-pill px-2 py-1 shadow-sm mb-1 me-2" style="border-color: rgba(0,0,0,0.08) !important;">
                                                                     <span class="text-primary fw-bold" style="font-size: 0.7rem;">${vLabel}</span>
@@ -1322,7 +1322,7 @@
                                                                         Object.entries(item.free_selections[attr]).forEach(([v, q]) => {
                                                                             if (q > 0) {
                                                                                 totalSelected += q;
-                                                                                attrGroup.push(`${q}x${v}`);
+                                                                                attrGroup.push(`${q} ${v}`);
                                                                             }
                                                                         });
                                                                         if (attrGroup.length > 0) {
@@ -1330,6 +1330,17 @@
                                                                         }
                                                                     });
                                                                 }
+                                                                
+                                                                let pName = (fpInfo ? fpInfo.product_name || '' : '').toLowerCase();
+                                                                let dynamicVariants = [];
+                                                                let match = pName.match(/\(([^)]+)\)/g);
+                                                                if (match) {
+                                                                    let lastMatch = match[match.length - 1].replace('(', '').replace(')', '');
+                                                                    if (lastMatch.includes('/')) {
+                                                                        dynamicVariants = lastMatch.split('/').map(s => s.trim().toUpperCase());
+                                                                    }
+                                                                }
+                                                                let hasV = fpInfo && (fpInfo.has_variants || dynamicVariants.length > 0 || (fpInfo.variant_options && Object.keys(fpInfo.variant_options).length > 0));
                                                                 
                                                                 let isComplete = totalSelected >= freeAmt;
                                                                 let btnClass = isComplete ? 'btn-outline-success' : 'btn-outline-primary';
@@ -1340,10 +1351,12 @@
                                                                         <span class="badge bg-success text-white px-2 py-1 shadow-sm mb-2 d-inline-block" style="font-size: 0.75rem; letter-spacing: 0.3px; border-radius: 6px;">
                                                                             <i class="fa fa-gift me-1"></i>+ ${freeAmt} FREE
                                                                         </span><br>
+                                                                        ${hasV ? `
                                                                         <button type="button" class="btn btn-sm ${btnClass} fw-bold open-free-variant-modal mb-1 px-3 shadow-sm font-outfit" data-key="${key}" style="border-radius: 8px;">
                                                                             ${iconHtml} Click to Select
                                                                         </button>
                                                                         ${summaries.length > 0 ? `<div class="small fw-bold mt-1" style="color: #6c757d; font-size: 0.7rem; line-height: 1.2;">${summaries.join('<br>')}</div>` : ''}
+                                                                        ` : ''}
                                                                     </div>
                                                                 `;
                                                             })()}
@@ -1373,7 +1386,7 @@
                                                                     if (item.free_selections && item.free_selections['side']) {
                                                                         Object.entries(item.free_selections['side']).forEach(([v, q]) => {
                                                                             if (q > 0) {
-                                                                                fSideStr.push(`${q}x${v}`);
+                                                                                fSideStr.push(`${q} ${v}`);
                                                                                 totalSelected += q;
                                                                             }
                                                                         });
@@ -1382,7 +1395,7 @@
                                                                     if (item.free_selections && item.free_selections['size']) {
                                                                         Object.entries(item.free_selections['size']).forEach(([v, q]) => {
                                                                             if (q > 0) {
-                                                                                fSizeStr.push(`${q}x${v}`);
+                                                                                fSizeStr.push(`${q} ${v}`);
                                                                                 totalSelected += q;
                                                                             }
                                                                         });

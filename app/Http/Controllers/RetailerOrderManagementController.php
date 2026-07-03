@@ -1431,9 +1431,7 @@ class RetailerOrderManagementController extends Controller
         if ($dbNotes !== $reqNotes) { $hasChanges = true; \Log::info("Change: delivery_notes '{$dbNotes}' !== '{$reqNotes}'"); }
 
         $requestItemsGrouped = collect($request->items ?? [])->groupBy('order_item_id');
-        $requestPaidCount = $requestItemsGrouped->filter(function($group) {
-            return $group->where('is_free', '!=', 1)->count() > 0;
-        })->count();
+        $requestPaidCount = $requestItemsGrouped->count();
 
         if ($retailerOrder->items->count() !== $requestPaidCount) {
             $hasChanges = true;
@@ -1449,8 +1447,7 @@ class RetailerOrderManagementController extends Controller
                     break;
                 }
 
-                $paidItem = $group->firstWhere('is_free', '!=', 1);
-                $freeItem = $group->firstWhere('is_free', '==', 1);
+                $paidItem = $group->first();
 
                 if ($paidItem) {
                     if ((string)$existingItem->product_id !== (string)$paidItem['product_id']) { $hasChanges = true; \Log::info("Change: product_id {$existingItem->product_id} !== {$paidItem['product_id']}"); }
@@ -1470,15 +1467,15 @@ class RetailerOrderManagementController extends Controller
                     $existingSize = $existingItem->size === null ? '' : strtolower(trim((string)$existingItem->size));
                     $newSize = empty($paidItem['size']) ? '' : strtolower(trim((string)$paidItem['size']));
                     if ($existingSize !== $newSize) { $hasChanges = true; \Log::info("Change: size {$existingSize} !== {$newSize}"); }
-                }
-
-                if ($freeItem) {
+                    
+                    if (round((float)$existingItem->free_quantity, 2) !== round((float)($paidItem['free_quantity'] ?? 0), 2)) { $hasChanges = true; \Log::info("Change: free_quantity {$existingItem->free_quantity} !== " . ($paidItem['free_quantity'] ?? 0)); }
+                    
                     $existingFreeSide = $existingItem->free_side === null ? '' : strtolower(trim((string)$existingItem->free_side));
-                    $newFreeSide = empty($freeItem['side']) ? '' : strtolower(trim((string)$freeItem['side']));
+                    $newFreeSide = empty($paidItem['free_side']) ? '' : strtolower(trim((string)$paidItem['free_side']));
                     if ($existingFreeSide !== $newFreeSide) { $hasChanges = true; \Log::info("Change: free side {$existingFreeSide} !== {$newFreeSide}"); }
 
                     $existingFreeSize = $existingItem->free_size === null ? '' : strtolower(trim((string)$existingItem->free_size));
-                    $newFreeSize = empty($freeItem['size']) ? '' : strtolower(trim((string)$freeItem['size']));
+                    $newFreeSize = empty($paidItem['free_size']) ? '' : strtolower(trim((string)$paidItem['free_size']));
                     if ($existingFreeSize !== $newFreeSize) { $hasChanges = true; \Log::info("Change: free size {$existingFreeSize} !== {$newFreeSize}"); }
                 }
 

@@ -1234,11 +1234,7 @@
                 const boxValInt = parseInt(String(boxVal || '').replace(/[^0-9]/g, '')) || 1;
                 const cartonValInt = parseInt(String(cartonVal || '').replace(/[^0-9]/g, '')) || 1;
 
-                const isStripBased = isValid(stripVal) && 
-                                     isValid(boxVal) && 
-                                     stripVal.toString().toLowerCase().trim() !== 'n/a' && 
-                                     boxVal.toString().toLowerCase().trim() !== 'n/a' &&
-                                     !(stripValInt === 1 && boxValInt === 1 && cartonValInt === 1);
+                const isStripBased = isValid(stripVal) || isValid(boxVal) || isValid(cartonVal);
 
                 let packagingHtml = '';
                 if (isStripBased) {
@@ -1248,6 +1244,10 @@
                                 Stock & Packaging
                             </h5>
                             <div class="row g-2">
+                    `;
+                    
+                    if (isValid(stripVal) && stripVal.toString().toLowerCase().trim() !== 'n/a') {
+                        packagingHtml += `
                                 <div class="col-12">
                                     <div class="detail-card-panel d-flex align-items-center justify-content-between">
                                         <div class="d-flex align-items-center">
@@ -1261,6 +1261,11 @@
                                         </div>
                                     </div>
                                 </div>
+                        `;
+                    }
+
+                    if (isValid(boxVal) && boxVal.toString().toLowerCase().trim() !== 'n/a') {
+                        packagingHtml += `
                                 <div class="col-12">
                                     <div class="detail-card-panel d-flex align-items-center justify-content-between">
                                         <div class="d-flex align-items-center">
@@ -1274,6 +1279,11 @@
                                         </div>
                                     </div>
                                 </div>
+                        `;
+                    }
+
+                    if (isValid(cartonVal) && cartonValInt > 1) {
+                        packagingHtml += `
                                 <div class="col-12">
                                     <div class="detail-card-panel d-flex align-items-center justify-content-between">
                                         <div class="d-flex align-items-center">
@@ -1282,11 +1292,15 @@
                                             </div>
                                             <div>
                                                 <div class="detail-text-title">Boxes Per Carton</div>
-                                                <div class="detail-text-value fs-6" style="line-height: 1.1;">${cartonVal || '1'} <span class="text-muted small" style="font-weight: 500;">Boxes</span></div>
+                                                <div class="detail-text-value fs-6" style="line-height: 1.1;">${cartonVal} <span class="text-muted small" style="font-weight: 500;">Boxes</span></div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                        `;
+                    }
+
+                    packagingHtml += `
                             </div>
                         </div>
                     `;

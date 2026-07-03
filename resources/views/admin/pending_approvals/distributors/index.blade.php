@@ -3512,9 +3512,9 @@
                         variantsHtml += `</div>`;
 
                         let fSideStr = [];
-                        if (st.selections['side']) Object.entries(st.selections['side']).forEach(([v, q]) => { if (q > 0) fSideStr.push(`${q}x${v}`); });
+                        if (st.selections['side']) Object.entries(st.selections['side']).forEach(([v, q]) => { if (q > 0) fSideStr.push(`${q} ${v}`); });
                         let fSizeStr = [];
-                        if (st.selections['size']) Object.entries(st.selections['size']).forEach(([v, q]) => { if (q > 0) fSizeStr.push(`${q}x${v}`); });
+                        if (st.selections['size']) Object.entries(st.selections['size']).forEach(([v, q]) => { if (q > 0) fSizeStr.push(`${q} ${v}`); });
 
                         tbody.append(`
                             <tr style="background-color: #f0fdf4;">

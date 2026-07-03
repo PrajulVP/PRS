@@ -656,6 +656,16 @@
                                                     "example": "XL",
                                                     "nullable": true
                                                 },
+                                                "free_side": {
+                                                    "type": "string",
+                                                    "example": "Left",
+                                                    "nullable": true
+                                                },
+                                                "free_size": {
+                                                    "type": "string",
+                                                    "example": "1 S, 2 XL",
+                                                    "nullable": true
+                                                },
                                                 "is_free": {
                                                     "type": "boolean",
                                                     "example": false,
@@ -744,6 +754,14 @@
                                                                 "nullable": true
                                                             },
                                                             "size": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            },
+                                                            "free_side": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            },
+                                                            "free_size": {
                                                                 "type": "string",
                                                                 "nullable": true
                                                             },
@@ -837,6 +855,14 @@
                                                         "nullable": true
                                                     },
                                                     "size": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "free_side": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "free_size": {
                                                         "type": "string",
                                                         "nullable": true
                                                     },
@@ -3601,6 +3627,16 @@
                                                     "example": "XL",
                                                     "nullable": true
                                                 },
+                                                "free_side": {
+                                                    "type": "string",
+                                                    "example": "Left",
+                                                    "nullable": true
+                                                },
+                                                "free_size": {
+                                                    "type": "string",
+                                                    "example": "1 S, 2 XL",
+                                                    "nullable": true
+                                                },
                                                 "is_free": {
                                                     "type": "boolean",
                                                     "example": false,
@@ -5216,6 +5252,14 @@
                                 "subtotal": {
                                     "type": "number",
                                     "format": "float"
+                                },
+                                "free_side": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "free_size": {
+                                    "type": "string",
+                                    "nullable": true
                                 },
                                 "is_free": {
                                     "type": "boolean"
