@@ -856,7 +856,8 @@
                         $unitSelect.empty();
                         let pPack = (p.pack || '').toLowerCase();
                         let hasCode = p.product_code && p.product_code !== '---' && p.product_code.trim() !== '';
-                        let isCount = hasCode || p.box_size === "" || pPack.includes('nos') || pPack.includes('count');
+                        let hasStrips = (p.units_per_strip > 1) || (p.strip_size && p.strip_size.trim() !== '');
+                        let isCount = !hasStrips && (hasCode || pPack.includes('nos') || pPack.includes('count') || p.box_size === "");
 
                         if (isCount) {
                             $unitSelect.empty().append('<option value="Nos">No.</option>').hide();

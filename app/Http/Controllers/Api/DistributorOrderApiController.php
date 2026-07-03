@@ -662,7 +662,7 @@ class DistributorOrderApiController extends Controller
                     'free_size' => $group->pluck('free_size')->filter()->first() ? preg_replace('/(\d+)x/', '$1 ', $group->pluck('free_size')->filter()->first()) : null,
                     'price' => $item->price,
                     'subtotal' => $group->sum('subtotal'),
-                    'is_free' => false,
+                    'is_free' => $group->sum('quantity') == 0,
                     'free_item_quantity' => $item->product ? (int)$item->product->free_qty_get : 0,
                     'free_item_threshold' => $item->product ? (int)$item->product->free_qty_buy : 0,
                     'batches' => $group->flatMap->batches->map(function ($b) {

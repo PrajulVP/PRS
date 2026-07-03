@@ -579,7 +579,8 @@
                         // Unit Logic: If has code or is count-based -> No.
                         let hasCode = p.product_code && p.product_code !== '---' && p.product_code.trim() !== '';
                         let boxSizeStr = p.box_size || '';
-                        let isCount = hasCode || boxSizeStr === "";
+                        let hasStrips = (p.units_per_strip > 1) || (p.strip_size && p.strip_size.trim() !== '');
+                        let isCount = !hasStrips && (hasCode || boxSizeStr === "");
                         
                         // Fallback patterns: If not already No., check keywords
                         if (!isCount) {

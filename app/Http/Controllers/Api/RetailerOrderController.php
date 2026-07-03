@@ -117,7 +117,7 @@ class RetailerOrderController extends Controller
                             'size'       => $item->size,
                             'free_side'  => $group->pluck('free_side')->filter()->first() ? preg_replace('/(\d+)x/', '$1 ', $group->pluck('free_side')->filter()->first()) : null,
                             'free_size'  => $group->pluck('free_size')->filter()->first() ? preg_replace('/(\d+)x/', '$1 ', $group->pluck('free_size')->filter()->first()) : null,
-                            'is_free'    => false,
+                            'is_free'    => $group->sum('quantity') == 0,
                             'free_item_quantity' => $item->product ? (int)$item->product->free_qty_get : 0,
                             'free_item_threshold' => $item->product ? (int)$item->product->free_qty_buy : 0,
                         ];
