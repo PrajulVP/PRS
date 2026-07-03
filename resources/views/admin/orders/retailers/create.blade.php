@@ -1368,20 +1368,29 @@
                                                                     <input type="hidden" name="items[${subKey}][unit]" value="${item.unit}">
                                                                 `;
                                                                 if (!freeAttached && freeAmt > 0) {
-                                                                    inputsHtml += `<input type="hidden" name="items[${subKey}][free_product_id]" value="${item.id}">`;
-                                                                    inputsHtml += `<input type="hidden" name="items[${subKey}][free_quantity]" value="${freeAmt}">`;
                                                                     let fSideStr = [];
+                                                                    let totalSelected = 0;
                                                                     if (item.free_selections && item.free_selections['side']) {
                                                                         Object.entries(item.free_selections['side']).forEach(([v, q]) => {
-                                                                            if (q > 0) fSideStr.push(`${q}x${v}`);
+                                                                            if (q > 0) {
+                                                                                fSideStr.push(`${q}x${v}`);
+                                                                                totalSelected += q;
+                                                                            }
                                                                         });
                                                                     }
                                                                     let fSizeStr = [];
                                                                     if (item.free_selections && item.free_selections['size']) {
                                                                         Object.entries(item.free_selections['size']).forEach(([v, q]) => {
-                                                                            if (q > 0) fSizeStr.push(`${q}x${v}`);
+                                                                            if (q > 0) {
+                                                                                fSizeStr.push(`${q}x${v}`);
+                                                                                totalSelected += q;
+                                                                            }
                                                                         });
                                                                     }
+                                                                    
+                                                                    let finalFreeQty = totalSelected > 0 ? totalSelected : freeAmt;
+                                                                    inputsHtml += `<input type="hidden" name="items[${subKey}][free_quantity]" value="${finalFreeQty}">`;
+                                                                    
                                                                     let finalSide = fSideStr.join(', ');
                                                                     let finalSize = fSizeStr.join(', ');
                                                                     
@@ -1436,6 +1445,9 @@
                     item.unit = oldUnit;
                     item.multiplier = oldMul;
                 }
+                
+                // Clear free selections since qty changed (free amounts may change)
+                item.free_selections = {};
 
                 renderTable();
             });
@@ -1734,15 +1746,27 @@
                     if (fpInfo && fpInfo.free_qty_get) getQty = fpInfo.free_qty_get;
                     let freeAmt = (item.free_qty_buy > 0 && item.qty >= item.free_qty_buy) ? Math.floor(item.qty / item.free_qty_buy) * getQty : 0;
                     
-                    if (freeAmt > 0 && fpInfo && fpInfo.variant_options) {
-                        let attrs = Object.keys(fpInfo.variant_options);
+                    let pName = (fpInfo ? fpInfo.product_name : '').toLowerCase();
+                    let dynamicVariants = [];
+                    let match = pName.match(/\(([^)]+)\)/g);
+                    if (match) {
+                        let lastMatch = match[match.length - 1].replace('(', '').replace(')', '');
+                        if (lastMatch.includes('/')) {
+                            dynamicVariants = lastMatch.split('/').map(s => s.trim().toUpperCase());
+                        }
+                    }
+                    let hasV = fpInfo && (fpInfo.has_variants || dynamicVariants.length > 0 || (fpInfo.variant_options && Object.keys(fpInfo.variant_options).length > 0));
+                    
+                    if (freeAmt > 0 && hasV) {
+                        let attrs = (fpInfo.variant_options && Object.keys(fpInfo.variant_options).length > 0) ? Object.keys(fpInfo.variant_options) : ['size'];
                         if (attrs.length > 0) {
                             let totalSelected = 0;
                             if (item.free_selections) {
                                 attrs.forEach(attr => {
                                     let attrTotal = 0;
-                                    if (item.free_selections[attr]) {
-                                        Object.values(item.free_selections[attr]).forEach(q => attrTotal += parseInt(q) || 0);
+                                    let attrLower = attr.toLowerCase();
+                                    if (item.free_selections[attrLower]) {
+                                        Object.values(item.free_selections[attrLower]).forEach(q => attrTotal += parseInt(q) || 0);
                                     }
                                     if (attrTotal < freeAmt) hasIncompleteFree = true;
                                 });

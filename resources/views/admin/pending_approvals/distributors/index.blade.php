@@ -561,6 +561,7 @@
                                 <th>Distributor</th>
                                 <th style="width: 200px;">products</th>
                                 <th style="width: 120px;">Brand</th>
+                                <th style="width: 200px;">Free Items</th>
                                 <th>Total</th>
                                 <th>Placed At</th>
                                 <th>Status</th>
@@ -1178,6 +1179,8 @@
                                                 data-code="{{ $product->product_code ?? '' }}"
                                                 data-boxsize="{{ $product->box_size ?? '' }}"
                                                 data-stripsperbox="{{ $product->strips_per_box ?? 10 }}"
+                                                data-free-qty-buy="{{ $product->free_qty_buy ?? 0 }}"
+                                                data-free-qty-get="{{ $product->free_qty_get ?? 1 }}"
                                                 data-variants="{{ $product->has_variants ? json_encode($product->variant_options) : '' }}">
                                                 {{ $product->product_name }} (Stock: {{ $product->stock }}) - ₹{{ $product->pts }}
                                             </option>
@@ -1333,6 +1336,35 @@
         const isSalesManager = @json(Auth::user()->hasRole('salesmanager'));
         const authSalesManagerId = {{ Auth::user()->salesManager ? Auth::user()->salesManager->id : 'null' }};
         const authDistributorId = {{ Auth::user()->distributor ? Auth::user()->distributor->id : 'null' }};
+
+        // Fallback definitions in case layout cache is stale
+        if (typeof window.cleanProductName !== 'function') {
+            window.cleanProductName = function (name, side, size) {
+                let clean = name;
+                if (side && side !== '-' && side !== 'N/A') {
+                    let sRegex = new RegExp('\\b' + side + '\\b', 'i');
+                    clean = clean.replace(sRegex, '').trim();
+                }
+                if (size && size !== '-' && size !== 'N/A') {
+                    let sRegex = new RegExp('\\b' + size + '\\b', 'i');
+                    clean = clean.replace(sRegex, '').trim();
+                }
+                return clean.replace(/\s+/g, ' ').trim();
+            };
+        }
+        if (typeof window.renderProductVariantBadge !== 'function') {
+            window.renderProductVariantBadge = function (item) {
+                let vParts = [];
+                if (item.side && item.side !== '-' && item.side !== 'N/A') vParts.push(item.side);
+                if (item.size && item.size !== '-' && item.size !== 'N/A') vParts.push(item.size);
+                if (vParts.length > 0) {
+                    return `<span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle ms-2" style="font-size: 0.65rem; padding: 0.25em 0.6em; font-weight: 600;">
+                                ${vParts.join('/').toUpperCase()}
+                            </span>`;
+                }
+                return '';
+            };
+        }
 
         $(document).ready(function () {
             // Fix for modal z-index issues (move to body)
@@ -1565,6 +1597,21 @@
                                 return items.join(', ');
                             }
                             return items.map(it => `<div class="py-1 fw-semibold text-muted" style="font-size: 0.78rem;">${it}</div>`).join('<div class="border-bottom border-light opacity-50 my-1"></div>');
+                        }
+                    },
+                    {
+                        data: 'free_summary',
+                        name: 'free_summary',
+                        className: 'free-col',
+                        orderable: false,
+                        searchable: false,
+                        render: function (data, type, row) {
+                            if (!data) return '<span class="text-muted small">-</span>';
+                            let items = data.split('|||');
+                            if (type !== 'display') {
+                                return items.map(it => it.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim()).join(', ');
+                            }
+                            return items.map(it => `<div class="py-1">${it}</div>`).join('<div class="border-bottom border-light opacity-50 my-1"></div>');
                         }
                     },
                     {
@@ -1922,6 +1969,20 @@
                 list.empty();
 
                 if (row.items && row.items.length) {
+                    let freeGroup = {};
+                    row.items.forEach(function(i) {
+                        let key = i.product_id || window.cleanProductName(i.product_name || i.name || '-', '', '');
+                        if (!freeGroup[key]) freeGroup[key] = { qty: 0, labels: [], rowspan: 0, index: 0 };
+                        freeGroup[key].rowspan++;
+                        if (i.free_quantity > 0) {
+                            freeGroup[key].qty += parseInt(i.free_quantity);
+                            if (i.free_side || i.free_size) {
+                                let label = [i.free_side, i.free_size].filter(Boolean).join(' / ').toUpperCase().replace(/(\d+)X([A-Z]+)/g, '$1 $2');
+                                freeGroup[key].labels.push(label);
+                            }
+                        }
+                    });
+
                     row.items.forEach(item => {
                         let cleanedName = window.cleanProductName(item.product_name, item.side, item.size);
                         let variantBadge = window.renderProductVariantBadge(item);
@@ -1937,6 +1998,24 @@
                         }
 
                         let totalAmtFormatted = parseFloat(item.total_amount || 0).toFixed(2);
+
+                        let key = item.product_id || window.cleanProductName(item.product_name || item.name || '-', '', '');
+                        let fg = freeGroup[key];
+                        let freeTd = '';
+                        if (fg.index === 0) {
+                            if (fg.qty > 0) {
+                                let labelsStr = fg.labels.length > 0 ? `<span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle mt-1" style="font-size: 0.65rem; letter-spacing: 0.5px; padding: 0.25em 0.6em;">${[...new Set(fg.labels)].join(', ')}</span>` : '';
+                                freeTd = `<td class="text-center fw-bold text-success" style="font-size: 0.85rem;" rowspan="${fg.rowspan}">
+                                            <div class="d-flex flex-column align-items-center justify-content-center gap-1">
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.75rem; letter-spacing: 0.5px;"><i class="fa fa-gift me-1"></i>${fg.qty}</span>
+                                                ${labelsStr}
+                                            </div>
+                                          </td>`;
+                            } else {
+                                freeTd = `<td class="text-center fw-bold text-success" style="font-size: 0.85rem;" rowspan="${fg.rowspan}">-</td>`;
+                            }
+                        }
+                        fg.index++;
 
                         list.append(`
                             <tr class="align-middle" style="border-bottom: 1px solid var(--med-border-light, #f1f5f9);">
@@ -1959,14 +2038,7 @@
                                 <td class="text-center fw-bold text-primary" style="font-size: 0.85rem;">
                                     ${item.quantity}
                                 </td>
-                                <td class="text-center fw-bold text-success" style="font-size: 0.85rem;">
-                                    ${item.free_quantity > 0 ? 
-                                        `<div class="d-flex flex-column align-items-center justify-content-center gap-1">
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.75rem; letter-spacing: 0.5px;"><i class="fa fa-gift me-1"></i>${item.free_quantity} Free</span>
-                                            ${(item.free_side || item.free_size) ? `<span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 0.65rem; letter-spacing: 0.5px; padding: 0.25em 0.6em;">${[item.free_side, item.free_size].filter(Boolean).join(' / ').toUpperCase()}</span>` : ''}
-                                        </div>` 
-                                    : '-'}
-                                </td>
+                                ${freeTd}
                                 <td class="text-end pe-3 fw-bold text-main-theme" style="font-size: 0.85rem;">₹${totalAmtFormatted}</td>
                             </tr>
                         `);
@@ -1978,6 +2050,7 @@
             });
 
             // Sales Manager Approve Click
+
             $(document).on('click', '.approve-order-btn', function () {
                 let id = $(this).data('id');
                 let row = $(this).data('row');
@@ -2025,8 +2098,50 @@
                     list.empty();
 
                     if (row.items && row.items.length) {
+                        let freeGroup = {};
+                        row.items.forEach(function(i) {
+                            let key = i.product_id || window.cleanProductName(i.product_name || i.name || '-', '', '');
+                            if (!freeGroup[key]) freeGroup[key] = { qty: 0, labels: [], index: 0 };
+                            if (i.free_quantity > 0) {
+                                freeGroup[key].qty += parseInt(i.free_quantity);
+                                if (i.free_side || i.free_size) {
+                                    let label = [i.free_side, i.free_size].filter(Boolean).join(' / ').toUpperCase().replace(/(\d+)X([A-Z]+)/g, '$1 $2');
+                                    freeGroup[key].labels.push(label);
+                                }
+                            }
+                        });
+
                         row.items.forEach(item => {
                             let appVariantBadge = window.renderProductVariantBadge(item);
+                            
+                            let key = item.product_id || window.cleanProductName(item.product_name || item.name || '-', '', '');
+                            let fg = freeGroup[key];
+                            let freeContent = '-';
+                            if (fg.index === 0) {
+                                if (fg.labels.length > 0) {
+                                    let uniqueLabels = [...new Set(fg.labels)];
+                                    let variantSum = 0;
+                                    uniqueLabels.forEach(l => {
+                                        let matches = l.match(/(\d+)\s+[A-Z]+/g);
+                                        if (matches) {
+                                            matches.forEach(m => {
+                                                let num = parseInt(m.split(' ')[0]);
+                                                if (!isNaN(num)) variantSum += num;
+                                            });
+                                        }
+                                    });
+                                    if (variantSum > 0) fg.qty = Math.max(fg.qty, variantSum);
+                                }
+
+                                if (fg.qty > 0) {
+                                    let labelsStr = fg.labels.length > 0 ? `<span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle mt-1" style="font-size: 0.65rem; padding: 0.25em 0.5em; letter-spacing: 0.2px;">${[...new Set(fg.labels)].join(', ')}</span>` : '';
+                                    freeContent = `<div class="d-flex flex-column align-items-center justify-content-center gap-1 mt-1">
+                                                    <span class="d-inline-flex align-items-center text-success fw-bold" style="font-size: 0.95rem;"><i class="fa fa-gift me-1" style="font-size: 0.85rem;"></i>${fg.qty}</span>
+                                                    ${labelsStr}
+                                                </div>`;
+                                }
+                            }
+                            fg.index++;
 
                             list.append(`
                                 <div class="invoice-list-row p-2">
@@ -2044,12 +2159,7 @@
                                         ${item.quantity} ${item.unit || 'Nos'}
                                     </div>
                                     <div style="flex: 1;" class="fw-bold text-success text-center">
-                                        ${item.free_quantity > 0 ? 
-                                            `<div class="d-flex flex-column align-items-center justify-content-center gap-1 mt-1">
-                                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.7rem;"><i class="fa fa-gift me-1"></i>${item.free_quantity}</span>
-                                                ${(item.free_side || item.free_size) ? `<span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 0.6rem; padding: 0.2em 0.5em;">${[item.free_side, item.free_size].filter(Boolean).join('/').toUpperCase()}</span>` : ''}
-                                            </div>` 
-                                        : '-'}
+                                        ${freeContent}
                                     </div>
                                     <div style="flex: 1;" class="fw-bold text-main-theme text-end pe-3">₹${item.total_amount}</div>
                                 </div>
@@ -2221,11 +2331,13 @@
                             `;
                             tbody.append(rowHtml);
 
+                            let freeBadge = (item.is_free || item.price == 0 && item.is_free !== false && item.quantity > 0) ? '<span class="badge bg-success-subtle text-success border border-success-subtle ms-2 px-2 py-1" style="font-size: 0.65rem;"><i class="fa fa-gift me-1"></i>FREE ITEM</span>' : '';
+
                             let vRowHtml = `
                                 <div id="v_row_${item.order_item_id}" class="invoice-list-row p-2">
                                     <div class="ai-col-product fw-bold text-main-theme small ps-2">
                                         <div style="white-space: normal; line-height: 1.2; font-size: 0.9rem;">
-                                            ${window.cleanProductName(item.product_name, item.side, item.size)} ${window.renderProductVariantBadge(item)}
+                                            ${window.cleanProductName(item.product_name, item.side, item.size)} ${window.renderProductVariantBadge(item)} ${freeBadge}
                                         </div>
                                         <div class="d-flex gap-2 flex-wrap mt-1">
                                             ${item.generic_name ? `<span class="badge bg-light text-dark border-0 fw-normal" style="font-size: 0.6rem;">${item.generic_name}</span>` : ''}
@@ -2247,7 +2359,7 @@
                                         ${item.free_quantity > 0 ? 
                                             `<div class="d-flex flex-column align-items-center justify-content-center gap-1 mt-1">
                                                 <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.7rem;"><i class="fa fa-gift me-1"></i>${item.free_quantity}</span>
-                                                ${(item.free_side || item.free_size) ? `<span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 0.6rem; padding: 0.2em 0.5em;">${[item.free_side, item.free_size].filter(Boolean).join('/').toUpperCase()}</span>` : ''}
+                                                ${(item.free_side || item.free_size) ? `<span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 0.6rem; padding: 0.2em 0.5em;">${[item.free_side, item.free_size].filter(Boolean).join('/').toUpperCase().replace(/(\d+)X([A-Z]+)/g, '$1x $2')}</span>` : ''}
                                             </div>` 
                                         : '-'}
                                     </div>
@@ -3027,6 +3139,7 @@
                 $('#edit_status').val(st);
 
                 editItems = {};
+                window.freeItemsState = {};
                 row.items.forEach(function (item) {
                     let vParts = [];
                     if (item.side && item.side !== '-' && item.side !== 'N/A') vParts.push(item.side);
@@ -3041,6 +3154,7 @@
                         id: item.product_id,
                         itemKey: itemKey,
                         name: displayName,
+                        baseName: item.product_name,
                         price: parseFloat(item.unit_price),
                         basePrice: parseFloat(item.unit_price),
                         stock: 9999,
@@ -3053,8 +3167,50 @@
                         brand: item.brand,
                         generic_name: item.generic_name,
                         side: item.side,
-                        size: item.size
+                        size: item.size,
+                        is_free: false,
+                        free_qty: item.free_quantity || 0,
+                        free_qty_buy: item.free_qty_buy || 0,
+                        free_qty_get: item.free_qty_get || 1,
+                        product_id: item.product_id
                     };
+
+                    if (item.free_quantity > 0) {
+                        if (!window.freeItemsState[item.product_id]) {
+                            window.freeItemsState[item.product_id] = {
+                                product_id: item.product_id,
+                                order_item_id: item.order_item_id,
+                                baseName: item.product_name,
+                                selections: { side: {}, size: {} },
+                                free_qty_buy: item.free_qty_buy || 0,
+                                free_qty_get: item.free_qty_get || 1
+                            };
+                        }
+                        
+                        let st = window.freeItemsState[item.product_id];
+                        if (item.free_side) {
+                            item.free_side.split(',').forEach(part => {
+                                part = part.trim();
+                                let match = part.match(/^(\d+)x(.*)$/);
+                                if (match) {
+                                    st.selections.side[match[2]] = (st.selections.side[match[2]] || 0) + parseInt(match[1]);
+                                } else {
+                                    st.selections.side[part] = (st.selections.side[part] || 0) + item.free_quantity;
+                                }
+                            });
+                        }
+                        if (item.free_size) {
+                            item.free_size.split(',').forEach(part => {
+                                part = part.trim();
+                                let match = part.match(/^(\d+)x(.*)$/);
+                                if (match) {
+                                    st.selections.size[match[2]] = (st.selections.size[match[2]] || 0) + parseInt(match[1]);
+                                } else {
+                                    st.selections.size[part] = (st.selections.size[part] || 0) + item.free_quantity;
+                                }
+                            });
+                        }
+                    }
                 });
                 renderEditItems();
 
@@ -3182,12 +3338,18 @@
                     basePrice: parseFloat(selectedOption.data('price')) || 0,
                     stock: parseInt(selectedOption.data('stock')) || 0,
                     quantity: 1,
+                    free_qty: 0,
+                    is_free: false,
                     unit: isCount ? 'Nos' : 'Strips',
                     stripsPerBox: stripsPerBox,
                     isCount: isCount,
                     orderItemId: null,
                     side: side,
-                    size: size
+                    size: size,
+                    free_qty_buy: parseInt(selectedOption.data('free-qty-buy')) || 0,
+                    free_qty_get: parseInt(selectedOption.data('free-qty-get')) || 1,
+                    baseName: selectedOption.text().split('(Stock')[0].trim(),
+                    product_id: id
                 };
 
                 buildEditVariantPickerDist(null);
@@ -3208,10 +3370,38 @@
                 let tbody = $('#edit_items_table tbody');
                 tbody.empty();
                 let total = 0;
-                if (Object.keys(editItems).length === 0) {
+                
+                let groupedItems = {};
+                
+                $.each(editItems, function(key, item) {
+                    if (!groupedItems[item.id]) {
+                        groupedItems[item.id] = {
+                            items: [],
+                            totalPaidQty: 0,
+                            freeAmt: 0,
+                            free_qty_buy: item.free_qty_buy || 0,
+                            free_qty_get: item.free_qty_get || 1,
+                            baseName: item.baseName
+                        };
+                    }
+                    groupedItems[item.id].items.push({key: key, data: item});
+                    groupedItems[item.id].totalPaidQty += parseInt(item.quantity) || 0;
+                });
+
+                if (Object.keys(groupedItems).length === 0) {
                     tbody.html('<tr><td colspan="6" class="text-center text-muted">No Items Added</td></tr>');
-                } else {
-                    $.each(editItems, function (key, item) {
+                    $('#edit_grand_total').text('0.00');
+                    return;
+                }
+
+                $.each(groupedItems, function(pId, group) {
+                    let getQty = group.free_qty_get;
+                    let freeAmt = (group.free_qty_buy > 0 && group.totalPaidQty >= group.free_qty_buy) ? Math.floor(group.totalPaidQty / group.free_qty_buy) * getQty : 0;
+                    group.freeAmt = freeAmt;
+
+                    group.items.forEach(function(i) {
+                        let key = i.key;
+                        let item = i.data;
                         let pPack = (item.pack || '').toLowerCase();
                         let hasCode = item.product_code && item.product_code !== '---' && item.product_code.trim() !== '';
                         let isCount = item.isCount !== undefined ? item.isCount : (hasCode || item.box_size === '' || item.box_size === null || pPack.includes('nos') || pPack.includes('count'));
@@ -3225,7 +3415,7 @@
                         let rowId = key;
                         let price = computeUnitPrice(item, unit);
                         let qty = parseInt(item.quantity) || 1;
-                        let sub = qty * price;
+                        let sub = (qty * price);
                         total += sub;
 
                         let options = '';
@@ -3252,15 +3442,12 @@
                                     ${item.orderItemId ? `<input type="hidden" name="items[${rowId}][order_item_id]" value="${item.orderItemId}">` : ''}
                                 </td>
                                 <td>
-                                    <select class="form-select form-select-sm unit-select-edit bg-card-theme text-main-theme" data-id="${rowId}" style="width: 90px; margin: 0 auto; border-color: var(--med-border-light);">
+                                    <select class="form-select form-select-sm unit-select-edit bg-card-theme text-main-theme" data-id="${rowId}" name="items[${rowId}][unit]" style="width:90px; margin: 0 auto; border-color: var(--med-border-light);">
                                         ${options}
                                     </select>
-                                    <input type="hidden" name="items[${rowId}][unit]" value="${unit}">
                                 </td>
                                 <td>
-                                    <input type="number" class="form-control form-control-sm qty-input-edit bg-card-theme text-main-theme text-center" 
-                                        data-id="${rowId}" value="${qty}" min="1" style="width:80px; margin: 0 auto; border-color: var(--med-border-light);">
-                                    <input type="hidden" name="items[${rowId}][quantity]" value="${qty}">
+                                    <input type="number" class="form-control form-control-sm qty-input-edit bg-card-theme text-main-theme text-center" data-id="${rowId}" value="${qty}" name="items[${rowId}][quantity]" min="1" style="width:80px; margin: 0 auto; border-color: var(--med-border-light);">
                                 </td>
                                 <td class="text-end">${price.toFixed(2)}<input type="hidden" name="items[${rowId}][unit_price]" value="${price.toFixed(2)}"></td>
                                 <td class="text-end">${sub.toFixed(2)}</td>
@@ -3268,9 +3455,123 @@
                             </tr>
                         `);
                     });
-                }
+
+                    if (freeAmt > 0) {
+                        if (!window.freeItemsState[pId]) {
+                            window.freeItemsState[pId] = {
+                                product_id: pId,
+                                baseName: group.baseName,
+                                selections: { side: {}, size: {} },
+                                free_qty_buy: group.free_qty_buy,
+                                free_qty_get: group.free_qty_get
+                            };
+                        }
+                        
+                        let st = window.freeItemsState[pId];
+                        let firstPaidRowId = group.items[0].key;
+                        
+                        let allocated = 0;
+                        if (st.selections) {
+                            Object.values(st.selections).forEach(attrObj => {
+                                Object.values(attrObj).forEach(q => allocated += q);
+                            });
+                        }
+
+                        let opt = $('#edit_product_select').find(`option[value="${pId}"]`);
+                        let vRaw = opt.attr('data-variants') || '';
+                        let variantsObj = null;
+                        try { variantsObj = JSON.parse(vRaw); } catch(e) {}
+
+                        let variantsHtml = `<div class="d-flex flex-wrap gap-2 mt-2">`;
+                        if (variantsObj && Object.keys(variantsObj).length > 0) {
+                            Object.keys(variantsObj).forEach(attrName => {
+                                let options = variantsObj[attrName];
+                                if (!options || options.length === 0) return;
+                                let currentVals = st.selections[attrName.toLowerCase()] || {};
+                                
+                                options.forEach(v => {
+                                    let cQty = currentVals[v] || 0;
+                                    variantsHtml += `
+                                    <div class="d-inline-flex align-items-center bg-white border border-light-dark rounded shadow-sm p-1" style="min-width: 100px;">
+                                        <span class="fw-bold text-center ms-1 me-2 text-dark" style="font-size: 0.75rem; min-width: 20px;">${v}</span>
+                                        <div class="d-flex align-items-center rounded bg-light border border-light-dark ms-auto" style="overflow: hidden;">
+                                            <button type="button" class="btn btn-sm btn-light border-0 p-0 edit-free-qty-btn d-flex align-items-center justify-content-center" data-action="minus" data-pid="${pId}" data-attr="${attrName.toLowerCase()}" data-val="${v}" style="width: 22px; height: 22px; border-radius: 0;">
+                                                <i class="fa fa-minus text-secondary" style="font-size: 0.6rem;"></i>
+                                            </button>
+                                            <span class="fw-bold text-primary text-center px-1 border-start border-end border-light-dark bg-white" style="font-size: 0.75rem; line-height: 22px; min-width: 22px;">${cQty || 0}</span>
+                                            <button type="button" class="btn btn-sm btn-light border-0 p-0 edit-free-qty-btn d-flex align-items-center justify-content-center" data-action="plus" data-pid="${pId}" data-attr="${attrName.toLowerCase()}" data-val="${v}" style="width: 22px; height: 22px; border-radius: 0;">
+                                                <i class="fa fa-plus text-secondary" style="font-size: 0.6rem;"></i>
+                                            </button>
+                                        </div>
+                                    </div>`;
+                                });
+                            });
+                        } else {
+                            variantsHtml += `<div class="text-muted small">No variants available.</div>`;
+                        }
+                        variantsHtml += `</div>`;
+
+                        let fSideStr = [];
+                        if (st.selections['side']) Object.entries(st.selections['side']).forEach(([v, q]) => { if (q > 0) fSideStr.push(`${q}x${v}`); });
+                        let fSizeStr = [];
+                        if (st.selections['size']) Object.entries(st.selections['size']).forEach(([v, q]) => { if (q > 0) fSizeStr.push(`${q}x${v}`); });
+
+                        tbody.append(`
+                            <tr style="background-color: #f0fdf4;">
+                                <td colspan="6" class="p-3 border-bottom">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div class="fw-bold text-success mb-0" style="font-size:0.88rem;">${group.baseName} <span class="badge bg-success shadow-sm ms-2" style="font-size:0.65rem;"><i class="fa fa-gift me-1"></i>${freeAmt} FREE ITEMS</span></div>
+                                        <div class="text-success fw-bold" style="font-size: 0.85rem;">Allocated: <span class="px-2 py-1 rounded shadow-sm border border-success-subtle ms-1" style="background-color: #d1e7dd !important; color: #0f5132 !important;">${allocated} / ${freeAmt}</span></div>
+                                    </div>
+                                    ${variantsHtml}
+                                    <input type="hidden" name="items[${firstPaidRowId}][free_quantity]" value="${freeAmt}">
+                                    ${fSideStr.length > 0 ? `<input type="hidden" name="items[${firstPaidRowId}][free_side]" value="${fSideStr.join(', ')}">` : ''}
+                                    ${fSizeStr.length > 0 ? `<input type="hidden" name="items[${firstPaidRowId}][free_size]" value="${fSizeStr.join(', ')}">` : ''}
+                                </td>
+                            </tr>
+                        `);
+                    }
+                });
+
                 $('#edit_grand_total').text(total.toFixed(2));
             }
+
+            $(document).on('click', '.edit-free-qty-btn', function() {
+                let pId = $(this).data('pid');
+                let attr = $(this).data('attr');
+                let val = $(this).data('val').toString();
+                let action = $(this).data('action');
+                
+                let st = window.freeItemsState[pId];
+                if (!st) return;
+                
+                let totalPaidQty = 0;
+                $.each(editItems, function(k, item) {
+                    if (item.id == pId) totalPaidQty += parseInt(item.quantity) || 0;
+                });
+                let getQty = st.free_qty_get || 1;
+                let freeAmt = (st.free_qty_buy > 0 && totalPaidQty >= st.free_qty_buy) ? Math.floor(totalPaidQty / st.free_qty_buy) * getQty : 0;
+                
+                if (!st.selections[attr]) st.selections[attr] = {};
+                let currentQty = st.selections[attr][val] || 0;
+                let allocated = 0;
+                Object.values(st.selections).forEach(attrObj => {
+                    Object.values(attrObj).forEach(q => allocated += q);
+                });
+                
+                if (action === 'plus') {
+                    if (allocated < freeAmt) {
+                        st.selections[attr][val] = currentQty + 1;
+                    } else {
+                        if (typeof showToast === 'function') showToast('warning', 'All free items allocated.');
+                    }
+                } else if (action === 'minus') {
+                    if (currentQty > 0) {
+                        st.selections[attr][val] = currentQty - 1;
+                    }
+                }
+                renderEditItems();
+            });
 
             $(document).on('change', '.unit-select-edit', function () {
                 let id = $(this).data('id');
@@ -3289,6 +3590,22 @@
                 if (editItems[id]) {
                     editItems[id].quantity = val;
                     renderEditItems();
+                }
+            });
+
+            $(document).on('change', '.side-select-edit', function () {
+                let id = $(this).data('id');
+                if (editItems[id]) {
+                    editItems[id].side = $(this).val();
+                    $(`input[name="items[${id}][side]"]`).val($(this).val());
+                }
+            });
+
+            $(document).on('change', '.size-select-edit', function () {
+                let id = $(this).data('id');
+                if (editItems[id]) {
+                    editItems[id].size = $(this).val();
+                    $(`input[name="items[${id}][size]"]`).val($(this).val());
                 }
             });
 

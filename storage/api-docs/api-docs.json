@@ -752,6 +752,15 @@
                                                             },
                                                             "subtotal": {
                                                                 "type": "string"
+                                                            },
+                                                            "is_free": {
+                                                                "type": "boolean"
+                                                            },
+                                                            "free_item_quantity": {
+                                                                "type": "integer"
+                                                            },
+                                                            "free_item_threshold": {
+                                                                "type": "integer"
                                                             }
                                                         },
                                                         "type": "object"
@@ -830,6 +839,15 @@
                                                     "size": {
                                                         "type": "string",
                                                         "nullable": true
+                                                    },
+                                                    "is_free": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "free_item_quantity": {
+                                                        "type": "integer"
+                                                    },
+                                                    "free_item_threshold": {
+                                                        "type": "integer"
                                                     },
                                                     "batches": {
                                                         "type": "array",
@@ -5198,6 +5216,15 @@
                                 "subtotal": {
                                     "type": "number",
                                     "format": "float"
+                                },
+                                "is_free": {
+                                    "type": "boolean"
+                                },
+                                "free_item_quantity": {
+                                    "type": "integer"
+                                },
+                                "free_item_threshold": {
+                                    "type": "integer"
                                 }
                             },
                             "type": "object"

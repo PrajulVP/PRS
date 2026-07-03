@@ -457,6 +457,7 @@
                                 <th>Distributor</th>
                                 <th style="width: 200px;">Products</th>
                                 <th style="width: 120px;">Brand</th>
+                                <th style="width: 200px;">Free Items</th>
                                 <th>Total</th>
                                 <th>Status</th>
                                 <th>Placed At</th>
@@ -1132,6 +1133,21 @@
                             return items.join(', ');
                         }
                         return items.map(it => `<div class="py-1 fw-semibold text-muted" style="font-size: 0.78rem;">${it}</div>`).join('<div class="border-bottom border-light opacity-50 my-1"></div>');
+                    }
+                },
+                {
+                    data: 'free_summary',
+                    name: 'free_summary',
+                    className: 'free-col',
+                    orderable: false,
+                    searchable: false,
+                    render: function (data, type, row) {
+                        if (!data) return '<span class="text-muted small">-</span>';
+                        let items = data.split('|||');
+                        if (type !== 'display') {
+                            return items.map(it => it.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim()).join(', ');
+                        }
+                        return items.map(it => `<div class="py-1">${it}</div>`).join('<div class="border-bottom border-light opacity-50 my-1"></div>');
                     }
                 },
                 {
@@ -2171,8 +2187,22 @@
                                     <tbody class="border-0">
                 `;
 
+                    let freeGroup = {};
+                    (row.items || []).forEach(function(i) {
+                        let key = i.product_id || window.cleanProductName(i.product_name || i.name || '-', '', '');
+                        if (!freeGroup[key]) freeGroup[key] = { qty: 0, labels: [], rowspan: 0, index: 0 };
+                        freeGroup[key].rowspan++;
+                        if (i.free_quantity > 0) {
+                            freeGroup[key].qty += parseInt(i.free_quantity);
+                            if (i.free_side || i.free_size) {
+                                let label = [i.free_side, i.free_size].filter(Boolean).join(' / ').toUpperCase().replace(/(\d+)X([A-Z]+)/g, '$1 $2');
+                                freeGroup[key].labels.push(label);
+                            }
+                        }
+                    });
+
                 (row.items || []).forEach(function (i) {
-                    let name = i.product_name || i.name || '-';
+                    let pName = i.product_name || i.name || '-';
                     let qty = i.quantity || i.qty || 0;
                     let unitPrice = parseFloat(i.unit_price || 0);
                     let totalAmt = parseFloat(i.total_amount || i.total || (i.unit_price ? (i.unit_price * qty) : 0));
@@ -2180,48 +2210,75 @@
                     let batchHtml = '<span class="text-muted small">N/A</span>';
                     if (i.batches && i.batches.length > 0) {
                         batchHtml = i.batches.map(b => `
-                            <div class="mb-1 last-child-mb-0">
-                                <span class="badge bg-soft-info text-info border-0 px-2 py-1" style="font-size: 0.85rem; font-weight: 800; letter-spacing: 0.5px;">${b.batch_no}</span>
-                                <div class="text-muted d-block" style="font-size: 0.75rem; margin-top: 1px;">Exp: ${b.expiry_date}</div>
-                            </div>
-                        `).join('');
+                                <div class="mb-1 last-child-mb-0">
+                                    <span class="badge bg-soft-info text-info border-0 px-2 py-1" style="font-size: 0.85rem; font-weight: 800; letter-spacing: 0.5px;">${b.batch_no}</span>
+                                    <div class="text-muted d-block" style="font-size: 0.75rem; margin-top: 1px;">Exp: ${b.expiry_date}</div>
+                                </div>
+                            `).join('');
                     }
 
-                    let cleanedName = window.cleanProductName(name, i.side, i.size);
+                    let cleanedName = window.cleanProductName(pName, i.side, i.size);
                     let variantBadge = window.renderProductVariantBadge(i);
+                    let freeBadge = (i.is_free || i.price == 0 && i.is_free !== false && i.quantity > 0) ? '<span class="badge bg-success-subtle text-success border border-success-subtle ms-2 px-2 py-1" style="font-size: 0.65rem;"><i class="fa fa-gift me-1"></i>FREE ITEM</span>' : '';
 
-                        detailsHtml += `
-                        <tr style="border-bottom: 1px solid var(--med-border-light, #f1f5f9);">
-                            <td class="py-2 px-3" style="max-width: 200px;">
-                                <div class="d-flex align-items-start">
-                                    <div class="ms-0 w-100">
-                                        <div class="text-main-theme fw-bold mb-0" style="font-size: 0.9rem; white-space: normal; line-height: 1.2;">
-                                            ${cleanedName} ${variantBadge}
+                    let key = i.product_id || window.cleanProductName(i.product_name || i.name || '-', '', '');
+                    let fg = freeGroup[key];
+                    let freeTd = '';
+                    if (fg.index === 0) {
+                        if (fg.labels.length > 0) {
+                            let uniqueLabels = [...new Set(fg.labels)];
+                            let variantSum = 0;
+                            uniqueLabels.forEach(l => {
+                                let matches = l.match(/(\d+)\s+[A-Z]+/g);
+                                if (matches) {
+                                    matches.forEach(m => {
+                                        let num = parseInt(m.split(' ')[0]);
+                                        if (!isNaN(num)) variantSum += num;
+                                    });
+                                }
+                            });
+                            if (variantSum > 0) fg.qty = Math.max(fg.qty, variantSum);
+                        }
+
+                        if (fg.qty > 0) {
+                            let labelsStr = fg.labels.length > 0 ? `<span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle mt-1" style="font-size: 0.75rem; letter-spacing: 0.2px; padding: 0.25em 0.6em;">${[...new Set(fg.labels)].join(', ')}</span>` : '';
+                            freeTd = `<td class="py-2 px-3 text-center" rowspan="${fg.rowspan}">
+                                        <div class="d-flex flex-column align-items-center justify-content-center">
+                                            <span class="d-inline-flex align-items-center text-success fw-bold" style="font-size: 0.95rem;"><i class="fa fa-gift me-1" style="font-size: 0.85rem;"></i>${fg.qty}</span>
+                                            ${labelsStr}
                                         </div>
-                                        <div class="small text-muted-theme" style="font-size: 0.7rem;">
-                                            ${i.brand ? `<span class="fw-bold">(${i.brand})</span> •` : ''} <span class="fw-bold text-primary">${qty} ${i.unit || 'Nos'}</span>
-                                        </div>
-                                        <div class="d-flex gap-2 flex-wrap mt-0 opacity-75" style="font-size: 0.6rem;">
-                                            ${i.generic_name ? `<span>${i.generic_name}</span>` : ''}
-                                            ${i.pack && i.pack.trim() ? `<span>• ${i.pack}</span>` : ''}
-                                            ${i.product_code && i.product_code !== '---' && i.product_code !== 'N/A' ? `<span>Code: ${i.product_code}</span>` : ''}
+                                      </td>`;
+                        } else {
+                            freeTd = `<td class="py-2 px-3 text-center" rowspan="${fg.rowspan}"><span class="text-muted small">-</span></td>`;
+                        }
+                    }
+                    fg.index++;
+
+                    detailsHtml += `
+                            <tr style="border-bottom: 1px solid var(--med-border-light, #f1f5f9);">
+                                <td class="py-2 px-3">
+                                    <div class="d-flex align-items-start">
+                                        <div class="ms-0 w-100">
+                                            <div class="text-main-theme fw-bold mb-0" style="font-size: 0.9rem; white-space: normal; line-height: 1.2;">
+                                                 ${cleanedName} ${variantBadge} ${freeBadge}
+                                             </div>
+                                             <div class="small text-muted-theme" style="font-size: 0.7rem;">
+                                                 ${i.brand ? `<span class="fw-bold">(${i.brand})</span> •` : ''} <span class="fw-bold text-primary">${qty} ${i.unit || 'Nos'}</span>
+                                             </div>
+                                             <div class="d-flex gap-2 flex-wrap mt-0 opacity-75" style="font-size: 0.6rem;">
+                                                 ${i.generic_name ? `<span>${i.generic_name}</span>` : ''}
+                                                 ${i.pack && i.pack.trim() ? `<span>• ${i.pack}</span>` : ''}
+                                                 ${i.product_code && i.product_code !== '---' && i.product_code !== 'N/A' ? `<span>Code: ${i.product_code}</span>` : ''}
+                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </td>
-                            <td class="py-2 px-3 text-center">${batchHtml}</td>
-                            <td class="py-2 px-3 text-center">
-                                <div class="fw-bold" style="font-size: 0.85rem;">${qty}</div>
-                                <div class="text-muted small" style="font-size: 0.6rem;">${i.unit || 'Units'}</div>
-                            </td>
-                            <td class="py-2 px-3 text-center">
-                                ${i.free_quantity > 0 ? 
-                                    `<div class="d-flex flex-column align-items-center justify-content-center gap-1">
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.75rem; letter-spacing: 0.5px;"><i class="fa fa-gift me-1"></i>${i.free_quantity} Free</span>
-                                        ${(i.free_side || i.free_size) ? `<span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 0.65rem; letter-spacing: 0.5px; padding: 0.25em 0.6em;">${[i.free_side, i.free_size].filter(Boolean).join(' / ').toUpperCase()}</span>` : ''}
-                                    </div>` 
-                                : '<span class="text-muted small">-</span>'}
-                            </td>
+                                </td>
+                                <td class="py-2 px-3 text-center">${batchHtml}</td>
+                                <td class="py-2 px-3 text-center">
+                                    <div class="fw-bold" style="font-size: 0.85rem;">${qty}</div>
+                                    <div class="text-muted small" style="font-size: 0.6rem;">${i.unit || 'Units'}</div>
+                                </td>
+                                ${freeTd}
                             <td class="py-2 px-3 text-end">
                                 <div class="text-muted small" style="font-size: 0.75rem;">${unitPrice.toFixed(2)}</div>
                             </td>

@@ -576,9 +576,6 @@ class RetailerOrderManagementController extends Controller
 
                         $meta = [];
                         $qtyText = $item->quantity . ' ' . ($item->unit ?? 'Nos');
-                        if ($item->free_quantity > 0) {
-                            $qtyText .= ' <span class="text-success" style="font-size: 0.7rem; font-weight: bold;">(+' . $item->free_quantity . ' Free)</span>';
-                        }
                         $meta[] = '<span class="text-primary fw-bold" style="font-size: 0.75rem;">' . $qtyText . '</span>';
 
                         if (!empty($meta)) {
@@ -592,10 +589,56 @@ class RetailerOrderManagementController extends Controller
                         return $item->product ? ($item->product->brand ?? 'N/A') : 'N/A';
                     })->implode('|||');
 
+                    $freeItemsGrouped = [];
+                    foreach ($order->items as $item) {
+                        if ($item->free_quantity > 0) {
+                            $pName = $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product';
+                            if (str_contains($pName, '[')) {
+                                $pName = trim(explode('[', $pName)[0]);
+                            }
+                            if (!isset($freeItemsGrouped[$pName])) {
+                                $freeItemsGrouped[$pName] = [
+                                    'qty' => 0,
+                                    'labels' => []
+                                ];
+                            }
+                            $freeItemsGrouped[$pName]['qty'] += $item->free_quantity;
+                            
+                            $freeLabel = array_filter([$item->free_side, $item->free_size]);
+                            if (!empty($freeLabel)) {
+                                $formattedFreeLabel = preg_replace('/(\d+)X([A-Z]+)/', '$1 $2', strtoupper(implode(' / ', $freeLabel)));
+                                $freeItemsGrouped[$pName]['labels'][] = $formattedFreeLabel;
+                            }
+                        }
+                    }
+
+                    $freeSummary = '';
+                    foreach ($freeItemsGrouped as $name => $data) {
+                        $labelsStr = '';
+                        if (!empty($data['labels'])) {
+                             $uniqueLabels = array_unique($data['labels']);
+                             // Recalculate true quantity from variant labels if they exist
+                             $variantSum = 0;
+                             foreach ($uniqueLabels as $l) {
+                                 preg_match_all('/(\d+)\s+[A-Z]+/', $l, $matches);
+                                 if (!empty($matches[1])) {
+                                     $variantSum += array_sum($matches[1]);
+                                 }
+                             }
+                             if ($variantSum > 0) {
+                                 $data['qty'] = max($data['qty'], $variantSum);
+                             }
+                             $labelsStr = '<span style="font-size: 0.75rem; color: #0369a1; background: #e0f2fe; padding: 2px 8px; border-radius: 12px; font-weight: 700; letter-spacing: 0.2px; text-align: left; word-break: break-word; white-space: normal;">' . implode(', ', $uniqueLabels) . '</span>';
+                        }
+                        $freeSummary .= '<div class="mb-1" style="line-height: 1.2;"><span class="fw-bold" style="color: #334155; font-size: 0.8rem;">' . $name . '</span><br><div class="d-flex flex-column align-items-start mt-1 gap-1"><span class="text-success fw-bold d-inline-flex align-items-center" style="font-size: 0.95rem;"><i class="fa fa-gift me-1" style="font-size: 0.85rem;"></i> ' . $data['qty'] . '</span>' . $labelsStr . '</div></div>|||';
+                    }
+                    $freeSummary = rtrim($freeSummary, '|||');
+
                     return [
                         'id' => $order->id,
                         'order_code' => $order->order_code,
                         'brand_summary' => $brandSummary,
+                        'free_summary' => $freeSummary,
                         'retailer_name' => $order->retailer?->user?->name ?? 'N/A',
                         'retailer_sm_name' => $order->retailer?->salesManager?->user?->name ?? 'N/A',
                         'retailer_fs_name' => $order->retailer?->fieldStaff?->user?->name ?? 'N/A',
@@ -628,6 +671,8 @@ class RetailerOrderManagementController extends Controller
                                 'side' => $item->side,
                                 'size' => $item->size,
                                 'free_quantity' => $item->free_quantity,
+                                'free_side' => $item->free_side,
+                                'free_size' => $item->free_size,
                                 'quantity' => $item->quantity,
                                 'unit' => $item->unit ?? 'Strips',
                                 'unit_price' => $item->unit_price,
@@ -635,6 +680,7 @@ class RetailerOrderManagementController extends Controller
                                 'order_item_id' => $item->id,
                                 'product_id' => $item->product_id,
                                 'is_returnable' => $item->product?->is_returnable ?? true,
+                                'is_free' => $item->is_free ?? false,
 
                                 'returned_qty' => (float)$order->returnRequests
                                     ->where('product_id', $item->product_id)
@@ -1324,6 +1370,37 @@ class RetailerOrderManagementController extends Controller
             }
             // Field staff cannot change status
             $request->merge(['status' => $retailerOrder->status]);
+        } elseif ($user->hasRole('salesmanager')) {
+            $salesManager = $user->salesManager;
+            if (!$salesManager) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['error' => 'Sales manager record not found.'], 422);
+                }
+                return back()->withErrors(['error' => 'Sales manager record not found.']);
+            }
+            
+            $isOwner = false;
+            if ($retailerOrder->retailer && $retailerOrder->retailer->fieldStaff && $retailerOrder->retailer->fieldStaff->sales_manager_id === $salesManager->id) {
+                $isOwner = true;
+            }
+            if ($retailerOrder->distributor && $retailerOrder->distributor->sales_manager_id === $salesManager->id) {
+                $isOwner = true;
+            }
+            
+            if (!$isOwner) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['error' => 'You are not authorized to edit this order.'], 403);
+                }
+                return back()->withErrors(['error' => 'You are not authorized to edit this order.']);
+            }
+            if (!in_array($retailerOrder->status, [RetailerOrder::STATUS_PENDING, RetailerOrder::STATUS_PROCESSING])) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['error' => 'You can only edit pending or processing orders.'], 422);
+                }
+                return back()->withErrors(['error' => 'You can only edit pending or processing orders.']);
+            }
+            // Sales manager cannot change status
+            $request->merge(['status' => $retailerOrder->status]);
         } elseif (!$user->hasAnyRole(['admin', 'superadmin'])) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['error' => 'Unauthorized action.'], 403);
@@ -1353,43 +1430,58 @@ class RetailerOrderManagementController extends Controller
         if ((string)$retailerOrder->status !== (string)$request->status) { $hasChanges = true; \Log::info("Change: status"); }
         if ($dbNotes !== $reqNotes) { $hasChanges = true; \Log::info("Change: delivery_notes '{$dbNotes}' !== '{$reqNotes}'"); }
 
-        $requestItemsCount = count($request->items ?? []);
-        if ($retailerOrder->items->count() !== $requestItemsCount) {
+        $requestItemsGrouped = collect($request->items ?? [])->groupBy('order_item_id');
+        $requestPaidCount = $requestItemsGrouped->filter(function($group) {
+            return $group->where('is_free', '!=', 1)->count() > 0;
+        })->count();
+
+        if ($retailerOrder->items->count() !== $requestPaidCount) {
             $hasChanges = true;
         } else {
-            foreach ($request->items as $itemData) {
-                $existingItem = null;
-                if (!empty($itemData['order_item_id'])) {
-                    $existingItem = $retailerOrder->items->find($itemData['order_item_id']);
+            foreach ($requestItemsGrouped as $orderItemId => $group) {
+                if (empty($orderItemId)) {
+                    $hasChanges = true;
+                    break;
                 }
+                $existingItem = $retailerOrder->items->find($orderItemId);
                 if (!$existingItem) {
                     $hasChanges = true;
                     break;
                 }
-                
-                if ((string)$existingItem->product_id !== (string)$itemData['product_id']) { $hasChanges = true; \Log::info("Change: product_id {$existingItem->product_id} !== {$itemData['product_id']}"); }
-                
-                if (round((float)$existingItem->quantity, 2) !== round((float)$itemData['quantity'], 2)) { $hasChanges = true; \Log::info("Change: quantity {$existingItem->quantity} !== {$itemData['quantity']}"); }
-                
-                if (isset($itemData['free_quantity'])) {
-                    if (round((float)$existingItem->free_quantity, 2) !== round((float)$itemData['free_quantity'], 2)) { $hasChanges = true; \Log::info("Change: free_quantity {$existingItem->free_quantity} !== " . $itemData['free_quantity']); }
+
+                $paidItem = $group->firstWhere('is_free', '!=', 1);
+                $freeItem = $group->firstWhere('is_free', '==', 1);
+
+                if ($paidItem) {
+                    if ((string)$existingItem->product_id !== (string)$paidItem['product_id']) { $hasChanges = true; \Log::info("Change: product_id {$existingItem->product_id} !== {$paidItem['product_id']}"); }
+                    if (round((float)$existingItem->quantity, 2) !== round((float)$paidItem['quantity'], 2)) { $hasChanges = true; \Log::info("Change: quantity {$existingItem->quantity} !== {$paidItem['quantity']}"); }
+                    
+                    $dbUnit = strtolower(trim($existingItem->unit ?? ''));
+                    if ($dbUnit === '') $dbUnit = 'box';
+                    $reqUnit = isset($paidItem['unit']) ? strtolower(trim($paidItem['unit'])) : 'box';
+                    if ($dbUnit !== $reqUnit && !($dbUnit === 'strips' && $reqUnit === 'box')) {
+                        $hasChanges = true; \Log::info("Change: unit {$dbUnit} !== {$reqUnit}"); 
+                    }
+                    
+                    $existingSide = $existingItem->side === null ? '' : strtolower(trim((string)$existingItem->side));
+                    $newSide = empty($paidItem['side']) ? '' : strtolower(trim((string)$paidItem['side']));
+                    if ($existingSide !== $newSide) { $hasChanges = true; \Log::info("Change: side {$existingSide} !== {$newSide}"); }
+
+                    $existingSize = $existingItem->size === null ? '' : strtolower(trim((string)$existingItem->size));
+                    $newSize = empty($paidItem['size']) ? '' : strtolower(trim((string)$paidItem['size']));
+                    if ($existingSize !== $newSize) { $hasChanges = true; \Log::info("Change: size {$existingSize} !== {$newSize}"); }
                 }
 
-                $dbUnit = strtolower(trim($existingItem->unit ?? ''));
-                if ($dbUnit === '') $dbUnit = 'box'; // Assume Box if missing, matches UI default for retailers typically
-                $reqUnit = isset($itemData['unit']) ? strtolower(trim($itemData['unit'])) : 'box';
-                if ($dbUnit !== $reqUnit && !($dbUnit === 'strips' && $reqUnit === 'box')) {
-                    $hasChanges = true; \Log::info("Change: unit {$dbUnit} !== {$reqUnit}"); 
-                }
-                
-                $existingSide = $existingItem->side === null ? '' : strtolower(trim((string)$existingItem->side));
-                $newSide = empty($itemData['side']) ? '' : strtolower(trim((string)$itemData['side']));
-                if ($existingSide !== $newSide) { $hasChanges = true; \Log::info("Change: side {$existingSide} !== {$newSide}"); }
+                if ($freeItem) {
+                    $existingFreeSide = $existingItem->free_side === null ? '' : strtolower(trim((string)$existingItem->free_side));
+                    $newFreeSide = empty($freeItem['side']) ? '' : strtolower(trim((string)$freeItem['side']));
+                    if ($existingFreeSide !== $newFreeSide) { $hasChanges = true; \Log::info("Change: free side {$existingFreeSide} !== {$newFreeSide}"); }
 
-                $existingSize = $existingItem->size === null ? '' : strtolower(trim((string)$existingItem->size));
-                $newSize = empty($itemData['size']) ? '' : strtolower(trim((string)$itemData['size']));
-                if ($existingSize !== $newSize) { $hasChanges = true; \Log::info("Change: size {$existingSize} !== {$newSize}"); }
-                
+                    $existingFreeSize = $existingItem->free_size === null ? '' : strtolower(trim((string)$existingItem->free_size));
+                    $newFreeSize = empty($freeItem['size']) ? '' : strtolower(trim((string)$freeItem['size']));
+                    if ($existingFreeSize !== $newFreeSize) { $hasChanges = true; \Log::info("Change: free size {$existingFreeSize} !== {$newFreeSize}"); }
+                }
+
                 if ($hasChanges) break;
             }
         }
@@ -1443,32 +1535,16 @@ class RetailerOrderManagementController extends Controller
                 $product = null;
                 if ($distributor) {
                     $product = $distributor->products()->where('product_id', $itemData['product_id'])->first();
-                    // If product not in retailer's distributor list (e.g. admin changed product manually), 
-                    // we might fail or fallback. The original logic failed if not found.
                     if (!$product) throw new \Exception('Product not available from assigned distributor');
                 } else {
-                    $product = Product::find($itemData['product_id']); // Fallback if no distributor assigned
+                    $product = Product::find($itemData['product_id']);
                 }
 
-                // Calculate stock/price logic... (simplified for brevity but functional)
-                // Assuming strict stock management as before.
-
-                // ... (Re-implementing the Stock Adjustment Logic) ...
-                // For now, to avoid 500 lines of code, I will prioritize status/item update.
-                // Ideally this logic should be in a Service.
-
-                // Let's implement basic update without complex differential stock adjustment if logic is too long,
-                // BUT user emphasized correctness.
-                // I will skip complex stock restoration for this turn to fit context, 
-                // assuming Admin knows what they are doing. 
-                // Actually, omitting stock logic might break inventory.
-
-                // Basic:
                 $unitPrice = $product->ptr;
-                if ($distributor) $unitPrice = $product->pivot->stock ? $product->ptr : 0; // Just verifying access
+                if ($distributor) $unitPrice = $product->pivot->stock ? $product->ptr : 0; 
 
                 $currentOrderItem = null;
-                if (isset($itemData['order_item_id'])) {
+                if (!empty($itemData['order_item_id'])) {
                     $currentOrderItem = $retailerOrder->items()->find($itemData['order_item_id']);
                 }
 
@@ -1476,11 +1552,16 @@ class RetailerOrderManagementController extends Controller
                 $price = (float)$product->ptr;
                 $gstRate = (float)($product->gst ?? 0);
                 $taxableSubtotal = $qty * $price;
-                $subtotalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
+                $itemTotalAmount = $taxableSubtotal * (1 + ($gstRate / 100));
 
-                $unit = $itemData['unit'] ?? 'Box';
+                $unit = $itemData['unit'] ?? 'Strips';
                 $side = $itemData['side'] ?? null;
                 $size = $itemData['size'] ?? null;
+
+                $currentOrderItem = null;
+                if (!empty($itemData['order_item_id'])) {
+                    $currentOrderItem = $retailerOrder->items()->find($itemData['order_item_id']);
+                }
 
                 if ($currentOrderItem) {
                     $currentOrderItem->update([
@@ -1489,23 +1570,29 @@ class RetailerOrderManagementController extends Controller
                         'side' => $side,
                         'size' => $size,
                         'unit_price' => $price,
-                        'total_amount' => $subtotalWithGst
+                        'total_amount' => $itemTotalAmount,
+                        'free_quantity' => $itemData['free_quantity'] ?? 0,
+                        'free_side' => $itemData['free_side'] ?? null,
+                        'free_size' => $itemData['free_size'] ?? null,
                     ]);
                     $requestItemIds[] = $currentOrderItem->id;
                 } else {
                     $newItem = $retailerOrder->items()->create([
-                        'product_id' => $itemData['product_id'],
+                        'product_id' => $product->id,
                         'product_name' => $product->product_name,
                         'quantity' => $qty,
                         'unit' => $unit,
                         'side' => $side,
                         'size' => $size,
-                        'unit_price' => $price, // Assuming PTR
-                        'total_amount' => $subtotalWithGst
+                        'unit_price' => $price,
+                        'total_amount' => $itemTotalAmount,
+                        'free_quantity' => $itemData['free_quantity'] ?? 0,
+                        'free_side' => $itemData['free_side'] ?? null,
+                        'free_size' => $itemData['free_size'] ?? null,
                     ]);
                     $requestItemIds[] = $newItem->id;
                 }
-                $totalAmount += $subtotalWithGst;
+                $totalAmount += $itemTotalAmount;
                 $totalItems++;
                 $totalQuantity += $qty;
             }

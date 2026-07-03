@@ -122,6 +122,9 @@ class DistributorOrderApiController extends Controller
      *                 @OA\Property(property="free_quantity", type="integer"),
      *                 @OA\Property(property="side", type="string", nullable=true),
      *                 @OA\Property(property="size", type="string", nullable=true),
+     *                 @OA\Property(property="is_free", type="boolean"),
+     *                 @OA\Property(property="free_item_quantity", type="integer"),
+     *                 @OA\Property(property="free_item_threshold", type="integer"),
      *                 @OA\Property(property="batches", type="array", @OA\Items(
      *                     @OA\Property(property="batch_no", type="string"),
      *                     @OA\Property(property="expiry_date", type="string")
@@ -241,7 +244,10 @@ class DistributorOrderApiController extends Controller
      *                     @OA\Property(property="side", type="string", nullable=true),
      *                     @OA\Property(property="size", type="string", nullable=true),
      *                     @OA\Property(property="price", type="string"),
-     *                     @OA\Property(property="subtotal", type="string")
+     *                     @OA\Property(property="subtotal", type="string"),
+     *                     @OA\Property(property="is_free", type="boolean"),
+     *                     @OA\Property(property="free_item_quantity", type="integer"),
+     *                     @OA\Property(property="free_item_threshold", type="integer")
      *                 ))
      *             )
      *         )
@@ -636,6 +642,9 @@ class DistributorOrderApiController extends Controller
                     'size' => $item->size,
                     'price' => $item->price,
                     'subtotal' => $group->sum('subtotal'),
+                    'is_free' => false,
+                    'free_item_quantity' => $item->product ? (int)$item->product->free_qty_get : 0,
+                    'free_item_threshold' => $item->product ? (int)$item->product->free_qty_buy : 0,
                     'batches' => $group->flatMap->batches->map(function ($b) {
                         return [
                             'batch_no' => $b->batch_no,

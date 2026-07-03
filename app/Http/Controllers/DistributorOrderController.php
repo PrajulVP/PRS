@@ -157,17 +157,7 @@ class DistributorOrderController extends Controller
                         
                         $meta = [];
                         $qtyText = $item->quantity . ' ' . ($item->unit ?? 'Nos');
-                        
                         $meta[] = '<span class="text-primary fw-bold" style="font-size: 0.75rem;">' . $qtyText . '</span>';
-                        
-                        if ($item->free_quantity > 0) {
-                            $freeLabel = array_filter([$item->free_side, $item->free_size]);
-                            $freeStr = '&nbsp;<i class="fa fa-gift" style="font-size:0.7rem;"></i> ' . $item->free_quantity . ' Free';
-                            if (!empty($freeLabel)) {
-                                $freeStr .= ' <span style="font-size: 0.65rem; color: #0369a1; background: #e0f2fe; padding: 1px 6px; border-radius: 10px; margin-left: 3px; font-weight: 700; letter-spacing: 0.2px;">' . strtoupper(implode(' / ', $freeLabel)) . '</span>';
-                            }
-                            $meta[] = '<span class="text-success fw-bold d-inline-flex align-items-center" style="font-size: 0.75rem;">+' . $freeStr . '</span>';
-                        }
                         
                         if (!empty($meta)) {
                             $summary .= '<div class="d-flex flex-wrap align-items-center gap-1 mt-1" style="word-break: break-word;">' . implode(' <span class="text-muted" style="font-size: 0.75rem; margin: 0 2px;">•</span> ', $meta) . '</div>';
@@ -175,6 +165,51 @@ class DistributorOrderController extends Controller
                         $summary .= '</div>';
                         return $summary;
                     })->implode('|||');
+
+                    $freeItemsGrouped = [];
+                    foreach ($order->items as $item) {
+                        if ($item->free_quantity > 0) {
+                            $pName = $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product';
+                            if (str_contains($pName, '[')) {
+                                $pName = trim(explode('[', $pName)[0]);
+                            }
+                            if (!isset($freeItemsGrouped[$pName])) {
+                                $freeItemsGrouped[$pName] = [
+                                    'qty' => 0,
+                                    'labels' => []
+                                ];
+                            }
+                            $freeItemsGrouped[$pName]['qty'] += $item->free_quantity;
+                            
+                            $freeLabel = array_filter([$item->free_side, $item->free_size]);
+                            if (!empty($freeLabel)) {
+                                $formattedFreeLabel = preg_replace('/(\d+)X([A-Z]+)/', '$1 $2', strtoupper(implode(' / ', $freeLabel)));
+                                $freeItemsGrouped[$pName]['labels'][] = $formattedFreeLabel;
+                            }
+                        }
+                    }
+
+                    $freeSummary = '';
+                    foreach ($freeItemsGrouped as $name => $data) {
+                        $labelsStr = '';
+                        if (!empty($data['labels'])) {
+                             $uniqueLabels = array_unique($data['labels']);
+                             // Recalculate true quantity from variant labels if they exist
+                             $variantSum = 0;
+                             foreach ($uniqueLabels as $l) {
+                                 preg_match_all('/(\d+)\s+[A-Z]+/', $l, $matches);
+                                 if (!empty($matches[1])) {
+                                     $variantSum += array_sum($matches[1]);
+                                 }
+                             }
+                             if ($variantSum > 0) {
+                                 $data['qty'] = max($data['qty'], $variantSum);
+                             }
+                             $labelsStr = '<span style="font-size: 0.75rem; color: #0369a1; background: #e0f2fe; padding: 2px 8px; border-radius: 12px; font-weight: 700; letter-spacing: 0.2px; text-align: left; word-break: break-word; white-space: normal;">' . implode(', ', $uniqueLabels) . '</span>';
+                        }
+                        $freeSummary .= '<div class="mb-1" style="line-height: 1.2;"><span class="fw-bold" style="color: #334155; font-size: 0.8rem;">' . $name . '</span><br><div class="d-flex flex-column align-items-start mt-1 gap-1"><span class="text-success fw-bold d-inline-flex align-items-center" style="font-size: 0.95rem;"><i class="fa fa-gift me-1" style="font-size: 0.85rem;"></i> ' . $data['qty'] . '</span>' . $labelsStr . '</div></div>|||';
+                    }
+                    $freeSummary = rtrim($freeSummary, '|||');
 
                     $brandSummary = $order->items->map(function ($item) {
                         return $item->product ? ($item->product->brand ?? 'N/A') : 'N/A';
@@ -201,6 +236,7 @@ class DistributorOrderController extends Controller
                         'total_amount' => $order->total_amount,
                         'metadata' => $order->metadata,
                         'product_summary' => $productSummary,
+                        'free_summary' => $freeSummary,
                         'status' => ucfirst(str_replace('_', ' ', $order->status)),
                         'placed_at' => $order->placed_at ? \Carbon\Carbon::parse($order->placed_at)->format('Y-m-d H:i:s') : '-',
                         'items' => $order->items->map(function ($item) use ($order) {
@@ -238,6 +274,12 @@ class DistributorOrderController extends Controller
                                 'unit' => $item->unit,
                                 'order_item_id' => $item->id,
                                 'is_returnable' => $item->product->is_returnable ?? true,
+                                'is_free' => $item->is_free ?? false,
+                                'free_quantity' => $item->free_quantity,
+                                'free_qty_buy' => $item->product->free_qty_buy ?? 0,
+                                'free_qty_get' => $item->product->free_qty_get ?? 1,
+                                'free_side' => $item->free_side,
+                                'free_size' => $item->free_size,
                                 'returned_qty' => (float)$returnedQty,
                                 'pending_return_qty' => (float)$activeRequestQty,
                                 'return_status' => $latestReturn ? $latestReturn->status : null,
@@ -556,43 +598,58 @@ class DistributorOrderController extends Controller
         if ((string)$distributorOrder->status !== (string)$request->status) { $hasChanges = true; \Log::info("Change: status"); }
         if ($dbNotes !== $reqNotes) { $hasChanges = true; \Log::info("Change: delivery_notes '{$dbNotes}' !== '{$reqNotes}'"); }
 
-        $requestItemsCount = count($request->items ?? []);
-        if ($distributorOrder->items->count() !== $requestItemsCount) {
+        $requestItemsGrouped = collect($request->items ?? [])->groupBy('order_item_id');
+        $requestPaidCount = $requestItemsGrouped->filter(function($group) {
+            return $group->where('is_free', '!=', 1)->count() > 0;
+        })->count();
+
+        if ($distributorOrder->items->count() !== $requestPaidCount) {
             $hasChanges = true;
         } else {
-            foreach ($request->items as $itemData) {
-                $existingItem = null;
-                if (!empty($itemData['order_item_id'])) {
-                    $existingItem = $distributorOrder->items->find($itemData['order_item_id']);
+            foreach ($requestItemsGrouped as $orderItemId => $group) {
+                if (empty($orderItemId)) {
+                    $hasChanges = true;
+                    break;
                 }
+                $existingItem = $distributorOrder->items->find($orderItemId);
                 if (!$existingItem) {
                     $hasChanges = true;
                     break;
                 }
-                
-                if ((string)$existingItem->product_id !== (string)$itemData['product_id']) { $hasChanges = true; \Log::info("Change: product_id {$existingItem->product_id} !== {$itemData['product_id']}"); }
-                
-                if (round((float)$existingItem->quantity, 2) !== round((float)$itemData['quantity'], 2)) { $hasChanges = true; \Log::info("Change: quantity {$existingItem->quantity} !== {$itemData['quantity']}"); }
-                
-                if (isset($itemData['free_quantity'])) {
-                    if (round((float)$existingItem->free_quantity, 2) !== round((float)$itemData['free_quantity'], 2)) { $hasChanges = true; \Log::info("Change: free_quantity {$existingItem->free_quantity} !== " . $itemData['free_quantity']); }
+
+                $paidItem = $group->firstWhere('is_free', '!=', 1);
+                $freeItem = $group->firstWhere('is_free', '==', 1);
+
+                if ($paidItem) {
+                    if ((string)$existingItem->product_id !== (string)$paidItem['product_id']) { $hasChanges = true; \Log::info("Change: product_id {$existingItem->product_id} !== {$paidItem['product_id']}"); }
+                    if (round((float)$existingItem->quantity, 2) !== round((float)$paidItem['quantity'], 2)) { $hasChanges = true; \Log::info("Change: quantity {$existingItem->quantity} !== {$paidItem['quantity']}"); }
+                    
+                    $dbUnit = strtolower(trim($existingItem->unit ?? ''));
+                    if ($dbUnit === '') $dbUnit = 'strips';
+                    $reqUnit = isset($paidItem['unit']) ? strtolower(trim($paidItem['unit'])) : 'strips';
+                    if ($dbUnit !== $reqUnit && !($dbUnit === 'box' && $reqUnit === 'strips')) { 
+                        $hasChanges = true; \Log::info("Change: unit {$dbUnit} !== {$reqUnit}"); 
+                    }
+                    
+                    $existingSide = $existingItem->side === null ? '' : strtolower(trim((string)$existingItem->side));
+                    $newSide = empty($paidItem['side']) ? '' : strtolower(trim((string)$paidItem['side']));
+                    if ($existingSide !== $newSide) { $hasChanges = true; \Log::info("Change: side {$existingSide} !== {$newSide}"); }
+
+                    $existingSize = $existingItem->size === null ? '' : strtolower(trim((string)$existingItem->size));
+                    $newSize = empty($paidItem['size']) ? '' : strtolower(trim((string)$paidItem['size']));
+                    if ($existingSize !== $newSize) { $hasChanges = true; \Log::info("Change: size {$existingSize} !== {$newSize}"); }
                 }
 
-                $dbUnit = strtolower(trim($existingItem->unit ?? ''));
-                if ($dbUnit === '') $dbUnit = 'strips'; // Assume Strips if missing, matches UI default
-                $reqUnit = isset($itemData['unit']) ? strtolower(trim($itemData['unit'])) : 'strips';
-                if ($dbUnit !== $reqUnit && !($dbUnit === 'box' && $reqUnit === 'strips')) { // Some products might be box vs strips, but let's strictly compare the lower-cased defaults
-                    $hasChanges = true; \Log::info("Change: unit {$dbUnit} !== {$reqUnit}"); 
-                }
-                
-                $existingSide = $existingItem->side === null ? '' : strtolower(trim((string)$existingItem->side));
-                $newSide = empty($itemData['side']) ? '' : strtolower(trim((string)$itemData['side']));
-                if ($existingSide !== $newSide) { $hasChanges = true; \Log::info("Change: side {$existingSide} !== {$newSide}"); }
+                if ($freeItem) {
+                    $existingFreeSide = $existingItem->free_side === null ? '' : strtolower(trim((string)$existingItem->free_side));
+                    $newFreeSide = empty($freeItem['side']) ? '' : strtolower(trim((string)$freeItem['side']));
+                    if ($existingFreeSide !== $newFreeSide) { $hasChanges = true; \Log::info("Change: free side {$existingFreeSide} !== {$newFreeSide}"); }
 
-                $existingSize = $existingItem->size === null ? '' : strtolower(trim((string)$existingItem->size));
-                $newSize = empty($itemData['size']) ? '' : strtolower(trim((string)$itemData['size']));
-                if ($existingSize !== $newSize) { $hasChanges = true; \Log::info("Change: size {$existingSize} !== {$newSize}"); }
-                
+                    $existingFreeSize = $existingItem->free_size === null ? '' : strtolower(trim((string)$existingItem->free_size));
+                    $newFreeSize = empty($freeItem['size']) ? '' : strtolower(trim((string)$freeItem['size']));
+                    if ($existingFreeSize !== $newFreeSize) { $hasChanges = true; \Log::info("Change: free size {$existingFreeSize} !== {$newFreeSize}"); }
+                }
+
                 if ($hasChanges) break;
             }
         }
@@ -639,15 +696,11 @@ class DistributorOrderController extends Controller
 
         try {
             foreach ($request->items as $itemData) {
-                $product = Product::find($itemData['product_id']);
-                if (!$product) throw new \Exception('Product not found');
+                $product = Product::findOrFail($itemData['product_id']);
 
                 $currentOrderItem = null;
-                $oldQuantity = 0;
-
-                if (isset($itemData['order_item_id']) && $itemData['order_item_id']) {
+                if (!empty($itemData['order_item_id'])) {
                     $currentOrderItem = $distributorOrder->items()->find($itemData['order_item_id']);
-                    if ($currentOrderItem) $oldQuantity = $currentOrderItem->quantity;
                 }
 
                 $unit = $itemData['unit'] ?? 'Box';
@@ -678,6 +731,9 @@ class DistributorOrderController extends Controller
                         'subtotal' => $itemTotalAmount,
                         'side' => $iSide,
                         'size' => $iSize,
+                        'free_quantity' => $itemData['free_quantity'] ?? 0,
+                        'free_side' => $itemData['free_side'] ?? null,
+                        'free_size' => $itemData['free_size'] ?? null,
                     ]);
                     $requestItemIds[] = $currentOrderItem->id;
                 } else {
@@ -690,6 +746,9 @@ class DistributorOrderController extends Controller
                         'subtotal' => $itemTotalAmount,
                         'side' => $iSide,
                         'size' => $iSize,
+                        'free_quantity' => $itemData['free_quantity'] ?? 0,
+                        'free_side' => $itemData['free_side'] ?? null,
+                        'free_size' => $itemData['free_size'] ?? null,
                     ]);
                     $requestItemIds[] = $newItem->id;
                 }

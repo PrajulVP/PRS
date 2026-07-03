@@ -487,7 +487,8 @@ class FieldStaffRetailerOrderController extends Controller
 
         $retailerOrder = RetailerOrder::findOrFail($id);
 
-        $isOwner = $retailerOrder->retailer && $retailerOrder->retailer->field_staff_id === $fieldStaff->id;
+        $isOwner = ($retailerOrder->fieldstaff_id === $fieldStaff->id) || 
+                   ($retailerOrder->retailer && $retailerOrder->retailer->field_staff_id === $fieldStaff->id);
         if (!$isOwner) {
             return response()->json(['error' => 'You are not authorized to edit this order.'], 403);
         }

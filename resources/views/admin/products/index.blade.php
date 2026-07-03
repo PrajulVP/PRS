@@ -349,10 +349,16 @@
                     </div>
                     <div class="card-body">
                         @if(session('success'))
-                            <div class="alert alert-success">{{ session('success') }}</div>
+                            <div class="alert alert-success alert-dismissible fade show auto-dismiss" role="alert">
+                                {{ session('success') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
                         @endif
                         @if(session('error'))
-                            <div class="alert alert-danger">{{ session('error') }}</div>
+                            <div class="alert alert-danger alert-dismissible fade show auto-dismiss" role="alert">
+                                {{ session('error') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
                         @endif
                         @if($errors->any())
                             <div class="alert alert-danger">
@@ -798,6 +804,13 @@
 
     <script>
         $(document).ready(function () {
+            // Auto-dismiss alerts after 5 seconds
+            setTimeout(function() {
+                $('.auto-dismiss').fadeOut('slow', function() {
+                    $(this).remove();
+                });
+            }, 5000);
+
             const canEdit = @json(Auth::user()->hasAnyRole(['admin', 'superadmin']) || Auth::user()->hasPermissionToCategory('products', 'edit'));
             const canDelete = @json(Auth::user()->hasAnyRole(['admin', 'superadmin']) || Auth::user()->hasPermissionToCategory('products', 'delete'));
 

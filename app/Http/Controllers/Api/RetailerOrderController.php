@@ -30,7 +30,10 @@ use Illuminate\Support\Facades\Storage;
  *         @OA\Property(property="product_name", type="string"),
  *         @OA\Property(property="quantity", type="integer"),
  *         @OA\Property(property="unit_price", type="number", format="float"),
- *         @OA\Property(property="subtotal", type="number", format="float")
+ *         @OA\Property(property="subtotal", type="number", format="float"),
+ *         @OA\Property(property="is_free", type="boolean"),
+ *         @OA\Property(property="free_item_quantity", type="integer"),
+ *         @OA\Property(property="free_item_threshold", type="integer")
  *     )),
  *     @OA\Property(property="delivery_notes", type="string", example="Urgent delivery"),
  *     @OA\Property(property="loyalty_points_earned", type="integer", example=25),
@@ -110,6 +113,9 @@ class RetailerOrderController extends Controller
                             'subtotal'   => (float)$group->sum('total_amount'),
                             'side'       => $item->side,
                             'size'       => $item->size,
+                            'is_free'    => false,
+                            'free_item_quantity' => $item->product ? (int)$item->product->free_qty_get : 0,
+                            'free_item_threshold' => $item->product ? (int)$item->product->free_qty_buy : 0,
                         ];
                     })->values(),
                     'invoice_url'    => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,

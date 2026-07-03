@@ -218,17 +218,7 @@ class PendingApprovalController extends Controller
                     
                     $meta = [];
                     $qtyStr = $i->quantity . ' ' . ($i->unit ?? 'Nos');
-                    
                     $meta[] = '<span class="text-primary fw-bold" style="font-size: 0.75rem;">' . $qtyStr . '</span>';
-                    
-                    if ($i->free_quantity > 0) {
-                        $freeLabel = array_filter([$i->free_side, $i->free_size]);
-                        $freeStr = '&nbsp;<i class="fa fa-gift" style="font-size:0.7rem;"></i> ' . $i->free_quantity . ' Free';
-                        if (!empty($freeLabel)) {
-                            $freeStr .= ' <span style="font-size: 0.65rem; color: #0369a1; background: #e0f2fe; padding: 1px 6px; border-radius: 10px; margin-left: 3px; font-weight: 700; letter-spacing: 0.2px;">' . strtoupper(implode(' / ', $freeLabel)) . '</span>';
-                        }
-                        $meta[] = '<span class="text-success fw-bold d-inline-flex align-items-center" style="font-size: 0.75rem;">+' . $freeStr . '</span>';
-                    }
                     
                     if (!empty($meta)) {
                         $summary .= '<div class="d-flex flex-wrap align-items-center gap-1 mt-1" style="word-break: break-word;">' . implode(' <span class="text-muted" style="font-size: 0.75rem; margin: 0 2px;">•</span> ', $meta) . '</div>';
@@ -236,6 +226,51 @@ class PendingApprovalController extends Controller
                     $summary .= '</div>';
                     return $summary;
                 })->implode('|||');
+
+                $freeItemsGrouped = [];
+                foreach ($item->items as $i) {
+                    if ($i->free_quantity > 0) {
+                        $pName = $i->product_name ?? $i->product->product_name ?? $i->name ?? 'Product';
+                        if (str_contains($pName, '[')) {
+                            $pName = trim(explode('[', $pName)[0]);
+                        }
+                        if (!isset($freeItemsGrouped[$pName])) {
+                            $freeItemsGrouped[$pName] = [
+                                'qty' => 0,
+                                'labels' => []
+                            ];
+                        }
+                        $freeItemsGrouped[$pName]['qty'] += $i->free_quantity;
+                        
+                        $freeLabel = array_filter([$i->free_side, $i->free_size]);
+                        if (!empty($freeLabel)) {
+                            $formattedFreeLabel = preg_replace('/(\d+)X([A-Z]+)/', '$1 $2', strtoupper(implode(' / ', $freeLabel)));
+                            $freeItemsGrouped[$pName]['labels'][] = $formattedFreeLabel;
+                        }
+                    }
+                }
+
+                $freeSummary = '';
+                foreach ($freeItemsGrouped as $name => $data) {
+                    $labelsStr = '';
+                    if (!empty($data['labels'])) {
+                         $uniqueLabels = array_unique($data['labels']);
+                         // Recalculate true quantity from variant labels if they exist
+                         $variantSum = 0;
+                         foreach ($uniqueLabels as $l) {
+                             preg_match_all('/(\d+)\s+[A-Z]+/', $l, $matches);
+                             if (!empty($matches[1])) {
+                                 $variantSum += array_sum($matches[1]);
+                             }
+                         }
+                         if ($variantSum > 0) {
+                             $data['qty'] = max($data['qty'], $variantSum);
+                         }
+                         $labelsStr = '<span style="font-size: 0.75rem; color: #0369a1; background: #e0f2fe; padding: 2px 8px; border-radius: 12px; font-weight: 700; letter-spacing: 0.2px; text-align: left; word-break: break-word; white-space: normal;">' . implode(', ', $uniqueLabels) . '</span>';
+                    }
+                    $freeSummary .= '<div class="mb-1" style="line-height: 1.2;"><span class="fw-bold" style="color: #334155; font-size: 0.8rem;">' . $name . '</span><br><div class="d-flex flex-column align-items-start mt-1 gap-1"><span class="text-success fw-bold d-inline-flex align-items-center" style="font-size: 0.95rem;"><i class="fa fa-gift me-1" style="font-size: 0.85rem;"></i> ' . $data['qty'] . '</span>' . $labelsStr . '</div></div>|||';
+                }
+                $freeSummary = rtrim($freeSummary, '|||');
 
                 $brandSummary = $item->items->map(function ($i) {
                     return $i->product?->brand ?? 'N/A';
@@ -248,6 +283,7 @@ class PendingApprovalController extends Controller
                     'metadata' => $item->metadata,
                     'status' => ucfirst(str_replace('_', ' ', $item->status)),
                     'product_summary' => $productSummary,
+                    'free_summary' => $freeSummary,
                     'brand_summary' => $brandSummary,
                     'placed_at' => $item->placed_at ? $item->placed_at->format('Y-m-d H:i') : '-',
                     'role_type' => 'order',
@@ -260,6 +296,8 @@ class PendingApprovalController extends Controller
                             'generic_name' => $i->product?->generic_name,
                             'quantity' => $i->quantity,
                             'free_quantity' => $i->free_quantity ?? 0,
+                            'free_qty_buy' => $i->product?->free_qty_buy ?? 0,
+                            'free_qty_get' => $i->product?->free_qty_get ?? 1,
                             'unit' => $i->unit ?? 'Strips',
                             'pack' => $i->product?->pack,
                             'strip_size' => $i->product?->strip_size,

@@ -33,7 +33,7 @@
                                         </div>
                                     </div>
                                     <select id="productSelect" class="form-select select2">
-                                        <option value="">Search by Name or POS Code...</option>
+                                        <option value="">Search Product</option>
                                         @foreach($products as $p)
                                             <option value="{{ $p->id }}" data-brand="{{ $p->brand }}">{{ $p->product_name }}{{ trim($p->pack) && $p->pack != '' ? " ($p->pack)" : "" }} - ₹{{ number_format($p->pts, 2) }}</option>
                                         @endforeach
@@ -63,7 +63,7 @@
                                         </div>
                                     </div>
                                     <select id="productSelect" class="form-select select2">
-                                        <option value="">Search by Name or POS Code...</option>
+                                        <option value="">Search Product</option>
                                         @foreach($products as $p)
                                             <option value="{{ $p->id }}" data-brand="{{ $p->brand }}">{{ $p->product_name }}{{ trim($p->pack) && $p->pack != '' ? " ($p->pack)" : "" }} - ₹{{ number_format($p->pts, 2) }}</option>
                                         @endforeach
@@ -492,7 +492,7 @@
                     method: 'GET',
                     data: { brand: brand },
                     success: function(res) {
-                        let options = '<option value="">Search by Name or POS Code...</option>';
+                        let options = '<option value="">Search Product</option>';
                         res.forEach(function(p) {
                             let packSuffix = (p.pack && p.pack.trim() !== '') ? ' (' + p.pack + ')' : '';
                             let price = parseFloat(p.pts).toFixed(2);
@@ -972,24 +972,10 @@
                 renderTable();
             });
             
-            // --- New Modal Logic ---
-            let currentFreeVariantKey = null;
-            let currentFreeVariantAvailable = null;
+        // --- New Modal Logic ---
+        let currentFreeVariantKey = null;
 
-            function renderFreeVariantModal(key, availableVariantsData = null) {
-                if (availableVariantsData !== null) {
-                    currentFreeVariantAvailable = availableVariantsData;
-                }
-                let availableData = currentFreeVariantAvailable;
-                
-                let availableSides = new Set();
-                let availableSizes = new Set();
-                if (availableData) {
-                    availableData.forEach(v => {
-                        if (v.side) availableSides.add(v.side.toUpperCase());
-                        if (v.size) availableSizes.add(v.size.toUpperCase());
-                    });
-                }
+        function renderFreeVariantModal(key) {
 
                 let item = addedItems[key];
                 if (!item) return;
@@ -1028,28 +1014,9 @@
                             </div>
                         `;
 
-                        let unavailableVariants = [];
-
                         if (fp.variant_options && Object.keys(fp.variant_options).length > 0) {
                             Object.keys(fp.variant_options).forEach(attrName => {
                                 let options = fp.variant_options[attrName];
-                                let purged = false;
-                                if (availableData) {
-                                    options = options.filter(v => {
-                                        let valid = true;
-                                        if (attrName.toUpperCase() === 'SIDE') valid = availableSides.has(v.toUpperCase());
-                                        if (attrName.toUpperCase() === 'SIZE') valid = availableSizes.has(v.toUpperCase());
-                                        if (!valid) {
-                                            unavailableVariants.push(v);
-                                            if (item.free_selections && item.free_selections[attrName.toLowerCase()] && item.free_selections[attrName.toLowerCase()][v]) {
-                                                delete item.free_selections[attrName.toLowerCase()][v];
-                                                purged = true;
-                                            }
-                                        }
-                                        return valid;
-                                    });
-                                }
-                                if (purged) renderTable();
                                 if (options.length === 0) return;
 
                                 let currentVals = item.free_selections && item.free_selections[attrName.toLowerCase()] ? item.free_selections[attrName.toLowerCase()] : {};
@@ -1082,21 +1049,7 @@
                             });
                         } else {
                             let variantsToUse = dynamicVariants.length > 0 ? dynamicVariants : ['S', 'M', 'L', 'XL'];
-                            let purged = false;
-                            if (availableData) {
-                                variantsToUse = variantsToUse.filter(v => {
-                                    let valid = availableSizes.has(v.toUpperCase());
-                                    if (!valid) {
-                                        unavailableVariants.push(v);
-                                        if (item.free_selections && item.free_selections['size'] && item.free_selections['size'][v]) {
-                                            delete item.free_selections['size'][v];
-                                            purged = true;
-                                        }
-                                    }
-                                    return valid;
-                                });
-                            }
-                            if (purged) renderTable();
+                            
                             if (variantsToUse.length > 0) {
                                 let currentVals = item.free_selections && item.free_selections['size'] ? item.free_selections['size'] : {};
                                 variantsHtml += `
@@ -1129,11 +1082,6 @@
                         }
                         variantsHtml += `</div>`;
                         
-                        if (unavailableVariants.length > 0) {
-                            let uniqueUnavailable = [...new Set(unavailableVariants)];
-                            variantsHtml += `<div class="text-muted small mt-2 font-outfit" style="font-size: 0.75rem; line-height: 1.4;">These variants are currently out of stock for this distributor: <strong class="text-dark dark-text-light">${uniqueUnavailable.join(', ')}</strong></div>`;
-                        }
-
                         if (variantsHtml.indexOf('d-flex flex-column align-items-start') === -1) {
                             variantsHtml = `<div class="alert alert-warning mb-0 font-outfit"><i class="fa fa-exclamation-triangle me-1"></i> The distributor does not have any variants in stock for this free product.</div>`;
                         }
@@ -1151,7 +1099,7 @@
 
                 // Distributor orders do not need stock validation for free variants
                 currentFreeVariantKey = key;
-                renderFreeVariantModal(key, null);
+                renderFreeVariantModal(key);
                 let modal = new bootstrap.Modal(document.getElementById('freeVariantModal'));
                 modal.show();
             });
@@ -1205,15 +1153,27 @@
                     if (fpInfo && fpInfo.free_qty_get) getQty = fpInfo.free_qty_get;
                     let freeAmt = (item.free_qty_buy > 0 && item.qty >= item.free_qty_buy) ? Math.floor(item.qty / item.free_qty_buy) * getQty : 0;
                     
-                    if (freeAmt > 0 && fpInfo && fpInfo.variant_options) {
-                        let attrs = Object.keys(fpInfo.variant_options);
+                    let pName = (fpInfo ? fpInfo.product_name : '').toLowerCase();
+                    let dynamicVariants = [];
+                    let match = pName.match(/\(([^)]+)\)/g);
+                    if (match) {
+                        let lastMatch = match[match.length - 1].replace('(', '').replace(')', '');
+                        if (lastMatch.includes('/')) {
+                            dynamicVariants = lastMatch.split('/').map(s => s.trim().toUpperCase());
+                        }
+                    }
+                    let hasV = fpInfo && (fpInfo.has_variants || dynamicVariants.length > 0 || (fpInfo.variant_options && Object.keys(fpInfo.variant_options).length > 0));
+                    
+                    if (freeAmt > 0 && hasV) {
+                        let attrs = (fpInfo.variant_options && Object.keys(fpInfo.variant_options).length > 0) ? Object.keys(fpInfo.variant_options) : ['size'];
                         if (attrs.length > 0) {
                             let totalSelected = 0;
                             if (item.free_selections) {
                                 attrs.forEach(attr => {
                                     let attrTotal = 0;
-                                    if (item.free_selections[attr]) {
-                                        Object.values(item.free_selections[attr]).forEach(q => attrTotal += parseInt(q) || 0);
+                                    let attrLower = attr.toLowerCase();
+                                    if (item.free_selections[attrLower]) {
+                                        Object.values(item.free_selections[attrLower]).forEach(q => attrTotal += parseInt(q) || 0);
                                     }
                                     if (attrTotal < freeAmt) hasIncompleteFree = true;
                                 });
