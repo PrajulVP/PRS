@@ -214,7 +214,18 @@ class FieldStaffActionApiController extends Controller
 
         $logs = [];
         foreach ($locations as $loc) {
-            $timestamp = isset($loc['timestamp']) ? \Carbon\Carbon::parse($loc['timestamp']) : now();
+            $timestampStr = $loc['timestamp'] ?? null;
+            $timestamp = now();
+            if ($timestampStr && $timestampStr !== '0' && (int)$timestampStr !== 0 && !str_starts_with($timestampStr, '1970')) {
+                try {
+                    $parsed = \Carbon\Carbon::parse($timestampStr);
+                    if ($parsed->year > 2000) {
+                        $timestamp = $parsed;
+                    }
+                } catch (\Exception $e) {
+                    $timestamp = now();
+                }
+            }
             $log = LocationLog::create([
                 'user_id' => $user->id,
                 'latitude' => $loc['latitude'],
