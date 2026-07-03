@@ -2314,7 +2314,7 @@
                     if (row && row.items) {
                         row.items.forEach(item => {
                             let rowHtml = `
-                                <div data-item-id="${item.order_item_id}" data-ordered-qty="${item.quantity}">
+                                <div data-item-id="${item.order_item_id}" data-ordered-qty="${item.quantity}" data-product-name="${item.product_name}">
                                     <div class="d-none">
                                         <div class="fw-bold product-name-marker">${item.product_name} ${(item.side && item.side !== '-' && item.side !== 'N/A') ? '['+item.side+']' : ''} ${(item.size && item.size !== '-' && item.size !== 'N/A') ? '['+item.size+']' : ''}</div>
                                         <input type="number" name="batches[${item.order_item_id}][0][quantity]" value="${item.quantity}">
@@ -2331,7 +2331,7 @@
                                         <input type="hidden" name="batches[${item.order_item_id}][0][sgst]" class="hidden-sgst-val">
                                         <input type="hidden" name="batches[${item.order_item_id}][0][igst]" class="hidden-igst-val">
                                         <input type="hidden" name="batches[${item.order_item_id}][0][net_amount]" class="hidden-net-val">
-                                        <input type="hidden" name="free_quantity[${item.order_item_id}]" class="hidden-free-val">
+                                        <input type="hidden" name="free_quantity[${item.order_item_id}]" class="hidden-free-val" value="${item.free_quantity || 0}">
                                     </div>
                                 </div>
                             `;
@@ -2807,7 +2807,7 @@
                                 $(`#v_row_${item.id} .v-qty-display`).html(displayHtml);
                                 
                                 // Maintain existing variant badges if present, just update the number
-                                if (freeQty > 0) {
+                                if (freeQty > 0 && (item.originalFree > 0 || $(`#v_row_${item.id} .v-free-display`).find('.bg-primary-subtle').length > 0)) {
                                     let existingVariantHtml = '';
                                     let $existingFree = $(`#v_row_${item.id} .v-free-display`);
                                     if ($existingFree.find('.bg-primary-subtle').length > 0) {
@@ -2821,6 +2821,8 @@
                                     `);
                                 } else {
                                     $(`#v_row_${item.id} .v-free-display`).html('-');
+                                    // if it's not the primary free item row, don't capture freeQty in hidden input
+                                    freeQty = 0; 
                                 }
                             }
 
@@ -3415,6 +3417,14 @@
                         let stripsPerBox = parseInt(item.stripsPerBox);
                         let hasStripsPerBox = !isNaN(stripsPerBox) && stripsPerBox > 1;
                         let isCount = item.isCount !== undefined ? item.isCount : (!hasStripsPerBox && (hasCode || item.box_size === '' || item.box_size === null || pPack.includes('nos') || pPack.includes('count')));
+
+                        let unitFromDb = item.unit || '';
+                        let lUnit = unitFromDb.toLowerCase();
+                        if (lUnit === 'strips' || lUnit === 'box') {
+                            isCount = false;
+                        } else if (lUnit === 'nos' || lUnit === 'no.' || lUnit === 'nos.') {
+                            isCount = true;
+                        }
 
                         let allowedUnits = isCount ? ['Nos'] : ['Strips', 'Box'];
                         let unit = item.unit || (isCount ? 'Nos' : 'Strips');

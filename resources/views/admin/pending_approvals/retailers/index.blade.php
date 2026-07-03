@@ -2722,7 +2722,7 @@
 
                         // 1. Hidden Submission Row
                         let rowHtml = `
-                                                                                                                                                                                <div data-item-id="${orderItemId}" class="product-row" data-ordered-qty="${orderedQty}">
+                                                                                                                                                                                <div data-item-id="${orderItemId}" class="product-row" data-ordered-qty="${orderedQty}" data-product-name="${item.product_name}">
                                                                                                                                                                                     <div class="d-none">
                                                                                                                                                                                         <div class="fw-bold product-name-marker">${item.product_name} ${(item.side && item.side !== '-' && item.side !== 'N/A') ? '['+item.side+']' : ''} ${(item.size && item.size !== '-' && item.size !== 'N/A') ? '['+item.size+']' : ''}</div>
                                                                                                                                                                                         <input type="number" name="items[${orderItemId}][quantity]" value="${orderedQty}">
@@ -3210,7 +3210,7 @@
                             vRow.find('.v-qty-display').html(displayQty);
                             
                             // Maintain existing variant badges if present, just update the number
-                            if (freeQty > 0) {
+                            if (freeQty > 0 && (parseInt(item.free_quantity) > 0 || vRow.find('.v-free-display').find('.bg-primary-subtle').length > 0)) {
                                 let existingVariantHtml = '';
                                 let $existingFree = vRow.find('.v-free-display');
                                 if ($existingFree.find('.bg-primary-subtle').length > 0) {
@@ -3224,6 +3224,7 @@
                                 `);
                             } else {
                                 vRow.find('.v-free-display').html('-');
+                                freeQty = 0;
                             }
 
                             vRow.find('.v-taxable-display').text(`₹${extTaxable.toFixed(2)}`);
@@ -3785,6 +3786,14 @@
                         let stripsPerBox = parseInt(item.stripsPerBox);
                         let hasStripsPerBox = !isNaN(stripsPerBox) && stripsPerBox > 1;
                         let isCount = item.isCount !== undefined ? item.isCount : (!hasStripsPerBox && (hasCode || item.box_size === '' || item.box_size === null || pPack.includes('nos') || pPack.includes('count')));
+
+                        let unitFromDb = item.unit || '';
+                        let lUnit = unitFromDb.toLowerCase();
+                        if (lUnit === 'strips' || lUnit === 'box') {
+                            isCount = false;
+                        } else if (lUnit === 'nos' || lUnit === 'no.' || lUnit === 'nos.') {
+                            isCount = true;
+                        }
 
                         let allowedUnits = isCount ? ['Nos'] : ['Strips', 'Box'];
                         let unit = item.unit || (isCount ? 'Nos' : 'Strips');
