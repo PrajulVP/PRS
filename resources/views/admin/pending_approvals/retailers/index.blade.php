@@ -3877,7 +3877,21 @@
                                 let currentVals = st.selections[attrName.toLowerCase()] || {};
                                 
                                 options.forEach(v => {
-                                    let cQty = currentVals[v] || 0;
+                                    let safeV = v.toString().trim().toLowerCase();
+                                    let cQty = 0;
+                                    let foundKey = v;
+                                    Object.keys(currentVals).forEach(k => {
+                                        if (k.trim().toLowerCase() === safeV) {
+                                            cQty = currentVals[k];
+                                            foundKey = k;
+                                        }
+                                    });
+                                    // Normalize the key to match exactly the DOM data-val for + / - buttons
+                                    if (foundKey !== v && cQty > 0) {
+                                        currentVals[v] = cQty;
+                                        delete currentVals[foundKey];
+                                    }
+
                                     variantsHtml += `
                                     <div class="d-inline-flex align-items-center bg-white border border-light-dark rounded shadow-sm p-1" style="min-width: 100px;">
                                         <span class="fw-bold text-center ms-1 me-2 text-dark" style="font-size: 0.75rem; min-width: 20px;">${v}</span>
