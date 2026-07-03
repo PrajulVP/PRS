@@ -2963,6 +2963,144 @@
                 ]
             }
         },
+        "/api/orders": {
+            "post": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Place new order (Retailer or Distributor based on payload)",
+                "description": "Unified Order Creation Endpoint",
+                "operationId": "e7be4cae1f1a994f1c7a58881f487441",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "retailer_id": {
+                                        "type": "integer",
+                                        "example": 12,
+                                        "nullable": true
+                                    },
+                                    "distributor_id": {
+                                        "type": "integer",
+                                        "example": 27,
+                                        "nullable": true
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "product_id": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "unit": {
+                                                    "type": "string",
+                                                    "example": "Nos"
+                                                },
+                                                "side": {
+                                                    "type": "string",
+                                                    "example": "Left"
+                                                },
+                                                "size": {
+                                                    "type": "string",
+                                                    "example": "M"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Order created with eligible free items"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/orders/{id}/add-free-items": {
+            "post": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Attach free items to an order (Retailer or Distributor)",
+                "operationId": "464470663658468e6e6634b14e6974a7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "order_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "retailer",
+                                            "distributor"
+                                        ]
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "product_id": {
+                                                    "type": "integer"
+                                                },
+                                                "quantity": {
+                                                    "type": "integer"
+                                                },
+                                                "side": {
+                                                    "type": "string"
+                                                },
+                                                "size": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Free items attached successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/prescriptions/upload": {
             "post": {
                 "tags": [
@@ -5403,6 +5541,10 @@
         {
             "name": "Notifications",
             "description": "Notifications"
+        },
+        {
+            "name": "Orders",
+            "description": "Orders"
         },
         {
             "name": "Prescription",

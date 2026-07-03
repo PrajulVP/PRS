@@ -148,4 +148,9 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/{returnRequest}/approve', [\App\Http\Controllers\Api\ReturnApiController::class, 'approve']);
         Route::post('/{returnRequest}/reject', [\App\Http\Controllers\Api\ReturnApiController::class, 'reject']);
     });
+    // Unified Orders API
+    Route::prefix('orders')->group(function () {
+        Route::post('/', [\App\Http\Controllers\Api\OrderApiController::class, 'store']);
+        Route::post('/{id}/add-free-items', [\App\Http\Controllers\Api\OrderApiController::class, 'addFreeItems']);
+    });
 });

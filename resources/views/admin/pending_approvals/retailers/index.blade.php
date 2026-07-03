@@ -2347,7 +2347,7 @@
                         let key = i.product_id || window.cleanProductName(i.product_name || i.name || '-', '', '');
                         if (!freeGroup[key]) freeGroup[key] = { qty: 0, labels: [], rowspan: 0, index: 0 };
                         freeGroup[key].rowspan++;
-                        if (i.free_quantity > 0) {
+                        if (i.quantity > 0 && i.free_quantity > 0) {
                             freeGroup[key].qty += parseInt(i.free_quantity);
                             if (i.free_side || i.free_size) {
                                 let label = [i.free_side, i.free_size].filter(Boolean).join(' / ').toUpperCase().replace(/(\d+)X([A-Z]+)/g, '$1 $2');
@@ -2461,7 +2461,7 @@
                         row.items.forEach(function(i) {
                             let key = i.product_id || window.cleanProductName(i.product_name || i.name || '-', '', '');
                             if (!freeGroup[key]) freeGroup[key] = { qty: 0, labels: [], index: 0 };
-                            if (i.free_quantity > 0) {
+                            if (i.quantity > 0 && i.free_quantity > 0) {
                                 freeGroup[key].qty += parseInt(i.free_quantity);
                                 if (i.free_side || i.free_size) {
                                     let label = [i.free_side, i.free_size].filter(Boolean).join(' / ').toUpperCase().replace(/(\d+)X([A-Z]+)/g, '$1 $2');
@@ -2722,7 +2722,7 @@
 
                         // 1. Hidden Submission Row
                         let rowHtml = `
-                                                                                                                                                                                <div data-item-id="${orderItemId}" class="product-row" data-ordered-qty="${orderedQty}" data-product-name="${item.product_name}">
+                                                                                                                                                                                <div data-item-id="${orderItemId}" class="product-row" data-ordered-qty="${orderedQty}" data-free-qty="${item.free_quantity || 0}" data-product-name="${item.product_name}">
                                                                                                                                                                                     <div class="d-none">
                                                                                                                                                                                         <div class="fw-bold product-name-marker">${item.product_name} ${(item.side && item.side !== '-' && item.side !== 'N/A') ? '['+item.side+']' : ''} ${(item.size && item.size !== '-' && item.size !== 'N/A') ? '['+item.size+']' : ''}</div>
                                                                                                                                                                                         <input type="number" name="items[${orderItemId}][quantity]" value="${orderedQty}">
@@ -3065,6 +3065,7 @@
                     let orderItemId = container.data('item-id');
                     let productName = container.find('.product-name-marker').text().trim().toLowerCase();
                     let orderedQty = parseInt(container.data('ordered-qty'));
+                    let originalFree = parseInt(container.data('free-qty')) || 0;
 
                     const normalize = (str) => {
                         if (!str) return '';
@@ -3179,12 +3180,12 @@
                         // 1. Update Visible Row Fields
                         let vRow = $(`#v_row_${orderItemId}`);
                         if (vRow.length) {
-                            // Append Pack Size if available
-                            let packStr = matchedInvoiceItem.pack && matchedInvoiceItem.pack !== 'N/A' && matchedInvoiceItem.pack.trim() !== '' ? ` [${matchedInvoiceItem.pack.trim()}]` : '';
-                            if (packStr) {
-                                let nameEl = vRow.find('.ai-col-product > div:first-child');
-                                nameEl.append(`<span class="ms-1 fw-normal text-muted" style="font-size:0.85em;">${packStr}</span>`);
-                            }
+                            // Append Pack Size if available (Removed as requested by user)
+                            // let packStr = matchedInvoiceItem.pack && matchedInvoiceItem.pack !== 'N/A' && matchedInvoiceItem.pack.trim() !== '' ? ` [${matchedInvoiceItem.pack.trim()}]` : '';
+                            // if (packStr) {
+                            //     let nameEl = vRow.find('.ai-col-product > div:first-child');
+                            //     nameEl.append(`<span class="ms-1 fw-normal text-muted" style="font-size:0.85em;">${packStr}</span>`);
+                            // }
 
                             if (extBatch) {
                                 vRow.find('.v-batch-display').text(extBatch).removeClass('text-muted').addClass('text-success fw-bold');
@@ -3210,7 +3211,7 @@
                             vRow.find('.v-qty-display').html(displayQty);
                             
                             // Maintain existing variant badges if present, just update the number
-                            if (freeQty > 0 && (parseInt(item.free_quantity) > 0 || vRow.find('.v-free-display').find('.bg-primary-subtle').length > 0)) {
+                            if (freeQty > 0 && (originalFree > 0 || vRow.find('.v-free-display').find('.bg-primary-subtle').length > 0)) {
                                 let existingVariantHtml = '';
                                 let $existingFree = vRow.find('.v-free-display');
                                 if ($existingFree.find('.bg-primary-subtle').length > 0) {
@@ -3878,8 +3879,9 @@
                         let variantsObj = null;
                         try { variantsObj = JSON.parse(vRaw); } catch(e) {}
 
+                        let hasVariants = (variantsObj && Object.keys(variantsObj).length > 0);
                         let variantsHtml = `<div class="d-flex flex-wrap gap-2 mt-2">`;
-                        if (variantsObj && Object.keys(variantsObj).length > 0) {
+                        if (hasVariants) {
                             Object.keys(variantsObj).forEach(attrName => {
                                 let options = variantsObj[attrName];
                                 if (!options || options.length === 0) return;
@@ -3916,8 +3918,6 @@
                                     </div>`;
                                 });
                             });
-                        } else {
-                            variantsHtml += `<div class="text-muted small">No variants available.</div>`;
                         }
                         variantsHtml += `</div>`;
 
@@ -3931,9 +3931,9 @@
                                 <td colspan="7" class="p-3 border-bottom">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                         <div class="fw-bold text-success mb-0" style="font-size:0.88rem;">${group.baseName} <span class="badge bg-success shadow-sm ms-2" style="font-size:0.65rem;"><i class="fa fa-gift me-1"></i>${freeAmt} FREE ITEMS</span></div>
-                                        <div class="text-success fw-bold" style="font-size: 0.85rem;">Allocated: <span class="px-2 py-1 rounded shadow-sm border border-success-subtle ms-1" style="background-color: #d1e7dd !important; color: #0f5132 !important;">${allocated} / ${freeAmt}</span></div>
+                                        ${hasVariants ? `<div class="text-success fw-bold" style="font-size: 0.85rem;">Allocated: <span class="px-2 py-1 rounded shadow-sm border border-success-subtle ms-1" style="background-color: #d1e7dd !important; color: #0f5132 !important;">${allocated} / ${freeAmt}</span></div>` : ''}
                                     </div>
-                                    ${variantsHtml}
+                                    ${hasVariants ? variantsHtml : ''}
                                     <input type="hidden" name="items[${firstPaidRowId}][free_quantity]" value="${freeAmt}">
                                     ${fSideStr.length > 0 ? `<input type="hidden" name="items[${firstPaidRowId}][free_side]" value="${fSideStr.join(', ')}">` : ''}
                                     ${fSizeStr.length > 0 ? `<input type="hidden" name="items[${firstPaidRowId}][free_size]" value="${fSizeStr.join(', ')}">` : ''}

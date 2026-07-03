@@ -2106,7 +2106,7 @@
                         row.items.forEach(function(i) {
                             let key = i.product_id || window.cleanProductName(i.product_name || i.name || '-', '', '');
                             if (!freeGroup[key]) freeGroup[key] = { qty: 0, labels: [], index: 0 };
-                            if (i.free_quantity > 0) {
+                            if (i.quantity > 0 && i.free_quantity > 0) {
                                 freeGroup[key].qty += parseInt(i.free_quantity);
                                 if (i.free_side || i.free_size) {
                                     let label = [i.free_side, i.free_size].filter(Boolean).join(' / ').toUpperCase().replace(/(\d+)X([A-Z]+)/g, '$1 $2');
@@ -2314,7 +2314,7 @@
                     if (row && row.items) {
                         row.items.forEach(item => {
                             let rowHtml = `
-                                <div data-item-id="${item.order_item_id}" data-ordered-qty="${item.quantity}" data-product-name="${item.product_name}">
+                                <div data-item-id="${item.order_item_id}" data-ordered-qty="${item.quantity}" data-free-qty="${item.free_quantity || 0}" data-product-name="${item.product_name}">
                                     <div class="d-none">
                                         <div class="fw-bold product-name-marker">${item.product_name} ${(item.side && item.side !== '-' && item.side !== 'N/A') ? '['+item.side+']' : ''} ${(item.size && item.size !== '-' && item.size !== 'N/A') ? '['+item.size+']' : ''}</div>
                                         <input type="number" name="batches[${item.order_item_id}][0][quantity]" value="${item.quantity}">
@@ -2658,7 +2658,8 @@
                     items.push({
                         id: $(this).data('item-id'),
                         name: name,
-                        orderedQty: parseInt($(this).data('ordered-qty')) || 0
+                        orderedQty: parseInt($(this).data('ordered-qty')) || 0,
+                        originalFree: parseInt($(this).data('free-qty')) || 0
                     });
                 });
                 
@@ -2769,12 +2770,12 @@
                             }
                         }
 
-                        // Append Pack Size if available
-                        let packStr = matchedInvoiceItem.pack && matchedInvoiceItem.pack !== 'N/A' && matchedInvoiceItem.pack.trim() !== '' ? ` [${matchedInvoiceItem.pack.trim()}]` : '';
-                        if (packStr) {
-                            let nameEl = $(`#v_row_${item.id} .ai-col-product > div:first-child`);
-                            nameEl.append(`<span class="ms-1 fw-normal text-muted" style="font-size:0.85em;">${packStr}</span>`);
-                        }
+                        // Append Pack Size if available (Removed as requested by user)
+                        // let packStr = matchedInvoiceItem.pack && matchedInvoiceItem.pack !== 'N/A' && matchedInvoiceItem.pack.trim() !== '' ? ` [${matchedInvoiceItem.pack.trim()}]` : '';
+                        // if (packStr) {
+                        //     let nameEl = $(`#v_row_${item.id} .ai-col-product > div:first-child`);
+                        //     nameEl.append(`<span class="ms-1 fw-normal text-muted" style="font-size:0.85em;">${packStr}</span>`);
+                        // }
 
                         if (extBatch) {
                             $(`#v_row_${item.id} .v-batch-input`).val(extBatch);
@@ -3508,8 +3509,9 @@
                         let variantsObj = null;
                         try { variantsObj = JSON.parse(vRaw); } catch(e) {}
 
+                        let hasVariants = (variantsObj && Object.keys(variantsObj).length > 0);
                         let variantsHtml = `<div class="d-flex flex-wrap gap-2 mt-2">`;
-                        if (variantsObj && Object.keys(variantsObj).length > 0) {
+                        if (hasVariants) {
                             Object.keys(variantsObj).forEach(attrName => {
                                 let options = variantsObj[attrName];
                                 if (!options || options.length === 0) return;
@@ -3546,8 +3548,6 @@
                                     </div>`;
                                 });
                             });
-                        } else {
-                            variantsHtml += `<div class="text-muted small">No variants available.</div>`;
                         }
                         variantsHtml += `</div>`;
 
@@ -3561,9 +3561,9 @@
                                 <td colspan="6" class="p-3 border-bottom">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                         <div class="fw-bold text-success mb-0" style="font-size:0.88rem;">${group.baseName} <span class="badge bg-success shadow-sm ms-2" style="font-size:0.65rem;"><i class="fa fa-gift me-1"></i>${freeAmt} FREE ITEMS</span></div>
-                                        <div class="text-success fw-bold" style="font-size: 0.85rem;">Allocated: <span class="px-2 py-1 rounded shadow-sm border border-success-subtle ms-1" style="background-color: #d1e7dd !important; color: #0f5132 !important;">${allocated} / ${freeAmt}</span></div>
+                                        ${hasVariants ? `<div class="text-success fw-bold" style="font-size: 0.85rem;">Allocated: <span class="px-2 py-1 rounded shadow-sm border border-success-subtle ms-1" style="background-color: #d1e7dd !important; color: #0f5132 !important;">${allocated} / ${freeAmt}</span></div>` : ''}
                                     </div>
-                                    ${variantsHtml}
+                                    ${hasVariants ? variantsHtml : ''}
                                     <input type="hidden" name="items[${firstPaidRowId}][free_quantity]" value="${freeAmt}">
                                     ${fSideStr.length > 0 ? `<input type="hidden" name="items[${firstPaidRowId}][free_side]" value="${fSideStr.join(', ')}">` : ''}
                                     ${fSizeStr.length > 0 ? `<input type="hidden" name="items[${firstPaidRowId}][free_size]" value="${fSizeStr.join(', ')}">` : ''}
