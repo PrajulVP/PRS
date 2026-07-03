@@ -856,8 +856,8 @@
                         $unitSelect.empty();
                         let pPack = (p.pack || '').toLowerCase();
                         let hasCode = p.product_code && p.product_code !== '---' && p.product_code.trim() !== '';
-                        let hasStrips = (p.units_per_strip > 1) || (p.strip_size && p.strip_size.trim() !== '');
-                        let isCount = !hasStrips && (hasCode || pPack.includes('nos') || pPack.includes('count') || p.box_size === "");
+                        let isCount = hasCode || pPack.includes('nos') || pPack.includes('count');
+                        let stripsPerBox = parseInt(p.strips_per_box);
 
                         if (isCount) {
                             $unitSelect.empty().append('<option value="Nos">No.</option>').hide();
@@ -866,8 +866,12 @@
                             }
                             $('#ptrLabel').text(`PTR (Per No.)`);
                         } else {
-                            $unitSelect.empty().append('<option value="Strips">Strips</option><option value="Box">Box</option>').show();
                             $('#unitText').remove();
+                            if (!stripsPerBox || isNaN(stripsPerBox) || stripsPerBox <= 1) {
+                                $unitSelect.empty().append('<option value="Strips">Strips</option>').show();
+                            } else {
+                                $unitSelect.empty().append('<option value="Strips">Strips</option><option value="Box">Box</option>').show();
+                            }
                             $('#ptrLabel').text(`PTR (Per Strip)`);
                         }
 

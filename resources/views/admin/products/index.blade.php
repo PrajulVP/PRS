@@ -1226,9 +1226,9 @@
                     return null;
                 };
 
-                const stripVal = (product.strip_size !== undefined && product.strip_size !== null && product.strip_size !== '') ? product.strip_size : (product.units_per_strip > 1 ? product.units_per_strip : null);
-                const boxVal = (product.box_size !== undefined && product.box_size !== null && product.box_size !== '') ? product.box_size : (product.strips_per_box > 1 ? product.strips_per_box : null);
-                const cartonVal = (product.carton_size !== undefined && product.carton_size !== null && product.carton_size !== '') ? product.carton_size : (product.boxes_per_carton > 1 ? product.boxes_per_carton : null);
+                const stripVal = getProductProp(product, ['strip_size', 'units_per_strip']);
+                const boxVal = getProductProp(product, ['box_size', 'strips_per_box']);
+                const cartonVal = getProductProp(product, ['boxes_per_carton', 'carton_size']);
 
                 const stripValInt = parseInt(String(stripVal || '').replace(/[^0-9]/g, '')) || 1;
                 const boxValInt = parseInt(String(boxVal || '').replace(/[^0-9]/g, '')) || 1;
@@ -1264,7 +1264,7 @@
                         `;
                     }
 
-                    if (isValid(boxVal) && boxVal.toString().toLowerCase().trim() !== 'n/a') {
+                    if (isValid(boxVal) && boxVal.toString().toLowerCase().trim() !== 'n/a' && parseInt(boxVal) > 1) {
                         packagingHtml += `
                                 <div class="col-12">
                                     <div class="detail-card-panel d-flex align-items-center justify-content-between">

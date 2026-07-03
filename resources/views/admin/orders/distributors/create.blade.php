@@ -578,16 +578,13 @@
                         }
                         // Unit Logic: If has code or is count-based -> No.
                         let hasCode = p.product_code && p.product_code !== '---' && p.product_code.trim() !== '';
-                        let boxSizeStr = p.box_size || '';
-                        let hasStrips = (p.units_per_strip > 1) || (p.strip_size && p.strip_size.trim() !== '');
-                        let isCount = !hasStrips && (hasCode || boxSizeStr === "");
+                        let pPack = (p.pack || '').toLowerCase();
+                        let isCount = hasCode || pPack.includes('nos') || pPack.includes('count');
                         
                         // Fallback patterns: If not already No., check keywords
                         if (!isCount) {
                             let pName = (p.product_name || '').toLowerCase();
-                            let pPack = (p.pack || '').toLowerCase();
-                            isCount = pPack.includes('nos') || pPack.includes('count') || 
-                                     pPack.includes('pair') || pPack.includes('bottle') || 
+                            isCount = pPack.includes('pair') || pPack.includes('bottle') || 
                                      pPack.includes('ml') || pPack.includes('gm') || 
                                      pPack.includes('syp') || pName.includes('syp') || 
                                      pName.includes('syrup') || pName.includes('drop') || 
@@ -602,12 +599,18 @@
 
                         let $unitSelect = $('#unitSelect');
                         $unitSelect.empty();
+                        let stripsPerBox = parseInt(p.strips_per_box);
+                        
                         if (isCount) {
                             $unitSelect.append('<option value="Nos">No.</option>');
                             $('#ptsLabel').text("PTS (Per No.)");
                         } else {
-                            $unitSelect.append('<option value="Strips">Strips</option>');
-                            $unitSelect.append('<option value="Box">Box</option>');
+                            if (!stripsPerBox || isNaN(stripsPerBox) || stripsPerBox <= 1) {
+                                $unitSelect.append('<option value="Strips">Strips</option>');
+                            } else {
+                                $unitSelect.append('<option value="Strips">Strips</option>');
+                                $unitSelect.append('<option value="Box">Box</option>');
+                            }
                             $('#ptsLabel').text("PTS (Per Strip)");
                         }
 
