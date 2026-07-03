@@ -3573,7 +3573,7 @@
                         if (i.free_side) {
                             i.free_side.split(',').forEach(part => {
                                 part = part.trim();
-                                let match = part.match(/^(\d+)\s*x?\s*(.*)$/i);
+                                let match = part.match(/^(\d+)\s*x?\s*(.*)$/);
                                 if (match) {
                                     st.selections.side[match[2].trim()] = (st.selections.side[match[2].trim()] || 0) + parseInt(match[1]);
                                 } else {
@@ -3584,7 +3584,7 @@
                         if (i.free_size) {
                             i.free_size.split(',').forEach(part => {
                                 part = part.trim();
-                                let match = part.match(/^(\d+)\s*x?\s*(.*)$/i);
+                                let match = part.match(/^(\d+)\s*x?\s*(.*)$/);
                                 if (match) {
                                     st.selections.size[match[2].trim()] = (st.selections.size[match[2].trim()] || 0) + parseInt(match[1]);
                                 } else {
