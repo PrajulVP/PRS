@@ -959,6 +959,10 @@
                                 </div>
 
                                 <div id="automation_success_state" class="d-none">
+                                    <div class="alert alert-success d-flex align-items-center py-2 mb-3 shadow-sm border-0" style="border-radius: 8px; font-size: 0.85rem;">
+                                        <i class="fa fa-check-circle me-2 fs-5"></i>
+                                        <div id="processed_summary_text" class="fw-bold mb-0"></div>
+                                    </div>
                                     <div class="premium-metadata-card p-3 rounded-4 border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
                                         <div class="row g-4 mb-3">
                                             <div class="col-md-3 border-end border-2 border-white">
@@ -2268,6 +2272,8 @@
                     // Reset OCR & Automation UI States
                     $('#automation_idle_state').removeClass('d-none');
                     $('#ocr_processing_state').addClass('d-none');
+                    $('#automation_success_state').addClass('d-none');
+                    $('#automation_error_state').addClass('d-none');
                     $('#verification_table_footer').addClass('d-none');
                     $('#scan_file_input').val('');
                     $('#distributor_approval_error_alert').removeClass('d-none');
@@ -2504,7 +2510,8 @@
                                     let identifiedCount = parseAndFillOCRResponse(res.data);
 
                                     if (identifiedCount > 0) {
-                                        $('#extracted_metadata_section').show();
+                                        $('#automation_success_state').removeClass('d-none').hide().fadeIn(300);
+                                        $('#verification_table_footer').removeClass('d-none');
                                         $('#processed_summary_text').text(`${identifiedCount} items auto-filled from Invoice.`);
                                         if (typeof window.checkDistributorApprovalReadiness === 'function') {
                                             window.checkDistributorApprovalReadiness();

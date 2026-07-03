@@ -461,6 +461,10 @@ class FieldStaffRetailerOrderController extends Controller
      *                     required={"product_id", "quantity"},
      *                     @OA\Property(property="product_id", type="integer", example=5),
      *                     @OA\Property(property="quantity", type="integer", example=10),
+     *                     @OA\Property(property="size", type="string", example="XL", nullable=true),
+     *                     @OA\Property(property="free_quantity", type="integer", example=2, nullable=true),
+     *                     @OA\Property(property="free_side", type="string", example="Left", nullable=true),
+     *                     @OA\Property(property="free_size", type="string", example="1 S", nullable=true),
      *                     @OA\Property(property="order_item_id", type="integer", example=12, description="Optional. Pass this to update an existing item instead of recreating it.")
      *                 )
      *             )
@@ -521,6 +525,9 @@ class FieldStaffRetailerOrderController extends Controller
                 'subtotal' => $item->total_amount,
                 'side' => $item->side,
                 'size' => $item->size,
+                'free_quantity' => $item->free_quantity,
+                'free_side' => $item->free_side,
+                'free_size' => $item->free_size,
             ];
         })->toArray();
 
@@ -595,7 +602,10 @@ class FieldStaffRetailerOrderController extends Controller
                         'side' => $side,
                         'size' => $size,
                         'unit_price' => $price,
-                        'total_amount' => $subtotalWithGst
+                        'total_amount' => $subtotalWithGst,
+                        'free_quantity' => $itemData['free_quantity'] ?? 0,
+                        'free_side' => $itemData['free_side'] ?? null,
+                        'free_size' => $itemData['free_size'] ?? null,
                     ]);
                     $requestItemIds[] = $currentOrderItem->id;
                 } else {
@@ -607,7 +617,10 @@ class FieldStaffRetailerOrderController extends Controller
                         'side' => $side,
                         'size' => $size,
                         'unit_price' => $price,
-                        'total_amount' => $subtotalWithGst
+                        'total_amount' => $subtotalWithGst,
+                        'free_quantity' => $itemData['free_quantity'] ?? 0,
+                        'free_side' => $itemData['free_side'] ?? null,
+                        'free_size' => $itemData['free_size'] ?? null,
                     ]);
                     $requestItemIds[] = $newItem->id;
                 }

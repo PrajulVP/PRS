@@ -291,6 +291,9 @@ class DistributorOrderApiController extends Controller
 
         DB::beginTransaction();
         try {
+            // Log payload for debugging
+            \Log::info('Distributor Order Payload:', $request->all());
+
             $order = DistributorOrder::create([
                 'distributor_id' => $distributorId,
                 'sales_manager_id' => $salesManagerId,
@@ -320,6 +323,8 @@ class DistributorOrderApiController extends Controller
                 // Keep normalized values
                 $first['side'] = isset($first['side']) ? trim($first['side']) : null;
                 $first['size'] = isset($first['size']) ? trim($first['size']) : null;
+                $first['free_side'] = isset($first['free_side']) ? trim($first['free_side']) : null;
+                $first['free_size'] = isset($first['free_size']) ? trim($first['free_size']) : null;
                 $first['is_free'] = isset($first['is_free']) ? filter_var($first['is_free'], FILTER_VALIDATE_BOOLEAN) : false;
                 
                 return $first;
@@ -362,6 +367,9 @@ class DistributorOrderApiController extends Controller
 
                 $isFree = $itemData['is_free'] ?? false;
 
+                $freeSide = $itemData['free_side'] ?? null;
+                $freeSize = $itemData['free_size'] ?? null;
+
                 if ($isFree) {
                     $unitPrice = 0;
                     $subtotalWithGst = 0;
@@ -385,6 +393,8 @@ class DistributorOrderApiController extends Controller
                     'subtotal' => $subtotalWithGst,
                     'side' => $itemData['side'] ?? null,
                     'size' => $itemData['size'] ?? null,
+                    'free_side' => $freeSide,
+                    'free_size' => $freeSize,
                 ]);
 
                 $totalAmount += $subtotalWithGst;

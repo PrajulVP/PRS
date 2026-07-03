@@ -2397,6 +2397,26 @@
                                                     "type": "integer",
                                                     "example": 10
                                                 },
+                                                "size": {
+                                                    "type": "string",
+                                                    "example": "XL",
+                                                    "nullable": true
+                                                },
+                                                "free_quantity": {
+                                                    "type": "integer",
+                                                    "example": 2,
+                                                    "nullable": true
+                                                },
+                                                "free_side": {
+                                                    "type": "string",
+                                                    "example": "Left",
+                                                    "nullable": true
+                                                },
+                                                "free_size": {
+                                                    "type": "string",
+                                                    "example": "1 S",
+                                                    "nullable": true
+                                                },
                                                 "order_item_id": {
                                                     "description": "Optional. Pass this to update an existing item instead of recreating it.",
                                                     "type": "integer",
@@ -4957,6 +4977,21 @@
                                                     "example": "M",
                                                     "nullable": true
                                                 },
+                                                "free_quantity": {
+                                                    "type": "integer",
+                                                    "example": 2,
+                                                    "nullable": true
+                                                },
+                                                "free_side": {
+                                                    "type": "string",
+                                                    "example": "Left",
+                                                    "nullable": true
+                                                },
+                                                "free_size": {
+                                                    "type": "string",
+                                                    "example": "1 S",
+                                                    "nullable": true
+                                                },
                                                 "order_item_id": {
                                                     "description": "Optional. Pass this to update an existing item instead of recreating it.",
                                                     "type": "integer",
@@ -5063,6 +5098,21 @@
                                                 "size": {
                                                     "type": "string",
                                                     "example": "M",
+                                                    "nullable": true
+                                                },
+                                                "free_quantity": {
+                                                    "type": "integer",
+                                                    "example": 2,
+                                                    "nullable": true
+                                                },
+                                                "free_side": {
+                                                    "type": "string",
+                                                    "example": "Left",
+                                                    "nullable": true
+                                                },
+                                                "free_size": {
+                                                    "type": "string",
+                                                    "example": "1 S",
                                                     "nullable": true
                                                 },
                                                 "order_item_id": {

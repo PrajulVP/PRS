@@ -248,6 +248,9 @@ class RetailerOrderController extends Controller
 
         DB::beginTransaction();
         try {
+            // Log payload for debugging
+            \Log::info('Retailer Order Payload:', $request->all());
+
             // Group items by distributor_id
             $itemsByDistributor = collect($request->items)->groupBy('distributor_id');
 
@@ -285,6 +288,8 @@ class RetailerOrderController extends Controller
                     // Keep normalized values for later creation
                     $first['side'] = isset($first['side']) ? trim($first['side']) : null;
                     $first['size'] = isset($first['size']) ? trim($first['size']) : null;
+                    $first['free_side'] = isset($first['free_side']) ? trim($first['free_side']) : null;
+                    $first['free_size'] = isset($first['free_size']) ? trim($first['free_size']) : null;
                     $first['is_free'] = isset($first['is_free']) ? filter_var($first['is_free'], FILTER_VALIDATE_BOOLEAN) : false;
                     
                     return $first;
@@ -391,8 +396,8 @@ class RetailerOrderController extends Controller
                         // --- FREE PRODUCT SCHEME LOGIC (Fallback for old app) ---
                         $freeQty = $itemData['free_quantity'] ?? 0;
                         $freeProductId = null;
-                        $freeSide = null;
-                        $freeSize = null;
+                        $freeSide = $itemData['free_side'] ?? null;
+                        $freeSize = $itemData['free_size'] ?? null;
         
                         if ($freeQty == 0) {
                             if ($product->free_qty_buy > 0 && $product->free_qty_get > 0) {
