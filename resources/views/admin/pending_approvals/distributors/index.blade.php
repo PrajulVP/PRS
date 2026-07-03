@@ -2772,8 +2772,8 @@
                         // Append Pack Size if available
                         let packStr = matchedInvoiceItem.pack && matchedInvoiceItem.pack !== 'N/A' && matchedInvoiceItem.pack.trim() !== '' ? ` [${matchedInvoiceItem.pack.trim()}]` : '';
                         if (packStr) {
-                            let nameEl = $(`#v_row_${item.id} .ai-col-product`);
-                            nameEl.text(nameEl.text() + packStr);
+                            let nameEl = $(`#v_row_${item.id} .ai-col-product > div:first-child`);
+                            nameEl.append(`<span class="ms-1 fw-normal text-muted" style="font-size:0.85em;">${packStr}</span>`);
                         }
 
                         if (extBatch) {
@@ -3198,9 +3198,9 @@
                         if (item.free_side) {
                             item.free_side.split(',').forEach(part => {
                                 part = part.trim();
-                                let match = part.match(/^(\d+)x(.*)$/);
+                                let match = part.match(/^(\d+)\s*x?\s*(.*)$/i);
                                 if (match) {
-                                    st.selections.side[match[2]] = (st.selections.side[match[2]] || 0) + parseInt(match[1]);
+                                    st.selections.side[match[2].trim()] = (st.selections.side[match[2].trim()] || 0) + parseInt(match[1]);
                                 } else {
                                     st.selections.side[part] = (st.selections.side[part] || 0) + item.free_quantity;
                                 }
@@ -3209,9 +3209,9 @@
                         if (item.free_size) {
                             item.free_size.split(',').forEach(part => {
                                 part = part.trim();
-                                let match = part.match(/^(\d+)x(.*)$/);
+                                let match = part.match(/^(\d+)\s*x?\s*(.*)$/i);
                                 if (match) {
-                                    st.selections.size[match[2]] = (st.selections.size[match[2]] || 0) + parseInt(match[1]);
+                                    st.selections.size[match[2].trim()] = (st.selections.size[match[2].trim()] || 0) + parseInt(match[1]);
                                 } else {
                                     st.selections.size[part] = (st.selections.size[part] || 0) + item.free_quantity;
                                 }
@@ -3301,9 +3301,10 @@
                 let pack = (selectedOption.data('pack') || '').toString().toLowerCase();
                 let code = (selectedOption.data('code') || '').toString().trim();
                 let boxSize = selectedOption.data('boxsize');
-                let stripsPerBox = parseInt(selectedOption.data('stripsperbox')) || 10;
+                let stripsPerBox = parseInt(selectedOption.data('stripsperbox'));
+                let hasStripsPerBox = !isNaN(stripsPerBox) && stripsPerBox > 1;
                 let hasCode = code && code !== '---' && code !== '';
-                let isCount = hasCode || boxSize === '' || boxSize === null || pack.includes('nos') || pack.includes('count');
+                let isCount = hasCode || (!hasStripsPerBox && (boxSize === '' || boxSize === null || pack.includes('nos') || pack.includes('count')));
 
                 let variantsRaw = selectedOption.attr('data-variants') || '';
                 let hasVariants = variantsRaw && variantsRaw.trim() !== '';
@@ -3411,10 +3412,18 @@
                         let item = i.data;
                         let pPack = (item.pack || '').toLowerCase();
                         let hasCode = item.product_code && item.product_code !== '---' && item.product_code.trim() !== '';
-                        let isCount = item.isCount !== undefined ? item.isCount : (hasCode || item.box_size === '' || item.box_size === null || pPack.includes('nos') || pPack.includes('count'));
+                        let stripsPerBox = parseInt(item.stripsPerBox);
+                        let hasStripsPerBox = !isNaN(stripsPerBox) && stripsPerBox > 1;
+                        let isCount = item.isCount !== undefined ? item.isCount : (!hasStripsPerBox && (hasCode || item.box_size === '' || item.box_size === null || pPack.includes('nos') || pPack.includes('count')));
 
                         let allowedUnits = isCount ? ['Nos'] : ['Strips', 'Box'];
                         let unit = item.unit || (isCount ? 'Nos' : 'Strips');
+                        
+                        // Fallback override if the saved unit was 'Nos' but it shouldn't be based on packaging logic
+                        if (!isCount && (unit === 'Nos' || unit === 'No.' || unit === 'Nos.' || unit === 'no' || unit === 'nos')) {
+                            unit = 'Strips';
+                        }
+
                         if (!allowedUnits.includes(unit)) {
                             allowedUnits.push(unit);
                         }
