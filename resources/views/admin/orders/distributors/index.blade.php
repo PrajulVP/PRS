@@ -487,7 +487,7 @@
                                 {{-- <th>Sales Manager</th> Removed --}}
                                 <th style="width: 200px;">Products</th>
                                 <th style="width: 120px;">Brand</th>
-                                <th style="width: 200px;">Free Items</th>
+                                <th style="width: 280px;">Free Items</th>
                                 {{-- <th>Items</th> --}}
                                 {{-- <th>Qty</th> --}}
                                 <th>Total</th>

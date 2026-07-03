@@ -387,6 +387,8 @@ class RetailerOrderController extends Controller
                         $subtotalWithGst = 0;
                         $freeQty = $qty;
                         $qty = 0; // The actual billed quantity is 0
+                        $freeSide = $iSide;
+                        $freeSize = $iSize;
                     } else {
                         $price = (float)$product->ptr; // Retailers buy at PTR
                         $gstRate = (float)($product->gst ?? 0);

@@ -375,6 +375,8 @@ class DistributorOrderApiController extends Controller
                     $subtotalWithGst = 0;
                     $freeQty = $qty;
                     $qty = 0; // Billed quantity is 0
+                    $freeSide = $iSide;
+                    $freeSize = $iSize;
                 } else {
                     $unitPrice = $product->pts;
                     $gstRate = (float)($product->gst ?? 0);

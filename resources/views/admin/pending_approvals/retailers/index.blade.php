@@ -564,7 +564,7 @@
                                 <th>Retailer</th>
                                 <th style="width: 200px;">Products</th>
                                 <th style="width: 120px;">Brand</th>
-                                <th style="width: 200px;">Free Items</th>
+                                <th style="width: 280px;">Free Items</th>
                                 <th>Total</th>
                                 <th>Placed At</th>
                                 <th>Distributor</th>
