@@ -115,7 +115,13 @@ class OrderApiController extends Controller
 
             foreach ($mergedItems as $itemData) {
                 $product = Product::findOrFail($itemData['product_id']);
-                $unit = $itemData['unit'] ?? 'Nos';
+                
+                $unit = ucfirst(strtolower($itemData['unit'] ?? 'Nos'));
+                $availableUnits = $this->getAvailableUnits($product);
+                if (!in_array($unit, $availableUnits)) {
+                    $unit = $availableUnits[0]; // Force to the primary valid unit (e.g., Strips)
+                }
+
                 $qty = (int)$itemData['quantity'];
                 $iSide = $itemData['side'] ?? null;
                 $iSize = $itemData['size'] ?? null;
@@ -135,7 +141,7 @@ class OrderApiController extends Controller
                 if (!isset($productTotals[$product->id])) {
                     $productTotals[$product->id] = ['total_qty' => 0, 'product' => $product];
                 }
-                $productTotals[$product->id]['total_qty'] += $qty; // For schemes based on ordered units
+                $productTotals[$product->id]['total_qty'] += $totalQtyNos; // For schemes based on ordered strips
 
                 $price = (float)$product->ptr;
                 $gstRate = (float)($product->gst ?? 0);
@@ -187,6 +193,33 @@ class OrderApiController extends Controller
                     $variants = [];
                     if ($product->has_variants && !empty($product->variant_options)) {
                         $variants = $product->variant_options;
+                        
+                        // Filter variants based on distributor's available stock
+                        $availableInventory = \App\Models\Inventory::where('distributor_id', $distributor->id)
+                            ->where('product_id', $product->id)
+                            ->where('stock', '>', 0)
+                            ->get();
+
+                        if ($availableInventory->count() > 0) {
+                            $filteredVariants = [];
+                            foreach ($variants as $type => $options) {
+                                $validOptions = [];
+                                foreach ($options as $option) {
+                                    $key = strtolower($type);
+                                    if ($key === 'size') {
+                                        if ($availableInventory->contains('size', $option)) $validOptions[] = $option;
+                                    } elseif ($key === 'side') {
+                                        if ($availableInventory->contains('side', $option)) $validOptions[] = $option;
+                                    } else {
+                                        $validOptions[] = $option;
+                                    }
+                                }
+                                if (!empty($validOptions)) {
+                                    $filteredVariants[$type] = array_values($validOptions);
+                                }
+                            }
+                            $variants = !empty($filteredVariants) ? $filteredVariants : $variants;
+                        }
                     }
                     
                     $eligibleFreeItems[] = [
@@ -282,8 +315,14 @@ class OrderApiController extends Controller
 
             foreach ($mergedItems as $itemData) {
                 $product = Product::findOrFail($itemData['product_id']);
+                
+                $unit = ucfirst(strtolower($itemData['unit'] ?? 'Box'));
+                $availableUnits = $this->getAvailableUnits($product);
+                if (!in_array($unit, $availableUnits)) {
+                    $unit = $availableUnits[0]; // Force to the primary valid unit (e.g., Strips)
+                }
+
                 $unitPrice = $product->pts;
-                $unit = $itemData['unit'] ?? 'Box';
                 $qty = (float)$itemData['quantity'];
                 $iSide = $itemData['side'] ?? null;
                 $iSize = $itemData['size'] ?? null;
@@ -303,7 +342,7 @@ class OrderApiController extends Controller
                 if (!isset($productTotals[$product->id])) {
                     $productTotals[$product->id] = ['total_qty' => 0, 'product' => $product];
                 }
-                $productTotals[$product->id]['total_qty'] += $qty;
+                $productTotals[$product->id]['total_qty'] += $totalQtyStrips; // For schemes based on ordered strips
 
                 $gstRate = (float)($product->gst ?? 0);
                 $taxableSubtotal = $totalQtyStrips * $unitPrice;

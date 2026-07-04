@@ -55,6 +55,12 @@ trait CalculatesPrices
      */
     public function getAvailableUnits(Product $product)
     {
+        // Enforce STRICT "Strips" only policy for all tablet-based medicines
+        $unitsPerStrip = (int)($product->units_per_strip ?? 1);
+        if ($unitsPerStrip > 1) {
+            return ['Strips'];
+        }
+
         $pPack = strtolower($product->pack ?? '');
         $pName = strtolower($product->product_name ?? '');
         $boxSizeStr = $product->box_size ?? '';

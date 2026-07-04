@@ -126,6 +126,9 @@ class ProductController extends Controller
             $data['free_item_threshold'] = $product->free_qty_buy;
             $data['free_item_quantity'] = $product->free_qty_get;
             
+            // Add robust available units using CalculatesPrices trait
+            $data['available_units'] = $this->getAvailableUnits($product);
+            
             // Remove legacy internal field names from response
             unset($data['is_free_eligible']);
             unset($data['free_qty_buy']);

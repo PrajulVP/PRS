@@ -1679,7 +1679,7 @@
                         // Add breakdown if exists
                         const pData = row.product_details || {};
                         const displayStr = window.formatStockBreakdown(data, pData, isNos, unitsPerStrip);
-                        if (displayStr && displayStr !== displayVal.toString() && displayStr !== (displayVal + ' Nos')) {
+                        if (displayStr && displayStr !== displayVal.toString() && displayStr !== (displayVal + ' Nos') && displayStr !== (displayVal + ' Str')) {
                             html += `<div class="small text-muted-theme opacity-75 mt-1" style="font-size: 0.75rem;">${displayStr}</div>`;
                         }
 
@@ -1880,7 +1880,7 @@
                                         ${displayVal} <span class="ms-1 fw-normal opacity-75">${unitText}</span>
                                      </span>`;
                     
-                    if (displayStr && displayStr !== displayVal.toString() && displayStr !== (displayVal + ' Nos')) {
+                    if (displayStr && displayStr !== displayVal.toString() && displayStr !== (displayVal + ' Nos') && displayStr !== (displayVal + ' Str')) {
                         stockHtml += `<div class="small text-muted opacity-75 mt-1" style="font-size: 0.75rem;">${displayStr}</div>`;
                     }
 

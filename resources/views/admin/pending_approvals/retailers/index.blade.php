@@ -1344,6 +1344,19 @@
                 return '';
             };
         }
+        if (typeof window.renderFreeVariantBadge !== 'function') {
+            window.renderFreeVariantBadge = function (item) {
+                let vParts = [];
+                if (item.free_side && item.free_side !== '-' && item.free_side !== 'N/A') vParts.push(item.free_side);
+                if (item.free_size && item.free_size !== '-' && item.free_size !== 'N/A') vParts.push(item.free_size);
+                if (vParts.length > 0) {
+                    return `<span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 0.65rem; padding: 0.25em 0.6em; font-weight: 600;">
+                                ${vParts.join('/').toUpperCase()}
+                            </span>`;
+                }
+                return '';
+            };
+        }
 
         $(document).ready(function () {
             const INITIAL_STATUS = "{{ $defaultStatus }}";
@@ -2759,7 +2772,9 @@
                                                                                                                                                                                     <div class="ai-col-qty fw-bold text-primary v-qty-display" data-original-unit="${item.unit || ''}">
                                                                                                                                                                                         ${orderedQty} ${item.unit || ''}
                                                                                                                                                                                     </div>
-                                                                                                                                                                                    <div class="ai-col-free fw-bold text-success v-free-display" data-id="${orderItemId}">-</div>
+                                                                                                                                                                                    <div class="ai-col-free fw-bold text-success v-free-display" data-id="${orderItemId}">
+                                                                                                                                                                                        ${item.free_quantity > 0 ? `<div class="d-flex flex-column align-items-center justify-content-center gap-1 mt-1"><span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.7rem;"><i class="fa fa-gift me-1"></i>${item.free_quantity}</span>${window.renderFreeVariantBadge(item)}</div>` : '-'}
+                                                                                                                                                                                    </div>
                                                                                                                                                                                     <div class="ai-col-value text-end small text-dark fw-bold v-taxable-display">--</div>
                                                                                                                                                                                     <div class="ai-col-value text-end small text-muted v-gst-display">--</div>
                                                                                                                                                                                     <div class="ai-col-value text-end fw-bold v-net-display">--</div>

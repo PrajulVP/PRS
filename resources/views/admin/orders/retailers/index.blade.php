@@ -1999,9 +1999,9 @@
                         allocated += parseInt($(this).val() || 0);
                     });
 
-                    if (allocated !== ordered) {
+                    if (allocated < ordered) {
                         isValid = false;
-                        $(this).find('.validation-msg').show().text(`Quantity mismatch: Allocated ${allocated} of ${ordered}`);
+                        $(this).find('.validation-msg').show().text(`Quantity mismatch: Allocated ${allocated} but ordered minimum is ${ordered}. Ensure you include all paid and free quantities.`);
                         $(this).find('.allocation-container').addClass('border border-danger rounded p-1');
                     } else {
                         $(this).find('.validation-msg').hide();

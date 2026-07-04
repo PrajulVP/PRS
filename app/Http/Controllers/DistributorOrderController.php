@@ -1285,19 +1285,13 @@ class DistributorOrderController extends Controller
             if (!$product) continue;
 
             $unit = strtolower($item->unit);
-            $freeStrips = $this->convertQuantityToStrips($product, $item->free_quantity ?? 0, $unit);
-            $freeAdded = false;
+            $firstBatch = $item->batches->first();
 
             foreach ($item->batches as $batch) {
                 $qty = $batch->quantity;
                 
                 // Use shared conversion helper for accuracy (handles box, carton, nos/tablets)
                 $totalStrips = $this->convertQuantityToStrips($product, $qty, $unit);
-
-                if (!$freeAdded && $freeStrips > 0) {
-                    $totalStrips += $freeStrips;
-                    $freeAdded = true;
-                }
 
                 $inventory = Inventory::firstOrNew([
                     'distributor_id' => $order->distributor_id,
@@ -1313,9 +1307,12 @@ class DistributorOrderController extends Controller
                     $inventory->product_name = $item->product_name;
                     $inventory->stock = 0;
                 }
+                
+                // Keep product name updated
                 $inventory->product_name = $item->product_name;
 
                 $inventory->stock += $totalStrips;
+                $inventory->save();
 
                 // Copy financial records from the confirmed order batch to the distributor's inventory
                 $inventory->mrp = $batch->mrp;
@@ -1329,8 +1326,79 @@ class DistributorOrderController extends Controller
 
                 $inventory->save();
             }
+
+            // Process Free Items based on free_size variants
+            if ($firstBatch && $item->free_quantity > 0) {
+                if (!empty($item->free_size)) {
+                    $parts = array_map('trim', explode(',', $item->free_size));
+                    foreach ($parts as $part) {
+                        if (preg_match('/^(\d+)\s+(.+)$/', $part, $matches)) {
+                            $fQty = (int)$matches[1];
+                            $fSize = trim($matches[2]);
+                            
+                            $fStrips = $this->convertQuantityToStrips($product, $fQty, $unit);
+                            
+                            $fInventory = Inventory::firstOrNew([
+                                'distributor_id' => $order->distributor_id,
+                                'product_id' => $product->id,
+                                'batch_no' => $firstBatch->batch_no,
+                                'expiry_date' => $firstBatch->expiry_date,
+                                'side' => empty($item->free_side) ? (empty($item->side) ? null : $item->side) : $item->free_side,
+                                'size' => $fSize
+                            ]);
+                            
+                            if (!$fInventory->exists) {
+                                $fInventory->distributor_product_code = $product->product_code ?? '---';
+                                $fInventory->product_name = $product->product_name;
+                                $fInventory->stock = 0;
+                            }
+                            $fInventory->stock += $fStrips;
+                            $fInventory->mrp = $firstBatch->mrp;
+                            $fInventory->ptr = $firstBatch->ptr;
+                            $fInventory->pts = $firstBatch->pts;
+                            $fInventory->taxable_value = $firstBatch->taxable_value;
+                            $fInventory->cgst = $firstBatch->cgst;
+                            $fInventory->sgst = $firstBatch->sgst;
+                            $fInventory->igst = $firstBatch->igst;
+                            $fInventory->net_amount = $firstBatch->net_amount;
+                            
+                            $fInventory->save();
+                        }
+                    }
+                } else {
+                    $fStrips = $this->convertQuantityToStrips($product, $item->free_quantity, $unit);
+                    
+                    $fInventory = Inventory::firstOrNew([
+                        'distributor_id' => $order->distributor_id,
+                        'product_id' => $product->id,
+                        'batch_no' => $firstBatch->batch_no,
+                        'expiry_date' => $firstBatch->expiry_date,
+                        'side' => empty($item->side) ? null : $item->side,
+                        'size' => empty($item->size) ? null : $item->size
+                    ]);
+                    
+                    if (!$fInventory->exists) {
+                        $fInventory->distributor_product_code = $product->product_code ?? '---';
+                        $fInventory->product_name = $item->product_name;
+                        $fInventory->stock = 0;
+                    }
+                    $fInventory->stock += $fStrips;
+
+                    $fInventory->mrp = $firstBatch->mrp;
+                    $fInventory->ptr = $firstBatch->ptr;
+                    $fInventory->pts = $firstBatch->pts;
+                    $fInventory->taxable_value = $firstBatch->taxable_value;
+                    $fInventory->cgst = $firstBatch->cgst;
+                    $fInventory->sgst = $firstBatch->sgst;
+                    $fInventory->igst = $firstBatch->igst;
+                    $fInventory->net_amount = $firstBatch->net_amount;
+
+                    $fInventory->save();
+                }
+            }
         }
     }
+
 
     public function confirmReceipt(DistributorOrder $distributorOrder)
     {

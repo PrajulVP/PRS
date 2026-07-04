@@ -1024,16 +1024,16 @@ class RetailerOrderManagementController extends Controller
                             $pName .= ' [' . implode('/', $vLabel) . ']';
                         }
                         
-                        $extractedFree = isset($allocation['free_quantity']) ? (float)$allocation['free_quantity'] : 0;
-                        if ($extractedFree > 0 && $extractedFree != $orderItem->free_quantity) {
-                            $orderItem->update(['free_quantity' => $extractedFree]);
-                        }
-
-                        $expectedTotal = $orderItem->quantity + ($orderItem->free_quantity ?? 0);
-                        if ($totalAllocated > $expectedTotal) {
-                            $qtyErrors[] = "You ordered {$expectedTotal} (incl. free) but the invoiced quantity is {$totalAllocated} for item: " . $pName;
-                        } elseif ($totalAllocated < $expectedTotal) {
-                            $qtyErrors[] = "Total allocated quantity ({$totalAllocated}) is less than expected quantity ({$expectedTotal}) for item: " . $pName;
+                        $expectedPaid = $orderItem->quantity;
+                        
+                        if ($totalAllocated < $expectedPaid) {
+                            $qtyErrors[] = "Total allocated quantity ({$totalAllocated}) is less than the ordered paid quantity ({$expectedPaid}) for item: " . $pName;
+                        } else {
+                            // Any quantity allocated above the expected paid quantity is automatically assumed to be the free quantity
+                            $autoFreeQty = $totalAllocated - $expectedPaid;
+                            if ($autoFreeQty != $orderItem->free_quantity) {
+                                $orderItem->update(['free_quantity' => $autoFreeQty]);
+                            }
                         }
                     }
 
@@ -1080,6 +1080,8 @@ class RetailerOrderManagementController extends Controller
                                 });
                             }
 
+                            $baseInvQuery = clone $invQuery;
+
                             if ($invId) {
                                 $inventory = $invQuery->findOrFail($invId);
                             } elseif (isset($batchData['batch_no'])) {
@@ -1091,26 +1093,56 @@ class RetailerOrderManagementController extends Controller
                                 throw new \Exception("Inventory ID or Batch Number is required for allocation of {$product->product_name}");
                             }
 
-                            $deductQty = $batchData['quantity'] * $multiplier;
+                            $deductQtyBase = $batchData['quantity'] * $multiplier;
+                            $remainingQtyToDeduct = $deductQtyBase;
 
-                            if ($inventory->stock < $deductQty) {
-                                throw new \Exception("Insufficient stock in batch {$inventory->batch_no} for product {$product->product_name}");
+                            // 1. First, attempt to deduct from the explicitly selected batch
+                            $takeFromPrimary = min($inventory->stock, $remainingQtyToDeduct);
+                            
+                            if ($takeFromPrimary > 0) {
+                                DB::table('inventories')->where('id', $inventory->id)->decrement('stock', $takeFromPrimary);
+                                
+                                \App\Models\RetailerOrderItemBatch::create([
+                                    'retailer_order_item_id' => $orderItem->id,
+                                    'batch_no' => $inventory->batch_no,
+                                    'expiry_date' => $inventory->expiry_date,
+                                    'quantity' => $takeFromPrimary / $multiplier,
+                                ]);
+                                
+                                $remainingQtyToDeduct -= $takeFromPrimary;
                             }
 
-                            // Deduct from Inventory
-                            DB::table('inventories')
-                                ->where('id', $inventory->id)
-                                ->decrement('stock', $deductQty);
+                            // 2. If we still need more, automatically cascade (spillover) to other available batches (FIFO by expiry)
+                            if ($remainingQtyToDeduct > 0) {
+                                // Clone the base query to find other batches of the EXACT SAME variant
+                                $otherBatches = (clone $baseInvQuery)
+                                    ->where('id', '!=', $inventory->id)
+                                    ->where('stock', '>', 0)
+                                    ->orderBy('expiry_date', 'asc')
+                                    ->get();
 
-                            // Record in RetailerOrderItemBatch
-                            \App\Models\RetailerOrderItemBatch::create([
-                                'retailer_order_item_id' => $orderItem->id,
-                                'batch_no' => $inventory->batch_no,
-                                'expiry_date' => $inventory->expiry_date,
-                                'quantity' => $batchData['quantity'], // Keep original unit qty or strip qty? 
-                                // Usually better to record in strips for consistency?
-                                // Looking at existing code, it records $batchData['quantity'].
-                            ]);
+                                foreach ($otherBatches as $otherBatch) {
+                                    if ($remainingQtyToDeduct <= 0) break;
+
+                                    $takeFromOther = min($otherBatch->stock, $remainingQtyToDeduct);
+                                    
+                                    DB::table('inventories')->where('id', $otherBatch->id)->decrement('stock', $takeFromOther);
+                                    
+                                    \App\Models\RetailerOrderItemBatch::create([
+                                        'retailer_order_item_id' => $orderItem->id,
+                                        'batch_no' => $otherBatch->batch_no,
+                                        'expiry_date' => $otherBatch->expiry_date,
+                                        'quantity' => $takeFromOther / $multiplier,
+                                    ]);
+                                    
+                                    $remainingQtyToDeduct -= $takeFromOther;
+                                }
+
+                                // 3. If after exhausting all other batches we still haven't met the requirement, throw an error
+                                if ($remainingQtyToDeduct > 0) {
+                                    throw new \Exception("Insufficient total stock across all available batches for product {$product->product_name}. You are short by " . ($remainingQtyToDeduct / $multiplier) . " items.");
+                                }
+                            }
 
                             $totalAllocated += $batchData['quantity'];
                         }
