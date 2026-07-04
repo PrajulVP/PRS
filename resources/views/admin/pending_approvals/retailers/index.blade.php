@@ -3225,9 +3225,7 @@
                             if (billedQty !== orderedQty) {
                                 let diffClass = billedQty > orderedQty ? 'text-primary' : 'text-danger';
                                 displayQty += ` <br><small class="${diffClass} fw-bold" style="font-size: 0.65rem;">(Ord: ${orderedQty})</small>`;
-                                if (billedQty > orderedQty) {
-                                    window.qtyMismatchProducts.push(`You ordered ${orderedQty} but the invoiced quantity is ${billedQty} for item: ${productName}`);
-                                }
+                                window.qtyMismatchProducts.push(`You ordered ${orderedQty} but the invoiced quantity is ${billedQty} for item: ${productName}`);
                             }
                             vRow.find('.v-qty-display').html(displayQty);
                             
