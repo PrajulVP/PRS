@@ -513,4 +513,24 @@ class OrderApiController extends Controller
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
+
+    private function getAvailableUnits($product)
+    {
+        $units = [];
+        if ($product->units_per_strip > 1) {
+            $units[] = 'Strips';
+        } else {
+            $units[] = 'Nos';
+        }
+        
+        if ($product->strips_per_box > 0) {
+            $units[] = 'Box';
+        }
+        
+        if ($product->boxes_per_carton > 0) {
+            $units[] = 'Carton';
+        }
+        
+        return empty($units) ? ['Nos'] : $units;
+    }
 }
