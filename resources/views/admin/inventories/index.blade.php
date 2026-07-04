@@ -1410,12 +1410,25 @@
             window.checkIsNos = function(pName, pPack, boxSize) {
                 pName = (pName || '').toLowerCase();
                 pPack = (pPack || '').toLowerCase();
-                let isNos = (boxSize === "" || boxSize === null || boxSize === undefined);
-                if (!isNos) {
-                    const nosKeywords = ['nos', 'count', 'pair', 'bottle', 'ml', 'gm', 'syp', 'syrup', 'drop', 'ointment', 'belt', 'cap', 'binder', 'splint', 'brace', 'cuff', 'walker'];
-                    isNos = nosKeywords.some(kw => pPack.includes(kw) || pName.includes(kw));
+                
+                // Detect tablet/strip packaging explicitly
+                if (pPack.includes('*') || pPack.includes('x') || pPack.includes("'s") || pPack.includes('strip')) {
+                    return false; // It's Strips, not Nos
                 }
-                return isNos;
+                
+                // Detect Nos/count packaging explicitly
+                const nosKeywords = ['nos', 'count', 'pair', 'bottle', 'ml', 'gm', 'syp', 'syrup', 'drop', 'ointment', 'belt', 'binder', 'splint', 'brace', 'cuff', 'walker'];
+                if (nosKeywords.some(kw => pPack.includes(kw) || pName.includes(kw))) {
+                    return true;
+                }
+
+                // If name says tab or capsule, it's strips (ensure 'cap' doesn't conflict with Knee cap which is caught by 'pair' above)
+                if (pName.includes('tab') || pName.includes('capsule') || pName.includes('cap ')) {
+                    return false;
+                }
+                
+                // Fallback: If no explicit box size string, treat as Nos
+                return (boxSize === "" || boxSize === null || boxSize === undefined);
             }
 
             window.formatStockBreakdown = function(data, productDetails, isNos, unitsPerStrip) {
@@ -1646,13 +1659,14 @@
                         let pPack = row.product_details.pack ? row.product_details.pack.toLowerCase() : '';
                         let pName = row.product_name ? row.product_name.toLowerCase() : '';
                         let boxSizeStr = row.product_details.box_size || '';
-                        let isNos = boxSizeStr === "" || pPack.includes('nos') || pPack.includes('count') || pPack.includes('pair');
+                        let isNos = window.checkIsNos(pName, pPack, boxSizeStr);
                         
                         if (isNos) {
                             displayVal = Math.round(data * unitsPerStrip);
                         }
 
-                        let html = `<span class="fw-bold ${data > 0 ? 'text-success' : 'text-danger'}">${displayVal}</span>`;
+                        let unitText = isNos ? 'Nos' : 'Strips';
+                        let html = `<span class="fw-bold ${data > 0 ? 'text-success' : 'text-danger'}">${displayVal} <span style="font-size: 0.75rem; font-weight: normal; opacity: 0.8;">${unitText}</span></span>`;
 
                         // Add breakdown if exists
                         const pData = row.product_details || {};
@@ -1852,8 +1866,9 @@
                         displayVal = Math.round(b.stock * unitsPerStrip);
                     }
                     
+                    let unitText = isNos ? 'Nos' : 'Strips';
                     let stockHtml = `<span class="badge ${b.stock > 0 ? 'bg-soft-success text-success' : 'bg-soft-danger text-danger'} rounded-pill px-3 fw-bold" style="font-size: 0.85rem; border: 1px solid rgba(0,0,0,0.05);">
-                                        ${displayVal}
+                                        ${displayVal} <span class="ms-1 fw-normal opacity-75">${unitText}</span>
                                      </span>`;
                     
                     if (displayStr && displayStr !== displayVal.toString() && displayStr !== (displayVal + ' Nos')) {
