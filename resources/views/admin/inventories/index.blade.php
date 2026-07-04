@@ -664,7 +664,8 @@
                                              var pPack = (selected.getAttribute('data-pack') || '').toLowerCase();
 
                                              // Refined Unit Logic: Use global helper
-                                             var isCount = window.checkIsNos(pName, pPack, boxSizeStr);
+                                             let tempUnitsPerStrip = pDetails.units_per_strip || 1;
+                                            var isCount = window.checkIsNos(pName, pPack, boxSizeStr, tempUnitsPerStrip);
 
                                              var unitSelect = calcUnit;
                                              var totalLabel = document.getElementById('create_stock_label');
@@ -1407,8 +1408,15 @@
                 return 'Medical Supply';
             }
 
-            window.checkIsNos = function(pName, pPack, boxSize) {
+            window.checkIsNos = function(pName, pPack, boxSize, unitsPerStrip = 1) {
                 pName = (pName || '').toLowerCase();
+                pPack = (pPack || '').toLowerCase();
+                unitsPerStrip = parseInt(unitsPerStrip) || 1;
+                
+                // If the product has multiple items per strip (e.g. 10 tablets per strip), it is definitely Strips
+                if (unitsPerStrip > 1) {
+                    return false;
+                }
                 pPack = (pPack || '').toLowerCase();
                 
                 // Detect tablet/strip packaging explicitly
@@ -1659,7 +1667,7 @@
                         let pPack = row.product_details.pack ? row.product_details.pack.toLowerCase() : '';
                         let pName = row.product_name ? row.product_name.toLowerCase() : '';
                         let boxSizeStr = row.product_details.box_size || '';
-                        let isNos = window.checkIsNos(pName, pPack, boxSizeStr);
+                        let isNos = window.checkIsNos(pName, pPack, boxSizeStr, unitsPerStrip);
                         
                         if (isNos) {
                             displayVal = Math.round(data * unitsPerStrip);
@@ -1770,7 +1778,8 @@
                 $('#edit_batch_no').val(data.batch_no);
 
                 const product = data.product_details || {};
-                const isNos = window.checkIsNos(data.product_name, product.pack, product.box_size);
+                const unitsPerStrip = product.units_per_strip || 1;
+                const isNos = window.checkIsNos(data.product_name, product.pack, product.box_size, unitsPerStrip);
                 
                 // Populate Detail Card with fallbacks
                 $('#edit_detail_mrp').text(product.mrp ?? '0.00');
@@ -1850,7 +1859,7 @@
                 
                 $('#batchListModal .text-muted.smaller').text(packParts.length > 0 ? packParts.join(' | ') : 'Inventory');
 
-                const isNos = window.checkIsNos(row.product_name, pData.pack, pData.box_size);
+                const isNos = window.checkIsNos(row.product_name, pData.pack, pData.box_size, unitsPerStrip);
                 const baseStr = isNos ? 'Nos' : 'Str';
 
                 // Re-init the minimal toggle to Add
