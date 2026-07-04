@@ -855,7 +855,7 @@
             };
 
             var table = $('#orders-table').DataTable({
-                order: [[8, 'desc']],
+                order: [[9, 'desc']],
                 autoWidth: false,
                 dom: "<'row mb-3'<'col-sm-12'B>>" +
                     "<'row mb-4 gy-4 d-flex align-items-center'<'col-12 col-lg-4 d-flex justify-content-center justify-content-lg-start'l><'col-12 col-lg-4 d-flex justify-content-center payment-filter-container'><'col-12 col-lg-4 d-flex justify-content-center justify-content-lg-end'f>>" +
