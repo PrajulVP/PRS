@@ -102,22 +102,29 @@ class RetailerOrderController extends Controller
                     'items'          => $order->items->groupBy(function($item) {
                         $side = $item->side ? trim(strtolower($item->side)) : '';
                         $size = $item->size ? trim(strtolower($item->size)) : '';
-                        return $item->product_id . '-' . $side . '-' . $size;
+                        $isFree = $item->unit_price == 0 ? 'free' : 'paid';
+                        return $item->product_id . '-' . $side . '-' . $size . '-' . $isFree;
                     })->map(function ($group) {
                         $item = $group->first();
+                        $isFreeItem = $item->unit_price == 0;
+                        $baseName = $item->product ? $item->product->product_name : $item->product_name;
+                        
                         return [
+                            'id'         => $item->id,
                             'product_id' => $item->product_id,
-                            'product_name' => $item->product ? $item->product->product_name : $item->product_name,
-                            'quantity'   => $group->sum('quantity'),
+                            'product_name' => $isFreeItem ? $baseName . ' (Free)' : $baseName,
+                            'quantity'   => $isFreeItem ? $group->sum('free_quantity') : $group->sum('quantity'),
                             'free_quantity' => $group->sum('free_quantity'),
                             'unit'       => $item->unit ?? 'Nos',
                             'unit_price' => (float)$item->unit_price,
                             'subtotal'   => (float)$group->sum('total_amount'),
+                            'total_amount' => (float)$group->sum('total_amount'),
                             'side'       => $item->side,
                             'size'       => $item->size,
                             'free_side'  => $group->pluck('free_side')->filter()->first() ? preg_replace('/(\d+)x/', '$1 ', $group->pluck('free_side')->filter()->first()) : null,
                             'free_size'  => $group->pluck('free_size')->filter()->first() ? preg_replace('/(\d+)x/', '$1 ', $group->pluck('free_size')->filter()->first()) : null,
-                            'is_free'    => $group->sum('quantity') == 0,
+                            'is_free'    => $isFreeItem,
+                            'price'      => (float)$item->unit_price,
                             'free_item_quantity' => $item->product ? (int)$item->product->free_qty_get : 0,
                             'free_item_threshold' => $item->product ? (int)$item->product->free_qty_buy : 0,
                         ];

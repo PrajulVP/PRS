@@ -646,23 +646,29 @@ class DistributorOrderApiController extends Controller
             'items' => $order->items->groupBy(function($item) {
                 $side = $item->side ? trim(strtolower($item->side)) : '';
                 $size = $item->size ? trim(strtolower($item->size)) : '';
-                return $item->product_id . '-' . $side . '-' . $size;
+                $isFree = $item->price == 0 ? 'free' : 'paid';
+                return $item->product_id . '-' . $side . '-' . $size . '-' . $isFree;
             })->map(function ($group) {
                 $item = $group->first();
+                $isFreeItem = $item->price == 0;
+                $baseName = $item->product->product_name ?? $item->product_name ?? 'N/A';
+                
                 return [
                     'id' => $item->id,
                     'product_id' => $item->product_id,
-                    'product_name' => $item->product->product_name ?? $item->product_name ?? 'N/A',
-                    'quantity' => $group->sum('quantity'),
+                    'product_name' => $isFreeItem ? $baseName . ' (Free)' : $baseName,
+                    'quantity' => $isFreeItem ? $group->sum('free_quantity') : $group->sum('quantity'),
                     'free_quantity' => $group->sum('free_quantity'),
                     'unit' => $item->unit,
                     'side' => $item->side,
                     'size' => $item->size,
                     'free_side' => $group->pluck('free_side')->filter()->first() ? preg_replace('/(\d+)x/', '$1 ', $group->pluck('free_side')->filter()->first()) : null,
                     'free_size' => $group->pluck('free_size')->filter()->first() ? preg_replace('/(\d+)x/', '$1 ', $group->pluck('free_size')->filter()->first()) : null,
-                    'price' => $item->price,
-                    'subtotal' => $group->sum('subtotal'),
-                    'is_free' => $group->sum('quantity') == 0,
+                    'price' => (float)$item->price,
+                    'unit_price' => (float)$item->price,
+                    'subtotal' => (float)$group->sum('subtotal'),
+                    'total_amount' => (float)$group->sum('subtotal'),
+                    'is_free' => $isFreeItem,
                     'free_item_quantity' => $item->product ? (int)$item->product->free_qty_get : 0,
                     'free_item_threshold' => $item->product ? (int)$item->product->free_qty_buy : 0,
                     'batches' => $group->flatMap->batches->map(function ($b) {

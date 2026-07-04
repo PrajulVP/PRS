@@ -624,12 +624,20 @@ class SalesManagerDashboardApiController extends Controller
                     'order_value' => $order->total_amount,
                     'date' => $order->updated_at->format('Y-m-d H:i:s'),
                     'items' => $order->items->map(function ($item) {
+                        $isFreeItem = $item->unit_price == 0;
+                        $baseName = $item->product->product_name ?? 'Unknown';
+
                         return [
                             'product_id' => $item->product_id,
-                            'product_name' => $item->product->product_name ?? 'Unknown',
+                            'product_name' => $isFreeItem ? $baseName . ' (Free)' : $baseName,
                             'brand' => $item->product->brand ?? 'N/A',
-                            'quantity' => $item->quantity,
+                            'quantity' => $isFreeItem ? $item->free_quantity : $item->quantity,
+                            'free_quantity' => $item->free_quantity,
+                            'is_free' => $isFreeItem,
+                            'price' => (float)$item->unit_price,
                             'unit' => $item->unit ?? 'N/A',
+                            'side' => $item->side,
+                            'size' => $item->size,
                             'unit_price' => $item->unit_price,
                             'total_amount' => $item->total_amount
                         ];
@@ -693,13 +701,18 @@ class SalesManagerDashboardApiController extends Controller
                 'payment_status' => $order->payment_status ?? null,
                 'placed_at' => $order->placed_at ? $order->placed_at->format('Y-m-d H:i:s') : null,
                 'items' => $order->items->map(function ($item) {
+                    $isFreeItem = $item->unit_price == 0;
+                    $baseName = $item->product_name ?? $item->product->product_name ?? 'N/A';
+                    
                     return [
                         'id' => $item->id,
                         'product_id' => $item->product_id,
-                        'product_name' => $item->product_name ?? $item->product->product_name ?? 'N/A',
+                        'product_name' => $isFreeItem ? $baseName . ' (Free)' : $baseName,
                         'brand' => $item->product->brand ?? null,
-                        'quantity' => $item->quantity,
+                        'quantity' => $isFreeItem ? $item->free_quantity : $item->quantity,
                         'free_quantity' => $item->free_quantity,
+                        'is_free' => $isFreeItem,
+                        'price' => (float)$item->unit_price,
                         'unit' => $item->unit ?? 'Nos',
                         'side' => $item->side,
                         'size' => $item->size,

@@ -37,4 +37,9 @@ class DistributorOrderItem extends Model
     {
         return $this->hasMany(DistributorOrderItemBatch::class, 'distributor_order_item_id');
     }
+
+    public function getIsFreeAttribute()
+    {
+        return (float)$this->price == 0;
+    }
 }

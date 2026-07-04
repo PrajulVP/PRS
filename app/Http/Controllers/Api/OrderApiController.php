@@ -101,12 +101,14 @@ class OrderApiController extends Controller
             $mergedItems = collect($items)->groupBy(function($i) {
                 $side = isset($i['side']) ? trim(strtolower($i['side'])) : '';
                 $size = isset($i['size']) ? trim(strtolower($i['size'])) : '';
-                return $i['product_id'] . '-' . $side . '-' . $size;
+                $isFree = isset($i['is_free']) && $i['is_free'] ? '1' : '0';
+                return $i['product_id'] . '-' . $side . '-' . $size . '-' . $isFree;
             })->map(function($group) {
                 $first = $group->first();
                 $first['quantity'] = $group->sum('quantity');
                 $first['side'] = isset($first['side']) ? trim($first['side']) : null;
                 $first['size'] = isset($first['size']) ? trim($first['size']) : null;
+                $first['is_free'] = isset($first['is_free']) ? (bool)$first['is_free'] : false;
                 return $first;
             });
 
@@ -143,7 +145,8 @@ class OrderApiController extends Controller
                 }
                 $productTotals[$product->id]['total_qty'] += $totalQtyNos; // For schemes based on ordered strips
 
-                $price = (float)$product->ptr;
+                $isFree = isset($itemData['is_free']) ? (bool)$itemData['is_free'] : false;
+                $price = $isFree ? 0 : (float)$product->ptr;
                 $gstRate = (float)($product->gst ?? 0);
                 $taxableSubtotal = $totalQtyNos * $price;
                 $subtotalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
@@ -157,8 +160,8 @@ class OrderApiController extends Controller
                 $order->items()->create([
                     'product_id' => $product->id,
                     'product_name' => $finalProductName,
-                    'quantity' => $qty,
-                    'free_quantity' => 0,
+                    'quantity' => $isFree ? 0 : $qty,
+                    'free_quantity' => $isFree ? $qty : 0,
                     'unit' => $unit,
                     'unit_price' => $price,
                     'total_amount' => $subtotalWithGst,
@@ -166,9 +169,11 @@ class OrderApiController extends Controller
                     'size' => $iSize,
                 ]);
 
-                $totalAmount += $subtotalWithGst;
+                if (!$isFree) {
+                    $totalAmount += $subtotalWithGst;
+                    $totalQuantityNos += $totalQtyNos;
+                }
                 $totalItemsCount++;
-                $totalQuantityNos += $totalQtyNos;
             }
 
             $order->update([
@@ -302,12 +307,14 @@ class OrderApiController extends Controller
             $mergedItems = collect($items)->groupBy(function($i) {
                 $side = isset($i['side']) ? trim(strtolower($i['side'])) : '';
                 $size = isset($i['size']) ? trim(strtolower($i['size'])) : '';
-                return $i['product_id'] . '-' . $side . '-' . $size;
+                $isFree = isset($i['is_free']) && $i['is_free'] ? '1' : '0';
+                return $i['product_id'] . '-' . $side . '-' . $size . '-' . $isFree;
             })->map(function($group) {
                 $first = $group->first();
                 $first['quantity'] = $group->sum('quantity');
                 $first['side'] = isset($first['side']) ? trim($first['side']) : null;
                 $first['size'] = isset($first['size']) ? trim($first['size']) : null;
+                $first['is_free'] = isset($first['is_free']) ? (bool)$first['is_free'] : false;
                 return $first;
             });
 
@@ -322,7 +329,8 @@ class OrderApiController extends Controller
                     $unit = $availableUnits[0]; // Force to the primary valid unit (e.g., Strips)
                 }
 
-                $unitPrice = $product->pts;
+                $isFree = isset($itemData['is_free']) ? (bool)$itemData['is_free'] : false;
+                $unitPrice = $isFree ? 0 : $product->pts;
                 $qty = (float)$itemData['quantity'];
                 $iSide = $itemData['side'] ?? null;
                 $iSize = $itemData['size'] ?? null;
@@ -339,10 +347,12 @@ class OrderApiController extends Controller
 
                 $totalQtyStrips = $qty * $multiplier;
                 
-                if (!isset($productTotals[$product->id])) {
-                    $productTotals[$product->id] = ['total_qty' => 0, 'product' => $product];
+                if (!$isFree) {
+                    if (!isset($productTotals[$product->id])) {
+                        $productTotals[$product->id] = ['total_qty' => 0, 'product' => $product];
+                    }
+                    $productTotals[$product->id]['total_qty'] += $totalQtyStrips;
                 }
-                $productTotals[$product->id]['total_qty'] += $totalQtyStrips; // For schemes based on ordered strips
 
                 $gstRate = (float)($product->gst ?? 0);
                 $taxableSubtotal = $totalQtyStrips * $unitPrice;
@@ -351,8 +361,8 @@ class OrderApiController extends Controller
                 $order->items()->create([
                     'product_id' => $product->id,
                     'product_name' => $product->product_name,
-                    'quantity' => $qty,
-                    'free_quantity' => 0,
+                    'quantity' => $isFree ? 0 : $qty,
+                    'free_quantity' => $isFree ? $qty : 0,
                     'unit' => $unit,
                     'price' => (float)$unitPrice,
                     'subtotal' => $subtotalWithGst,
@@ -362,9 +372,11 @@ class OrderApiController extends Controller
                     'free_size' => null,
                 ]);
 
-                $totalAmount += $subtotalWithGst;
+                if (!$isFree) {
+                    $totalAmount += $subtotalWithGst;
+                    $totalQuantityStrips += $totalQtyStrips;
+                }
                 $totalItemsCount++;
-                $totalQuantityStrips += $totalQtyStrips;
             }
 
             $order->update([
