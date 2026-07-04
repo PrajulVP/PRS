@@ -2848,8 +2848,14 @@
                 const file = this.files[0];
                 if (!file) return;
 
-                // Unlock the invoice number field
+                // Unlock the invoice number field and CLEAR PREVIOUS STATE
                 $('#retailer_invoice_no_input').prop('readonly', false).attr('placeholder', 'Enter invoice number...');
+                $('#retailer_invoice_no_input').val('');
+                $('#meta_invoice_no').text('--');
+                $('#retailer_invoice_no_input').removeData('extracted');
+                $('#retailer_invoice_no_input').removeData('extracted-raw');
+                
+                $('#ai_retailer_validation_alert').addClass('d-none');
 
                 $('#ocr_dropzone').addClass('d-none'); // Hide the dropzone
                 $('#results_loading_spinner').removeClass('d-none'); // Show loading spinner
@@ -3044,8 +3050,8 @@
                     }
 
                     if (hasError) {
-                        // Show warning but no longer block product mapping
-                        $('#btnSubmitDistributorApprove').prop('disabled', meta.is_duplicate); 
+                        // Strictly block approval if there is any mismatch or duplicate error
+                        $('#btnSubmitDistributorApprove').prop('disabled', true); 
                     } else {
                         $('#btnSubmitDistributorApprove').prop('disabled', false);
                     }

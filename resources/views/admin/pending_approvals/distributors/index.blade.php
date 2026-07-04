@@ -2465,9 +2465,6 @@
                 const file = this.files[0];
                 if (!file) return;
 
-                // Unlock the invoice number field
-                $('#retailer_invoice_no_input').prop('readonly', false).attr('placeholder', 'Enter invoice number...');
-
                 // Switch UI to processing
                 $('#ocr_processing_state').removeClass('d-none');
                 $('#automation_idle_state').addClass('d-none');
@@ -2476,8 +2473,14 @@
                 $('#ocr_dropzone').removeClass('has-file');
                 $('#btn_approve_order').prop('disabled', true);
 
-                // Unlock the invoice number field
+                // Unlock the invoice number field and CLEAR PREVIOUS STATE
                 $('#invoice_no_input').prop('readonly', false).attr('placeholder', 'Enter the official invoice number...');
+                $('#invoice_no_input').val('');
+                $('#extract_invoice_no').text('--');
+                $('#invoice_no_input').removeData('extracted');
+                $('#invoice_no_input').removeData('extracted-raw');
+                
+                $('#ai_validation_alert').addClass('d-none');
 
                 $('#ocr_progress_bar').css('width', '50%');
                 $('#ocr_status_text').text('AI is analyzing your invoice...');
@@ -2629,8 +2632,8 @@
                 $('#invoice_no_input').data('is-duplicate', meta.is_duplicate);
 
                 if (hasError) {
-                    // Show warning but no longer block product mapping
-                    $('#btn_approve_order').prop('disabled', meta.is_duplicate); // Still block duplicates
+                    // Strictly block approval if there is any mismatch or duplicate error
+                    $('#btn_approve_order').prop('disabled', true); 
                 } else {
                     $('#btn_approve_order').prop('disabled', false);
                 }
