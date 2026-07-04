@@ -2969,7 +2969,7 @@
                     "Orders"
                 ],
                 "summary": "Place new order (Retailer or Distributor based on payload)",
-                "description": "Unified Order Creation Endpoint",
+                "description": "Step 1 of the 2-step ordering process. Places the base order, creates the order record, calculates the total bill, and triggers notifications. Returns the generated order_id and a list of eligible free items to be presented in the UI (e.g. Bottom Sheet).",
                 "operationId": "e7be4cae1f1a994f1c7a58881f487441",
                 "requestBody": {
                     "required": true,
@@ -2978,11 +2978,13 @@
                             "schema": {
                                 "properties": {
                                     "retailer_id": {
+                                        "description": "Omit if Distributor order",
                                         "type": "integer",
                                         "example": 12,
                                         "nullable": true
                                     },
                                     "distributor_id": {
+                                        "description": "Required for Distributor order, optional for Retailer order",
                                         "type": "integer",
                                         "example": 27,
                                         "nullable": true
@@ -3023,7 +3025,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Order created with eligible free items"
+                        "description": "Order created successfully with eligible free items returned for Step 2 selection."
                     }
                 },
                 "security": [
@@ -3039,11 +3041,13 @@
                     "Orders"
                 ],
                 "summary": "Attach free items to an order (Retailer or Distributor)",
+                "description": "Step 2 of the 2-step ordering process. Attaches user-selected free variants from the UI Bottom Sheet to the base order created in Step 1. Ensures the main paid order is secured first.",
                 "operationId": "464470663658468e6e6634b14e6974a7",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "The order_id generated from the Step 1 POST /api/orders call",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -3091,7 +3095,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Free items attached successfully"
+                        "description": "Free items attached successfully to the already placed base order."
                     }
                 },
                 "security": [

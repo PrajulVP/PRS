@@ -27,11 +27,12 @@ class OrderApiController extends Controller
      *     summary="Place new order (Retailer or Distributor based on payload)",
      *     tags={"Orders"},
      *     security={{"bearerAuth":{}}},
+     *     description="Step 1 of the 2-step ordering process. Places the base order, creates the order record, calculates the total bill, and triggers notifications. Returns the generated order_id and a list of eligible free items to be presented in the UI (e.g. Bottom Sheet).",
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             @OA\Property(property="retailer_id", type="integer", nullable=true, example=12),
-     *             @OA\Property(property="distributor_id", type="integer", nullable=true, example=27),
+     *             @OA\Property(property="retailer_id", type="integer", nullable=true, description="Omit if Distributor order", example=12),
+     *             @OA\Property(property="distributor_id", type="integer", nullable=true, description="Required for Distributor order, optional for Retailer order", example=27),
      *             @OA\Property(property="items", type="array", @OA\Items(
      *                 @OA\Property(property="product_id", type="integer", example=15),
      *                 @OA\Property(property="quantity", type="integer", example=5),
@@ -41,7 +42,7 @@ class OrderApiController extends Controller
      *             ))
      *         )
      *     ),
-     *     @OA\Response(response=200, description="Order created with eligible free items")
+     *     @OA\Response(response=200, description="Order created successfully with eligible free items returned for Step 2 selection.")
      * )
      */
     public function store(Request $request)
@@ -399,7 +400,8 @@ class OrderApiController extends Controller
      *     summary="Attach free items to an order (Retailer or Distributor)",
      *     tags={"Orders"},
      *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     description="Step 2 of the 2-step ordering process. Attaches user-selected free variants from the UI Bottom Sheet to the base order created in Step 1. Ensures the main paid order is secured first.",
+     *     @OA\Parameter(name="id", in="path", required=true, description="The order_id generated from the Step 1 POST /api/orders call", @OA\Schema(type="integer")),
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
@@ -412,7 +414,7 @@ class OrderApiController extends Controller
      *             ))
      *         )
      *     ),
-     *     @OA\Response(response=200, description="Free items attached successfully")
+     *     @OA\Response(response=200, description="Free items attached successfully to the already placed base order.")
      * )
      */
     public function addFreeItems(Request $request, $id)
