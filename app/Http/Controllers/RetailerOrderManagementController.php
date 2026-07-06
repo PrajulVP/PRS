@@ -1005,7 +1005,9 @@ class RetailerOrderManagementController extends Controller
             try {
                 DB::beginTransaction();
 
-                // 1. Batch Allocation Logic
+                // 1. Batch Allocation Logic (Paid Items from Invoice)
+                $allocatedOrderItemIds = [];
+                
                 if ($request->has('items_batches')) {
                     $itemsBatches = $request->items_batches; // Expected: [ {order_item_id: X, batches: [ {id: Y, quantity: Z} ]} ]
                     
@@ -1028,13 +1030,8 @@ class RetailerOrderManagementController extends Controller
                         
                         if ($totalAllocated < $expectedPaid) {
                             $qtyErrors[] = "Total allocated quantity ({$totalAllocated}) is less than the ordered paid quantity ({$expectedPaid}) for item: " . $pName;
-                        } else {
-                            // Any quantity allocated above the expected paid quantity is automatically assumed to be the free quantity
-                            $autoFreeQty = $totalAllocated - $expectedPaid;
-                            if ($autoFreeQty != $orderItem->free_quantity) {
-                                $orderItem->update(['free_quantity' => $autoFreeQty]);
-                            }
                         }
+                        // We NO LONGER overwrite free_quantity here. We trust the free_quantity already set on the order item.
                     }
 
                     if (!empty($qtyErrors)) {
@@ -1043,14 +1040,23 @@ class RetailerOrderManagementController extends Controller
 
                     foreach ($itemsBatches as $allocation) {
                         $orderItem = $retailerOrder->items()->findOrFail($allocation['order_item_id']);
+                        $allocatedOrderItemIds[] = $orderItem->id;
                         $product = $orderItem->product;
                         // Conversion Factor using shared helper
                         $multiplier = $this->convertQuantityToStrips($product, 1, $orderItem->unit);
                         $totalAllocated = 0;
+                        
+                        $totalPaidQtyStrips = $orderItem->quantity * $multiplier;
+                        $currentlyAllocatedStrips = 0;
+                        
                         if ($orderItem->batches) {
                             $orderItem->batches()->delete(); // Clear existing batches
                         }
                         foreach ($allocation['batches'] as $batchData) {
+                            if ($currentlyAllocatedStrips >= $totalPaidQtyStrips) {
+                                break; // We have already allocated the required PAID quantity. Ignore excess from UI.
+                            }
+                            
                             $invId = isset($batchData['inventory_id']) ? str_replace(['"', "'"], '', $batchData['inventory_id']) : null;
 
                             $invQuery = \App\Models\Inventory::where('distributor_id', $distributor->id)
@@ -1094,6 +1100,12 @@ class RetailerOrderManagementController extends Controller
                             }
 
                             $deductQtyBase = $batchData['quantity'] * $multiplier;
+                            
+                            // Cap the deduction for this batch so we don't exceed the total paid quantity
+                            if ($currentlyAllocatedStrips + $deductQtyBase > $totalPaidQtyStrips) {
+                                $deductQtyBase = $totalPaidQtyStrips - $currentlyAllocatedStrips;
+                            }
+                            
                             $remainingQtyToDeduct = $deductQtyBase;
 
                             // 1. First, attempt to deduct from the explicitly selected batch
@@ -1144,41 +1156,91 @@ class RetailerOrderManagementController extends Controller
                                 }
                             }
 
-                            $totalAllocated += $batchData['quantity'];
+                            $totalAllocated += ($deductQtyBase / $multiplier);
+                            $currentlyAllocatedStrips += $deductQtyBase;
                         }
                     }
-                } else {
-                    // Fallback to FEFO if no manual batches provided (Optional: Remove if you want to FORCE manual allocation)
-                    foreach ($retailerOrder->items as $orderItem) {
-                        $product = $orderItem->product;
+                }
 
-                        // Conversion Factor using shared helper
-                        $multiplier = $this->convertQuantityToStrips($product, 1, $orderItem->unit);
+                // 2. Auto-Deduct Free Quantities (and any unallocated items) via FEFO
+                // This correctly deducts free items that don't have batches specified on the invoice.
+                foreach ($retailerOrder->items as $orderItem) {
+                    $product = $orderItem->product;
+                    $multiplier = $this->convertQuantityToStrips($product, 1, $orderItem->unit);
+                    
+                    $isAllocated = in_array($orderItem->id, $allocatedOrderItemIds);
+                    $neededForAutoDeduction = $isAllocated ? $orderItem->free_quantity : ($orderItem->quantity + $orderItem->free_quantity);
+                    
+                    if ($neededForAutoDeduction <= 0) continue;
 
-                        $neededStrips = $orderItem->quantity * $multiplier;
+                    $deductionTasks = [];
+
+                    // Parse comma-separated variants with quantities like "2 M, 2 S"
+                    if (!empty($orderItem->free_size) && preg_match('/^\d+\s+/', trim($orderItem->free_size))) {
+                        $parts = array_map('trim', explode(',', $orderItem->free_size));
+                        foreach ($parts as $part) {
+                            if (preg_match('/^(\d+)\s+(.+)$/', $part, $matches)) {
+                                $deductionTasks[] = [
+                                    'qty' => (int)$matches[1],
+                                    'side' => $orderItem->free_side ?: $orderItem->side, // Fallback to main side if free_side is empty
+                                    'size' => trim($matches[2])
+                                ];
+                            } else {
+                                // Fallback for unparseable part
+                                $deductionTasks[] = [
+                                    'qty' => $orderItem->free_quantity, 
+                                    'side' => $orderItem->free_side ?: $orderItem->side,
+                                    'size' => $part
+                                ];
+                            }
+                        }
+                        
+                        // If unallocated, we must also deduct the paid quantity
+                        if (!$isAllocated && $orderItem->quantity > 0) {
+                            $deductionTasks[] = [
+                                'qty' => $orderItem->quantity,
+                                'side' => $orderItem->side,
+                                'size' => $orderItem->size
+                            ];
+                        }
+                    } else {
+                        // Standard fallback
+                        $deductionTasks[] = [
+                            'qty' => $neededForAutoDeduction,
+                            'side' => $isAllocated ? $orderItem->free_side : ($orderItem->side ?: $orderItem->free_side),
+                            'size' => $isAllocated ? $orderItem->free_size : ($orderItem->size ?: $orderItem->free_size)
+                        ];
+                    }
+
+                    foreach ($deductionTasks as $task) {
+                        $neededStrips = $task['qty'] * $multiplier;
+                        if ($neededStrips <= 0) continue;
+
+                        $querySide = $task['side'];
+                        $querySize = $task['size'];
 
                         $invQuery = \App\Models\Inventory::where('distributor_id', $distributor->id)
                             ->where('product_id', $product->id);
 
-                        if (empty($orderItem->side)) {
+                        if (empty($querySide)) {
                             $invQuery->where(function($q) {
                                 $q->whereNull('side')->orWhere('side', '');
                             });
                         } else {
-                            $invQuery->where(function($q) use ($orderItem) {
-                                $q->where('side', $orderItem->side)
+                            $invQuery->where(function($q) use ($querySide) {
+                                $q->where('side', $querySide)
                                   ->orWhereNull('side')
                                   ->orWhere('side', '');
                             });
                         }
 
-                        if (empty($orderItem->size)) {
+                        if (empty($querySize)) {
                             $invQuery->where(function($q) {
                                 $q->whereNull('size')->orWhere('size', '');
                             });
                         } else {
-                            $invQuery->where(function($q) use ($orderItem) {
-                                $q->where('size', $orderItem->size)
+                            $invQuery->where(function($q) use ($querySize) {
+                                $q->where('size', $querySize)
                                   ->orWhereNull('size')
                                   ->orWhere('size', '');
                             });
@@ -1189,7 +1251,9 @@ class RetailerOrderManagementController extends Controller
                             ->get();
 
                         if ($inventories->sum('stock') < $neededStrips) {
-                            throw new \Exception("Insufficient stock for product: {$product->product_name}");
+                            $variantInfo = array_filter([$querySide, $querySize]);
+                            $vText = !empty($variantInfo) ? ' [' . implode('/', $variantInfo) . ']' : '';
+                            throw new \Exception("Insufficient stock for free/unallocated item: {$product->product_name}{$vText}");
                         }
 
                         $remainingStrips = $neededStrips;
@@ -1204,9 +1268,7 @@ class RetailerOrderManagementController extends Controller
                                 'retailer_order_item_id' => $orderItem->id,
                                 'batch_no' => $inv->batch_no,
                                 'expiry_date' => $inv->expiry_date,
-                                'quantity' => $takeStrips / $multiplier, // Store in order unit? 
-                                // Given manual allocation records $batchData['quantity'] (order unit),
-                                // we should record order unit here too.
+                                'quantity' => $takeStrips / $multiplier,
                             ]);
 
                             $remainingStrips -= $takeStrips;

@@ -1286,6 +1286,21 @@ class DistributorOrderController extends Controller
 
             $unit = strtolower($item->unit);
             $firstBatch = $item->batches->first();
+            
+            // If this is a standalone free item without batches, borrow a sibling's batch or create a fallback
+            if (!$firstBatch && $item->quantity == 0 && $item->free_quantity > 0) {
+                $siblingItem = $order->items()->where('product_id', $product->id)->where('quantity', '>', 0)->first();
+                if ($siblingItem && $siblingItem->batches->isNotEmpty()) {
+                    $firstBatch = $siblingItem->batches->first();
+                } else {
+                    $firstBatch = new \stdClass();
+                    $firstBatch->batch_no = 'FREE-' . now()->format('Ymd');
+                    $firstBatch->expiry_date = now()->addYears(2)->format('Y-m-d');
+                    $firstBatch->mrp = 0; $firstBatch->ptr = 0; $firstBatch->pts = 0;
+                    $firstBatch->taxable_value = 0; $firstBatch->cgst = 0; $firstBatch->sgst = 0;
+                    $firstBatch->igst = 0; $firstBatch->net_amount = 0;
+                }
+            }
 
             foreach ($item->batches as $batch) {
                 $qty = $batch->quantity;
@@ -1335,35 +1350,38 @@ class DistributorOrderController extends Controller
                         if (preg_match('/^(\d+)\s+(.+)$/', $part, $matches)) {
                             $fQty = (int)$matches[1];
                             $fSize = trim($matches[2]);
-                            
-                            $fStrips = $this->convertQuantityToStrips($product, $fQty, $unit);
-                            
-                            $fInventory = Inventory::firstOrNew([
-                                'distributor_id' => $order->distributor_id,
-                                'product_id' => $product->id,
-                                'batch_no' => $firstBatch->batch_no,
-                                'expiry_date' => $firstBatch->expiry_date,
-                                'side' => empty($item->free_side) ? (empty($item->side) ? null : $item->side) : $item->free_side,
-                                'size' => $fSize
-                            ]);
-                            
-                            if (!$fInventory->exists) {
-                                $fInventory->distributor_product_code = $product->product_code ?? '---';
-                                $fInventory->product_name = $product->product_name;
-                                $fInventory->stock = 0;
-                            }
-                            $fInventory->stock += $fStrips;
-                            $fInventory->mrp = $firstBatch->mrp;
-                            $fInventory->ptr = $firstBatch->ptr;
-                            $fInventory->pts = $firstBatch->pts;
-                            $fInventory->taxable_value = $firstBatch->taxable_value;
-                            $fInventory->cgst = $firstBatch->cgst;
-                            $fInventory->sgst = $firstBatch->sgst;
-                            $fInventory->igst = $firstBatch->igst;
-                            $fInventory->net_amount = $firstBatch->net_amount;
-                            
-                            $fInventory->save();
+                        } else {
+                            $fQty = $item->free_quantity;
+                            $fSize = $part;
                         }
+                        
+                        $fStrips = $this->convertQuantityToStrips($product, $fQty, $unit);
+                        
+                        $fInventory = Inventory::firstOrNew([
+                            'distributor_id' => $order->distributor_id,
+                            'product_id' => $product->id,
+                            'batch_no' => $firstBatch->batch_no,
+                            'expiry_date' => $firstBatch->expiry_date,
+                            'side' => empty($item->free_side) ? (empty($item->side) ? null : $item->side) : $item->free_side,
+                            'size' => $fSize
+                        ]);
+                        
+                        if (!$fInventory->exists) {
+                            $fInventory->distributor_product_code = $product->product_code ?? '---';
+                            $fInventory->product_name = $item->product_name;
+                            $fInventory->stock = 0;
+                        }
+                        $fInventory->stock += $fStrips;
+                        $fInventory->mrp = $firstBatch->mrp;
+                        $fInventory->ptr = $firstBatch->ptr;
+                        $fInventory->pts = $firstBatch->pts;
+                        $fInventory->taxable_value = $firstBatch->taxable_value;
+                        $fInventory->cgst = $firstBatch->cgst;
+                        $fInventory->sgst = $firstBatch->sgst;
+                        $fInventory->igst = $firstBatch->igst;
+                        $fInventory->net_amount = $firstBatch->net_amount;
+                        
+                        $fInventory->save();
                     }
                 } else {
                     $fStrips = $this->convertQuantityToStrips($product, $item->free_quantity, $unit);
@@ -1373,8 +1391,8 @@ class DistributorOrderController extends Controller
                         'product_id' => $product->id,
                         'batch_no' => $firstBatch->batch_no,
                         'expiry_date' => $firstBatch->expiry_date,
-                        'side' => empty($item->side) ? null : $item->side,
-                        'size' => empty($item->size) ? null : $item->size
+                        'side' => empty($item->free_side) ? (empty($item->side) ? null : $item->side) : $item->free_side,
+                        'size' => empty($item->free_size) ? (empty($item->size) ? null : $item->size) : $item->free_size
                     ]);
                     
                     if (!$fInventory->exists) {
