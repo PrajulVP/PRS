@@ -1346,15 +1346,22 @@
         }
         if (typeof window.renderFreeVariantBadge !== 'function') {
             window.renderFreeVariantBadge = function (item) {
-                let vParts = [];
-                if (item.free_side && item.free_side !== '-' && item.free_side !== 'N/A') vParts.push(item.free_side);
-                if (item.free_size && item.free_size !== '-' && item.free_size !== 'N/A') vParts.push(item.free_size);
-                if (vParts.length > 0) {
+                // If the item has a free_size/free_side string (e.g. "2 M, 2 L"), show it as-is
+                let freeLabel = [item.free_side, item.free_size].filter(v => v && v !== '-' && v !== 'N/A');
+                if (freeLabel.length > 0) {
                     return `<span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 0.65rem; padding: 0.25em 0.6em; font-weight: 600;">
-                                ${vParts.join('/').toUpperCase()}
+                                ${freeLabel.join('/').toUpperCase()}
                             </span>`;
                 }
                 return '';
+            };
+        }
+        if (typeof window.renderFreeQtyBadge !== 'function') {
+            window.renderFreeQtyBadge = function (item) {
+                if (!item.free_quantity || item.free_quantity <= 0) return '-';
+                const freeLabel = [item.free_side, item.free_size].filter(v => v && v !== '-' && v !== 'N/A').join('').toUpperCase();
+                const labelStr = freeLabel ? freeLabel : `${item.free_quantity}`;
+                return `<div class="d-flex align-items-center justify-content-center mt-1"><span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.7rem;"><i class="fa fa-gift me-1"></i>${labelStr}</span></div>`;
             };
         }
 
@@ -2735,7 +2742,7 @@
 
                         // 1. Hidden Submission Row
                         let rowHtml = `
-                                                                                                                                                                                <div data-item-id="${orderItemId}" class="product-row" data-ordered-qty="${orderedQty}" data-free-qty="${item.free_quantity || 0}" data-product-name="${item.product_name}">
+                                                                                                                                                                                <div data-item-id="${orderItemId}" class="product-row" data-ordered-qty="${orderedQty}" data-free-qty="${item.free_quantity || 0}" data-product-name="${item.product_name}" data-unit="${item.unit || 'Nos'}" data-side="${item.side || ''}" data-size="${item.size || ''}">
                                                                                                                                                                                     <div class="d-none">
                                                                                                                                                                                         <div class="fw-bold product-name-marker">${item.product_name} ${(item.side && item.side !== '-' && item.side !== 'N/A') ? '['+item.side+']' : ''} ${(item.size && item.size !== '-' && item.size !== 'N/A') ? '['+item.size+']' : ''}</div>
                                                                                                                                                                                         <input type="number" name="items[${orderItemId}][quantity]" value="${orderedQty}">
@@ -2772,8 +2779,8 @@
                                                                                                                                                                                     <div class="ai-col-qty fw-bold text-primary v-qty-display" data-original-unit="${item.unit || ''}">
                                                                                                                                                                                         ${orderedQty} ${item.unit || ''}
                                                                                                                                                                                     </div>
-                                                                                                                                                                                    <div class="ai-col-free fw-bold text-success v-free-display" data-id="${orderItemId}">
-                                                                                                                                                                                        ${item.free_quantity > 0 ? `<div class="d-flex flex-column align-items-center justify-content-center gap-1 mt-1"><span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.7rem;"><i class="fa fa-gift me-1"></i>${item.free_quantity}</span>${window.renderFreeVariantBadge(item)}</div>` : '-'}
+                                                                                                                                                                                    <div class="ai-col-free fw-bold text-success v-free-display" data-id="${orderItemId}" data-free-label="${[item.free_side, item.free_size].filter(v => v && v !== '-' && v !== 'N/A').join('').toUpperCase()}">
+                                                                                                                                                                                        ${window.renderFreeQtyBadge(item)}
                                                                                                                                                                                     </div>
                                                                                                                                                                                     <div class="ai-col-value text-end small text-dark fw-bold v-taxable-display">--</div>
                                                                                                                                                                                     <div class="ai-col-value text-end small text-muted v-gst-display">--</div>
@@ -3087,6 +3094,9 @@
                     let productName = container.find('.product-name-marker').text().trim().toLowerCase();
                     let orderedQty = parseInt(container.data('ordered-qty'));
                     let originalFree = parseInt(container.data('free-qty')) || 0;
+                    let itemUnit = container.data('unit') || 'Nos';
+                    let itemSide = container.data('side') || '';
+                    let itemSize = container.data('size') || '';
 
                     const normalize = (str) => {
                         if (!str) return '';
@@ -3229,17 +3239,14 @@
                             }
                             vRow.find('.v-qty-display').html(displayQty);
                             
-                            // Maintain existing variant badges if present, just update the number
-                            if (freeQty > 0 && (originalFree > 0 || vRow.find('.v-free-display').find('.bg-primary-subtle').length > 0)) {
-                                let existingVariantHtml = '';
-                                let $existingFree = vRow.find('.v-free-display');
-                                if ($existingFree.find('.bg-primary-subtle').length > 0) {
-                                    existingVariantHtml = $existingFree.find('.bg-primary-subtle')[0].outerHTML;
-                                }
+                            // Single badge: number + variant text inline (e.g. 🎁 2 M, 2L)
+                            if (freeQty > 0 && (originalFree > 0 || vRow.find('.v-free-display').find('.badge').length > 0)) {
+                                // Read variant label stored on the element during initial render
+                                let existingVariantText = vRow.find('.v-free-display').data('free-label') || '';
+                                const labelStr = existingVariantText ? existingVariantText : `${freeQty}`;
                                 vRow.find('.v-free-display').html(`
-                                    <div class="d-flex flex-column align-items-center justify-content-center gap-1 mt-1">
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.7rem;"><i class="fa fa-gift me-1"></i>${freeQty}</span>
-                                        ${existingVariantHtml}
+                                    <div class="d-flex align-items-center justify-content-center mt-1">
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.7rem;"><i class="fa fa-gift me-1"></i>${labelStr}</span>
                                     </div>
                                 `);
                             } else {

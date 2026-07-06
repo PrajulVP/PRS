@@ -2314,7 +2314,7 @@
                     if (row && row.items) {
                         row.items.forEach(item => {
                             let rowHtml = `
-                                <div data-item-id="${item.order_item_id}" data-ordered-qty="${item.quantity}" data-free-qty="${item.free_quantity || 0}" data-product-name="${item.product_name}">
+                                <div data-item-id="${item.order_item_id}" data-ordered-qty="${item.quantity}" data-free-qty="${item.free_quantity || 0}" data-product-name="${item.product_name}" data-unit="${item.unit || 'Nos'}" data-side="${item.side || ''}" data-size="${item.size || ''}">
                                     <div class="d-none">
                                         <div class="fw-bold product-name-marker">${item.product_name} ${(item.side && item.side !== '-' && item.side !== 'N/A') ? '['+item.side+']' : ''} ${(item.size && item.size !== '-' && item.size !== 'N/A') ? '['+item.size+']' : ''}</div>
                                         <input type="number" name="batches[${item.order_item_id}][0][quantity]" value="${item.quantity}">
@@ -2361,13 +2361,12 @@
                                     <div class="ai-col-qty fw-bold text-primary text-center v-qty-display" data-original-unit="${item.unit || 'Nos'}">
                                         ${item.quantity} ${item.unit || 'Nos'}
                                     </div>
-                                    <div class="ai-col-qty fw-bold text-success text-center v-free-display">
-                                        ${item.free_quantity > 0 ? 
-                                            `<div class="d-flex flex-column align-items-center justify-content-center gap-1 mt-1">
-                                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.7rem;"><i class="fa fa-gift me-1"></i>${item.free_quantity}</span>
-                                                ${(item.free_side || item.free_size) ? `<span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 0.6rem; padding: 0.2em 0.5em;">${[item.free_side, item.free_size].filter(Boolean).join('/').toUpperCase().replace(/(\d+)X([A-Z]+)/g, '$1x $2')}</span>` : ''}
-                                            </div>` 
-                                        : '-'}
+                                    <div class="ai-col-qty fw-bold text-success text-center v-free-display" data-free-label="${[item.free_side, item.free_size].filter(v => v && v !== '-' && v !== 'N/A').join('').toUpperCase()}">
+                                        ${item.free_quantity > 0 ? (() => {
+                                            const freeLabel = [item.free_side, item.free_size].filter(v => v && v !== '-' && v !== 'N/A').join('').toUpperCase();
+                                            const labelStr = freeLabel ? freeLabel : `${item.free_quantity}`;
+                                            return `<div class="d-flex align-items-center justify-content-center mt-1"><span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.7rem;"><i class="fa fa-gift me-1"></i>${labelStr}</span></div>`;
+                                        })() : '-'}
                                     </div>
                                     <div class="ai-col-value fw-bold text-main-theme text-end pe-3 v-taxable-display">--</div>
                                 </div>
@@ -2662,11 +2661,33 @@
                         id: $(this).data('item-id'),
                         name: name,
                         orderedQty: parseInt($(this).data('ordered-qty')) || 0,
-                        originalFree: parseInt($(this).data('free-qty')) || 0
+                        originalFree: parseInt($(this).data('free-qty')) || 0,
+                        unit: $(this).data('unit') || 'Nos',
+                        side: $(this).data('side') || '',
+                        size: $(this).data('size') || ''
                     });
                 });
-                
+
+                // Pre-scan: find items whose free qty is already covered by another item's free-label
+                // (e.g. Knee Cap L is covered by Knee Cap M's label "2 M, 2 L")
+                const coveredItemIds = new Set();
+                items.forEach(sourceItem => {
+                    const freeLabel = $(`#v_row_${sourceItem.id} .v-free-display`).data('free-label') || '';
+                    if (!freeLabel) return;
+                    const sourceNameBase = sourceItem.name.split('[')[0].trim().toLowerCase();
+                    items.forEach(targetItem => {
+                        if (targetItem.id === sourceItem.id) return;
+                        const targetNameBase = targetItem.name.split('[')[0].trim().toLowerCase();
+                        if (targetNameBase !== sourceNameBase) return;
+                        const variant = (targetItem.size || targetItem.side || '').toUpperCase();
+                        if (variant && freeLabel.toUpperCase().includes(variant)) {
+                            coveredItemIds.add(targetItem.id);
+                        }
+                    });
+                });
+
                 let missingProducts = [];
+
                 window.qtyMismatchProducts = [];
                 let matchedProducts = [];
                 let invoiceProducts = [...(data.line_items || [])];
@@ -2808,17 +2829,17 @@
                                 
                                 $(`#v_row_${item.id} .v-qty-display`).html(displayHtml);
                                 
-                                // Maintain existing variant badges if present, just update the number
-                                if (freeQty > 0 && (item.originalFree > 0 || $(`#v_row_${item.id} .v-free-display`).find('.bg-primary-subtle').length > 0)) {
-                                    let existingVariantHtml = '';
-                                    let $existingFree = $(`#v_row_${item.id} .v-free-display`);
-                                    if ($existingFree.find('.bg-primary-subtle').length > 0) {
-                                        existingVariantHtml = $existingFree.find('.bg-primary-subtle')[0].outerHTML;
-                                    }
+                                // If this item's free is already covered by another item's label, force to zero
+                                if (coveredItemIds.has(item.id)) {
+                                    freeQty = 0;
+                                    $(`#v_row_${item.id} .v-free-display`).html('-');
+                                } else if (freeQty > 0 && item.originalFree > 0) {
+                                    // Read variant label stored on the element during initial render
+                                    const existingVariantText = $(`#v_row_${item.id} .v-free-display`).data('free-label') || '';
+                                    const labelStr = existingVariantText ? existingVariantText : `${freeQty}`;
                                     $(`#v_row_${item.id} .v-free-display`).html(`
-                                        <div class="d-flex flex-column align-items-center justify-content-center gap-1 mt-1">
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.7rem;"><i class="fa fa-gift me-1"></i>${freeQty}</span>
-                                            ${existingVariantHtml}
+                                        <div class="d-flex align-items-center justify-content-center mt-1">
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.7rem;"><i class="fa fa-gift me-1"></i>${labelStr}</span>
                                         </div>
                                     `);
                                 } else {

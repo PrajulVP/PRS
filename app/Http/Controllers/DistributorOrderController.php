@@ -242,6 +242,20 @@ class DistributorOrderController extends Controller
                         'items' => $order->items->map(function ($item) use ($order) {
                             $pName = $item->product_name ?? $item->product->product_name ?? $item->name ?? 'Product';
                             
+                            $displayFreeQty = $item->free_quantity;
+                            if (empty($item->free_size) && empty($item->free_side) && $displayFreeQty > 0) {
+                                foreach ($order->items as $otherItem) {
+                                    if ($otherItem->id !== $item->id && $otherItem->product_id === $item->product_id) {
+                                        $labelStr = strtoupper(implode(' / ', array_filter([$otherItem->free_side, $otherItem->free_size])));
+                                        $myVar = strtoupper(trim($item->size ?: $item->side));
+                                        if ($myVar && preg_match('/\b' . preg_quote($myVar, '/') . '\b/', $labelStr)) {
+                                            $displayFreeQty = 0;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+
                             // Aggregate return requests for this specific variant
                             $itemReturns = $order->returnRequests
                                 ->where('product_id', $item->product_id)
@@ -275,7 +289,7 @@ class DistributorOrderController extends Controller
                                 'order_item_id' => $item->id,
                                 'is_returnable' => $item->product->is_returnable ?? true,
                                 'is_free' => $item->is_free ?? false,
-                                'free_quantity' => $item->free_quantity,
+                                'free_quantity' => $displayFreeQty,
                                 'free_qty_buy' => $item->product->free_qty_buy ?? 0,
                                 'free_qty_get' => $item->product->free_qty_get ?? 1,
                                 'free_side' => $item->free_side,
