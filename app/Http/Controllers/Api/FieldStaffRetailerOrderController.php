@@ -256,7 +256,14 @@ class FieldStaffRetailerOrderController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
+            'items.*.unit' => 'nullable|string',
+            'items.*.side' => 'nullable|string',
+            'items.*.size' => 'nullable|string',
             'items.*.distributor_id' => 'nullable|exists:distributors,id',
+            'items.*.is_free' => 'nullable|boolean',
+            'items.*.free_quantity' => 'nullable|integer|min:0',
+            'items.*.free_side' => 'nullable|string',
+            'items.*.free_size' => 'nullable|string',
             'delivery_notes' => 'nullable|string'
         ]);
 
@@ -310,20 +317,52 @@ class FieldStaffRetailerOrderController extends Controller
                     if (!$product) continue;
 
                     $qty = $itemData['quantity'];
-                    $price = (float)$product->ptr;
-                    $gstRate = (float)($product->gst ?? 0);
-                    $taxableSubtotal = $qty * $price;
-                    $subtotalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
+                    $isFree = isset($itemData['is_free']) ? filter_var($itemData['is_free'], FILTER_VALIDATE_BOOLEAN) : false;
+                    $iSide = $itemData['side'] ?? null;
+                    $iSize = $itemData['size'] ?? null;
+
+                    if ($isFree) {
+                        $price = 0;
+                        $subtotalWithGst = 0;
+                        $freeQty = $qty;
+                        $qty = 0; // The actual billed quantity is 0
+                        $freeSide = $iSide;
+                        $freeSize = $iSize;
+                    } else {
+                        $price = (float)$product->ptr;
+                        $gstRate = (float)($product->gst ?? 0);
+                        $taxableSubtotal = $qty * $price;
+                        $subtotalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
+
+                        // Free product auto-calculation logic
+                        $freeQty = $itemData['free_quantity'] ?? 0;
+                        $freeSide = $itemData['free_side'] ?? null;
+                        $freeSize = $itemData['free_size'] ?? null;
+
+                        if ($freeQty == 0) {
+                            if ($product->free_qty_buy > 0 && $product->free_qty_get > 0) {
+                                $eligibleFree = floor($qty / $product->free_qty_buy) * $product->free_qty_get;
+                                if ($eligibleFree > 0) {
+                                    $freeQty = $eligibleFree;
+                                }
+                            } elseif (strcasecmp($product->brand, 'Atomeds') === 0 || strcasecmp($product->brand, 'Atomets') === 0) {
+                                $freeQty = floor($qty / 10) * 2;
+                            }
+                        }
+                    }
 
                     $order->items()->create([
                         'product_id' => $product->id,
                         'product_name' => $product->product_name,
                         'quantity' => $qty,
                         'unit' => $itemData['unit'] ?? 'Nos',
-                        'side' => $itemData['side'] ?? null,
-                        'size' => $itemData['size'] ?? null,
+                        'side' => $iSide,
+                        'size' => $iSize,
                         'unit_price' => $price,
-                        'total_amount' => $subtotalWithGst
+                        'total_amount' => $subtotalWithGst,
+                        'free_quantity' => $freeQty,
+                        'free_side' => $freeSide,
+                        'free_size' => $freeSize,
                     ]);
 
                     $totalAmount += $subtotalWithGst;
@@ -517,6 +556,13 @@ class FieldStaffRetailerOrderController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
+            'items.*.unit' => 'nullable|string',
+            'items.*.side' => 'nullable|string',
+            'items.*.size' => 'nullable|string',
+            'items.*.is_free' => 'nullable|boolean',
+            'items.*.free_quantity' => 'nullable|integer|min:0',
+            'items.*.free_side' => 'nullable|string',
+            'items.*.free_size' => 'nullable|string',
         ]);
 
         $metadata = $retailerOrder->metadata ?? [];
@@ -591,13 +637,38 @@ class FieldStaffRetailerOrderController extends Controller
 
                 $qty = $itemData['quantity'];
                 $unit = $itemData['unit'] ?? 'Nos';
-                $side = $itemData['side'] ?? null;
-                $size = $itemData['size'] ?? null;
+                $iSide = $itemData['side'] ?? null;
+                $iSize = $itemData['size'] ?? null;
+                $isFree = isset($itemData['is_free']) ? filter_var($itemData['is_free'], FILTER_VALIDATE_BOOLEAN) : false;
                 
-                $price = (float)$product->ptr;
-                $gstRate = (float)($product->gst ?? 0);
-                $taxableSubtotal = $qty * $price;
-                $subtotalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
+                if ($isFree) {
+                    $price = 0;
+                    $subtotalWithGst = 0;
+                    $freeQty = $qty;
+                    $qty = 0;
+                    $freeSide = $iSide;
+                    $freeSize = $iSize;
+                } else {
+                    $price = (float)$product->ptr;
+                    $gstRate = (float)($product->gst ?? 0);
+                    $taxableSubtotal = $qty * $price;
+                    $subtotalWithGst = $taxableSubtotal * (1 + ($gstRate / 100));
+
+                    $freeQty = $itemData['free_quantity'] ?? 0;
+                    $freeSide = $itemData['free_side'] ?? null;
+                    $freeSize = $itemData['free_size'] ?? null;
+
+                    if ($freeQty == 0) {
+                        if ($product->free_qty_buy > 0 && $product->free_qty_get > 0) {
+                            $eligibleFree = floor($qty / $product->free_qty_buy) * $product->free_qty_get;
+                            if ($eligibleFree > 0) {
+                                $freeQty = $eligibleFree;
+                            }
+                        } elseif (strcasecmp($product->brand, 'Atomeds') === 0 || strcasecmp($product->brand, 'Atomets') === 0) {
+                            $freeQty = floor($qty / 10) * 2;
+                        }
+                    }
+                }
 
                 $currentOrderItem = null;
                 if (isset($itemData['order_item_id'])) {
@@ -609,13 +680,13 @@ class FieldStaffRetailerOrderController extends Controller
                         'product_id' => $itemData['product_id'],
                         'quantity' => $qty,
                         'unit' => $unit,
-                        'side' => $side,
-                        'size' => $size,
+                        'side' => $iSide,
+                        'size' => $iSize,
                         'unit_price' => $price,
                         'total_amount' => $subtotalWithGst,
-                        'free_quantity' => $itemData['free_quantity'] ?? 0,
-                        'free_side' => $itemData['free_side'] ?? null,
-                        'free_size' => $itemData['free_size'] ?? null,
+                        'free_quantity' => $freeQty,
+                        'free_side' => $freeSide,
+                        'free_size' => $freeSize,
                     ]);
                     $requestItemIds[] = $currentOrderItem->id;
                 } else {
@@ -624,13 +695,13 @@ class FieldStaffRetailerOrderController extends Controller
                         'product_name' => $product->product_name,
                         'quantity' => $qty,
                         'unit' => $unit,
-                        'side' => $side,
-                        'size' => $size,
+                        'side' => $iSide,
+                        'size' => $iSize,
                         'unit_price' => $price,
                         'total_amount' => $subtotalWithGst,
-                        'free_quantity' => $itemData['free_quantity'] ?? 0,
-                        'free_side' => $itemData['free_side'] ?? null,
-                        'free_size' => $itemData['free_size'] ?? null,
+                        'free_quantity' => $freeQty,
+                        'free_side' => $freeSide,
+                        'free_size' => $freeSize,
                     ]);
                     $requestItemIds[] = $newItem->id;
                 }
