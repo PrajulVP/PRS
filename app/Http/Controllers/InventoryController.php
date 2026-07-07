@@ -184,12 +184,18 @@ class InventoryController extends Controller
                         ->get();
                     
                     $batches = $rawBatches->map(function($b) {
+                        $side = $b->side && $b->side !== '-' && strcasecmp($b->side, 'N/A') !== 0 ? trim($b->side) : null;
+                        $size = $b->size && $b->size !== '-' && strcasecmp($b->size, 'N/A') !== 0 ? trim($b->size) : null;
+                        $parts = array_filter([$side, $size]);
+                        $variant = empty($parts) ? null : implode(' / ', $parts);
+
                         return [
                             'id' => $b->id,
                             'batch_no' => $b->batch_no,
                             'stock' => (float) $b->stock,
                             'side' => $b->side,
                             'size' => $b->size,
+                            'variant' => $variant,
                             'expiry_date' => $b->expiry_date ? $b->expiry_date->format('d-m-Y') : 'N/A',
                             'raw_expiry_date' => $b->expiry_date ? $b->expiry_date->format('Y-m-d') : null,
                             'distributor_name' => $b->distributor?->user?->name ?? 'N/A',
