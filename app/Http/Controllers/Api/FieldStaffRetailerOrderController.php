@@ -355,24 +355,14 @@ class FieldStaffRetailerOrderController extends Controller
                         $updatedItem = $mergedPaidItems->get($targetKey);
                         $updatedItem['free_quantity'] = ($updatedItem['free_quantity'] ?? 0) + $qty;
                         if (!empty($freeSide)) {
-                            if (!empty($updatedItem['free_side'])) {
-                                $sides = array_map('trim', explode(',', $updatedItem['free_side']));
-                                if (!in_array($freeSide, $sides)) {
-                                    $updatedItem['free_side'] .= ', ' . $freeSide;
-                                }
-                            } else {
-                                $updatedItem['free_side'] = $freeSide;
-                            }
+                            $counts = $updatedItem['_free_side_counts'] ?? [];
+                            $counts[$freeSide] = ($counts[$freeSide] ?? 0) + $qty;
+                            $updatedItem['_free_side_counts'] = $counts;
                         }
                         if (!empty($freeSize)) {
-                            if (!empty($updatedItem['free_size'])) {
-                                $sizes = array_map('trim', explode(',', $updatedItem['free_size']));
-                                if (!in_array($freeSize, $sizes)) {
-                                    $updatedItem['free_size'] .= ', ' . $freeSize;
-                                }
-                            } else {
-                                $updatedItem['free_size'] = $freeSize;
-                            }
+                            $counts = $updatedItem['_free_size_counts'] ?? [];
+                            $counts[$freeSize] = ($counts[$freeSize] ?? 0) + $qty;
+                            $updatedItem['_free_size_counts'] = $counts;
                         }
                         $mergedPaidItems->put($targetKey, $updatedItem);
                     } else {
@@ -384,11 +374,21 @@ class FieldStaffRetailerOrderController extends Controller
                         $freeItem['free_size'] = $freeSize;
                         $freeItem['side'] = $freeSide;
                         $freeItem['size'] = $freeSize;
+                        if (!empty($freeSide)) $freeItem['_free_side_counts'] = [$freeSide => $qty];
+                        if (!empty($freeSize)) $freeItem['_free_size_counts'] = [$freeSize => $qty];
                         $mergedPaidItems->put($standaloneKey, $freeItem);
                     }
                 });
 
-                $mergedItems = $mergedPaidItems->values();
+                $mergedItems = $mergedPaidItems->map(function($item) {
+                    if (!empty($item['_free_side_counts'])) {
+                        $item['free_side'] = collect($item['_free_side_counts'])->map(fn($q, $s) => $q . ' ' . $s)->implode(', ');
+                    }
+                    if (!empty($item['_free_size_counts'])) {
+                        $item['free_size'] = collect($item['_free_size_counts'])->map(fn($q, $s) => $q . ' ' . $s)->implode(', ');
+                    }
+                    return $item;
+                })->values();
 
                 foreach ($mergedItems as $itemData) {
                     $product = \App\Models\Product::find($itemData['product_id']);
