@@ -613,8 +613,25 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="col-md-4">
+                            <div class="card border-0 rounded-4 shadow-sm h-100 overflow-hidden executive-metric-card action-card-compact cursor-pointer" 
+                                style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.02) 100%);"
+                                onclick="openMyRetailersModal(event)">
+                                <div class="card-body d-flex align-items-center gap-3">
+                                    <div class="icon-circle-md" style="background: rgba(245, 158, 11, 0.15)">
+                                        <i data-feather="users" class="text-warning" style="width: 24px; height: 24px; stroke-width: 2.5px;"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-800 mb-0 text-warning" style="color: #d97706 !important;">Retailers</h5>
+                                        <p class="text-muted text-opacity-75 mb-0">Retailers who ordered from you</p>
+                                    </div>
+                                    <div class="ms-auto text-warning">
+                                        <i data-feather="external-link" style="width: 18px;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-
 
 
                     <div class="row">
@@ -1755,9 +1772,119 @@
                             };
                             window.requestAnimationFrame(step);
                         }
+                        
+                        function openMyRetailersModal(event) {
+                            if (event) {
+                                event.preventDefault();
+                            }
+                            const modalEl = document.getElementById('myRetailersModal');
+                            let bsModal = bootstrap.Modal.getInstance(modalEl);
+                            if (!bsModal) {
+                                bsModal = new bootstrap.Modal(modalEl, { focus: false });
+                            }
+                            bsModal.show();
+                            
+                            const container = document.getElementById('myRetailersList');
+                            container.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Loading your retailers...</p></div>';
+                            
+                            fetch('{{ route("dashboard.retailers") }}')
+                                .then(response => response.json())
+                                .then(data => {
+                                    if(data.data && data.data.length > 0) {
+                                        let html = '<div class="row g-3">';
+                                        data.data.forEach(r => {
+                                            const hasAction = r.orders_needing_action > 0;
+                                            html += `
+                                                <div class="col-lg-4 col-md-6">
+                                                    <div class="card border-0 shadow-sm h-100 position-relative overflow-hidden" style="border-radius: 12px; background: rgba(120,120,120,0.05);">
+                                                        ${hasAction ? '<div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #f59e0b;"></div>' : ''}
+                                                        <div class="card-body p-3">
+                                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                                <div>
+                                                                    <h6 class="fw-800 mb-1" style="color: var(--med-primary); font-size: 0.95rem;">${r.shop_name}</h6>
+                                                                    <p class="mb-0 text-muted" style="font-size: 0.75rem;"><i class="fa fa-user me-1"></i>${r.name}</p>
+                                                                </div>
+                                                                ${hasAction ? `<span class="badge bg-warning text-dark rounded-pill fw-bold" style="font-size: 0.65rem; padding: 0.35em 0.65em;"><i class="fa fa-exclamation-circle me-1"></i>${r.orders_needing_action} Action</span>` : ''}
+                                                            </div>
+                                                            <div class="mb-2">
+                                                                <p class="mb-0 text-muted" style="font-size: 0.75rem;"><i class="fa fa-phone me-1"></i>${r.phone !== 'N/A' ? r.phone : 'No Phone'} <span class="mx-1">|</span> <i class="fa fa-envelope me-1"></i>${r.email !== 'N/A' ? r.email : 'No Email'}</p>
+                                                                <p class="mb-0 text-muted text-truncate" style="font-size: 0.75rem;" title="${r.address}"><i class="fa fa-map-marker-alt me-1"></i>${r.address}</p>
+                                                            </div>
+                                                            <div class="row g-2 mt-1">
+                                                                <div class="col-6">
+                                                                    <div class="p-2 rounded h-100" style="background: rgba(120, 120, 120, 0.08);">
+                                                                        <p class="text-muted mb-0" style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px;">Revenue</p>
+                                                                        <p class="fw-800 mb-0 text-success" style="font-size: 0.9rem;">₹${r.total_revenue}</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-6 text-end">
+                                                                    <div class="p-2 rounded h-100 text-start" style="background: rgba(120, 120, 120, 0.08);">
+                                                                        <p class="text-muted mb-0" style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px;">Orders</p>
+                                                                        <p class="fw-bold mb-0" style="font-size: 0.9rem;">${r.total_orders}</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-12 mt-1">
+                                                                    <div class="d-flex align-items-center justify-content-between p-2 rounded" style="background: rgba(0, 73, 122, 0.04);">
+                                                                        <div class="text-center px-1">
+                                                                            <p class="mb-0 text-muted" style="font-size: 0.6rem; text-transform: uppercase;">Pending</p>
+                                                                            <p class="mb-0 fw-bold" style="font-size: 0.8rem;">${r.status_counts?.pending || 0}</p>
+                                                                        </div>
+                                                                        <div class="text-center px-1">
+                                                                            <p class="mb-0 text-muted" style="font-size: 0.6rem; text-transform: uppercase;">Processing</p>
+                                                                            <p class="mb-0 fw-bold" style="font-size: 0.8rem;">${r.status_counts?.processing || 0}</p>
+                                                                        </div>
+                                                                        <div class="text-center px-1">
+                                                                            <p class="mb-0 text-muted" style="font-size: 0.6rem; text-transform: uppercase;">Approved</p>
+                                                                            <p class="mb-0 fw-bold" style="font-size: 0.8rem;">${r.status_counts?.approved || 0}</p>
+                                                                        </div>
+                                                                        <div class="text-center px-1">
+                                                                            <p class="mb-0 text-muted" style="font-size: 0.6rem; text-transform: uppercase;">Delivered</p>
+                                                                            <p class="mb-0 fw-bold text-success" style="font-size: 0.8rem;">${r.status_counts?.delivered || 0}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        });
+                                        html += '</div>';
+                                        container.innerHTML = html;
+                                    } else {
+                                        container.innerHTML = '<div class="text-center p-5 text-muted"><i data-feather="users" style="width: 40px; height: 40px; opacity: 0.5; margin-bottom: 15px;"></i><p>No retailers found.</p></div>';
+                                        feather.replace();
+                                    }
+                                })
+                                .catch(error => {
+                                    container.innerHTML = '<div class="alert alert-danger">Error loading retailers.</div>';
+                                });
+                        }
                     </script>
                 @endpush
 
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal for Retailers --}}
+    <div class="modal fade" id="myRetailersModal" tabindex="-1" aria-labelledby="myRetailersModalLabel" aria-hidden="true" style="z-index: 1055;">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                <div class="modal-header border-bottom-0 pb-3 shadow-sm" style="z-index: 10;">
+                    <h5 class="modal-title fw-800 d-flex align-items-center gap-2" id="myRetailersModalLabel" style="color: var(--med-primary);">
+                        <div class="p-2 bg-soft-primary rounded-circle d-flex align-items-center justify-content-center">
+                            <i data-feather="users" class="text-primary" style="width: 18px; height: 18px;"></i>
+                        </div>
+                        My Retailers Network
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div id="myRetailersList">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -267,7 +267,7 @@ class DistributorOrderApiController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.free_quantity' => 'nullable|integer|min:0',
-            'items.*.unit' => 'nullable|string|in:Box,Carton,Strip,Nos,no',
+            'items.*.unit' => 'nullable|string',
             'items.*.side' => 'nullable|string',
             'items.*.size' => 'nullable|string',
             'items.*.is_free' => 'nullable|boolean',

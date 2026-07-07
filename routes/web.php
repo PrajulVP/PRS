@@ -45,6 +45,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/stats', [DashboardController::class, 'getStats'])->name('dashboard.stats');
+    Route::get('/dashboard/retailers', [DashboardController::class, 'getDistributorRetailers'])->name('dashboard.retailers');
 
     Route::prefix('dashboard-api')->name('dashboard.api.')->group(function () {
         Route::get('order-status-distribution', [DashboardController::class, 'getOrderStatusDistribution'])->name('orderStatusDistribution');

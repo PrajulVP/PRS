@@ -45,6 +45,63 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function getDistributorRetailers(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user || !$user->hasRole('distributor')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $distributorId = $user->distributor->id;
+        
+        $retailers = Retailer::with('user')
+            ->whereHas('retailerOrders', function ($orderQuery) use ($distributorId) {
+                $orderQuery->where('distributor_id', $distributorId);
+            })
+            ->latest()
+            ->get(); // For the dashboard offcanvas, getting all might be fine, or paginate if needed. Let's use get() to load all in offcanvas list.
+
+        $data = $retailers->map(function ($retailer) use ($distributorId) {
+            $stats = RetailerOrder::select(
+                DB::raw('COUNT(id) as total_orders'),
+                DB::raw('SUM(total_amount) as total_revenue')
+            )
+                ->where('retailer_id', $retailer->id)
+                ->where('distributor_id', $distributorId)
+                ->first();
+
+            $statusCounts = RetailerOrder::select('status', DB::raw('COUNT(id) as count'))
+                ->where('retailer_id', $retailer->id)
+                ->where('distributor_id', $distributorId)
+                ->groupBy('status')
+                ->pluck('count', 'status')
+                ->toArray();
+
+            $ordersNeedingAction = $statusCounts[RetailerOrder::STATUS_PROCESSING] ?? 0;
+
+            return [
+                'id'                    => $retailer->id,
+                'name'                  => $retailer->user?->name ?? 'N/A',
+                'shop_name'             => $retailer->shop_name ?? 'N/A',
+                'email'                 => $retailer->user?->email ?? 'N/A',
+                'phone'                 => $retailer->user?->contact_no ?? 'N/A',
+                'address'               => $retailer->address ?? 'N/A',
+                'total_orders'          => $stats->total_orders ?? 0,
+                'total_revenue'         => number_format($stats->total_revenue ?? 0, 2),
+                'orders_needing_action' => $ordersNeedingAction,
+                'status_counts'         => [
+                    'pending'    => $statusCounts['pending'] ?? 0,
+                    'processing' => $statusCounts['processing'] ?? 0,
+                    'approved'   => $statusCounts['approved'] ?? 0,
+                    'delivered'  => $statusCounts['delivered'] ?? 0,
+                ]
+            ];
+        });
+
+        return response()->json(['data' => $data]);
+    }
+
     private function calculateDashboardData($period)
     {
         $user = Auth::user();
