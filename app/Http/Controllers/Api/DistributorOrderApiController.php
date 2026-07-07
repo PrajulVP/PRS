@@ -162,7 +162,7 @@ class DistributorOrderApiController extends Controller
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="product_id", in="query", required=true, @OA\Schema(type="integer"), example=1),
      *     @OA\Parameter(name="quantity", in="query", required=true, @OA\Schema(type="number"), example=10),
-     *     @OA\Parameter(name="unit", in="query", required=true, @OA\Schema(type="string", enum={"Nos", "Strips", "Box", "Carton"}), example="Box"),
+     *     @OA\Parameter(name="unit", in="query", required=true, @OA\Schema(type="string"), example="Box"),
      *     @OA\Parameter(name="variant", in="query", required=false, @OA\Schema(type="string"), example="M"),
      *     @OA\Response(
      *         response=200,
@@ -215,7 +215,7 @@ class DistributorOrderApiController extends Controller
      *             @OA\Property(property="items", type="array", @OA\Items(
      *                 @OA\Property(property="product_id", type="integer", example=1),
      *                 @OA\Property(property="quantity", type="integer", example=10),
-     *                 @OA\Property(property="unit", type="string", enum={"Nos", "Strips", "Box", "Carton"}, example="Box"),
+     *                 @OA\Property(property="unit", type="string", example="Box"),
      *                 @OA\Property(property="side", type="string", nullable=true, example="Left"),
      *                 @OA\Property(property="size", type="string", nullable=true, example="XL"),
      *                 @OA\Property(property="free_side", type="string", nullable=true, example="Left"),
@@ -313,19 +313,26 @@ class DistributorOrderApiController extends Controller
             $mergedItems = collect($request->items)->groupBy(function($i) {
                 $side = isset($i['side']) ? trim(strtolower($i['side'])) : '';
                 $size = isset($i['size']) ? trim(strtolower($i['size'])) : '';
-                $isFree = isset($i['is_free']) && filter_var($i['is_free'], FILTER_VALIDATE_BOOLEAN) ? 'free' : 'paid';
-                return $i['product_id'] . '-' . $side . '-' . $size . '-' . $isFree;
+                return $i['product_id'] . '-' . $side . '-' . $size;
             })->map(function($group) {
                 $first = $group->first();
-                $first['quantity'] = $group->sum('quantity');
-                $first['free_quantity'] = (int)$group->sum('free_quantity');
+                
+                // Billed quantity (sum where is_free is false/missing)
+                $first['quantity'] = $group->filter(fn($i) => empty($i['is_free']) || !filter_var($i['is_free'], FILTER_VALIDATE_BOOLEAN))->sum('quantity');
+                
+                // Free quantity (sum of explicitly provided free_quantity + quantity of items marked as is_free)
+                $explicitFree = $group->sum('free_quantity');
+                $implicitFree = $group->filter(fn($i) => !empty($i['is_free']) && filter_var($i['is_free'], FILTER_VALIDATE_BOOLEAN))->sum('quantity');
+                $first['free_quantity'] = (int)($explicitFree + $implicitFree);
+                
+                // Determine overall is_free status for the row
+                $first['is_free'] = $first['quantity'] == 0 && $first['free_quantity'] > 0;
                 
                 // Keep normalized values
                 $first['side'] = isset($first['side']) ? trim($first['side']) : null;
                 $first['size'] = isset($first['size']) ? trim($first['size']) : null;
                 $first['free_side'] = isset($first['free_side']) ? trim($first['free_side']) : null;
                 $first['free_size'] = isset($first['free_size']) ? trim($first['free_size']) : null;
-                $first['is_free'] = isset($first['is_free']) ? filter_var($first['is_free'], FILTER_VALIDATE_BOOLEAN) : false;
                 
                 return $first;
             });

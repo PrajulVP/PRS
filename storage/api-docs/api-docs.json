@@ -638,12 +638,6 @@
                                                 },
                                                 "unit": {
                                                     "type": "string",
-                                                    "enum": [
-                                                        "Nos",
-                                                        "Strips",
-                                                        "Box",
-                                                        "Carton"
-                                                    ],
                                                     "example": "Box"
                                                 },
                                                 "side": {
@@ -941,13 +935,7 @@
                         "in": "query",
                         "required": true,
                         "schema": {
-                            "type": "string",
-                            "enum": [
-                                "Nos",
-                                "Strips",
-                                "Box",
-                                "Carton"
-                            ]
+                            "type": "string"
                         },
                         "example": "Box"
                     },
