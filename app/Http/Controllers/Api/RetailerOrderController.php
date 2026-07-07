@@ -323,8 +323,26 @@ class RetailerOrderController extends Controller
                         $targetKey = $targetItem['product_id'] . '-' . strtolower($targetItem['side'] ?? '') . '-' . strtolower($targetItem['size'] ?? '');
                         $updatedItem = $mergedPaidItems->get($targetKey);
                         $updatedItem['free_quantity'] = ($updatedItem['free_quantity'] ?? 0) + $qty;
-                        if (!empty($freeSide)) $updatedItem['free_side'] = $freeSide;
-                        if (!empty($freeSize)) $updatedItem['free_size'] = $freeSize;
+                        if (!empty($freeSide)) {
+                            if (!empty($updatedItem['free_side'])) {
+                                $sides = array_map('trim', explode(',', $updatedItem['free_side']));
+                                if (!in_array($freeSide, $sides)) {
+                                    $updatedItem['free_side'] .= ', ' . $freeSide;
+                                }
+                            } else {
+                                $updatedItem['free_side'] = $freeSide;
+                            }
+                        }
+                        if (!empty($freeSize)) {
+                            if (!empty($updatedItem['free_size'])) {
+                                $sizes = array_map('trim', explode(',', $updatedItem['free_size']));
+                                if (!in_array($freeSize, $sizes)) {
+                                    $updatedItem['free_size'] .= ', ' . $freeSize;
+                                }
+                            } else {
+                                $updatedItem['free_size'] = $freeSize;
+                            }
+                        }
                         $mergedPaidItems->put($targetKey, $updatedItem);
                     } else {
                         $standaloneKey = 'free-' . uniqid();
