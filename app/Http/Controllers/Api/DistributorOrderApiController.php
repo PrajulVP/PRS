@@ -343,18 +343,13 @@ class DistributorOrderApiController extends Controller
                 $productId = $freeItem['product_id'];
                 $freeSide = isset($freeItem['side']) ? trim($freeItem['side']) : null;
                 $freeSize = isset($freeItem['size']) ? trim($freeItem['size']) : null;
-                $qty = (int)($freeItem['quantity'] ?? 0);
+                $qty = (int)($freeItem['quantity'] ?? $freeItem['free_quantity'] ?? 0);
                 
-                // Find matching paid item (exact variant first)
-                $exactKey = $productId . '-' . strtolower($freeSide ?? '') . '-' . strtolower($freeSize ?? '');
-                $targetItem = $mergedPaidItems->get($exactKey);
-
-                // Fallback: any paid item with the same product ID
-                if (!$targetItem) {
-                    $targetItem = $mergedPaidItems->first(function($item) use ($productId) {
-                        return $item['product_id'] == $productId;
-                    });
-                }
+                // Always consolidate all free items into the FIRST paid item of the same product 
+                // so the Web Dashboard doesn't split the free_size string across multiple rows.
+                $targetItem = $mergedPaidItems->first(function($item) use ($productId) {
+                    return $item['product_id'] == $productId;
+                });
 
                 if ($targetItem) {
                     // Update the target item with free quantities and variants

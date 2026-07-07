@@ -154,15 +154,37 @@ class DistributorDashboardApiController extends Controller
      *     summary="Get retailer order status distribution",
      *     tags={"Distributor Dashboard"},
      *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="period", in="query", required=false, @OA\Schema(type="string", enum={"weekly","monthly","yearly","all-time"})),
      *     @OA\Response(response=200, description="Status distribution")
      * )
      */
-    public function getOrderStatusDistribution()
+    public function getOrderStatusDistribution(Request $request)
     {
         $distributorId = $this->getDistributorId();
         if ($distributorId instanceof \Illuminate\Http\JsonResponse) return $distributorId;
 
-        return response()->json($this->calculateOrderStatusDistribution($distributorId));
+        $period = $request->get('period', 'monthly');
+        $endDate = now();
+        $startDate = now();
+
+        switch ($period) {
+            case 'weekly':
+                $startDate = now()->subDays(6)->startOfDay();
+                break;
+            case 'yearly':
+                $startDate = now()->startOfYear();
+                break;
+            case 'all-time':
+                $startDate = null;
+                $endDate = null;
+                break;
+            case 'monthly':
+            default:
+                $startDate = now()->startOfMonth();
+                break;
+        }
+
+        return response()->json($this->calculateOrderStatusDistribution($distributorId, $startDate, $endDate));
     }
 
     /**
