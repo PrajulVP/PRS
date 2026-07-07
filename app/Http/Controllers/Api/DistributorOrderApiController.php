@@ -309,34 +309,70 @@ class DistributorOrderApiController extends Controller
             $totalItems = 0;
             $totalQuantity = 0;
 
-            // Merge identical items before processing
-            $mergedItems = collect($request->items)->groupBy(function($i) {
+            // Intelligent Merging Logic: Attach free items to paid items of the same product
+            $rawItems = collect($request->items);
+            $paidItems = $rawItems->filter(fn($i) => empty($i['is_free']) || !filter_var($i['is_free'], FILTER_VALIDATE_BOOLEAN));
+            $freeItems = $rawItems->filter(fn($i) => !empty($i['is_free']) && filter_var($i['is_free'], FILTER_VALIDATE_BOOLEAN));
+
+            // Group paid items by exact variant
+            $mergedPaidItems = $paidItems->groupBy(function($i) {
                 $side = isset($i['side']) ? trim(strtolower($i['side'])) : '';
                 $size = isset($i['size']) ? trim(strtolower($i['size'])) : '';
                 return $i['product_id'] . '-' . $side . '-' . $size;
             })->map(function($group) {
                 $first = $group->first();
-                
-                // Billed quantity (sum where is_free is false/missing)
-                $first['quantity'] = $group->filter(fn($i) => empty($i['is_free']) || !filter_var($i['is_free'], FILTER_VALIDATE_BOOLEAN))->sum('quantity');
-                
-                // Free quantity (sum of explicitly provided free_quantity + quantity of items marked as is_free)
-                $explicitFree = $group->sum('free_quantity');
-                $implicitFree = $group->filter(fn($i) => !empty($i['is_free']) && filter_var($i['is_free'], FILTER_VALIDATE_BOOLEAN))->sum('quantity');
-                $first['free_quantity'] = (int)($explicitFree + $implicitFree);
-                
-                // Determine overall is_free status for the row
-                $first['is_free'] = $first['quantity'] == 0 && $first['free_quantity'] > 0;
-                
-                // Keep normalized values
+                $first['quantity'] = $group->sum('quantity');
+                $first['free_quantity'] = $group->sum('free_quantity');
+                $first['is_free'] = false;
                 $first['side'] = isset($first['side']) ? trim($first['side']) : null;
                 $first['size'] = isset($first['size']) ? trim($first['size']) : null;
-                $first['free_side'] = isset($first['free_side']) ? trim($first['free_side']) : null;
-                $first['free_size'] = isset($first['free_size']) ? trim($first['free_size']) : null;
-                
                 return $first;
             });
 
+            // Process free items and attach them to paid items
+            $freeItems->each(function($freeItem) use ($mergedPaidItems) {
+                $productId = $freeItem['product_id'];
+                $freeSide = isset($freeItem['side']) ? trim($freeItem['side']) : null;
+                $freeSize = isset($freeItem['size']) ? trim($freeItem['size']) : null;
+                $qty = (int)($freeItem['quantity'] ?? 0);
+                
+                // Find matching paid item (exact variant first)
+                $exactKey = $productId . '-' . strtolower($freeSide ?? '') . '-' . strtolower($freeSize ?? '');
+                $targetItem = $mergedPaidItems->get($exactKey);
+
+                // Fallback: any paid item with the same product ID
+                if (!$targetItem) {
+                    $targetItem = $mergedPaidItems->first(function($item) use ($productId) {
+                        return $item['product_id'] == $productId;
+                    });
+                }
+
+                if ($targetItem) {
+                    // Update the target item with free quantities and variants
+                    $targetKey = $targetItem['product_id'] . '-' . strtolower($targetItem['side'] ?? '') . '-' . strtolower($targetItem['size'] ?? '');
+                    
+                    $updatedItem = $mergedPaidItems->get($targetKey);
+                    $updatedItem['free_quantity'] = ($updatedItem['free_quantity'] ?? 0) + $qty;
+                    
+                    if (!empty($freeSide)) $updatedItem['free_side'] = $freeSide;
+                    if (!empty($freeSize)) $updatedItem['free_size'] = $freeSize;
+                    
+                    $mergedPaidItems->put($targetKey, $updatedItem);
+                } else {
+                    // No paid item exists for this product, add it as a standalone free row
+                    $standaloneKey = 'free-' . uniqid();
+                    $freeItem['quantity'] = 0;
+                    $freeItem['free_quantity'] = $qty;
+                    $freeItem['is_free'] = true;
+                    $freeItem['free_side'] = $freeSide;
+                    $freeItem['free_size'] = $freeSize;
+                    $freeItem['side'] = $freeSide;
+                    $freeItem['size'] = $freeSize;
+                    $mergedPaidItems->put($standaloneKey, $freeItem);
+                }
+            });
+
+            $mergedItems = $mergedPaidItems->values();
             foreach ($mergedItems as $itemData) {
                 $product = Product::findOrFail($itemData['product_id']);
                 $unitPrice = $product->pts;
