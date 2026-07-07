@@ -285,6 +285,15 @@ class DistributorOrderApiController extends Controller
             $distributor = $user->distributor;
             $distributorId = $distributor->id;
             $salesManagerId = $distributor->sales_manager_id;
+            
+            // Duplicate Prevention Check
+            $recentOrder = \App\Models\DistributorOrder::where('distributor_id', $distributorId)
+                ->where('created_at', '>=', now()->subSeconds(10))
+                ->first();
+                
+            if ($recentOrder) {
+                return response()->json(['error' => 'Please wait 10 seconds before placing another order to prevent duplicates.'], 429);
+            }
         } else {
             return response()->json(['error' => 'Only distributors can place orders via API'], 403);
         }

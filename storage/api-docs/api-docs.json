@@ -2994,8 +2994,8 @@
                 "tags": [
                     "Orders"
                 ],
-                "summary": "Place new order (Retailer or Distributor based on payload)",
-                "description": "Step 1 of the 2-step ordering process. Places the base order, creates the order record, calculates the total bill, and triggers notifications. Returns the generated order_id and a list of eligible free items to be presented in the UI (e.g. Bottom Sheet).",
+                "summary": "Check Free Quantity & Calculate Order (Does NOT place order)",
+                "description": "Checks free item eligibility and calculates order totals without actually saving the order to the database. Returns a simulated order response exactly as it would appear if it were created.",
                 "operationId": "e7be4cae1f1a994f1c7a58881f487441",
                 "requestBody": {
                     "required": true,

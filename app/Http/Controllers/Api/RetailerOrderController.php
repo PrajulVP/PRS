@@ -251,6 +251,16 @@ class RetailerOrderController extends Controller
         }
 
         $retailer = $user->retailer;
+        
+        // Duplicate Prevention Check
+        $recentOrder = RetailerOrder::where('retailer_id', $retailer->id)
+            ->where('created_at', '>=', now()->subSeconds(10))
+            ->first();
+            
+        if ($recentOrder) {
+            return response()->json(['error' => 'Please wait 10 seconds before placing another order to prevent duplicates.'], 429);
+        }
+        
         $createdOrders = [];
 
         DB::beginTransaction();

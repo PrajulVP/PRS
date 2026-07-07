@@ -24,10 +24,10 @@ class OrderApiController extends Controller
      * 
      * @OA\Post(
      *     path="/api/orders",
-     *     summary="Place new order (Retailer or Distributor based on payload)",
+     *     summary="Check Free Quantity & Calculate Order (Does NOT place order)",
      *     tags={"Orders"},
      *     security={{"bearerAuth":{}}},
-     *     description="Step 1 of the 2-step ordering process. Places the base order, creates the order record, calculates the total bill, and triggers notifications. Returns the generated order_id and a list of eligible free items to be presented in the UI (e.g. Bottom Sheet).",
+     *     description="Checks free item eligibility and calculates order totals without actually saving the order to the database. Returns a simulated order response exactly as it would appear if it were created.",
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
@@ -240,27 +240,8 @@ class OrderApiController extends Controller
                 }
             }
 
-            // Notify Field Staff
-            if ($order->fieldStaff && $order->fieldStaff->user) {
-                $this->notifyUnique(
-                    $order->fieldStaff->user,
-                    new \App\Notifications\OrderActionRequired(
-                        $order,
-                        "New order #{$order->order_code} from {$retailer->shop_name} assigned to you.",
-                        url('/approvals/retailers'),
-                        'retailer_order'
-                    )
-                );
-
-                $this->sendOneSignalPush(
-                    [$order->fieldStaff->user->id],
-                    "New order #{$order->order_code} from {$retailer->shop_name} assigned to you.",
-                    ['order_id' => $order->id, 'type' => 'retailer_order'],
-                    'New Retailer Order'
-                );
-            }
-
-            DB::commit();
+            // Order is explicitly NOT saved per client requirement to only use this for checking free items
+            DB::rollBack();
             return response()->json([
                 'status' => 'success',
                 'data' => [
@@ -416,23 +397,8 @@ class OrderApiController extends Controller
                 }
             }
 
-            if ($order->salesManager && $order->salesManager->user) {
-                $this->notifyUnique($order->salesManager->user, new \App\Notifications\OrderActionRequired(
-                    $order,
-                    "New Distributor Order #{$order->order_code} is ready for your approval.",
-                    url('/approvals/distributors'),
-                    'distributor_order'
-                ));
-
-                $this->sendOneSignalPush(
-                    [$order->salesManager->user->id],
-                    "New Distributor Order #{$order->order_code} is ready for your approval.",
-                    ['order_id' => $order->id, 'type' => 'distributor_order'],
-                    'Distributor Order Pending'
-                );
-            }
-
-            DB::commit();
+            // Order is explicitly NOT saved per client requirement to only use this for checking free items
+            DB::rollBack();
             return response()->json([
                 'status' => 'success',
                 'data' => [

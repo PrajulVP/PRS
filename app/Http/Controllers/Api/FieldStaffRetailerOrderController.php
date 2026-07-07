@@ -277,6 +277,16 @@ class FieldStaffRetailerOrderController extends Controller
             return response()->json(['error' => 'Retailer not assigned to you or invalid.'], 403);
         }
 
+        // Duplicate Prevention Check
+        $recentOrder = RetailerOrder::where('fieldstaff_id', $fieldStaffId)
+            ->where('retailer_id', $retailer->id)
+            ->where('created_at', '>=', now()->subSeconds(10))
+            ->first();
+            
+        if ($recentOrder) {
+            return response()->json(['error' => 'Please wait 10 seconds before placing another order to prevent duplicates.'], 429);
+        }
+
         // Group items by distributor_id
         $groupedItems = collect($request->items)->groupBy('distributor_id');
         $createdOrders = [];
