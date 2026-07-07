@@ -778,21 +778,74 @@ class DistributorOrderApiController extends Controller
             $multiplier = (float)$multiplier;
             $totalStrips = $qty * $multiplier;
 
-            $inventory = Inventory::firstOrNew([
-                'distributor_id' => $order->distributor_id,
-                'product_id' => $product->id,
-                'side' => $item->side,
-                'size' => $item->size,
-            ]);
+            // 1. Process Paid Quantity
+            if ($qty > 0) {
+                $inventory = Inventory::firstOrNew([
+                    'distributor_id' => $order->distributor_id,
+                    'product_id' => $product->id,
+                    'side' => $item->side,
+                    'size' => $item->size,
+                ]);
 
-            if (!$inventory->exists) {
-                $inventory->distributor_product_code = $product->product_code ?? '---';
+                if (!$inventory->exists) {
+                    $inventory->distributor_product_code = $product->product_code ?? '---';
+                    $inventory->product_name = $product->product_name;
+                    $inventory->stock = 0;
+                }
                 $inventory->product_name = $product->product_name;
-                $inventory->stock = 0;
+                $inventory->stock += $totalStrips;
+                $inventory->save();
             }
-            $inventory->product_name = $product->product_name;
-            $inventory->stock += $totalStrips;
-            $inventory->save();
+
+            // 2. Process Free Items (using free_size parsing from Web Controller)
+            if ($item->free_quantity > 0) {
+                if (!empty($item->free_size)) {
+                    $parts = array_map('trim', explode(',', $item->free_size));
+                    foreach ($parts as $part) {
+                        if (preg_match('/^(\d+)\s+(.+)$/', $part, $matches)) {
+                            $fQty = (int)$matches[1];
+                            $fSize = trim($matches[2]);
+                        } else {
+                            $fQty = $item->free_quantity;
+                            $fSize = $part;
+                        }
+                        
+                        $fStrips = $fQty * $multiplier;
+                        
+                        $fInventory = Inventory::firstOrNew([
+                            'distributor_id' => $order->distributor_id,
+                            'product_id' => $product->id,
+                            'side' => empty($item->free_side) ? (empty($item->side) ? null : $item->side) : $item->free_side,
+                            'size' => $fSize
+                        ]);
+                        
+                        if (!$fInventory->exists) {
+                            $fInventory->distributor_product_code = $product->product_code ?? '---';
+                            $fInventory->product_name = $product->product_name;
+                            $fInventory->stock = 0;
+                        }
+                        $fInventory->stock += $fStrips;
+                        $fInventory->save();
+                    }
+                } else {
+                    $fStrips = $item->free_quantity * $multiplier;
+                    
+                    $fInventory = Inventory::firstOrNew([
+                        'distributor_id' => $order->distributor_id,
+                        'product_id' => $product->id,
+                        'side' => empty($item->free_side) ? (empty($item->side) ? null : $item->side) : $item->free_side,
+                        'size' => empty($item->free_size) ? (empty($item->size) ? null : $item->size) : $item->free_size
+                    ]);
+                    
+                    if (!$fInventory->exists) {
+                        $fInventory->distributor_product_code = $product->product_code ?? '---';
+                        $fInventory->product_name = $product->product_name;
+                        $fInventory->stock = 0;
+                    }
+                    $fInventory->stock += $fStrips;
+                    $fInventory->save();
+                }
+            }
         }
     }
 }

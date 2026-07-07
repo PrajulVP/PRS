@@ -59,7 +59,13 @@ class FieldStaffRetailerOrderController extends Controller
                 'status'         => $order->status,
                 'payment_status' => $order->payment_status ?? null,
                 'placed_at'      => $order->placed_at ? $order->placed_at->format('Y-m-d H:i:s') : null,
-                'items'          => $order->items->map(function ($item) {
+                'items'          => $order->items->groupBy(function($item) {
+                    $side = $item->side ? trim(strtolower($item->side)) : '';
+                    $size = $item->size ? trim(strtolower($item->size)) : '';
+                    $isFree = $item->unit_price == 0 ? 'free' : 'paid';
+                    return $item->product_id . '-' . $side . '-' . $size . '-' . $isFree;
+                })->map(function ($group) {
+                    $item = $group->first();
                     $isFreeItem = $item->unit_price == 0;
                     $baseName = $item->product_name ?? $item->product->product_name ?? 'N/A';
                     
@@ -68,17 +74,19 @@ class FieldStaffRetailerOrderController extends Controller
                         'product_id'   => $item->product_id,
                         'product_name' => $isFreeItem ? $baseName . ' (Free)' : $baseName,
                         'brand'        => $item->product->brand ?? null,
-                        'quantity'     => $isFreeItem ? $item->free_quantity : $item->quantity,
-                        'free_quantity' => $item->free_quantity,
+                        'quantity'     => $isFreeItem ? $group->sum('free_quantity') : $group->sum('quantity'),
+                        'free_quantity' => $group->sum('free_quantity'),
                         'is_free'      => $isFreeItem,
                         'price'        => (float)$item->unit_price,
                         'unit'         => $item->unit ?? 'Nos',
                         'side'         => $item->side,
                         'size'         => $item->size,
-                        'unit_price'   => $item->unit_price,
-                        'total_amount' => $item->total_amount,
+                        'free_side'    => $group->pluck('free_side')->filter()->first() ? preg_replace('/(\d+)x/', '$1 ', $group->pluck('free_side')->filter()->first()) : null,
+                        'free_size'    => $group->pluck('free_size')->filter()->first() ? preg_replace('/(\d+)x/', '$1 ', $group->pluck('free_size')->filter()->first()) : null,
+                        'unit_price'   => (float)$item->unit_price,
+                        'total_amount' => (float)$group->sum('total_amount'),
                     ];
-                }),
+                })->values(),
             ];
         }));
     }
@@ -134,28 +142,36 @@ class FieldStaffRetailerOrderController extends Controller
             'delivered_at'   => $order->delivered_at ? $order->delivered_at->format('Y-m-d H:i:s') : null,
             'delivery_notes' => $order->delivery_notes ?? null,
             'invoice_url'    => $order->invoice_url ?? null,
-            'items'          => $order->items->map(function ($item) {
-                $isFreeItem = $item->unit_price == 0;
-                $baseName = $item->product_name ?? $item->product->product_name ?? 'N/A';
+                'items'          => $order->items->groupBy(function($item) {
+                    $side = $item->side ? trim(strtolower($item->side)) : '';
+                    $size = $item->size ? trim(strtolower($item->size)) : '';
+                    $isFree = $item->unit_price == 0 ? 'free' : 'paid';
+                    return $item->product_id . '-' . $side . '-' . $size . '-' . $isFree;
+                })->map(function ($group) {
+                    $item = $group->first();
+                    $isFreeItem = $item->unit_price == 0;
+                    $baseName = $item->product_name ?? $item->product->product_name ?? 'N/A';
 
-                return [
-                    'id'            => $item->id,
-                    'product_id'    => $item->product_id,
-                    'product_name'  => $isFreeItem ? $baseName . ' (Free)' : $baseName,
-                    'product_code'  => $item->product->product_code ?? null,
-                    'brand'         => $item->product->brand ?? null,
-                    'quantity'      => $isFreeItem ? $item->free_quantity : $item->quantity,
-                    'free_quantity' => $item->free_quantity,
-                    'is_free'       => $isFreeItem,
-                    'price'         => (float)$item->unit_price,
-                    'unit'          => $item->unit ?? 'Nos',
-                    'side'          => $item->side,
-                    'size'          => $item->size,
-                    'unit_price'    => $item->unit_price,
-                    'total_amount'  => $item->total_amount,
-                    'mrp'           => $item->product->mrp ?? null,
-                ];
-            }),
+                    return [
+                        'id'            => $item->id,
+                        'product_id'    => $item->product_id,
+                        'product_name'  => $isFreeItem ? $baseName . ' (Free)' : $baseName,
+                        'product_code'  => $item->product->product_code ?? null,
+                        'brand'         => $item->product->brand ?? null,
+                        'quantity'      => $isFreeItem ? $group->sum('free_quantity') : $group->sum('quantity'),
+                        'free_quantity' => $group->sum('free_quantity'),
+                        'is_free'       => $isFreeItem,
+                        'price'         => (float)$item->unit_price,
+                        'unit'          => $item->unit ?? 'Nos',
+                        'side'          => $item->side,
+                        'size'          => $item->size,
+                        'free_side'     => $group->pluck('free_side')->filter()->first() ? preg_replace('/(\d+)x/', '$1 ', $group->pluck('free_side')->filter()->first()) : null,
+                        'free_size'     => $group->pluck('free_size')->filter()->first() ? preg_replace('/(\d+)x/', '$1 ', $group->pluck('free_size')->filter()->first()) : null,
+                        'unit_price'    => (float)$item->unit_price,
+                        'total_amount'  => (float)$group->sum('total_amount'),
+                        'mrp'           => $item->product->mrp ?? null,
+                    ];
+                })->values(),
         ]);
     }
 
