@@ -13,6 +13,45 @@ use App\Models\Product;
 class InventoryController extends Controller
 {
     use ManagesInventory;
+
+    private function getStockDisplay($product, $stock)
+    {
+        if (!$product) return (string)$stock . ' Strips';
+        
+        $unitsPerStrip = (int)($product->units_per_strip ?? 1);
+        $isNos = false;
+        
+        if ($unitsPerStrip === 1) {
+            $pName = strtolower($product->product_name ?? '');
+            $pPack = strtolower($product->pack ?? '');
+            $boxSizeStr = strtolower((string)($product->box_size ?? ''));
+            
+            if (str_contains($pName, 'pair') || str_contains($pName, 'pc') || str_contains($pName, 'unit') ||
+                str_contains($pPack, 'pair') || str_contains($pPack, 'pc') || str_contains($pPack, 'unit') ||
+                str_contains($boxSizeStr, 'pair') || str_contains($boxSizeStr, 'pc') || str_contains($boxSizeStr, 'unit')) {
+                $isNos = true;
+            } else {
+                $exactMatches = ['1', '1s', '1 pair', '1 pc', '1 unit'];
+                if (in_array($pPack, $exactMatches) || in_array($boxSizeStr, $exactMatches)) {
+                    $isNos = true;
+                }
+            }
+        }
+        
+        $displayVal = $isNos ? round((float)$stock * $unitsPerStrip) : (float)$stock;
+        $unitText = $isNos ? 'Nos' : 'Strips';
+        
+        return $displayVal . ' ' . $unitText;
+    }
+
+    private function formatVariant($item)
+    {
+        $side = $item->side && $item->side !== '-' && strcasecmp($item->side, 'N/A') !== 0 ? trim($item->side) : null;
+        $size = $item->size && $item->size !== '-' && strcasecmp($item->size, 'N/A') !== 0 ? trim($item->size) : null;
+        $parts = array_filter([$side, $size]);
+        return empty($parts) ? null : implode(' / ', $parts);
+    }
+
     /**
      * @OA\Get(
      *     path="/api/distributor/inventory",
@@ -85,15 +124,16 @@ class InventoryController extends Controller
         })->map(function ($items) {
             $first = $items->first();
             $totalStock = $items->sum('stock');
+            $product = $first->product;
             
-            $batches = $items->map(function ($item) {
+            $batches = $items->map(function ($item) use ($product) {
                 return [
                     'id' => $item->id,
                     'batch_no' => $item->batch_no,
                     'expiry_date' => $item->expiry_date,
                     'stock' => $item->stock,
-                    'stock_display' => (string)$item->stock . ' Strips',
-                    'variant' => $item->variant ?? null,
+                    'stock_display' => $this->getStockDisplay($product, $item->stock),
+                    'variant' => $this->formatVariant($item),
                     'updated_at' => $item->updated_at,
                 ];
             })->values()->toArray();
@@ -103,9 +143,9 @@ class InventoryController extends Controller
                 'product_id' => $first->product_id,
                 'distributor_id' => $first->distributor_id,
                 'stock' => $totalStock,
-                'stock_display' => (string)$totalStock . ' Strips',
+                'stock_display' => $this->getStockDisplay($product, $totalStock),
                 'distributor_product_code' => $first->distributor_product_code,
-                'product' => $first->product,
+                'product' => $product,
                 'batches' => $batches,
             ];
         })->values();
@@ -185,15 +225,16 @@ class InventoryController extends Controller
             ->get();
 
         $totalStock = $allItems->sum('stock');
+        $product = $inventory->product;
         
-        $batches = $allItems->map(function ($item) {
+        $batches = $allItems->map(function ($item) use ($product) {
             return [
                 'id' => $item->id,
                 'batch_no' => $item->batch_no,
                 'expiry_date' => $item->expiry_date,
                 'stock' => $item->stock,
-                'stock_display' => (string)$item->stock . ' Strips',
-                'variant' => $item->variant ?? null,
+                'stock_display' => $this->getStockDisplay($product, $item->stock),
+                'variant' => $this->formatVariant($item),
                 'updated_at' => $item->updated_at,
             ];
         })->values()->toArray();
@@ -203,9 +244,9 @@ class InventoryController extends Controller
             'product_id' => $inventory->product_id,
             'distributor_id' => $inventory->distributor_id,
             'stock' => $totalStock,
-            'stock_display' => (string)$totalStock . ' Strips',
+            'stock_display' => $this->getStockDisplay($product, $totalStock),
             'distributor_product_code' => $inventory->distributor_product_code,
-            'product' => $inventory->product,
+            'product' => $product,
             'batches' => $batches,
         ];
 

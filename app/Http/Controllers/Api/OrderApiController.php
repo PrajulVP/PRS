@@ -231,6 +231,8 @@ class OrderApiController extends Controller
                         'promotion_id' => $product->id, // Usually there is a promo ID, falling back to product ID
                         'product_id' => $product->id,
                         'product_name' => $product->product_name,
+                        'pack' => $product->pack,
+                        'unit' => $this->getAvailableUnits($product)[0] ?? 'Nos',
                         'quantity_allowed' => $freeQty,
                         'requires_variants' => $product->has_variants ? true : false,
                         'allowed_variants' => $variants
@@ -405,6 +407,8 @@ class OrderApiController extends Controller
                         'promotion_id' => $product->id,
                         'product_id' => $product->id,
                         'product_name' => $product->product_name,
+                        'pack' => $product->pack,
+                        'unit' => $this->getAvailableUnits($product)[0] ?? 'Nos',
                         'quantity_allowed' => $freeQty,
                         'requires_variants' => $product->has_variants ? true : false,
                         'allowed_variants' => $variants

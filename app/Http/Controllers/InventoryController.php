@@ -104,10 +104,17 @@ class InventoryController extends Controller
                     });
                 }
 
+                if ($request->has('brand') && !empty($request->input('brand'))) {
+                    $brand = $request->input('brand');
+                    $query->whereHas('product', function ($qp) use ($brand) {
+                        $qp->where('brand', $brand);
+                    });
+                }
+
                 // Correct totals for grouped data
                 $totalData = DB::table('inventories')
-                    ->select('product_id', 'side', 'size')
-                    ->groupBy('product_id', 'side', 'size')
+                    ->select('product_id')
+                    ->groupBy('product_id')
                     ->get()
                     ->count();
 
@@ -126,8 +133,8 @@ class InventoryController extends Controller
                     ]);
                 }
 
-                $totalFiltered = (clone $query)->select('product_id', 'side', 'size')
-                    ->groupBy('product_id', 'side', 'size')
+                $totalFiltered = (clone $query)->select('product_id')
+                    ->groupBy('product_id')
                     ->get()
                     ->count();
 
@@ -140,11 +147,9 @@ class InventoryController extends Controller
                     DB::raw('MAX(distributor_id) as distributor_id'),
                     DB::raw('MAX(updated_at) as updated_at'),
                     DB::raw('MAX(batch_no) as batch_no'),
-                    DB::raw('MAX(expiry_date) as expiry_date'),
-                    'side',
-                    'size'
+                    DB::raw('MAX(expiry_date) as expiry_date')
                 )
-                ->groupBy('product_id', 'side', 'size');
+                ->groupBy('product_id');
 
                 // ordering
                 if ($request->has('order') && !empty($request->input('order'))) {
@@ -171,13 +176,10 @@ class InventoryController extends Controller
                     : $query->with(['product', 'distributor.user'])->offset($start)->limit($length)->get();
 
                 $formatted = $items->map(function ($i) {
-                    // Fetch all batches for this group to show in the breakdown
-                    // We sum stock for batches with same batch_no and expiry
+                    // Fetch all batches for this product
                     $rawBatches = Inventory::with(['distributor.user'])
                         ->where('product_id', $i->product_id)
                         ->where('distributor_id', $i->distributor_id)
-                        ->where('side', $i->side)
-                        ->where('size', $i->size)
                         ->orderBy('expiry_date', 'asc')
                         ->get();
                     
@@ -202,8 +204,6 @@ class InventoryController extends Controller
                         'distributor_id' => $i->distributor_id,
                         'distributor_name' => $i->distributor?->user?->name ?? 'N/A',
                         'stock' => (float) $i->stock,
-                        'side' => $i->side,
-                        'size' => $i->size,
                         'batches' => $batches,
                         'product_details' => $i->product ? [
                             'id' => $i->product->id,
@@ -287,6 +287,13 @@ class InventoryController extends Controller
         $products = Product::select('id', 'product_name', 'product_code', 'box_size', 'carton_size', 'units_per_strip', 'strips_per_box', 'boxes_per_carton', 'has_variants')
             ->orderBy('product_name')
             ->get();
+            
+        $brands = Product::whereNotNull('brand')->where('brand', '!=', '')
+            ->select('brand')
+            ->distinct()
+            ->orderBy('brand', 'asc')
+            ->pluck('brand');
+            
         $distributors = [];
         /** @var \App\Models\User $authUserFiltered */
         $authUserFiltered = Auth::user();
@@ -294,7 +301,7 @@ class InventoryController extends Controller
             $distributors = Distributor::with('user')->get();
         }
 
-        return view('admin.inventories.index', compact('products', 'distributors'));
+        return view('admin.inventories.index', compact('products', 'distributors', 'brands'));
     }
 
     public function create()

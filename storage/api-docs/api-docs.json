@@ -2632,6 +2632,10 @@
                                             "type": "integer",
                                             "example": 100
                                         },
+                                        "stock_display": {
+                                            "type": "string",
+                                            "example": "100 Strips"
+                                        },
                                         "distributor_product_code": {
                                             "type": "string",
                                             "example": "P001"
@@ -2672,6 +2676,40 @@
                                                 }
                                             },
                                             "type": "object"
+                                        },
+                                        "batches": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 12
+                                                    },
+                                                    "batch_no": {
+                                                        "type": "string",
+                                                        "example": "XXXX"
+                                                    },
+                                                    "expiry_date": {
+                                                        "type": "string",
+                                                        "format": "date",
+                                                        "example": "2024-12-01"
+                                                    },
+                                                    "stock": {
+                                                        "type": "integer",
+                                                        "example": 10
+                                                    },
+                                                    "stock_display": {
+                                                        "type": "string",
+                                                        "example": "10 Strips"
+                                                    },
+                                                    "variant": {
+                                                        "type": "string",
+                                                        "example": "M",
+                                                        "nullable": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
                                         }
                                     },
                                     "type": "object"

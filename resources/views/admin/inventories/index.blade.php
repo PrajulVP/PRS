@@ -489,6 +489,45 @@
                             </div>
                         @endunless
 
+                        @if(isset($brands) && $brands->count() > 0)
+                        <div class="mb-4">
+                            <ul class="nav nav-pills nav-tabs custom-brand-tabs" id="brandTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active brand-filter-btn" id="all-brand-tab" data-bs-toggle="pill" data-brand="" type="button" role="tab" aria-selected="true">All Products</button>
+                                </li>
+                                @foreach($brands as $brand)
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link brand-filter-btn" id="brand-{{ Str::slug($brand) }}-tab" data-bs-toggle="pill" data-brand="{{ $brand }}" type="button" role="tab" aria-selected="false">{{ $brand }}</button>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                        <style>
+                            .custom-brand-tabs {
+                                border-bottom: 2px solid var(--med-border);
+                                gap: 10px;
+                            }
+                            .custom-brand-tabs .nav-link {
+                                border: none;
+                                border-radius: 12px 12px 0 0;
+                                font-weight: 700;
+                                color: var(--med-text-muted);
+                                padding: 10px 20px;
+                                transition: all 0.3s ease;
+                                background: transparent;
+                            }
+                            .custom-brand-tabs .nav-link:hover {
+                                color: var(--med-primary);
+                                background: rgba(var(--med-primary-rgb), 0.05);
+                            }
+                            .custom-brand-tabs .nav-link.active {
+                                color: var(--med-primary);
+                                background: rgba(var(--med-primary-rgb), 0.1);
+                                border-bottom: 3px solid var(--med-primary);
+                            }
+                        </style>
+                        @endif
+
                         <div class="row mb-4 align-items-center">
                             <div class="col-md-6">
                                 <div class="inventory-search-group">
@@ -944,21 +983,8 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4 pt-2">
-                    <div class="table-responsive rounded-4 border overflow-hidden">
-                        <table class="table table-hover mb-0" id="batchListingTable">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th class="ps-4">Batch Number</th>
-                                    <th>Variation</th>
-                                    <th>Expiry</th>
-                                    <th class="text-center">Stock</th>
-                                    {{-- <th class="text-end pe-4">Actions</th> --}}
-                                </tr>
-                            </thead>
-                            <tbody id="batchListTableBody">
-                                <!-- Populated via JS -->
-                            </tbody>
-                        </table>
+                    <div id="batchTabsContainer" class="variant-tabs">
+                        <!-- Populated via JS -->
                     </div>
                 </div>
                 <div class="modal-footer border-0 p-4 pt-0">
@@ -1206,6 +1232,48 @@
         }
         body.dark-only .modal-header.bg-soft-primary {
             background-color: rgba(59, 130, 246, 0.15) !important;
+        }
+        
+        /* Premium Tab Styles for light/dark mode */
+        .variant-tabs .nav-link {
+            border: 1px solid #e2e8f0;
+            color: #64748b;
+            font-weight: 700;
+            padding: 8px 24px;
+            border-radius: 50rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #ffffff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            font-size: 0.9rem;
+        }
+        .variant-tabs .nav-link:hover {
+            color: #0f172a;
+            border-color: #cbd5e1;
+            background-color: #f8fafc;
+        }
+        .variant-tabs .nav-link.active {
+            color: #ffffff;
+            background-color: #10b981;
+            border-color: #10b981;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+        
+        body.dark-only .variant-tabs .nav-link {
+            border-color: rgba(255,255,255,0.05);
+            background: #1e293b;
+            color: #94a3b8;
+            box-shadow: none;
+        }
+        body.dark-only .variant-tabs .nav-link:hover {
+            color: #f8fafc;
+            background-color: #334155;
+            border-color: rgba(255,255,255,0.1);
+        }
+        body.dark-only .variant-tabs .nav-link.active {
+            color: #ffffff;
+            background-color: #10b981;
+            border-color: #10b981;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
         }
         body.dark-only .modal-header.bg-light,
         body.dark-only .bg-light {
@@ -1497,6 +1565,10 @@
                         if (distFilter.length) {
                              d.distributor_id = distFilter.val();
                         }
+                        const activeBrand = $('.custom-brand-tabs .nav-link.active').data('brand');
+                        if (activeBrand) {
+                            d.brand = activeBrand;
+                        }
                     },
                     dataSrc: 'data'
                 },
@@ -1547,6 +1619,14 @@
                     $('#custom-inventory-search').on('keyup', function() {
                         table.search(this.value).draw();
                     });
+
+                    // Brand tab filter
+                    $('.brand-filter-btn').on('click', function (e) {
+                        e.preventDefault();
+                        $('.brand-filter-btn').removeClass('active');
+                        $(this).addClass('active');
+                        table.draw();
+                    });
                     
                     // Move buttons to custom container
                     table.buttons().container().appendTo('#table-buttons-container');
@@ -1592,7 +1672,7 @@
                     ]
                 },
                 order: [
-                    [0, 'desc']
+                    [2, 'asc']
                 ],
                 columns: [{
                     data: 'updated_at',
@@ -1620,14 +1700,7 @@
                         if (details.generic_name) subInfo.push(details.generic_name);
                         if (details.pack) subInfo.push(details.pack);
 
-                        // Add Variation badges if available
-                        if (row.side && row.side !== '-' && row.side !== 'N/A') {
-                            subInfo.push(`<span class="merged-badge bg-soft-primary text-primary">${row.side}</span>`);
-                        }
-                        if (row.size && row.size !== '-' && row.size !== 'N/A') {
-                            subInfo.push(`<span class="merged-badge bg-soft-info text-info">${row.size}</span>`);
-                        }
-                        
+                        // Variation badges removed as variants are shown inside modal
                         return `
                             <div class="product-info-cell">
                                  <a href="javascript:void(0)" class="fw-bold product-main-name view-product-details text-primary" 
@@ -1867,50 +1940,97 @@
                 $('.op-btn[data-op="subtract"]').removeClass('active');
                 $('#selected_op').val('add');
 
-                let html = '';
+                let variantGroups = {};
                 row.batches.forEach(b => {
-                    const displayStr = window.formatStockBreakdown(b.stock, pData, isNos, unitsPerStrip);
-                    let displayVal = b.stock;
-                    if (isNos) {
-                        displayVal = Math.round(b.stock * unitsPerStrip);
-                    }
-                    
-                    let unitText = isNos ? 'Nos' : 'Strips';
-                    let stockHtml = `<span class="badge ${b.stock > 0 ? 'bg-soft-success text-success' : 'bg-soft-danger text-danger'} rounded-pill px-3 fw-bold" style="font-size: 0.85rem; border: 1px solid rgba(0,0,0,0.05);">
-                                        ${displayVal} <span class="ms-1 fw-normal opacity-75">${unitText}</span>
-                                     </span>`;
-                    
-                    if (displayStr && displayStr !== displayVal.toString() && displayStr !== (displayVal + ' Nos') && displayStr !== (displayVal + ' Str')) {
-                        stockHtml += `<div class="small text-muted opacity-75 mt-1" style="font-size: 0.75rem;">${displayStr}</div>`;
-                    }
-
-                    html += `<tr>
-                        <td class="ps-4 align-middle">
-                            <span class="fw-bold text-dark">${b.batch_no}</span>
-                            <div class="smaller text-muted" style="font-size: 0.65rem;">${b.distributor_name}</div>
-                        </td>
-                        <td class="align-middle">
-                            ${b.side && b.side !== '-' ? `<span class="badge bg-soft-primary text-primary rounded-pill px-2" style="font-size: 0.7rem;">${b.side}</span>` : ''}
-                            ${b.size && b.size !== '-' ? `<span class="badge bg-soft-info text-info rounded-pill px-2 ms-1" style="font-size: 0.7rem;">${b.size}</span>` : ''}
-                            ${(!b.side || b.side === '-') && (!b.size || b.size === '-') ? '<span class="text-muted opacity-50">-</span>' : ''}
-                        </td>
-                        <td class="align-middle fw-600 text-muted" style="font-size: 0.85rem;">${b.expiry_date}</td>
-                        <td class="text-center align-middle">
-                            ${stockHtml}
-                        </td>
-                        {{-- 
-                        <td class="text-end pe-4 align-middle">
-                            <button class="btn btn-sm btn-primary rounded-pill px-3 edit-single-batch d-inline-flex align-items-center gap-2" 
-                                    data-batch='${JSON.stringify({...row, ...b, product_details: pData}).replace(/'/g, "&apos;")}' title="Adjust this Batch">
-                                <i class="fa fa-pencil-alt small"></i>
-                                <span>Edit</span>
-                            </button>
-                        </td>
-                        --}}
-                    </tr>`;
+                    let key = (b.side && b.side !== '-' && b.side !== 'N/A' ? b.side : '') + '|' + (b.size && b.size !== '-' && b.size !== 'N/A' ? b.size : '');
+                    if (key === '|') key = 'Standard (No Variant)';
+                    if (!variantGroups[key]) variantGroups[key] = { side: b.side, size: b.size, batches: [], totalStock: 0 };
+                    variantGroups[key].batches.push(b);
+                    variantGroups[key].totalStock += parseFloat(b.stock) || 0;
                 });
 
-                $('#batchListTableBody').html(html);
+                let navHtml = `<ul class="nav nav-pills mb-3 d-flex gap-2" id="variantTabs" role="tablist" style="overflow-x: auto; flex-wrap: nowrap;">`;
+                let contentHtml = `<div class="tab-content border rounded-4 bg-transparent overflow-hidden" id="variantTabsContent">`;
+                
+                let index = 0;
+                for (let key in variantGroups) {
+                    let vg = variantGroups[key];
+                    index++;
+                    
+                    let variantStr = '';
+                    if (vg.side && vg.side !== '-' && vg.side !== 'N/A') variantStr += vg.side + ' ';
+                    if (vg.size && vg.size !== '-' && vg.size !== 'N/A') variantStr += vg.size;
+                    variantStr = variantStr.trim();
+                    if (!variantStr) variantStr = 'Standard';
+                    
+                    let displayTotalVal = isNos ? Math.round(vg.totalStock * unitsPerStrip) : vg.totalStock;
+                    
+                    let isActive = index === 1;
+                    
+                    // Nav Item
+                    navHtml += `
+                        <li class="nav-item flex-shrink-0" role="presentation">
+                            <button class="nav-link ${isActive ? 'active' : ''} d-flex align-items-center gap-2" 
+                                    id="tab-${index}" data-bs-toggle="tab" data-bs-target="#content-${index}" 
+                                    type="button" role="tab" aria-controls="content-${index}" aria-selected="${isActive ? 'true' : 'false'}">
+                                <span>${variantStr}</span>
+                                <div style="width: 4px; height: 4px; border-radius: 50%; background-color: currentColor; opacity: 0.4;"></div>
+                                <span>${displayTotalVal} <span style="font-size: 0.8em; opacity: 0.8; font-weight: 500;">${baseStr}</span></span>
+                            </button>
+                        </li>
+                    `;
+                    
+                    // Content Pane
+                    contentHtml += `
+                        <div class="tab-pane fade ${isActive ? 'show active' : ''}" id="content-${index}" role="tabpanel" aria-labelledby="tab-${index}">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light text-muted small text-uppercase" style="font-size: 0.75rem;">
+                                        <tr>
+                                            <th class="ps-4 py-2 border-bottom-0">Batch No.</th>
+                                            <th class="py-2 border-bottom-0">Distributor</th>
+                                            <th class="py-2 border-bottom-0">Expiry</th>
+                                            <th class="text-center pe-4 py-2 border-bottom-0">Stock</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+                    
+                    vg.batches.forEach(b => {
+                        const displayStr = window.formatStockBreakdown(b.stock, pData, isNos, unitsPerStrip);
+                        let displayVal = b.stock;
+                        if (isNos) {
+                            displayVal = Math.round(b.stock * unitsPerStrip);
+                        }
+                        
+                        let unitText = isNos ? 'Nos' : 'Strips';
+                        
+                        // Using same rendering as main datatable for consistency and premium look
+                        let stockHtml = `<span class="fw-bold ${b.stock > 0 ? 'text-success' : 'text-danger'} fs-6">${displayVal} <span style="font-size: 0.75rem; font-weight: normal; opacity: 0.8;">${unitText}</span></span>`;
+                        
+                        if (displayStr && displayStr !== displayVal.toString() && displayStr !== (displayVal + ' Nos') && displayStr !== (displayVal + ' Str')) {
+                            stockHtml += `<div class="small text-muted opacity-75 mt-1" style="font-size: 0.75rem;">${displayStr}</div>`;
+                        }
+
+                        contentHtml += `<tr>
+                            <td class="ps-4 align-middle fw-bold text-dark">${b.batch_no}</td>
+                            <td class="align-middle text-muted smaller">${b.distributor_name}</td>
+                            <td class="align-middle fw-600 text-muted" style="font-size: 0.85rem;">${b.expiry_date}</td>
+                            <td class="text-center align-middle pe-4">
+                                ${stockHtml}
+                            </td>
+                        </tr>`;
+                    });
+                    
+                    contentHtml += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>`;
+                }
+                navHtml += `</ul>`;
+                contentHtml += `</div>`;
+
+                $('#batchTabsContainer').html(navHtml + contentHtml);
                 $('#batchListModal').modal('show');
             });
 
