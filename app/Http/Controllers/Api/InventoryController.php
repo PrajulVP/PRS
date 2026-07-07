@@ -80,14 +80,37 @@ class InventoryController extends Controller
 
         $inventory = $query->orderBy('updated_at', 'desc')->get();
 
-        $inventory->transform(function ($item) {
-            $item->stock_display = (string)$item->stock . ' Strips';
-            // Also update stock if the app expects a string with units
-            // $item->stock = (string)$item->stock . ' Strips'; 
-            return $item;
-        });
+        $grouped = $inventory->groupBy(function ($item) {
+            return $item->product_id . '_' . $item->distributor_id;
+        })->map(function ($items) {
+            $first = $items->first();
+            $totalStock = $items->sum('stock');
+            
+            $batches = $items->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'batch_no' => $item->batch_no,
+                    'expiry_date' => $item->expiry_date,
+                    'stock' => $item->stock,
+                    'stock_display' => (string)$item->stock . ' Strips',
+                    'variant' => $item->variant ?? null,
+                    'updated_at' => $item->updated_at,
+                ];
+            })->values()->toArray();
 
-        return response()->json($inventory);
+            return [
+                'id' => $first->id,
+                'product_id' => $first->product_id,
+                'distributor_id' => $first->distributor_id,
+                'stock' => $totalStock,
+                'stock_display' => (string)$totalStock . ' Strips',
+                'distributor_product_code' => $first->distributor_product_code,
+                'product' => $first->product,
+                'batches' => $batches,
+            ];
+        })->values();
+
+        return response()->json($grouped);
     }
 
     /**
@@ -111,6 +134,7 @@ class InventoryController extends Controller
      *             @OA\Property(property="product_id", type="integer", example=1),
      *             @OA\Property(property="distributor_id", type="integer", example=1),
      *             @OA\Property(property="stock", type="integer", example=100),
+     *             @OA\Property(property="stock_display", type="string", example="100 Strips"),
      *             @OA\Property(property="distributor_product_code", type="string", example="P001"),
      *             @OA\Property(property="product", type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
@@ -121,6 +145,16 @@ class InventoryController extends Controller
      *                 @OA\Property(property="ptr", type="string", example="80.00"),
      *                 @OA\Property(property="pts", type="string", example="70.00"),
      *                 @OA\Property(property="gst", type="string", example="12")
+     *             ),
+     *             @OA\Property(property="batches", type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=12),
+     *                     @OA\Property(property="batch_no", type="string", example="XXXX"),
+     *                     @OA\Property(property="expiry_date", type="string", format="date", example="2024-12-01"),
+     *                     @OA\Property(property="stock", type="integer", example=10),
+     *                     @OA\Property(property="stock_display", type="string", example="10 Strips"),
+     *                     @OA\Property(property="variant", type="string", example="M", nullable=true)
+     *                 )
      *             )
      *         )
      *     ),
@@ -145,7 +179,37 @@ class InventoryController extends Controller
             }
         }
 
-        return response()->json($inventory);
+        $allItems = Inventory::where('product_id', $inventory->product_id)
+            ->where('distributor_id', $inventory->distributor_id)
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        $totalStock = $allItems->sum('stock');
+        
+        $batches = $allItems->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'batch_no' => $item->batch_no,
+                'expiry_date' => $item->expiry_date,
+                'stock' => $item->stock,
+                'stock_display' => (string)$item->stock . ' Strips',
+                'variant' => $item->variant ?? null,
+                'updated_at' => $item->updated_at,
+            ];
+        })->values()->toArray();
+
+        $response = [
+            'id' => $inventory->id,
+            'product_id' => $inventory->product_id,
+            'distributor_id' => $inventory->distributor_id,
+            'stock' => $totalStock,
+            'stock_display' => (string)$totalStock . ' Strips',
+            'distributor_product_code' => $inventory->distributor_product_code,
+            'product' => $inventory->product,
+            'batches' => $batches,
+        ];
+
+        return response()->json($response);
     }
 
     /**
