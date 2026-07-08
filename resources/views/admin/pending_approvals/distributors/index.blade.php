@@ -2134,7 +2134,7 @@
                                             });
                                         }
                                     });
-                                    if (variantSum > 0) fg.qty = Math.max(fg.qty, variantSum);
+                                    if (variantSum > 0) fg.qty = variantSum;
                                 }
 
                                 if (fg.qty > 0) {

@@ -81,13 +81,7 @@ trait ConsolidatesFreeItems
 
             $finalFreeSide = $sideData['string'];
             $finalFreeSize = $sizeData['string'];
-            
-            // If variants exist, their total sum should override the free_quantity column 
-            // because the column might include unassigned free quantities from other rows.
-            $variantQty = max($sideData['total'], $sizeData['total']);
-            if ($variantQty > 0) {
-                $totalFreeQty = $variantQty;
-            }
+
 
             // Pass 2: Redistribute
             foreach ($groupItems as $item) {

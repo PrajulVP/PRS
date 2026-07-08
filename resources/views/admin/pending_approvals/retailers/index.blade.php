@@ -2388,6 +2388,7 @@
                         let fg = freeGroup[key];
                         let freeTd = '';
                         if (fg.index === 0) {
+
                             if (fg.qty > 0) {
                                 let labelsStr = fg.labels.length > 0 ? `<span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle mt-1" style="font-size: 0.65rem; letter-spacing: 0.5px; padding: 0.25em 0.6em;">${[...new Set(fg.labels)].join(', ')}</span>` : '';
                                 freeTd = `<td class="text-center fw-bold text-success" style="font-size: 0.85rem;" rowspan="${fg.rowspan}">
@@ -2518,7 +2519,7 @@
                                             });
                                         }
                                     });
-                                    if (variantSum > 0) fg.qty = Math.max(fg.qty, variantSum);
+                                    if (variantSum > 0) fg.qty = variantSum;
                                 }
 
                                 if (fg.qty > 0) {

@@ -537,12 +537,22 @@ class DistributorRetailerOrderController extends Controller
         ]);
 
         if ($isMatch) {
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Invoice matched successfully! You can now proceed to accept the order.',
-                'matched_details' => $matchedDetails,
-                'ocr_data' => $ocrItemsRaw // Line items
-            ]);
+            try {
+                $result = $this->processOrderAcceptance($retailerOrder, null, 'pending', $path);
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Invoice matched successfully and order has been auto-approved!',
+                    'matched_details' => $matchedDetails,
+                    'ocr_data' => $ocrItemsRaw, // Line items
+                    'approval_result' => $result
+                ]);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Invoice matched, but auto-approval failed: ' . $e->getMessage(),
+                    'invoice_path' => $path
+                ], 422);
+            }
         }
 
         // Mismatch: return error with data for cross-verification
@@ -614,7 +624,7 @@ class DistributorRetailerOrderController extends Controller
                     $multiplier = $this->convertQuantityToStrips($product, 1, $orderItem->unit);
 
 
-                    $neededStrips = $orderItem->quantity * $multiplier;
+                    $neededStrips = ($orderItem->quantity + $orderItem->free_quantity) * $multiplier;
                     $inventories = \App\Models\Inventory::where('distributor_id', $distributor->id)
                         ->where('product_id', $product->id)
                         ->when($orderItem->side, function($q) use ($orderItem) {
