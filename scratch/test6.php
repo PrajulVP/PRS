@@ -1,13 +1,7 @@
-<?php
-require 'vendor/autoload.php';
-$app = require_once 'bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
-$kernel->bootstrap();
-
-$order = \App\Models\RetailerOrder::where('order_code', 'RO-2600069')->first();
-if (!$order) {
-    echo "Order not found\n";
-} else {
-    $items = \App\Models\RetailerOrderItem::where('retailer_order_id', $order->id)->get()->toArray();
-    print_r($items);
+<?php require __DIR__.'/vendor/autoload.php';
+$app = require_once __DIR__.'/bootstrap/app.php';
+$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$inventories = App\Models\Inventory::whereIn('product_id', [15, 17])->get(['id', 'product_id', 'batch_no', 'side', 'size', 'quantity']);
+foreach($inventories as $inv) {
+    echo str_pad($inv->product_id, 3) . ' | ' . str_pad($inv->batch_no, 15) . ' | ' . str_pad($inv->side ?: '-', 3) . ' | ' . str_pad($inv->size ?: '-', 3) . ' | ' . $inv->quantity . "\n";
 }

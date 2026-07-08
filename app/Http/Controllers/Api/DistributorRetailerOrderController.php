@@ -583,6 +583,33 @@ class DistributorRetailerOrderController extends Controller
 
         DB::beginTransaction();
         try {
+            // 0. Auto-Fix Legacy Orders: Ensure free items are permanently consolidated in DB 
+            // before any deductions run to prevent duplicate deductions of old overlapping free quantities.
+            $consolidatedData = collect($this->consolidateFreeItems($retailerOrder->items))->keyBy(function($i) {
+                return is_array($i) ? ($i['id'] ?? null) : $i->id;
+            });
+            
+            foreach ($retailerOrder->items as $orderItem) {
+                if ($consolidated = $consolidatedData->get($orderItem->id)) {
+                    $isArr = is_array($consolidated);
+                    $newFreeQty = $isArr ? ($consolidated['free_quantity'] ?? 0) : ($consolidated->free_quantity ?? 0);
+                    $newFreeSide = $isArr ? ($consolidated['free_side'] ?? null) : ($consolidated->free_side ?? null);
+                    $newFreeSize = $isArr ? ($consolidated['free_size'] ?? null) : ($consolidated->free_size ?? null);
+                    
+                    if (
+                        $orderItem->free_quantity != $newFreeQty ||
+                        $orderItem->free_side != $newFreeSide ||
+                        $orderItem->free_size != $newFreeSize
+                    ) {
+                        $orderItem->update([
+                            'free_quantity' => $newFreeQty,
+                            'free_side' => $newFreeSide,
+                            'free_size' => $newFreeSize,
+                        ]);
+                    }
+                }
+            }
+            $retailerOrder->load('items'); // Reload to reflect changes before proceeding
             // 1. Batch Allocation Logic
             if ($itemsBatches) {
                 foreach ($itemsBatches as $allocation) {
