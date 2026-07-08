@@ -19,7 +19,7 @@ use App\Traits\CalculatesPrices;
 
 class DistributorOrderApiController extends Controller
 {
-    use HandlesNotifications, OneSignalNotifications, CalculatesPrices;
+    use HandlesNotifications, OneSignalNotifications, CalculatesPrices, \App\Traits\ConsolidatesFreeItems;
     /**
      * @OA\Get(
      *     path="/api/distributor-orders",
@@ -708,7 +708,7 @@ class DistributorOrderApiController extends Controller
             'cancellation_reason' => $order->cancellation_reason,
             'placed_at' => $order->placed_at ? $order->placed_at->format('Y-m-d H:i:s') : null,
             'invoice_url' => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
-            'items' => $order->items->groupBy(function($item) {
+            'items' => $this->consolidateFreeItems($order->items->groupBy(function($item) {
                 $side = $item->side ? trim(strtolower($item->side)) : '';
                 $size = $item->size ? trim(strtolower($item->size)) : '';
                 $isFree = $item->price == 0 ? 'free' : 'paid';
@@ -748,7 +748,7 @@ class DistributorOrderApiController extends Controller
                         ];
                     })
                 ];
-            })->values()
+            })->values())
         ];
     }
 

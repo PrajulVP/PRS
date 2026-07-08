@@ -45,7 +45,7 @@ use Illuminate\Support\Facades\Storage;
  */
 class RetailerOrderController extends Controller
 {
-    use HandlesNotifications, OneSignalNotifications, CalculatesPrices;
+    use HandlesNotifications, OneSignalNotifications, CalculatesPrices, \App\Traits\ConsolidatesFreeItems;
 
     /**
      * @OA\Get(
@@ -99,7 +99,7 @@ class RetailerOrderController extends Controller
                     'total_items'    => $order->total_items,
                     'total_quantity' => $order->total_quantity,
                     'delivery_notes' => $order->delivery_notes,
-                    'items'          => $order->items->groupBy(function($item) {
+                    'items'          => $this->consolidateFreeItems($order->items->groupBy(function($item) {
                         $side = $item->side ? trim(strtolower($item->side)) : '';
                         $size = $item->size ? trim(strtolower($item->size)) : '';
                         $isFree = $item->unit_price == 0 ? 'free' : 'paid';
@@ -128,7 +128,7 @@ class RetailerOrderController extends Controller
                             'free_item_quantity' => $item->product ? (int)$item->product->free_qty_get : 0,
                             'free_item_threshold' => $item->product ? (int)$item->product->free_qty_buy : 0,
                         ];
-                    })->values(),
+                    })->values()),
                     'invoice_url'    => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
                     'placed_at'      => $order->placed_at?->format('Y-m-d H:i:s'),
                     'delivered_at'   => $order->delivered_at?->format('Y-m-d H:i:s'),

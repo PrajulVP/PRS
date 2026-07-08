@@ -19,7 +19,7 @@ use App\Traits\HandlesNotifications;
 
 class SalesManagerDashboardApiController extends Controller
 {
-    use HandlesNotifications, OneSignalNotifications;
+    use HandlesNotifications, OneSignalNotifications, \App\Traits\ConsolidatesFreeItems;
     /**
      * @OA\Get(
      *     path="/api/sales-manager/dashboard",
@@ -700,7 +700,7 @@ class SalesManagerDashboardApiController extends Controller
                 'status' => $order->status,
                 'payment_status' => $order->payment_status ?? null,
                 'placed_at' => $order->placed_at ? $order->placed_at->format('Y-m-d H:i:s') : null,
-                'items' => $order->items->groupBy(function($item) {
+                'items' => $this->consolidateFreeItems($order->items->groupBy(function($item) {
                     $side = $item->side ? trim(strtolower($item->side)) : '';
                     $size = $item->size ? trim(strtolower($item->size)) : '';
                     $isFree = $item->unit_price == 0 ? 'free' : 'paid';
@@ -727,7 +727,7 @@ class SalesManagerDashboardApiController extends Controller
                         'unit_price' => (float)$item->unit_price,
                         'total_amount' => (float)$group->sum('total_amount')
                     ];
-                })->values()
+                })->values())
             ];
         }));
     }

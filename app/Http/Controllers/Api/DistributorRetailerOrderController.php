@@ -14,7 +14,7 @@ use App\Services\OcrService;
 
 class DistributorRetailerOrderController extends Controller
 {
-    use HandlesNotifications, OneSignalNotifications, CalculatesPrices;
+    use HandlesNotifications, OneSignalNotifications, CalculatesPrices, \App\Traits\ConsolidatesFreeItems;
 
     protected $ocrService;
 
@@ -117,7 +117,7 @@ class DistributorRetailerOrderController extends Controller
                 'placed_at'       => $order->placed_at?->format('Y-m-d H:i:s'),
                 'delivered_at'    => $order->delivered_at?->format('Y-m-d H:i:s'),
                 'delivery_notes'  => $order->delivery_notes,
-                'items'           => $order->items->map(function ($item) {
+                'items'           => $this->consolidateFreeItems($order->items->map(function ($item) {
                     return [
                         'product_id'   => $item->product_id,
                         'product_name' => $item->product?->product_name ?? 'N/A',
@@ -203,7 +203,7 @@ class DistributorRetailerOrderController extends Controller
                 'loyalty_points' => (float)($order->loyalty_points_earned ?? 0),
             ],
 
-            'items' => $order->items->map(function ($item) use ($distributor, $order) {
+            'items' => $this->consolidateFreeItems($order->items->map(function ($item) use ($distributor, $order) {
                 $itemData = [
                     'id'               => $item->id,
                     'product_id'       => $item->product_id,
@@ -256,7 +256,7 @@ class DistributorRetailerOrderController extends Controller
                 }
 
                 return $itemData;
-            }),
+            })),
 
             'invoice_url'    => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
             'placed_at'      => $order->placed_at?->format('Y-m-d H:i:s'),

@@ -11,6 +11,7 @@ use App\Traits\OneSignalNotifications;
 
 class FieldStaffRetailerOrderController extends Controller
 {
+    use \App\Traits\ConsolidatesFreeItems;
     use HandlesNotifications, OneSignalNotifications;
 
     /**
@@ -59,7 +60,7 @@ class FieldStaffRetailerOrderController extends Controller
                 'status'         => $order->status,
                 'payment_status' => $order->payment_status ?? null,
                 'placed_at'      => $order->placed_at ? $order->placed_at->format('Y-m-d H:i:s') : null,
-                'items'          => $order->items->groupBy(function($item) {
+                'items'          => $this->consolidateFreeItems($order->items->groupBy(function($item) {
                     $side = $item->side ? trim(strtolower($item->side)) : '';
                     $size = $item->size ? trim(strtolower($item->size)) : '';
                     $isFree = $item->unit_price == 0 ? 'free' : 'paid';
@@ -86,7 +87,7 @@ class FieldStaffRetailerOrderController extends Controller
                         'unit_price'   => (float)$item->unit_price,
                         'total_amount' => (float)$group->sum('total_amount'),
                     ];
-                })->values(),
+                })->values()),
             ];
         }));
     }
@@ -142,7 +143,7 @@ class FieldStaffRetailerOrderController extends Controller
             'delivered_at'   => $order->delivered_at ? $order->delivered_at->format('Y-m-d H:i:s') : null,
             'delivery_notes' => $order->delivery_notes ?? null,
             'invoice_url'    => $order->invoice_url ?? null,
-                'items'          => $order->items->groupBy(function($item) {
+                'items'          => $this->consolidateFreeItems($order->items->groupBy(function($item) {
                     $side = $item->side ? trim(strtolower($item->side)) : '';
                     $size = $item->size ? trim(strtolower($item->size)) : '';
                     $isFree = $item->unit_price == 0 ? 'free' : 'paid';
@@ -171,7 +172,7 @@ class FieldStaffRetailerOrderController extends Controller
                         'total_amount'  => (float)$group->sum('total_amount'),
                         'mrp'           => $item->product->mrp ?? null,
                     ];
-                })->values(),
+                })->values()),
         ]);
     }
 
