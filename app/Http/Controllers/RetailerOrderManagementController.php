@@ -1205,10 +1205,11 @@ class RetailerOrderManagementController extends Controller
                         }
                     } else {
                         // Standard fallback
+                        // Standard fallback
                         $deductionTasks[] = [
                             'qty' => $neededForAutoDeduction,
-                            'side' => $isAllocated ? $orderItem->free_side : ($orderItem->side ?: $orderItem->free_side),
-                            'size' => $isAllocated ? $orderItem->free_size : ($orderItem->size ?: $orderItem->free_size)
+                            'side' => $isAllocated ? ($orderItem->free_side ?: $orderItem->side) : ($orderItem->side ?: $orderItem->free_side),
+                            'size' => $isAllocated ? ($orderItem->free_size ?: $orderItem->size) : ($orderItem->size ?: $orderItem->free_size)
                         ];
                     }
 

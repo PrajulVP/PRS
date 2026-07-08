@@ -10,9 +10,11 @@ use App\Models\FieldStaff;
 use App\Models\Retailer;
 use App\Models\DistributorOrder; // Added this line
 use Illuminate\Support\Facades\Storage;
+use App\Traits\ConsolidatesFreeItems;
 
 class PendingApprovalController extends Controller
 {
+    use ConsolidatesFreeItems;
     public function index(Request $request)
     {
         /** @var \App\Models\User $user */
@@ -287,28 +289,28 @@ class PendingApprovalController extends Controller
                     'brand_summary' => $brandSummary,
                     'placed_at' => $item->placed_at ? $item->placed_at->format('Y-m-d H:i') : '-',
                     'role_type' => 'order',
-                    'items' => $item->items->map(function ($i) use ($viewType) {
+                    'items' => collect($this->consolidateFreeItems($item->items))->map(function ($i) use ($viewType, $item) {
                         $itemData = [
-                            'order_item_id' => $i->id,
-                            'product_id' => $i->product_id,
-                            'product_name' => $i->product?->product_name ?? 'N/A',
-                            'product_code' => $i->product?->product_code,
-                            'generic_name' => $i->product?->generic_name,
-                            'quantity' => $i->quantity,
-                            'free_quantity' => $i->free_quantity ?? 0,
-                            'free_qty_buy' => $i->product?->free_qty_buy ?? 0,
-                            'free_qty_get' => $i->product?->free_qty_get ?? 1,
-                            'unit' => $i->unit ?? 'Strips',
-                            'pack' => $i->product?->pack,
-                            'strip_size' => $i->product?->strip_size,
-                            'box_size' => $i->product?->box_size,
-                            'carton_size' => $i->product?->carton_size,
-                            'side' => $i->side,
-                            'size' => $i->size,
-                            'free_side' => $i->free_side,
-                            'free_size' => $i->free_size,
-                            'is_returnable' => $i->product?->is_returnable ?? true,
-                            'gst' => $i->product?->gst ?? 0,
+                            'order_item_id' => $i['id'] ?? $i->id,
+                            'product_id' => $i['product_id'] ?? $i->product_id,
+                            'product_name' => $i['product']['product_name'] ?? $i->product?->product_name ?? 'N/A',
+                            'product_code' => $i['product']['product_code'] ?? $i->product?->product_code,
+                            'generic_name' => $i['product']['generic_name'] ?? $i->product?->generic_name,
+                            'quantity' => $i['quantity'] ?? $i->quantity,
+                            'free_quantity' => $i['free_quantity'] ?? 0,
+                            'free_qty_buy' => $i['product']['free_qty_buy'] ?? $i->product?->free_qty_buy ?? 0,
+                            'free_qty_get' => $i['product']['free_qty_get'] ?? $i->product?->free_qty_get ?? 1,
+                            'unit' => $i['unit'] ?? 'Strips',
+                            'pack' => $i['product']['pack'] ?? $i->product?->pack,
+                            'strip_size' => $i['product']['strip_size'] ?? $i->product?->strip_size,
+                            'box_size' => $i['product']['box_size'] ?? $i->product?->box_size,
+                            'carton_size' => $i['product']['carton_size'] ?? $i->product?->carton_size,
+                            'side' => $i['side'] ?? $i->side,
+                            'size' => $i['size'] ?? $i->size,
+                            'free_side' => $i['free_side'] ?? $i->free_side,
+                            'free_size' => $i['free_size'] ?? $i->free_size,
+                            'is_returnable' => $i['product']['is_returnable'] ?? $i->product?->is_returnable ?? true,
+                            'gst' => $i['product']['gst'] ?? $i->product?->gst ?? 0,
                         ];
 
                         // Find corresponding return request if any
@@ -321,14 +323,15 @@ class PendingApprovalController extends Controller
                         $itemData['return_code'] = $retReq ? $retReq->return_code : null;
 
                         if ($viewType === 'distributor') {
-                            $itemData['unit_price'] = $i->price ?? 0;
-                            $itemData['total_amount'] = $i->subtotal ?? 0;
+                            $itemData['unit_price'] = $i['price'] ?? $i->price ?? 0;
+                            $itemData['total_amount'] = $i['subtotal'] ?? $i->subtotal ?? 0;
                         } else {
-                            $itemData['unit_price'] = $i->unit_price ?? 0;
-                            $itemData['total_amount'] = $i->total_amount ?? 0;
+                            $itemData['unit_price'] = $i['unit_price'] ?? $i->unit_price ?? 0;
+                            $itemData['total_amount'] = $i['total_amount'] ?? $i->total_amount ?? 0;
                         }
 
-                        $itemData['batches'] = ($i->batches ?? collect())->map(function ($b) {
+                        $rawBatches = $i['batches'] ?? $i->batches ?? collect();
+                        $itemData['batches'] = collect($rawBatches)->map(function ($b) {
                             return [
                                 'id' => $b->id,
                                 'batch_no' => $b->batch_no,
