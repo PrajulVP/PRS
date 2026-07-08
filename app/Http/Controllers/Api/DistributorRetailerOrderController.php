@@ -126,6 +126,8 @@ class DistributorRetailerOrderController extends Controller
                         'unit'         => $item->unit ?? 'Nos',
                         'side'         => $item->side,
                         'size'         => $item->size,
+                        'free_side'    => $item->free_side,
+                        'free_size'    => $item->free_size,
                         'unit_price'   => $item->unit_price,
                         'total_amount' => $item->total_amount,
                     ];
@@ -213,6 +215,8 @@ class DistributorRetailerOrderController extends Controller
                     'unit'             => $item->unit,
                     'side'             => $item->side,
                     'size'             => $item->size,
+                    'free_side'        => $item->free_side,
+                    'free_size'        => $item->free_size,
                     'unit_price'       => $item->unit_price,
                     'total_amount'     => $item->total_amount,
                     'allocated_batches' => $item->batches->map(function ($b) {

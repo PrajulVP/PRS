@@ -626,7 +626,7 @@ class RetailerOrderManagementController extends Controller
                                  }
                              }
                              if ($variantSum > 0) {
-                                 $data['qty'] = max($data['qty'], $variantSum);
+                                 $data['qty'] = $variantSum;
                              }
                              $labelsStr = '<span style="font-size: 0.75rem; color: #0369a1; background: #e0f2fe; padding: 2px 8px; border-radius: 12px; font-weight: 700; letter-spacing: 0.2px; text-align: left; word-break: break-word; white-space: normal;">' . implode(', ', $uniqueLabels) . '</span>';
                         }
