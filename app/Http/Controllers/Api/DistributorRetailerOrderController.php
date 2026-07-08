@@ -391,6 +391,7 @@ class DistributorRetailerOrderController extends Controller
         if ($existingRetailer || $existingDistributor) {
             $code = $existingRetailer ? $existingRetailer->order_code : $existingDistributor->order_code;
             $role = $existingRetailer ? 'Retailer' : 'Distributor';
+            \Log::warning("Upload Invoice Failed: Duplicate Hash", ['order_id' => $id, 'duplicate_of' => $code]);
             return response()->json([
                 'error' => "Invoice already uploaded for $role Order #$code. Duplicates are not allowed.",
                 'duplicate' => true
@@ -425,6 +426,11 @@ class DistributorRetailerOrderController extends Controller
         $matchedDetails = [];
 
         foreach ($retailerOrder->items as $orderItem) {
+            // Only validate paid items against OCR. Free items are often merged into the 'sch' column.
+            if ($orderItem->is_free) {
+                continue;
+            }
+
             $productName = $orderItem->product->product_name;
             $productCode = $orderItem->product->product_code;
             $expectedQty = (float)$orderItem->quantity;
@@ -489,9 +495,9 @@ class DistributorRetailerOrderController extends Controller
                 $ocrQty = (float)($match['quantity'] ?? $match['qty'] ?? 0);
                 $freeQty = (float)($match['sch'] ?? $match['free_qty'] ?? 0);
 
-                // Update order item with free quantity and product name from OCR if found
+                // Do NOT overwrite order free_quantity with OCR sch to preserve original order details.
+                // Just update the product name if needed.
                 $orderItem->update([
-                    'free_quantity' => $freeQty,
                     'product_name' => $orderItem->product_name ?? $productName
                 ]);
 
@@ -547,6 +553,7 @@ class DistributorRetailerOrderController extends Controller
                     'approval_result' => $result
                 ]);
             } catch (\Exception $e) {
+                \Log::error("Upload Invoice Auto-Approval Failed", ['order_id' => $id, 'error' => $e->getMessage()]);
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Invoice matched, but auto-approval failed: ' . $e->getMessage(),
@@ -556,6 +563,7 @@ class DistributorRetailerOrderController extends Controller
         }
 
         // Mismatch: return error with data for cross-verification
+        \Log::warning("Upload Invoice Mismatch", ['order_id' => $id, 'mismatches' => $mismatches]);
         return response()->json([
             'status' => 'error',
             'message' => 'Invoice data mismatch. Please cross-verify and approve manually.',
