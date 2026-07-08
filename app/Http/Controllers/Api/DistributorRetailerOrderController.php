@@ -593,6 +593,19 @@ class DistributorRetailerOrderController extends Controller
 
 
                     $totalAllocated = 0;
+                    
+                    // Restore existing batch stock before re-allocation
+                    $existingBatches = $orderItem->batches()->get();
+                    foreach ($existingBatches as $b) {
+                        $inventoryToRestore = \App\Models\Inventory::where('distributor_id', $distributor->id)
+                            ->where('product_id', $product->id)
+                            ->where('batch_no', $b->batch_no)
+                            ->first();
+                        if ($inventoryToRestore) {
+                            $restoreQty = $b->quantity * $multiplier;
+                            DB::table('inventories')->where('id', $inventoryToRestore->id)->increment('stock', $restoreQty);
+                        }
+                    }
                     $orderItem->batches()->delete();
                     foreach ($allocation['batches'] as $batchData) {
                         $inventory = \App\Models\Inventory::where('distributor_id', $distributor->id)
@@ -625,6 +638,20 @@ class DistributorRetailerOrderController extends Controller
                 // Fallback to FEFO
                 foreach ($retailerOrder->items as $orderItem) {
                     $product = $orderItem->product;
+                    $multiplier = $this->convertQuantityToStrips($product, 1, $orderItem->unit);
+
+                    // Restore existing batch stock before re-allocation
+                    $existingBatches = $orderItem->batches()->get();
+                    foreach ($existingBatches as $b) {
+                        $inventoryToRestore = \App\Models\Inventory::where('distributor_id', $distributor->id)
+                            ->where('product_id', $product->id)
+                            ->where('batch_no', $b->batch_no)
+                            ->first();
+                        if ($inventoryToRestore) {
+                            $restoreQty = $b->quantity * $multiplier;
+                            DB::table('inventories')->where('id', $inventoryToRestore->id)->increment('stock', $restoreQty);
+                        }
+                    }
                     $orderItem->batches()->delete();
                     $multiplier = $this->convertQuantityToStrips($product, 1, $orderItem->unit);
 
