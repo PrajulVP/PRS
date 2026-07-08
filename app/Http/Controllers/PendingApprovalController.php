@@ -255,6 +255,17 @@ class PendingApprovalController extends Controller
                     $labelsStr = '';
                     if (!empty($data['labels'])) {
                          $uniqueLabels = array_unique($data['labels']);
+                         // Recalculate true quantity from variant labels if they exist
+                         $variantSum = 0;
+                         foreach ($uniqueLabels as $l) {
+                             preg_match_all('/(\d+)\s+[A-Z]+/', $l, $matches);
+                             if (!empty($matches[1])) {
+                                 $variantSum += array_sum($matches[1]);
+                             }
+                         }
+                         if ($variantSum > 0) {
+                             $data['qty'] = $variantSum;
+                         }
                          $labelsStr = '<span style="font-size: 0.75rem; color: #0369a1; background: #e0f2fe; padding: 2px 8px; border-radius: 12px; font-weight: 700; letter-spacing: 0.2px; text-align: left; word-break: break-word; white-space: normal;">' . implode(', ', $uniqueLabels) . '</span>';
                     }
                     $freeSummary .= '<div class="mb-1" style="line-height: 1.2;"><span class="fw-bold" style="color: #334155; font-size: 0.8rem;">' . $name . '</span><br><div class="d-flex flex-column align-items-start mt-1 gap-1"><span class="text-success fw-bold d-inline-flex align-items-center" style="font-size: 0.95rem;"><i class="fa fa-gift me-1" style="font-size: 0.85rem;"></i> ' . $data['qty'] . '</span>' . $labelsStr . '</div></div>|||';

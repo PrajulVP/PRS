@@ -1882,7 +1882,20 @@
                     let fg = freeGroup[key];
                     let freeTd = '';
                     if (fg.index === 0) {
-
+                        if (fg.labels.length > 0) {
+                            let uniqueLabels = [...new Set(fg.labels)];
+                            let variantSum = 0;
+                            uniqueLabels.forEach(l => {
+                                let matches = l.match(/(\d+)\s+[A-Z]+/g);
+                                if (matches) {
+                                    matches.forEach(m => {
+                                        let num = parseInt(m.split(' ')[0]);
+                                        if (!isNaN(num)) variantSum += num;
+                                    });
+                                }
+                            });
+                            if (variantSum > 0) fg.qty = variantSum;
+                        }
 
                         if (fg.qty > 0) {
                             let labelsStr = fg.labels.length > 0 ? `<span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle mt-1" style="font-size: 0.75rem; letter-spacing: 0.2px; padding: 0.25em 0.6em;">${[...new Set(fg.labels)].join(', ')}</span>` : '';
