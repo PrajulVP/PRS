@@ -290,52 +290,60 @@ class PendingApprovalController extends Controller
                     'placed_at' => $item->placed_at ? $item->placed_at->format('Y-m-d H:i') : '-',
                     'role_type' => 'order',
                     'items' => collect($this->consolidateFreeItems($item->items))->map(function ($i) use ($viewType, $item) {
+                        $isArr = is_array($i);
+                        $product = $isArr ? ($i['product'] ?? []) : ($i->product ?? null);
+                        
                         $itemData = [
-                            'order_item_id' => $i['id'] ?? $i->id,
-                            'product_id' => $i['product_id'] ?? $i->product_id,
-                            'product_name' => $i['product']['product_name'] ?? $i->product?->product_name ?? 'N/A',
-                            'product_code' => $i['product']['product_code'] ?? $i->product?->product_code,
-                            'generic_name' => $i['product']['generic_name'] ?? $i->product?->generic_name,
-                            'quantity' => $i['quantity'] ?? $i->quantity,
-                            'free_quantity' => $i['free_quantity'] ?? 0,
-                            'free_qty_buy' => $i['product']['free_qty_buy'] ?? $i->product?->free_qty_buy ?? 0,
-                            'free_qty_get' => $i['product']['free_qty_get'] ?? $i->product?->free_qty_get ?? 1,
-                            'unit' => $i['unit'] ?? 'Strips',
-                            'pack' => $i['product']['pack'] ?? $i->product?->pack,
-                            'strip_size' => $i['product']['strip_size'] ?? $i->product?->strip_size,
-                            'box_size' => $i['product']['box_size'] ?? $i->product?->box_size,
-                            'carton_size' => $i['product']['carton_size'] ?? $i->product?->carton_size,
-                            'side' => $i['side'] ?? $i->side,
-                            'size' => $i['size'] ?? $i->size,
-                            'free_side' => $i['free_side'] ?? $i->free_side,
-                            'free_size' => $i['free_size'] ?? $i->free_size,
-                            'is_returnable' => $i['product']['is_returnable'] ?? $i->product?->is_returnable ?? true,
-                            'gst' => $i['product']['gst'] ?? $i->product?->gst ?? 0,
+                            'order_item_id' => $isArr ? ($i['id'] ?? null) : $i->id,
+                            'product_id' => $isArr ? ($i['product_id'] ?? null) : $i->product_id,
+                            'product_name' => $isArr ? ($product['product_name'] ?? 'N/A') : ($product->product_name ?? 'N/A'),
+                            'product_code' => $isArr ? ($product['product_code'] ?? null) : ($product->product_code ?? null),
+                            'generic_name' => $isArr ? ($product['generic_name'] ?? null) : ($product->generic_name ?? null),
+                            'quantity' => $isArr ? ($i['quantity'] ?? 0) : $i->quantity,
+                            'free_quantity' => $isArr ? ($i['free_quantity'] ?? 0) : ($i->free_quantity ?? 0),
+                            'free_qty_buy' => $isArr ? ($product['free_qty_buy'] ?? 0) : ($product->free_qty_buy ?? 0),
+                            'free_qty_get' => $isArr ? ($product['free_qty_get'] ?? 1) : ($product->free_qty_get ?? 1),
+                            'unit' => $isArr ? ($i['unit'] ?? 'Strips') : ($i->unit ?? 'Strips'),
+                            'pack' => $isArr ? ($product['pack'] ?? null) : ($product->pack ?? null),
+                            'strip_size' => $isArr ? ($product['strip_size'] ?? null) : ($product->strip_size ?? null),
+                            'box_size' => $isArr ? ($product['box_size'] ?? null) : ($product->box_size ?? null),
+                            'carton_size' => $isArr ? ($product['carton_size'] ?? null) : ($product->carton_size ?? null),
+                            'side' => $isArr ? ($i['side'] ?? null) : $i->side,
+                            'size' => $isArr ? ($i['size'] ?? null) : $i->size,
+                            'free_side' => $isArr ? ($i['free_side'] ?? null) : $i->free_side,
+                            'free_size' => $isArr ? ($i['free_size'] ?? null) : $i->free_size,
+                            'is_returnable' => $isArr ? ($product['is_returnable'] ?? true) : ($product->is_returnable ?? true),
+                            'gst' => $isArr ? ($product['gst'] ?? 0) : ($product->gst ?? 0),
                         ];
 
                         // Find corresponding return request if any
-                        $retReq = ($item->returnRequests ?? collect())->where('product_id', $i->product_id)
-                            ->where('side', $i->side)
-                            ->where('size', $i->size)
+                        $prodId = $isArr ? ($i['product_id'] ?? null) : $i->product_id;
+                        $prodSide = $isArr ? ($i['side'] ?? null) : $i->side;
+                        $prodSize = $isArr ? ($i['size'] ?? null) : $i->size;
+
+                        $retReq = ($item->returnRequests ?? collect())->where('product_id', $prodId)
+                            ->where('side', $prodSide)
+                            ->where('size', $prodSize)
                             ->first();
                         
                         $itemData['return_status'] = $retReq ? $retReq->status : null;
                         $itemData['return_code'] = $retReq ? $retReq->return_code : null;
 
                         if ($viewType === 'distributor') {
-                            $itemData['unit_price'] = $i['price'] ?? $i->price ?? 0;
-                            $itemData['total_amount'] = $i['subtotal'] ?? $i->subtotal ?? 0;
+                            $itemData['unit_price'] = $isArr ? ($i['price'] ?? 0) : ($i->price ?? 0);
+                            $itemData['total_amount'] = $isArr ? ($i['subtotal'] ?? 0) : ($i->subtotal ?? 0);
                         } else {
-                            $itemData['unit_price'] = $i['unit_price'] ?? $i->unit_price ?? 0;
-                            $itemData['total_amount'] = $i['total_amount'] ?? $i->total_amount ?? 0;
+                            $itemData['unit_price'] = $isArr ? ($i['unit_price'] ?? 0) : ($i->unit_price ?? 0);
+                            $itemData['total_amount'] = $isArr ? ($i['total_amount'] ?? 0) : ($i->total_amount ?? 0);
                         }
 
-                        $rawBatches = $i['batches'] ?? $i->batches ?? collect();
+                        $rawBatches = $isArr ? ($i['batches'] ?? []) : ($i->batches ?? collect());
                         $itemData['batches'] = collect($rawBatches)->map(function ($b) {
+                            $isBArr = is_array($b);
                             return [
-                                'id' => $b->id,
-                                'batch_no' => $b->batch_no,
-                                'expiry_date' => $b->expiry_date ? (function ($date) {
+                                'id' => $isBArr ? ($b['id'] ?? null) : $b->id,
+                                'batch_no' => $isBArr ? ($b['batch_no'] ?? null) : $b->batch_no,
+                                'expiry_date' => ($isBArr ? ($b['expiry_date'] ?? null) : $b->expiry_date) ? (function ($date) {
                                     try {
                                         $parsed = \Carbon\Carbon::parse($date);
                                         if ($parsed->copy()->endOfMonth()->isSameDay($parsed)) {
@@ -345,8 +353,9 @@ class PendingApprovalController extends Controller
                                     } catch (\Exception $e) {
                                         return $date;
                                     }
-                                })($b->expiry_date) : '-',
-                                'quantity' => $b->quantity,
+                                })($isBArr ? ($b['expiry_date'] ?? null) : $b->expiry_date) : '-',
+                                'quantity' => $isBArr ? ($b['quantity'] ?? 0) : $b->quantity,
+                                'free_quantity' => $isBArr ? ($b['free_quantity'] ?? 0) : ($b->free_quantity ?? 0),
                             ];
                         });
 
