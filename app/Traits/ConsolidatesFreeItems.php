@@ -51,27 +51,43 @@ trait ConsolidatesFreeItems
 
             // Merge helper
             $mergeVariants = function($arr) {
-                if (empty($arr)) return null;
+                if (empty($arr)) return ['string' => null, 'total' => 0];
                 $counts = [];
+                $total = 0;
                 foreach ($arr as $str) {
                     if (preg_match('/(\d+)\s+([A-Za-z0-9]+)/', $str, $matches)) {
                         $qty = (int)$matches[1];
                         $var = strtoupper($matches[2]);
                         $counts[$var] = ($counts[$var] ?? 0) + $qty;
+                        $total += $qty;
                     } else {
-                        $var = strtoupper($str);
+                        $var = strtoupper(trim($str));
                         $counts[$var] = ($counts[$var] ?? 0) + 1;
+                        $total += 1;
                     }
                 }
                 $res = [];
                 foreach ($counts as $var => $qty) {
                     $res[] = "$qty $var";
                 }
-                return empty($res) ? null : implode(', ', $res);
+                return [
+                    'string' => empty($res) ? null : implode(', ', $res),
+                    'total' => $total
+                ];
             };
 
-            $finalFreeSide = $mergeVariants($allFreeSides);
-            $finalFreeSize = $mergeVariants($allFreeSizes);
+            $sideData = $mergeVariants($allFreeSides);
+            $sizeData = $mergeVariants($allFreeSizes);
+
+            $finalFreeSide = $sideData['string'];
+            $finalFreeSize = $sizeData['string'];
+            
+            // If variants exist, their total sum should override the free_quantity column 
+            // because the column might include unassigned free quantities from other rows.
+            $variantQty = max($sideData['total'], $sizeData['total']);
+            if ($variantQty > 0) {
+                $totalFreeQty = $variantQty;
+            }
 
             // Pass 2: Redistribute
             foreach ($groupItems as $item) {

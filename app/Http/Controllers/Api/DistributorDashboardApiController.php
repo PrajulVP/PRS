@@ -227,6 +227,7 @@ class DistributorDashboardApiController extends Controller
      *     summary="Get the total count of retailer orders awaiting distributor approval",
      *     tags={"Distributor Dashboard"},
      *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="period", in="query", required=false, @OA\Schema(type="string", enum={"weekly","monthly","yearly","all-time"})),
      *     @OA\Response(
      *         response=200,
      *         description="Total count of actionable orders",
@@ -236,16 +237,40 @@ class DistributorDashboardApiController extends Controller
      *     )
      * )
      */
-    public function getActionableOrdersCount()
+    public function getActionableOrdersCount(Request $request)
     {
         $distributorId = $this->getDistributorId();
         if ($distributorId instanceof \Illuminate\Http\JsonResponse) return $distributorId;
 
-        $count = RetailerOrder::where('distributor_id', $distributorId)
-            ->where('status', RetailerOrder::STATUS_PROCESSING)
-            ->count();
+        $period = $request->get('period', 'monthly');
+        $endDate = now();
+        $startDate = now();
 
-        return response()->json(['count' => $count]);
+        switch ($period) {
+            case 'weekly':
+                $startDate = now()->subDays(6)->startOfDay();
+                break;
+            case 'yearly':
+                $startDate = now()->startOfYear();
+                break;
+            case 'all-time':
+                $startDate = null;
+                $endDate = null;
+                break;
+            case 'monthly':
+            default:
+                $startDate = now()->startOfMonth();
+                break;
+        }
+
+        $query = RetailerOrder::where('distributor_id', $distributorId)
+            ->where('status', RetailerOrder::STATUS_PROCESSING);
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        }
+
+        return response()->json(['count' => $query->count()]);
     }
 
     /**
