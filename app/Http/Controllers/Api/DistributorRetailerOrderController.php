@@ -129,7 +129,7 @@ class DistributorRetailerOrderController extends Controller
                         'unit_price'   => $item->unit_price,
                         'total_amount' => $item->total_amount,
                     ];
-                }),
+                })),
             ];
         });
 
