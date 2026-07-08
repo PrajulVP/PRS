@@ -656,37 +656,86 @@ class DistributorRetailerOrderController extends Controller
                     $multiplier = $this->convertQuantityToStrips($product, 1, $orderItem->unit);
 
 
-                    $neededStrips = ($orderItem->quantity + $orderItem->free_quantity) * $multiplier;
-                    $inventories = \App\Models\Inventory::where('distributor_id', $distributor->id)
-                        ->where('product_id', $product->id)
-                        ->when($orderItem->side, function($q) use ($orderItem) {
-                            return $q->where('side', $orderItem->side);
-                        })
-                        ->when($orderItem->size, function($q) use ($orderItem) {
-                            return $q->where('size', $orderItem->size);
-                        })
-                        ->where('stock', '>', 0)
-                        ->orderBy('expiry_date', 'asc')
-                        ->get();
+                    $parseVariants = function($str, $totalFreeQty) {
+                        $str = trim($str ?? '');
+                        if (empty($str)) return null;
+                        if (!str_contains($str, ',') && !preg_match('/^\d+\s+/', $str)) return null;
 
-                    if ($inventories->sum('stock') < $neededStrips) {
-                        throw new \Exception("Insufficient total stock for product: {$product->product_name}");
-                    }
+                        $results = [];
+                        $parts = explode(',', $str);
+                        $totalParsed = 0;
+                        foreach ($parts as $p) {
+                            $p = trim($p);
+                            if (preg_match('/^(\d+)\s+(.+)$/', $p, $m)) {
+                                $results[] = ['qty' => (int)$m[1], 'val' => trim($m[2])];
+                                $totalParsed += (int)$m[1];
+                            } else {
+                                $results[] = ['qty' => 1, 'val' => $p];
+                                $totalParsed += 1;
+                            }
+                        }
+                        if ($totalParsed !== (int)$totalFreeQty) return null;
+                        return $results;
+                    };
 
-                    $remainingStrips = $neededStrips;
-                    foreach ($inventories as $inv) {
-                        if ($remainingStrips <= 0) break;
-                        $takeStrips = min($inv->stock, $remainingStrips);
-                        DB::table('inventories')->where('id', $inv->id)->decrement('stock', $takeStrips);
+                    $deductFromInventory = function($neededStrips, $targetSide, $targetSize) use ($distributor, $product, $orderItem, $multiplier) {
+                        if ($neededStrips <= 0) return;
+                        
+                        $inventories = \App\Models\Inventory::where('distributor_id', $distributor->id)
+                            ->where('product_id', $product->id)
+                            ->when($targetSide, function($q) use ($targetSide) {
+                                return $q->where('side', $targetSide);
+                            })
+                            ->when($targetSize, function($q) use ($targetSize) {
+                                return $q->where('size', $targetSize);
+                            })
+                            ->where('stock', '>', 0)
+                            ->orderBy('expiry_date', 'asc')
+                            ->get();
 
-                        \App\Models\RetailerOrderItemBatch::create([
-                            'retailer_order_item_id' => $orderItem->id,
-                            'batch_no' => $inv->batch_no,
-                            'expiry_date' => $inv->expiry_date,
-                            'quantity' => $takeStrips / $multiplier,
-                        ]);
+                        if ($inventories->sum('stock') < $neededStrips) {
+                            throw new \Exception("Insufficient total stock for product: {$product->product_name}");
+                        }
 
-                        $remainingStrips -= $takeStrips;
+                        $remainingStrips = $neededStrips;
+                        foreach ($inventories as $inv) {
+                            if ($remainingStrips <= 0) break;
+                            $takeStrips = min($inv->stock, $remainingStrips);
+                            \DB::table('inventories')->where('id', $inv->id)->decrement('stock', $takeStrips);
+
+                            \App\Models\RetailerOrderItemBatch::create([
+                                'retailer_order_item_id' => $orderItem->id,
+                                'batch_no' => $inv->batch_no,
+                                'expiry_date' => $inv->expiry_date,
+                                'quantity' => $takeStrips / $multiplier,
+                            ]);
+
+                            $remainingStrips -= $takeStrips;
+                        }
+                    };
+
+                    // Process Paid Item
+                    $paidStrips = $orderItem->quantity * $multiplier;
+                    $deductFromInventory($paidStrips, $orderItem->side, $orderItem->size);
+
+                    // Process Free Item(s)
+                    if ($orderItem->free_quantity > 0) {
+                        $sizeParsed = $parseVariants($orderItem->free_size, $orderItem->free_quantity);
+                        $sideParsed = $parseVariants($orderItem->free_side, $orderItem->free_quantity);
+
+                        if ($sizeParsed) {
+                            foreach ($sizeParsed as $sz) {
+                                $deductFromInventory($sz['qty'] * $multiplier, $orderItem->side, $sz['val']);
+                            }
+                        } elseif ($sideParsed) {
+                            foreach ($sideParsed as $sd) {
+                                $deductFromInventory($sd['qty'] * $multiplier, $sd['val'], $orderItem->size);
+                            }
+                        } else {
+                            $fSide = $orderItem->free_side ?: $orderItem->side;
+                            $fSize = $orderItem->free_size ?: $orderItem->size;
+                            $deductFromInventory($orderItem->free_quantity * $multiplier, $fSide, $fSize);
+                        }
                     }
                 }
             }
