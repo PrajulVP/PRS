@@ -455,27 +455,22 @@ class DistributorRetailerOrderController extends Controller
                     }
                 }
 
-                // Assuming OCR item has 'product_name' or 'name' or 'description'
                 $name = strtolower(trim($item['product_name'] ?? $item['name'] ?? $item['description'] ?? ''));
+                $nameClean = trim(preg_replace('/[^a-z0-9]+/i', ' ', $name));
+                $orderNameClean = trim(preg_replace('/[^a-z0-9]+/i', ' ', $normalizedOrderName));
 
-                // 2. Direct contains check
-                if (str_contains($name, $normalizedOrderName) || str_contains($normalizedOrderName, $name)) {
+                // 2. Direct contains check (cleaned)
+                if (str_contains($nameClean, $orderNameClean) || str_contains($orderNameClean, $nameClean)) {
                     return true;
                 }
 
-                // 3. Fuzzy match: Check if at least first 2 words match
-                $ocrWords = preg_split('/[\s,]+/', $name);
-                $orderWords = preg_split('/[\s,]+/', $normalizedOrderName);
-
-                if (count($ocrWords) >= 2 && count($orderWords) >= 2) {
-                    $matchCount = 0;
-                    $wordsToCheck = min(count($ocrWords), count($orderWords), 4);
-                    for ($i = 0; $i < $wordsToCheck; $i++) {
-                        if (isset($ocrWords[$i]) && isset($orderWords[$i]) && $ocrWords[$i] === $orderWords[$i]) {
-                            $matchCount++;
-                        }
-                    }
-                    if ($matchCount >= 2) return true;
+                // 3. Fuzzy match: Check if at least 2 words intersect, regardless of order
+                $ocrWords = array_filter(explode(' ', $nameClean));
+                $orderWords = array_filter(explode(' ', $orderNameClean));
+                
+                $commonWords = array_intersect($ocrWords, $orderWords);
+                if (count($commonWords) >= 2) {
+                    return true;
                 }
 
                 return false;
