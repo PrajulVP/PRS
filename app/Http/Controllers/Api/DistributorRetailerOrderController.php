@@ -701,7 +701,7 @@ class DistributorRetailerOrderController extends Controller
             DB::commit();
             return [
                 'success' => 'Order accepted successfully!',
-                'loyalty_points_earned' => $totalPoints,
+                'loyalty_points_earned' => 0, // Handled by Observer
                 'retailer_total_points' => $retailerOrder->retailer->loyalty_points ?? 0
             ];
         } catch (\Exception $e) {
