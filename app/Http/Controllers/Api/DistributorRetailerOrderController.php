@@ -656,25 +656,21 @@ class DistributorRetailerOrderController extends Controller
                     $multiplier = $this->convertQuantityToStrips($product, 1, $orderItem->unit);
 
 
-                    $parseVariants = function($str, $totalFreeQty) {
+                    $parseVariants = function($str) {
                         $str = trim($str ?? '');
                         if (empty($str)) return null;
                         if (!str_contains($str, ',') && !preg_match('/^\d+\s+/', $str)) return null;
 
                         $results = [];
                         $parts = explode(',', $str);
-                        $totalParsed = 0;
                         foreach ($parts as $p) {
                             $p = trim($p);
                             if (preg_match('/^(\d+)\s+(.+)$/', $p, $m)) {
                                 $results[] = ['qty' => (int)$m[1], 'val' => trim($m[2])];
-                                $totalParsed += (int)$m[1];
                             } else {
                                 $results[] = ['qty' => 1, 'val' => $p];
-                                $totalParsed += 1;
                             }
                         }
-                        if ($totalParsed !== (int)$totalFreeQty) return null;
                         return $results;
                     };
 
@@ -720,16 +716,28 @@ class DistributorRetailerOrderController extends Controller
 
                     // Process Free Item(s)
                     if ($orderItem->free_quantity > 0) {
-                        $sizeParsed = $parseVariants($orderItem->free_size, $orderItem->free_quantity);
-                        $sideParsed = $parseVariants($orderItem->free_side, $orderItem->free_quantity);
+                        $sizeParsed = $parseVariants($orderItem->free_size);
+                        $sideParsed = $parseVariants($orderItem->free_side);
 
                         if ($sizeParsed) {
+                            $totalParsed = 0;
                             foreach ($sizeParsed as $sz) {
                                 $deductFromInventory($sz['qty'] * $multiplier, $orderItem->side, $sz['val']);
+                                $totalParsed += $sz['qty'];
+                            }
+                            $diff = $orderItem->free_quantity - $totalParsed;
+                            if ($diff > 0) {
+                                $deductFromInventory($diff * $multiplier, $orderItem->side, $orderItem->size);
                             }
                         } elseif ($sideParsed) {
+                            $totalParsed = 0;
                             foreach ($sideParsed as $sd) {
                                 $deductFromInventory($sd['qty'] * $multiplier, $sd['val'], $orderItem->size);
+                                $totalParsed += $sd['qty'];
+                            }
+                            $diff = $orderItem->free_quantity - $totalParsed;
+                            if ($diff > 0) {
+                                $deductFromInventory($diff * $multiplier, $orderItem->side, $orderItem->size);
                             }
                         } else {
                             $fSide = $orderItem->free_side ?: $orderItem->side;
