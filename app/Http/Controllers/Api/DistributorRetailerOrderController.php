@@ -506,7 +506,7 @@ class DistributorRetailerOrderController extends Controller
                         'batch' => $match['batch'] ?? 'N/A',
                         'expiry' => $match['expiry'] ?? 'N/A',
                         'qty' => $ocrQty,
-                        'free_qty' => $freeQty,
+                        'free_qty' => (float)($orderItem->free_quantity), // Do not show OCR free qty, show the originally placed free qty
                         'taxable_amt' => (float)($match['taxable_amt'] ?? $match['amount'] ?? 0),
                         'gst_percent' => (float)($match['gst'] ?? 0),
                         'total_amt' => (float)($match['total_amount'] ?? $match['amount'] ?? 0),
