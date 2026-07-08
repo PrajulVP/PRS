@@ -398,8 +398,8 @@ class DistributorRetailerOrderController extends Controller
             ], 422);
         }
 
-        $filename = 'invoice_' . $retailerOrder->id . '_' . time() . '.' . $file->getClientOriginalExtension();
-        $path = $file->storeAs('retailer_invoices', $filename, 'public');
+        $filename = 'Invoice_' . $retailerOrder->order_code . '_' . date('Y-m-d_His') . '.' . $file->getClientOriginalExtension();
+        $path = $file->storeAs('invoices/retailers', $filename, 'public');
 
         // Extract OCR data
         $ocrData = $this->ocrService->processInvoice($file, 'retailer');
@@ -532,8 +532,10 @@ class DistributorRetailerOrderController extends Controller
         // Always save path and hash for manual approval and duplicate checks
         $meta = $retailerOrder->metadata ?? [];
         $meta['invoice_hash'] = $fileHash;
+        $invoiceNo = $ocrData['invoice_metadata']['invoice_number'] ?? null;
         $retailerOrder->update([
             'invoice_path' => $path,
+            'invoice_no' => $invoiceNo,
             'metadata' => $meta
         ]);
 
