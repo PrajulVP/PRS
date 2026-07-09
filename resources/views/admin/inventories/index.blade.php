@@ -1742,43 +1742,51 @@
                         let boxSizeStr = row.product_details.box_size || '';
                         let isNos = window.checkIsNos(pName, pPack, boxSizeStr, unitsPerStrip);
                         
+                        const pData = row.product_details || {};
+                        let variantTotals = {};
+                        let hasAnyRealVariant = false;
+                        let sumOfRealVariants = 0;
+                        
+                        if (row.batches && row.batches.length > 0 && pData.has_variants) {
+                            row.batches.forEach(b => {
+                                let v = (b.variant && b.variant !== 'null' && b.variant !== '-') ? b.variant : 'Standard';
+                                if (v !== 'Standard') {
+                                    hasAnyRealVariant = true;
+                                    sumOfRealVariants += parseFloat(b.stock);
+                                }
+                                variantTotals[v] = (variantTotals[v] || 0) + parseFloat(b.stock);
+                            });
+                            
+                            if (hasAnyRealVariant) {
+                                displayVal = sumOfRealVariants;
+                            }
+                        }
+
                         if (isNos) {
-                            displayVal = Math.round(data * unitsPerStrip);
+                            displayVal = Math.round(displayVal * unitsPerStrip);
                         }
 
                         let unitText = isNos ? 'Nos' : 'Strips';
-                        let html = `<span class="fw-bold fs-6 ${data <= 0 ? 'text-danger' : ''}">${displayVal} <span style="font-size: 0.75rem; font-weight: normal; opacity: 0.8;">${unitText}</span></span>`;
+                        let html = `<span class="fw-bold fs-6 ${displayVal <= 0 ? 'text-danger' : ''}">${displayVal} <span style="font-size: 0.75rem; font-weight: normal; opacity: 0.8;">${unitText}</span></span>`;
 
                         // Add breakdown if exists
-                        const pData = row.product_details || {};
-                        const displayStr = window.formatStockBreakdown(data, pData, isNos, unitsPerStrip);
+                        const displayStr = window.formatStockBreakdown(hasAnyRealVariant ? sumOfRealVariants : data, pData, isNos, unitsPerStrip);
                         if (displayStr && displayStr !== displayVal.toString() && displayStr !== (displayVal + ' Nos') && displayStr !== (displayVal + ' Str')) {
                             html += `<div class="small text-muted-theme opacity-75 mt-1" style="font-size: 0.75rem;">${displayStr}</div>`;
                         }
 
                         // Premium Minimal Variant Breakdown
-                        if (row.batches && row.batches.length > 0 && pData.has_variants) {
-                            let variantTotals = {};
-                            let hasAnyRealVariant = false;
-                            
-                            row.batches.forEach(b => {
-                                let v = (b.variant && b.variant !== 'null' && b.variant !== '-') ? b.variant : 'Standard';
-                                if (v !== 'Standard') hasAnyRealVariant = true;
-                                variantTotals[v] = (variantTotals[v] || 0) + parseFloat(b.stock);
-                            });
-                            
-                            if (hasAnyRealVariant) {
-                                let vParts = [];
-                                for (let v in variantTotals) {
-                                    let val = isNos ? Math.round(variantTotals[v] * unitsPerStrip) : variantTotals[v];
-                                    if (v !== 'Standard' && val > 0) {
-                                        vParts.push(`<span class="badge border border-secondary-subtle rounded-pill text-body px-2 fw-normal shadow-sm" style="font-size: 0.7rem; background: var(--bs-body-bg);">${v} <span class="opacity-50 mx-1">|</span> <span class="fw-bold">${val}</span></span>`);
-                                    }
+                        if (hasAnyRealVariant) {
+                            let vParts = [];
+                            for (let v in variantTotals) {
+                                let val = isNos ? Math.round(variantTotals[v] * unitsPerStrip) : variantTotals[v];
+                                if (v !== 'Standard' && val > 0) {
+                                    vParts.push(`<span class="badge border border-secondary-subtle rounded-pill text-body px-2 fw-normal shadow-sm" style="font-size: 0.7rem; background: var(--bs-body-bg);">${v} <span class="opacity-50 mx-1">|</span> <span class="fw-bold">${val}</span></span>`);
                                 }
-                                
-                                if (vParts.length > 0) {
-                                    html += `<div class="d-flex flex-wrap gap-1 mt-2 justify-content-center">${vParts.join('')}</div>`;
-                                }
+                            }
+                            
+                            if (vParts.length > 0) {
+                                html += `<div class="d-flex flex-wrap gap-1 mt-2 justify-content-center">${vParts.join('')}</div>`;
                             }
                         }
 

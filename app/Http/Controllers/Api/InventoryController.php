@@ -123,8 +123,23 @@ class InventoryController extends Controller
             return $item->product_id . '_' . $item->distributor_id;
         })->map(function ($items) {
             $first = $items->first();
-            $totalStock = $items->sum('stock');
             $product = $first->product;
+            
+            $totalStock = $items->sum('stock');
+            if ($product && $product->has_variants) {
+                $hasRealVariant = false;
+                $sumRealVariants = 0;
+                foreach ($items as $item) {
+                    $v = $this->formatVariant($item);
+                    if (!empty($v)) {
+                        $hasRealVariant = true;
+                        $sumRealVariants += $item->stock;
+                    }
+                }
+                if ($hasRealVariant) {
+                    $totalStock = $sumRealVariants;
+                }
+            }
             
             $batches = $items->map(function ($item) use ($product) {
                 return [
@@ -226,6 +241,21 @@ class InventoryController extends Controller
 
         $totalStock = $allItems->sum('stock');
         $product = $inventory->product;
+        
+        if ($product && $product->has_variants) {
+            $hasRealVariant = false;
+            $sumRealVariants = 0;
+            foreach ($allItems as $item) {
+                $v = $this->formatVariant($item);
+                if (!empty($v)) {
+                    $hasRealVariant = true;
+                    $sumRealVariants += $item->stock;
+                }
+            }
+            if ($hasRealVariant) {
+                $totalStock = $sumRealVariants;
+            }
+        }
         
         $batches = $allItems->map(function ($item) use ($product) {
             return [
