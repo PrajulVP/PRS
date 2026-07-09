@@ -131,7 +131,7 @@ class DistributorRetailerOrderController extends Controller
                         'unit_price'   => $item->unit_price,
                         'total_amount' => $item->total_amount,
                     ];
-                })),
+                }), true),
             ];
         });
 
@@ -260,7 +260,7 @@ class DistributorRetailerOrderController extends Controller
                 }
 
                 return $itemData;
-            })),
+            }), true),
 
             'invoice_url'    => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
             'placed_at'      => $order->placed_at?->format('Y-m-d H:i:s'),
@@ -616,177 +616,244 @@ class DistributorRetailerOrderController extends Controller
             }
             $retailerOrder->load('items'); // Reload to reflect changes before proceeding
             // 1. Batch Allocation Logic
+            $allocatedOrderItemIds = [];
+            
             if ($itemsBatches) {
+                // Validate allocations first
+                $qtyErrors = [];
                 foreach ($itemsBatches as $allocation) {
                     $orderItem = $retailerOrder->items()->findOrFail($allocation['order_item_id']);
                     $product = $orderItem->product;
+                    $totalAllocated = 0;
+                    foreach ($allocation['batches'] as $batchData) {
+                        $totalAllocated += (float)$batchData['quantity'];
+                    }
+                    $pName = $product->product_name;
+                    $vLabel = array_filter([$orderItem->side, $orderItem->size]);
+                    if (!empty($vLabel)) {
+                        $pName .= ' [' . implode('/', $vLabel) . ']';
+                    }
+                    
+                    $expectedPaid = $orderItem->quantity;
+                    
+                    if ($totalAllocated < $expectedPaid) {
+                        $qtyErrors[] = "Total allocated quantity ({$totalAllocated}) is less than the ordered paid quantity ({$expectedPaid}) for item: " . $pName;
+                    }
+                }
 
+                if (!empty($qtyErrors)) {
+                    throw new \Exception(implode("\n", $qtyErrors));
+                }
+
+                foreach ($itemsBatches as $allocation) {
+                    $orderItem = $retailerOrder->items()->findOrFail($allocation['order_item_id']);
+                    $allocatedOrderItemIds[] = $orderItem->id;
+                    $product = $orderItem->product;
                     $multiplier = $this->convertQuantityToStrips($product, 1, $orderItem->unit);
-
-
                     $totalAllocated = 0;
                     
-                    // Restore existing batch stock before re-allocation
-                    $existingBatches = $orderItem->batches()->get();
-                    foreach ($existingBatches as $b) {
-                        $inventoryToRestore = \App\Models\Inventory::where('distributor_id', $distributor->id)
-                            ->where('product_id', $product->id)
-                            ->where('batch_no', $b->batch_no)
-                            ->first();
-                        if ($inventoryToRestore) {
-                            $restoreQty = $b->quantity * $multiplier;
-                            DB::table('inventories')->where('id', $inventoryToRestore->id)->increment('stock', $restoreQty);
+                    $totalPaidQtyStrips = $orderItem->quantity * $multiplier;
+                    $currentlyAllocatedStrips = 0;
+                    
+                    if ($orderItem->batches) {
+                        $orderItem->batches()->delete(); // Clear existing batches
+                    }
+                    foreach ($allocation['batches'] as $batchData) {
+                        if ($currentlyAllocatedStrips >= $totalPaidQtyStrips) {
+                            break; // We have already allocated the required PAID quantity. Ignore excess.
+                        }
+                        
+                        $invId = isset($batchData['inventory_id']) ? str_replace(['"', "'"], '', $batchData['inventory_id']) : null;
+
+                        $invQuery = \App\Models\Inventory::where('distributor_id', $distributor->id)
+                            ->where('product_id', $product->id);
+
+                        if (empty($orderItem->side)) {
+                            $invQuery->where(function($q) {
+                                $q->whereNull('side')->orWhere('side', '');
+                            });
+                        } else {
+                            $invQuery->where('side', $orderItem->side);
+                        }
+
+                        if (empty($orderItem->size)) {
+                            $invQuery->where(function($q) {
+                                $q->whereNull('size')->orWhere('size', '');
+                            });
+                        } else {
+                            $invQuery->where('size', $orderItem->size);
+                        }
+
+                        $baseInvQuery = clone $invQuery;
+
+                        if ($invId) {
+                            $inventory = $invQuery->findOrFail($invId);
+                        } elseif (isset($batchData['batch_no'])) {
+                            $inventory = $invQuery->where('batch_no', $batchData['batch_no'])->first();
+                            if (!$inventory) {
+                                throw new \Exception("Could not find batch '{$batchData['batch_no']}' in your inventory for {$product->product_name}");
+                            }
+                        } else {
+                            throw new \Exception("Inventory ID or Batch Number is required for allocation of {$product->product_name}");
+                        }
+
+                        $deductQtyBase = $batchData['quantity'] * $multiplier;
+                        
+                        if ($currentlyAllocatedStrips + $deductQtyBase > $totalPaidQtyStrips) {
+                            $deductQtyBase = $totalPaidQtyStrips - $currentlyAllocatedStrips;
+                        }
+                        
+                        $remainingQtyToDeduct = $deductQtyBase;
+
+                        // 1. First, attempt to deduct from explicitly selected batch
+                        $takeFromPrimary = min($inventory->stock, $remainingQtyToDeduct);
+                        
+                        if ($takeFromPrimary > 0) {
+                            DB::table('inventories')->where('id', $inventory->id)->decrement('stock', $takeFromPrimary);
+                            
+                            \App\Models\RetailerOrderItemBatch::create([
+                                'retailer_order_item_id' => $orderItem->id,
+                                'batch_no' => $inventory->batch_no,
+                                'expiry_date' => $inventory->expiry_date,
+                                'quantity' => $takeFromPrimary / $multiplier,
+                            ]);
+                            
+                            $remainingQtyToDeduct -= $takeFromPrimary;
+                        }
+
+                        // 2. Cascade (spillover) to other available batches (FIFO)
+                        if ($remainingQtyToDeduct > 0) {
+                            $otherBatches = (clone $baseInvQuery)
+                                ->where('id', '!=', $inventory->id)
+                                ->where('stock', '>', 0)
+                                ->orderBy('expiry_date', 'asc')
+                                ->get();
+
+                            foreach ($otherBatches as $otherBatch) {
+                                if ($remainingQtyToDeduct <= 0) break;
+
+                                $takeFromOther = min($otherBatch->stock, $remainingQtyToDeduct);
+                                
+                                DB::table('inventories')->where('id', $otherBatch->id)->decrement('stock', $takeFromOther);
+                                
+                                \App\Models\RetailerOrderItemBatch::create([
+                                    'retailer_order_item_id' => $orderItem->id,
+                                    'batch_no' => $otherBatch->batch_no,
+                                    'expiry_date' => $otherBatch->expiry_date,
+                                    'quantity' => $takeFromOther / $multiplier,
+                                ]);
+                                
+                                $remainingQtyToDeduct -= $takeFromOther;
+                            }
+
+                            if ($remainingQtyToDeduct > 0) {
+                                throw new \Exception("Insufficient total stock across all available batches for product {$product->product_name}. You are short by " . ($remainingQtyToDeduct / $multiplier) . " items.");
+                            }
+                        }
+
+                        $totalAllocated += ($deductQtyBase / $multiplier);
+                        $currentlyAllocatedStrips += $deductQtyBase;
+                    }
+                }
+            }
+
+            // 2. Auto-Deduct Free Quantities (and any unallocated items) via FEFO
+            foreach ($retailerOrder->items as $orderItem) {
+                $product = $orderItem->product;
+                $multiplier = $this->convertQuantityToStrips($product, 1, $orderItem->unit);
+                
+                $isAllocated = in_array($orderItem->id, $allocatedOrderItemIds);
+                $neededForAutoDeduction = $isAllocated ? $orderItem->free_quantity : ($orderItem->quantity + $orderItem->free_quantity);
+                
+                if ($neededForAutoDeduction <= 0) continue;
+
+                $deductionTasks = [];
+
+                if (!empty($orderItem->free_size) && preg_match('/^\d+\s+/', trim($orderItem->free_size))) {
+                    $parts = array_map('trim', explode(',', $orderItem->free_size));
+                    foreach ($parts as $part) {
+                        if (preg_match('/^(\d+)\s+(.+)$/', $part, $matches)) {
+                            $deductionTasks[] = [
+                                'qty' => (int)$matches[1],
+                                'side' => $orderItem->free_side ?: $orderItem->side,
+                                'size' => trim($matches[2])
+                            ];
+                        } else {
+                            $deductionTasks[] = [
+                                'qty' => $orderItem->free_quantity, 
+                                'side' => $orderItem->free_side ?: $orderItem->side,
+                                'size' => $part
+                            ];
                         }
                     }
-                    $orderItem->batches()->delete();
-                    foreach ($allocation['batches'] as $batchData) {
-                        $inventory = \App\Models\Inventory::where('distributor_id', $distributor->id)
-                            ->where('product_id', $product->id)
-                            ->findOrFail($batchData['inventory_id']);
+                    
+                    if (!$isAllocated && $orderItem->quantity > 0) {
+                        $deductionTasks[] = [
+                            'qty' => $orderItem->quantity,
+                            'side' => $orderItem->side,
+                            'size' => $orderItem->size
+                        ];
+                    }
+                } else {
+                    $deductionTasks[] = [
+                        'qty' => $neededForAutoDeduction,
+                        'side' => $isAllocated ? ($orderItem->free_side ?: $orderItem->side) : ($orderItem->side ?: $orderItem->free_side),
+                        'size' => $isAllocated ? ($orderItem->free_size ?: $orderItem->size) : ($orderItem->size ?: $orderItem->free_size)
+                    ];
+                }
 
-                        $deductQty = $batchData['quantity'] * $multiplier;
+                foreach ($deductionTasks as $task) {
+                    $neededStrips = $task['qty'] * $multiplier;
+                    if ($neededStrips <= 0) continue;
 
-                        if ($inventory->stock < $deductQty) {
-                            throw new \Exception("Not enough stock in batch {$inventory->batch_no} for product {$product->product_name}");
-                        }
+                    $querySide = $task['side'];
+                    $querySize = $task['size'];
 
-                        DB::table('inventories')->where('id', $inventory->id)->decrement('stock', $deductQty);
+                    $invQuery = \App\Models\Inventory::where('distributor_id', $distributor->id)
+                        ->where('product_id', $product->id);
+
+                    if (empty($querySide)) {
+                        $invQuery->where(function($q) {
+                            $q->whereNull('side')->orWhere('side', '');
+                        });
+                    } else {
+                        $invQuery->where('side', $querySide);
+                    }
+
+                    if (empty($querySize)) {
+                        $invQuery->where(function($q) {
+                            $q->whereNull('size')->orWhere('size', '');
+                        });
+                    } else {
+                        $invQuery->where('size', $querySize);
+                    }
+
+                    $inventories = $invQuery->where('stock', '>', 0)
+                        ->orderBy('expiry_date', 'asc')
+                        ->get();
+
+                    if ($inventories->sum('stock') < $neededStrips) {
+                        $variantInfo = array_filter([$querySide, $querySize]);
+                        $vText = !empty($variantInfo) ? ' [' . implode('/', $variantInfo) . ']' : '';
+                        throw new \Exception("Insufficient stock for free/unallocated item: {$product->product_name}{$vText}");
+                    }
+
+                    $remainingStrips = $neededStrips;
+                    foreach ($inventories as $inv) {
+                        if ($remainingStrips <= 0) break;
+                        $takeStrips = min($inv->stock, $remainingStrips);
+                        DB::table('inventories')
+                            ->where('id', $inv->id)
+                            ->decrement('stock', $takeStrips);
 
                         \App\Models\RetailerOrderItemBatch::create([
                             'retailer_order_item_id' => $orderItem->id,
-                            'batch_no' => $inventory->batch_no,
-                            'expiry_date' => $inventory->expiry_date,
-                            'quantity' => $batchData['quantity'],
+                            'batch_no' => $inv->batch_no,
+                            'expiry_date' => $inv->expiry_date,
+                            'quantity' => $takeStrips / $multiplier,
                         ]);
 
-                        $totalAllocated += $batchData['quantity'];
-                    }
-
-                    if ($totalAllocated < $orderItem->quantity) {
-                        throw new \Exception("Total allocated quantity ({$totalAllocated}) is less than ordered quantity ({$orderItem->quantity}) for {$product->product_name}");
-                    }
-                }
-            } else {
-                // Fallback to FEFO
-                foreach ($retailerOrder->items as $orderItem) {
-                    $product = $orderItem->product;
-                    $multiplier = $this->convertQuantityToStrips($product, 1, $orderItem->unit);
-
-                    // Restore existing batch stock before re-allocation
-                    $existingBatches = $orderItem->batches()->get();
-                    foreach ($existingBatches as $b) {
-                        $inventoryToRestore = \App\Models\Inventory::where('distributor_id', $distributor->id)
-                            ->where('product_id', $product->id)
-                            ->where('batch_no', $b->batch_no)
-                            ->first();
-                        if ($inventoryToRestore) {
-                            $restoreQty = $b->quantity * $multiplier;
-                            DB::table('inventories')->where('id', $inventoryToRestore->id)->increment('stock', $restoreQty);
-                        }
-                    }
-                    $orderItem->batches()->delete();
-                    $multiplier = $this->convertQuantityToStrips($product, 1, $orderItem->unit);
-
-
-                    $parseVariants = function($str) {
-                        $str = trim($str ?? '');
-                        if (empty($str)) return null;
-                        if (!str_contains($str, ',') && !preg_match('/^\d+\s+/', $str)) return null;
-
-                        $results = [];
-                        $parts = explode(',', $str);
-                        foreach ($parts as $p) {
-                            $p = trim($p);
-                            if (preg_match('/^(\d+)\s+(.+)$/', $p, $m)) {
-                                $results[] = ['qty' => (int)$m[1], 'val' => trim($m[2])];
-                            } else {
-                                $results[] = ['qty' => 1, 'val' => $p];
-                            }
-                        }
-                        return $results;
-                    };
-
-                    $deductFromInventory = function($neededStrips, $targetSide, $targetSize) use ($distributor, $product, $orderItem, $multiplier) {
-                        if ($neededStrips <= 0) return;
-                        
-                        $invQuery = \App\Models\Inventory::where('distributor_id', $distributor->id)
-                            ->where('product_id', $product->id);
-                            
-                            if (empty($targetSide)) {
-                                $invQuery->where(function($q) {
-                                    $q->whereNull('side')->orWhere('side', '');
-                                });
-                            } else {
-                                $invQuery->where('side', $targetSide);
-                            }
-
-                            if (empty($targetSize)) {
-                                $invQuery->where(function($q) {
-                                    $q->whereNull('size')->orWhere('size', '');
-                                });
-                            } else {
-                                $invQuery->where('size', $targetSize);
-                            }
-                            
-                            $inventories = $invQuery->where('stock', '>', 0)
-                            ->orderBy('expiry_date', 'asc')
-                            ->get();
-
-                        if ($inventories->sum('stock') < $neededStrips) {
-                            throw new \Exception("Insufficient total stock for product: {$product->product_name}");
-                        }
-
-                        $remainingStrips = $neededStrips;
-                        foreach ($inventories as $inv) {
-                            if ($remainingStrips <= 0) break;
-                            $takeStrips = min($inv->stock, $remainingStrips);
-                            \DB::table('inventories')->where('id', $inv->id)->decrement('stock', $takeStrips);
-
-                            \App\Models\RetailerOrderItemBatch::create([
-                                'retailer_order_item_id' => $orderItem->id,
-                                'batch_no' => $inv->batch_no,
-                                'expiry_date' => $inv->expiry_date,
-                                'quantity' => $takeStrips / $multiplier,
-                            ]);
-
-                            $remainingStrips -= $takeStrips;
-                        }
-                    };
-
-                    // Process Paid Item
-                    $paidStrips = $orderItem->quantity * $multiplier;
-                    $deductFromInventory($paidStrips, $orderItem->side, $orderItem->size);
-
-                    // Process Free Item(s)
-                    if ($orderItem->free_quantity > 0) {
-                        $sizeParsed = $parseVariants($orderItem->free_size);
-                        $sideParsed = $parseVariants($orderItem->free_side);
-
-                        if ($sizeParsed) {
-                            $totalParsed = 0;
-                            foreach ($sizeParsed as $sz) {
-                                $deductFromInventory($sz['qty'] * $multiplier, $orderItem->side, $sz['val']);
-                                $totalParsed += $sz['qty'];
-                            }
-                            $diff = $orderItem->free_quantity - $totalParsed;
-                            if ($diff > 0) {
-                                $deductFromInventory($diff * $multiplier, $orderItem->side, $orderItem->size);
-                            }
-                        } elseif ($sideParsed) {
-                            $totalParsed = 0;
-                            foreach ($sideParsed as $sd) {
-                                $deductFromInventory($sd['qty'] * $multiplier, $sd['val'], $orderItem->size);
-                                $totalParsed += $sd['qty'];
-                            }
-                            $diff = $orderItem->free_quantity - $totalParsed;
-                            if ($diff > 0) {
-                                $deductFromInventory($diff * $multiplier, $orderItem->side, $orderItem->size);
-                            }
-                        } else {
-                            $fSide = $orderItem->free_side ?: $orderItem->side;
-                            $fSize = $orderItem->free_size ?: $orderItem->size;
-                            $deductFromInventory($orderItem->free_quantity * $multiplier, $fSide, $fSize);
-                        }
+                        $remainingStrips -= $takeStrips;
                     }
                 }
             }

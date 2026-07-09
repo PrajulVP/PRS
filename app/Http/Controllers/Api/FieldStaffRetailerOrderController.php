@@ -87,7 +87,7 @@ class FieldStaffRetailerOrderController extends Controller
                         'unit_price'   => (float)$item->unit_price,
                         'total_amount' => (float)$group->sum('total_amount'),
                     ];
-                })->values()),
+                })->values(), true),
             ];
         }));
     }
@@ -172,7 +172,7 @@ class FieldStaffRetailerOrderController extends Controller
                         'total_amount'  => (float)$group->sum('total_amount'),
                         'mrp'           => $item->product->mrp ?? null,
                     ];
-                })->values()),
+                })->values(), true),
         ]);
     }
 

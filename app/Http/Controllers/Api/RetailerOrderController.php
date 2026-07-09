@@ -128,7 +128,7 @@ class RetailerOrderController extends Controller
                             'free_item_quantity' => $item->product ? (int)$item->product->free_qty_get : 0,
                             'free_item_threshold' => $item->product ? (int)$item->product->free_qty_buy : 0,
                         ];
-                    })->values()),
+                    })->values(), true),
                     'invoice_url'    => $order->invoice_path ? asset('storage/' . $order->invoice_path) : null,
                     'placed_at'      => $order->placed_at?->format('Y-m-d H:i:s'),
                     'delivered_at'   => $order->delivered_at?->format('Y-m-d H:i:s'),

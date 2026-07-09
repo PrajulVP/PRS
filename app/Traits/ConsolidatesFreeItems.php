@@ -8,9 +8,10 @@ trait ConsolidatesFreeItems
      * Consolidate free quantities and sizes for the same product into the first array item.
      * 
      * @param array|\Illuminate\Support\Collection $items
+     * @param bool $forDisplay Whether to format the quantity for display (matches web frontend logic)
      * @return array
      */
-    public function consolidateFreeItems($items)
+    public function consolidateFreeItems($items, $forDisplay = false)
     {
         $itemsArray = is_array($items) ? $items : $items->toArray();
         $formatted = [];
@@ -82,8 +83,16 @@ trait ConsolidatesFreeItems
             $finalFreeSide = $sideData['string'];
             $finalFreeSize = $sizeData['string'];
             
-            // The totalFreeQty is already the sum of all free quantities from all rows.
-            // We do not overwrite it with variantQty because some free items might not have a size assigned yet.
+            // If formatting for display (API response parity with web view), 
+            // override totalFreeQty with variant string counts to match frontend logic
+            if ($forDisplay) {
+                if ($sizeData['total'] > 0 || $sideData['total'] > 0) {
+                    $totalFreeQty = max($sizeData['total'], $sideData['total']);
+                }
+            } else {
+                // The totalFreeQty is already the sum of all free quantities from all rows.
+                // We do not overwrite it with variantQty because some free items might not have a size assigned yet.
+            }
 
             // Pass 2: Redistribute
             foreach ($groupItems as $item) {
