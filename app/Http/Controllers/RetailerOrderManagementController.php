@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Storage;
 
 class RetailerOrderManagementController extends Controller
 {
-    use HandlesNotifications, OneSignalNotifications, \App\Traits\CalculatesPrices;
+    use HandlesNotifications, OneSignalNotifications, \App\Traits\CalculatesPrices, \App\Traits\ConsolidatesFreeItems;
     // Create Order Page
     public function create()
     {
@@ -1011,6 +1011,33 @@ class RetailerOrderManagementController extends Controller
                     DB::rollBack();
                     return response()->json(['error' => 'Order has already been processed.'], 400);
                 }
+
+                // Ensure free items are permanently consolidated before any deductions run
+                $consolidatedData = collect($this->consolidateFreeItems($retailerOrder->items))->keyBy(function($i) {
+                    return is_array($i) ? ($i['id'] ?? null) : $i->id;
+                });
+                
+                foreach ($retailerOrder->items as $orderItem) {
+                    if ($consolidated = $consolidatedData->get($orderItem->id)) {
+                        $isArr = is_array($consolidated);
+                        $newFreeQty = $isArr ? ($consolidated['free_quantity'] ?? 0) : ($consolidated->free_quantity ?? 0);
+                        $newFreeSide = $isArr ? ($consolidated['free_side'] ?? null) : ($consolidated->free_side ?? null);
+                        $newFreeSize = $isArr ? ($consolidated['free_size'] ?? null) : ($consolidated->free_size ?? null);
+                        
+                        if (
+                            $orderItem->free_quantity != $newFreeQty ||
+                            $orderItem->free_side != $newFreeSide ||
+                            $orderItem->free_size != $newFreeSize
+                        ) {
+                            $orderItem->update([
+                                'free_quantity' => $newFreeQty,
+                                'free_side' => $newFreeSide,
+                                'free_size' => $newFreeSize,
+                            ]);
+                        }
+                    }
+                }
+                $retailerOrder->load('items'); // Reload to reflect changes before proceeding
 
                 // 1. Batch Allocation Logic (Paid Items from Invoice)
                 $allocatedOrderItemIds = [];
