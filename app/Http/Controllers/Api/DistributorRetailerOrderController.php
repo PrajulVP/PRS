@@ -583,6 +583,11 @@ class DistributorRetailerOrderController extends Controller
 
         DB::beginTransaction();
         try {
+            $lockedOrder = \App\Models\RetailerOrder::where('id', $retailerOrder->id)->lockForUpdate()->first();
+            if ($lockedOrder->status !== 'processing' && $lockedOrder->status !== 'pending') {
+                DB::rollBack();
+                return ['success' => false, 'message' => 'Order has already been processed.'];
+            }
             // 0. Auto-Fix Legacy Orders: Ensure free items are permanently consolidated in DB 
             // before any deductions run to prevent duplicate deductions of old overlapping free quantities.
             $consolidatedData = collect($this->consolidateFreeItems($retailerOrder->items))->keyBy(function($i) {
@@ -704,15 +709,26 @@ class DistributorRetailerOrderController extends Controller
                     $deductFromInventory = function($neededStrips, $targetSide, $targetSize) use ($distributor, $product, $orderItem, $multiplier) {
                         if ($neededStrips <= 0) return;
                         
-                        $inventories = \App\Models\Inventory::where('distributor_id', $distributor->id)
-                            ->where('product_id', $product->id)
-                            ->when($targetSide, function($q) use ($targetSide) {
-                                return $q->where('side', $targetSide);
-                            })
-                            ->when($targetSize, function($q) use ($targetSize) {
-                                return $q->where('size', $targetSize);
-                            })
-                            ->where('stock', '>', 0)
+                        $invQuery = \App\Models\Inventory::where('distributor_id', $distributor->id)
+                            ->where('product_id', $product->id);
+                            
+                            if (empty($targetSide)) {
+                                $invQuery->where(function($q) {
+                                    $q->whereNull('side')->orWhere('side', '');
+                                });
+                            } else {
+                                $invQuery->where('side', $targetSide);
+                            }
+
+                            if (empty($targetSize)) {
+                                $invQuery->where(function($q) {
+                                    $q->whereNull('size')->orWhere('size', '');
+                                });
+                            } else {
+                                $invQuery->where('size', $targetSize);
+                            }
+                            
+                            $inventories = $invQuery->where('stock', '>', 0)
                             ->orderBy('expiry_date', 'asc')
                             ->get();
 

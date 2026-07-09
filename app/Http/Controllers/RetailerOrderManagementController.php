@@ -1005,6 +1005,13 @@ class RetailerOrderManagementController extends Controller
             try {
                 DB::beginTransaction();
 
+                // Prevent double-deduction race condition by locking the row
+                $lockedOrder = \App\Models\RetailerOrder::where('id', $retailerOrder->id)->lockForUpdate()->first();
+                if ($lockedOrder->status !== 'processing') {
+                    DB::rollBack();
+                    return response()->json(['error' => 'Order has already been processed.'], 400);
+                }
+
                 // 1. Batch Allocation Logic (Paid Items from Invoice)
                 $allocatedOrderItemIds = [];
                 
@@ -1067,11 +1074,7 @@ class RetailerOrderManagementController extends Controller
                                     $q->whereNull('side')->orWhere('side', '');
                                 });
                             } else {
-                                $invQuery->where(function($q) use ($orderItem) {
-                                    $q->where('side', $orderItem->side)
-                                      ->orWhereNull('side')
-                                      ->orWhere('side', '');
-                                });
+                                $invQuery->where('side', $orderItem->side);
                             }
 
                             if (empty($orderItem->size)) {
@@ -1079,11 +1082,7 @@ class RetailerOrderManagementController extends Controller
                                     $q->whereNull('size')->orWhere('size', '');
                                 });
                             } else {
-                                $invQuery->where(function($q) use ($orderItem) {
-                                    $q->where('size', $orderItem->size)
-                                      ->orWhereNull('size')
-                                      ->orWhere('size', '');
-                                });
+                                $invQuery->where('size', $orderItem->size);
                             }
 
                             $baseInvQuery = clone $invQuery;
@@ -1228,11 +1227,7 @@ class RetailerOrderManagementController extends Controller
                                 $q->whereNull('side')->orWhere('side', '');
                             });
                         } else {
-                            $invQuery->where(function($q) use ($querySide) {
-                                $q->where('side', $querySide)
-                                  ->orWhereNull('side')
-                                  ->orWhere('side', '');
-                            });
+                            $invQuery->where('side', $querySide);
                         }
 
                         if (empty($querySize)) {
@@ -1240,11 +1235,7 @@ class RetailerOrderManagementController extends Controller
                                 $q->whereNull('size')->orWhere('size', '');
                             });
                         } else {
-                            $invQuery->where(function($q) use ($querySize) {
-                                $q->where('size', $querySize)
-                                  ->orWhereNull('size')
-                                  ->orWhere('size', '');
-                            });
+                            $invQuery->where('size', $querySize);
                         }
 
                         $inventories = $invQuery->where('stock', '>', 0)

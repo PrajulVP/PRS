@@ -1,7 +1,14 @@
-<?php require __DIR__.'/vendor/autoload.php';
-$app = require_once __DIR__.'/bootstrap/app.php';
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
-$inventories = App\Models\Inventory::whereIn('product_id', [15, 17])->get(['id', 'product_id', 'batch_no', 'side', 'size', 'quantity']);
-foreach($inventories as $inv) {
-    echo str_pad($inv->product_id, 3) . ' | ' . str_pad($inv->batch_no, 15) . ' | ' . str_pad($inv->side ?: '-', 3) . ' | ' . str_pad($inv->size ?: '-', 3) . ' | ' . $inv->quantity . "\n";
+<?php
+require __DIR__.'/../vendor/autoload.php';
+$app = require_once __DIR__.'/../bootstrap/app.php';
+$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel->bootstrap();
+
+$products = \App\Models\Product::where('product_name', 'like', '%Ankle Binder%')->get();
+foreach($products as $p) {
+    echo "Product ID: {$p->id}, Name: {$p->product_name}, Size: {$p->size}\n";
+    $invs = \App\Models\Inventory::where('product_id', $p->id)->get();
+    foreach($invs as $inv) {
+        echo "  Inv ID: {$inv->id}, Side: '{$inv->side}', Size: '{$inv->size}', Stock: {$inv->stock}\n";
+    }
 }

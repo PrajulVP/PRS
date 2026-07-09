@@ -291,6 +291,10 @@ class InventoryController extends Controller
         ]);
 
         $product = Product::findOrFail($request->product_id);
+        
+        if ($product->has_variants && empty($request->variant)) {
+            return response()->json(['error' => 'This product has variants. You must specify a variant.'], 422);
+        }
         $user = Auth::user();
         $distributorId = null;
 
@@ -367,6 +371,15 @@ class InventoryController extends Controller
 
         $previousStock = $inventory->stock;
         $updateData = $request->only(['batch_no', 'expiry_date', 'variant']);
+
+        if ($inventory->product && $inventory->product->has_variants) {
+            $checkVariant = $request->has('variant') ? $request->variant : $this->formatVariant($inventory);
+            if ($request->has('variant') && empty($request->variant)) {
+                if (empty($checkVariant)) {
+                    return response()->json(['error' => 'This product has variants. You must specify a variant.'], 422);
+                }
+            }
+        }
 
         if ($request->has('stock')) {
             $newStock = $this->convertQuantityToStrips($inventory->product, $request->stock, $request->unit ?? 'Strips');

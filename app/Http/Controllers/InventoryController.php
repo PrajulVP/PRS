@@ -328,6 +328,13 @@ class InventoryController extends Controller
 
         $product = Product::find($request->product_id);
 
+        if ($product && $product->has_variants) {
+            if (empty($request->side) && empty($request->size)) {
+                if ($request->ajax()) return response()->json(['error' => 'This product has variants. You must specify a side or size.'], 422);
+                return back()->withInput()->with('error', 'This product has variants. You must specify a side or size.');
+            }
+        }
+
         // If user wants simplified flow where they just select product, we can use product_code as dist_prod_code
         // OR we can make dist_prod_code nullable in table (if not strict). But assuming table schema has it set.
         // User said: "so when adding the inventory we just select the product, no distributor code is entered"
@@ -392,6 +399,20 @@ class InventoryController extends Controller
 
         $operation = $request->input('operation', 'set');
         $product = $inventory->product;
+
+        if ($product && $product->has_variants) {
+            $checkSide = $request->has('side') ? $request->side : $inventory->side;
+            $checkSize = $request->has('size') ? $request->size : $inventory->size;
+            
+            // Check if user is trying to clear the variants during edit
+            if (($request->has('side') && empty($request->side)) && ($request->has('size') && empty($request->size))) {
+                 // Check if both end up empty
+                 if (empty($checkSide) && empty($checkSize)) {
+                     if ($request->ajax()) return response()->json(['error' => 'This product has variants. You must specify a side or size.'], 422);
+                     return back()->withInput()->with('error', 'This product has variants. You must specify a side or size.');
+                 }
+            }
+        }
         
         // Convert the input stock to strips based on the selected unit using shared helper
         $inputStrips = $this->convertQuantityToStrips($product, $request->stock, $request->unit ?? 'Strips');
