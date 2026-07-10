@@ -111,6 +111,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('field-staff/tracking', [ReportController::class, 'fieldStaffReports'])->name('field-staff.tracking');
         Route::get('field-staff/tracking-map', [ReportController::class, 'fieldStaffTracking'])->name('field-staff.tracking-map');
         Route::get('field-staff/tracking/export', [ReportController::class, 'fieldStaffTrackingExport'])->name('field-staff.tracking.export');
+        
+        // Manager Specialized Management (Tracking)
+        Route::get('manager/tracking', [ReportController::class, 'managerReports'])->name('manager.tracking');
+        Route::get('manager/tracking-map', [ReportController::class, 'managerTracking'])->name('manager.tracking-map');
+        Route::get('manager/tracking/export', [ReportController::class, 'managerTrackingExport'])->name('manager.tracking.export');
         Route::get('field-staff/expenses', [\App\Http\Controllers\FieldStaffManagementController::class, 'expensesIndex'])->name('field-staff.expenses');
         Route::post('field-staff/expenses/{expense}/status', [\App\Http\Controllers\FieldStaffManagementController::class, 'updateExpenseStatus'])->name('field-staff.expenses.status');
         Route::get('field-staff/leaves', [\App\Http\Controllers\FieldStaffManagementController::class, 'leavesIndex'])->name('field-staff.leaves');

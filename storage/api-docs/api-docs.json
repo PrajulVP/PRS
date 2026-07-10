@@ -445,6 +445,22 @@
                 ],
                 "summary": "Get retailer order status distribution",
                 "operationId": "56c4b6c6556ce1dc7c35344c48456367",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "weekly",
+                                "monthly",
+                                "yearly",
+                                "all-time"
+                            ]
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Status distribution"
@@ -502,6 +518,22 @@
                 ],
                 "summary": "Get the total count of retailer orders awaiting distributor approval",
                 "operationId": "0e1046edd8bd95e7bb18b155439a1785",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "weekly",
+                                "monthly",
+                                "yearly",
+                                "all-time"
+                            ]
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Total count of actionable orders",
@@ -1897,6 +1929,46 @@
                 ]
             }
         },
+        "/api/field-staff/visits/report-location": {
+            "post": {
+                "tags": [
+                    "Field Staff"
+                ],
+                "summary": "Report location when explicitly turned off or logged by system",
+                "operationId": "17252525b0edfb031521d41696bfa839",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "latitude": {
+                                        "type": "number"
+                                    },
+                                    "longitude": {
+                                        "type": "number"
+                                    },
+                                    "remarks": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Location reported"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/field-staff/dashboard": {
             "get": {
                 "tags": [
@@ -2888,6 +2960,221 @@
                         "description": "List of areas"
                     }
                 }
+            }
+        },
+        "/api/manager/punch": {
+            "get": {
+                "tags": [
+                    "Sales Manager"
+                ],
+                "summary": "Get current punch status of the manager",
+                "operationId": "c2aeaec380fdda37cda7524b01665c89",
+                "responses": {
+                    "200": {
+                        "description": "Last punch status retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "enum": [
+                                                "punched_in",
+                                                "punched_out"
+                                            ]
+                                        },
+                                        "last_log": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Sales Manager"
+                ],
+                "summary": "Punch-in or Punch-out with GPS validation",
+                "operationId": "55d98c2b09e321a70a737f4fd92fb38a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "punch_in",
+                                            "punch_out"
+                                        ]
+                                    },
+                                    "latitude": {
+                                        "type": "number"
+                                    },
+                                    "longitude": {
+                                        "type": "number"
+                                    },
+                                    "is_mock": {
+                                        "description": "Detected fake GPS usage",
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Punch logged successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/manager/ping": {
+            "post": {
+                "tags": [
+                    "Sales Manager"
+                ],
+                "summary": "Log continuous GPS location ping",
+                "operationId": "21106a45e17a46bf025219c3b243ac3d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "array",
+                                "items": {
+                                    "properties": {
+                                        "latitude": {
+                                            "type": "number"
+                                        },
+                                        "longitude": {
+                                            "type": "number"
+                                        },
+                                        "is_mock": {
+                                            "type": "boolean"
+                                        },
+                                        "timestamp": {
+                                            "description": "Optional. Original time of ping.",
+                                            "type": "string",
+                                            "format": "date-time"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Location pings saved"
+                    }
+                }
+            }
+        },
+        "/api/manager/log-visit": {
+            "post": {
+                "tags": [
+                    "Sales Manager"
+                ],
+                "summary": "Log a visit",
+                "operationId": "2457a42a4a4688a99510a91e75f4cd6b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "customer_category": {
+                                        "type": "string"
+                                    },
+                                    "customer_name": {
+                                        "type": "string"
+                                    },
+                                    "latitude": {
+                                        "type": "number"
+                                    },
+                                    "longitude": {
+                                        "type": "number"
+                                    },
+                                    "notes": {
+                                        "type": "string"
+                                    },
+                                    "next_follow_up": {
+                                        "type": "string",
+                                        "format": "date"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Visit logged"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/manager/expenses": {
+            "post": {
+                "tags": [
+                    "Sales Manager"
+                ],
+                "summary": "Submit an expense claim",
+                "operationId": "c878bf4bab3e5419a2192f50e918e3ea",
+                "responses": {
+                    "201": {
+                        "description": "Expense submitted"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/manager/leaves": {
+            "post": {
+                "tags": [
+                    "Sales Manager"
+                ],
+                "summary": "Request a leave or permission",
+                "operationId": "68ecb29c3fd42d1b60983b284a28bb9e",
+                "responses": {
+                    "201": {
+                        "description": "Leave requested"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/notifications": {
@@ -5567,6 +5854,10 @@
         {
             "name": "Locations",
             "description": "Locations"
+        },
+        {
+            "name": "Sales Manager",
+            "description": "Sales Manager"
         },
         {
             "name": "Notifications",

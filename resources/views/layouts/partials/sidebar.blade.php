@@ -350,6 +350,13 @@
             @endif
           </a>
           <ul class="sidebar-submenu">
+              @if (Auth::user()->hasAnyRole(['admin', 'superadmin']))
+              <li>
+                <a class="{{ (request()->routeIs('admin.manager.tracking') || request()->routeIs('admin.manager.tracking-map')) ? 'active' : '' }}" href="{{ route('admin.manager.tracking') }}">
+                   <span>Manager Tracking</span>
+                </a>
+              </li>
+              @endif
               @if (Auth::user()->hasPermissionToCategory('field_staff_reports', 'view') || Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
               <li>
                 <a class="{{ (request()->routeIs('admin.field-staff.tracking') || request()->routeIs('admin.field-staff.tracking-map')) ? 'active' : '' }}" href="{{ route('admin.field-staff.tracking') }}">

@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Field Staff Tracking - ' . $user->name)
+@section('title', 'Manager Tracking - ' . $user->name)
 
 @push('styles')
     <style>
@@ -170,17 +170,17 @@
                                 <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-xl-end gap-3 flex-wrap">
                                     <!-- Enhanced Date Selector -->
                                     <div class="d-flex gap-2 align-items-center flex-wrap">
-                                        <a href="{{ route('admin.field-staff.tracking.export', ['user_id' => $user->id, 'date' => $date, 'format' => 'csv']) }}"
+                                        <a href="{{ route('admin.manager.tracking.export', ['user_id' => $user->id, 'date' => $date, 'format' => 'csv']) }}"
                                             class="btn btn-primary shadow-sm rounded-3 d-flex align-items-center px-2"
                                             style="height: 32px; border: none; background: #1a3a63; font-size: 0.8rem;">
                                             <span class="fw-bold">CSV</span>
                                         </a>
-                                        <a href="{{ route('admin.field-staff.tracking.export', ['user_id' => $user->id, 'date' => $date, 'format' => 'csv']) }}"
+                                        <a href="{{ route('admin.manager.tracking.export', ['user_id' => $user->id, 'date' => $date, 'format' => 'csv']) }}"
                                             class="btn btn-success shadow-sm rounded-3 d-flex align-items-center px-2"
                                             style="height: 32px; border: none; background: #28a745; font-size: 0.8rem;">
                                             <span class="fw-bold">Excel</span>
                                         </a>
-                                        <a href="{{ route('admin.field-staff.tracking.export', ['user_id' => $user->id, 'date' => $date, 'format' => 'pdf']) }}"
+                                        <a href="{{ route('admin.manager.tracking.export', ['user_id' => $user->id, 'date' => $date, 'format' => 'pdf']) }}"
                                             class="btn btn-danger shadow-sm rounded-3 d-flex align-items-center px-2"
                                             style="height: 32px; border: none; background: #dc3545; font-size: 0.8rem;">
                                             <span class="fw-bold">PDF</span>
@@ -193,7 +193,7 @@
 
                                     </div>
                                     <div class="position-relative">
-                                        <form action="{{ route('admin.field-staff.tracking-map') }}" method="GET"
+                                        <form action="{{ route('admin.manager.tracking-map') }}" method="GET"
                                             id="dateFilterForm">
                                             <input type="hidden" name="user_id" value="{{ $user->id }}">
                                             <div class="position-relative bg-white rounded-3 shadow-sm d-flex align-items-center"
@@ -207,7 +207,7 @@
                                         </form>
                                     </div>
                                     <div class="ms-1 ps-2 border-start">
-                                        <a href="{{ route('admin.field-staff.tracking') }}"
+                                        <a href="{{ route('admin.manager.tracking') }}"
                                             class="btn btn-primary rounded-3 px-3 d-flex align-items-center justify-content-center shadow-sm"
                                             style="height: 32px; font-weight: 700; background: #0d6efd; border: none; font-size: 0.85rem;">
                                             Back

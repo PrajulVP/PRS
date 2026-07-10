@@ -129,6 +129,17 @@ Route::middleware('auth:api')->group(function () {
         Route::get('retailers/{id}/last-visit', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'getLastVisitRemark']);
         Route::post('expenses', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'submitExpense']);
         Route::post('leaves', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'requestLeave']);
+        Route::post('visits/report-location', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'reportLocation']);
+    });
+
+    // Manager Tracking & Actions
+    Route::prefix('Manager')->group(function () {
+        Route::get('punch', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'getPunchStatus']);
+        Route::post('punch', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'punch']);
+        Route::post('ping', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'pingLocation']);
+        Route::post('log-visit', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'logVisit']);
+        Route::post('expenses', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'submitExpense']);
+        Route::post('leaves', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'requestLeave']);
     });
 
     // Retailer Dashboard & Loyalty

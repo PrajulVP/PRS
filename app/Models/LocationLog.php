@@ -14,6 +14,7 @@ class LocationLog extends Model
         'latitude',
         'longitude',
         'is_mock_location',
+        'remarks',
         'timestamp',
     ];
 
