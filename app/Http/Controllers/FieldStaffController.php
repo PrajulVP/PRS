@@ -56,6 +56,25 @@ class FieldStaffController extends Controller
                 ->addColumn('longitude', function ($row) {
                     return $row->longitude ?? '';
                 })
+                ->addColumn('punch_status', function ($row) {
+                    $lastPunch = \App\Models\AttendanceLog::where('user_id', $row->user_id)
+                        ->orderBy('timestamp', 'desc')
+                        ->first();
+                        
+                    $status = 'punched_out';
+                    if ($lastPunch && $lastPunch->type === 'punch_in' && \Carbon\Carbon::parse($lastPunch->timestamp)->isToday()) {
+                        $status = 'punched_in';
+                    }
+                    return $status;
+                })
+                ->addColumn('has_punch_today', function ($row) {
+                    return \App\Models\AttendanceLog::where('user_id', $row->user_id)
+                        ->whereDate('timestamp', \Carbon\Carbon::today())
+                        ->exists();
+                })
+                ->addColumn('clock_in_permission', function ($row) {
+                    return $row->user->clock_in_permission;
+                })
                 ->make(true);
         }
 
@@ -85,6 +104,20 @@ class FieldStaffController extends Controller
         return response()->json([
             'success' => true,
             'data' => $field_staff
+        ]);
+    }
+
+    public function grantClockInPermission($id)
+    {
+        $fieldStaff = FieldStaff::findOrFail($id);
+        $user = $fieldStaff->user;
+        
+        $user->clock_in_permission = true;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Clock-in permission granted successfully.'
         ]);
     }
 

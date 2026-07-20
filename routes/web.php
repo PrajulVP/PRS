@@ -106,6 +106,7 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('field-staffs', FieldStaffController::class);
         Route::patch('field-staffs/{field_staff}/activate', [FieldStaffController::class, 'activate'])->name('field-staffs.activate');
         Route::patch('field-staffs/{field_staff}/deactivate', [FieldStaffController::class, 'deactivate'])->name('field-staffs.deactivate');
+        Route::post('field-staffs/{field_staff}/grant-clock-in', [FieldStaffController::class, 'grantClockInPermission'])->name('field-staffs.grant-clock-in');
 
         // Field Staff Specialized Management (Tracking, Expenses & Leaves)
         Route::get('field-staff/tracking', [ReportController::class, 'fieldStaffReports'])->name('field-staff.tracking');

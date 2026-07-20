@@ -39,7 +39,24 @@ class FieldStaffActionApiController extends Controller
      *         description="Unique Device identifier for binding",
      *         @OA\Schema(type="string")
      *     ),
-     *     @OA\Response(response=200, description="Punch logged successfully")
+     *     @OA\Response(
+     *         response=200, 
+     *         description="Punch logged successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="already_punched", type="boolean", nullable=true),
+     *             @OA\Property(property="log", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Punch rejected (e.g., duplicate punch without permission, invalid device)",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="You have already punched today. Contact admin for permission to punch in again."),
+     *             @OA\Property(property="already_punched", type="boolean", example=true),
+     *             @OA\Property(property="log", type="object", nullable=true)
+     *         )
+     *     )
      * )
      */
     public function punch(Request $request)
@@ -59,18 +76,52 @@ class FieldStaffActionApiController extends Controller
             return response()->json(['error' => 'Device mismatch. Use registered device.'], 403);
         }
 
-        // Prevent duplicate punch per day
-        $lastLog = AttendanceLog::where('user_id', $user->id)
-            ->where('type', $request->type)
-            ->whereDate('timestamp', Carbon::today())
+        $lastPunch = AttendanceLog::where('user_id', $user->id)
+            ->orderBy('timestamp', 'desc')
             ->first();
 
-        if ($lastLog) {
-            return response()->json([
-                'message' => 'You have already ' . str_replace('_', ' ', $request->type) . 'for today.',
-                'already_punched' => true,
-                'log' => $lastLog
-            ], 200);
+        if ($request->type === 'punch_in') {
+            $hasPunchToday = AttendanceLog::where('user_id', $user->id)
+                ->whereDate('timestamp', Carbon::today())
+                ->exists();
+
+            if ($hasPunchToday && !$user->clock_in_permission) {
+                return response()->json([
+                    'message' => 'You have already punched today. Contact admin for permission to punch in again.',
+                    'already_punched' => true,
+                    'log' => $lastPunch
+                ], 403);
+            }
+            
+            // If they are allowed to punch in today because of permission, check if their current status is punched_out
+            $currentStatus = 'punched_out';
+            if ($lastPunch && $lastPunch->type === 'punch_in' && Carbon::parse($lastPunch->timestamp)->isToday()) {
+                $currentStatus = 'punched_in';
+            }
+            
+            if ($currentStatus === 'punched_in') {
+                return response()->json([
+                    'message' => 'You are already punched in.',
+                    'already_punched' => true,
+                    'log' => $lastPunch
+                ], 200);
+            }
+            
+            // Consume the permission if used
+            if ($hasPunchToday && $user->clock_in_permission) {
+                $user->clock_in_permission = false;
+                $user->save();
+            }
+            
+        } elseif ($request->type === 'punch_out') {
+            // Can punch out ONLY if last punch was punch_in and it was TODAY.
+            if (!$lastPunch || $lastPunch->type === 'punch_out' || !Carbon::parse($lastPunch->timestamp)->isToday()) {
+                return response()->json([
+                    'message' => 'You must be punched in today to punch out.',
+                    'already_punched' => true,
+                    'log' => $lastPunch
+                ], 403);
+            }
         }
 
         $log = AttendanceLog::create([
@@ -148,8 +199,15 @@ class FieldStaffActionApiController extends Controller
             ->orderBy('timestamp', 'desc')
             ->first();
 
+        $status = 'punched_out';
+        if ($lastPunch && $lastPunch->type === 'punch_in') {
+            if (Carbon::parse($lastPunch->timestamp)->isToday()) {
+                $status = 'punched_in';
+            }
+        }
+
         return response()->json([
-            'status' => $lastPunch ? ($lastPunch->type === 'punch_in' ? 'punched_in' : 'punched_out') : 'punched_out',
+            'status' => $status,
             'last_log' => $lastPunch
         ]);
     }

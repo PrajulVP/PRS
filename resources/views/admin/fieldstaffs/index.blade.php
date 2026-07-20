@@ -116,6 +116,7 @@
                                         <th>Sales Manager</th>
                                         <th>Pincode</th>
                                         <th>Address</th>
+                                        <th>Punch Status</th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
@@ -651,6 +652,22 @@
                     { data: 'pincode', name: 'pincode' },
                     { data: 'address', name: 'address' },
                     { 
+                        data: 'punch_status', name: 'punch_status', orderable: false, searchable: false,
+                        render: function (data, type, row) {
+                            if (data === 'punched_in') {
+                                return `<span class="status-badge status-badge-active">Punched In</span>`;
+                            } else {
+                                // Always show red for Punched Out so it's clear
+                                // We add the grant-clockin-btn class to ALL Punched Out badges
+                                // We use a data attribute to know if they actually need permission
+                                let needsPermission = (row.has_punch_today && !row.clock_in_permission) ? 'yes' : 'no';
+                                let icon = needsPermission === 'yes' ? ' <i class="fa fa-lock ms-1"></i>' : '';
+                                
+                                return `<span class="status-badge status-badge-inactive grant-clockin-btn" data-id="${row.id}" data-needs-permission="${needsPermission}" style="cursor:pointer;" title="Click for clock-in access">Punched Out${icon}</span>`;
+                            }
+                        }
+                    },
+                    { 
                         data: 'user.status', name: 'user.status',
                         render: function (data, type, row) {
                             return `<span class="status-badge ${data === 'active' ? 'status-badge-active' : 'status-badge-inactive'} status-toggle" data-id="${row.id}" data-status="${data}">${data === 'active' ? 'Active' : 'Inactive'}</span>`;
@@ -666,6 +683,7 @@
 
                             if (row.can_edit) btns += `<button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>`;
                             if (row.can_delete) btns += `<button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>`;
+                            
                             btns += `</div>`;
                             return btns;
                         }
@@ -680,7 +698,7 @@
                         { extend: 'excel', className: 'btn btn-success btn-sm', text: '<i class="fa fa-file-excel"></i> Excel' },
                         { 
                             extend: 'pdf', className: 'btn btn-danger btn-sm', text: '<i class="fa fa-file-pdf"></i> PDF',
-                            exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7] },
+                            exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8] },
                             orientation: 'landscape',
                             pageSize: 'A4',
                             customize: function (doc) {
@@ -688,7 +706,7 @@
                                 doc.styles.tableHeader.fontSize = 9;
                             }
                         },
-                        { extend: 'print', className: 'btn btn-dark btn-sm', text: '<i class="fa fa-print"></i> Print', exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7] } }
+                        { extend: 'print', className: 'btn btn-dark btn-sm', text: '<i class="fa fa-print"></i> Print', exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6, 7, 8] } }
                     ]
                 }
             });
@@ -705,6 +723,48 @@
             $('#btn_filter_reset').on('click', function () {
                 $('#filter_sales_manager').val('');
                 table.ajax.reload();
+            });
+
+            // Handle Grant Clock-In Permission
+            $('#fieldstaffs-table').on('click', '.grant-clockin-btn', function () {
+                var id = $(this).data('id');
+                var needsPermission = $(this).data('needs-permission');
+                
+                if (needsPermission === 'no') {
+                    Swal.fire({
+                        title: 'No Permission Needed',
+                        text: "This field staff hasn't clocked in today yet, so they don't need special permission to clock in.",
+                        icon: 'info',
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: 'OK'
+                    });
+                    return;
+                }
+
+                var url = "{{ route('admin.field-staffs.grant-clock-in', ':id') }}".replace(':id', id);
+                
+                Swal.fire({
+                    title: 'Grant Access?',
+                    text: "Allow this field staff to clock in again today?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, grant it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.post(url, { _token: '{{ csrf_token() }}' }, function (response) {
+                            if (response.success) {
+                                table.ajax.reload(null, false);
+                                showToast('success', response.message);
+                            } else {
+                                showToast('danger', response.message || 'Something went wrong');
+                            }
+                        }).fail(function () {
+                            showToast('danger', 'Error granting permission');
+                        });
+                    }
+                });
             });
 
             // Handle View Button

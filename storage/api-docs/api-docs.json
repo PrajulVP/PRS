@@ -1665,7 +1665,50 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Punch logged successfully"
+                        "description": "Punch logged successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "already_punched": {
+                                            "type": "boolean",
+                                            "nullable": true
+                                        },
+                                        "log": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Punch rejected (e.g., duplicate punch without permission, invalid device)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "You have already punched today. Contact admin for permission to punch in again."
+                                        },
+                                        "already_punched": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "log": {
+                                            "type": "object",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
