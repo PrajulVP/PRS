@@ -122,6 +122,8 @@ class FieldStaffActionApiController extends Controller
                     'log' => $lastPunch
                 ], 403);
             }
+        }
+
         $log = AttendanceLog::create([
             'user_id' => $user->id,
             'type' => $request->type,
