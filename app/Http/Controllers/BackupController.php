@@ -53,6 +53,9 @@ class BackupController extends Controller
     public function create()
     {
         try {
+            // Prevent timeout for large databases
+            set_time_limit(0);
+
             $backupPath = storage_path('app/backups');
             if (!File::exists($backupPath)) {
                 File::makeDirectory($backupPath, 0755, true);
@@ -89,7 +92,7 @@ class BackupController extends Controller
 
             return redirect()->route('admin.backups.index')->with('success', 'Database backup created successfully: ' . $filename);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return redirect()->route('admin.backups.index')->with('error', 'Backup failed: ' . $e->getMessage());
         }
     }
