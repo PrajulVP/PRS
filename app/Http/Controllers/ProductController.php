@@ -538,6 +538,11 @@ class ProductController extends Controller
                             'generic_name' => !empty($productData['generic_name']) ? trim($productData['generic_name']) : null,
                             'pack' => !empty($productData['pack']) ? trim($productData['pack']) : null
                         ];
+                        
+                        // If there are different sizes/sides for the exact same name, don't overwrite them
+                        if (!empty($variantOptions)) {
+                            $matchCriteria['variant_options'] = json_encode($variantOptions);
+                        }
                     }
 
                     // Create or Update

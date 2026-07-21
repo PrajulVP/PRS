@@ -519,7 +519,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label fw-medium small">Sizes</label>
                                     <input type="hidden" name="variant_name_2" value="Size">
-                                    <select name="variant_values_2[]" id="create_variant_values_2" class="form-select select2-variants" multiple="multiple" data-placeholder="Select Sizes (e.g. S, M, L, XL)">
+                                    <select name="variant_values_2[]" id="create_variant_values_2" class="form-select select2-variants" multiple="multiple" data-placeholder="Select Sizes (e.g. S, M, L, XL, 8, 9, 10)">
                                         <option value="S">S</option>
                                         <option value="M">M</option>
                                         <option value="L">L</option>
@@ -528,6 +528,9 @@
                                         <option value="XXXL">XXXL</option>
                                         <option value="UNIVERSAL">UNIVERSAL</option>
                                         <option value="FREE SIZE">FREE SIZE</option>
+                                        @for($i = 1; $i <= 15; $i++)
+                                            <option value="{{ $i }}">{{ $i }}</option>
+                                        @endfor
                                     </select>
                                 </div>
                             </div>
@@ -684,7 +687,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label fw-medium small">Sizes</label>
                                     <input type="hidden" name="variant_name_2" value="Size">
-                                    <select name="variant_values_2[]" id="edit_variant_values_2" class="form-select select2-variants" multiple="multiple" data-placeholder="Select Sizes (e.g. S, M, L, XL)">
+                                    <select name="variant_values_2[]" id="edit_variant_values_2" class="form-select select2-variants" multiple="multiple" data-placeholder="Select Sizes (e.g. S, M, L, XL, 8, 9, 10)">
                                         <option value="S">S</option>
                                         <option value="M">M</option>
                                         <option value="L">L</option>
@@ -693,6 +696,9 @@
                                         <option value="XXXL">XXXL</option>
                                         <option value="UNIVERSAL">UNIVERSAL</option>
                                         <option value="FREE SIZE">FREE SIZE</option>
+                                        @for($i = 1; $i <= 15; $i++)
+                                            <option value="{{ $i }}">{{ $i }}</option>
+                                        @endfor
                                     </select>
                                 </div>
                             </div>
