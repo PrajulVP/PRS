@@ -114,16 +114,14 @@ class FieldStaffActionApiController extends Controller
             }
             
         } elseif ($request->type === 'punch_out') {
-            // Can punch out ONLY if last punch was punch_in and it was TODAY.
-            if (!$lastPunch || $lastPunch->type === 'punch_out' || !Carbon::parse($lastPunch->timestamp)->isToday()) {
+            // Can punch out if last punch was punch_in (regardless of what day it was)
+            if (!$lastPunch || $lastPunch->type === 'punch_out') {
                 return response()->json([
-                    'message' => 'You must be punched in today to punch out.',
+                    'message' => 'You must be punched in to punch out.',
                     'already_punched' => true,
                     'log' => $lastPunch
                 ], 403);
             }
-        }
-
         $log = AttendanceLog::create([
             'user_id' => $user->id,
             'type' => $request->type,
@@ -201,9 +199,7 @@ class FieldStaffActionApiController extends Controller
 
         $status = 'punched_out';
         if ($lastPunch && $lastPunch->type === 'punch_in') {
-            if (Carbon::parse($lastPunch->timestamp)->isToday()) {
-                $status = 'punched_in';
-            }
+            $status = 'punched_in';
         }
 
         return response()->json([

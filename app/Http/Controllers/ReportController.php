@@ -1124,6 +1124,41 @@ class ReportController extends Controller
             'alerts' => $alerts,
             'timestamp' => now()->format('H:i:s')
         ]);
+        ]);
+    }
+
+    protected function getTrackingPunches($userId, $date)
+    {
+        $punches = \App\Models\AttendanceLog::where('user_id', $userId)
+            ->whereDate('timestamp', $date)
+            ->orderBy('timestamp', 'asc')
+            ->get();
+            
+        $punches = $punches->filter(function ($punch) use ($userId) {
+            if ($punch->type === 'punch_out') {
+                $prevPunch = \App\Models\AttendanceLog::where('user_id', $userId)
+                    ->where('timestamp', '<', $punch->timestamp)
+                    ->orderBy('timestamp', 'desc')
+                    ->first();
+                if ($prevPunch && $prevPunch->type === 'punch_in' && !\Carbon\Carbon::parse($prevPunch->timestamp)->isSameDay(\Carbon\Carbon::parse($punch->timestamp))) {
+                    return false;
+                }
+            }
+            return true;
+        })->values();
+
+        if ($punches->isNotEmpty() && $punches->last()->type === 'punch_in') {
+            $nextPunch = \App\Models\AttendanceLog::where('user_id', $userId)
+                ->where('timestamp', '>', $punches->last()->timestamp)
+                ->orderBy('timestamp', 'asc')
+                ->first();
+                
+            if ($nextPunch && $nextPunch->type === 'punch_out' && !\Carbon\Carbon::parse($nextPunch->timestamp)->isSameDay(\Carbon\Carbon::parse($punches->last()->timestamp))) {
+                $punches->push($nextPunch);
+            }
+        }
+        
+        return $punches;
     }
 
     public function fieldStaffTracking(Request $request)
@@ -1145,10 +1180,7 @@ class ReportController extends Controller
             ->orderBy('timestamp', 'asc')
             ->get();
             
-        $punches = \App\Models\AttendanceLog::where('user_id', $userId)
-            ->whereDate('timestamp', $date)
-            ->orderBy('timestamp', 'asc')
-            ->get();
+        $punches = $this->getTrackingPunches($userId, $date);
             
         $visits = \App\Models\VisitLog::where('user_id', $userId)
             ->whereDate('check_in_at', $date)
@@ -1187,10 +1219,7 @@ class ReportController extends Controller
             ->orderBy('timestamp', 'asc')
             ->get();
             
-        $punches = \App\Models\AttendanceLog::where('user_id', $userId)
-            ->whereDate('timestamp', $date)
-            ->orderBy('timestamp', 'asc')
-            ->get();
+        $punches = $this->getTrackingPunches($userId, $date);
             
         $visits = \App\Models\VisitLog::where('user_id', $userId)
             ->whereDate('check_in_at', $date)
@@ -1908,10 +1937,7 @@ class ReportController extends Controller
             ->orderBy('timestamp', 'asc')
             ->get();
             
-        $punches = \App\Models\AttendanceLog::where('user_id', $userId)
-            ->whereDate('timestamp', $date)
-            ->orderBy('timestamp', 'asc')
-            ->get();
+        $punches = $this->getTrackingPunches($userId, $date);
             
         $visits = \App\Models\VisitLog::where('user_id', $userId)
             ->whereDate('check_in_at', $date)
@@ -1944,10 +1970,7 @@ class ReportController extends Controller
             ->orderBy('timestamp', 'asc')
             ->get();
             
-        $punches = \App\Models\AttendanceLog::where('user_id', $userId)
-            ->whereDate('timestamp', $date)
-            ->orderBy('timestamp', 'asc')
-            ->get();
+        $punches = $this->getTrackingPunches($userId, $date);
             
         $visits = \App\Models\VisitLog::where('user_id', $userId)
             ->whereDate('check_in_at', $date)
