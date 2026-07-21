@@ -273,4 +273,13 @@
             });
         }
     });
+
+    // Auto-dismiss alerts after 3 seconds
+    $(document).ready(function() {
+        setTimeout(function() {
+            $('.auto-dismiss').fadeOut('slow', function() {
+                $(this).remove();
+            });
+        }, 3000);
+    });
 </script>

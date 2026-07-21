@@ -3,7 +3,7 @@
         'name' => 'laravel/laravel',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '0f69b21914c0e50183bb916d7fb5474a575f9640',
+        'reference' => '0ac9023f001937b9f0f719b24ac6fb6091756749',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -265,6 +265,15 @@
             'aliases' => array(),
             'dev_requirement' => true,
         ),
+        'ifsnop/mysqldump-php' => array(
+            'pretty_version' => 'v2.12',
+            'version' => '2.12.0.0',
+            'reference' => '2d3a43fc0c49f23bf7dee392b0dd1f8c799f89d3',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../ifsnop/mysqldump-php',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'illuminate/auth' => array(
             'dev_requirement' => false,
             'replaced' => array(
@@ -499,7 +508,7 @@
         'laravel/laravel' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '0f69b21914c0e50183bb916d7fb5474a575f9640',
+            'reference' => '0ac9023f001937b9f0f719b24ac6fb6091756749',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

@@ -515,6 +515,9 @@
             @endif
             <li><a href="{{ route('admin.permissions.index') }}"><span>Roles & Permissions</span></a></li>
             <li><a href="{{ route('admin.settings.general') }}"><span>System Config</span></a></li>
+            @if (Auth::user()->hasAnyRole(['admin', 'superadmin']))
+            <li><a href="{{ route('admin.backups.index') }}"><span>Database Backups</span></a></li>
+            @endif
           </ul>
         </li>
         @endif

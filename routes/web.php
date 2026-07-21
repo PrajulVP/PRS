@@ -220,6 +220,12 @@ Route::middleware(['auth'])->group(function () {
         Route::post('settings/brands/save', [SettingsController::class, 'saveBrand'])->name('settings.brands.save');
         Route::post('settings/brands/delete', [SettingsController::class, 'deleteBrand'])->name('settings.brands.delete');
 
+        // Backup Management
+        Route::get('backups', [\App\Http\Controllers\BackupController::class, 'index'])->name('backups.index');
+        Route::post('backups/create', [\App\Http\Controllers\BackupController::class, 'create'])->name('backups.create');
+        Route::get('backups/download/{filename}', [\App\Http\Controllers\BackupController::class, 'download'])->name('backups.download');
+        Route::delete('backups/{filename}', [\App\Http\Controllers\BackupController::class, 'destroy'])->name('backups.destroy');
+
         // Reports
         Route::prefix('reports')->name('reports.')->group(function () {
             Route::get('/executive', [ReportController::class, 'index'])->name('index');
