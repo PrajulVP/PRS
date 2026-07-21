@@ -25,12 +25,12 @@ class DistrictController extends Controller
                 $columnIndex = $order['column'];
                 $dir = $order['dir'];
                 $columns = ['id', 'name']; // map your columns
-                $query->orderBy($columns[$columnIndex], $dir);
+                $query->orderBy($columns[$columnIndex], $dir); 
             }
 
             $start = $request->input('start', 0);
             $length = $request->input('length', 10);
-            $districts = $query->offset($start)->limit($length)->get();
+            $districts = $query->offset($start)->limit($length)->get(); 
 
             $data = $districts->map(function ($d) {
                 return [
