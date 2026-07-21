@@ -1124,7 +1124,6 @@ class ReportController extends Controller
             'alerts' => $alerts,
             'timestamp' => now()->format('H:i:s')
         ]);
-        ]);
     }
 
     protected function getTrackingPunches($userId, $date)
