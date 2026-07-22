@@ -97,9 +97,10 @@ class InventoryController extends Controller
                     $searchValue = $request->input('search')['value'];
                     $query->where(function ($q) use ($searchValue) {
                         $q->where('distributor_product_code', 'like', "%{$searchValue}%")
-                            ->orWhere('product_name', 'like', "%{$searchValue}%")
                             ->orWhereHas('product', function ($qp) use ($searchValue) {
-                                $qp->where('brand', 'like', "%{$searchValue}%");
+                                $qp->where('product_name', 'like', "%{$searchValue}%")
+                                   ->orWhere('brand', 'like', "%{$searchValue}%")
+                                   ->orWhere('generic_name', 'like', "%{$searchValue}%");
                             });
                     });
                 }
@@ -167,6 +168,9 @@ class InventoryController extends Controller
                 } else {
                     $query->orderBy('updated_at', 'desc');
                 }
+                
+                // Add secondary sorting so rows don't randomly jump around on refresh!
+                $query->orderBy('product_id', 'desc');
 
                 $start = intval($request->input('start', 0));
                 $length = intval($request->input('length', 10));
