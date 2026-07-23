@@ -1819,9 +1819,9 @@
                                 <div class="card h-100 border-0 shadow-sm bg-card-theme" style="border-radius: 10px !important;">
                                     <div class="card-body py-2 px-3">
                                         <h6 class="text-uppercase text-muted-theme fw-bold mb-1" style="font-size: 0.6rem; letter-spacing: 0.05em;"><i class="fa fa-building-columns me-2"></i>Company Info</h6>
-                                        <h5 class="fw-bold mb-1 text-main-theme" style="font-size: 1rem;">${row.company_name || 'Atom Wellness'}</h5>
+                                        <h5 class="fw-bold mb-1 text-main-theme" style="font-size: 1rem;">${row.company_name || 'ATOMLIFE HEALTHCARE AND RESEARCH PRIVATE LIMITED'}</h5>
                                         <div class="d-flex align-items-center mb-0 text-main-theme text-muted-theme small" style="font-size: 0.75rem;"><i class="fa fa-user me-2" style="width: 12px;"></i> Sales Manager: ${row.sales_manager_name || 'Test Manager'}</div>
-                                        <div class="d-flex align-items-center mb-0 text-main-theme"><i class="fa fa-envelope text-muted-theme me-2" style="width: 12px; font-size: 0.75rem;"></i> <span class="small" style="font-size: 0.8rem;">${row.company_email || 'info@prs.com'}</span></div>
+                                        {{-- <div class="d-flex align-items-center mb-0 text-main-theme"><i class="fa fa-envelope text-muted-theme me-2" style="width: 12px; font-size: 0.75rem;"></i> <span class="small" style="font-size: 0.8rem;">${row.company_email || ''}</span></div> --}}
                                     </div>
                                 </div>
                             </div>
