@@ -128,6 +128,8 @@ Route::middleware('auth:api')->group(function () {
         Route::post('log-visit', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'logVisit']);
         Route::get('retailers/{id}/last-visit', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'getLastVisitRemark']);
         Route::post('expenses', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'submitExpense']);
+        Route::get('leaves', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'getLeaves']);
+        Route::get('leave-types', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'getLeaveTypes']);
         Route::post('leaves', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'requestLeave']);
         Route::post('visits/report-location', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'reportLocation']);
     });
@@ -139,6 +141,8 @@ Route::middleware('auth:api')->group(function () {
         Route::post('ping', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'pingLocation']);
         Route::post('log-visit', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'logVisit']);
         Route::post('expenses', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'submitExpense']);
+        Route::get('leaves', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'getLeaves']);
+        Route::get('leave-types', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'getLeaveTypes']);
         Route::post('leaves', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'requestLeave']);
     });
 

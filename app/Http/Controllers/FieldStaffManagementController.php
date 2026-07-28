@@ -136,9 +136,38 @@ class FieldStaffManagementController extends Controller
             $updateData['status'] = $status;
             $updateData['admin_id'] = Auth::id();
             $updateData['approved_by'] = Auth::id(); // Backwards compatibility
+
+            if ($updateData['status'] === 'approved' && $leave->status !== 'approved') {
+                $type = $leave->type;
+                $start = \Carbon\Carbon::parse($leave->start_date);
+                $end = $leave->end_date ? \Carbon\Carbon::parse($leave->end_date) : $start->copy();
+                
+                $days = ($leave->duration_type === 'full_day' || empty($leave->duration_type)) 
+                        ? ($start->diffInDays($end) + 1) 
+                        : 0.5;
+                
+                $requester = $leave->user;
+                if ($requester) {
+                    $leaveType = \App\Models\LeaveType::where('name', $type)->first();
+                    if ($leaveType) {
+                        $userBalance = \App\Models\UserLeaveBalance::where('user_id', $requester->id)
+                            ->where('leave_type_id', $leaveType->id)
+                            ->first();
+                        if ($userBalance) {
+                            $userBalance->balance = max(0, $userBalance->balance - $days);
+                            $userBalance->save();
+                        }
+                    }
+                }
+            }
         }
 
         $leave->update($updateData);
+        
+        // Notify the user
+        if ($leave->user) {
+            $leave->user->notify(new \App\Notifications\LeaveStatusUpdatedNotification($leave, $updateData['status'], Auth::user()));
+        }
 
         return back()->with('success', 'Leave status updated successfully.');
     }

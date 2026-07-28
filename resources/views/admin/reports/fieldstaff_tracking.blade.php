@@ -350,10 +350,26 @@
         src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key', env('GOOGLE_MAPS_API_KEY')) }}&libraries=geometry&callback=initMap"
         async defer></script>
     <script>
-        let map, routePath, staffMarker;
+        let map, staffMarker;
+        let routePaths = [];
+        let currentRoutePath = null;
         let pathPoints = [];
         let snappedPoints = [];
         let markers = [];
+        let lastTimestamp = null;
+
+        function createNewPolyline() {
+            let path = new google.maps.Polyline({
+                path: [],
+                geodesic: true,
+                strokeColor: "#7366ff",
+                strokeOpacity: 0.8,
+                strokeWeight: 5,
+                map: map
+            });
+            routePaths.push(path);
+            return path;
+        }
         const apiKey = "{{ config('services.google_maps.key', env('GOOGLE_MAPS_API_KEY')) }}";
 
         async function snapPathToRoads(points) {
@@ -396,16 +412,6 @@
                 ]
             });
 
-            // Initialize Route Path (Polyline)
-            routePath = new google.maps.Polyline({
-                path: snappedPoints,
-                geodesic: true,
-                strokeColor: "#7366ff",
-                strokeOpacity: 0.8,
-                strokeWeight: 5,
-                map: map
-            });
-
             // Initial Plotting
             loadInitialData();
 
@@ -417,15 +423,46 @@
             const bounds = new google.maps.LatLngBounds();
 
             // 1. Plot History Path
+            let pathSegments = [];
+            let currentSegment = [];
+
             @foreach($locations as $loc)
-                pathPoints.push({ lat: {{ $loc->latitude }}, lng: {{ $loc->longitude }} });
+                (function() {
+                    let currentTimestamp = new Date("{{ str_replace('-', '/', $loc->timestamp) }}").getTime();
+                    let point = { lat: {{ $loc->latitude }}, lng: {{ $loc->longitude }} };
+                    
+                    if (lastTimestamp) {
+                        let diffMins = (currentTimestamp - lastTimestamp) / (1000 * 60);
+                        if (diffMins > 15) {
+                            if (currentSegment.length > 0) {
+                                pathSegments.push(currentSegment);
+                            }
+                            currentSegment = [];
+                        }
+                    }
+                    currentSegment.push(point);
+                    lastTimestamp = currentTimestamp;
+                    
+                    pathPoints.push(point);
+                })();
             @endforeach
 
-                if (pathPoints.length > 0) {
-                snappedPoints = await snapPathToRoads(pathPoints);
-                routePath.setPath(snappedPoints);
-                snappedPoints.forEach(p => bounds.extend(p));
+            if (currentSegment.length > 0) {
+                pathSegments.push(currentSegment);
+            }
 
+            if (pathSegments.length > 0) {
+                for (let segment of pathSegments) {
+                    if (segment.length > 0) {
+                        let snappedSegment = await snapPathToRoads(segment);
+                        snappedPoints = snappedPoints.concat(snappedSegment);
+                        
+                        currentRoutePath = createNewPolyline();
+                        currentRoutePath.setPath(snappedSegment);
+                        
+                        snappedSegment.forEach(p => bounds.extend(p));
+                    }
+                }
                 // Update frontend distance display based on snapped points
                 updateDistanceDisplay(snappedPoints);
             }
@@ -530,18 +567,38 @@
 
         async function updateLiveMap(lat, lng) {
             const newPos = { lat: parseFloat(lat), lng: parseFloat(lng) };
+            const currentTimestamp = new Date().getTime();
+            
+            if (lastTimestamp) {
+                let diffMins = (currentTimestamp - lastTimestamp) / (1000 * 60);
+                if (diffMins > 15) {
+                    currentRoutePath = createNewPolyline();
+                }
+            } else {
+                if (!currentRoutePath) {
+                    currentRoutePath = createNewPolyline();
+                }
+            }
+            lastTimestamp = currentTimestamp;
+
             pathPoints.push(newPos);
 
             // Snap only the last segment for performance
             const lastTwo = pathPoints.slice(-2);
+            let latestSnappedPoint = newPos;
+
             if (lastTwo.length === 2) {
                 const snapped = await snapPathToRoads(lastTwo);
-                snappedPoints = snappedPoints.concat(snapped.slice(1));
-            } else {
-                snappedPoints.push(newPos);
+                if (snapped.length > 1) {
+                    latestSnappedPoint = snapped[snapped.length - 1];
+                }
             }
+            
+            snappedPoints.push(latestSnappedPoint);
 
-            routePath.setPath(snappedPoints);
+            let currentPath = currentRoutePath.getPath();
+            currentPath.push(new google.maps.LatLng(latestSnappedPoint.lat, latestSnappedPoint.lng));
+
             updateDistanceDisplay(snappedPoints);
 
             // Update Arrow Marker

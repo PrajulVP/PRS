@@ -1943,6 +1943,23 @@
             }
         },
         "/api/field-staff/leaves": {
+            "get": {
+                "tags": [
+                    "Field Staff"
+                ],
+                "summary": "Get leave history and balances",
+                "operationId": "5d624dd5b0304a3d6dde02dafb227dda",
+                "responses": {
+                    "200": {
+                        "description": "Leave history retrieved"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
             "post": {
                 "tags": [
                     "Field Staff"
@@ -1963,6 +1980,25 @@
                 "responses": {
                     "201": {
                         "description": "Leave requested"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/field-staff/leave-types": {
+            "get": {
+                "tags": [
+                    "Field Staff"
+                ],
+                "summary": "Get available leave types",
+                "operationId": "7e8baa2972b38e75e194c46faa62a20d",
+                "responses": {
+                    "200": {
+                        "description": "Leave types retrieved"
                     }
                 },
                 "security": [
@@ -3202,6 +3238,23 @@
             }
         },
         "/api/manager/leaves": {
+            "get": {
+                "tags": [
+                    "Sales Manager"
+                ],
+                "summary": "Get leave history and balances",
+                "operationId": "5fc16297382bde636bc4ba9315d19531",
+                "responses": {
+                    "200": {
+                        "description": "Leave history retrieved"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
             "post": {
                 "tags": [
                     "Sales Manager"
@@ -3211,6 +3264,25 @@
                 "responses": {
                     "201": {
                         "description": "Leave requested"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/manager/leave-types": {
+            "get": {
+                "tags": [
+                    "Sales Manager"
+                ],
+                "summary": "Get available leave types",
+                "operationId": "f8e865e1422343137c2eb5e0e599d256",
+                "responses": {
+                    "200": {
+                        "description": "Leave types retrieved"
                     }
                 },
                 "security": [

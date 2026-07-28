@@ -11,18 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('retailers', function (Blueprint $table) {
-            $table->boolean('can_configure_free_strips')->default(false)->after('loyalty_points');
+        Schema::table('leave_requests', function (Blueprint $table) {
+            $table->string('duration_type')->default('full_day')->after('end_date'); // full_day, first_half, second_half
         });
     }
 
     /**
-     * Reverse the migrations.  
+     * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::table('retailers', function (Blueprint $table) {
-            $table->dropColumn('can_configure_free_strips');
+        Schema::table('leave_requests', function (Blueprint $table) {
+            $table->dropColumn('duration_type');
         });
     }
 };

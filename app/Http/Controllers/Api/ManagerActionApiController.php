@@ -330,13 +330,46 @@ class ManagerActionApiController extends Controller
     public function requestLeave(Request $request)
     {
         $request->validate([
-            'type' => 'required|in:Sick Leave,Casual Leave,Permission',
+            'type' => 'required|string',
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'reason' => 'required|string',
+            'duration_type' => 'nullable|in:full_day,first_half,second_half',
         ]);
 
         $user = auth('api')->user();
+        
+        $durationType = $request->duration_type ?? 'full_day';
+        $start = \Carbon\Carbon::parse($request->start_date);
+        $end = $request->end_date ? \Carbon\Carbon::parse($request->end_date) : $start->copy();
+        
+        if ($durationType !== 'full_day' && !$start->isSameDay($end)) {
+            return response()->json(['error' => 'Half day leaves must be on a single day.'], 400);
+        }
+
+        // Check balances dynamically
+        $type = $request->type;
+        $leaveType = \App\Models\LeaveType::where('name', $type)->first();
+        
+        if ($leaveType) {
+            $days = ($durationType === 'full_day') ? ($start->diffInDays($end) + 1) : 0.5;
+            
+            $userBalance = \App\Models\UserLeaveBalance::where('user_id', $user->id)
+                ->where('leave_type_id', $leaveType->id)
+                ->first();
+                
+            $currentBalance = $userBalance ? $userBalance->balance : 0;
+            
+            if ($currentBalance < $days) {
+                return response()->json([
+                    'error' => "Insufficient $type balance. Requested: $days days. Available: $currentBalance days.",
+                ], 400);
+            }
+        } elseif ($type !== 'Permission') {
+            return response()->json([
+                'error' => "Invalid leave type.",
+            ], 400);
+        }
 
         $leave = LeaveRequest::create([
             'user_id' => $user->id,
@@ -344,12 +377,58 @@ class ManagerActionApiController extends Controller
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
             'reason' => $request->reason,
-            'status' => 'pending',
+            'duration_type' => $durationType,
+            'status' => 'manager_approved', 
         ]);
 
         return response()->json([
             'message' => 'Leave request submitted.',
             'leave' => $leave
         ], 201);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/manager/leaves",
+     *     summary="Get leave history and balances",
+     *     tags={"Sales Manager"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(response=200, description="Leave history retrieved")
+     * )
+     */
+    public function getLeaves(Request $request)
+    {
+        $user = auth('api')->user();
+        $leaves = LeaveRequest::where('user_id', $user->id)->latest()->get();
+        
+        $balances = \App\Models\UserLeaveBalance::with('leaveType')->where('user_id', $user->id)->get()->map(function($b) {
+            return [
+                'type' => $b->leaveType->name,
+                'balance' => $b->balance
+            ];
+        });
+        
+        return response()->json([
+            'balances' => $balances,
+            'leaves' => $leaves
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/manager/leave-types",
+     *     summary="Get available leave types",
+     *     tags={"Sales Manager"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(response=200, description="Leave types retrieved")
+     * )
+     */
+    public function getLeaveTypes(Request $request)
+    {
+        $types = \App\Models\LeaveType::all()->map(function($t) {
+            return $t->name;
+        });
+        $types->push('Permission');
+        return response()->json(['leave_types' => $types]);
     }
 }

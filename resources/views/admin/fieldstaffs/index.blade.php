@@ -398,6 +398,24 @@
                                     <i class="fa fa-shopping-bag me-1"></i>Retailers (<span id="fsRetailerCount">0</span>)
                                 </button>
                             </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link fw-bold" id="fs-activity-tab" data-bs-toggle="tab"
+                                    data-bs-target="#fs-activity-panel" type="button" role="tab">
+                                    <i class="fa fa-map-marker me-1"></i>Activity
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link fw-bold" id="fs-leaves-tab" data-bs-toggle="tab"
+                                    data-bs-target="#fs-leaves-panel" type="button" role="tab">
+                                    <i class="fa fa-calendar me-1"></i>Leaves
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link fw-bold" id="fs-expenses-tab" data-bs-toggle="tab"
+                                    data-bs-target="#fs-expenses-panel" type="button" role="tab">
+                                    <i class="fa fa-money me-1"></i>Expenses
+                                </button>
+                            </li>
                         </ul>
                         <div class="tab-content border border-top-0 p-3" id="fsModalTabsContent"
                             style="border-radius: 0 0 0.5rem 0.5rem; background: var(--med-bg-body);">
@@ -463,17 +481,90 @@
                                 --}}
                             </div>
                             <div class="tab-pane fade" id="fs-retailer-panel" role="tabpanel">
-                                <div class="table-responsive" style="max-height: 400px;">
-                                    <table class="table table-sm table-striped table-hover mb-0">
-                                        <thead class="sticky-top" style="background: var(--med-bg-card);">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-sm">
+                                        <thead class="table-light">
                                             <tr>
-                                                <th style="color: var(--med-text-main) !important;">Shop Name</th>
-                                                <th style="color: var(--med-text-main) !important;">Owner</th>
-                                                <th style="color: var(--med-text-main) !important;">Contact</th>
-                                                <th style="color: var(--med-text-main) !important;">Status</th>
+                                                <th>Shop Name</th>
+                                                <th>Owner Name</th>
+                                                <th>Contact</th>
+                                                <th>Status</th>
                                             </tr>
                                         </thead>
-                                        <tbody id="fs_view_retailers_body"></tbody>
+                                        <tbody id="fs_view_retailers_body">
+                                            <!-- Retailers injected via JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="fs-activity-panel" role="tabpanel">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-start gap-2 p-3 rounded h-100" style="background: var(--med-bg-body);">
+                                            <i class="fa fa-map-marker mt-1 text-danger"></i>
+                                            <div>
+                                                <div class="text-muted small">Last Known Location</div>
+                                                <div class="fw-semibold" id="fs_view_last_location">No location data today.</div>
+                                                <div class="text-muted small mt-1" id="fs_view_last_location_time"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-start gap-2 p-3 rounded h-100" style="background: var(--med-bg-body);">
+                                            <i class="fa fa-road mt-1 text-primary"></i>
+                                            <div>
+                                                <div class="text-muted small">Distance Traveled Today</div>
+                                                <div class="fw-semibold fs-5"><span id="fs_view_todays_distance">0</span> km</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-center mt-4 mb-2">
+                                    <a href="#" id="fs_view_tracking_btn" class="btn btn-outline-primary btn-sm rounded-pill px-4">
+                                        <i class="fa fa-map me-1"></i> View Full Tracking Map
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="fs-leaves-panel" role="tabpanel">
+                                <h6>Available Balances</h6>
+                                <div class="row g-2 mb-4" id="fs_view_leave_balances">
+                                    <!-- Leave balances injected here -->
+                                </div>
+                                <h6>Recent Leave Requests</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-sm">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Type</th>
+                                                <th>Date</th>
+                                                <th>Duration</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="fs_view_leave_requests_body">
+                                            <!-- Leaves injected via JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="fs-expenses-panel" role="tabpanel">
+                                <h6>Recent Expenses</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-sm">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Type</th>
+                                                <th>Date</th>
+                                                <th>Amount</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="fs_view_expenses_body">
+                                            <!-- Expenses injected via JS -->
+                                        </tbody>
                                     </table>
                                 </div>
                             </div>
@@ -814,6 +905,70 @@
                         $('#fsRetailerCount').text(fs.retailers?.length || 0);
 
                         $('#showFieldStaffModal').data('lat', fs.latitude).data('lng', fs.longitude);
+
+                        // Activity Tab
+                        if (fs.latest_location) {
+                            $('#fs_view_last_location').text(fs.latest_location.address || (fs.latest_location.latitude + ', ' + fs.latest_location.longitude));
+                            let timeObj = new Date(fs.latest_location.timestamp);
+                            $('#fs_view_last_location_time').text(timeObj.toLocaleString());
+                        } else {
+                            $('#fs_view_last_location').text('No location data today.');
+                            $('#fs_view_last_location_time').text('');
+                        }
+                        $('#fs_view_todays_distance').text(fs.todays_distance_km || '0');
+                        $('#fs_view_tracking_btn').attr('href', `/admin/reports/field-staff/tracking-map?user_id=${fs.user.id}`);
+
+                        // Leaves Tab
+                        let balancesHtml = fs.user?.leave_balances?.map(b => `
+                            <div class="col-6">
+                                <div class="p-2 border rounded text-center bg-light">
+                                    <div class="small text-muted">${b.leave_type?.name}</div>
+                                    <div class="fw-bold fs-5">${parseFloat(b.balance)}</div>
+                                </div>
+                            </div>
+                        `).join('') || '<div class="col-12 text-muted">No balances configured</div>';
+                        $('#fs_view_leave_balances').html(balancesHtml);
+
+                        let leavesHtml = fs.user?.leave_requests?.map(lr => {
+                            let statusBadge = '';
+                            if(lr.status == 'pending') statusBadge = '<span class="badge badge-light-warning">Pending</span>';
+                            else if(lr.status == 'manager_approved') statusBadge = '<span class="badge badge-light-primary">Verified</span>';
+                            else if(lr.status == 'approved') statusBadge = '<span class="badge badge-light-success">Approved</span>';
+                            else statusBadge = '<span class="badge badge-light-danger">Rejected</span>';
+                            
+                            let dateText = lr.start_date;
+                            if (lr.end_date && lr.end_date != lr.start_date) {
+                                dateText += ' to ' + lr.end_date;
+                            }
+                            
+                            let durationText = (lr.duration_type == 'first_half') ? 'First Half (0.5)' : 
+                                               (lr.duration_type == 'second_half') ? 'Second Half (0.5)' : 'Full Day';
+                            
+                            return `<tr>
+                                <td><span class="badge bg-secondary">${lr.type}</span></td>
+                                <td class="small">${dateText}</td>
+                                <td><span class="small">${durationText}</span></td>
+                                <td>${statusBadge}</td>
+                            </tr>`;
+                        }).join('') || '<tr><td colspan="4" class="text-center text-muted">No recent leave requests</td></tr>';
+                        $('#fs_view_leave_requests_body').html(leavesHtml);
+
+                        // Expenses Tab
+                        let expensesHtml = fs.user?.expenses?.map(exp => {
+                            let statusBadge = '';
+                            if(exp.status == 'pending') statusBadge = '<span class="badge badge-light-warning">Pending</span>';
+                            else if(exp.status == 'manager_approved') statusBadge = '<span class="badge badge-light-primary">Verified</span>';
+                            else if(exp.status == 'approved') statusBadge = '<span class="badge badge-light-success">Approved</span>';
+                            else statusBadge = '<span class="badge badge-light-danger">Rejected</span>';
+                            
+                            return `<tr>
+                                <td><span class="badge bg-dark">${exp.type}</span></td>
+                                <td><span class="small">${exp.expense_date}</span></td>
+                                <td class="fw-bold text-success">₹${exp.amount}</td>
+                                <td>${statusBadge}</td>
+                            </tr>`;
+                        }).join('') || '<tr><td colspan="4" class="text-center text-muted">No recent expenses</td></tr>';
+                        $('#fs_view_expenses_body').html(expensesHtml);
                     }
                 });
             });

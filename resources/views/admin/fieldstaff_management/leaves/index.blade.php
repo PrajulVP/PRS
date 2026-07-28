@@ -16,8 +16,21 @@
     <div class="row">
         <div class="col-sm-12">
             <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-header border-0 py-3">
+                <div class="card-header border-0 py-3 d-flex justify-content-between align-items-center">
                     <h5 class="mb-0 fw-bold text-primary">Leave Requests Timeline</h5>
+                    <div class="nav nav-pills custom-pills" role="tablist" style="background: var(--med-bg-body); padding: 4px; border-radius: 8px;">
+                        <li class="nav-item">
+                            <a href="{{ route('admin.field-staff.leaves', ['status' => 'pending']) }}" class="nav-link {{ request('status', 'pending') == 'pending' ? 'active' : '' }}" style="padding: 6px 16px; font-weight: 500;">Pending</a>
+                        </li>
+                        @if(Auth::user()->hasAnyRole(['admin', 'superadmin']))
+                            <li class="nav-item">
+                                <a href="{{ route('admin.field-staff.leaves', ['status' => 'manager_approved']) }}" class="nav-link {{ request('status') == 'manager_approved' ? 'active' : '' }}" style="padding: 6px 16px; font-weight: 500;">Verified</a>
+                            </li>
+                        @endif
+                        <li class="nav-item">
+                            <a href="{{ route('admin.field-staff.leaves', ['status' => 'all']) }}" class="nav-link {{ request('status') == 'all' ? 'active' : '' }}" style="padding: 6px 16px; font-weight: 500;">History (All)</a>
+                        </li>
+                    </div>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive px-4 pb-4">
@@ -28,6 +41,7 @@
                                     <th>Type</th>
                                     <th>Period (Start - End)</th>
                                     <th>Reason</th>
+                                    <th>Balances</th>
                                     <th>Status</th>
                                     <th class="text-center">Action</th>
                                 </tr>
@@ -41,8 +55,10 @@
                                                 <span class="badge badge-light-danger">Sick</span>
                                             @elseif($leave->type == 'Casual Leave')
                                                 <span class="badge badge-light-info">Casual</span>
-                                            @else
+                                            @elseif($leave->type == 'Permission')
                                                 <span class="badge badge-light-warning">Permission</span>
+                                            @else
+                                                <span class="badge badge-light-primary">{{ $leave->type }}</span>
                                             @endif
                                         </td>
                                         <td>
@@ -50,8 +66,29 @@
                                             @if($leave->end_date && $leave->end_date != $leave->start_date)
                                                 <div class="small text-muted">to {{ $leave->end_date->format('M d, Y') }}</div>
                                             @endif
+                                            @if($leave->duration_type == 'first_half')
+                                                <div class="small text-info fw-bold mt-1"><i class="fa fa-clock me-1"></i>First Half (0.5 Days)</div>
+                                            @elseif($leave->duration_type == 'second_half')
+                                                <div class="small text-info fw-bold mt-1"><i class="fa fa-clock me-1"></i>Second Half (0.5 Days)</div>
+                                            @else
+                                                @php 
+                                                    $days = \Carbon\Carbon::parse($leave->start_date)->diffInDays(\Carbon\Carbon::parse($leave->end_date ?? $leave->start_date)) + 1;
+                                                @endphp
+                                                <div class="small text-muted mt-1">{{ $days }} Day{{ $days > 1 ? 's' : '' }}</div>
+                                            @endif
                                         </td>
                                         <td><div class="small text-truncate" style="max-width: 200px;" title="{{ $leave->reason }}">{{ $leave->reason }}</div></td>
+                                        <td>
+                                            <div class="small">
+                                                @foreach($leave->user->leaveBalances as $balance)
+                                                    {{ substr($balance->leaveType->name, 0, 1) }}: <b>{{ floatval($balance->balance) }}</b> 
+                                                    @if(!$loop->last) | @endif
+                                                @endforeach
+                                                @if($leave->user->leaveBalances->isEmpty())
+                                                    <b>No Balances</b>
+                                                @endif
+                                            </div>
+                                        </td>
                                         <td>
                                             @if($leave->status == 'pending')
                                                 <span class="badge badge-light-warning pulsate">Pending (FS)</span>

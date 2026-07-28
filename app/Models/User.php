@@ -44,6 +44,9 @@ class User extends Authenticatable implements JWTSubject
         'device_bound_at',
         'otp',
         'otp_expires_at',
+        'casual_leaves_balance',
+        'sick_leaves_balance',
+        'paid_leaves_balance',
     ];
 
     public function distributor()
@@ -99,6 +102,21 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->hasMany(RetailerOrder::class);
     }
+    public function leaveRequests()
+    {
+        return $this->hasMany(LeaveRequest::class);
+    }
+
+    public function leaveBalances()
+    {
+        return $this->hasMany(UserLeaveBalance::class);
+    }
+
+    public function expenses()
+    {
+        return $this->hasMany(Expense::class);
+    }
+
     public function targets()
     {
         return $this->hasMany(SalesTarget::class);

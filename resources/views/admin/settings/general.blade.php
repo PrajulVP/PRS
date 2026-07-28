@@ -295,6 +295,27 @@
                                 </div>
                             </div>
 
+                            <!-- Leave Types Master -->
+                            <div class="col-md-12 mb-4">
+                                <div class="card border-info shadow-sm h-100">
+                                    <div class="card-body">
+                                         <div class="d-flex align-items-center justify-content-between mb-3">
+                                             <h6 class="card-title text-info mb-0"><i class="fa fa-calendar-alt me-2"></i>Leave Types Master</h6>
+                                             <div>
+                                                 <button type="button" class="btn btn-info btn-sm rounded-pill px-3 text-white" id="add_leave_type_btn">
+                                                     <i class="fa fa-plus me-1"></i>Add New Leave Type
+                                                 </button>
+                                             </div>
+                                         </div>
+                                         <p class="text-muted small">Manage the list of active leave types and their default annual quotas.</p>
+                                         
+                                         <div id="leave_types_container" class="d-flex flex-wrap gap-3 p-3 bg-light rounded border shadow-inner" style="min-height: 80px;">
+                                             <!-- Tags filled by JS -->
+                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+
 
                         </div>
                     </div>
@@ -778,6 +799,179 @@
                     }
                 });
             });
+
+            // Leave Types Management Logic
+            let leaveTypesData = @json($leaveTypes);
+
+            function renderLeaveTypes() {
+                let html = '';
+                if (leaveTypesData.length === 0) {
+                    html = '<div class="text-muted small w-100 text-center py-2">No leave types added yet.</div>';
+                } else {
+                    leaveTypesData.forEach((leaveType, index) => {
+                        html += `
+                            <div class="brand-tag-wrapper d-inline-flex flex-column rounded p-3" style="min-width: 220px; max-width: 280px; border-color: var(--med-info) !important;">
+                                <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                                    <span class="brand-name text-truncate me-2 fw-bold text-info" title="${leaveType.name}">
+                                        <i class="fa fa-calendar-day me-1"></i>${leaveType.name}
+                                    </span>
+                                    <div class="d-flex gap-1 flex-shrink-0">
+                                        <button type="button" class="btn btn-outline-info p-0 d-flex align-items-center justify-content-center edit-leavetype-btn" data-index="${index}" style="width: 28px; height: 28px;" title="Edit"><i class="fa fa-edit small"></i></button>
+                                        <button type="button" class="btn btn-outline-danger p-0 d-flex align-items-center justify-content-center delete-leavetype-btn" data-index="${index}" style="width: 28px; height: 28px;" title="Delete"><i class="fa fa-trash small"></i></button>
+                                    </div>
+                                </div>
+                                <div class="mb-2 text-center">
+                                    <span class="small text-muted d-block mb-1">Default Quota:</span>
+                                    <span class="badge bg-info text-white border px-3 py-2" style="font-size: 1rem;">${leaveType.default_quota} Days</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                $('#leave_types_container').html(html);
+            }
+
+            renderLeaveTypes();
+
+            $('#add_leave_type_btn').on('click', function() {
+                Swal.fire({
+                    title: 'Add New Leave Type',
+                    html: `
+                        <div class="text-start mb-3">
+                            <label class="form-label fw-bold small">Leave Type Name</label>
+                            <input type="text" id="swal_leave_name" class="form-control" placeholder="e.g. Casual Leave">
+                        </div>
+                        <div class="text-start mb-3">
+                            <label class="form-label fw-bold small">Default Annual Quota (Days)</label>
+                            <input type="number" id="swal_leave_quota" class="form-control" value="0" min="0">
+                        </div>
+                    `,
+                    focusConfirm: false,
+                    showCancelButton: true,
+                    confirmButtonText: 'Add Leave Type',
+                    preConfirm: () => {
+                        let name = document.getElementById('swal_leave_name').value.trim();
+                        let quota = document.getElementById('swal_leave_quota').value;
+                        if (!name) {
+                            Swal.showValidationMessage('Leave Type Name is required');
+                            return false;
+                        }
+                        if (quota === '' || quota < 0) {
+                            Swal.showValidationMessage('Valid Quota is required');
+                            return false;
+                        }
+                        return { name, default_quota: quota };
+                    }
+                }).then((result) => {
+                    if (result.value) {
+                        $.ajax({
+                            url: '{{ route('admin.settings.leave-types.save') }}',
+                            method: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}',
+                                name: result.value.name,
+                                default_quota: result.value.default_quota
+                            },
+                            success: function(res) {
+                                leaveTypesData.push(res.leaveType);
+                                renderLeaveTypes();
+                                showToast('success', 'Added', 'Leave Type added successfully');
+                            },
+                            error: function(xhr) {
+                                let msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Could not add leave type.';
+                                showToast('error', 'Error', msg);
+                            }
+                        });
+                    }
+                });
+            });
+
+            $(document).on('click', '.edit-leavetype-btn', function() {
+                let index = $(this).data('index');
+                let leaveObj = leaveTypesData[index];
+                
+                Swal.fire({
+                    title: 'Edit Leave Type',
+                    html: `
+                        <div class="text-start mb-3">
+                            <label class="form-label fw-bold small">Leave Type Name</label>
+                            <input type="text" id="swal_leave_name" class="form-control" value="${leaveObj.name}" placeholder="e.g. Casual Leave">
+                        </div>
+                        <div class="text-start mb-3">
+                            <label class="form-label fw-bold small">Default Annual Quota (Days)</label>
+                            <input type="number" id="swal_leave_quota" class="form-control" value="${leaveObj.default_quota}" min="0">
+                        </div>
+                    `,
+                    focusConfirm: false,
+                    showCancelButton: true,
+                    confirmButtonText: 'Update Leave Type',
+                    preConfirm: () => {
+                        let name = document.getElementById('swal_leave_name').value.trim();
+                        let quota = document.getElementById('swal_leave_quota').value;
+                        if (!name) {
+                            Swal.showValidationMessage('Leave Type Name is required');
+                            return false;
+                        }
+                        return { id: leaveObj.id, name, default_quota: quota };
+                    }
+                }).then((result) => {
+                    if (result.value) {
+                        $.ajax({
+                            url: '{{ route('admin.settings.leave-types.save') }}',
+                            method: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}',
+                                id: result.value.id,
+                                name: result.value.name,
+                                default_quota: result.value.default_quota
+                            },
+                            success: function(res) {
+                                leaveTypesData[index] = res.leaveType;
+                                renderLeaveTypes();
+                                showToast('success', 'Updated', 'Leave Type updated successfully');
+                            },
+                            error: function(xhr) {
+                                let msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Could not update leave type.';
+                                showToast('error', 'Error', msg);
+                            }
+                        });
+                    }
+                });
+            });
+
+            $(document).on('click', '.delete-leavetype-btn', function() {
+                let index = $(this).data('index');
+                let leaveObj = leaveTypesData[index];
+                Swal.fire({
+                    title: 'Delete Leave Type?',
+                    text: `Are you sure you want to delete "${leaveObj.name}"? This will also remove any existing user balances for this type.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    confirmButtonText: 'Yes, delete it'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '{{ route('admin.settings.leave-types.delete') }}',
+                            method: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}',
+                                id: leaveObj.id
+                            },
+                            success: function() {
+                                leaveTypesData.splice(index, 1);
+                                renderLeaveTypes();
+                                showToast('success', 'Deleted', 'Leave Type deleted successfully');
+                            },
+                            error: function() {
+                                showToast('error', 'Error', 'Could not delete leave type.');
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Allocate logic has been moved to backend automatically on save
 
             // Manage Products Individual Logic
             $(document).on('click', '.manage-products-btn', function() {

@@ -34,6 +34,8 @@ class SettingsController extends Controller
         $type_general_title = Setting::getValue('type_general_title', 'SUDHNEELGIRI');
         $type_general_desc = Setting::getValue('type_general_desc', 'Herbals');
 
+        $leaveTypes = \App\Models\LeaveType::all();
+
         return view('admin.settings.general', compact(
             'value', 'cgst', 'sgst', 
             'geofence_radius', 'ta_rate_per_km', 'da_hq_rate', 'da_outstation_rate',
@@ -41,7 +43,7 @@ class SettingsController extends Controller
             'type_medical_title', 'type_medical_desc',
             'type_ortho_title', 'type_ortho_desc',
             'type_general_title', 'type_general_desc',
-            'brands'
+            'brands', 'leaveTypes'
         ));
     }
 
@@ -206,5 +208,78 @@ class SettingsController extends Controller
         Setting::setValue('product_brands', $names);
 
         return response()->json(['message' => 'Brand deleted successfully']);
+    }
+
+    public function saveLeaveType(Request $request)
+    {
+        $request->validate([
+            'id' => 'nullable|integer|exists:leave_types,id',
+            'name' => 'required|string|max:255',
+            'default_quota' => 'required|integer|min:0',
+        ]);
+
+        $name = trim($request->name);
+        $id = $request->id;
+
+        $existing = \App\Models\LeaveType::where('name', $name)->first();
+        if ($existing && $existing->id != $id) {
+            return response()->json(['message' => 'Leave Type already exists.'], 422);
+        }
+
+        if ($id) {
+            $leaveType = \App\Models\LeaveType::find($id);
+            $leaveType->update([
+                'name' => $name,
+                'default_quota' => $request->default_quota,
+            ]);
+        } else {
+            $leaveType = \App\Models\LeaveType::create([
+                'name' => $name,
+                'default_quota' => $request->default_quota,
+            ]);
+        }
+
+        // Auto-allocate to all field staffs and sales managers
+        $users = \App\Models\User::whereHas('roles', function($q) {
+            $q->whereIn('name', ['field_staff', 'sales_manager']);
+        })->get();
+
+        foreach ($users as $user) {
+            \App\Models\UserLeaveBalance::updateOrCreate(
+                ['user_id' => $user->id, 'leave_type_id' => $leaveType->id],
+                ['balance' => $leaveType->default_quota]
+            );
+        }
+
+        return response()->json(['message' => 'Leave Type saved and allocated successfully', 'leaveType' => $leaveType]);
+    }
+
+    public function deleteLeaveType(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|integer|exists:leave_types,id',
+        ]);
+
+        \App\Models\LeaveType::destroy($request->id);
+        return response()->json(['message' => 'Leave Type deleted successfully']);
+    }
+
+    public function allocateLeaves(Request $request)
+    {
+        $leaveTypes = \App\Models\LeaveType::all();
+        $users = \App\Models\User::whereHas('roles', function($q) {
+            $q->whereIn('name', ['field_staff', 'sales_manager']);
+        })->get();
+
+        foreach ($users as $user) {
+            foreach ($leaveTypes as $leaveType) {
+                \App\Models\UserLeaveBalance::updateOrCreate(
+                    ['user_id' => $user->id, 'leave_type_id' => $leaveType->id],
+                    ['balance' => $leaveType->default_quota]
+                );
+            }
+        }
+
+        return response()->json(['message' => 'Leaves allocated successfully to all staff.']);
     }
 }

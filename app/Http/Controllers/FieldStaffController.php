@@ -100,7 +100,26 @@ class FieldStaffController extends Controller
 
     public function show(FieldStaff $field_staff)
     {
-        $field_staff->load(['user', 'salesManager.user', 'retailers.user']);
+        $field_staff->load([
+            'user',
+            'user.leaveBalances.leaveType',
+            'user.leaveRequests' => function ($q) {
+                $q->orderBy('created_at', 'desc')->take(5);
+            },
+            'user.expenses' => function ($q) {
+                $q->orderBy('created_at', 'desc')->take(5);
+            },
+            'salesManager.user',
+            'retailers.user'
+        ]);
+        
+        $latestLocation = \App\Models\LocationLog::where('user_id', $field_staff->user_id)->orderBy('timestamp', 'desc')->first();
+        $todaysDistance = \App\Models\LocationLog::calculateDailyDistance($field_staff->user_id, date('Y-m-d'));
+        
+        // Append additional details to the field staff object
+        $field_staff->setAttribute('latest_location', $latestLocation);
+        $field_staff->setAttribute('todays_distance_km', round($todaysDistance, 2));
+
         return response()->json([
             'success' => true,
             'data' => $field_staff
