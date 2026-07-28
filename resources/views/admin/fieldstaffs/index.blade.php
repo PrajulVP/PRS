@@ -916,7 +916,7 @@
                             $('#fs_view_last_location_time').text('');
                         }
                         $('#fs_view_todays_distance').text(fs.todays_distance_km || '0');
-                        $('#fs_view_tracking_btn').attr('href', `/admin/reports/field-staff/tracking-map?user_id=${fs.user.id}`);
+                        $('#fs_view_tracking_btn').attr('href', `/admin/field-staff/tracking-map?user_id=${fs.user.id}`);
 
                         // Leaves Tab
                         let balancesHtml = fs.user?.leave_balances?.map(b => `
