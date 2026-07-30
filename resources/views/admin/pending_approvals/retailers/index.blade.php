@@ -1378,7 +1378,7 @@
             const authFieldStaffId = {{ Auth::user()->hasRole('fieldstaff') && Auth::user()->fieldStaff ? Auth::user()->fieldStaff->id : 'null' }};
             const authSalesManagerId = {{ Auth::user()->hasRole('salesmanager') && Auth::user()->salesManager ? Auth::user()->salesManager->id : 'null' }};
 
-            let exportCols = [1, 2, 3, 13, 14, 15, 16, 17, 18, 19, 20, 8, 4, 5, 6, 7, 9, 10];
+            let exportCols = [1, 2, 3, 14, 15, 16, 17, 18, 19, 20, 21, 8, 4, 5, 6, 7, 9, 10];
             let exportOptions = {
                 columns: exportCols,
                 format: {

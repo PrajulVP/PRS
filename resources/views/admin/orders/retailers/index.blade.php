@@ -874,160 +874,16 @@
                         exportOptions: exportOptions
                     },
                     {
-                        text: '<i class="fa fa-file-csv"></i> CSV',
+                        extend: 'csv',
                         className: 'btn btn-info btn-sm text-white',
-                        action: function (e, dt, button, config) {
-                            let oldHtml = button.html();
-                            button.html('<i class="fa fa-spinner fa-spin"></i> Exporting...');
-                            button.prop('disabled', true);
-                            
-                            let params = $.extend({}, dt.ajax.params());
-                            params.length = -1;
-                            
-                            $.ajax({
-                                url: dt.ajax.url(),
-                                data: params,
-                                success: function(res) {
-                                    let rows = res.data;
-                                    let csvContent = "\uFEFF"; // UTF-8 BOM
-                                    csvContent += "No.,Order Code,Retailer,Shop Name,Area,District,Distributor,Sales Manager,Field Staff,Phone,GST,Drug License,Product Code,Product Name,Brand,Variant,Qty,Free Qty,Unit,Unit Price,Total Amount,Status,Placed At,Delivered At,Payment Status\n";
-                                    let slNo = 1;
-                                    rows.forEach(function(row) {
-                                        let baseData = [
-                                            slNo++,
-                                            row.order_code,
-                                            row.retailer_name || '',
-                                            row.retailer_shop || '',
-                                            row.retailer_area || '',
-                                            row.retailer_district || '',
-                                            row.distributor_name || '',
-                                            row.retailer_sm_name || '',
-                                            row.retailer_fs_name || '',
-                                            row.retailer_phone || '',
-                                            row.retailer_gst || '',
-                                            row.retailer_dl || ''
-                                        ];
-                                        if (row.items && row.items.length > 0) {
-                                            row.items.forEach(function(item) {
-                                                let variantStr = (item.side ? item.side + ' ' : '') + (item.size || '');
-                                                let itemData = [
-                                                    item.product_code || '',
-                                                    item.product_name || item.name || '',
-                                                    item.brand || '',
-                                                    variantStr,
-                                                    item.quantity || 0,
-                                                    item.free_quantity || 0,
-                                                    item.unit || 'Strips',
-                                                    item.unit_price || 0,
-                                                    item.total_amount || 0,
-                                                    row.status || '',
-                                                    row.placed_at || '',
-                                                    row.delivered_at || '',
-                                                    row.payment_status || 'Pending'
-                                                ];
-                                                csvContent += baseData.concat(itemData).map(val => `"${(val === null || val === undefined ? '' : val).toString().replace(/"/g, '""')}"`).join(",") + "\n";
-                                            });
-                                        } else {
-                                            let itemData = ['', '', '', '', '', '', '', '', '', row.status || '', row.placed_at || '', row.delivered_at || '', row.payment_status || 'Pending'];
-                                            csvContent += baseData.concat(itemData).map(val => `"${(val === null || val === undefined ? '' : val).toString().replace(/"/g, '""')}"`).join(",") + "\n";
-                                        }
-                                    });
-                                    let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                                    let url = URL.createObjectURL(blob);
-                                    let link = document.createElement("a");
-                                    link.setAttribute("href", url);
-                                    link.setAttribute("download", `Retailer_Orders_${new Date().toISOString().slice(0,10)}.csv`);
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
-                                    button.html(oldHtml);
-                                    button.prop('disabled', false);
-                                },
-                                error: function() {
-                                    button.html(oldHtml);
-                                    button.prop('disabled', false);
-                                    alert('Export failed. Please try again.');
-                                }
-                            });
-                        }
+                        text: '<i class="fa fa-file-csv"></i> CSV',
+                        exportOptions: exportOptions
                     },
                     {
-                        text: '<i class="fa fa-file-excel"></i> Excel',
+                        extend: 'excel',
                         className: 'btn btn-success btn-sm',
-                        action: function (e, dt, button, config) {
-                            let oldHtml = button.html();
-                            button.html('<i class="fa fa-spinner fa-spin"></i> Exporting...');
-                            button.prop('disabled', true);
-                            
-                            let params = $.extend({}, dt.ajax.params());
-                            params.length = -1;
-                            
-                            $.ajax({
-                                url: dt.ajax.url(),
-                                data: params,
-                                success: function(res) {
-                                    let rows = res.data;
-                                    let csvContent = "\uFEFF"; // UTF-8 BOM
-                                    csvContent += "No.,Order Code,Retailer,Shop Name,Area,District,Distributor,Sales Manager,Field Staff,Phone,GST,Drug License,Product Code,Product Name,Brand,Variant,Qty,Free Qty,Unit,Unit Price,Total Amount,Status,Placed At,Delivered At,Payment Status\n";
-                                    let slNo = 1;
-                                    rows.forEach(function(row) {
-                                        let baseData = [
-                                            slNo++,
-                                            row.order_code,
-                                            row.retailer_name || '',
-                                            row.retailer_shop || '',
-                                            row.retailer_area || '',
-                                            row.retailer_district || '',
-                                            row.distributor_name || '',
-                                            row.retailer_sm_name || '',
-                                            row.retailer_fs_name || '',
-                                            row.retailer_phone || '',
-                                            row.retailer_gst || '',
-                                            row.retailer_dl || ''
-                                        ];
-                                        if (row.items && row.items.length > 0) {
-                                            row.items.forEach(function(item) {
-                                                let variantStr = (item.side ? item.side + ' ' : '') + (item.size || '');
-                                                let itemData = [
-                                                    item.product_code || '',
-                                                    item.product_name || item.name || '',
-                                                    item.brand || '',
-                                                    variantStr,
-                                                    item.quantity || 0,
-                                                    item.free_quantity || 0,
-                                                    item.unit || 'Strips',
-                                                    item.unit_price || 0,
-                                                    item.total_amount || 0,
-                                                    row.status || '',
-                                                    row.placed_at || '',
-                                                    row.delivered_at || '',
-                                                    row.payment_status || 'Pending'
-                                                ];
-                                                csvContent += baseData.concat(itemData).map(val => `"${(val === null || val === undefined ? '' : val).toString().replace(/"/g, '""')}"`).join(",") + "\n";
-                                            });
-                                        } else {
-                                            let itemData = ['', '', '', '', '', '', '', '', '', row.status || '', row.placed_at || '', row.delivered_at || '', row.payment_status || 'Pending'];
-                                            csvContent += baseData.concat(itemData).map(val => `"${(val === null || val === undefined ? '' : val).toString().replace(/"/g, '""')}"`).join(",") + "\n";
-                                        }
-                                    });
-                                    let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                                    let url = URL.createObjectURL(blob);
-                                    let link = document.createElement("a");
-                                    link.setAttribute("href", url);
-                                    link.setAttribute("download", `Retailer_Orders_${new Date().toISOString().slice(0,10)}.csv`);
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
-                                    button.html(oldHtml);
-                                    button.prop('disabled', false);
-                                },
-                                error: function() {
-                                    button.html(oldHtml);
-                                    button.prop('disabled', false);
-                                    alert('Export failed. Please try again.');
-                                }
-                            });
-                        }
+                        text: '<i class="fa fa-file-excel"></i> Excel',
+                        exportOptions: exportOptions
                     },
                     {
                         extend: 'pdf',
