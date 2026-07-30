@@ -777,7 +777,7 @@
                     <h5 class="modal-title text-white"><i class="fa fa-check-circle me-2"></i> Approve Retailer Order</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div> --}}
-                <form id="approveRetailerOrderForm" enctype="multipart/form-data">
+                <form id="approveRetailerOrderForm" enctype="multipart/form-data" novalidate>
                     @csrf
                     <input type="hidden" id="approve_retailer_order_id" name="order_id">
                     <div class="modal-body p-0 bg-card-theme">
@@ -898,7 +898,7 @@
         <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg overflow-hidden" style="border-radius: 20px;">
                 
-                <form id="distributorApproveForm">
+                <form id="distributorApproveForm" novalidate>
                     <div class="modal-body p-0">
                         <!-- Order Summary Header -->
                         <div class="order-summary-header"
@@ -2621,6 +2621,15 @@
 
             $('#approveRetailerOrderForm').submit(function (e) {
                 e.preventDefault();
+                if (!this.checkValidity()) {
+                    let invalidElement = $(this).find(':invalid').first();
+                    if (invalidElement.is(':hidden')) {
+                        showToast('error', 'A required hidden field is missing a value.');
+                    } else {
+                        this.reportValidity();
+                    }
+                    return;
+                }
                 let formData = new FormData(this);
                 let id = $('#approve_retailer_order_id').val();
                 let url = "{{ route('admin.retailer.accept', ':id') }}".replace(':id', id);

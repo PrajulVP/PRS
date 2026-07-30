@@ -708,7 +708,7 @@
     <div class="modal fade" id="approveOrderModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content shadow-lg border-0 overflow-hidden">
-                <form id="approveOrderForm">
+                <form id="approveOrderForm" novalidate>
                     <div class="modal-body p-0">
                         <!-- Order Summary Header -->
                         <div class="order-summary-header">
@@ -851,7 +851,7 @@
     <div class="modal fade" id="processOrderModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content shadow-lg border-0 overflow-hidden">
-                <form id="processOrderForm">
+                <form id="processOrderForm" novalidate>
                     <div class="modal-body p-0">
                         <!-- Order Summary Header -->
                         <div class="order-summary-header">
@@ -2198,6 +2198,15 @@
             // Sales Manager Approve Form Submit
             $('#approveOrderForm').submit(function (e) {
                 e.preventDefault();
+                if (!this.checkValidity()) {
+                    let invalidElement = $(this).find(':invalid').first();
+                    if (invalidElement.is(':hidden')) {
+                        showToast('error', 'A required hidden field is missing a value.');
+                    } else {
+                        this.reportValidity();
+                    }
+                    return;
+                }
                 let formData = new FormData(this);
                 formData.append('_token', '{{ csrf_token() }}');
                 let id = $('#approve_order_id').val();
@@ -2986,6 +2995,15 @@
             // Admin Process Form Submit
             $('#processOrderForm').submit(function (e) {
                 e.preventDefault();
+                if (!this.checkValidity()) {
+                    let invalidElement = $(this).find(':invalid').first();
+                    if (invalidElement.is(':hidden')) {
+                        showToast('error', 'A required hidden field is missing a value. Check the batch/expiry information.');
+                    } else {
+                        this.reportValidity();
+                    }
+                    return;
+                }
                 let formData = new FormData(this);
                 formData.append('_token', '{{ csrf_token() }}');
 
