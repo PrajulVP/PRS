@@ -1879,15 +1879,14 @@
 
                     let expVal = hContainer.find('.hidden-expiry-val').val();
                     if (!expVal) {
-                        isValid = false;
-                        vRow.find('.v-expiry-display').addClass('text-danger fw-bold').text('Missing');
+                        vRow.find('.v-expiry-display').removeClass('text-danger fw-bold').addClass('text-muted').text('N/A');
                     } else {
-                        vRow.find('.v-expiry-display').removeClass('text-danger');
+                        vRow.find('.v-expiry-display').removeClass('text-danger text-muted fw-bold');
                     }
                 });
 
                 if (!isValid) {
-                    showToast('error', 'Please ensure all items have filled out batches, expiries, and quantities matching the ordered amounts.');
+                    showToast('error', 'Please ensure all items have filled out batches and quantities matching the ordered amounts.');
                     return;
                 }
 
@@ -2775,7 +2774,7 @@
                                                                                                                                                                                     </div>
                                                                                                                                                                                     <div class="d-none" id="batches_for_${orderItemId}">
                                                                                                                                                                                         <input type="text" name="items_batches[${orderItemId}][batches][0][batch_no]" class="hidden-batch-val" required>
-                                                                                                                                                                                        <input type="date" name="items_batches[${orderItemId}][batches][0][expiry_date]" class="hidden-expiry-val" required>
+                                                                                                                                                                                        <input type="date" name="items_batches[${orderItemId}][batches][0][expiry_date]" class="hidden-expiry-val">
                                                                                                                                                                                         <input type="number" name="items_batches[${orderItemId}][batches][0][quantity]" class="hidden-qty-val" value="${orderedQty}" required>
                                                                                                                                                                                         <input type="hidden" name="items_batches[${orderItemId}][free_quantity]" class="hidden-free-val" value="0">
                                                                                                                                                                                         <input type="hidden" name="batches[${orderItemId}][0][mrp]" class="hidden-mrp-val">

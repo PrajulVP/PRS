@@ -2345,7 +2345,7 @@
                                     </div>
                                     <div class="d-none" id="batches_for_${item.order_item_id}">
                                         <input type="text" name="batches[${item.order_item_id}][0][batch_no]" class="hidden-batch-val" required>
-                                        <input type="date" name="batches[${item.order_item_id}][0][expiry_date]" class="hidden-expiry-val" required>
+                                        <input type="date" name="batches[${item.order_item_id}][0][expiry_date]" class="hidden-expiry-val">
 
                                         <input type="hidden" name="batches[${item.order_item_id}][0][mrp]" class="hidden-mrp-val">
                                         <input type="hidden" name="batches[${item.order_item_id}][0][ptr]" class="hidden-ptr-val">
@@ -2998,7 +2998,7 @@
                 if (!this.checkValidity()) {
                     let invalidElement = $(this).find(':invalid').first();
                     if (invalidElement.is(':hidden')) {
-                        showToast('error', 'A required hidden field is missing a value. Check the batch/expiry information.');
+                        showToast('error', 'A required hidden field is missing a value. Check the batch information.');
                     } else {
                         this.reportValidity();
                     }
