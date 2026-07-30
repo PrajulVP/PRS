@@ -409,7 +409,7 @@ class ReturnApiController extends Controller
                         'size' => $returnRequest->size,
                         'stock' => $returnRequest->quantity,
                         'batch_no' => 'RETURNED',
-                        'expiry_date' => now()->addYear(),
+                        'expiry_date' => null,
                     ]);
                 }
             }

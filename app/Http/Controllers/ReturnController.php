@@ -388,7 +388,7 @@ class ReturnController extends Controller
                         'size' => $returnRequest->size,
                         'stock' => $returnRequest->quantity,
                         'batch_no' => 'RETURNED',
-                        'expiry_date' => now()->addYear(), // Placeholder
+                        'expiry_date' => null, // Placeholder
                     ]);
                 }
             }

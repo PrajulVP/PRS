@@ -957,7 +957,7 @@ class DistributorOrderController extends Controller
                 foreach ($batches as $batchData) {
                     $orderItem->batches()->create([
                         'batch_no' => $batchData['batch_no'],
-                        'expiry_date' => !empty($batchData['expiry_date']) ? $batchData['expiry_date'] : now()->addYears(2)->format('Y-m-d'),
+                        'expiry_date' => !empty($batchData['expiry_date']) ? $batchData['expiry_date'] : null,
                         'quantity' => $batchData['quantity'],
                         'mrp' => $batchData['mrp'] ?? null,
                         'ptr' => $batchData['ptr'] ?? null,
@@ -1309,7 +1309,7 @@ class DistributorOrderController extends Controller
                 } else {
                     $firstBatch = new \stdClass();
                     $firstBatch->batch_no = 'FREE-' . now()->format('Ymd');
-                    $firstBatch->expiry_date = now()->addYears(2)->format('Y-m-d');
+                    $firstBatch->expiry_date = null;
                     $firstBatch->mrp = 0; $firstBatch->ptr = 0; $firstBatch->pts = 0;
                     $firstBatch->taxable_value = 0; $firstBatch->cgst = 0; $firstBatch->sgst = 0;
                     $firstBatch->igst = 0; $firstBatch->net_amount = 0;
