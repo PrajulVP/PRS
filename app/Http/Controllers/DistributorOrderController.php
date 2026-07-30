@@ -830,7 +830,7 @@ class DistributorOrderController extends Controller
             'batches' => 'required|array',
             'batches.*' => 'required|array|min:1',
             'batches.*.*.batch_no' => 'required|string|max:255',
-            'batches.*.*.expiry_date' => 'required|date',
+            'batches.*.*.expiry_date' => 'nullable',
             'batches.*.*.quantity' => 'required|integer|min:1',
             'batches.*.*.mrp' => 'nullable|numeric|min:0',
             'batches.*.*.ptr' => 'nullable|numeric|min:0',

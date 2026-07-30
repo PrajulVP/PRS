@@ -3049,7 +3049,14 @@
                         }
                     },
                     error: function (xhr) {
-                        let errMsg = xhr.responseJSON ? xhr.responseJSON.error || xhr.responseJSON.message : 'Failed to approve order';
+                        let errMsg = 'Failed to process order';
+                        if (xhr.responseJSON) {
+                            if (xhr.responseJSON.errors) {
+                                errMsg = Object.values(xhr.responseJSON.errors).flat().join('<br>');
+                            } else {
+                                errMsg = xhr.responseJSON.error || xhr.responseJSON.message || errMsg;
+                            }
+                        }
                         $('#distributor_approval_error_message').html(errMsg);
                         $('#distributor_approval_error_alert').removeClass('d-none').show();
                         $('#processOrderModal').animate({ scrollTop: 0 }, 'slow');

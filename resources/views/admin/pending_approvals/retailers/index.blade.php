@@ -1934,7 +1934,14 @@
                         }
                     },
                     error: function (xhr) {
-                        let errMsg = xhr.responseJSON ? xhr.responseJSON.error || xhr.responseJSON.message : 'An error occurred during approval.';
+                        let errMsg = 'An error occurred during approval.';
+                        if (xhr.responseJSON) {
+                            if (xhr.responseJSON.errors) {
+                                errMsg = Object.values(xhr.responseJSON.errors).flat().join('<br>');
+                            } else {
+                                errMsg = xhr.responseJSON.error || xhr.responseJSON.message || errMsg;
+                            }
+                        }
                         $('#retailer_approval_error_message').html(errMsg);
                         $('#retailer_approval_error_alert').removeClass('d-none').show();
                         $('#distributorApproveModal').animate({ scrollTop: 0 }, 'slow');
