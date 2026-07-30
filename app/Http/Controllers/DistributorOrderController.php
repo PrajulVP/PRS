@@ -957,7 +957,7 @@ class DistributorOrderController extends Controller
                 foreach ($batches as $batchData) {
                     $orderItem->batches()->create([
                         'batch_no' => $batchData['batch_no'],
-                        'expiry_date' => $batchData['expiry_date'],
+                        'expiry_date' => !empty($batchData['expiry_date']) ? $batchData['expiry_date'] : now()->addYears(2)->format('Y-m-d'),
                         'quantity' => $batchData['quantity'],
                         'mrp' => $batchData['mrp'] ?? null,
                         'ptr' => $batchData['ptr'] ?? null,
