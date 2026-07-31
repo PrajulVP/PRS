@@ -3345,57 +3345,45 @@
                 $('#final_amount_input').val(finalNet.toFixed(2));
                 $('#taxable_amount_input').val(totalInvoiceTaxable.toFixed(2));
 
-                // STRICT MATCH BLOCKING: Only enable if no missing AND no extra items
-                if (missingProducts.length === 0 && invoiceProducts.length === 0 && window.qtyMismatchProducts.length === 0) {
-                    
-                    // NEW: Validate Batches against Backend Inventory dynamically
-                    $('#automation_error_state').hide();
-                    $('#automation_success_state').hide();
-                    $('#btnSubmitDistributorApprove').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Validating Inventory...');
-                    
-                    $.ajax({
-                        url: "{{ route('admin.retailer.validate-batches') }}",
-                        type: "POST",
-                        data: $('#distributorApproveForm').serialize() + '&_token={{ csrf_token() }}',
-                        success: function(valRes) {
-                            if (valRes.success) {
-                                $('#automation_success_state').fadeIn();
-                                $('#btnSubmitDistributorApprove').prop('disabled', false).html('Accept Order');
-                            } else {
+                // ALLOW PARTIAL MATCHES: User requested to not strictly block if there are missing/extra items.
+                // We show warnings for mismatches, but still run validateBatches and enable the Accept button on success.
+                $('#automation_error_state').hide();
+                $('#automation_success_state').hide();
+                $('#btnSubmitDistributorApprove').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Validating Inventory...');
+                
+                $.ajax({
+                    url: "{{ route('admin.retailer.validate-batches') }}",
+                    type: "POST",
+                    data: $('#distributorApproveForm').serialize() + '&_token={{ csrf_token() }}',
+                    success: function(valRes) {
+                        if (valRes.success) {
+                            if (missingProducts.length > 0 || invoiceProducts.length > 0 || window.qtyMismatchProducts.length > 0) {
                                 $('#automation_error_state').removeClass('d-none').show();
-                                $('#automation_error_state h5').text('Inventory Mismatch Detected');
-                                let msg = valRes.errors.join('<br>');
-                                $('#automation_error_state p').html(`${msg} <br>Please resolve inventory shortages before approving.`);
-                                $('#btnSubmitDistributorApprove').prop('disabled', true).html('Accept Order');
+                                $('#automation_error_state h5').text('Verification Mismatch (Action Required)');
+                                let msg = '';
+                                if (missingProducts.length > 0) msg += `This document is <b>missing ${missingProducts.length} ordered items</b>. <br>`;
+                                if (invoiceProducts.length > 0) msg += `It also contains <b>${invoiceProducts.length} extra items</b> not in the order. <br>`;
+                                if (window.qtyMismatchProducts.length > 0) msg += window.qtyMismatchProducts.join('<br>') + '<br>';
+                                $('#automation_error_state p').html(`${msg} Please verify before approving.`);
+                            } else {
+                                $('#automation_success_state').fadeIn();
                             }
-                        },
-                        error: function() {
+                            $('#btnSubmitDistributorApprove').prop('disabled', false).html('Accept Order');
+                        } else {
                             $('#automation_error_state').removeClass('d-none').show();
-                            $('#automation_error_state h5').text('Validation Error');
-                            $('#automation_error_state p').html('Failed to validate inventory batches. Please try again.');
+                            $('#automation_error_state h5').text('Inventory Mismatch Detected');
+                            let msg = valRes.errors.join('<br>');
+                            $('#automation_error_state p').html(`${msg} <br>Please resolve inventory shortages before approving.`);
                             $('#btnSubmitDistributorApprove').prop('disabled', true).html('Accept Order');
                         }
-                    });
-
-                } else {
-                    $('#automation_error_state').removeClass('d-none').show();
-                    $('#automation_error_state h5').text('Action Required');
-                    
-                    let msg = '';
-                    if (missingProducts.length > 0) {
-                        msg = `This document is <b>missing ${missingProducts.length} ordered items</b>. <br>`;
+                    },
+                    error: function() {
+                        $('#automation_error_state').removeClass('d-none').show();
+                        $('#automation_error_state h5').text('Validation Error');
+                        $('#automation_error_state p').html('Failed to validate inventory batches. Please try again.');
+                        $('#btnSubmitDistributorApprove').prop('disabled', true).html('Accept Order');
                     }
-                    if (invoiceProducts.length > 0) {
-                        msg += `It also contains <b>${invoiceProducts.length} extra items</b> not in the order. <br>`;
-                    }
-                    if (window.qtyMismatchProducts.length > 0) {
-                        msg += window.qtyMismatchProducts.join('<br>') + '<br>';
-                    }
-                    
-                    $('#automation_error_state p').html(`${msg} Please upload a perfect match invoice to proceed.`);
-                    $('#automation_success_state').hide();
-                    $('#btnSubmitDistributorApprove').prop('disabled', true).html('Accept Order');
-                }
+                });
 
                 // COMPREHENSIVE SUMMARY ALERT
                 if (missingProducts.length > 0 || invoiceProducts.length > 0) {

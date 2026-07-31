@@ -2928,30 +2928,24 @@
                     $('#final_amount_input').val(finalAmount.toFixed(2));
                     $('#taxable_amount_input').val(totalTaxable.toFixed(2));
                     
-                    // STRICT MATCH BLOCKING: Only enable if no missing AND no extra items
-                    if (missingProducts.length === 0 && invoiceProducts.length === 0 && window.qtyMismatchProducts.length === 0) {
-                        $('#automation_error_state').hide();
-                        $('#automation_success_state').fadeIn();
-                        $('#btn_approve_order').prop('disabled', false);
-                    } else {
+                    // ALLOW PARTIAL MATCHES: User requested to not strictly block if there are missing/extra items.
+                    if (missingProducts.length > 0 || invoiceProducts.length > 0 || window.qtyMismatchProducts.length > 0) {
                         $('#automation_error_state').removeClass('d-none').show();
-                        $('#automation_error_state h5').text('Action Required');
+                        $('#automation_error_state h5').text('Verification Mismatch (Action Required)');
                         
                         let msg = '';
-                        if (missingProducts.length > 0) {
-                            msg = `This document is <b>missing ${missingProducts.length} ordered items</b>. <br>`;
-                        }
-                        if (invoiceProducts.length > 0) {
-                            msg += `It also contains <b>${invoiceProducts.length} extra items</b> not in the order. <br>`;
-                        }
-                        if (window.qtyMismatchProducts.length > 0) {
-                            msg += window.qtyMismatchProducts.join('<br>') + '<br>';
-                        }
+                        if (missingProducts.length > 0) msg += `This document is <b>missing ${missingProducts.length} ordered items</b>. <br>`;
+                        if (invoiceProducts.length > 0) msg += `It also contains <b>${invoiceProducts.length} extra items</b> not in the order. <br>`;
+                        if (window.qtyMismatchProducts.length > 0) msg += window.qtyMismatchProducts.join('<br>') + '<br>';
                         
-                        $('#automation_error_state p').html(`${msg} Please upload a perfect match invoice to proceed.`);
+                        $('#automation_error_state p').html(`${msg} Please verify before approving.`);
                         $('#automation_success_state').hide();
-                        $('#btn_approve_order').prop('disabled', true);
+                    } else {
+                        $('#automation_error_state').hide();
+                        $('#automation_success_state').fadeIn();
                     }
+                    // Button is always enabled even with mismatches per user request
+                    $('#btn_approve_order').prop('disabled', false);
                     
                     $('#verification_table_footer').removeClass('d-none');
                 }
