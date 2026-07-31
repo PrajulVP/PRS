@@ -2771,9 +2771,51 @@
                         matchedIdx = bestIdx;
                     }
 
-                    // 3. Last fallback (start-of-string prefix match)
-                    if (matchedIdx === -1 && normItemName.length >= 6) {
-                        matchedIdx = invoiceProducts.findIndex(p => p.description && normalize(p.description).startsWith(normItemName.substring(0, 6)));
+                    // 3. Last fallback (fuzzy matching via Levenshtein)
+                    if (matchedIdx === -1) {
+                        let normItemNoSpace = normItemName.replace(/\s+/g, '');
+                        let bestSim = 0;
+                        let bestIdx = -1;
+                        invoiceProducts.forEach((p, idx) => {
+                            if (!p.description) return;
+                            let normDescNoSpace = normalize(p.description).replace(/\s+/g, '');
+                            
+                            let s1 = normItemNoSpace, s2 = normDescNoSpace;
+                            let longer = s1.length > s2.length ? s1 : s2;
+                            let shorter = s1.length > s2.length ? s2 : s1;
+                            
+                            let costs = [];
+                            for (let i = 0; i <= longer.length; i++) {
+                                let lastValue = i;
+                                for (let j = 0; j <= shorter.length; j++) {
+                                    if (i === 0) costs[j] = j;
+                                    else {
+                                        if (j > 0) {
+                                            let newValue = costs[j - 1];
+                                            if (longer.charAt(i - 1) !== shorter.charAt(j - 1)) {
+                                                newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                                            }
+                                            costs[j - 1] = lastValue;
+                                            lastValue = newValue;
+                                        }
+                                    }
+                                }
+                                if (i > 0) costs[shorter.length] = lastValue;
+                            }
+                            let sim = (longer.length - costs[shorter.length]) / parseFloat(longer.length || 1);
+                            
+                            if (sim > bestSim) {
+                                bestSim = sim;
+                                bestIdx = idx;
+                            }
+                        });
+                        
+                        if (bestSim >= 0.65) {
+                            matchedIdx = bestIdx;
+                        } else if (normItemName.length >= 6) {
+                            // original prefix match fallback
+                            matchedIdx = invoiceProducts.findIndex(p => p.description && normalize(p.description).startsWith(normItemName.substring(0, 6)));
+                        }
                     }
 
                     if (matchedIdx !== -1) {
