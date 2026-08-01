@@ -60,6 +60,20 @@ class SalesManagerController extends Controller
         // Load relationships needed for the view modal
         $sales_manager->load(['user', 'fieldStaffs.user', 'retailers.user']);
 
+        $totalTarget = $sales_manager->fieldStaffs->sum('monthly_target');
+        
+        $totalAchieved = 0;
+        foreach ($sales_manager->fieldStaffs as $fs) {
+            $totalAchieved += \App\Models\RetailerOrder::where('fieldstaff_id', $fs->id)
+                ->whereMonth('created_at', date('m'))
+                ->whereYear('created_at', date('Y'))
+                ->whereNotIn('status', ['cancelled'])
+                ->sum('total_amount');
+        }
+
+        $sales_manager->setAttribute('monthly_target', round($totalTarget, 2));
+        $sales_manager->setAttribute('achieved_target', round($totalAchieved, 2));
+
         return response()->json([
             'success' => true,
             'data' => $sales_manager

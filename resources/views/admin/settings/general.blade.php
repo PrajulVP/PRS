@@ -160,134 +160,74 @@
             background-color: #334155 !important;
             color: #ffffff !important;
         }
+
+        /* === Accordion Custom Plus/Minus Icons === */
+        .accordion-button::after {
+            content: "+" !important;
+            font-family: inherit !important;
+            font-size: 1.5rem !important;
+            font-weight: 300 !important;
+            background-image: none !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: none !important;
+            color: #64748b;
+            transition: all 0.2s ease-in-out;
+        }
+        .accordion-button:not(.collapsed)::after {
+            content: "-" !important;
+            font-size: 1.8rem !important;
+            line-height: 0.8 !important;
+            color: var(--med-primary, #00497a);
+        }
+        body.dark-only .accordion-button::after {
+            color: #94a3b8;
+        }
+        body.dark-only .accordion-button:not(.collapsed)::after {
+            color: #38bdf8;
+        }
     </style>
     <div class="container-fluid">
         <div class="row">
             <div class="col-sm-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>Field Staff Configuration</h5>
-                        <span>Manage global parameters for trackng, geo-fencing and reimbursements.</span>
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                    <div class="card-header bg-white border-bottom-0 pb-2 pt-4 px-4">
+                        <h4 class="fw-bold mb-1">General Settings</h4>
+                        <p class="text-muted small mb-0">Manage global parameters for products, tracking, geo-fencing, and reimbursements.</p>
                     </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <!-- Geo-fencing -->
-                            <div class="col-md-6 mb-4">
-                                <div class="card border-primary shadow-sm h-100">
-                                    <div class="card-body">
-                                        <h6 class="card-title text-primary"><i class="fa fa-map-marker-alt me-2"></i>Geo-fencing Radius</h6>
-                                        <p class="text-muted small">Max allowed distance (in meters) from customer for punching and visit validation.</p>
-                                        <form class="setting-form">
-                                            @csrf
-                                            <input type="hidden" name="slug" value="geofence_radius">
-                                            <div class="input-group">
-                                                <input type="number" class="form-control" name="value" value="{{ $geofence_radius }}" min="1">
-                                                <span class="input-group-text">Meters</span>
-                                                <button type="button" class="btn btn-primary save-setting-btn">Save</button>
+                    <div class="card-body p-4 pt-2">
+                        <div class="accordion accordion-flush" id="settingsAccordion">
+                            
+                            <!-- Product Brands Master (Priority #1) -->
+                            <div class="accordion-item border mb-3 rounded-4 overflow-hidden shadow-sm">
+                                <h2 class="accordion-header" id="headingBrands">
+                                    <button class="accordion-button collapsed fw-bold py-3 px-4 bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBrands" aria-expanded="false" aria-controls="collapseBrands" style="font-size: 1.1rem; color: #1e293b;">
+                                        <div class="d-flex align-items-center w-100 me-3">
+                                            <i class="fa fa-tags me-3 text-primary fs-4"></i>
+                                            <div>
+                                                <div>Product Brands Master</div>
+                                                <small class="text-muted fw-normal d-block mt-1" style="font-size: 0.85rem;">{{ count(array_filter(explode(',', trim($product_brands)))) }} Active Brands Configured</small>
                                             </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- TA Rate -->
-                            <div class="col-md-6 mb-4">
-                                <div class="card border-success shadow-sm h-100">
-                                    <div class="card-body">
-                                        <h6 class="card-title text-success"><i class="fa fa-car me-2"></i>Travel Allowance (TA) Rate</h6>
-                                        <p class="text-muted small">Reimbursement rate per kilometer travelled.</p>
-                                        <form class="setting-form">
-                                            @csrf
-                                            <input type="hidden" name="slug" value="ta_rate_per_km">
-                                            <div class="input-group">
-                                                <span class="input-group-text">₹</span>
-                                                <input type="number" step="0.01" class="form-control" name="value" value="{{ $ta_rate_per_km }}" min="0">
-                                                <span class="input-group-text">per KM</span>
-                                                <button type="button" class="btn btn-success save-setting-btn">Save</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- DA HQ Rate -->
-                            <div class="col-md-6 mb-4">
-                                <div class="card border-info shadow-sm h-100">
-                                    <div class="card-body">
-                                        <h6 class="card-title text-info"><i class="fa fa-building me-2"></i>DA HQ Rate</h6>
-                                        <p class="text-muted small">Daily Allowance rate for regular Headquarter visits.</p>
-                                        <form class="setting-form">
-                                            @csrf
-                                            <input type="hidden" name="slug" value="da_hq_rate">
-                                            <div class="input-group">
-                                                <span class="input-group-text">₹</span>
-                                                <input type="number" step="0.01" class="form-control" name="value" value="{{ $da_hq_rate }}" min="0">
-                                                <span class="input-group-text">per Day</span>
-                                                <button type="button" class="btn btn-info text-white save-setting-btn">Save</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- DA Outstation Rate -->
-                            <div class="col-md-6 mb-4">
-                                <div class="card border-warning shadow-sm h-100">
-                                    <div class="card-body">
-                                        <h6 class="card-title text-warning"><i class="fa fa-plane-departure me-2"></i>DA Outstation Rate</h6>
-                                        <p class="text-muted small">Daily Allowance rate for visits outside specified headquarters.</p>
-                                        <form class="setting-form">
-                                            @csrf
-                                            <input type="hidden" name="slug" value="da_outstation_rate">
-                                            <div class="input-group">
-                                                <span class="input-group-text">₹</span>
-                                                <input type="number" step="0.01" class="form-control" name="value" value="{{ $da_outstation_rate }}" min="0">
-                                                <span class="input-group-text">per Day</span>
-                                                <button type="button" class="btn btn-warning text-white save-setting-btn">Save</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-
-                             <!-- HQ Radius Threshold -->
-                            <div class="col-md-6 mb-4">
-                                <div class="card border-danger shadow-sm h-100">
-                                    <div class="card-body">
-                                        <h6 class="card-title text-danger"><i class="fa fa-compass me-2"></i>HQ Radius Threshold</h6>
-                                        <p class="text-muted small">Maximum distance (in KM) considered as local HQ area.</p>
-                                        <form class="setting-form">
-                                            @csrf
-                                            <input type="hidden" name="slug" value="hq_radius_km">
-                                            <div class="input-group">
-                                                <input type="number" step="0.1" class="form-control" name="value" value="{{ $hq_radius_km }}" min="0">
-                                                <span class="input-group-text">KM</span>
-                                                <button type="button" class="btn btn-danger save-setting-btn">Save</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Product Brands -->
-                            <div class="col-md-12 mb-4">
-                                <div class="card border-dark shadow-sm h-100">
-                                    <div class="card-body">
+                                        </div>
+                                    </button>
+                                </h2>
+                                <div id="collapseBrands" class="accordion-collapse collapse" aria-labelledby="headingBrands" data-bs-parent="#settingsAccordion">
+                                    <div class="accordion-body p-4 bg-light">
                                          <div class="d-flex align-items-center justify-content-between mb-3">
-                                             <h6 class="card-title text-dark mb-0"><i class="fa fa-tags me-2"></i>Product Brands Master</h6>
-                                             <button type="button" class="btn btn-dark btn-sm rounded-pill px-3" id="add_brand_btn">
+                                             <h6 class="text-dark mb-0 fw-bold">Active Brands List</h6>
+                                             <button type="button" class="btn btn-dark btn-sm rounded-pill px-3 shadow-sm" id="add_brand_btn">
                                                  <i class="fa fa-plus me-1"></i>Add New Brand
                                              </button>
                                          </div>
-                                         <p class="text-muted small">Manage the list of active product brands. Each brand can have its own description, icon, and custom layout behavior (Medical, Orthopedic, or General).</p>
+                                         <p class="text-muted small mb-4">Manage the list of active product brands. Each brand can have its own description, icon, and custom layout behavior (Medical, Orthopedic, or General).</p>
                                          
                                          <form class="setting-form" id="brands_form">
                                              @csrf
                                              <input type="hidden" name="slug" value="product_brands">
                                              <input type="hidden" name="value" id="brands_final_value" value="{{ $product_brands }}">
                                              
-                                             <label class="form-label fw-bold">Active Brands</label>
-                                             <div id="brands_tag_container" class="d-flex flex-wrap gap-3 p-3 bg-light rounded border shadow-inner" style="min-height: 80px;">
+                                             <div id="brands_tag_container" class="d-flex flex-wrap align-items-stretch gap-3 p-3 bg-white rounded-3 border shadow-inner" style="min-height: 80px;">
                                                  <!-- Tags filled by JS -->
                                              </div>
                                          </form>
@@ -295,27 +235,151 @@
                                 </div>
                             </div>
 
+                            <!-- Field Staff Configuration -->
+                            <div class="accordion-item border mb-3 rounded-4 overflow-hidden shadow-sm">
+                                <h2 class="accordion-header" id="headingFieldStaff">
+                                    <button class="accordion-button collapsed fw-bold py-3 px-4 bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFieldStaff" aria-expanded="false" aria-controls="collapseFieldStaff" style="font-size: 1.1rem; color: #1e293b;">
+                                        <div class="d-flex align-items-center w-100 me-3">
+                                            <i class="fa fa-users-cog me-3 text-primary fs-4"></i>
+                                            <div>
+                                                <div>Field Staff Configuration</div>
+                                                <small class="text-muted fw-normal d-block mt-1" style="font-size: 0.85rem;">Geo-fencing, TA, DA, and Radius rules</small>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </h2>
+                                <div id="collapseFieldStaff" class="accordion-collapse collapse" aria-labelledby="headingFieldStaff" data-bs-parent="#settingsAccordion">
+                                    <div class="accordion-body p-4 bg-light">
+                                        <div class="row g-4">
+                                            <!-- Geo-fencing -->
+                                            <div class="col-md-6">
+                                                <div class="card border-0 shadow-sm h-100 rounded-3">
+                                                    <div class="card-body p-4">
+                                                        <h6 class="fw-bold text-primary mb-1"><i class="fa fa-map-marker-alt me-2"></i>Geo-fencing Radius</h6>
+                                                        <p class="text-muted small mb-3">Max allowed distance (in meters) from customer for punching and visit validation.</p>
+                                                        <form class="setting-form">
+                                                            @csrf
+                                                            <input type="hidden" name="slug" value="geofence_radius">
+                                                            <div class="input-group input-group-sm">
+                                                                <input type="number" class="form-control" name="value" value="{{ $geofence_radius }}" min="1">
+                                                                <span class="input-group-text bg-light text-muted">Meters</span>
+                                                                <button type="button" class="btn btn-primary px-3 save-setting-btn">Save</button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- TA Rate -->
+                                            <div class="col-md-6">
+                                                <div class="card border-0 shadow-sm h-100 rounded-3">
+                                                    <div class="card-body p-4">
+                                                        <h6 class="fw-bold text-success mb-1"><i class="fa fa-car me-2"></i>Travel Allowance (TA) Rate</h6>
+                                                        <p class="text-muted small mb-3">Reimbursement rate per kilometer travelled.</p>
+                                                        <form class="setting-form">
+                                                            @csrf
+                                                            <input type="hidden" name="slug" value="ta_rate_per_km">
+                                                            <div class="input-group input-group-sm">
+                                                                <span class="input-group-text bg-light text-muted">₹</span>
+                                                                <input type="number" step="0.01" class="form-control" name="value" value="{{ $ta_rate_per_km }}" min="0">
+                                                                <span class="input-group-text bg-light text-muted">per KM</span>
+                                                                <button type="button" class="btn btn-success px-3 save-setting-btn">Save</button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- DA HQ Rate -->
+                                            <div class="col-md-6">
+                                                <div class="card border-0 shadow-sm h-100 rounded-3">
+                                                    <div class="card-body p-4">
+                                                        <h6 class="fw-bold text-info mb-1"><i class="fa fa-building me-2"></i>DA HQ Rate</h6>
+                                                        <p class="text-muted small mb-3">Daily Allowance rate for regular Headquarter visits.</p>
+                                                        <form class="setting-form">
+                                                            @csrf
+                                                            <input type="hidden" name="slug" value="da_hq_rate">
+                                                            <div class="input-group input-group-sm">
+                                                                <span class="input-group-text bg-light text-muted">₹</span>
+                                                                <input type="number" step="0.01" class="form-control" name="value" value="{{ $da_hq_rate }}" min="0">
+                                                                <span class="input-group-text bg-light text-muted">per Day</span>
+                                                                <button type="button" class="btn btn-info text-white px-3 save-setting-btn">Save</button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- DA Outstation Rate -->
+                                            <div class="col-md-6">
+                                                <div class="card border-0 shadow-sm h-100 rounded-3">
+                                                    <div class="card-body p-4">
+                                                        <h6 class="fw-bold text-warning mb-1"><i class="fa fa-plane-departure me-2"></i>DA Outstation Rate</h6>
+                                                        <p class="text-muted small mb-3">Daily Allowance rate for visits outside specified headquarters.</p>
+                                                        <form class="setting-form">
+                                                            @csrf
+                                                            <input type="hidden" name="slug" value="da_outstation_rate">
+                                                            <div class="input-group input-group-sm">
+                                                                <span class="input-group-text bg-light text-muted">₹</span>
+                                                                <input type="number" step="0.01" class="form-control" name="value" value="{{ $da_outstation_rate }}" min="0">
+                                                                <span class="input-group-text bg-light text-muted">per Day</span>
+                                                                <button type="button" class="btn btn-warning text-white px-3 save-setting-btn">Save</button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- HQ Radius Threshold -->
+                                            <div class="col-md-6">
+                                                <div class="card border-0 shadow-sm h-100 rounded-3">
+                                                    <div class="card-body p-4">
+                                                        <h6 class="fw-bold text-danger mb-1"><i class="fa fa-compass me-2"></i>HQ Radius Threshold</h6>
+                                                        <p class="text-muted small mb-3">Maximum distance (in KM) considered as local HQ area.</p>
+                                                        <form class="setting-form">
+                                                            @csrf
+                                                            <input type="hidden" name="slug" value="hq_radius_km">
+                                                            <div class="input-group input-group-sm">
+                                                                <input type="number" step="0.1" class="form-control" name="value" value="{{ $hq_radius_km }}" min="0">
+                                                                <span class="input-group-text bg-light text-muted">KM</span>
+                                                                <button type="button" class="btn btn-danger px-3 save-setting-btn">Save</button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Leave Types Master -->
-                            <div class="col-md-12 mb-4">
-                                <div class="card border-info shadow-sm h-100">
-                                    <div class="card-body">
+                            <div class="accordion-item border mb-3 rounded-4 overflow-hidden shadow-sm">
+                                <h2 class="accordion-header" id="headingLeave">
+                                    <button class="accordion-button collapsed fw-bold py-3 px-4 bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLeave" aria-expanded="false" aria-controls="collapseLeave" style="font-size: 1.1rem; color: #1e293b;">
+                                        <div class="d-flex align-items-center w-100 me-3">
+                                            <i class="fa fa-calendar-alt me-3 text-primary fs-4"></i>
+                                            <div>
+                                                <div>Leave Types Master</div>
+                                                <small class="text-muted fw-normal d-block mt-1" style="font-size: 0.85rem;">Configure default annual quotas</small>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </h2>
+                                <div id="collapseLeave" class="accordion-collapse collapse" aria-labelledby="headingLeave" data-bs-parent="#settingsAccordion">
+                                    <div class="accordion-body p-4 bg-light">
                                          <div class="d-flex align-items-center justify-content-between mb-3">
-                                             <h6 class="card-title text-info mb-0"><i class="fa fa-calendar-alt me-2"></i>Leave Types Master</h6>
+                                             <h6 class="fw-bold mb-0 text-dark">Leave Type Configurations</h6>
                                              <div>
-                                                 <button type="button" class="btn btn-info btn-sm rounded-pill px-3 text-white" id="add_leave_type_btn">
+                                                 <button type="button" class="btn btn-info btn-sm rounded-pill px-3 text-white shadow-sm" id="add_leave_type_btn">
                                                      <i class="fa fa-plus me-1"></i>Add New Leave Type
                                                  </button>
                                              </div>
                                          </div>
-                                         <p class="text-muted small">Manage the list of active leave types and their default annual quotas.</p>
+                                         <p class="text-muted small mb-4">Manage the list of active leave types and their default annual quotas.</p>
                                          
-                                         <div id="leave_types_container" class="d-flex flex-wrap gap-3 p-3 bg-light rounded border shadow-inner" style="min-height: 80px;">
+                                         <div id="leave_types_container" class="d-flex flex-wrap gap-3 p-3 bg-white rounded-3 border shadow-inner" style="min-height: 80px;">
                                              <!-- Tags filled by JS -->
                                          </div>
                                     </div>
                                 </div>
                             </div>
-
 
                         </div>
                     </div>
@@ -389,6 +453,8 @@
             // Brand Management Logic
             let brandsData = @json($brands);
             let returnableBrands = '{{ $returnable_brands }}'.split(',').map(s => s.trim()).filter(s => s.length > 0);
+            let loyaltyBrands = '{{ $loyalty_brands }}'.split(',').map(s => s.trim()).filter(s => s.length > 0);
+            let loyaltyRules = @json(json_decode($loyalty_rules, true) ?: (object)[]);
 
             function getBrandFieldsList(brandObj) {
                 let layout = brandObj.layout_type;
@@ -425,10 +491,11 @@
                     brandsData.forEach((brandObj, index) => {
                         let brand = brandObj.name;
                         let isReturnable = returnableBrands.includes(brand);
+                        let isLoyalty = loyaltyBrands.includes(brand);
                         let fieldsList = getBrandFieldsList(brandObj);
 
                         html += `
-                            <div class="brand-tag-wrapper d-inline-flex flex-column rounded p-3" style="min-width: 260px; max-width: 320px;">
+                            <div class="brand-tag-wrapper d-flex flex-column rounded p-3" style="min-width: 260px; max-width: 320px; flex: 1 1 auto; height: auto;">
                                 <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
                                     <span class="brand-name text-truncate me-2 fw-bold" title="${brand}">
                                         <i class="fa ${brandObj.icon || 'fa-tag'} me-1 text-primary"></i>${brand}
@@ -457,7 +524,16 @@
                                         <input class="form-check-input returnable-toggle" type="checkbox" data-brand="${brand}" ${isReturnable ? 'checked' : ''}>
                                     </div>
                                 </div>
-                                <div class="border-top pt-2 mt-1 text-center">
+                                <div class="d-flex align-items-center justify-content-between mb-2 border-top pt-2">
+                                    <span class="small text-muted">Loyalty Program</span>
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input loyalty-toggle" type="checkbox" data-brand="${brand}" ${isLoyalty ? 'checked' : ''}>
+                                    </div>
+                                </div>
+                                <div class="border-top pt-3 mt-auto text-center d-flex flex-column gap-2">
+                                    <button type="button" class="btn btn-sm btn-primary w-100 config-loyalty-btn shadow-sm ${isLoyalty ? '' : 'd-none'}" data-brand="${brand}">
+                                        <i class="fa fa-gift me-1"></i>Configure Loyalty
+                                    </button>
                                     <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 manage-products-btn" data-brand="${brand}">
                                         <i class="fa fa-list-ul me-1"></i>Manage Products
                                     </button>
@@ -475,6 +551,19 @@
                     $('#brands_form').append(`<input type="hidden" name="returnable_brands" id="returnable_brands_input" value="${returnableBrands.join(',')}">`);
                 } else {
                     $('#returnable_brands_input').val(returnableBrands.join(','));
+                }
+                
+                // Update hidden input for loyalty_brands
+                if ($('#loyalty_brands_input').length === 0) {
+                    $('#brands_form').append(`<input type="hidden" name="loyalty_brands" id="loyalty_brands_input" value="${loyaltyBrands.join(',')}">`);
+                } else {
+                    $('#loyalty_brands_input').val(loyaltyBrands.join(','));
+                }
+                
+                if ($('#loyalty_rules_input').length === 0) {
+                    $('#brands_form').append(`<input type="hidden" name="loyalty_rules" id="loyalty_rules_input" value='${JSON.stringify(loyaltyRules)}'>`);
+                } else {
+                    $('#loyalty_rules_input').val(JSON.stringify(loyaltyRules));
                 }
             }
 
@@ -525,6 +614,278 @@
                     error: function() {
                         showToast('error', 'Settings Failed', 'Could not save returnable brands setting.');
                         $manageBtn.prop('disabled', false).html('<i class="fa fa-list-ul me-1"></i>Manage Products');
+                    }
+                });
+            });
+
+            $(document).on('change', '.loyalty-toggle', function() {
+                let brand = $(this).data('brand');
+                let isChecked = $(this).is(':checked');
+                let $configBtn = $(`.config-loyalty-btn[data-brand="${brand}"]`);
+                
+                if (isChecked) {
+                    if (!loyaltyBrands.includes(brand)) loyaltyBrands.push(brand);
+                    $configBtn.removeClass('d-none');
+                } else {
+                    loyaltyBrands = loyaltyBrands.filter(b => b !== brand);
+                    $configBtn.addClass('d-none');
+                }
+                
+                $('#loyalty_brands_input').val(loyaltyBrands.join(','));
+                
+                $.ajax({
+                    url: '{{ route('admin.settings.save') }}',
+                    method: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        slug: 'loyalty_brands',
+                        value: loyaltyBrands.join(',')
+                    },
+                    success: function() {
+                        showToast('success', 'Saved', 'Loyalty status updated for ' + brand);
+                    },
+                    error: function() {
+                        showToast('error', 'Error', 'Could not save loyalty status.');
+                    }
+                });
+            });
+
+            $(document).on('click', '.config-loyalty-btn', function() {
+                let brand = $(this).data('brand');
+                let rules = loyaltyRules[brand] ? [...loyaltyRules[brand]] : [];
+
+                rules.sort((a, b) => a.threshold - b.threshold);
+                let editingIndex = null;
+
+                let renderRulesList = (rulesList) => {
+                    if (rulesList.length === 0) return '<div class="text-center text-muted small p-4 bg-light rounded border border-dashed">No loyalty rules configured for this brand yet.</div>';
+                    let html = '<div class="row g-2 mb-3">';
+                    rulesList.forEach((r, idx) => {
+                        if (editingIndex === idx) {
+                            html += `
+                            <div class="col-12 col-sm-6">
+                                <div class="card h-100 border-primary shadow rounded-3 bg-white overflow-hidden">
+                                    <div class="card-body p-2 d-flex flex-column gap-2">
+                                        <input type="number" class="form-control form-control-sm inline-threshold" value="${r.threshold}" placeholder="Target ₹" min="1">
+                                        <input type="text" class="form-control form-control-sm inline-reward" value="${r.reward}" placeholder="Reward">
+                                        <input type="text" class="form-control form-control-sm inline-description" value="${r.description || ''}" placeholder="Description">
+                                        <div class="d-flex gap-1">
+                                            <input type="file" class="form-control form-control-sm inline-image" accept="image/*" style="width: 100px; flex-grow:1;" title="Leave empty to keep image">
+                                            <button type="button" class="btn btn-sm btn-success btn-save-inline shadow-sm px-2" data-index="${idx}" title="Save"><i class="fa fa-check"></i></button>
+                                            <button type="button" class="btn btn-sm btn-light btn-cancel-inline border shadow-sm px-2" title="Cancel"><i class="fa fa-times"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            `;
+                            return;
+                        }
+
+                        let imgHtml = r.image_url ? `<img src="${r.image_url}" class="rounded shadow-sm" style="width: 40px; height: 40px; object-fit: cover;">` : (r.imageFile ? `<img src="${URL.createObjectURL(r.imageFile)}" class="rounded shadow-sm" style="width: 40px; height: 40px; object-fit: cover;">` : `<div class="bg-secondary rounded d-flex align-items-center justify-content-center text-white" style="width:40px; height:40px;"><i class="fa fa-gift"></i></div>`);
+                        let descHtml = r.description ? `<div class="text-muted small mt-1 text-truncate" style="max-width: 100%;" title="${r.description}">${r.description}</div>` : '';
+                        html += `
+                            <div class="col-12 col-sm-6">
+                                <div class="card h-100 border shadow-sm rounded-3 bg-white overflow-hidden">
+                                    <div class="card-body p-3 d-flex gap-3 align-items-center position-relative">
+                                        <!-- Action Buttons -->
+                                        <div class="position-absolute top-50 translate-middle-y end-0 pe-2 d-flex flex-column gap-2 z-1">
+                                            <button type="button" class="btn btn-sm btn-light border shadow-sm text-primary rounded-3 btn-edit-rule px-2 py-1" data-index="${idx}" title="Edit">
+                                                <i class="fa fa-edit" style="font-size: 0.85rem;"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-light border shadow-sm text-danger rounded-3 btn-remove-rule px-2 py-1" data-index="${idx}" title="Remove">
+                                                <i class="fa fa-trash" style="font-size: 0.85rem;"></i>
+                                            </button>
+                                        </div>
+                                        
+                                        <!-- Image -->
+                                        <div class="flex-shrink-0">
+                                            ${imgHtml}
+                                        </div>
+                                        
+                                        <!-- Content -->
+                                        <div class="flex-grow-1 overflow-hidden pe-5">
+                                            <div class="text-primary fw-bold mb-1" style="font-size: 0.95rem;"><i class="fa fa-bullseye me-1"></i>Target: ₹${r.threshold}</div>
+                                            <div class="text-success fw-bold small"><i class="fa fa-gift me-1"></i>${r.reward}</div>
+                                            ${descHtml}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    return html;
+                };
+
+                let updateModalContent = () => {
+                    $('#loyalty_rules_list_container').html(renderRulesList(rules));
+                };
+
+                Swal.fire({
+                    html: `
+                        <style>.swal2-icon { display: none !important; }</style>
+                        <div class="text-start mb-4">
+                            <h4 class="fw-bold text-dark mb-1">Configure Loyalty</h4>
+                            <p class="text-muted small mb-0">Set order targets and rewards for <b>${brand}</b>.</p>
+                        </div>
+                        <div id="loyalty_rules_list_container" class="text-start mb-3" style="max-height: 280px; overflow-y: auto; overflow-x: hidden;">
+                            ${renderRulesList(rules)}
+                        </div>
+                        <div class="p-3 border rounded-3 bg-white shadow-sm">
+                            <h6 class="fw-bold small mb-2 text-start text-primary" id="swal_rule_form_title">Add New Reward Level</h6>
+                            <div class="row g-2">
+                                <div class="col-12 col-md-4">
+                                    <input type="number" id="swal_rule_threshold" class="form-control form-control-sm" placeholder="Target (e.g. 2000)" min="1">
+                                </div>
+                                <div class="col-12 col-md-8">
+                                    <input type="text" id="swal_rule_reward" class="form-control form-control-sm" placeholder="Reward (e.g. 1 Gold Coin)">
+                                </div>
+                                <div class="col-12 col-md-12">
+                                    <input type="text" id="swal_rule_description" class="form-control form-control-sm" placeholder="Description (Optional)">
+                                </div>
+                                <div class="col-12 col-md-12 d-flex gap-2">
+                                    <input type="file" id="swal_rule_image" class="form-control form-control-sm" accept="image/*">
+                                    <button type="button" class="btn btn-sm btn-primary" id="swal_add_rule_btn" style="min-width:40px;"><i class="fa fa-plus"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    `,
+                    width: '600px',
+                    showCancelButton: true,
+                    confirmButtonText: 'Save Rules',
+                    cancelButtonText: 'Cancel',
+                    buttonsStyling: true,
+                    customClass: {
+                        confirmButton: 'btn btn-primary px-4 shadow-sm',
+                        cancelButton: 'btn btn-light px-4 shadow-sm ms-2'
+                    },
+                    didOpen: () => {
+                        $(document).off('click', '#swal_add_rule_btn').on('click', '#swal_add_rule_btn', function() {
+                            let threshold = parseFloat($('#swal_rule_threshold').val());
+                            let reward = $('#swal_rule_reward').val().trim();
+                            let description = $('#swal_rule_description').val().trim();
+                            let imageFile = document.getElementById('swal_rule_image').files[0];
+                            
+                            if (isNaN(threshold) || threshold <= 0) {
+                                Swal.showValidationMessage('Please enter a valid order target amount.');
+                                return;
+                            }
+                            if (reward === '') {
+                                Swal.showValidationMessage('Please enter a reward gift name.');
+                                return;
+                            }
+                            
+                            Swal.resetValidationMessage();
+                            
+                            rules.push({ threshold: threshold, reward: reward, description: description, imageFile: imageFile });
+                            
+                            rules.sort((a, b) => a.threshold - b.threshold);
+                            updateModalContent();
+                            
+                            $('#swal_rule_threshold').val('');
+                            $('#swal_rule_reward').val('');
+                            $('#swal_rule_description').val('');
+                            $('#swal_rule_image').val('');
+                        });
+
+                        $(document).off('click', '.btn-remove-rule').on('click', '.btn-remove-rule', function() {
+                            let idx = $(this).data('index');
+                            rules.splice(idx, 1);
+                            if (editingIndex === idx) {
+                                editingIndex = null;
+                            }
+                            updateModalContent();
+                        });
+
+                        $(document).off('click', '.btn-edit-rule').on('click', '.btn-edit-rule', function() {
+                            editingIndex = $(this).data('index');
+                            updateModalContent();
+                        });
+                        
+                        $(document).off('click', '.btn-cancel-inline').on('click', '.btn-cancel-inline', function() {
+                            editingIndex = null;
+                            updateModalContent();
+                        });
+                        
+                        $(document).off('click', '.btn-save-inline').on('click', '.btn-save-inline', function() {
+                            let idx = $(this).data('index');
+                            let $card = $(this).closest('.card-body');
+                            
+                            let threshold = parseFloat($card.find('.inline-threshold').val());
+                            let reward = $card.find('.inline-reward').val().trim();
+                            let description = $card.find('.inline-description').val().trim();
+                            let imageFile = $card.find('.inline-image')[0].files[0];
+                            
+                            if (isNaN(threshold) || threshold <= 0 || reward === '') {
+                                Swal.showValidationMessage('Valid target and reward are required to update.');
+                                return;
+                            }
+                            Swal.resetValidationMessage();
+                            
+                            rules[idx].threshold = threshold;
+                            rules[idx].reward = reward;
+                            rules[idx].description = description;
+                            if (imageFile) {
+                                rules[idx].imageFile = imageFile;
+                                rules[idx].image_url = null;
+                                rules[idx].image_path = null;
+                            }
+                            
+                            editingIndex = null;
+                            rules.sort((a, b) => a.threshold - b.threshold);
+                            updateModalContent();
+                        });
+                    },
+                    preConfirm: () => {
+                        let threshold = parseFloat($('#swal_rule_threshold').val());
+                        let reward = $('#swal_rule_reward').val() ? $('#swal_rule_reward').val().trim() : '';
+                        let description = $('#swal_rule_description').val() ? $('#swal_rule_description').val().trim() : '';
+                        let imageFile = document.getElementById('swal_rule_image') ? document.getElementById('swal_rule_image').files[0] : null;
+                        
+                        if (!isNaN(threshold) && threshold > 0 && reward !== '') {
+                            rules.push({ threshold: threshold, reward: reward, description: description, imageFile: imageFile });
+                            rules.sort((a, b) => a.threshold - b.threshold);
+                        }
+                        
+                        return rules;
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        loyaltyRules[brand] = result.value;
+                        
+                        // We do NOT stringify loyaltyRules back to a hidden input containing File objects,
+                        // we just trigger the save logic via FormData.
+                        let formData = new FormData();
+                        formData.append('_token', '{{ csrf_token() }}');
+                        formData.append('slug', 'loyalty_rules');
+                        
+                        let rulesPayload = JSON.parse(JSON.stringify(loyaltyRules, function(key, val) {
+                            return val; 
+                        }));
+                        
+                        Object.keys(loyaltyRules).forEach(b => {
+                            loyaltyRules[b].forEach((r) => {
+                                if (r.imageFile) {
+                                    formData.append(`images[${b}_${r.threshold}]`, r.imageFile);
+                                }
+                            });
+                        });
+                        
+                        formData.append('value', JSON.stringify(rulesPayload));
+                        
+                        $.ajax({
+                            url: '{{ route('admin.settings.save') }}',
+                            method: 'POST',
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            success: function() {
+                                showToast('success', 'Saved', 'Loyalty rules updated for ' + brand);
+                            },
+                            error: function() {
+                                showToast('error', 'Error', 'Could not save loyalty rules.');
+                            }
+                        });
                     }
                 });
             });

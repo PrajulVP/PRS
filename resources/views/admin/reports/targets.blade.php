@@ -28,7 +28,8 @@
         'showRetailer' => false,
         'showStaff' => false,
         'showStatus' => false,
-        'showExports' => false
+        'showExports' => false,
+        'showMonthPicker' => true
     ])
 
     <!-- Report Table -->
@@ -68,10 +69,8 @@
             ajax: {
                 url: "{{ route('admin.reports.targets') }}",
                 data: function(d) {
-                    d.from_date = $('#from_date').val();
-                    d.to_date = $('#to_date').val();
+                    d.month = $('#analysis_month').val();
                     d.sales_manager_id = $('#sales_manager_id').val();
-                    d.period = $('.preset-btn.active').data('range');
                 }
             },
             columns: [
@@ -98,19 +97,22 @@
                     extend: 'csv',
                     text: '<i class="fa fa-file-text-o me-1"></i> CSV',
                     className: 'btn btn-sm btn-csv-custom',
-                    exportOptions: { columns: ':visible' }
+                    exportOptions: { columns: ':visible' },
+                    title: function() { return 'Target Achievement Report - ' + ($('#analysis_month').val() || new Date().toLocaleDateString()); }
                 },
                 {
                     extend: 'excel',
                     text: '<i class="fa fa-file-excel-o me-1"></i> Excel',
                     className: 'btn btn-sm btn-excel-custom',
-                    exportOptions: { columns: ':visible' }
+                    exportOptions: { columns: ':visible' },
+                    title: function() { return 'Target Achievement Report - ' + ($('#analysis_month').val() || new Date().toLocaleDateString()); }
                 },
                 {
                     extend: 'pdf',
                     text: '<i class="fa fa-file-pdf-o me-1"></i> PDF',
                     className: 'btn btn-sm btn-pdf-custom',
-                    exportOptions: { columns: ':visible' }
+                    exportOptions: { columns: ':visible' },
+                    title: function() { return 'Target Achievement Report - ' + ($('#analysis_month').val() || new Date().toLocaleDateString()); }
                 },
                 {
                     extend: 'print',
@@ -119,7 +121,7 @@
                     orientation: 'landscape',
                     pageSize: 'A4',
                     exportOptions: { columns: ':visible' },
-                    title: 'Target Achievement Report - ' + new Date().toLocaleDateString(),
+                    title: function() { return 'Target Achievement Report - ' + ($('#analysis_month').val() || new Date().toLocaleDateString()); },
                     customize: function (win) {
                         $(win.document.body).addClass('landscape');
                         $(win.document.body).find('.dataTables_paginate, .pagination, .dataTables_info').hide();

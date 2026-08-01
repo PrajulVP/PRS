@@ -947,22 +947,22 @@ class ReportController extends Controller
             $query = FieldStaff::with(['user', 'salesManager.user'])->select('fieldstaffs.*');
             $this->applyGlobalFilters($query, $request);
 
-            [$f, $t] = $this->getFilterDates($request);
+            $month = $request->month ?: date('Y-m');
+            $yearStr = substr($month, 0, 4);
+            $monthStr = substr($month, 5, 2);
 
-            $query->withSum(['retailerOrders as achievement' => function($q) use ($f, $t) {
-                $q->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED);
-                if ($f && $t) $q->whereBetween('placed_at', [$f, $t]);
+            $query->withSum(['retailerOrders as achievement' => function($q) use ($yearStr, $monthStr) {
+                $q->whereNotIn('status', ['cancelled']);
+                $q->whereYear('created_at', $yearStr)->whereMonth('created_at', $monthStr);
             }], 'total_amount');
-
-            $query->withSum(['salesTargets as target_amount'], 'amount');
 
             return DataTables::of($query)
                 ->addColumn('name', fn($fs) => $fs->user->name ?? 'N/A')
                 ->addColumn('achievement_display', fn($fs) => '₹' . number_format($fs->achievement ?? 0, 2))
-                ->addColumn('target_display', fn($fs) => '₹' . number_format($fs->target_amount ?? 0, 2))
+                ->addColumn('target_display', fn($fs) => '₹' . number_format($fs->monthly_target ?? 0, 2))
                 ->addColumn('variance', function($fs) {
                     $achieved = $fs->achievement ?? 0;
-                    $target = $fs->target_amount ?? 0;
+                    $target = $fs->monthly_target ?? 0;
                     if ($target == 0) return ($achieved > 0) ? '<span class="text-success small">+100% (No Target)</span>' : '<span class="text-muted small">0%</span>';
                     
                     $percent = ($achieved / $target) * 100;
@@ -971,7 +971,7 @@ class ReportController extends Controller
                 })
                 ->addColumn('progress_bar', function($fs) {
                     $achieved = $fs->achievement ?? 0;
-                    $target = $fs->target_amount ?? 0;
+                    $target = $fs->monthly_target ?? 0;
                     if ($target == 0) $percent = ($achieved > 0) ? 100 : 0;
                     else $percent = min(($achieved / $target) * 100, 100);
                     

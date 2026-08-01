@@ -178,6 +178,10 @@
                                 <label class="form-label">Pincode</label>
                                 <input type="text" name="pincode" class="form-control" required>
                             </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Monthly Target</label>
+                                <input type="number" step="0.01" min="0" name="monthly_target" class="form-control" value="0">
+                            </div>
                         </div>
 
                         <div class="row">
@@ -279,6 +283,10 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Pincode</label>
                                 <input type="text" name="pincode" id="edit_pincode" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Monthly Target</label>
+                                <input type="number" step="0.01" min="0" name="monthly_target" id="edit_monthly_target" class="form-control">
                             </div>
                         </div>
 
@@ -442,13 +450,33 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                     <div class="col-md-6">
                                         <div class="d-flex align-items-start gap-2 p-3 rounded"
                                             style="background: var(--med-bg-body);">
                                             <i class="fa fa-hashtag mt-1"></i>
                                             <div>
                                                 <div class="text-muted small">Pincode</div>
                                                 <div class="fw-semibold" id="fs_view_pincode"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-start gap-2 p-3 rounded"
+                                            style="background: var(--med-bg-body);">
+                                            <i class="fa fa-bullseye mt-1 text-primary"></i>
+                                            <div>
+                                                <div class="text-muted small">Target (This Month)</div>
+                                                <div class="fw-semibold" id="fs_view_monthly_target"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-start gap-2 p-3 rounded"
+                                            style="background: var(--med-bg-body);">
+                                            <i class="fa fa-line-chart mt-1 text-success"></i>
+                                            <div>
+                                                <div class="text-muted small">Achieved (This Month)</div>
+                                                <div class="fw-semibold" id="fs_view_achieved_target"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -883,6 +911,8 @@
                         $('#fs_view_contact').text(fs.contact_no || 'N/A');
                         $('#fs_view_pincode').text(fs.pincode || 'N/A');
                         $('#fs_view_address').text(fs.address || 'N/A');
+                        $('#fs_view_monthly_target').text('₹' + parseFloat(fs.monthly_target || 0).toFixed(2));
+                        $('#fs_view_achieved_target').text('₹' + parseFloat(fs.achieved_target || 0).toFixed(2));
                         $('#fs_view_device').text(fs.user.device_uuid || 'Not Bound');
 
 
@@ -1031,6 +1061,7 @@
                 $('#edit_email').val(data.user.email);
                 $('#edit_contact_no').val(data.contact_no || '');
                 $('#edit_pincode').val(data.pincode || '');
+                $('#edit_monthly_target').val(data.monthly_target || '0');
                 $('#edit_address').val(data.address || ''); // Populate address
                 $('#edit_status').val(data.user.status);
                 $('#edit_sales_manager_id').val(data.sales_manager_id);

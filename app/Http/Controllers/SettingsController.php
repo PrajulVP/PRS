@@ -26,6 +26,24 @@ class SettingsController extends Controller
         $brands = \App\Models\Brand::orderBy('id')->get();
         $product_brands = $brands->pluck('name')->implode(',');
         $returnable_brands = Setting::getValue('returnable_brands', '');
+        $loyalty_brands = Setting::getValue('loyalty_brands', '');
+        
+        $slabs = \App\Models\LoyaltySlab::orderBy('min_points')->get();
+        $loyalty_rules_array = [];
+        foreach ($slabs as $slab) {
+            $brand = $slab->type;
+            if (!isset($loyalty_rules_array[$brand])) {
+                $loyalty_rules_array[$brand] = [];
+            }
+            $loyalty_rules_array[$brand][] = [
+                'threshold' => $slab->min_points,
+                'reward' => $slab->gift_name,
+                'description' => $slab->description,
+                'image_url' => $slab->gift_image ? asset($slab->gift_image) : null,
+                'image_path' => $slab->gift_image
+            ];
+        }
+        $loyalty_rules = json_encode($loyalty_rules_array);
 
         $type_medical_title = Setting::getValue('type_medical_title', 'ATOMEDS');
         $type_medical_desc = Setting::getValue('type_medical_desc', 'Medicines');
@@ -43,7 +61,7 @@ class SettingsController extends Controller
             'type_medical_title', 'type_medical_desc',
             'type_ortho_title', 'type_ortho_desc',
             'type_general_title', 'type_general_desc',
-            'brands', 'leaveTypes'
+            'brands', 'leaveTypes', 'loyalty_brands', 'loyalty_rules'
         ));
     }
 
@@ -101,6 +119,54 @@ class SettingsController extends Controller
         } elseif ($data['slug'] === 'returnable_brands') {
             $title = 'Returnable Brands';
             $desc = 'Comma-separated list of brands eligible for returns.';
+        } elseif ($data['slug'] === 'loyalty_brands') {
+            $title = 'Loyalty Brands';
+            $desc = 'Comma-separated list of brands with loyalty enabled.';
+        } elseif ($data['slug'] === 'loyalty_rules') {
+            $rulesData = json_decode($data['value'], true);
+            $images = request()->file('images');
+            
+            \DB::transaction(function() use ($rulesData, $images) {
+                $existingSlabs = \App\Models\LoyaltySlab::all();
+                $incomingKeys = [];
+                
+                if (is_array($rulesData)) {
+                    foreach ($rulesData as $brand => $rules) {
+                        if (!is_array($rules)) continue;
+                        foreach ($rules as $rule) {
+                            $key = $brand . '_' . $rule['threshold'];
+                            $incomingKeys[] = $key;
+                            
+                            $slab = \App\Models\LoyaltySlab::firstOrNew([
+                                'type' => $brand,
+                                'min_points' => $rule['threshold']
+                            ]);
+                            $slab->slab_name = $brand . ' - ₹' . $rule['threshold'];
+                            $slab->gift_name = $rule['reward'];
+                            $slab->description = $rule['description'] ?? null;
+                            
+                            if ($images && isset($images[$key])) {
+                                $file = $images[$key];
+                                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                                $file->move(public_path('uploads/loyalty_gifts'), $filename);
+                                $slab->gift_image = 'uploads/loyalty_gifts/' . $filename;
+                            }
+                            
+                            $slab->save();
+                        }
+                    }
+                }
+                
+                foreach ($existingSlabs as $slab) {
+                    $key = $slab->type . '_' . $slab->min_points;
+                    if (!in_array($key, $incomingKeys)) {
+                        if ($slab->redemptions()->count() == 0) {
+                            $slab->delete();
+                        }
+                    }
+                }
+            });
+            return response()->json(['message' => 'Loyalty Slabs saved successfully.']);
         } elseif ($data['slug'] === 'type_medical_title') {
             $title = 'Medical Product Type Title';
             $desc = 'Main title for Medical Products tab in modal.';

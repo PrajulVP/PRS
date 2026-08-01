@@ -21,6 +21,7 @@ class FieldStaff extends Model
         'contact_no',
         'address',
         'status',
+        'monthly_target',
     ];
 
     public function user()

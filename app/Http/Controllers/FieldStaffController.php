@@ -116,9 +116,16 @@ class FieldStaffController extends Controller
         $latestLocation = \App\Models\LocationLog::where('user_id', $field_staff->user_id)->orderBy('timestamp', 'desc')->first();
         $todaysDistance = \App\Models\LocationLog::calculateDailyDistance($field_staff->user_id, date('Y-m-d'));
         
+        $achievedTarget = \App\Models\RetailerOrder::where('fieldstaff_id', $field_staff->id)
+            ->whereMonth('created_at', date('m'))
+            ->whereYear('created_at', date('Y'))
+            ->whereNotIn('status', ['cancelled'])
+            ->sum('total_amount');
+        
         // Append additional details to the field staff object
         $field_staff->setAttribute('latest_location', $latestLocation);
         $field_staff->setAttribute('todays_distance_km', round($todaysDistance, 2));
+        $field_staff->setAttribute('achieved_target', round($achievedTarget, 2));
 
         return response()->json([
             'success' => true,
@@ -166,6 +173,7 @@ class FieldStaffController extends Controller
             'sales_manager_id' => 'nullable|exists:sales_managers,id',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
+            'monthly_target' => 'nullable|numeric|min:0',
             'contact_no' => ['required', 'digits:10', 'regex:/^[1-9][0-9]{9}$/'],
             'address' => ['required', 'string'],
         ], [
@@ -226,6 +234,8 @@ class FieldStaffController extends Controller
 
     public function update(Request $request, FieldStaff $field_staff)
     {
+        \Log::info('FieldStaff Update Request:', $request->all());
+
         // Smart Repair: If user relationship is missing, check if a user with this email already exists
         if (!$field_staff->user && $request->filled('email')) {
             $foundUser = User::where('email', $request->email)->first();
@@ -259,6 +269,7 @@ class FieldStaffController extends Controller
             'sales_manager_id' => 'nullable|exists:sales_managers,id',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
+            'monthly_target' => 'nullable|numeric|min:0',
             'contact_no' => ['required', 'digits:10', 'regex:/^[1-9][0-9]{9}$/'],
             'address' => ['required', 'string'],
         ], [

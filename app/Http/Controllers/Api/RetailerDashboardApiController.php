@@ -148,10 +148,70 @@ class RetailerDashboardApiController extends Controller
             ->where('status', RetailerOrder::STATUS_DELIVERED)
             ->sum('loyalty_points_earned');
 
+        // Upcoming Rewards Logic based on brand totals
+        $slabs = \App\Models\LoyaltySlab::orderBy('min_points')->get();
+        $loyaltyRules = [];
+        foreach ($slabs as $slab) {
+            $brand = $slab->type;
+            if (!isset($loyaltyRules[$brand])) {
+                $loyaltyRules[$brand] = [];
+            }
+            $loyaltyRules[$brand][] = [
+                'threshold' => $slab->min_points,
+                'reward' => $slab->gift_name
+            ];
+        }
+
+        $upcomingRewards = [];
+
+        if (!empty($loyaltyRules)) {
+            $deliveredItems = \App\Models\RetailerOrderItem::whereHas('retailerOrder', function($q) use ($retailer) {
+                $q->where('retailer_id', $retailer->id)->where('status', RetailerOrder::STATUS_DELIVERED);
+            })->with('product')->get();
+
+            $brandTotals = [];
+            foreach ($deliveredItems as $item) {
+                if ($item->product && $item->product->brand) {
+                    $brand = $item->product->brand;
+                    if (!isset($brandTotals[$brand])) {
+                        $brandTotals[$brand] = 0;
+                    }
+                    $brandTotals[$brand] += $item->total_amount;
+                }
+            }
+
+            foreach ($loyaltyRules as $brand => $rules) {
+                if (empty($rules)) continue;
+                
+                usort($rules, function($a, $b) { return $a['threshold'] <=> $b['threshold']; });
+                $currentTotal = $brandTotals[$brand] ?? 0;
+                
+                $nextRule = null;
+                $achievedRules = [];
+                foreach ($rules as $rule) {
+                    if ($currentTotal < $rule['threshold']) {
+                        $nextRule = $rule;
+                        break;
+                    } else {
+                        $achievedRules[] = $rule;
+                    }
+                }
+                
+                $upcomingRewards[] = [
+                    'brand' => $brand,
+                    'current_total' => $currentTotal,
+                    'next_target' => $nextRule ? $nextRule['threshold'] : null,
+                    'next_reward' => $nextRule ? $nextRule['reward'] : null,
+                    'achieved_rewards' => $achievedRules
+                ];
+            }
+        }
+
         return response()->json([
             'total_points' => (string)$totalLoyaltyPoints,
             'credit_balance' => (string)($retailer->credit_balance ?? 0),
             'credit_limit' => (string)($retailer->credit_limit ?? 0),
+            'upcoming_rewards' => $upcomingRewards,
             'history' => $pointsHistory
         ]);
     }

@@ -368,6 +368,26 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start gap-2 p-3 rounded"
+                                    style="background: var(--med-bg-body);">
+                                    <i class="fa fa-bullseye mt-1 text-primary"></i>
+                                    <div>
+                                        <div class="text-muted small">Total Target (This Month)</div>
+                                        <div class="fw-semibold" id="sm_view_monthly_target"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start gap-2 p-3 rounded"
+                                    style="background: var(--med-bg-body);">
+                                    <i class="fa fa-line-chart mt-1 text-success"></i>
+                                    <div>
+                                        <div class="text-muted small">Total Achieved (This Month)</div>
+                                        <div class="fw-semibold" id="sm_view_achieved_target"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -397,6 +417,7 @@
                                                 <th style="color: var(--med-text-main) !important;">Name</th>
                                                 <th style="color: var(--med-text-main) !important;">Email</th>
                                                 <th style="color: var(--med-text-main) !important;">Contact</th>
+                                                <th style="color: var(--med-text-main) !important;">Target</th>
                                                 <th style="color: var(--med-text-main) !important;">Status</th>
                                             </tr>
                                         </thead>
@@ -547,6 +568,8 @@
                         $('#sm_view_address').text(smData.address || 'N/A');
                         $('#sm_view_pincode').text(smData.pincode || 'N/A');
                         $('#sm_view_status').attr('class', 'status-badge ' + (smData.user?.status === 'active' ? 'status-badge-active' : 'status-badge-inactive')).text(smData.user?.status);
+                        $('#sm_view_monthly_target').text('₹' + parseFloat(smData.monthly_target || 0).toFixed(2));
+                        $('#sm_view_achieved_target').text('₹' + parseFloat(smData.achieved_target || 0).toFixed(2));
                         
                         let fsHtml = smData.field_staffs?.map(fs => {
                             let fsData = JSON.stringify(fs).replace(/"/g, '&quot;');
@@ -555,9 +578,10 @@
                                 <td class="text-main-theme"><a href="javascript:void(0)" class="fw-bold text-primary quick-view-trigger" data-type="fieldstaff" data-item='${fsData}' title="${title}">${fs.user.name}</a></td>
                                 <td class="text-main-theme">${fs.user.email}</td>
                                 <td class="text-main-theme">${fs.contact_no || 'N/A'}</td>
+                                <td class="text-main-theme fw-bold text-success">₹${parseFloat(fs.monthly_target || 0).toFixed(2)}</td>
                                 <td><span class="status-badge ${fs.user.status === 'active' ? 'status-badge-active' : 'status-badge-inactive'}">${fs.user.status}</span></td>
                             </tr>`;
-                        }).join('') || '<tr><td colspan="4">None</td></tr>';
+                        }).join('') || '<tr><td colspan="5">None</td></tr>';
                         $('#showFieldStaffBody').html(fsHtml);
                         $('#fieldStaffCount').text(smData.field_staffs?.length || 0);
 

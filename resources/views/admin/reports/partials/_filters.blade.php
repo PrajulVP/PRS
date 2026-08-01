@@ -43,6 +43,7 @@
 
     <div class="card border-0 shadow-sm rounded-4 mb-4 filter-container overflow-visible">
     <div class="card-body p-0">
+        @if(!($showMonthPicker ?? false))
         <!-- Quick Presets Header -->
         <div class="presets-header p-4 border-bottom bg-light-soft rounded-top-4">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
@@ -78,10 +79,22 @@
                 @endif
             </div>
         </div>
+        @endif
 
         <!-- Manual Filters Body -->
         <div class="p-4 border-top">
             <div class="row g-3 align-items-end">
+                @if($showMonthPicker ?? false)
+                <!-- Month Picker (Targets Report) -->
+                <div class="col-xl-3 col-md-6">
+                    <label class="form-label fw-bold small text-muted text-uppercase mb-2"><i class="fa fa-calendar me-1"></i> Analysis Month</label>
+                    <div class="modern-range-container shadow-sm p-1">
+                        <div class="range-field w-100">
+                            <input type="month" name="analysis_month" id="analysis_month" class="form-control border-0" value="{{ date('Y-m') }}">
+                        </div>
+                    </div>
+                </div>
+                @else
                 <!-- Manual Date Range Redesign -->
                 <div class="col-xl-3 col-md-6">
                     <label class="form-label fw-bold small text-muted text-uppercase mb-2"><i class="fa fa-calendar me-1"></i> Analysis Range</label>
@@ -98,6 +111,7 @@
                         </div>
                     </div>
                 </div>
+                @endif
 
 
                 <!-- Entity Filter Group (Hierarchy) -->
