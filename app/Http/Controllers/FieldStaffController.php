@@ -110,17 +110,23 @@ class FieldStaffController extends Controller
                 $q->orderBy('created_at', 'desc')->take(5);
             },
             'salesManager.user',
-            'retailers.user'
+            'retailers.user',
+            'salesTargets' => function ($q) {
+                $q->orderBy('year', 'desc')->orderBy('month', 'desc');
+            }
         ]);
         
         $latestLocation = \App\Models\LocationLog::where('user_id', $field_staff->user_id)->orderBy('timestamp', 'desc')->first();
         $todaysDistance = \App\Models\LocationLog::calculateDailyDistance($field_staff->user_id, date('Y-m-d'));
         
-        $achievedTarget = \App\Models\RetailerOrder::where('fieldstaff_id', $field_staff->id)
-            ->whereMonth('created_at', date('m'))
-            ->whereYear('created_at', date('Y'))
-            ->whereNotIn('status', ['cancelled'])
-            ->sum('total_amount');
+        // Ensure the current month target is initialized
+        $field_staff->getCurrentMonthTarget();
+        // Refresh salesTargets after ensuring current month is initialized
+        $field_staff->load(['salesTargets' => function ($q) {
+            $q->orderBy('year', 'desc')->orderByRaw("STR_TO_DATE(CONCAT('1 ', month, ' ', year), '%d %M %Y') DESC");
+        }]);
+        
+        $achievedTarget = $field_staff->getCurrentMonthAchieved();
         
         // Append additional details to the field staff object
         $field_staff->setAttribute('latest_location', $latestLocation);

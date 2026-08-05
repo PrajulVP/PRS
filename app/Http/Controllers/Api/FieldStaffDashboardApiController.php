@@ -93,10 +93,7 @@ class FieldStaffDashboardApiController extends Controller
         $month = now()->format('F');
         $year = now()->year;
         
-        $target = SalesTarget::where('field_staff_id', $fieldStaffId)
-            ->where('month', $month)
-            ->where('year', $year)
-            ->first();
+        $target = $fieldStaff->getCurrentMonthTarget();
 
         // Achievement (Sum of unit_price * quantity for delivered orders this month)
         $achievementValue = RetailerOrder::join('retailer_order_items', 'retailer_orders.id', '=', 'retailer_order_items.retailer_order_id')
@@ -168,6 +165,7 @@ class FieldStaffDashboardApiController extends Controller
             'summary' => [
                 'target' => number_format($targetAmount, 2, '.', ''),
                 'achievement' => number_format($achievementValue, 2, '.', ''),
+                'remaining' => number_format(max(0, $targetAmount - $achievementValue), 2, '.', ''),
                 'achievement_percent' => round($achievementPercent, 2),
                 'global_rank' => $myRank,
                 'total_staff' => $allStaffStats->count(),

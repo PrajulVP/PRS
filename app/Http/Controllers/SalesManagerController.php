@@ -58,17 +58,15 @@ class SalesManagerController extends Controller
     public function show(SalesManager $sales_manager)
     {
         // Load relationships needed for the view modal
-        $sales_manager->load(['user', 'fieldStaffs.user', 'retailers.user']);
+        $sales_manager->load(['user', 'fieldStaffs.user', 'fieldStaffs.salesTargets', 'retailers.user']);
 
-        $totalTarget = $sales_manager->fieldStaffs->sum('monthly_target');
-        
+        $totalTarget = 0;
         $totalAchieved = 0;
+        
         foreach ($sales_manager->fieldStaffs as $fs) {
-            $totalAchieved += \App\Models\RetailerOrder::where('fieldstaff_id', $fs->id)
-                ->whereMonth('created_at', date('m'))
-                ->whereYear('created_at', date('Y'))
-                ->whereNotIn('status', ['cancelled'])
-                ->sum('total_amount');
+            $targetObj = $fs->getCurrentMonthTarget();
+            $totalTarget += $targetObj ? $targetObj->amount : 0;
+            $totalAchieved += $fs->getCurrentMonthAchieved();
         }
 
         $sales_manager->setAttribute('monthly_target', round($totalTarget, 2));

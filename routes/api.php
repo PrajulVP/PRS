@@ -119,6 +119,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('retailer-orders/{id}', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'show']);
         Route::post('retailer-orders', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'store']);
         Route::post('retailer-orders/{id}/update-status', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'updateStatus']);
+        Route::post('retailer-orders/{id}/accept', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'acceptOrder']);
         Route::put('retailer-orders/{id}', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'update']);
 
         // Tracking & Actions

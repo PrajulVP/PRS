@@ -651,6 +651,34 @@
                             </div>
                         </div>
                     </div>
+                    ${type === 'fieldstaff' ? `
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-2 text-main"><i class="fa fa-bullseye me-1 text-primary"></i>Historical Targets</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th>Month</th>
+                                            <th>Target</th>
+                                            <th>Achieved</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${data.sales_targets && data.sales_targets.length > 0 ? data.sales_targets.map(t => {
+                                            let pct = t.amount > 0 ? ((t.achieved_amount / t.amount) * 100).toFixed(1) : 0;
+                                            let color = pct >= 100 ? 'text-success' : (pct >= 50 ? 'text-warning' : 'text-danger');
+                                            return `<tr>
+                                                <td class="fw-bold">${t.month} ${t.year}</td>
+                                                <td>₹${parseFloat(t.amount).toFixed(2)}</td>
+                                                <td><span class="${color} fw-bold">₹${parseFloat(t.achieved_amount).toFixed(2)}</span> (${pct}%)</td>
+                                            </tr>`;
+                                        }).join('') : '<tr><td colspan="3" class="text-center text-muted">No historical targets found</td></tr>'}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>` : ''}
                 `;
                 $('#quickViewContent').html(bodyHtml);
                 $('#quickViewModal').modal('show');

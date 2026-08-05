@@ -424,6 +424,12 @@
                                     <i class="fa fa-money me-1"></i>Expenses
                                 </button>
                             </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link fw-bold" id="fs-targets-tab" data-bs-toggle="tab"
+                                    data-bs-target="#fs-targets-panel" type="button" role="tab">
+                                    <i class="fa fa-bullseye me-1"></i>Targets
+                                </button>
+                            </li>
                         </ul>
                         <div class="tab-content border border-top-0 p-3" id="fsModalTabsContent"
                             style="border-radius: 0 0 0.5rem 0.5rem; background: var(--med-bg-body);">
@@ -592,6 +598,25 @@
                                         </thead>
                                         <tbody id="fs_view_expenses_body">
                                             <!-- Expenses injected via JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="fs-targets-panel" role="tabpanel">
+                                <h6>Historical Targets</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-sm">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Month</th>
+                                                <th>Target Amount</th>
+                                                <th>Achieved</th>
+                                                <th>Percentage</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="fs_view_targets_body">
+                                            <!-- Targets injected via JS -->
                                         </tbody>
                                     </table>
                                 </div>
@@ -999,6 +1024,20 @@
                             </tr>`;
                         }).join('') || '<tr><td colspan="4" class="text-center text-muted">No recent expenses</td></tr>';
                         $('#fs_view_expenses_body').html(expensesHtml);
+
+                        // Targets Tab
+                        let targetsHtml = fs.sales_targets?.map(target => {
+                            let percentage = target.amount > 0 ? ((target.achieved_amount / target.amount) * 100).toFixed(1) : 0;
+                            let badgeClass = percentage >= 100 ? 'bg-success' : (percentage >= 50 ? 'bg-warning' : 'bg-danger');
+                            
+                            return `<tr>
+                                <td class="fw-bold">${target.month} ${target.year}</td>
+                                <td>₹${parseFloat(target.amount).toFixed(2)}</td>
+                                <td>₹${parseFloat(target.achieved_amount).toFixed(2)}</td>
+                                <td><span class="badge ${badgeClass}">${percentage}%</span></td>
+                            </tr>`;
+                        }).join('') || '<tr><td colspan="4" class="text-center text-muted">No historical targets</td></tr>';
+                        $('#fs_view_targets_body').html(targetsHtml);
                     }
                 });
             });

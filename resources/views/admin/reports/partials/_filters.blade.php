@@ -85,12 +85,11 @@
         <div class="p-4 border-top">
             <div class="row g-3 align-items-end">
                 @if($showMonthPicker ?? false)
-                <!-- Month Picker (Targets Report) -->
                 <div class="col-xl-3 col-md-6">
                     <label class="form-label fw-bold small text-muted text-uppercase mb-2"><i class="fa fa-calendar me-1"></i> Analysis Month</label>
                     <div class="modern-range-container shadow-sm p-1">
                         <div class="range-field w-100">
-                            <input type="month" name="analysis_month" id="analysis_month" class="form-control border-0" value="{{ date('Y-m') }}">
+                            <input type="month" name="analysis_month" id="analysis_month" class="range-input" style="outline: none;" value="{{ date('Y-m') }}">
                         </div>
                     </div>
                 </div>

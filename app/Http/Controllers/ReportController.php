@@ -950,6 +950,11 @@ class ReportController extends Controller
             $month = $request->month ?: date('Y-m');
             $yearStr = substr($month, 0, 4);
             $monthStr = substr($month, 5, 2);
+            $monthName = date('F', mktime(0, 0, 0, $monthStr, 10));
+
+            $query->with(['salesTargets' => function($q) use ($yearStr, $monthName) {
+                $q->where('year', $yearStr)->where('month', $monthName);
+            }]);
 
             $query->withSum(['retailerOrders as achievement' => function($q) use ($yearStr, $monthStr) {
                 $q->whereNotIn('status', ['cancelled']);
@@ -959,10 +964,16 @@ class ReportController extends Controller
             return DataTables::of($query)
                 ->addColumn('name', fn($fs) => $fs->user->name ?? 'N/A')
                 ->addColumn('achievement_display', fn($fs) => '₹' . number_format($fs->achievement ?? 0, 2))
-                ->addColumn('target_display', fn($fs) => '₹' . number_format($fs->monthly_target ?? 0, 2))
+                ->addColumn('target_display', function($fs) {
+                    $targetObj = $fs->salesTargets->first();
+                    $targetAmount = $targetObj ? $targetObj->amount : $fs->monthly_target;
+                    return '₹' . number_format($targetAmount, 2);
+                })
                 ->addColumn('variance', function($fs) {
                     $achieved = $fs->achievement ?? 0;
-                    $target = $fs->monthly_target ?? 0;
+                    $targetObj = $fs->salesTargets->first();
+                    $target = $targetObj ? $targetObj->amount : $fs->monthly_target;
+                    
                     if ($target == 0) return ($achieved > 0) ? '<span class="text-success small">+100% (No Target)</span>' : '<span class="text-muted small">0%</span>';
                     
                     $percent = ($achieved / $target) * 100;
@@ -971,7 +982,9 @@ class ReportController extends Controller
                 })
                 ->addColumn('progress_bar', function($fs) {
                     $achieved = $fs->achievement ?? 0;
-                    $target = $fs->monthly_target ?? 0;
+                    $targetObj = $fs->salesTargets->first();
+                    $target = $targetObj ? $targetObj->amount : $fs->monthly_target;
+                    
                     if ($target == 0) $percent = ($achieved > 0) ? 100 : 0;
                     else $percent = min(($achieved / $target) * 100, 100);
                     
@@ -984,6 +997,82 @@ class ReportController extends Controller
 
         $salesManagers = SalesManager::with('user')->get();
         return view('admin.reports.targets', compact('salesManagers'));
+    }
+
+    public function managerTargetReports(Request $request)
+    {
+        $user = Auth::user();
+        abort_if(!$user->hasPermissionToCategory('performance_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
+        
+        if ($request->ajax()) {
+
+            $query = SalesManager::with(['user'])->select('sales_managers.*');
+            
+            $month = $request->month ?: date('Y-m');
+            $yearStr = substr($month, 0, 4);
+            $monthStr = substr($month, 5, 2);
+            $monthName = date('F', mktime(0, 0, 0, $monthStr, 10));
+
+            $query->with(['fieldStaffs' => function($q) use ($yearStr, $monthStr, $monthName) {
+                $q->with(['salesTargets' => function($sq) use ($yearStr, $monthName) {
+                    $sq->where('year', $yearStr)->where('month', $monthName);
+                }])->withSum(['retailerOrders as achievement' => function($oq) use ($yearStr, $monthStr) {
+                    $oq->whereNotIn('status', ['cancelled'])
+                       ->whereYear('created_at', $yearStr)->whereMonth('created_at', $monthStr);
+                }], 'total_amount');
+            }]);
+
+            return DataTables::of($query)
+                ->addColumn('name', fn($sm) => $sm->user->name ?? 'N/A')
+                ->addColumn('team_size', fn($sm) => $sm->fieldStaffs->count())
+                ->addColumn('target_display', function($sm) {
+                    $totalTarget = 0;
+                    foreach($sm->fieldStaffs as $fs) {
+                        $targetObj = $fs->salesTargets->first();
+                        $totalTarget += $targetObj ? $targetObj->amount : $fs->monthly_target;
+                    }
+                    return '₹' . number_format($totalTarget, 2);
+                })
+                ->addColumn('achievement_display', function($sm) {
+                    $totalAchieved = 0;
+                    foreach($sm->fieldStaffs as $fs) {
+                        $totalAchieved += $fs->achievement ?? 0;
+                    }
+                    return '₹' . number_format($totalAchieved, 2);
+                })
+                ->addColumn('variance', function($sm) {
+                    $achieved = 0;
+                    $target = 0;
+                    foreach($sm->fieldStaffs as $fs) {
+                        $achieved += $fs->achievement ?? 0;
+                        $targetObj = $fs->salesTargets->first();
+                        $target += $targetObj ? $targetObj->amount : $fs->monthly_target;
+                    }
+                    if ($target == 0) return ($achieved > 0) ? '<span class="text-success small">+100% (No Target)</span>' : '<span class="text-muted small">0%</span>';
+                    
+                    $percent = ($achieved / $target) * 100;
+                    $color = ($percent >= 100) ? 'text-success' : (($percent >= 70) ? 'text-warning' : 'text-danger');
+                    return "<span class='{$color} fw-bold'>" . number_format($percent, 1) . "%</span>";
+                })
+                ->addColumn('progress_bar', function($sm) {
+                    $achieved = 0;
+                    $target = 0;
+                    foreach($sm->fieldStaffs as $fs) {
+                        $achieved += $fs->achievement ?? 0;
+                        $targetObj = $fs->salesTargets->first();
+                        $target += $targetObj ? $targetObj->amount : $fs->monthly_target;
+                    }
+                    if ($target == 0) $percent = ($achieved > 0) ? 100 : 0;
+                    else $percent = min(($achieved / $target) * 100, 100);
+                    
+                    $color = ($percent >= 100) ? 'bg-success' : (($percent >= 70) ? 'bg-warning' : 'bg-danger');
+                    return '<div class="progress" style="height: 6px;"><div class="progress-bar ' . $color . '" role="progressbar" style="width: ' . $percent . '%"></div></div>';
+                })
+                ->rawColumns(['variance', 'progress_bar'])
+                ->make(true);
+        }
+
+        return view('admin.reports.manager_targets');
     }
 
     public function performanceReports()

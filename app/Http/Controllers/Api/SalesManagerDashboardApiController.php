@@ -493,7 +493,17 @@ class SalesManagerDashboardApiController extends Controller
                 $q->where('sales_manager_id', $salesManager->id)
                     ->orWhere('sales_manager_id', $salesManager->user_id);
             })
-            ->get();
+            ->get()
+            ->map(function ($staff) {
+                $targetObj = $staff->getCurrentMonthTarget();
+                $targetAmount = $targetObj ? $targetObj->amount : 0;
+                $achievedAmount = $staff->getCurrentMonthAchieved();
+                
+                $staff->target = round($targetAmount, 2);
+                $staff->achieved = round($achievedAmount, 2);
+                $staff->remaining = max(0, round($targetAmount - $achievedAmount, 2));
+                return $staff;
+            });
 
         return response()->json($fieldStaffs);
     }

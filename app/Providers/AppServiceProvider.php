@@ -32,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
         // Register Observers
         \App\Models\RetailerOrder::observe(\App\Observers\RetailerOrderObserver::class);
         \App\Models\DistributorOrder::observe(\App\Observers\DistributorOrderObserver::class);
+        \App\Models\FieldStaff::observe(\App\Observers\FieldStaffObserver::class);
 
         // Customize Password Reset Email
         ResetPassword::toMailUsing(function ($notifiable, $token) {

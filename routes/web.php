@@ -242,6 +242,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/monitoring', [ReportController::class, 'monitoring'])->name('monitoring');
             Route::get('/monitoring/data', [ReportController::class, 'getMonitoringData'])->name('monitoring.data');
             Route::get('/targets', [ReportController::class, 'targetReports'])->name('targets');
+            Route::get('/manager-targets', [ReportController::class, 'managerTargetReports'])->name('manager-targets');
             Route::get('/visits', [ReportController::class, 'visitReports'])->name('visits');
             Route::get('/outstanding', [ReportController::class, 'outstandingReports'])->name('outstanding');
             Route::get('/performance', [ReportController::class, 'performanceReports'])->name('performance');

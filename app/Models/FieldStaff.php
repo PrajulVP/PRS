@@ -78,4 +78,26 @@ class FieldStaff extends Model
     {
         return $this->hasMany(Rating::class, 'field_staff_id');
     }
+
+    public function getCurrentMonthTarget()
+    {
+        $currentMonth = date('F');
+        $currentYear = date('Y');
+
+        $salesTarget = $this->salesTargets()->firstOrCreate(
+            ['month' => $currentMonth, 'year' => $currentYear],
+            ['amount' => $this->monthly_target ?? 0, 'achieved_amount' => 0]
+        );
+
+        return $salesTarget;
+    }
+
+    public function getCurrentMonthAchieved()
+    {
+        return $this->retailerOrders()
+            ->whereMonth('created_at', date('m'))
+            ->whereYear('created_at', date('Y'))
+            ->whereNotIn('status', ['cancelled'])
+            ->sum('total_amount');
+    }
 }

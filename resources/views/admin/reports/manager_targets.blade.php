@@ -5,15 +5,15 @@
     <div class="page-title text-start mb-4">
         <div class="row m-0">
           <div class="col-sm-6 p-0">
-            <h4 class="mb-0 fw-bold">Target vs Achievement Analysis</h4>
-            <p class="text-muted mb-0 small">Monitoring personnel performance against assigned sales targets.</p>
+            <h4 class="mb-0 fw-bold">Manager Target vs Achievement Analysis</h4>
+            <p class="text-muted mb-0 small">Monitoring manager performance against assigned sales team targets.</p>
           </div>
           <div class="col-sm-6 p-0 text-end">
               <nav aria-label="breadcrumb">
                   <ol class="breadcrumb justify-content-end mb-0 bg-transparent">
                       <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
                       <li class="breadcrumb-item"><a href="{{ route('admin.reports.index') }}">Reports</a></li>
-                      <li class="breadcrumb-item active">Targets</li>
+                      <li class="breadcrumb-item active">Manager Targets</li>
                   </ol>
               </nav>
           </div>
@@ -23,7 +23,8 @@
     <!-- Filters Section -->
     @include('admin.reports.partials._filters', [
         'reportType' => 'targets',
-        'salesManagers' => $salesManagers,
+        'salesManagers' => [], // Unused for manager targets but passed for safety
+        'showManager' => false,
         'showDistributor' => false,
         'showRetailer' => false,
         'showStaff' => false,
@@ -37,7 +38,7 @@
         <div class="col-sm-12">
             <div class="card border-0 shadow-sm rounded-4">
                 <div class="card-header border-0 py-3">
-                    <h5 class="mb-0 fw-bold text-primary">Performance Pipeline</h5>
+                    <h5 class="mb-0 fw-bold text-primary">Manager Performance Pipeline</h5>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive px-4 pb-4">
@@ -45,9 +46,10 @@
                             <thead>
                                 <tr>
                                     <th style="width: 50px;">Rank</th>
-                                    <th>Field Personnel</th>
-                                    <th class="text-end">Target Amt</th>
-                                    <th class="text-end">Achievement</th>
+                                    <th>Sales Manager</th>
+                                    <th class="text-center">Team Size</th>
+                                    <th class="text-end">Total Target</th>
+                                    <th class="text-end">Total Achievement</th>
                                     <th class="text-center" style="width: 200px;">Progress</th>
                                     <th class="text-center">Variance</th>
                                 </tr>
@@ -76,10 +78,9 @@
             processing: true,
             serverSide: true,
             ajax: {
-                url: "{{ route('admin.reports.targets') }}",
+                url: "{{ route('admin.reports.manager-targets') }}",
                 data: function(d) {
                     d.month = $('#analysis_month').val();
-                    d.sales_manager_id = $('#sales_manager_id').val();
                 }
             },
             columns: [
@@ -95,6 +96,7 @@
                     name: 'user.name', 
                     className: 'fw-bold'
                 },
+                { data: 'team_size', name: 'team_size', className: 'text-center fw-bold', searchable: false },
                 { data: 'target_display', name: 'target_display', className: 'text-end', searchable: false },
                 { data: 'achievement_display', name: 'achievement_display', className: 'text-end fw-bold text-primary', searchable: false },
                 { data: 'progress_bar', name: 'progress_bar', className: 'no-export', orderable: false, searchable: false },
@@ -107,21 +109,21 @@
                     text: '<i class="fa fa-file-text-o me-1"></i> CSV',
                     className: 'btn btn-sm btn-csv-custom',
                     exportOptions: { columns: ':visible:not(.no-export)' },
-                    title: function() { return 'Target Achievement Report - ' + getFormattedMonth(); }
+                    title: function() { return 'Manager Target Achievement Report - ' + getFormattedMonth(); }
                 },
                 {
                     extend: 'excel',
                     text: '<i class="fa fa-file-excel-o me-1"></i> Excel',
                     className: 'btn btn-sm btn-excel-custom',
                     exportOptions: { columns: ':visible:not(.no-export)' },
-                    title: function() { return 'Target Achievement Report - ' + getFormattedMonth(); }
+                    title: function() { return 'Manager Target Achievement Report - ' + getFormattedMonth(); }
                 },
                 {
                     extend: 'pdf',
                     text: '<i class="fa fa-file-pdf-o me-1"></i> PDF',
                     className: 'btn btn-sm btn-pdf-custom',
                     exportOptions: { columns: ':visible:not(.no-export)' },
-                    title: function() { return 'Target Achievement Report - ' + getFormattedMonth(); }
+                    title: function() { return 'Manager Target Achievement Report - ' + getFormattedMonth(); }
                 },
                 {
                     extend: 'print',
@@ -130,7 +132,7 @@
                     orientation: 'landscape',
                     pageSize: 'A4',
                     exportOptions: { columns: ':visible:not(.no-export)' },
-                    title: function() { return 'Target Achievement Report - ' + getFormattedMonth(); },
+                    title: function() { return 'Manager Target Achievement Report - ' + getFormattedMonth(); },
                     customize: function (win) {
                         $(win.document.body).addClass('landscape');
                         $(win.document.body).find('.dataTables_paginate, .pagination, .dataTables_info').hide();
@@ -210,111 +212,15 @@
         color: #334155 !important;
     }
 
-    .dt-buttons .btn:hover {
-        transform: translateY(-1px) !important;
-        box-shadow: 0 6px 15px rgba(0, 73, 122, 0.08) !important;
-        background: #f8fafc !important;
-    }
+    .dt-buttons .btn-csv-custom { color: #1e3a8a !important; border-color: #bfdbfe !important; }
+    .dt-buttons .btn-excel-custom { color: #166534 !important; border-color: #bbf7d0 !important; }
+    .dt-buttons .btn-pdf-custom { color: #991b1b !important; border-color: #fecaca !important; }
+    .dt-buttons .btn-print-custom { color: #374151 !important; border-color: #e5e7eb !important; }
 
-    .dt-buttons .btn-csv-custom {
-        color: #475569 !important;
-        border-color: #e2e8f0 !important;
-    }
-    .dt-buttons .btn-csv-custom i {
-        color: #475569 !important;
-    }
-    .dt-buttons .btn-csv-custom:hover {
-        border-color: #94a3b8 !important;
-    }
-
-    .dt-buttons .btn-excel-custom {
-        color: #15803d !important;
-        border-color: rgba(21, 128, 61, 0.15) !important;
-    }
-    .dt-buttons .btn-excel-custom i {
-        color: #15803d !important;
-    }
-    .dt-buttons .btn-excel-custom:hover {
-        background: #f0fdf4 !important;
-        border-color: #15803d !important;
-    }
-
-    .dt-buttons .btn-pdf-custom {
-        color: #b91c1c !important;
-        border-color: rgba(185, 28, 28, 0.15) !important;
-    }
-    .dt-buttons .btn-pdf-custom i {
-        color: #b91c1c !important;
-    }
-    .dt-buttons .btn-pdf-custom:hover {
-        background: #fef2f2 !important;
-        border-color: #b91c1c !important;
-    }
-
-    .dt-buttons .btn-print-custom {
-        color: #1d4ed8 !important;
-        border-color: rgba(29, 78, 216, 0.15) !important;
-    }
-    .dt-buttons .btn-print-custom i {
-        color: #1d4ed8 !important;
-    }
-    .dt-buttons .btn-print-custom:hover {
-        background: #eff6ff !important;
-        border-color: #1d4ed8 !important;
-    }
-
-    body.dark-only .dt-buttons .btn {
-        background: #121b2a !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        color: #f8fafc !important;
-    }
-
-    body.dark-only .dt-buttons .btn:hover {
-        background: rgba(255, 255, 255, 0.03) !important;
-    }
-
-    body.dark-only .dt-buttons .btn-csv-custom {
-        color: #94a3b8 !important;
-    }
-    body.dark-only .dt-buttons .btn-csv-custom i {
-        color: #94a3b8 !important;
-    }
-
-    body.dark-only .dt-buttons .btn-excel-custom {
-        color: #4ade80 !important;
-        border-color: rgba(74, 222, 128, 0.1) !important;
-    }
-    body.dark-only .dt-buttons .btn-excel-custom i {
-        color: #4ade80 !important;
-    }
-    body.dark-only .dt-buttons .btn-excel-custom:hover {
-        background: rgba(74, 222, 128, 0.05) !important;
-        border-color: #4ade80 !important;
-    }
-
-    body.dark-only .dt-buttons .btn-pdf-custom {
-        color: #f87171 !important;
-        border-color: rgba(248, 113, 113, 0.1) !important;
-    }
-    body.dark-only .dt-buttons .btn-pdf-custom i {
-        color: #f87171 !important;
-    }
-    body.dark-only .dt-buttons .btn-pdf-custom:hover {
-        background: rgba(248, 113, 113, 0.05) !important;
-        border-color: #f87171 !important;
-    }
-
-    body.dark-only .dt-buttons .btn-print-custom {
-        color: #60a5fa !important;
-        border-color: rgba(96, 165, 250, 0.1) !important;
-    }
-    body.dark-only .dt-buttons .btn-print-custom i {
-        color: #60a5fa !important;
-    }
-    body.dark-only .dt-buttons .btn-print-custom:hover {
-        background: rgba(96, 165, 250, 0.05) !important;
-        border-color: #60a5fa !important;
-    }
+    .dt-buttons .btn-csv-custom:hover { background: #eff6ff !important; border-color: #93c5fd !important; transform: translateY(-2px) !important; box-shadow: 0 6px 15px rgba(59, 130, 246, 0.1) !important; }
+    .dt-buttons .btn-excel-custom:hover { background: #f0fdf4 !important; border-color: #86efac !important; transform: translateY(-2px) !important; box-shadow: 0 6px 15px rgba(34, 197, 94, 0.1) !important; }
+    .dt-buttons .btn-pdf-custom:hover { background: #fef2f2 !important; border-color: #fca5a5 !important; transform: translateY(-2px) !important; box-shadow: 0 6px 15px rgba(239, 68, 68, 0.1) !important; }
+    .dt-buttons .btn-print-custom:hover { background: #f9fafb !important; border-color: #d1d5db !important; transform: translateY(-2px) !important; box-shadow: 0 6px 15px rgba(107, 114, 128, 0.1) !important; }
 </style>
 @endpush
 @endsection

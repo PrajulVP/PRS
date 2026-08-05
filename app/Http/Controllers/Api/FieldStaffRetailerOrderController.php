@@ -11,7 +11,7 @@ use App\Traits\OneSignalNotifications;
 
 class FieldStaffRetailerOrderController extends Controller
 {
-    use \App\Traits\ConsolidatesFreeItems;
+    use \App\Traits\ConsolidatesFreeItems, \App\Traits\ProcessesOrderAcceptance, \App\Traits\CalculatesPrices;
     use HandlesNotifications, OneSignalNotifications;
 
     /**
@@ -833,6 +833,71 @@ class FieldStaffRetailerOrderController extends Controller
     {
         if (method_exists($this, 'deleteOrderNotifications')) {
             $this->deleteOrderNotifications($orderId, $type);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/field-staff/retailer-orders/{id}/accept",
+     *     summary="Accept/Approve a retailer order on behalf of the distributor",
+     *     tags={"Field Staff Retailer Orders"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(property="invoice", type="string", format="binary", description="Invoice file (optional if already uploaded)"),
+     *                 @OA\Property(property="payment_status", type="string", enum={"pending","paid"})
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Order accepted successfully"),
+     *     @OA\Response(response=422, description="Validation or stock error")
+     * )
+     */
+    public function acceptOrder(Request $request, $id)
+    {
+        $user = Auth::user();
+        if (!$user->hasRole('fieldstaff')) return response()->json(['error' => 'Unauthorized'], 403);
+
+        $fieldStaffId = $user->fieldStaff->id;
+        $retailerOrder = RetailerOrder::whereHas('retailer', function ($qr) use ($fieldStaffId) {
+            $qr->where('field_staff_id', $fieldStaffId);
+        })->findOrFail($id);
+
+        if ($retailerOrder->status !== 'processing') {
+            return response()->json(['error' => 'Order must be in processing status to be approved.'], 400);
+        }
+
+        $request->validate([
+            'invoice' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'payment_status' => 'nullable|string|in:pending,paid',
+        ]);
+
+        if (!$retailerOrder->invoice_path && !$request->hasFile('invoice')) {
+            return response()->json(['error' => 'Invoice file is required because it hasn\'t been uploaded yet.'], 422);
+        }
+
+        $invoicePath = $retailerOrder->invoice_path;
+        if ($request->hasFile('invoice')) {
+            $file = $request->file('invoice');
+            $filename = 'invoice_fs_' . $retailerOrder->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $invoicePath = $file->storeAs('retailer_invoices', $filename, 'public');
+        }
+
+        try {
+            $result = $this->processOrderAcceptance(
+                $retailerOrder,
+                null,
+                $request->payment_status,
+                $invoicePath
+            );
+
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
         }
     }
 }
