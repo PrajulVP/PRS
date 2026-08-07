@@ -171,4 +171,76 @@ class FieldStaffManagementController extends Controller
 
         return back()->with('success', 'Leave status updated successfully.');
     }
+
+    /**
+     * Display targets index for staff monitoring.
+     */
+    public function targetsIndex(Request $request)
+    {
+        $month = $request->month ?: date('Y-m');
+        $yearStr = substr($month, 0, 4);
+        $monthStr = substr($month, 5, 2);
+        $monthName = date('F', mktime(0, 0, 0, $monthStr, 10));
+
+        $query = \App\Models\FieldStaff::with(['user', 'salesManager.user', 'salesTargets' => function($q) use ($yearStr, $monthName) {
+            $q->where('year', $yearStr)->where('month', $monthName);
+        }]);
+
+        if (Auth::user()->hasRole('salesmanager')) {
+            $query->where('sales_manager_id', Auth::user()->salesManager->id);
+        } elseif ($request->filled('sales_manager_id')) {
+            $query->where('sales_manager_id', $request->sales_manager_id);
+        }
+
+        $fieldStaffs = $query->get();
+
+        foreach ($fieldStaffs as $fs) {
+            if ($fs->salesTargets->isEmpty()) {
+                $latest = \App\Models\SalesTarget::where('field_staff_id', $fs->id)->latest('id')->first();
+                $fs->default_target_amount = $latest ? $latest->amount : 0;
+            } else {
+                $fs->default_target_amount = $fs->salesTargets->first()->amount;
+            }
+        }
+
+        $salesManagers = \App\Models\SalesManager::with('user')->whereHas('user', function($q) {
+            $q->where('status', 'active');
+        })->get();
+
+        return view('admin.fieldstaff_management.targets', compact('fieldStaffs', 'salesManagers', 'month', 'yearStr', 'monthName'));
+    }
+
+    /**
+     * Save targets.
+     */
+    public function targetsSave(Request $request)
+    {
+        $request->validate([
+            'month' => 'required',
+            'targets' => 'required|array',
+            'targets.*' => 'nullable|numeric|min:0'
+        ]);
+
+        $month = $request->month;
+        $yearStr = substr($month, 0, 4);
+        $monthStr = substr($month, 5, 2);
+        $monthName = date('F', mktime(0, 0, 0, $monthStr, 10));
+
+        foreach ($request->targets as $field_staff_id => $amount) {
+            if ($amount === null || $amount === '') continue;
+
+            \App\Models\SalesTarget::updateOrCreate(
+                [
+                    'field_staff_id' => $field_staff_id,
+                    'month' => $monthName,
+                    'year' => $yearStr
+                ],
+                [
+                    'amount' => $amount
+                ]
+            );
+        }
+
+        return response()->json(['success' => true, 'message' => 'Targets saved successfully.']);
+    }
 }

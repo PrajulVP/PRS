@@ -956,23 +956,28 @@ class ReportController extends Controller
                 $q->where('year', $yearStr)->where('month', $monthName);
             }]);
 
-            $query->withSum(['retailerOrders as achievement' => function($q) use ($yearStr, $monthStr) {
-                $q->whereNotIn('status', ['cancelled']);
-                $q->whereYear('created_at', $yearStr)->whereMonth('created_at', $monthStr);
-            }], 'total_amount');
-
             return DataTables::of($query)
                 ->addColumn('name', fn($fs) => $fs->user->name ?? 'N/A')
                 ->addColumn('achievement_display', fn($fs) => '₹' . number_format($fs->achievement ?? 0, 2))
                 ->addColumn('target_display', function($fs) {
                     $targetObj = $fs->salesTargets->first();
-                    $targetAmount = $targetObj ? $targetObj->amount : $fs->monthly_target;
+                    if ($targetObj) {
+                        $targetAmount = $targetObj->amount;
+                    } else {
+                        $latest = \App\Models\SalesTarget::where('field_staff_id', $fs->id)->latest('id')->first();
+                        $targetAmount = $latest ? $latest->amount : 0;
+                    }
                     return '₹' . number_format($targetAmount, 2);
                 })
                 ->addColumn('variance', function($fs) {
                     $achieved = $fs->achievement ?? 0;
                     $targetObj = $fs->salesTargets->first();
-                    $target = $targetObj ? $targetObj->amount : $fs->monthly_target;
+                    if ($targetObj) {
+                        $target = $targetObj->amount;
+                    } else {
+                        $latest = \App\Models\SalesTarget::where('field_staff_id', $fs->id)->latest('id')->first();
+                        $target = $latest ? $latest->amount : 0;
+                    }
                     
                     if ($target == 0) return ($achieved > 0) ? '<span class="text-success small">+100% (No Target)</span>' : '<span class="text-muted small">0%</span>';
                     
@@ -980,10 +985,15 @@ class ReportController extends Controller
                     $color = ($percent >= 100) ? 'text-success' : (($percent >= 70) ? 'text-warning' : 'text-danger');
                     return "<span class='{$color} fw-bold'>" . number_format($percent, 1) . "%</span>";
                 })
-                ->addColumn('progress_bar', function($fs) {
-                    $achieved = $fs->achievement ?? 0;
+                ->addColumn('progress_bar', function($fs) use ($monthStr, $yearStr) {
+                    $achieved = $fs->getAchievedAmountForMonth($monthStr, $yearStr);
                     $targetObj = $fs->salesTargets->first();
-                    $target = $targetObj ? $targetObj->amount : $fs->monthly_target;
+                    if ($targetObj) {
+                        $target = $targetObj->amount;
+                    } else {
+                        $latest = \App\Models\SalesTarget::where('field_staff_id', $fs->id)->latest('id')->first();
+                        $target = $latest ? $latest->amount : 0;
+                    }
                     
                     if ($target == 0) $percent = ($achieved > 0) ? 100 : 0;
                     else $percent = min(($achieved / $target) * 100, 100);
@@ -1016,10 +1026,7 @@ class ReportController extends Controller
             $query->with(['fieldStaffs' => function($q) use ($yearStr, $monthStr, $monthName) {
                 $q->with(['salesTargets' => function($sq) use ($yearStr, $monthName) {
                     $sq->where('year', $yearStr)->where('month', $monthName);
-                }])->withSum(['retailerOrders as achievement' => function($oq) use ($yearStr, $monthStr) {
-                    $oq->whereNotIn('status', ['cancelled'])
-                       ->whereYear('created_at', $yearStr)->whereMonth('created_at', $monthStr);
-                }], 'total_amount');
+                }]);
             }]);
 
             return DataTables::of($query)
@@ -1029,24 +1036,34 @@ class ReportController extends Controller
                     $totalTarget = 0;
                     foreach($sm->fieldStaffs as $fs) {
                         $targetObj = $fs->salesTargets->first();
-                        $totalTarget += $targetObj ? $targetObj->amount : $fs->monthly_target;
+                        if ($targetObj) {
+                            $totalTarget += $targetObj->amount;
+                        } else {
+                            $latest = \App\Models\SalesTarget::where('field_staff_id', $fs->id)->latest('id')->first();
+                            $totalTarget += $latest ? $latest->amount : 0;
+                        }
                     }
                     return '₹' . number_format($totalTarget, 2);
                 })
-                ->addColumn('achievement_display', function($sm) {
+                ->addColumn('achievement_display', function($sm) use ($monthStr, $yearStr) {
                     $totalAchieved = 0;
                     foreach($sm->fieldStaffs as $fs) {
-                        $totalAchieved += $fs->achievement ?? 0;
+                        $totalAchieved += $fs->getAchievedAmountForMonth($monthStr, $yearStr);
                     }
                     return '₹' . number_format($totalAchieved, 2);
                 })
-                ->addColumn('variance', function($sm) {
+                ->addColumn('variance', function($sm) use ($monthStr, $yearStr) {
                     $achieved = 0;
                     $target = 0;
                     foreach($sm->fieldStaffs as $fs) {
-                        $achieved += $fs->achievement ?? 0;
+                        $achieved += $fs->getAchievedAmountForMonth($monthStr, $yearStr);
                         $targetObj = $fs->salesTargets->first();
-                        $target += $targetObj ? $targetObj->amount : $fs->monthly_target;
+                        if ($targetObj) {
+                            $target += $targetObj->amount;
+                        } else {
+                            $latest = \App\Models\SalesTarget::where('field_staff_id', $fs->id)->latest('id')->first();
+                            $target += $latest ? $latest->amount : 0;
+                        }
                     }
                     if ($target == 0) return ($achieved > 0) ? '<span class="text-success small">+100% (No Target)</span>' : '<span class="text-muted small">0%</span>';
                     
@@ -1054,13 +1071,18 @@ class ReportController extends Controller
                     $color = ($percent >= 100) ? 'text-success' : (($percent >= 70) ? 'text-warning' : 'text-danger');
                     return "<span class='{$color} fw-bold'>" . number_format($percent, 1) . "%</span>";
                 })
-                ->addColumn('progress_bar', function($sm) {
+                ->addColumn('progress_bar', function($sm) use ($monthStr, $yearStr) {
                     $achieved = 0;
                     $target = 0;
                     foreach($sm->fieldStaffs as $fs) {
-                        $achieved += $fs->achievement ?? 0;
+                        $achieved += $fs->getAchievedAmountForMonth($monthStr, $yearStr);
                         $targetObj = $fs->salesTargets->first();
-                        $target += $targetObj ? $targetObj->amount : $fs->monthly_target;
+                        if ($targetObj) {
+                            $target += $targetObj->amount;
+                        } else {
+                            $latest = \App\Models\SalesTarget::where('field_staff_id', $fs->id)->latest('id')->first();
+                            $target += $latest ? $latest->amount : 0;
+                        }
                     }
                     if ($target == 0) $percent = ($achieved > 0) ? 100 : 0;
                     else $percent = min(($achieved / $target) * 100, 100);

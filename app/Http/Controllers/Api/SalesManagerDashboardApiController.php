@@ -30,6 +30,10 @@ class SalesManagerDashboardApiController extends Controller
      *         response=200,
      *         description="Dashboard data for the logged-in Sales Manager",
      *         @OA\JsonContent(
+     *             @OA\Property(property="period", type="string"),
+     *             @OA\Property(property="target", type="number", format="float"),
+     *             @OA\Property(property="achieved", type="number", format="float"),
+     *             @OA\Property(property="remaining", type="number", format="float"),
      *             @OA\Property(property="retailer_order_stats", type="object"),
      *             @OA\Property(property="distributor_order_stats", type="object"),
      *             @OA\Property(property="counts", type="object"),
@@ -125,8 +129,37 @@ class SalesManagerDashboardApiController extends Controller
             ->groupBy('fieldstaff_id')->orderByDesc('total_orders')->take(5)
             ->with('fieldStaff.user')->get();
 
+        // Aggregate targets and achievements
+        $monthStr = $startDate->format('m');
+        $yearStr = $startDate->format('Y');
+
+        $totalTarget = 0;
+        $totalAchieved = 0;
+        
+        $fieldStaffs = \App\Models\FieldStaff::whereIn('id', $fieldStaffIds)->get();
+        foreach ($fieldStaffs as $fs) {
+            // Achievement
+            $totalAchieved += $fs->getAchievedAmountForMonth($monthStr, $yearStr);
+            
+            // Target
+            $targetObj = $fs->salesTargets()
+                ->where('year', $yearStr)
+                ->where('month', $startDate->format('F'))
+                ->first();
+                
+            if ($targetObj) {
+                $totalTarget += $targetObj->amount;
+            } else {
+                $latest = \App\Models\SalesTarget::where('field_staff_id', $fs->id)->latest('id')->first();
+                $totalTarget += $latest ? $latest->amount : 0;
+            }
+        }
+
         return response()->json([
             'period' => $period,
+            'target' => round($totalTarget, 2),
+            'achieved' => round($totalAchieved, 2),
+            'remaining' => max(0, round($totalTarget - $totalAchieved, 2)),
             'retailer_order_stats' => $retailerOrderStats,
             'distributor_order_stats' => $distributorOrderStats,
             'counts' => $counts,

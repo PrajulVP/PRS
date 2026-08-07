@@ -27,7 +27,17 @@ class RetailerDashboardApiController extends Controller
      *             @OA\Property(property="rejected_orders", type="integer", example=2),
      *             @OA\Property(property="total_loyalty_points", type="string", example="500"),
      *             @OA\Property(property="credit_balance", type="string", example="1500.50"),
-     *             @OA\Property(property="credit_limit", type="string", example="5000.00")
+     *             @OA\Property(property="credit_limit", type="string", example="5000.00"),
+     *             @OA\Property(property="upcoming_rewards", type="array", @OA\Items(
+     *                 @OA\Property(property="brand", type="string", example="Brand X"),
+     *                 @OA\Property(property="current_total", type="number", example=250),
+     *                 @OA\Property(property="next_target", type="number", example=500),
+     *                 @OA\Property(property="next_reward", type="string", example="Gift Card"),
+     *                 @OA\Property(property="achieved_rewards", type="array", @OA\Items(
+     *                     @OA\Property(property="threshold", type="number", example=100),
+     *                     @OA\Property(property="reward", type="string", example="Coupon")
+     *                 ))
+     *             ))
      *         )
      *     ),
      *     @OA\Response(response=403, description="Unauthorized")
@@ -79,6 +89,61 @@ class RetailerDashboardApiController extends Controller
             ->where('status', RetailerOrder::STATUS_DELIVERED)
             ->sum('loyalty_points_earned');
 
+        // Upcoming Rewards Logic based on brand totals (PTR amount)
+        // Build loyalty rules collection grouped by brand (type)
+        $loyaltyRulesCollection = \App\Models\LoyaltySlab::orderBy('type')
+            ->orderBy('min_points')
+            ->get()
+            ->groupBy('type');
+
+        // Get total PTR per brand for this retailer
+        $brandTotals = \Illuminate\Support\Facades\DB::table('retailer_order_items')
+            ->join('retailer_orders', 'retailer_order_items.retailer_order_id', '=', 'retailer_orders.id')
+            ->join('products', 'retailer_order_items.product_id', '=', 'products.id')
+            ->where('retailer_orders.retailer_id', $retailer->id)
+            ->where('retailer_orders.status', RetailerOrder::STATUS_DELIVERED)
+            ->select('products.brand', \Illuminate\Support\Facades\DB::raw('SUM(retailer_order_items.unit_price * retailer_order_items.quantity) as total_ptr'))
+            ->groupBy('products.brand')
+            ->pluck('total_ptr', 'brand')
+            ->toArray();
+
+        // Get already redeemed slab ids for this retailer
+        $redeemedSlabIds = \Illuminate\Support\Facades\DB::table('loyalty_redemptions')
+            ->where('retailer_id', $retailer->id)
+            ->pluck('loyalty_slab_id')
+            ->toArray();
+
+        $upcomingRewards = [];
+        foreach ($loyaltyRulesCollection as $brand => $rules) {
+            $currentTotal = $brandTotals[$brand] ?? 0;
+            $achievedRules = [];
+            $nextRule = null;
+
+            foreach ($rules as $rule) {
+                if ($currentTotal >= $rule->min_points) {
+                    $achievedRules[] = [
+                        'slab_id' => $rule->id,
+                        'threshold' => $rule->min_points,
+                        'reward' => $rule->gift_name,
+                        'is_redeemed' => in_array($rule->id, $redeemedSlabIds),
+                    ];
+                } else {
+                    if (!$nextRule) {
+                        $nextRule = $rule;
+                    }
+                }
+            }
+
+            $upcomingRewards[] = [
+                'brand' => $brand,
+                'current_total' => $currentTotal,
+                'next_target' => $nextRule ? $nextRule->min_points : null,
+                'next_reward' => $nextRule ? $nextRule->gift_name : null,
+                'achieved_rewards' => $achievedRules,
+            ];
+        }
+
+
         return response()->json([
             'period' => $period,
             'total_orders' => $totalOrders,
@@ -91,6 +156,7 @@ class RetailerDashboardApiController extends Controller
             'total_loyalty_points' => (string)$totalLoyaltyPoints,
             'credit_balance' => (string)($user->retailer->credit_balance ?? 0),
             'credit_limit' => (string)($user->retailer->credit_limit ?? 0),
+            'upcoming_rewards' => $upcomingRewards,
         ]);
     }
 
@@ -149,62 +215,56 @@ class RetailerDashboardApiController extends Controller
             ->sum('loyalty_points_earned');
 
         // Upcoming Rewards Logic based on brand totals
-        $slabs = \App\Models\LoyaltySlab::orderBy('min_points')->get();
-        $loyaltyRules = [];
-        foreach ($slabs as $slab) {
-            $brand = $slab->type;
-            if (!isset($loyaltyRules[$brand])) {
-                $loyaltyRules[$brand] = [];
-            }
-            $loyaltyRules[$brand][] = [
-                'threshold' => $slab->min_points,
-                'reward' => $slab->gift_name
-            ];
-        }
+        $loyaltyRulesCollection = \App\Models\LoyaltySlab::orderBy('type')
+            ->orderBy('min_points')
+            ->get()
+            ->groupBy('type');
+
+        // Get total PTR per brand for this retailer
+        $brandTotals = \Illuminate\Support\Facades\DB::table('retailer_order_items')
+            ->join('retailer_orders', 'retailer_order_items.retailer_order_id', '=', 'retailer_orders.id')
+            ->join('products', 'retailer_order_items.product_id', '=', 'products.id')
+            ->where('retailer_orders.retailer_id', $retailer->id)
+            ->where('retailer_orders.status', RetailerOrder::STATUS_DELIVERED)
+            ->select('products.brand', \Illuminate\Support\Facades\DB::raw('SUM(retailer_order_items.unit_price * retailer_order_items.quantity) as total_ptr'))
+            ->groupBy('products.brand')
+            ->pluck('total_ptr', 'brand')
+            ->toArray();
+
+        // Get already redeemed slab ids for this retailer
+        $redeemedSlabIds = \Illuminate\Support\Facades\DB::table('loyalty_redemptions')
+            ->where('retailer_id', $retailer->id)
+            ->pluck('loyalty_slab_id')
+            ->toArray();
 
         $upcomingRewards = [];
+        foreach ($loyaltyRulesCollection as $brand => $rules) {
+            $currentTotal = $brandTotals[$brand] ?? 0;
+            $achievedRules = [];
+            $nextRule = null;
 
-        if (!empty($loyaltyRules)) {
-            $deliveredItems = \App\Models\RetailerOrderItem::whereHas('retailerOrder', function($q) use ($retailer) {
-                $q->where('retailer_id', $retailer->id)->where('status', RetailerOrder::STATUS_DELIVERED);
-            })->with('product')->get();
-
-            $brandTotals = [];
-            foreach ($deliveredItems as $item) {
-                if ($item->product && $item->product->brand) {
-                    $brand = $item->product->brand;
-                    if (!isset($brandTotals[$brand])) {
-                        $brandTotals[$brand] = 0;
-                    }
-                    $brandTotals[$brand] += $item->total_amount;
-                }
-            }
-
-            foreach ($loyaltyRules as $brand => $rules) {
-                if (empty($rules)) continue;
-                
-                usort($rules, function($a, $b) { return $a['threshold'] <=> $b['threshold']; });
-                $currentTotal = $brandTotals[$brand] ?? 0;
-                
-                $nextRule = null;
-                $achievedRules = [];
-                foreach ($rules as $rule) {
-                    if ($currentTotal < $rule['threshold']) {
+            foreach ($rules as $rule) {
+                if ($currentTotal >= $rule->min_points) {
+                    $achievedRules[] = [
+                        'slab_id' => $rule->id,
+                        'threshold' => $rule->min_points,
+                        'reward' => $rule->gift_name,
+                        'is_redeemed' => in_array($rule->id, $redeemedSlabIds),
+                    ];
+                } else {
+                    if (!$nextRule) {
                         $nextRule = $rule;
-                        break;
-                    } else {
-                        $achievedRules[] = $rule;
                     }
                 }
-                
-                $upcomingRewards[] = [
-                    'brand' => $brand,
-                    'current_total' => $currentTotal,
-                    'next_target' => $nextRule ? $nextRule['threshold'] : null,
-                    'next_reward' => $nextRule ? $nextRule['reward'] : null,
-                    'achieved_rewards' => $achievedRules
-                ];
             }
+
+            $upcomingRewards[] = [
+                'brand' => $brand,
+                'current_total' => $currentTotal,
+                'next_target' => $nextRule ? $nextRule->min_points : null,
+                'next_reward' => $nextRule ? $nextRule->gift_name : null,
+                'achieved_rewards' => $achievedRules,
+            ];
         }
 
         return response()->json([

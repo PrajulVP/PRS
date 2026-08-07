@@ -150,6 +150,7 @@ class DashboardController extends Controller
         $isTopRetailer = false;
         $data_extra = [];
         $brandSalesDistribution = $this->getBrandSalesDistribution($startDate, $endDate, $user);
+        $upcomingRewards = [];
 
         // Role-Based Filtering
         if ($user->hasAnyRole(['superadmin', 'admin'])) {
@@ -341,6 +342,59 @@ class DashboardController extends Controller
                 
                 $myRank = $localityRank->search(fn($r) => $r->id === $retailer->id) + 1;
                 $totalInLocality = $localityRank->count();
+
+                // Upcoming Rewards Logic based on brand totals (PTR amount)
+                $slabs = \App\Models\LoyaltySlab::orderBy('min_points')->get();
+                $loyaltyRules = [];
+                foreach ($slabs as $slab) {
+                    $brand = $slab->type;
+                    if (!isset($loyaltyRules[$brand])) {
+                        $loyaltyRules[$brand] = [];
+                    }
+                    $loyaltyRules[$brand][] = [
+                        'threshold' => $slab->min_points,
+                        'reward' => $slab->gift_name
+                    ];
+                }
+
+                $upcomingRewards = [];
+                if (!empty($loyaltyRules)) {
+                    $brandTotals = \Illuminate\Support\Facades\DB::table('retailer_order_items')
+                        ->join('retailer_orders', 'retailer_order_items.retailer_order_id', '=', 'retailer_orders.id')
+                        ->join('products', 'retailer_order_items.product_id', '=', 'products.id')
+                        ->where('retailer_orders.retailer_id', $retailer->id)
+                        ->where('retailer_orders.status', \App\Models\RetailerOrder::STATUS_DELIVERED)
+                        ->select('products.brand', \Illuminate\Support\Facades\DB::raw('SUM(retailer_order_items.unit_price * retailer_order_items.quantity) as total_ptr'))
+                        ->groupBy('products.brand')
+                        ->pluck('total_ptr', 'brand')
+                        ->toArray();
+
+                    foreach ($loyaltyRules as $brand => $rules) {
+                        if (empty($rules)) continue;
+                        
+                        usort($rules, function($a, $b) { return $a['threshold'] <=> $b['threshold']; });
+                        $currentTotal = $brandTotals[$brand] ?? 0;
+                        
+                        $nextRule = null;
+                        $achievedRules = [];
+                        foreach ($rules as $rule) {
+                            if ($currentTotal < $rule['threshold']) {
+                                $nextRule = $rule;
+                                break;
+                            } else {
+                                $achievedRules[] = $rule;
+                            }
+                        }
+                        
+                        $upcomingRewards[] = [
+                            'brand' => $brand,
+                            'current_total' => $currentTotal,
+                            'next_target' => $nextRule ? $nextRule['threshold'] : null,
+                            'next_reward' => $nextRule ? $nextRule['reward'] : null,
+                            'achieved_rewards' => $achievedRules
+                        ];
+                    }
+                }
             }
         }
 
@@ -451,7 +505,8 @@ class DashboardController extends Controller
             'totalLoyaltyPoints',
             'data_extra',
             'brandSalesDistribution',
-            'topAreas'
+            'topAreas',
+            'upcomingRewards'
         );
     }
 

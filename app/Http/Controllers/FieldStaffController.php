@@ -120,7 +120,7 @@ class FieldStaffController extends Controller
         $todaysDistance = \App\Models\LocationLog::calculateDailyDistance($field_staff->user_id, date('Y-m-d'));
         
         // Ensure the current month target is initialized
-        $field_staff->getCurrentMonthTarget();
+        $currentMonthTarget = $field_staff->getCurrentMonthTarget();
         // Refresh salesTargets after ensuring current month is initialized
         $field_staff->load(['salesTargets' => function ($q) {
             $q->orderBy('year', 'desc')->orderByRaw("STR_TO_DATE(CONCAT('1 ', month, ' ', year), '%d %M %Y') DESC");
@@ -132,6 +132,7 @@ class FieldStaffController extends Controller
         $field_staff->setAttribute('latest_location', $latestLocation);
         $field_staff->setAttribute('todays_distance_km', round($todaysDistance, 2));
         $field_staff->setAttribute('achieved_target', round($achievedTarget, 2));
+        $field_staff->setAttribute('current_month_target_amount', $currentMonthTarget ? $currentMonthTarget->amount : 0);
 
         return response()->json([
             'success' => true,
@@ -179,7 +180,6 @@ class FieldStaffController extends Controller
             'sales_manager_id' => 'nullable|exists:sales_managers,id',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
-            'monthly_target' => 'nullable|numeric|min:0',
             'contact_no' => ['required', 'digits:10', 'regex:/^[1-9][0-9]{9}$/'],
             'address' => ['required', 'string'],
         ], [
@@ -275,7 +275,6 @@ class FieldStaffController extends Controller
             'sales_manager_id' => 'nullable|exists:sales_managers,id',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
-            'monthly_target' => 'nullable|numeric|min:0',
             'contact_no' => ['required', 'digits:10', 'regex:/^[1-9][0-9]{9}$/'],
             'address' => ['required', 'string'],
         ], [

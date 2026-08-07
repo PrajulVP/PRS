@@ -2690,6 +2690,62 @@
                 ]
             }
         },
+        "/api/field-staff/retailer-orders/{id}/accept": {
+            "post": {
+                "tags": [
+                    "Field Staff Retailer Orders"
+                ],
+                "summary": "Accept/Approve a retailer order on behalf of the distributor",
+                "operationId": "b20b497bcca39a1b3e3582c8744c798b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "invoice": {
+                                        "description": "Invoice file (optional if already uploaded)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "payment_status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "paid"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Order accepted successfully"
+                    },
+                    "422": {
+                        "description": "Validation or stock error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/distributor/inventory": {
             "get": {
                 "tags": [
@@ -4061,6 +4117,46 @@
                                         "credit_limit": {
                                             "type": "string",
                                             "example": "5000.00"
+                                        },
+                                        "upcoming_rewards": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "brand": {
+                                                        "type": "string",
+                                                        "example": "Brand X"
+                                                    },
+                                                    "current_total": {
+                                                        "type": "number",
+                                                        "example": 250
+                                                    },
+                                                    "next_target": {
+                                                        "type": "number",
+                                                        "example": 500
+                                                    },
+                                                    "next_reward": {
+                                                        "type": "string",
+                                                        "example": "Gift Card"
+                                                    },
+                                                    "achieved_rewards": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "threshold": {
+                                                                    "type": "number",
+                                                                    "example": 100
+                                                                },
+                                                                "reward": {
+                                                                    "type": "string",
+                                                                    "example": "Coupon"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
                                         }
                                     },
                                     "type": "object"
@@ -4881,6 +4977,21 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "period": {
+                                            "type": "string"
+                                        },
+                                        "target": {
+                                            "type": "number",
+                                            "format": "float"
+                                        },
+                                        "achieved": {
+                                            "type": "number",
+                                            "format": "float"
+                                        },
+                                        "remaining": {
+                                            "type": "number",
+                                            "format": "float"
+                                        },
                                         "retailer_order_stats": {
                                             "type": "object"
                                         },

@@ -238,6 +238,42 @@
     <div class="container-fluid">
         <div class="row">
             @if(!$selectedRetailer)
+            <!-- TOP ACHIEVERS SHOWCASE -->
+            @if(isset($topAchievers) && $topAchievers->count() > 0)
+            <div class="col-12 mb-4 entrance-fade">
+                <div class="d-flex align-items-center mb-3">
+                    <h5 class="fw-800 text-primary mb-0"><i class="fa fa-trophy me-2 text-warning"></i>Top Performers</h5>
+                    <div class="ms-3 flex-grow-1 border-bottom border-light"></div>
+                </div>
+                <div class="row g-3">
+                    @foreach($topAchievers as $index => $achiever)
+                        <div class="col-xl-3 col-md-6">
+                            <div class="card border-0 shadow-sm h-100" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 16px; border: 1px solid var(--med-primary);">
+                                <div class="card-body p-3 text-center position-relative overflow-hidden">
+                                    @if($index === 0)
+                                        <div class="position-absolute top-0 end-0 pt-2 pe-3">
+                                            <i class="fa fa-crown text-warning fs-4" style="filter: drop-shadow(0 2px 4px rgba(218,165,32,0.4));"></i>
+                                        </div>
+                                    @endif
+                                    <div class="d-flex justify-content-center mb-2">
+                                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center fw-800 text-primary" style="width: 50px; height: 50px; font-size: 20px; border: 2px solid var(--med-primary);">
+                                            {{ substr($achiever->shop_name, 0, 1) }}
+                                        </div>
+                                    </div>
+                                    <h6 class="fw-bold text-primary mb-1 text-truncate" title="{{ $achiever->shop_name }}">{{ $achiever->shop_name }}</h6>
+                                    <p class="text-muted small mb-2">{{ $achiever->district->name ?? 'Unknown Region' }}</p>
+                                    <div class="bg-glass-primary rounded-pill py-1 px-3 d-inline-block">
+                                        <span class="fw-800 text-primary">{{ number_format($achiever->loyalty_points, 0) }} LP</span>
+                                    </div>
+                                    <a href="{{ route('admin.loyalty-points.detail', $achiever->id) }}" class="stretched-link"></a>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
             <!-- COMPACT GLOBAL STATS BAR -->
             <div class="col-12 mb-4 entrance-fade">
                 <div class="card border-0 shadow-sm" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 16px; border: 1px solid rgba(0, 73, 122, 0.05);">
@@ -501,6 +537,22 @@
                         </div>
                     </div>
                 </div>        
+
+                <!-- INLINE BRAND REWARDS PROGRESS -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card shadow-sm border-0" style="border-radius: 20px; background: var(--med-bg-card);">
+                            <div class="card-header loyalty-card-header py-3 px-4 d-flex justify-content-between align-items-center bg-light" style="border-radius: 20px 20px 0 0;">
+                                <h5 class="fw-bold mb-0 heading-theme"><i class="fa fa-gift me-2 text-primary"></i>Brand Rewards Progress</h5>
+                            </div>
+                            <div class="card-body p-4 bg-light" style="border-radius: 0 0 20px 20px;">
+                                <div class="row g-3">
+                                    @include('admin.loyalty_points.partials.rewards_progress', ['retailer' => $selectedRetailer, 'upcomingRewards' => $upcomingRewards])
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
 
                     <!-- Transaction Logs -->

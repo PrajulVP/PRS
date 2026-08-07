@@ -118,17 +118,10 @@ class FieldStaffDashboardApiController extends Controller
                 ->where('year', $year)
                 ->value('amount') ?? 0;
 
-            $staffAchievementValue = RetailerOrder::join('retailer_order_items', 'retailer_orders.id', '=', 'retailer_order_items.retailer_order_id')
-                ->where(function ($q) use ($staff) {
-                    $q->where('retailer_orders.fieldstaff_id', $staff->id)
-                        ->orWhereHas('retailer', function ($qr) use ($staff) {
-                            $qr->where('field_staff_id', $staff->id);
-                        });
-                })
-                ->where('retailer_orders.status', RetailerOrder::STATUS_DELIVERED)
-                ->whereMonth('retailer_orders.delivered_at', now()->month)
-                ->whereYear('retailer_orders.delivered_at', now()->year)
-                ->sum(DB::raw('retailer_order_items.unit_price * retailer_order_items.quantity'));
+            $staffAchievementValue = $staff->getAchievedAmountForMonth(
+                \Carbon\Carbon::parse("1 {$month} {$year}")->month, 
+                $year
+            );
 
             return [
                 'id' => $staff->id,
@@ -168,6 +161,7 @@ class FieldStaffDashboardApiController extends Controller
                 'remaining' => number_format(max(0, $targetAmount - $achievementValue), 2, '.', ''),
                 'achievement_percent' => round($achievementPercent, 2),
                 'global_rank' => $myRank,
+                'is_top_5' => $myRank > 0 && $myRank <= 5,
                 'total_staff' => $allStaffStats->count(),
                 'outstanding_dues' => number_format($outstandingAmount, 2, '.', ''),
                 'incentive_rate' => $slab ? $slab->incentive_percent . '%' : '0%',
@@ -177,8 +171,7 @@ class FieldStaffDashboardApiController extends Controller
             'counts' => [
                 'total_retailers' => Retailer::where('field_staff_id', $fieldStaffId)->count(),
                 'actionable_orders' => $orderStats['pending_approval']
-            ],
-            'ranking_preview' => $allStaffStats->take(5) // Show top 5 for motivation
+            ]
         ]);
     }
 

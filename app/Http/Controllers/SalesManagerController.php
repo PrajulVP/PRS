@@ -65,6 +65,7 @@ class SalesManagerController extends Controller
         
         foreach ($sales_manager->fieldStaffs as $fs) {
             $targetObj = $fs->getCurrentMonthTarget();
+            $fs->setAttribute('current_month_target_amount', $targetObj ? $targetObj->amount : 0);
             $totalTarget += $targetObj ? $targetObj->amount : 0;
             $totalAchieved += $fs->getCurrentMonthAchieved();
         }

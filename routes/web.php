@@ -108,10 +108,13 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('field-staffs/{field_staff}/deactivate', [FieldStaffController::class, 'deactivate'])->name('field-staffs.deactivate');
         Route::post('field-staffs/{field_staff}/grant-clock-in', [FieldStaffController::class, 'grantClockInPermission'])->name('field-staffs.grant-clock-in');
 
-        // Field Staff Specialized Management (Tracking, Expenses & Leaves)
+        // Field Staff Specialized Management (Tracking, Expenses & Leaves & Targets)
         Route::get('field-staff/tracking', [ReportController::class, 'fieldStaffReports'])->name('field-staff.tracking');
         Route::get('field-staff/tracking-map', [ReportController::class, 'fieldStaffTracking'])->name('field-staff.tracking-map');
         Route::get('field-staff/tracking/export', [ReportController::class, 'fieldStaffTrackingExport'])->name('field-staff.tracking.export');
+        
+        Route::get('field-staff/targets', [\App\Http\Controllers\FieldStaffManagementController::class, 'targetsIndex'])->name('field-staff.targets');
+        Route::post('field-staff/targets/save', [\App\Http\Controllers\FieldStaffManagementController::class, 'targetsSave'])->name('field-staff.targets.save');
         
         // Manager Specialized Management (Tracking)
         Route::get('manager/tracking', [ReportController::class, 'managerReports'])->name('manager.tracking');
@@ -201,6 +204,7 @@ Route::middleware(['auth'])->group(function () {
         // Staff Ratings for Admin & Sales Managers
         Route::get('staff-ratings', [\App\Http\Controllers\AdminRatingController::class, 'index'])->name('staff-ratings.index');
         Route::get('loyalty-points/{retailer}/summary', [LoyaltyPointsController::class, 'getSummary'])->name('loyalty-points.summary');
+        Route::post('loyalty-points/{retailer}/mark-reward-given', [LoyaltyPointsController::class, 'markRewardGiven'])->name('loyalty-points.mark-reward-given');
         Route::get('loyalty-points/get-field-staffs-by-manager', [LoyaltyPointsController::class, 'getFieldStaffByManager'])->name('loyalty-points.field-staffs-by-manager');
 
         // Returns & Credits
