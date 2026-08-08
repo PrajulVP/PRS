@@ -363,6 +363,11 @@
                    <span>Staff Tracking</span>
                 </a>
               </li>
+              <li>
+                <a class="{{ request()->routeIs('admin.field-staff.visits') ? 'active' : '' }}" href="{{ route('admin.field-staff.visits') }}">
+                   <span>Staff Visits</span>
+                </a>
+              </li>
               @endif
               <li><a href="{{ route('admin.field-staff.expenses') }}">
                 <span>Staff Expenses</span>
@@ -518,8 +523,9 @@
             @if (Auth::user()->hasPermissionToCategory('areas', 'view') || Auth::user()->hasPermissionToCategory('areas', 'add'))
             <li><a href="{{ route('areas.index') }}"><span>Areas</span></a></li>
             @endif
+            <li><a href="{{ route('admin.settings.field-staff') }}"><span>Field Staff Settings</span></a></li>
             <li><a href="{{ route('admin.permissions.index') }}"><span>Roles & Permissions</span></a></li>
-            <li><a href="{{ route('admin.settings.general') }}"><span>System Config</span></a></li>
+            <li><a href="{{ route('admin.settings.general') }}"><span>General Settings</span></a></li>
             @if (Auth::user()->hasAnyRole(['admin', 'superadmin']))
             <li><a href="{{ route('admin.backups.index') }}"><span>Database Backups</span></a></li>
             @endif

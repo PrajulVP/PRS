@@ -38,6 +38,7 @@ trait OneSignalNotifications
             'contents' => ['en' => $message],
             'headings' => ['en' => $title],
             'data' => $data,
+            'priority' => 10, // High priority to wake up device
         ];
 
         if (!empty($playerIds)) {

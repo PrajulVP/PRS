@@ -28,6 +28,8 @@ use App\Http\Controllers\{
     SidebarController,
     ReturnController
 };
+use App\Http\Controllers\Admin\FieldStaffVisitController;
+use App\Http\Controllers\Admin\FieldStaffSettingsController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -203,6 +205,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('distributor-wallet/{distributor}/summary', [\App\Http\Controllers\DistributorWalletController::class, 'getSummary'])->name('distributor-wallet.summary');
         // Staff Ratings for Admin & Sales Managers
         Route::get('staff-ratings', [\App\Http\Controllers\AdminRatingController::class, 'index'])->name('staff-ratings.index');
+        // Field Staff Visits
+        Route::get('field-staff/visits', [FieldStaffVisitController::class, 'index'])->name('field-staff.visits');
         Route::get('loyalty-points/{retailer}/summary', [LoyaltyPointsController::class, 'getSummary'])->name('loyalty-points.summary');
         Route::post('loyalty-points/{retailer}/mark-reward-given', [LoyaltyPointsController::class, 'markRewardGiven'])->name('loyalty-points.mark-reward-given');
         Route::get('loyalty-points/get-field-staffs-by-manager', [LoyaltyPointsController::class, 'getFieldStaffByManager'])->name('loyalty-points.field-staffs-by-manager');
@@ -220,6 +224,9 @@ Route::middleware(['auth'])->group(function () {
 
         // Master settings
         Route::get('settings/general', [SettingsController::class, 'general'])->name('settings.general');
+        Route::get('settings/field-staff', [FieldStaffSettingsController::class, 'index'])->name('settings.field-staff');
+        Route::post('settings/field-staff/purpose', [FieldStaffSettingsController::class, 'savePurpose'])->name('settings.field-staff.save-purpose');
+        Route::post('settings/field-staff/purpose/delete', [FieldStaffSettingsController::class, 'deletePurpose'])->name('settings.field-staff.delete-purpose');
         Route::post('/settings/general/save', [SettingsController::class, 'save'])->name('settings.save');
         Route::post('/settings/brands/save', [SettingsController::class, 'saveBrand'])->name('settings.brands.save');
         Route::post('/settings/brands/delete', [SettingsController::class, 'deleteBrand'])->name('settings.brands.delete');

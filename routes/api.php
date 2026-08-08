@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\DistributorController;
 use App\Http\Controllers\Api\PrescriptionApiController;
 use App\Http\Controllers\Api\SettingsApiController;
+use App\Http\Controllers\Api\FieldVisitController;
 
 //add a prefix to all routes
 Route::post('login', [AuthApiController::class, 'login']);
@@ -126,8 +127,9 @@ Route::middleware('auth:api')->group(function () {
         Route::get('punch', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'getPunchStatus']);
         Route::post('punch', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'punch']);
         Route::post('ping', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'pingLocation']);
-        Route::post('log-visit', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'logVisit']);
-        Route::get('retailers/{id}/last-visit', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'getLastVisitRemark']);
+        // Replaced by new Field Visits Module
+        // Route::post('log-visit', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'logVisit']);
+        // Route::get('retailers/{id}/last-visit', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'getLastVisitRemark']);
         Route::post('expenses', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'submitExpense']);
         Route::get('leaves', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'getLeaves']);
         Route::get('leave-types', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'getLeaveTypes']);
@@ -140,7 +142,8 @@ Route::middleware('auth:api')->group(function () {
         Route::get('punch', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'getPunchStatus']);
         Route::post('punch', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'punch']);
         Route::post('ping', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'pingLocation']);
-        Route::post('log-visit', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'logVisit']);
+        // Replaced by new Field Visits Module
+        // Route::post('log-visit', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'logVisit']);
         Route::post('expenses', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'submitExpense']);
         Route::get('leaves', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'getLeaves']);
         Route::get('leave-types', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'getLeaveTypes']);
@@ -168,5 +171,13 @@ Route::middleware('auth:api')->group(function () {
     Route::prefix('orders')->group(function () {
         Route::post('/', [\App\Http\Controllers\Api\OrderApiController::class, 'store']);
         Route::post('/{id}/add-free-items', [\App\Http\Controllers\Api\OrderApiController::class, 'addFreeItems']);
+    });
+
+    // Field Staff Visits Module
+    Route::prefix('field-visits')->group(function () {
+        Route::get('purposes', [FieldVisitController::class, 'purposes']);
+        Route::post('start', [FieldVisitController::class, 'start']);
+        Route::post('stop', [FieldVisitController::class, 'stop']);
+        Route::get('history', [FieldVisitController::class, 'history']);
     });
 });

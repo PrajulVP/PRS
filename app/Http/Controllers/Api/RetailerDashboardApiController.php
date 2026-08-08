@@ -100,7 +100,7 @@ class RetailerDashboardApiController extends Controller
         $brandTotals = \Illuminate\Support\Facades\DB::table('retailer_order_items')
             ->join('retailer_orders', 'retailer_order_items.retailer_order_id', '=', 'retailer_orders.id')
             ->join('products', 'retailer_order_items.product_id', '=', 'products.id')
-            ->where('retailer_orders.retailer_id', $retailer->id)
+            ->where('retailer_orders.retailer_id', $retailerId)
             ->where('retailer_orders.status', RetailerOrder::STATUS_DELIVERED)
             ->select('products.brand', \Illuminate\Support\Facades\DB::raw('SUM(retailer_order_items.unit_price * retailer_order_items.quantity) as total_ptr'))
             ->groupBy('products.brand')
@@ -109,7 +109,7 @@ class RetailerDashboardApiController extends Controller
 
         // Get already redeemed slab ids for this retailer
         $redeemedSlabIds = \Illuminate\Support\Facades\DB::table('loyalty_redemptions')
-            ->where('retailer_id', $retailer->id)
+            ->where('retailer_id', $retailerId)
             ->pluck('loyalty_slab_id')
             ->toArray();
 

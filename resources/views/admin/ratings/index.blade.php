@@ -193,24 +193,26 @@
     .btn-reset-theme {
         height: 44px;
         border-radius: 12px;
-        border: 1.5px solid #ff9e88 !important;
-        color: #ff6f4c !important;
-        background-color: #ffe5dd !important;
+        border: 1px solid #fecaca !important;
+        color: #ef4444 !important;
+        background-color: #fef2f2 !important;
         transition: all 0.2s ease;
     }
     .btn-reset-theme:hover {
-        background-color: #ff6f4c !important;
-        color: #ffffff !important;
+        background-color: #fee2e2 !important;
+        color: #dc2626 !important;
+        border-color: #fca5a5 !important;
     }
 
     body.dark-only .btn-reset-theme {
-        border-color: rgba(239, 68, 68, 0.4) !important;
+        border-color: rgba(239, 68, 68, 0.2) !important;
         color: #f87171 !important;
-        background-color: rgba(239, 68, 68, 0.1) !important;
+        background-color: rgba(239, 68, 68, 0.05) !important;
     }
     body.dark-only .btn-reset-theme:hover {
-        background-color: #ef4444 !important;
-        color: #ffffff !important;
+        background-color: rgba(239, 68, 68, 0.15) !important;
+        color: #fca5a5 !important;
+        border-color: rgba(239, 68, 68, 0.3) !important;
     }
 
     /* Premium Toggle Group Active States */
