@@ -176,9 +176,10 @@ Route::middleware('auth:api')->group(function () {
 
     // Field Staff Visits Module
     Route::prefix('field-visits')->group(function () {
-        Route::get('purposes', [FieldVisitController::class, 'purposes']);
-        Route::post('start', [FieldVisitController::class, 'start']);
-        Route::post('stop', [FieldVisitController::class, 'stop']);
-        Route::get('history', [FieldVisitController::class, 'history']);
+        Route::get('purposes', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'purposes']);
+        Route::post('start', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'start']);
+        Route::post('stop', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'stop']);
+        Route::get('history', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'history']);
     });
 });
+
