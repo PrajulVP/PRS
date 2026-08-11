@@ -206,6 +206,7 @@ class FieldStaffActionApiController extends Controller
      *         description="Last punch status retrieved",
      *         @OA\JsonContent(
      *             @OA\Property(property="status", type="string", enum={"punched_in", "punched_out"}),
+     *             @OA\Property(property="message", type="string", example="The user has been punched out."),
      *             @OA\Property(property="last_log", type="object")
      *         )
      *     )
@@ -226,12 +227,15 @@ class FieldStaffActionApiController extends Controller
             ->first();
 
         $status = 'punched_out';
+        $message = 'The user has been punched out.';
         if ($lastPunch && $lastPunch->type === 'punch_in') {
             $status = 'punched_in';
+            $message = 'The user is currently punched in.';
         }
 
         return response()->json([
             'status' => $status,
+            'message' => $message,
             'last_log' => $lastPunch
         ]);
     }

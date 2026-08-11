@@ -90,6 +90,7 @@ class ManagerActionApiController extends Controller
      *         description="Last punch status retrieved",
      *         @OA\JsonContent(
      *             @OA\Property(property="status", type="string", enum={"punched_in", "punched_out"}),
+     *             @OA\Property(property="message", type="string", example="The user has been punched out."),
      *             @OA\Property(property="last_log", type="object")
      *         )
      *     )
@@ -103,8 +104,12 @@ class ManagerActionApiController extends Controller
             ->orderBy('timestamp', 'desc')
             ->first();
 
+        $status = $lastPunch ? ($lastPunch->type === 'punch_in' ? 'punched_in' : 'punched_out') : 'punched_out';
+        $message = $status === 'punched_in' ? 'The user is currently punched in.' : 'The user has been punched out.';
+
         return response()->json([
-            'status' => $lastPunch ? ($lastPunch->type === 'punch_in' ? 'punched_in' : 'punched_out') : 'punched_out',
+            'status' => $status,
+            'message' => $message,
             'last_log' => $lastPunch
         ]);
     }
