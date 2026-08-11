@@ -8,12 +8,21 @@ use App\Models\FieldVisit;
 use App\Models\VisitPurpose;
 use App\Models\RetailerOrder;
 use App\Models\DistributorOrder;
+use App\Models\VisitLog;
+use App\Models\Retailer;
+use App\Models\Distributor;
 use Carbon\Carbon;
 
 class FieldVisitController extends Controller
 {
     /**
-     * Get all active visit purposes.
+     * @OA\Get(
+     *     path="/api/field-visits/purposes",
+     *     summary="Get all active visit purposes",
+     *     tags={"Field Visits"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(response=200, description="List of purposes")
+     * )
      */
     public function purposes()
     {
@@ -22,7 +31,30 @@ class FieldVisitController extends Controller
     }
 
     /**
-     * Start a field visit.
+     * @OA\Post(
+     *     path="/api/field-visits/start",
+     *     summary="Start a field visit",
+     *     tags={"Field Visits"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"party_type"},
+     *             @OA\Property(property="party_type", type="string", enum={"retailer", "distributor", "other"}),
+     *             @OA\Property(property="party_id", type="integer", description="ID of the party (nullable for 'other')"),
+     *             @OA\Property(property="location_lat", type="number"),
+     *             @OA\Property(property="location_lng", type="number")
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="X-Device-ID",
+     *         in="header",
+     *         required=true,
+     *         description="Unique Device identifier for binding",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(response=200, description="Visit started successfully")
+     * )
      */
     public function start(Request $request)
     {
@@ -33,8 +65,53 @@ class FieldVisitController extends Controller
             'location_lng' => 'nullable|numeric',
         ]);
 
+        $user = $request->user();
+
+        // Extra security: Verify Device ID if bound
+        $deviceId = $request->header('X-Device-ID');
+        if ($user->device_uuid && $user->device_uuid !== $deviceId) {
+            return response()->json(['error' => 'Device mismatch. Use registered device.'], 403);
+        }
+
+        // Fetch Party (for Geofencing and VisitLog)
+        $party = null;
+        $customerName = 'Unknown';
+        if ($request->party_type === 'retailer') {
+            $party = Retailer::find($request->party_id);
+            $customerName = $party ? $party->shop_name : 'Unknown Retailer';
+        } elseif ($request->party_type === 'distributor') {
+            $party = Distributor::find($request->party_id);
+            $customerName = $party ? $party->user->name : 'Unknown Distributor';
+        }
+
+        // Geofencing Check
+        $isFlagged = false;
+        $radiusMeters = (float) \App\Models\Setting::getValue('geofence_radius', 20);
+        $radiusKm = $radiusMeters / 1000;
+
+        if ($party && $request->location_lat && $request->location_lng) {
+            if ($party->latitude && $party->longitude) {
+                $distance = $this->calculateDistance(
+                    $request->location_lat, $request->location_lng,
+                    $party->latitude, $party->longitude
+                );
+                
+                if ($distance > $radiusKm) { 
+                    return response()->json([
+                        'error' => "Geofence violation. You must be within {$radiusMeters} meters of the customer location.",
+                        'current_distance' => round($distance * 1000, 2) . ' meters'
+                    ], 403);
+                }
+            } else {
+                // Auto-learn location since it's missing
+                $party->latitude = $request->location_lat;
+                $party->longitude = $request->location_lng;
+                $party->save();
+            }
+        }
+
         $visit = FieldVisit::create([
-            'user_id' => $request->user()->id,
+            'user_id' => $user->id,
             'party_type' => $request->party_type,
             'party_id' => $request->party_id,
             'start_at' => Carbon::now(),
@@ -43,14 +120,52 @@ class FieldVisitController extends Controller
             'status' => 'ongoing',
         ]);
 
+        // Create VisitLog for Web Dashboard Sync
+        $visitLogCategory = $request->party_type === 'other' ? 'Other' : ucfirst($request->party_type);
+        $visitLog = VisitLog::create([
+            'user_id' => $user->id,
+            'customer_category' => $visitLogCategory,
+            'customer_name' => $customerName,
+            'customer_id' => $request->party_id,
+            'latitude' => $request->location_lat,
+            'longitude' => $request->location_lng,
+            'check_in_at' => now(), 
+            'is_flagged' => $isFlagged, 
+        ]);
+
         return response()->json([
             'message' => 'Visit started successfully',
-            'visit' => $visit
+            'visit' => $visit,
+            'visit_log_id' => $visitLog->id
         ]);
     }
 
     /**
-     * Stop a field visit.
+     * @OA\Post(
+     *     path="/api/field-visits/stop",
+     *     summary="Stop a field visit",
+     *     tags={"Field Visits"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"visit_id", "purpose_id", "remarks"},
+     *             @OA\Property(property="visit_id", type="integer"),
+     *             @OA\Property(property="purpose_id", type="integer"),
+     *             @OA\Property(property="remarks", type="string"),
+     *             @OA\Property(property="location_lat", type="number"),
+     *             @OA\Property(property="location_lng", type="number")
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="X-Device-ID",
+     *         in="header",
+     *         required=true,
+     *         description="Unique Device identifier for binding",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(response=200, description="Visit stopped successfully")
+     * )
      */
     public function stop(Request $request)
     {
@@ -62,8 +177,16 @@ class FieldVisitController extends Controller
             'location_lng' => 'nullable|numeric',
         ]);
 
+        $user = $request->user();
+
+        // Extra security: Verify Device ID if bound
+        $deviceId = $request->header('X-Device-ID');
+        if ($user->device_uuid && $user->device_uuid !== $deviceId) {
+            return response()->json(['error' => 'Device mismatch. Use registered device.'], 403);
+        }
+
         $visit = FieldVisit::where('id', $request->visit_id)
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $user->id)
             ->first();
 
         if (!$visit) {
@@ -88,14 +211,58 @@ class FieldVisitController extends Controller
              $visit->save();
         }
 
+        // Sync with VisitLog
+        // We find the VisitLog created around the same time for this user and party
+        $visitLogCategory = $visit->party_type === 'other' ? 'Other' : ucfirst($visit->party_type);
+        $visitLog = VisitLog::where('user_id', $user->id)
+            ->where('customer_category', $visitLogCategory)
+            ->where('customer_id', $visit->party_id)
+            ->whereNull('check_out_at')
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($visitLog) {
+            $visitLog->check_out_at = now();
+            $visitLog->notes = $request->remarks;
+            $visitLog->save();
+        }
+
         return response()->json([
             'message' => 'Visit stopped successfully',
             'visit' => $visit
         ]);
     }
 
+    private function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371; // km
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon/2) * sin($dLon/2);
+        $c = 2 * asin(sqrt($a));
+        return $earthRadius * $c;
+    }
+
     /**
-     * Get visit history for a specific party.
+     * @OA\Get(
+     *     path="/api/field-visits/history",
+     *     summary="Get visit history for a specific party",
+     *     tags={"Field Visits"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="party_type",
+     *         in="query",
+     *         required=true,
+     *         @OA\Schema(type="string", enum={"retailer", "distributor", "other"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="party_id",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response=200, description="Visit history and orders")
+     * )
      */
     public function history(Request $request)
     {

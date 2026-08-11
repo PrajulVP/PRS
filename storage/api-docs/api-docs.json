@@ -1773,118 +1773,6 @@
                 }
             }
         },
-        "/api/field-staff/log-visit": {
-            "post": {
-                "tags": [
-                    "Field Staff"
-                ],
-                "summary": "Log a visit to a customer",
-                "operationId": "e0b9aef5ef8d371f0799e7bd34236e8e",
-                "parameters": [
-                    {
-                        "name": "X-Device-ID",
-                        "in": "header",
-                        "description": "Unique Device identifier for binding",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "customer_category": {
-                                        "type": "string",
-                                        "enum": [
-                                            "Doctor",
-                                            "Hospital",
-                                            "Retailer",
-                                            "Distributor/Wholesaler"
-                                        ]
-                                    },
-                                    "customer_name": {
-                                        "type": "string"
-                                    },
-                                    "latitude": {
-                                        "type": "number"
-                                    },
-                                    "longitude": {
-                                        "type": "number"
-                                    },
-                                    "notes": {
-                                        "type": "string"
-                                    },
-                                    "next_follow_up": {
-                                        "type": "string",
-                                        "format": "date"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Visit logged"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/field-staff/checkout-visit": {
-            "post": {
-                "tags": [
-                    "Field Staff"
-                ],
-                "summary": "Check out of a logged visit",
-                "operationId": "c80d670b723390565d41c47525bec780",
-                "parameters": [
-                    {
-                        "name": "X-Device-ID",
-                        "in": "header",
-                        "description": "Unique Device identifier for binding",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "visit_id": {
-                                        "type": "integer"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Visit checked out successfully"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/api/field-staff/sync-offline-logs": {
             "post": {
                 "tags": [
@@ -2841,6 +2729,192 @@
                     },
                     "422": {
                         "description": "Validation or stock error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/field-visits/purposes": {
+            "get": {
+                "tags": [
+                    "Field Visits"
+                ],
+                "summary": "Get all active visit purposes",
+                "operationId": "af2379218be3297659b2b4e19b8b8966",
+                "responses": {
+                    "200": {
+                        "description": "List of purposes"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/field-visits/start": {
+            "post": {
+                "tags": [
+                    "Field Visits"
+                ],
+                "summary": "Start a field visit",
+                "operationId": "cf439161d5ffa8ad559b90beaf6a776f",
+                "parameters": [
+                    {
+                        "name": "X-Device-ID",
+                        "in": "header",
+                        "description": "Unique Device identifier for binding",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "party_type"
+                                ],
+                                "properties": {
+                                    "party_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "retailer",
+                                            "distributor",
+                                            "other"
+                                        ]
+                                    },
+                                    "party_id": {
+                                        "description": "ID of the party (nullable for 'other')",
+                                        "type": "integer"
+                                    },
+                                    "location_lat": {
+                                        "type": "number"
+                                    },
+                                    "location_lng": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Visit started successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/field-visits/stop": {
+            "post": {
+                "tags": [
+                    "Field Visits"
+                ],
+                "summary": "Stop a field visit",
+                "operationId": "34cd8fdb164935b70063e4dac7ef878f",
+                "parameters": [
+                    {
+                        "name": "X-Device-ID",
+                        "in": "header",
+                        "description": "Unique Device identifier for binding",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "visit_id",
+                                    "purpose_id",
+                                    "remarks"
+                                ],
+                                "properties": {
+                                    "visit_id": {
+                                        "type": "integer"
+                                    },
+                                    "purpose_id": {
+                                        "type": "integer"
+                                    },
+                                    "remarks": {
+                                        "type": "string"
+                                    },
+                                    "location_lat": {
+                                        "type": "number"
+                                    },
+                                    "location_lng": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Visit stopped successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/field-visits/history": {
+            "get": {
+                "tags": [
+                    "Field Visits"
+                ],
+                "summary": "Get visit history for a specific party",
+                "operationId": "5fb90cb9765cf8a22cac64f563e5e606",
+                "parameters": [
+                    {
+                        "name": "party_type",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "retailer",
+                                "distributor",
+                                "other"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "party_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Visit history and orders"
                     }
                 },
                 "security": [
@@ -6176,6 +6250,10 @@
         {
             "name": "Field Staff Retailer Orders",
             "description": "Field Staff Retailer Orders"
+        },
+        {
+            "name": "Field Visits",
+            "description": "Field Visits"
         },
         {
             "name": "Inventory",
