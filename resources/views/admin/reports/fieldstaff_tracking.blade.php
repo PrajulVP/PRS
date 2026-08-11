@@ -380,7 +380,7 @@
                                                                 </p>
                                                                 <p class="mb-0 text-muted small">
                                                                     {{ \Carbon\Carbon::parse($event['data']['start_time'])->format('h:i A') }} - {{ \Carbon\Carbon::parse($event['data']['end_time'])->format('h:i A') }}
-                                                                    <br>Duration: {{ \Carbon\Carbon::parse($event['data']['start_time'])->diffInMinutes($event['data']['end_time']) }} mins
+                                                                    <br>Duration: {{ \App\Http\Controllers\ReportController::formatDurationHumans($event['data']['start_time'], $event['data']['end_time']) }}
                                                                 </p>
                                                             @else
                                                                 <p class="mb-0 fw-bold small text-primary">
@@ -488,13 +488,13 @@
                                                                         <span class="fw-bold">Offline Period</span><br>
                                                                         <span class="text-muted small">
                                                                             Disconnected: {{ $event['data']->reason ?? 'Network drop' }}<br>
-                                                                            Duration: {{ \Carbon\Carbon::parse($event['data']->from_time)->diffInMinutes($event['data']->to_time ?? now()) }} mins<br>
+                                                                            Duration: {{ \App\Http\Controllers\ReportController::formatDurationHumans($event['data']->from_time, $event['data']->to_time) }}<br>
                                                                             Resumed: {{ $event['data']->to_time ? \Carbon\Carbon::parse($event['data']->to_time)->format('h:i A') : 'Ongoing' }}
                                                                         </span>
                                                                     @elseif($event['type'] == 'stop')
                                                                         <span class="fw-bold">Stationary Stop</span><br>
                                                                         <span class="text-muted small">
-                                                                            Duration: {{ \Carbon\Carbon::parse($event['data']['start_time'])->diffInMinutes($event['data']['end_time']) }} mins<br>
+                                                                            Duration: {{ \App\Http\Controllers\ReportController::formatDurationHumans($event['data']['start_time'], $event['data']['end_time']) }}<br>
                                                                             {{ \Carbon\Carbon::parse($event['data']['start_time'])->format('h:i A') }} - {{ \Carbon\Carbon::parse($event['data']['end_time'])->format('h:i A') }}
                                                                         </span>
                                                                     @else
@@ -725,7 +725,7 @@
 
             // 5. Plot Stops (> 5 mins)
             @foreach($stops as $stop)
-                addStopMarker({{ $stop['lat'] }}, {{ $stop['lng'] }}, {{ $stop['duration'] }}, '{{ \Carbon\Carbon::parse($stop['start_time'])->format('h:i A') }}', '{{ \Carbon\Carbon::parse($stop['end_time'])->format('h:i A') }}');
+                addStopMarker({{ $stop['lat'] }}, {{ $stop['lng'] }}, '{{ \App\Http\Controllers\ReportController::formatDurationHumans($stop['start_time'], $stop['end_time']) }}', '{{ \Carbon\Carbon::parse($stop['start_time'])->format('h:i A') }}', '{{ \Carbon\Carbon::parse($stop['end_time'])->format('h:i A') }}');
                 bounds.extend({ lat: {{ $stop['lat'] }}, lng: {{ $stop['lng'] }} });
             @endforeach
 
@@ -774,7 +774,7 @@
             const infoWindow = new google.maps.InfoWindow({
                 content: `<div class="custom-info-window">
                             <h6 class="text-danger fw-bold mb-1"><i class="fa fa-hand-paper text-danger me-2"></i>Stopped</h6>
-                            <div class="small"><b>Duration:</b> ${duration} Minutes</div>
+                            <div class="small"><b>Duration:</b> ${duration}</div>
                             <div class="small text-muted">${startTime} to ${endTime}</div>
                           </div>`
             });

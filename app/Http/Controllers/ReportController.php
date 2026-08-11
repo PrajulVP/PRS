@@ -1303,6 +1303,28 @@ class ReportController extends Controller
             })
             ->orderBy('from_time', 'asc')
             ->get();
+            
+        $stops = collect($this->calculateStops($locations));
+
+        // Filter stops and offline logs based on punches
+        $firstPunchIn = $punches->where('type', 'punch_in')->first();
+        if ($firstPunchIn) {
+            $lastPunchOut = $punches->where('type', 'punch_out')->last();
+            $punchOutTime = $lastPunchOut ? clone $lastPunchOut->timestamp : now();
+            
+            $stops = $stops->filter(function($stop) use ($firstPunchIn, $punchOutTime) {
+                $stopStart = \Carbon\Carbon::parse($stop['start_time']);
+                return $stopStart->between($firstPunchIn->timestamp, $punchOutTime);
+            })->values();
+
+            $offlineLogs = $offlineLogs->filter(function($log) use ($firstPunchIn, $punchOutTime) {
+                $logStart = \Carbon\Carbon::parse($log->from_time);
+                return $logStart->between($firstPunchIn->timestamp, $punchOutTime);
+            })->values();
+        } else {
+            $stops = collect([]);
+            $offlineLogs = collect([]);
+        }
  
         // Calculate total distance coverd
         $totalDistance = \App\Models\LocationLog::calculateDailyDistance($userId, $date);
@@ -1315,9 +1337,25 @@ class ReportController extends Controller
         $lastPunch = $punches->last();
         $isOnline = $lastPunch && $lastPunch->type === 'punch_in';
 
-        $stops = collect($this->calculateStops($locations));
-
         return view('admin.reports.fieldstaff_tracking', compact('user', 'locations', 'punches', 'visits', 'offlineLogs', 'date', 'totalDistance', 'isOnline', 'mockGpsCount', 'stops'));
+    }
+
+    public static function formatDurationHumans($start, $end = null)
+    {
+        $start = \Carbon\Carbon::parse($start);
+        $end = $end ? \Carbon\Carbon::parse($end) : now();
+        $secs = $start->diffInSeconds($end);
+        
+        $hours = floor($secs / 3600);
+        $mins = floor(($secs % 3600) / 60);
+        $secs = $secs % 60;
+        
+        $parts = [];
+        if ($hours > 0) $parts[] = $hours . 'h';
+        if ($mins > 0) $parts[] = $mins . 'm';
+        if ($secs > 0) $parts[] = $secs . 's';
+        
+        return empty($parts) ? '0s' : implode(' ', $parts);
     }
  
     private function calculateStops($locations)
@@ -1409,6 +1447,28 @@ class ReportController extends Controller
             ->orderBy('from_time', 'asc')
             ->get();
             
+        $stops = collect($this->calculateStops($locations));
+
+        // Filter stops and offline logs based on punches
+        $firstPunchIn = $punches->where('type', 'punch_in')->first();
+        if ($firstPunchIn) {
+            $lastPunchOut = $punches->where('type', 'punch_out')->last();
+            $punchOutTime = $lastPunchOut ? clone $lastPunchOut->timestamp : now();
+            
+            $stops = $stops->filter(function($stop) use ($firstPunchIn, $punchOutTime) {
+                $stopStart = \Carbon\Carbon::parse($stop['start_time']);
+                return $stopStart->between($firstPunchIn->timestamp, $punchOutTime);
+            })->values();
+
+            $offlineLogs = $offlineLogs->filter(function($log) use ($firstPunchIn, $punchOutTime) {
+                $logStart = \Carbon\Carbon::parse($log->from_time);
+                return $logStart->between($firstPunchIn->timestamp, $punchOutTime);
+            })->values();
+        } else {
+            $stops = collect([]);
+            $offlineLogs = collect([]);
+        }
+            
         $totalOfflineMinutes = 0;
         foreach($offlineLogs as $log) {
             if($log->from_time && $log->to_time) {
@@ -1433,7 +1493,7 @@ class ReportController extends Controller
             $punches->each(fn($p) => $events->push(['time' => $p->timestamp, 'type' => 'Attendance', 'details' => str_replace('_', ' ', $p->type), 'lat' => $p->latitude, 'lng' => $p->longitude]));
             $visits->each(fn($v) => $events->push(['time' => $v->check_in_at, 'type' => 'Visit', 'details' => $v->customer_name . " (" . $v->customer_category . ")", 'lat' => $v->latitude, 'lng' => $v->longitude]));
             $offlineLogs->each(function($o) use ($events) {
-                $duration = $o->to_time ? $o->from_time->diffInMinutes($o->to_time) . " mins" : "Ongoing";
+                $duration = $o->to_time ? \App\Http\Controllers\ReportController::formatDurationHumans($o->from_time, $o->to_time) : "Ongoing";
                 $reasonText = $o->reason ? " (" . $o->reason . ")" : "";
                 $events->push([
                     'time' => $o->from_time, 
@@ -1454,11 +1514,10 @@ class ReportController extends Controller
             ]));
 
             // Add Stops
-            $stops = collect($this->calculateStops($locations));
             $stops->each(fn($s) => $events->push([
                 'time' => $s['start_time'],
                 'type' => 'Stop',
-                'details' => "Stop - Duration: {$s['duration']} mins. " . Carbon::parse($s['start_time'])->format('h:i A') . " to " . Carbon::parse($s['end_time'])->format('h:i A'),
+                'details' => "Stop - Duration: " . \App\Http\Controllers\ReportController::formatDurationHumans($s['start_time'], $s['end_time']) . ". " . Carbon::parse($s['start_time'])->format('h:i A') . " to " . Carbon::parse($s['end_time'])->format('h:i A'),
                 'lat' => $s['lat'],
                 'lng' => $s['lng']
             ]));
