@@ -335,6 +335,36 @@ class FieldStaffActionApiController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/field-visits/parties",
+     *     summary="Get list of parties based on party_type",
+     *     tags={"Field Staff"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="party_type",
+     *         in="query",
+     *         required=true,
+     *         description="Type of party (retailer or distributor)",
+     *         @OA\Schema(type="string", enum={"retailer", "distributor"})
+     *     ),
+     *     @OA\Response(response=200, description="List of parties")
+     * )
+     */
+    public function parties(Request $request)
+    {
+        $type = $request->query('party_type');
+        
+        if ($type === 'retailer') {
+            $parties = \App\Models\Retailer::select('id', 'shop_name as name', 'owner_name')->get();
+        } elseif ($type === 'distributor') {
+            $parties = \App\Models\Distributor::select('id', 'name')->get();
+        } else {
+            $parties = [];
+        }
+        
+        return response()->json(['parties' => $parties]);
+    }
 
 /**
      * @OA\Get(
@@ -470,12 +500,11 @@ class FieldStaffActionApiController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"visit_id", "purpose_id", "remarks"},
-     *             @OA\Property(property="visit_id", type="integer"),
+     *             required={"purpose_id", "remarks"},
      *             @OA\Property(property="purpose_id", type="integer"),
      *             @OA\Property(property="remarks", type="string"),
-     *             @OA\Property(property="location_lat", type="number"),
-     *             @OA\Property(property="location_lng", type="number")
+     *             @OA\Property(property="location_lat", type="number", format="float"),
+     *             @OA\Property(property="location_lng", type="number", format="float")
      *         )
      *     ),
      *     @OA\Parameter(
@@ -491,7 +520,6 @@ class FieldStaffActionApiController extends Controller
     public function stop(Request $request)
     {
         $request->validate([
-            'visit_id' => 'required|exists:field_visits,id',
             'purpose_id' => 'required|exists:visit_purposes,id',
             'remarks' => 'required|string',
             'location_lat' => 'nullable|numeric',
@@ -506,12 +534,14 @@ class FieldStaffActionApiController extends Controller
             return response()->json(['error' => 'Device mismatch. Use registered device.'], 403);
         }
 
-        $visit = FieldVisit::where('id', $request->visit_id)
-            ->where('user_id', $user->id)
+        // Auto-detect the active visit
+        $visit = FieldVisit::where('user_id', $user->id)
+            ->where('status', '!=', 'completed')
+            ->latest()
             ->first();
 
         if (!$visit) {
-            return response()->json(['message' => 'Visit not found or unauthorized'], 403);
+            return response()->json(['message' => 'No active visit found to stop or unauthorized'], 404);
         }
 
         if ($visit->status === 'completed') {

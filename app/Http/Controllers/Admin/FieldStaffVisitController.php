@@ -70,35 +70,24 @@ class FieldStaffVisitController extends Controller
             return \Yajra\DataTables\Facades\DataTables::of($query)
                 ->addColumn('staff_member', function ($visit) {
                     $name = optional($visit->user)->name ?? 'Unknown Staff';
-                    $initial = strtoupper(substr($name, 0, 1));
-                    return '
-                        <div class="d-flex align-items-center">
-                            <div class="avatar me-2 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:32px; height:32px; font-size:12px;">
-                                ' . $initial . '
-                            </div>
-                            <div class="fw-bold text-dark">' . $name . '</div>
-                        </div>';
+                    return '<div class="fw-bold text-dark">' . $name . '</div>';
                 })
                 ->addColumn('manager', function ($visit) {
-                    $managerName = optional(optional(optional($visit->user)->fieldStaff)->salesManager)->user->name ?? 'No Manager';
-                    return '<div class="text-dark"><i class="fa fa-user-tie text-muted small me-1"></i> ' . $managerName . '</div>';
+                    $managerName = optional(optional(optional($visit->user)->fieldStaff)->salesManager)->user->name ?? 'N/A';
+                    return '<div class="text-muted">' . $managerName . '</div>';
                 })
                 ->addColumn('party_details', function ($visit) {
-                    if ($visit->party_type == 'retailer' || $visit->party_type == 'distributor') {
+                    if ($visit->party_type === 'retailer' || $visit->party_type === 'distributor') {
                         $partyName = optional($visit->party)->shop_name ?? optional($visit->party)->name ?? 'Unknown';
-                        return '
-                            <span class="badge bg-info text-white mb-1">' . ucfirst($visit->party_type) . '</span>
-                            <div class="fw-bold text-dark text-truncate" style="max-width: 200px;" title="' . $partyName . '">
-                                ' . $partyName . '
-                            </div>';
+                        return '<div class="mb-1"><span class="badge bg-primary text-white small">' . ucfirst($visit->party_type) . '</span></div>
+                                <div class="fw-bold text-dark">' . $partyName . '</div>';
                     } else {
-                        return '
-                            <span class="badge bg-secondary mb-1">Other</span>
-                            <div class="text-muted small">Party ID: ' . ($visit->party_id ?? 'N/A') . '</div>';
+                        return '<div class="mb-1"><span class="badge bg-secondary text-white small">' . ucfirst($visit->party_type) . '</span></div>
+                                <div class="text-muted small">Party ID: ' . ($visit->party_id ?? 'N/A') . '</div>';
                     }
                 })
                 ->addColumn('purpose', function ($visit) {
-                    $html = '<span class="badge bg-light text-dark border p-2 mb-1" style="font-size: 0.95rem;">' . (optional($visit->purpose)->name ?? 'N/A') . '</span>';
+                    $html = '<div class="text-dark">' . (optional($visit->purpose)->name ?? 'N/A') . '</div>';
                     if ($visit->is_repeat) {
                         $html .= '<div class="mt-1"><span class="badge bg-warning text-dark"><i class="fa fa-redo-alt"></i> Repeat Visit</span></div>';
                     }
@@ -113,9 +102,6 @@ class FieldStaffVisitController extends Controller
                         $durationHtml = ($hours > 0 ? $hours . 'h ' : '') . $mins . 'm';
                     }
                     return '<div class="fw-bold text-dark">' . $durationHtml . '</div>';
-                })
-                ->addColumn('distance', function ($visit) {
-                    return '<div class="small text-muted"><i class="fa fa-route me-1"></i> ' . ($visit->distance_km ?? 0) . ' km</div>';
                 })
                 ->addColumn('date_time', function ($visit) {
                     $date = $visit->start_at ? $visit->start_at->format('d M, Y') : 'N/A';
@@ -133,7 +119,7 @@ class FieldStaffVisitController extends Controller
                         <div class="small text-muted">' . $time . ' ' . $endTime . '</div>';
                 })
                 ->editColumn('remarks', function ($visit) {
-                    return '<div class="text-truncate text-muted" style="max-width: 150px;" title="' . $visit->remarks . '">' . ($visit->remarks ?: '-') . '</div>';
+                    return '<div class="text-muted" style="max-width: 220px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; white-space: normal; line-height: 1.4;" title="' . htmlspecialchars($visit->remarks ?? '') . '">' . htmlspecialchars($visit->remarks ?: '-') . '</div>';
                 })
                 ->addColumn('action', function ($visit) {
                     $durationHtml = '-';
@@ -162,7 +148,7 @@ class FieldStaffVisitController extends Controller
                             </button>
                         </div>';
                 })
-                ->rawColumns(['staff_member', 'manager', 'party_details', 'purpose', 'duration', 'distance', 'date_time', 'remarks', 'action'])
+                ->rawColumns(['staff_member', 'manager', 'party_details', 'purpose', 'duration', 'date_time', 'remarks', 'action'])
                 ->make(true);
         }
 
@@ -193,7 +179,7 @@ class FieldStaffVisitController extends Controller
 
         $columns = [
             'Date', 'Time', 'Staff Name', 'Manager Name', 'Party Type', 'Party Name', 
-            'Purpose', 'Status', 'Duration (Mins)', 'Kilometers', 'Repeat Visit', 'Remarks'
+            'Purpose', 'Status', 'Duration (Mins)', 'Repeat Visit', 'Remarks'
         ];
 
         $callback = function() use($visits, $columns) {
@@ -227,7 +213,6 @@ class FieldStaffVisitController extends Controller
                     $purpose,
                     $status,
                     $duration,
-                    $visit->distance_km,
                     $visit->is_repeat ? 'Yes' : 'No',
                     $visit->remarks
                 ];

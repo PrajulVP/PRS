@@ -426,7 +426,7 @@
                                                 </div>
                                                 
                                                 <div class="mt-auto pt-3 border-top">
-                                                    <button type="button" class="btn w-100 manage-products-btn shadow-sm py-2 fw-bold text-uppercase border-0" style="background-color: #f97316 !important; color: #ffffff !important; border-radius: 8px; letter-spacing: 0.5px; text-decoration: none !important;" data-brand="${brand}">
+                                                    <button type="button" class="btn w-100 manage-products-btn shadow-sm py-2 fw-bold text-uppercase border-0" style="background-color: #f97316 !important; color: #ffffff !important; border-radius: 8px; letter-spacing: 0.5px; text-decoration: none !important;" data-brand="${brand}" ${!isReturnable ? 'disabled' : ''}>
                                                         <i class="fa fa-list-ul me-2" style="color: #ffffff !important;"></i>Manage Return Products
                                                     </button>
                                                 </div>
@@ -452,7 +452,7 @@
                                                 </div>
                                                 
                                                 <div class="mt-auto pt-3 border-top">
-                                                    <button type="button" class="btn w-100 config-loyalty-btn shadow-sm py-2 fw-bold text-uppercase border-0" style="background-color: #0ea5e9 !important; color: #ffffff !important; border-radius: 8px; letter-spacing: 0.5px; text-decoration: none !important;" data-brand="${brand}">
+                                                    <button type="button" class="btn w-100 config-loyalty-btn shadow-sm py-2 fw-bold text-uppercase border-0" style="background-color: #0ea5e9 !important; color: #ffffff !important; border-radius: 8px; letter-spacing: 0.5px; text-decoration: none !important;" data-brand="${brand}" ${!isLoyalty ? 'disabled' : ''}>
                                                         <i class="fa fa-cog me-2" style="color: #ffffff !important;"></i>Configure Loyalty Rules
                                                     </button>
                                                 </div>
@@ -527,17 +527,17 @@
                             },
                             success: function(res) {
                                 showToast('success', 'Sync Successful', `Products for ${brand} are now ${isChecked ? 'returnable' : 'non-returnable'}.`);
-                                $manageBtn.prop('disabled', false).html('<i class="fa fa-list-ul me-1"></i>Manage Return Products');
+                                $manageBtn.prop('disabled', !isChecked).html('<i class="fa fa-list-ul me-1"></i>Manage Return Products');
                             },
                             error: function() {
                                 showToast('error', 'Sync Failed', 'Could not sync products.');
-                                $manageBtn.prop('disabled', false).html('<i class="fa fa-list-ul me-1"></i>Manage return Products');
+                                $manageBtn.prop('disabled', !isChecked).html('<i class="fa fa-list-ul me-1"></i>Manage return Products');
                             }
                         });
                     },
                     error: function() {
                         showToast('error', 'Settings Failed', 'Could not save returnable brands setting.');
-                        $manageBtn.prop('disabled', false).html('<i class="fa fa-list-ul me-1"></i>Manage Return Products');
+                        $manageBtn.prop('disabled', !isChecked).html('<i class="fa fa-list-ul me-1"></i>Manage Return Products');
                     }
                 });
             });
@@ -546,6 +546,8 @@
                 let brand = $(this).data('brand');
                 let isChecked = $(this).is(':checked');
                 let $configBtn = $(`.config-loyalty-btn[data-brand="${brand}"]`);
+                
+                $configBtn.prop('disabled', !isChecked);
                 
                 if (isChecked) {
                     if (!loyaltyBrands.includes(brand)) loyaltyBrands.push(brand);
@@ -1267,6 +1269,9 @@
                     method: 'POST',
                     data: {
                         _token: '{{ csrf_token() }}'
+                    },
+                    success: function() {
+                        showToast('success', 'Saved', 'Product returnability updated.');
                     },
                     error: function() {
                         showToast('error', 'Error', 'Failed to update product setting.');

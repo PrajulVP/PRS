@@ -1444,6 +1444,25 @@ class ReportController extends Controller
                 ]);
             });
 
+            // Add System Alerts
+            $locations->whereNotNull('remarks')->each(fn($l) => $events->push([
+                'time' => $l->timestamp,
+                'type' => 'System Alert',
+                'details' => $l->remarks,
+                'lat' => $l->latitude,
+                'lng' => $l->longitude
+            ]));
+
+            // Add Stops
+            $stops = collect($this->calculateStops($locations));
+            $stops->each(fn($s) => $events->push([
+                'time' => $s['start_time'],
+                'type' => 'Stop',
+                'details' => "Stop - Duration: {$s['duration']} mins. " . Carbon::parse($s['start_time'])->format('h:i A') . " to " . Carbon::parse($s['end_time'])->format('h:i A'),
+                'lat' => $s['lat'],
+                'lng' => $s['lng']
+            ]));
+
             if ($format === 'excel') {
                 // Generate HTML table for Excel
                 $html = "<table border='1'>";

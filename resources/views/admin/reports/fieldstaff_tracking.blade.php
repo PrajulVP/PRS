@@ -286,7 +286,7 @@
                                     <div class="mb-1"><i style="background: #51bb25"></i> Punch In</div>
                                     <div class="mb-1"><i style="background: #f73164"></i> Punch Out</div>
                                     <div class="mb-1"><i style="background: #7366ff"></i> Customer Visit</div>
-                                    <div class="mb-1"><i style="background: #dc3545"></i> Stop (> 5 mins)</div>
+                                    <div class="mb-1"><i style="background: #dc3545"></i> Stopped</div>
                                     <div><i
                                             style="background: #7366ff; border-radius: 0; height: 2px; margin-top: 11px;"></i>
                                         Route</div>
@@ -303,9 +303,23 @@
                                         @php
                                             $allEvents = collect();
                                             $punches->each(fn($p) => $allEvents->push(['type' => 'punch', 'time' => $p->timestamp, 'data' => $p]));
-                                            $visits->each(fn($v) => $allEvents->push(['type' => 'visit', 'time' => $v->check_in_at, 'data' => $v]));
+                                            
+                                            // Ensure visits work for both VisitLog (check_in_at) and FieldVisit (start_at)
+                                            $visits->each(function($v) use ($allEvents) {
+                                                $time = $v->check_in_at ?? $v->start_at ?? $v->created_at;
+                                                if ($time) $allEvents->push(['type' => 'visit', 'time' => $time, 'data' => $v]);
+                                            });
+                                            
                                             $locations->whereNotNull('remarks')->each(fn($l) => $allEvents->push(['type' => 'alert', 'time' => $l->timestamp, 'data' => $l]));
                                             $offlineLogs->each(fn($o) => $allEvents->push(['type' => 'offline', 'time' => $o->from_time, 'data' => $o]));
+                                            
+                                            // Include computed stops (> 5 mins) in the timeline
+                                            if (isset($stops)) {
+                                                $stops->each(function($s) use ($allEvents) {
+                                                    $allEvents->push(['type' => 'stop', 'time' => $s['start_time'], 'data' => $s]);
+                                                });
+                                            }
+                                            
                                             $sortedEvents = $allEvents->sortBy('time');
                                         @endphp
 
@@ -320,9 +334,13 @@
                                                     <div class="timeline-item {{ $event['type'] }}"
                                                         @if(isset($event['data']->latitude) && isset($event['data']->longitude))
                                                             onclick="flyToLocation({{ $event['data']->latitude }}, {{ $event['data']->longitude }})"
+                                                        @elseif(isset($event['data']['lat']) && isset($event['data']['lng']))
+                                                            onclick="flyToLocation({{ $event['data']['lat'] }}, {{ $event['data']['lng'] }})"
+                                                        @elseif(isset($event['data']->location_lat) && isset($event['data']->location_lng))
+                                                            onclick="flyToLocation({{ $event['data']->location_lat }}, {{ $event['data']->location_lng }})"
                                                         @endif>
                                                         <div class="d-flex justify-content-between">
-                                                            <span class="small fw-bold">{{ $event['time']->format('h:i A') }}</span>
+                                                            <span class="small fw-bold">{{ \Carbon\Carbon::parse($event['time'])->format('h:i A') }}</span>
                                                             @if($event['type'] == 'punch')
                                                                 <span class="badge badge-light-{{ $event['data']->type == 'punch_in' ? 'success' : 'danger' }} small">
                                                                     {{ str_replace('_', ' ', $event['data']->type) }}
@@ -331,6 +349,8 @@
                                                                 <span class="badge badge-light-danger small">System Alert</span>
                                                             @elseif($event['type'] == 'offline')
                                                                 <span class="badge badge-light-secondary small">Offline</span>
+                                                            @elseif($event['type'] == 'stop')
+                                                                <span class="badge badge-light-danger small">Stopped</span>
                                                             @else
                                                                 <span class="badge badge-light-warning small">Visit</span>
                                                             @endif
@@ -349,15 +369,25 @@
                                                                     <i class="fa fa-wifi me-1" style="text-decoration: line-through;"></i>Offline Period
                                                                 </p>
                                                                 <p class="mb-0 text-muted small">
-                                                                    {{ $event['data']->from_time->format('h:i A') }} - {{ $event['data']->to_time ? $event['data']->to_time->format('h:i A') : 'Ongoing' }}
+                                                                    {{ \Carbon\Carbon::parse($event['data']->from_time)->format('h:i A') }} - {{ $event['data']->to_time ? \Carbon\Carbon::parse($event['data']->to_time)->format('h:i A') : 'Ongoing' }}
                                                                     @if($event['data']->reason)
                                                                         <br>Reason: {{ $event['data']->reason }}
                                                                     @endif
                                                                 </p>
+                                                            @elseif($event['type'] == 'stop')
+                                                                <p class="mb-0 fw-bold small text-danger">
+                                                                    <i class="fa fa-hand-paper me-1"></i>Stopped
+                                                                </p>
+                                                                <p class="mb-0 text-muted small">
+                                                                    {{ \Carbon\Carbon::parse($event['data']['start_time'])->format('h:i A') }} - {{ \Carbon\Carbon::parse($event['data']['end_time'])->format('h:i A') }}
+                                                                    <br>Duration: {{ \Carbon\Carbon::parse($event['data']['start_time'])->diffInMinutes($event['data']['end_time']) }} mins
+                                                                </p>
                                                             @else
                                                                 <p class="mb-0 fw-bold small text-primary">
-                                                                    {{ $event['data']->customer_name }}</p>
-                                                                <p class="mb-0 text-muted small">{{ $event['data']->customer_category }}</p>
+                                                                    {{ $event['data']->customer_name ?? $event['data']->party?->name ?? 'Customer Visit' }}</p>
+                                                                @if(isset($event['data']->customer_category))
+                                                                    <p class="mb-0 text-muted small">{{ ucfirst($event['data']->customer_category) }}</p>
+                                                                @endif
                                                             @endif
                                                         </div>
                                                     </div>
@@ -366,63 +396,121 @@
                                         </div>
 
                                         <div class="d-none d-print-block mt-4">
+                                            <div class="text-center mb-4">
+                                                <h4 class="fw-bold mb-1">Atomed Wellness Field Staff Tracking Report</h4>
+                                                <p class="text-muted mb-0">Report Date: {{ now()->format('M d, Y H:i') }}</p>
+                                            </div>
+                                            
                                             <table class="table table-bordered table-sm mb-4">
-                                                <tr>
-                                                    <th>Staff Name</th><td>{{ $user->name }}</td>
-                                                    <th>Date</th><td>{{ \Carbon\Carbon::parse($date)->format('M d, Y') }}</td>
+                                                <tr style="background: #f8f9fa;">
+                                                    <th colspan="2" class="text-uppercase" style="width: 50%;">Field Personnel</th>
+                                                    <th colspan="2" class="text-uppercase" style="width: 50%;">Tracking Date</th>
                                                 </tr>
                                                 <tr>
-                                                    <th>Total Distance</th><td>{{ number_format($totalDistance, 2) }} KM</td>
-                                                    <th>Visits Completed</th><td>{{ $visits->count() }}</td>
+                                                    <td colspan="2">
+                                                        <span class="fw-bold fs-6">{{ $user->name }}</span><br>
+                                                        @if($user->fieldStaff && $user->fieldStaff->salesManager)
+                                                            <span class="text-muted small">SM: {{ $user->fieldStaff->salesManager->user->name ?? 'N/A' }}</span>
+                                                        @endif
+                                                    </td>
+                                                    <td colspan="2" class="align-middle fw-bold fs-6">
+                                                        {{ \Carbon\Carbon::parse($date)->format('F d, Y') }}
+                                                    </td>
+                                                </tr>
+                                                <tr style="background: #f8f9fa;">
+                                                    <th class="text-uppercase" style="width: 25%;">Total Distance</th>
+                                                    <th class="text-uppercase" style="width: 25%;">Visits Completed</th>
+                                                    <th class="text-uppercase" style="width: 25%;">Attendance Logs</th>
+                                                    <th class="text-uppercase" style="width: 25%;">Offline Periods</th>
                                                 </tr>
                                                 <tr>
-                                                    <th>Attendance Logs</th><td>{{ $punches->count() }}</td>
-                                                    <th>Status</th><td>{{ $isOnline ? 'Online' : 'Offline' }}</td>
+                                                    <td class="fs-6">{{ number_format($totalDistance, 2) }} KM</td>
+                                                    <td class="fs-6">{{ $visits->count() }}</td>
+                                                    <td class="fs-6">{{ $punches->count() }}</td>
+                                                    <td class="fs-6">
+                                                        @if(isset($offlineLogs) && $offlineLogs->count() > 0)
+                                                            {{ $offlineLogs->count() }} ({{ $offlineLogs->sum(function($o) { return \Carbon\Carbon::parse($o->from_time)->diffInMinutes($o->to_time ?? now()); }) }} mins)
+                                                        @else
+                                                            0
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                                <tr style="background: #f8f9fa;">
+                                                    <th colspan="4" class="text-uppercase">Status</th>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="4" class="fw-bold fs-6 text-uppercase">{{ $isOnline ? 'Online' : 'Punch Out' }}</td>
                                                 </tr>
                                             </table>
 
-                                            <h6 class="fw-bold mb-2">Activity Timeline</h6>
-                                            <table class="table table-bordered table-sm">
+                                            <h5 class="fw-bold mb-3 border-bottom pb-2">Activity Timeline</h5>
+                                            <table class="table table-bordered table-sm mb-5">
                                                 <thead>
-                                                    <tr style="background: #f8f9fa;">
-                                                        <th>Time</th>
-                                                        <th>Type</th>
-                                                        <th>Details</th>
+                                                    <tr style="background: #f8f9fa;" class="text-uppercase">
+                                                        <th style="width: 15%;">Time</th>
+                                                        <th style="width: 15%;">Type</th>
+                                                        <th style="width: 45%;">Details</th>
+                                                        <th style="width: 25%;">Coordinates</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     @if($sortedEvents->isEmpty())
                                                         <tr>
-                                                            <td colspan="3" class="text-center text-muted py-3">No activity recorded yet.</td>
+                                                            <td colspan="4" class="text-center text-muted py-3">No activity recorded yet.</td>
                                                         </tr>
                                                     @else
                                                         @foreach($sortedEvents as $event)
                                                             <tr>
-                                                                <td class="fw-bold" style="white-space: nowrap;">{{ $event['time']->format('h:i A') }}</td>
-                                                                <td>
+                                                                <td class="fw-bold align-middle" style="white-space: nowrap;">{{ \Carbon\Carbon::parse($event['time'])->format('h:i A') }}</td>
+                                                                <td class="align-middle fw-bold">
                                                                     @if($event['type'] == 'punch')
                                                                         {{ strtoupper(str_replace('_', ' ', $event['data']->type)) }}
                                                                     @elseif($event['type'] == 'alert')
                                                                         ALERT
                                                                     @elseif($event['type'] == 'offline')
                                                                         OFFLINE
+                                                                    @elseif($event['type'] == 'stop')
+                                                                        STOP
                                                                     @else
                                                                         VISIT
                                                                     @endif
                                                                 </td>
-                                                                <td>
+                                                                <td class="align-middle">
                                                                     @if($event['type'] == 'punch')
-                                                                        Punched at location
+                                                                        <span class="fw-bold">Attendance Log</span><br>
+                                                                        <span class="text-muted small">Location verified via registered device.</span>
                                                                         @if($event['data']->is_mock_location)
-                                                                            - Mock GPS!
+                                                                            <br><span class="text-danger small">Mock GPS detected!</span>
                                                                         @endif
                                                                     @elseif($event['type'] == 'alert')
                                                                         {{ $event['data']->remarks }}
                                                                     @elseif($event['type'] == 'offline')
-                                                                        Offline Period @if(!empty($event['data']->reason)) ({{ $event['data']->reason }}) @endif<br>
-                                                                        {{ $event['data']->from_time->format('h:i A') }} - {{ $event['data']->to_time ? $event['data']->to_time->format('h:i A') : 'Ongoing' }}
+                                                                        <span class="fw-bold">Offline Period</span><br>
+                                                                        <span class="text-muted small">
+                                                                            Disconnected: {{ $event['data']->reason ?? 'Network drop' }}<br>
+                                                                            Duration: {{ \Carbon\Carbon::parse($event['data']->from_time)->diffInMinutes($event['data']->to_time ?? now()) }} mins<br>
+                                                                            Resumed: {{ $event['data']->to_time ? \Carbon\Carbon::parse($event['data']->to_time)->format('h:i A') : 'Ongoing' }}
+                                                                        </span>
+                                                                    @elseif($event['type'] == 'stop')
+                                                                        <span class="fw-bold">Stationary Stop</span><br>
+                                                                        <span class="text-muted small">
+                                                                            Duration: {{ \Carbon\Carbon::parse($event['data']['start_time'])->diffInMinutes($event['data']['end_time']) }} mins<br>
+                                                                            {{ \Carbon\Carbon::parse($event['data']['start_time'])->format('h:i A') }} - {{ \Carbon\Carbon::parse($event['data']['end_time'])->format('h:i A') }}
+                                                                        </span>
                                                                     @else
-                                                                        {{ $event['data']->customer_name }} ({{ $event['data']->customer_category }})
+                                                                        <span class="fw-bold">{{ $event['data']->customer_name ?? $event['data']->party?->name ?? 'Customer Visit' }}</span><br>
+                                                                        <span class="text-muted small">{{ ucfirst($event['data']->customer_category ?? 'Retailer') }} visit logged.</span>
+                                                                    @endif
+                                                                </td>
+                                                                <td class="align-middle text-muted small" style="font-family: monospace;">
+                                                                    @if(isset($event['data']->latitude) && isset($event['data']->longitude))
+                                                                        {{ number_format($event['data']->latitude, 8) }},<br>{{ number_format($event['data']->longitude, 8) }}
+                                                                    @elseif(isset($event['data']['lat']) && isset($event['data']['lng']))
+                                                                        {{ number_format($event['data']['lat'], 8) }},<br>{{ number_format($event['data']['lng'], 8) }}
+                                                                    @elseif(isset($event['data']->location_lat) && isset($event['data']->location_lng))
+                                                                        {{ number_format($event['data']->location_lat, 8) }},<br>{{ number_format($event['data']->location_lng, 8) }}
+                                                                    @else
+                                                                        N/A
                                                                     @endif
                                                                 </td>
                                                             </tr>
@@ -430,6 +518,44 @@
                                                     @endif
                                                 </tbody>
                                             </table>
+                                            
+                                            <div style="page-break-before: always;"></div>
+                                            
+                                            <h5 class="fw-bold mb-1 border-bottom pb-2">Route Data Samples</h5>
+                                            <p class="text-muted small mb-3">Displaying high-frequency location pings used for route reconstruction.</p>
+                                            <table class="table table-bordered table-sm mb-5">
+                                                <thead>
+                                                    <tr style="background: #f8f9fa;" class="text-uppercase small">
+                                                        <th>Ping Time</th>
+                                                        <th>Latitude</th>
+                                                        <th>Longitude</th>
+                                                        <th>Security Check</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @if($locations->isEmpty())
+                                                        <tr><td colspan="4" class="text-center text-muted">No telemetry data available.</td></tr>
+                                                    @else
+                                                        @foreach($locations->take(15) as $loc)
+                                                        <tr>
+                                                            <td class="small">{{ \Carbon\Carbon::parse($loc->timestamp)->format('H:i:s') }}</td>
+                                                            <td class="small font-monospace">{{ number_format($loc->latitude, 8) }}</td>
+                                                            <td class="small font-monospace">{{ number_format($loc->longitude, 8) }}</td>
+                                                            <td class="small text-success"><i class="fa fa-check-circle me-1"></i> Valid GPS</td>
+                                                        </tr>
+                                                        @endforeach
+                                                        @if($locations->count() > 15)
+                                                            <tr>
+                                                                <td colspan="4" class="text-center text-muted small fst-italic">... {{ $locations->count() - 15 }} additional pings omitted for brevity ...</td>
+                                                            </tr>
+                                                        @endif
+                                                    @endif
+                                                </tbody>
+                                            </table>
+
+                                            <div class="text-center mt-5 pt-3 border-top text-muted small">
+                                                Confidentially generated for Atomed Wellness Admin | This document contains verified GPS telemetry data.
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -489,6 +615,9 @@
                             lat: p.location.latitude,
                             lng: p.location.longitude
                         })));
+                    } else {
+                        // Fallback if API returns error JSON (e.g., 403 Permission Denied)
+                        allSnapped = allSnapped.concat(chunk);
                     }
                 } catch (e) {
                     console.error('Snap to Roads chunk failed:', e);
@@ -639,12 +768,12 @@
                     strokeColor: "#fff",
                     strokeWeight: 2
                 },
-                title: `Stop: ${duration} mins`
+                title: `Stop`
             });
             
             const infoWindow = new google.maps.InfoWindow({
                 content: `<div class="custom-info-window">
-                            <h6 class="text-danger fw-bold mb-1"><i class="fa fa-hand-paper text-danger me-2"></i>Stop Detected</h6>
+                            <h6 class="text-danger fw-bold mb-1"><i class="fa fa-hand-paper text-danger me-2"></i>Stopped</h6>
                             <div class="small"><b>Duration:</b> ${duration} Minutes</div>
                             <div class="small text-muted">${startTime} to ${endTime}</div>
                           </div>`

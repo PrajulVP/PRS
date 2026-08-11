@@ -326,8 +326,7 @@
                                                         @elseif($event['type'] == 'alert')
                                                             <p class="mb-0 fw-bold small text-danger"><i class="fa fa-info-circle me-1"></i>{{ $event['data']->remarks }}</p>
                                                         @else
-                                                            <p class="mb-0 fw-bold small text-primary">
-                                                                {{ $event['data']->customer_name }}</p>
+                                                            <p class="mb-0 fw-bold small text-primary">{{ $event['data']->customer_name }}</p>
                                                             <p class="mb-0 text-muted small">{{ $event['data']->customer_category }}</p>
                                                         @endif
                                                     </div>

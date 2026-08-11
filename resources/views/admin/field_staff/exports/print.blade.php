@@ -25,7 +25,6 @@
                 <th>Party Name</th>
                 <th>Purpose</th>
                 <th>Status</th>
-                <th>Kilometers</th>
                 <th>Repeat Visit</th>
                 <th>Remarks</th>
             </tr>
@@ -46,7 +45,6 @@
                 </td>
                 <td>{{ optional($visit->purpose)->name }}</td>
                 <td>{{ ucfirst($visit->status) }}</td>
-                <td>{{ $visit->distance_km }}</td>
                 <td>{{ $visit->is_repeat ? 'Yes' : 'No' }}</td>
                 <td>{{ $visit->remarks }}</td>
             </tr>

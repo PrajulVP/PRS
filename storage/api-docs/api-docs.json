@@ -1773,6 +1773,40 @@
                 }
             }
         },
+        "/api/field-visits/parties": {
+            "get": {
+                "tags": [
+                    "Field Staff"
+                ],
+                "summary": "Get list of parties based on party_type",
+                "operationId": "6a87f133c9fcaea949f4dbf8264df356",
+                "parameters": [
+                    {
+                        "name": "party_type",
+                        "in": "query",
+                        "description": "Type of party (retailer or distributor)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "retailer",
+                                "distributor"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of parties"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/field-visits/purposes": {
             "get": {
                 "tags": [
@@ -1879,14 +1913,10 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "visit_id",
                                     "purpose_id",
                                     "remarks"
                                 ],
                                 "properties": {
-                                    "visit_id": {
-                                        "type": "integer"
-                                    },
                                     "purpose_id": {
                                         "type": "integer"
                                     },
@@ -1894,10 +1924,12 @@
                                         "type": "string"
                                     },
                                     "location_lat": {
-                                        "type": "number"
+                                        "type": "number",
+                                        "format": "float"
                                     },
                                     "location_lng": {
-                                        "type": "number"
+                                        "type": "number",
+                                        "format": "float"
                                     }
                                 },
                                 "type": "object"

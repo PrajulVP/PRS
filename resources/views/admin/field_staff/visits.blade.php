@@ -90,14 +90,13 @@
                         <table class="table table-hover table-borderless align-middle mb-0" id="visitsTable" style="width:100%">
                             <thead class="table-light border-bottom">
                                 <tr>
-                                    <th class="py-3 ps-4 text-secondary fw-bold">Date & Time</th>
+                                    <th class="py-3 ps-4 text-secondary fw-bold" style="min-width: 140px;">Date & Time</th>
                                     <th class="py-3 text-secondary fw-bold">Staff Member</th>
                                     <th class="py-3 text-secondary fw-bold">Manager</th>
                                     <th class="py-3 text-secondary fw-bold">Party Details</th>
                                     <th class="py-3 text-secondary fw-bold">Purpose</th>
                                     <th class="py-3 text-secondary fw-bold">Duration</th>
-                                    <th class="py-3 text-secondary fw-bold">Distance</th>
-                                    <th class="py-3 text-secondary fw-bold">Remarks</th>
+                                    <th class="py-3 text-secondary fw-bold" style="min-width: 250px;">Remarks</th>
                                     <th class="py-3 pe-4 text-secondary fw-bold text-center">Action</th>
                                 </tr>
                             </thead>
@@ -403,7 +402,6 @@
                 { data: 'party_details', name: 'party_type', orderable: false, searchable: false },
                 { data: 'purpose', name: 'purpose.name', orderable: false },
                 { data: 'duration', name: 'duration', orderable: false, searchable: false },
-                { data: 'distance', name: 'distance', orderable: false, searchable: false },
                 { data: 'remarks', name: 'remarks', orderable: false },
                 { data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center' }
             ],
