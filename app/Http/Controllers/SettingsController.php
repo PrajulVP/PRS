@@ -40,7 +40,8 @@ class SettingsController extends Controller
                 'reward' => $slab->gift_name,
                 'description' => $slab->description,
                 'image_url' => $slab->gift_image ? asset($slab->gift_image) : null,
-                'image_path' => $slab->gift_image
+                'image_path' => $slab->gift_image,
+                'is_active' => $slab->is_active
             ];
         }
         $loyalty_rules = json_encode($loyalty_rules_array);
@@ -144,6 +145,7 @@ class SettingsController extends Controller
                             $slab->slab_name = $brand . ' - ₹' . $rule['threshold'];
                             $slab->gift_name = $rule['reward'];
                             $slab->description = $rule['description'] ?? null;
+                            $slab->is_active = $rule['is_active'] ?? true;
                             
                             if ($images && isset($images[$key])) {
                                 $file = $images[$key];
@@ -166,7 +168,7 @@ class SettingsController extends Controller
                     }
                 }
             });
-            return response()->json(['message' => 'Loyalty Slabs saved successfully.']);
+            return response()->json(['message' => 'Loyalty Rules saved successfully.']);
         } elseif ($data['slug'] === 'type_medical_title') {
             $title = 'Medical Product Type Title';
             $desc = 'Main title for Medical Products tab in modal.';

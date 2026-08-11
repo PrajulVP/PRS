@@ -3,8 +3,27 @@
 @section('page-body')
     <style>
         .setting-form .input-group-text { font-size: 0.85rem; }
-        .accordion-button::after { content: "+" !important; font-family: inherit !important; font-size: 1.5rem !important; background-image: none !important; display: flex; align-items: center; justify-content: center; transform: none !important; color: #64748b; }
-        .accordion-button:not(.collapsed)::after { content: "-" !important; font-size: 1.8rem !important; color: var(--med-primary, #00497a); }
+        .custom-accordion-toggle {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+        .custom-accordion-toggle:hover {
+            background-color: rgba(0,0,0,0.015);
+            border-color: rgba(13,110,253,0.3);
+        }
+        .custom-accordion-toggle[aria-expanded="true"] {
+            border-bottom: none;
+            border-bottom-left-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+            background-color: var(--bs-body-bg, #fff);
+        }
+        .custom-accordion-toggle[aria-expanded="true"] .toggle-icon {
+            transform: rotate(180deg);
+        }
+        .custom-accordion-toggle[aria-expanded="true"] .toggle-icon-wrap {
+            color: #0d6efd !important;
+        }
     </style>
     <div class="container-fluid">
         <div class="row">
@@ -18,20 +37,22 @@
                         <div class="accordion accordion-flush" id="settingsAccordion">
                             
                             <!-- Field Staff Configuration -->
-                            <div class="accordion-item border mb-3 rounded-4 overflow-hidden shadow-sm">
-                                <h2 class="accordion-header" id="headingFieldStaff">
-                                    <button class="accordion-button collapsed fw-bold py-3 px-4 bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFieldStaff" aria-expanded="false" aria-controls="collapseFieldStaff" style="font-size: 1.1rem; color: #1e293b;">
-                                        <div class="d-flex align-items-center w-100 me-3">
-                                            <i class="fa fa-users-cog me-3 text-primary fs-4"></i>
+                            <div class="accordion-item border-0 mb-3 rounded-4 shadow-sm" style="background: var(--bs-body-bg, #fff);">
+                                <div class="custom-accordion-toggle p-3 rounded-4" id="headingFieldStaff" data-bs-toggle="collapse" data-bs-target="#collapseFieldStaff" aria-expanded="true" aria-controls="collapseFieldStaff">
+                                    <div class="d-flex align-items-center justify-content-between w-100">
+                                        <div class="d-flex align-items-center">
                                             <div>
-                                                <div>Field Staff Configuration</div>
-                                                <small class="text-muted fw-normal d-block mt-1" style="font-size: 0.85rem;">Geo-fencing, TA, DA, and Radius rules</small>
+                                                <h6 class="fw-bold mb-1" style="color: var(--bs-body-color, #1e293b); letter-spacing: 0.3px; font-size: 1rem;">Field Staff Configuration</h6>
+                                                <small class="text-muted fw-medium d-block" style="font-size: 0.85rem;">Geo-fencing, TA, DA, and Radius rules</small>
                                             </div>
                                         </div>
-                                    </button>
-                                </h2>
+                                        <div class="toggle-icon-wrap d-flex align-items-center justify-content-center me-2" style="color: #6c757d; transition: all 0.3s ease;">
+                                            <i class="fa fa-chevron-down toggle-icon" style="transition: transform 0.3s ease; font-size: 0.9rem;"></i>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div id="collapseFieldStaff" class="accordion-collapse collapse show" aria-labelledby="headingFieldStaff" data-bs-parent="#settingsAccordion">
-                                    <div class="accordion-body p-4 bg-light">
+                                    <div class="accordion-body p-4 border border-top-0 rounded-bottom-4 bg-light" style="border-color: rgba(0,0,0,0.08) !important;">
                                         <div class="row g-4">
                                             <!-- Geo-fencing -->
                                             <div class="col-md-6">
@@ -131,20 +152,22 @@
                                 </div>
                             </div>
                             <!-- Leave Types Master -->
-                            <div class="accordion-item border mb-3 rounded-4 overflow-hidden shadow-sm">
-                                <h2 class="accordion-header" id="headingLeave">
-                                    <button class="accordion-button collapsed fw-bold py-3 px-4 bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLeave" aria-expanded="false" aria-controls="collapseLeave" style="font-size: 1.1rem; color: #1e293b;">
-                                        <div class="d-flex align-items-center w-100 me-3">
-                                            <i class="fa fa-calendar-alt me-3 text-primary fs-4"></i>
+                            <div class="accordion-item border-0 mb-3 rounded-4 shadow-sm" style="background: var(--bs-body-bg, #fff);">
+                                <div class="custom-accordion-toggle p-3 rounded-4" id="headingLeave" data-bs-toggle="collapse" data-bs-target="#collapseLeave" aria-expanded="false" aria-controls="collapseLeave">
+                                    <div class="d-flex align-items-center justify-content-between w-100">
+                                        <div class="d-flex align-items-center">
                                             <div>
-                                                <div>Leave Types Master</div>
-                                                <small class="text-muted fw-normal d-block mt-1" style="font-size: 0.85rem;">Configure default annual quotas for field staff</small>
+                                                <h6 class="fw-bold mb-1" style="color: var(--bs-body-color, #1e293b); letter-spacing: 0.3px; font-size: 1rem;">Leave Types Master</h6>
+                                                <small class="text-muted fw-medium d-block" style="font-size: 0.85rem;">Configure default annual quotas for field staff</small>
                                             </div>
                                         </div>
-                                    </button>
-                                </h2>
+                                        <div class="toggle-icon-wrap d-flex align-items-center justify-content-center me-2" style="color: #6c757d; transition: all 0.3s ease;">
+                                            <i class="fa fa-chevron-down toggle-icon" style="transition: transform 0.3s ease; font-size: 0.9rem;"></i>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div id="collapseLeave" class="accordion-collapse collapse" aria-labelledby="headingLeave" data-bs-parent="#settingsAccordion">
-                                    <div class="accordion-body p-4 bg-light">
+                                    <div class="accordion-body p-4 border border-top-0 rounded-bottom-4 bg-light" style="border-color: rgba(0,0,0,0.08) !important;">
                                          <div class="d-flex align-items-center justify-content-between mb-3">
                                              <h6 class="fw-bold mb-0 text-dark">Leave Type Configurations</h6>
                                              <div>
@@ -163,20 +186,22 @@
                             </div>
 
                             <!-- Visit Purposes Master -->
-                            <div class="accordion-item border mb-3 rounded-4 overflow-hidden shadow-sm">
-                                <h2 class="accordion-header" id="headingPurposes">
-                                    <button class="accordion-button collapsed fw-bold py-3 px-4 bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePurposes" aria-expanded="false" aria-controls="collapsePurposes" style="font-size: 1.1rem; color: #1e293b;">
-                                        <div class="d-flex align-items-center w-100 me-3">
-                                            <i class="fa fa-list-check me-3 text-primary fs-4"></i>
+                            <div class="accordion-item border-0 mb-3 rounded-4 shadow-sm" style="background: var(--bs-body-bg, #fff);">
+                                <div class="custom-accordion-toggle p-3 rounded-4" id="headingPurposes" data-bs-toggle="collapse" data-bs-target="#collapsePurposes" aria-expanded="false" aria-controls="collapsePurposes">
+                                    <div class="d-flex align-items-center justify-content-between w-100">
+                                        <div class="d-flex align-items-center">
                                             <div>
-                                                <div>Visit Purposes Master</div>
-                                                <small class="text-muted fw-normal d-block mt-1" style="font-size: 0.85rem;">Configure purposes for field staff visits</small>
+                                                <h6 class="fw-bold mb-1" style="color: var(--bs-body-color, #1e293b); letter-spacing: 0.3px; font-size: 1rem;">Visit Purposes Master</h6>
+                                                <small class="text-muted fw-medium d-block" style="font-size: 0.85rem;">Configure purposes for field staff visits</small>
                                             </div>
                                         </div>
-                                    </button>
-                                </h2>
+                                        <div class="toggle-icon-wrap d-flex align-items-center justify-content-center me-2" style="color: #6c757d; transition: all 0.3s ease;">
+                                            <i class="fa fa-chevron-down toggle-icon" style="transition: transform 0.3s ease; font-size: 0.9rem;"></i>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div id="collapsePurposes" class="accordion-collapse collapse" aria-labelledby="headingPurposes" data-bs-parent="#settingsAccordion">
-                                    <div class="accordion-body p-4 bg-light">
+                                    <div class="accordion-body p-4 border border-top-0 rounded-bottom-4 bg-light" style="border-color: rgba(0,0,0,0.08) !important;">
                                          <div class="d-flex align-items-center justify-content-between mb-3">
                                              <h6 class="fw-bold mb-0 text-dark">Visit Purposes</h6>
                                              <div>
@@ -186,27 +211,24 @@
                                              </div>
                                          </div>
                                          
-                                         <div id="purposes_container" class="d-flex flex-wrap gap-3 p-3 bg-white rounded-3 border shadow-inner" style="min-height: 80px;">
+                                         <div id="purposes_container" class="d-flex flex-wrap gap-2 p-3 rounded-3 shadow-sm border" style="min-height: 80px; background-color: #f8fafc;">
                                              @foreach($visitPurposes as $purpose)
-                                                 <div class="d-inline-flex align-items-center justify-content-between rounded-pill py-2 px-3 shadow-sm border" style="background-color: #f8fafc; border-color: #e2e8f0; font-size: 1.05rem;">
-                                                     <div class="d-flex align-items-center me-4">
-                                                         <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2 shadow-sm" style="width: 32px; height: 32px;">
-                                                             <i class="fa fa-tag small"></i>
-                                                         </div>
-                                                         <span class="fw-semibold text-dark">{{ $purpose->name }}</span>
+                                                 <div class="d-inline-flex align-items-center justify-content-between rounded px-3 py-2 shadow-sm border" style="background-color: #ffffff; border-color: #e2e8f0; transition: all 0.2s ease;">
+                                                     <div class="d-flex align-items-center me-3">
+                                                         <span class="fw-medium" style="color: #334155; font-size: 0.95rem;">{{ $purpose->name }}</span>
                                                      </div>
-                                                     <div class="d-flex gap-2">
-                                                         <button type="button" class="btn btn-sm btn-light border p-0 d-flex align-items-center justify-content-center edit-purpose shadow-sm" data-id="{{ $purpose->id }}" data-name="{{ $purpose->name }}" style="width: 30px; height: 30px; border-radius: 50%;">
-                                                             <i class="fa fa-edit text-primary" style="font-size: 0.8rem;"></i>
+                                                     <div class="d-flex gap-1">
+                                                         <button type="button" class="btn btn-sm btn-link text-primary p-0 d-flex align-items-center justify-content-center edit-purpose" data-id="{{ $purpose->id }}" data-name="{{ $purpose->name }}" style="width: 24px; height: 24px; text-decoration: none;">
+                                                             <i class="fa fa-edit" style="font-size: 0.85rem;"></i>
                                                          </button>
-                                                         <button type="button" class="btn btn-sm btn-light border p-0 d-flex align-items-center justify-content-center delete-purpose shadow-sm" data-id="{{ $purpose->id }}" style="width: 30px; height: 30px; border-radius: 50%;">
-                                                             <i class="fa fa-trash text-danger" style="font-size: 0.8rem;"></i>
+                                                         <button type="button" class="btn btn-sm btn-link text-danger p-0 d-flex align-items-center justify-content-center delete-purpose" data-id="{{ $purpose->id }}" style="width: 24px; height: 24px; text-decoration: none;">
+                                                             <i class="fa fa-trash" style="font-size: 0.85rem;"></i>
                                                          </button>
                                                      </div>
                                                  </div>
                                              @endforeach
                                              @if($visitPurposes->isEmpty())
-                                                 <span class="text-muted small">No purposes configured yet.</span>
+                                                 <span class="text-muted small w-100 text-center py-2">No purposes configured yet.</span>
                                              @endif
                                          </div>
                                     </div>

@@ -1840,6 +1840,110 @@
                 ]
             }
         },
+        "/api/field-staff/checkout-visit": {
+            "post": {
+                "tags": [
+                    "Field Staff"
+                ],
+                "summary": "Check out of a logged visit",
+                "operationId": "c80d670b723390565d41c47525bec780",
+                "parameters": [
+                    {
+                        "name": "X-Device-ID",
+                        "in": "header",
+                        "description": "Unique Device identifier for binding",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "visit_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Visit checked out successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/field-staff/sync-offline-logs": {
+            "post": {
+                "tags": [
+                    "Field Staff"
+                ],
+                "summary": "Sync offline logs when internet is restored",
+                "operationId": "e9c0d9a3de80c484d33933764c51fbad",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "logs": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "from_time": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "to_time": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "latitude": {
+                                                    "type": "number",
+                                                    "nullable": true
+                                                },
+                                                "longitude": {
+                                                    "type": "number",
+                                                    "nullable": true
+                                                },
+                                                "reason": {
+                                                    "type": "string",
+                                                    "example": "Mobile Data Off"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Logs synced successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/field-staff/expenses": {
             "post": {
                 "tags": [

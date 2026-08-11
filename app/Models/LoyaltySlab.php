@@ -15,9 +15,13 @@ class LoyaltySlab extends Model
         'min_points',
         'gift_name',
         'gift_image',
-        'description'
+        'description',
+        'is_active'
     ];
 
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
     public function redemptions()
     {
         return $this->hasMany(LoyaltyRedemption::class);

@@ -1295,6 +1295,14 @@ class ReportController extends Controller
         $visits = \App\Models\VisitLog::where('user_id', $userId)
             ->whereDate('check_in_at', $date)
             ->get();
+
+        $offlineLogs = \App\Models\OfflineLog::where('user_id', $userId)
+            ->where(function($query) use ($date) {
+                $query->whereDate('from_time', $date)
+                      ->orWhereDate('to_time', $date);
+            })
+            ->orderBy('from_time', 'asc')
+            ->get();
  
         // Calculate total distance coverd
         $totalDistance = \App\Models\LocationLog::calculateDailyDistance($userId, $date);
@@ -1307,7 +1315,65 @@ class ReportController extends Controller
         $lastPunch = $punches->last();
         $isOnline = $lastPunch && $lastPunch->type === 'punch_in';
 
-        return view('admin.reports.fieldstaff_tracking', compact('user', 'locations', 'punches', 'visits', 'date', 'totalDistance', 'isOnline', 'mockGpsCount'));
+        $stops = collect($this->calculateStops($locations));
+
+        return view('admin.reports.fieldstaff_tracking', compact('user', 'locations', 'punches', 'visits', 'offlineLogs', 'date', 'totalDistance', 'isOnline', 'mockGpsCount', 'stops'));
+    }
+ 
+    private function calculateStops($locations)
+    {
+        $stops = [];
+        if ($locations->isEmpty()) return $stops;
+
+        $currentStop = null;
+
+        foreach ($locations as $loc) {
+            if (!$currentStop) {
+                $currentStop = [
+                    'start_time' => $loc->timestamp,
+                    'end_time' => $loc->timestamp,
+                    'lat' => $loc->latitude,
+                    'lng' => $loc->longitude,
+                ];
+                continue;
+            }
+
+            // Calculate distance using Haversine (meters)
+            $earthRadius = 6371000;
+            $latDelta = deg2rad($loc->latitude - $currentStop['lat']);
+            $lonDelta = deg2rad($loc->longitude - $currentStop['lng']);
+            $a = sin($latDelta / 2) * sin($latDelta / 2) +
+                 cos(deg2rad($currentStop['lat'])) * cos(deg2rad($loc->latitude)) *
+                 sin($lonDelta / 2) * sin($lonDelta / 2);
+            $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+            $distance = $earthRadius * $c;
+
+            if ($distance <= 15) { // 15 meters radius
+                $currentStop['end_time'] = $loc->timestamp;
+            } else {
+                $duration = \Carbon\Carbon::parse($currentStop['start_time'])->diffInMinutes(\Carbon\Carbon::parse($currentStop['end_time']));
+                if ($duration >= 5) {
+                    $currentStop['duration'] = $duration;
+                    $stops[] = $currentStop;
+                }
+                $currentStop = [
+                    'start_time' => $loc->timestamp,
+                    'end_time' => $loc->timestamp,
+                    'lat' => $loc->latitude,
+                    'lng' => $loc->longitude,
+                ];
+            }
+        }
+
+        if ($currentStop) {
+            $duration = \Carbon\Carbon::parse($currentStop['start_time'])->diffInMinutes(\Carbon\Carbon::parse($currentStop['end_time']));
+            if ($duration >= 5) {
+                $currentStop['duration'] = $duration;
+                $stops[] = $currentStop;
+            }
+        }
+
+        return $stops;
     }
  
     public function fieldStaffTrackingExport(Request $request)
@@ -1335,39 +1401,84 @@ class ReportController extends Controller
             ->whereDate('check_in_at', $date)
             ->get();
 
+        $offlineLogs = \App\Models\OfflineLog::where('user_id', $userId)
+            ->where(function($query) use ($date) {
+                $query->whereDate('from_time', $date)
+                      ->orWhereDate('to_time', $date);
+            })
+            ->orderBy('from_time', 'asc')
+            ->get();
+            
+        $totalOfflineMinutes = 0;
+        foreach($offlineLogs as $log) {
+            if($log->from_time && $log->to_time) {
+                $totalOfflineMinutes += $log->from_time->diffInMinutes($log->to_time);
+            }
+        }
+        $offlineCount = $offlineLogs->count();
+
         $totalDistance = \App\Models\LocationLog::calculateDailyDistance($userId, $date);
 
-        if ($format === 'csv') {
-            $filename = "tracking_{$user->name}_{$date}.csv";
+        if ($format === 'csv' || $format === 'excel') {
+            $filename = "tracking_{$user->name}_{$date}." . ($format === 'excel' ? 'xls' : 'csv');
             $headers = [
-                "Content-type"        => "text/csv",
+                "Content-type"        => $format === 'excel' ? "application/vnd.ms-excel" : "text/csv",
                 "Content-Disposition" => "attachment; filename=$filename",
                 "Pragma"              => "no-cache",
                 "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
                 "Expires"             => "0"
             ];
 
-            $callback = function() use($user, $date, $locations, $punches, $visits, $totalDistance) {
+            $events = collect();
+            $punches->each(fn($p) => $events->push(['time' => $p->timestamp, 'type' => 'Attendance', 'details' => str_replace('_', ' ', $p->type), 'lat' => $p->latitude, 'lng' => $p->longitude]));
+            $visits->each(fn($v) => $events->push(['time' => $v->check_in_at, 'type' => 'Visit', 'details' => $v->customer_name . " (" . $v->customer_category . ")", 'lat' => $v->latitude, 'lng' => $v->longitude]));
+            $offlineLogs->each(function($o) use ($events) {
+                $duration = $o->to_time ? $o->from_time->diffInMinutes($o->to_time) . " mins" : "Ongoing";
+                $reasonText = $o->reason ? " (" . $o->reason . ")" : "";
+                $events->push([
+                    'time' => $o->from_time, 
+                    'type' => 'Offline', 
+                    'details' => "Offline Period" . $reasonText . " - Duration: $duration. Resumed at: " . ($o->to_time ? $o->to_time->format('h:i A') : 'N/A'), 
+                    'lat' => $o->latitude ?? 'N/A', 
+                    'lng' => $o->longitude ?? 'N/A'
+                ]);
+            });
+
+            if ($format === 'excel') {
+                // Generate HTML table for Excel
+                $html = "<table border='1'>";
+                $html .= "<tr><th colspan='4'>FIELD STAFF TRACKING REPORT - {$user->name} | Date: {$date} | Dist: {$totalDistance} KM | Offline: {$offlineCount} ({$totalOfflineMinutes} mins)</th></tr>";
+                
+                $html .= "<tr><th>Time</th><th>Type</th><th>Details</th><th>Location (Lat/Lng)</th></tr>";
+                foreach ($events->sortBy('time') as $event) {
+                    $loc = $event['lat'] . ($event['lng'] !== 'N/A' ? ", " . $event['lng'] : "");
+                    $time = Carbon::parse($event['time'])->format('h:i A');
+                    $html .= "<tr><td>{$time}</td><td>{$event['type']}</td><td>{$event['details']}</td><td>{$loc}</td></tr>";
+                }
+
+                $html .= "<tr><td colspan='4'></td></tr>";
+                $html .= "<tr><th colspan='4'>RAW GPS LOGS</th></tr>";
+                $html .= "<tr><th>Timestamp</th><th>Latitude</th><th>Longitude</th><th>Mock GPS</th></tr>";
+                foreach ($locations as $loc) {
+                    $mock = $loc->is_mock_location ? 'Yes' : 'No';
+                    $html .= "<tr><td>{$loc->timestamp->format('H:i:s')}</td><td>{$loc->latitude}</td><td>{$loc->longitude}</td><td>{$mock}</td></tr>";
+                }
+                $html .= "</table>";
+
+                return response($html, 200, $headers);
+            }
+
+            $callback = function() use($user, $date, $locations, $events, $totalDistance, $totalOfflineMinutes, $offlineCount) {
                 $file = fopen('php://output', 'w');
-                fputcsv($file, ["FIELD STAFF TRACKING REPORT"]);
-                fputcsv($file, ["Staff Name", $user->name]);
-                fputcsv($file, ["Date", $date]);
-                fputcsv($file, ["Total Distance", $totalDistance . " KM"]);
-                fputcsv($file, []);
-
-                fputcsv($file, ["ACTIVITY TIMELINE"]);
+                fputcsv($file, ["FIELD STAFF TRACKING REPORT - {$user->name} | Date: {$date} | Dist: {$totalDistance} KM | Offline: {$offlineCount} ({$totalOfflineMinutes} mins)"]);
                 fputcsv($file, ["Time", "Type", "Details", "Location (Lat/Lng)"]);
-
-                $events = collect();
-                $punches->each(fn($p) => $events->push(['time' => $p->timestamp, 'type' => 'Attendance', 'details' => str_replace('_', ' ', $p->type), 'lat' => $p->latitude, 'lng' => $p->longitude]));
-                $visits->each(fn($v) => $events->push(['time' => $v->check_in_at, 'type' => 'Visit', 'details' => $v->customer_name . " (" . $v->customer_category . ")", 'lat' => $v->latitude, 'lng' => $v->longitude]));
                 
                 foreach ($events->sortBy('time') as $event) {
                     fputcsv($file, [
                         Carbon::parse($event['time'])->format('h:i A'),
                         $event['type'],
                         $event['details'],
-                        $event['lat'] . ", " . $event['lng']
+                        $event['lat'] . ($event['lng'] !== 'N/A' ? ", " . $event['lng'] : "")
                     ]);
                 }
 
@@ -1392,6 +1503,9 @@ class ReportController extends Controller
                 'locations' => $locations,
                 'punches' => $punches,
                 'visits' => $visits,
+                'offlineLogs' => $offlineLogs,
+                'totalOfflineMinutes' => $totalOfflineMinutes,
+                'offlineCount' => $offlineCount,
                 'totalDistance' => $totalDistance,
                 'reportDate' => now()->format('M d, Y H:i')
             ])->setPaper('a4', 'portrait');

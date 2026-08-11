@@ -72,6 +72,10 @@
             <div class="stat-value">{{ $punches->count() }}</div>
         </div>
         <div class="stat-item">
+            <div class="stat-label">Offline Periods</div>
+            <div class="stat-value">{{ $offlineCount }} <span style="font-size: 8pt; color: #64748b;">({{ $totalOfflineMinutes }} mins)</span></div>
+        </div>
+        <div class="stat-item">
             <div class="stat-label">Status</div>
             <div class="stat-value" style="font-size: 10pt;">
                 @php $last = $punches->sortByDesc('timestamp')->first(); @endphp
@@ -95,6 +99,9 @@
                 $allEvents = collect();
                 $punches->each(fn($p) => $allEvents->push(['type' => 'punch', 'time' => $p->timestamp, 'data' => $p]));
                 $visits->each(fn($v) => $allEvents->push(['type' => 'visit', 'time' => $v->check_in_at, 'data' => $v]));
+                if(isset($offlineLogs)) {
+                    $offlineLogs->each(fn($o) => $allEvents->push(['type' => 'offline', 'time' => $o->from_time, 'data' => $o]));
+                }
                 $sortedEvents = $allEvents->sortBy('time');
             @endphp
 
@@ -106,6 +113,8 @@
                             <span class="badge {{ $event['data']->type == 'punch_in' ? 'bg-success' : 'bg-danger' }}">
                                 {{ strtoupper(str_replace('_', ' ', $event['data']->type)) }}
                             </span>
+                        @elseif($event['type'] == 'offline')
+                            <span class="badge" style="background: #64748b; color: white;">OFFLINE</span>
                         @else
                             <span class="badge bg-warning">VISIT</span>
                         @endif
@@ -114,13 +123,26 @@
                         @if($event['type'] == 'punch')
                             <span class="timeline-type">Attendance Log</span><br>
                             <span class="timeline-details">Location verified via registered device.</span>
+                        @elseif($event['type'] == 'offline')
+                            <span class="timeline-type">Offline Period</span><br>
+                            <span class="timeline-details">
+                                @if(!empty($event['data']->reason))
+                                    Disconnected: {{ $event['data']->reason }}<br>
+                                @endif
+                                Duration: {{ $event['data']->to_time ? $event['data']->from_time->diffInMinutes($event['data']->to_time) . ' mins' : 'Ongoing' }}<br>
+                                Resumed: {{ $event['data']->to_time ? $event['data']->to_time->format('h:i A') : 'N/A' }}
+                            </span>
                         @else
                             <span class="timeline-type">{{ $event['data']->customer_name }}</span><br>
                             <span class="timeline-details">{{ $event['data']->customer_category }} visit logged.</span>
                         @endif
                     </td>
                     <td style="font-family: monospace; font-size: 8pt;">
-                        {{ $event['data']->latitude }},<br>{{ $event['data']->longitude }}
+                        @if($event['type'] == 'offline')
+                            {{ $event['data']->latitude ?? 'N/A' }},<br>{{ $event['data']->longitude ?? 'N/A' }}
+                        @else
+                            {{ $event['data']->latitude }},<br>{{ $event['data']->longitude }}
+                        @endif
                     </td>
                 </tr>
             @endforeach

@@ -199,35 +199,62 @@
                     <div class="card-body p-4 pt-2">
                         <div class="accordion accordion-flush" id="settingsAccordion">
                             
+                            <style>
+                                .custom-brand-toggle {
+                                    cursor: pointer;
+                                    transition: all 0.3s ease;
+                                    border: 1px solid rgba(0,0,0,0.08);
+                                }
+                                .custom-brand-toggle:hover {
+                                    background-color: rgba(0,0,0,0.015);
+                                    border-color: rgba(13,110,253,0.3);
+                                }
+                                .custom-brand-toggle[aria-expanded="true"] {
+                                    border-bottom: none;
+                                    border-bottom-left-radius: 0 !important;
+                                    border-bottom-right-radius: 0 !important;
+                                    background-color: var(--bs-body-bg, #fff);
+                                }
+                                .custom-brand-toggle[aria-expanded="true"] .toggle-icon {
+                                    transform: rotate(180deg);
+                                }
+                                .custom-brand-toggle[aria-expanded="true"] .toggle-icon-wrap {
+                                    color: #0d6efd !important;
+                                }
+                            </style>
                             <!-- Product Brands Master (Priority #1) -->
-                            <div class="accordion-item border mb-3 rounded-4 overflow-hidden shadow-sm">
-                                <h2 class="accordion-header" id="headingBrands">
-                                    <button class="accordion-button collapsed fw-bold py-3 px-4 bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBrands" aria-expanded="false" aria-controls="collapseBrands" style="font-size: 1.1rem; color: #1e293b;">
-                                        <div class="d-flex align-items-center w-100 me-3">
-                                            <i class="fa fa-tags me-3 text-primary fs-4"></i>
+                            <div class="accordion-item border-0 mb-4 rounded-4 shadow-sm" style="background: var(--bs-body-bg, #fff);">
+                                <div class="custom-brand-toggle p-3 rounded-4" id="headingBrands" data-bs-toggle="collapse" data-bs-target="#collapseBrands" aria-expanded="false" aria-controls="collapseBrands">
+                                    <div class="d-flex align-items-center justify-content-between w-100">
+                                        <div class="d-flex align-items-center">
                                             <div>
-                                                <div>Product Brands Master</div>
-                                                <small class="text-muted fw-normal d-block mt-1" style="font-size: 0.85rem;">{{ count(array_filter(explode(',', trim($product_brands)))) }} Active Brands Configured</small>
+                                                <h6 class="fw-bold mb-1" style="color: var(--bs-body-color, #1e293b); letter-spacing: 0.3px; font-size: 1rem;">Product Brands Master</h6>
+                                                <small class="text-muted fw-medium d-block" style="font-size: 0.85rem;">{{ count(array_filter(explode(',', trim($product_brands)))) }} Active Brands Configured</small>
                                             </div>
                                         </div>
-                                    </button>
-                                </h2>
+                                        <div class="toggle-icon-wrap d-flex align-items-center justify-content-center me-2" style="color: #6c757d; transition: all 0.3s ease;">
+                                            <i class="fa fa-chevron-down toggle-icon" style="transition: transform 0.3s ease; font-size: 0.9rem;"></i>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div id="collapseBrands" class="accordion-collapse collapse" aria-labelledby="headingBrands" data-bs-parent="#settingsAccordion">
-                                    <div class="accordion-body p-4 bg-light">
-                                         <div class="d-flex align-items-center justify-content-between mb-3">
-                                             <h6 class="text-dark mb-0 fw-bold">Active Brands List</h6>
-                                             <button type="button" class="btn btn-dark btn-sm rounded-pill px-3 shadow-sm" id="add_brand_btn">
-                                                 <i class="fa fa-plus me-1"></i>Add New Brand
-                                             </button>
-                                         </div>
-                                         <p class="text-muted small mb-4">Manage the list of active product brands. Each brand can have its own description, icon, and custom layout behavior (Medical, Orthopedic, or General).</p>
-                                         
+                                    <div class="accordion-body p-0 border border-top-0 rounded-bottom-4" style="border-color: rgba(0,0,0,0.08) !important;">
+                                        <div class="p-4 p-md-5" style="background: rgba(0,0,0,0.015);">
+                                            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4 pb-3 border-bottom">
+                                                <div>
+                                                    <h6 class="mb-1 fw-bold" style="color: var(--bs-body-color, #1e293b); font-size: 1.1rem;">Active Brands List</h6>
+                                                    <p class="text-muted small mb-0">Manage layout behavior (Medical, Orthopedic, etc.), Return Rules, and Loyalty settings for each brand.</p>
+                                                </div>
+                                                <button type="button" class="btn btn-dark fw-bold px-4 py-2 shadow-sm rounded-pill mt-3 mt-md-0 text-nowrap" id="add_brand_btn" style="letter-spacing: 0.5px;">
+                                                    <i class="fa fa-plus me-2"></i>Add New Brand
+                                                </button>
+                                            </div>
                                          <form class="setting-form" id="brands_form">
                                              @csrf
                                              <input type="hidden" name="slug" value="product_brands">
                                              <input type="hidden" name="value" id="brands_final_value" value="{{ $product_brands }}">
                                              
-                                             <div id="brands_tag_container" class="d-flex flex-wrap align-items-stretch gap-3 p-3 bg-white rounded-3 border shadow-inner" style="min-height: 80px;">
+                                             <div id="brands_tag_container" class="p-3 bg-white rounded-3 border shadow-inner" style="min-height: 80px;">
                                                  <!-- Tags filled by JS -->
                                              </div>
                                          </form>
@@ -343,8 +370,9 @@
             function renderBrands() {
                 let html = '';
                 if (brandsData.length === 0) {
-                    html = '<div class="text-muted small w-100 text-center py-2">No brands added yet.</div>';
+                    html = '<div class="text-muted small w-100 text-center py-4">No brands added yet.</div>';
                 } else {
+                    html += '<div class="d-flex flex-column gap-4 w-100" id="brandConfigList">';
                     brandsData.forEach((brandObj, index) => {
                         let brand = brandObj.name;
                         let isReturnable = returnableBrands.includes(brand);
@@ -352,52 +380,91 @@
                         let fieldsList = getBrandFieldsList(brandObj);
 
                         html += `
-                            <div class="brand-tag-wrapper d-flex flex-column rounded p-3" style="min-width: 260px; max-width: 320px; flex: 1 1 auto; height: auto;">
-                                <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
-                                    <span class="brand-name text-truncate me-2 fw-bold" title="${brand}">
-                                        <i class="fa ${brandObj.icon || 'fa-tag'} me-1 text-primary"></i>${brand}
-                                    </span>
-                                    <div class="d-flex gap-1 flex-shrink-0">
-                                        <button type="button" class="btn btn-outline-info p-0 d-flex align-items-center justify-content-center edit-brand-btn" data-index="${index}" style="width: 28px; height: 28px;" title="Edit"><i class="fa fa-edit small"></i></button>
-                                        <button type="button" class="btn btn-outline-danger p-0 d-flex align-items-center justify-content-center delete-brand-btn" data-index="${index}" style="width: 28px; height: 28px;" title="Delete"><i class="fa fa-trash small"></i></button>
+                            <div class="card border rounded-4 shadow-sm w-100" style="background: var(--bs-body-bg, #fff);">
+                                <div class="card-header bg-transparent border-bottom px-4 py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                                    <div class="d-flex align-items-center flex-grow-1">
+                                        <div class="d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                            <i class="fa ${brandObj.icon || 'fa-tag'} text-primary" style="font-size: 1.75rem;"></i>
+                                        </div>
+                                        <div class="text-start">
+                                            <div class="fw-bold fs-5">${brand}</div>
+                                            <div class="small text-muted mt-1">${brandObj.description || 'No description provided'}</div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-outline-primary fw-bold px-4 shadow-sm text-nowrap edit-brand-btn" data-index="${index}"><i class="fa fa-edit me-2"></i>Edit Brand</button>
+                                        <button type="button" class="btn btn-outline-danger fw-bold px-4 shadow-sm text-nowrap delete-brand-btn" data-index="${index}"><i class="fa fa-trash me-2"></i>Remove</button>
                                     </div>
                                 </div>
-                                <div class="mb-2">
-                                    <span class="small text-muted d-block">Description:</span>
-                                    <span class="small fw-semibold text-dark">${brandObj.description || 'No description'}</span>
-                                </div>
-                                <div class="mb-2 border-top pt-2">
-                                    <span class="small text-muted d-block mb-1">Visible Fields:</span>
-                                    <div class="d-flex flex-wrap gap-1">
+                                <div class="card-body p-4" style="background: rgba(0,0,0,0.02);">
+                                    <div class="d-flex flex-wrap gap-2 align-items-center mb-4">
+                                        <span class="small fw-bold text-uppercase text-muted me-2">Visible Fields:</span>
                                         ${fieldsList.length === 0 
                                             ? '<span class="text-muted small">None (Common only)</span>' 
-                                            : fieldsList.map(f => `<span class="badge bg-light text-dark border px-2 py-1 small" style="font-size: 0.68rem; font-weight: 500;">${f}</span>`).join('')
+                                            : fieldsList.map(f => `<span class="badge border px-3 py-2 rounded-pill shadow-sm" style="background: var(--bs-body-bg, #fff); color: var(--bs-body-color, #000);">${f}</span>`).join('')
                                         }
                                     </div>
-                                </div>
-                                <div class="d-flex align-items-center justify-content-between mb-2 border-top pt-2">
-                                    <span class="small text-muted">Returnable</span>
-                                    <div class="form-check form-switch mb-0">
-                                        <input class="form-check-input returnable-toggle" type="checkbox" data-brand="${brand}" ${isReturnable ? 'checked' : ''}>
+                                    
+                                    <div class="row g-4 align-items-stretch">
+                                        
+                                        <!-- Return Configuration -->
+                                        <div class="col-md-6">
+                                            <div class="p-4 rounded-4 border shadow-sm h-100 d-flex flex-column position-relative" style="border-top: 4px solid #f97316 !important; background: var(--bs-body-bg, #fff);">
+                                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                                    <div class="d-flex align-items-center gap-3 text-start">
+                                                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(249,115,22,0.15); color: #f97316;">
+                                                            <i class="fa fa-undo fs-5"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h6 class="fw-bold mb-1" style="color: inherit;">Return Configuration</h6>
+                                                            <span class="small text-muted">Allow item returns for this brand</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-check form-switch mb-0 mt-1">
+                                                        <input class="form-check-input returnable-toggle" style="width: 2.5em; height: 1.25em; cursor: pointer;" type="checkbox" data-brand="${brand}" ${isReturnable ? 'checked' : ''}>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mt-auto pt-3 border-top">
+                                                    <button type="button" class="btn w-100 manage-products-btn shadow-sm py-2 fw-bold text-uppercase border-0" style="background-color: #f97316 !important; color: #ffffff !important; border-radius: 8px; letter-spacing: 0.5px; text-decoration: none !important;" data-brand="${brand}">
+                                                        <i class="fa fa-list-ul me-2" style="color: #ffffff !important;"></i>Manage Return Products
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Loyalty Configuration -->
+                                        <div class="col-md-6">
+                                            <div class="p-4 rounded-4 border shadow-sm h-100 d-flex flex-column position-relative" style="border-top: 4px solid #0ea5e9 !important; background: var(--bs-body-bg, #fff);">
+                                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                                    <div class="d-flex align-items-center gap-3 text-start">
+                                                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(14,165,233,0.15); color: #0ea5e9;">
+                                                            <i class="fa fa-gift fs-5"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h6 class="fw-bold mb-1" style="color: inherit;">Loyalty Program</h6>
+                                                            <span class="small text-muted">Enable loyalty rewards</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-check form-switch mb-0 mt-1">
+                                                        <input class="form-check-input loyalty-toggle" style="width: 2.5em; height: 1.25em; cursor: pointer;" type="checkbox" data-brand="${brand}" ${isLoyalty ? 'checked' : ''}>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mt-auto pt-3 border-top">
+                                                    <button type="button" class="btn w-100 config-loyalty-btn shadow-sm py-2 fw-bold text-uppercase border-0" style="background-color: #0ea5e9 !important; color: #ffffff !important; border-radius: 8px; letter-spacing: 0.5px; text-decoration: none !important;" data-brand="${brand}">
+                                                        <i class="fa fa-cog me-2" style="color: #ffffff !important;"></i>Configure Loyalty Rules
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
                                     </div>
-                                </div>
-                                <div class="d-flex align-items-center justify-content-between mb-2 border-top pt-2">
-                                    <span class="small text-muted">Loyalty Program</span>
-                                    <div class="form-check form-switch mb-0">
-                                        <input class="form-check-input loyalty-toggle" type="checkbox" data-brand="${brand}" ${isLoyalty ? 'checked' : ''}>
-                                    </div>
-                                </div>
-                                <div class="border-top pt-3 mt-auto text-center d-flex flex-column gap-2">
-                                    <button type="button" class="btn btn-sm btn-primary w-100 config-loyalty-btn shadow-sm ${isLoyalty ? '' : 'd-none'}" data-brand="${brand}">
-                                        <i class="fa fa-gift me-1"></i>Configure Loyalty
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 manage-products-btn" data-brand="${brand}">
-                                        <i class="fa fa-list-ul me-1"></i>Manage Products
-                                    </button>
                                 </div>
                             </div>
                         `;
                     });
+                    html += '</div>';
                 }
                 $('#brands_tag_container').html(html);
                 let brandNames = brandsData.map(b => b.name);
@@ -460,17 +527,17 @@
                             },
                             success: function(res) {
                                 showToast('success', 'Sync Successful', `Products for ${brand} are now ${isChecked ? 'returnable' : 'non-returnable'}.`);
-                                $manageBtn.prop('disabled', false).html('<i class="fa fa-list-ul me-1"></i>Manage Products');
+                                $manageBtn.prop('disabled', false).html('<i class="fa fa-list-ul me-1"></i>Manage Return Products');
                             },
                             error: function() {
                                 showToast('error', 'Sync Failed', 'Could not sync products.');
-                                $manageBtn.prop('disabled', false).html('<i class="fa fa-list-ul me-1"></i>Manage Products');
+                                $manageBtn.prop('disabled', false).html('<i class="fa fa-list-ul me-1"></i>Manage return Products');
                             }
                         });
                     },
                     error: function() {
                         showToast('error', 'Settings Failed', 'Could not save returnable brands setting.');
-                        $manageBtn.prop('disabled', false).html('<i class="fa fa-list-ul me-1"></i>Manage Products');
+                        $manageBtn.prop('disabled', false).html('<i class="fa fa-list-ul me-1"></i>Manage Return Products');
                     }
                 });
             });
@@ -482,10 +549,8 @@
                 
                 if (isChecked) {
                     if (!loyaltyBrands.includes(brand)) loyaltyBrands.push(brand);
-                    $configBtn.removeClass('d-none');
                 } else {
                     loyaltyBrands = loyaltyBrands.filter(b => b !== brand);
-                    $configBtn.addClass('d-none');
                 }
                 
                 $('#loyalty_brands_input').val(loyaltyBrands.join(','));
@@ -520,15 +585,14 @@
                     rulesList.forEach((r, idx) => {
                         if (editingIndex === idx) {
                             html += `
-                            <div class="col-12 col-sm-6">
-                                <div class="card h-100 border-primary shadow rounded-3 bg-white overflow-hidden">
-                                    <div class="card-body p-2 d-flex flex-column gap-2">
+                            <div class="col-12 col-md-6 mb-2 d-flex align-items-stretch">
+                                <div class="card h-100 w-100 border-primary shadow rounded-3 bg-white overflow-hidden">
+                                    <div class="card-body p-2 d-flex flex-column gap-2 justify-content-center">
                                         <input type="number" class="form-control form-control-sm inline-threshold" value="${r.threshold}" placeholder="Target ₹" min="1">
                                         <input type="text" class="form-control form-control-sm inline-reward" value="${r.reward}" placeholder="Reward">
                                         <input type="text" class="form-control form-control-sm inline-description" value="${r.description || ''}" placeholder="Description">
-                                        <div class="d-flex gap-1">
-                                            <input type="file" class="form-control form-control-sm inline-image" accept="image/*" style="width: 100px; flex-grow:1;" title="Leave empty to keep image">
-                                            <button type="button" class="btn btn-sm btn-success btn-save-inline shadow-sm px-2" data-index="${idx}" title="Save"><i class="fa fa-check"></i></button>
+                                        <div class="d-flex gap-1 justify-content-end mt-1">
+                                            <button type="button" class="btn btn-sm btn-success btn-save-inline shadow-sm px-3" data-index="${idx}" title="Save"><i class="fa fa-check"></i> Save</button>
                                             <button type="button" class="btn btn-sm btn-light btn-cancel-inline border shadow-sm px-2" title="Cancel"><i class="fa fa-times"></i></button>
                                         </div>
                                     </div>
@@ -538,32 +602,30 @@
                             return;
                         }
 
-                        let imgHtml = r.image_url ? `<img src="${r.image_url}" class="rounded shadow-sm" style="width: 40px; height: 40px; object-fit: cover;">` : (r.imageFile ? `<img src="${URL.createObjectURL(r.imageFile)}" class="rounded shadow-sm" style="width: 40px; height: 40px; object-fit: cover;">` : `<div class="bg-secondary rounded d-flex align-items-center justify-content-center text-white" style="width:40px; height:40px;"><i class="fa fa-gift"></i></div>`);
-                        let descHtml = r.description ? `<div class="text-muted small mt-1 text-truncate" style="max-width: 100%;" title="${r.description}">${r.description}</div>` : '';
+                        let descHtml = r.description ? `<div class="text-muted mt-1 text-truncate" style="font-size: 0.85rem; max-width: 100%;" title="${r.description}">${r.description}</div>` : '';
+                        let opacityStyle = r.is_active === false ? 'opacity: 0.6; filter: grayscale(1);' : '';
                         html += `
-                            <div class="col-12 col-sm-6">
-                                <div class="card h-100 border shadow-sm rounded-3 bg-white overflow-hidden">
-                                    <div class="card-body p-3 d-flex gap-3 align-items-center position-relative">
-                                        <!-- Action Buttons -->
-                                        <div class="position-absolute top-50 translate-middle-y end-0 pe-2 d-flex flex-column gap-2 z-1">
-                                            <button type="button" class="btn btn-sm btn-light border shadow-sm text-primary rounded-3 btn-edit-rule px-2 py-1" data-index="${idx}" title="Edit">
+                            <div class="col-12 col-md-6 mb-2 d-flex align-items-stretch">
+                                <div class="premium-loyalty-card h-100 w-100" style="${opacityStyle}">
+                                    <div class="premium-loyalty-img-wrapper" style="width:48px; height:48px; background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                                        <i class="fa fa-gift" style="font-size: 1.25rem;"></i>
+                                    </div>
+                                    <div class="premium-loyalty-content text-start">
+                                        <div class="premium-target-text"><i class="fa fa-bullseye me-1 text-primary" style="font-size: 1rem; vertical-align: middle;"></i>₹${r.threshold}</div>
+                                        <div class="premium-reward-text"><i class="fa fa-gem"></i>${r.reward}</div>
+                                        ${descHtml}
+                                    </div>
+                                    <div class="premium-action-btns d-flex flex-column align-items-center gap-2">
+                                        <div class="form-check form-switch mb-0" style="margin-left: 0.5rem;" title="Toggle Status">
+                                            <input class="form-check-input rule-active-toggle" type="checkbox" style="cursor: pointer;" data-index="${idx}" ${r.is_active !== false ? 'checked' : ''}>
+                                        </div>
+                                        <div class="d-flex gap-1">
+                                            <button type="button" class="premium-btn-icon btn-edit-rule shadow-sm" data-index="${idx}" title="Edit">
                                                 <i class="fa fa-edit" style="font-size: 0.85rem;"></i>
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-light border shadow-sm text-danger rounded-3 btn-remove-rule px-2 py-1" data-index="${idx}" title="Remove">
+                                            <button type="button" class="premium-btn-icon delete btn-remove-rule shadow-sm" data-index="${idx}" title="Remove">
                                                 <i class="fa fa-trash" style="font-size: 0.85rem;"></i>
                                             </button>
-                                        </div>
-                                        
-                                        <!-- Image -->
-                                        <div class="flex-shrink-0">
-                                            ${imgHtml}
-                                        </div>
-                                        
-                                        <!-- Content -->
-                                        <div class="flex-grow-1 overflow-hidden pe-5">
-                                            <div class="text-primary fw-bold mb-1" style="font-size: 0.95rem;"><i class="fa fa-bullseye me-1"></i>Target: ₹${r.threshold}</div>
-                                            <div class="text-success fw-bold small"><i class="fa fa-gift me-1"></i>${r.reward}</div>
-                                            ${descHtml}
                                         </div>
                                     </div>
                                 </div>
@@ -574,46 +636,223 @@
                     return html;
                 };
 
+                let saveLoyaltyRulesDynamically = () => {
+                    loyaltyRules[brand] = rules;
+                    let formData = new FormData();
+                    formData.append('_token', '{{ csrf_token() }}');
+                    formData.append('slug', 'loyalty_rules');
+                    
+                    let rulesPayload = JSON.parse(JSON.stringify(loyaltyRules, function(key, val) {
+                        return val; 
+                    }));
+                    
+                    Object.keys(loyaltyRules).forEach(b => {
+                        loyaltyRules[b].forEach((r) => {
+                            if (r.imageFile) {
+                                formData.append(`images[${b}_${r.threshold}]`, r.imageFile);
+                            }
+                        });
+                    });
+                    
+                    formData.append('value', JSON.stringify(rulesPayload));
+                    
+                    $.ajax({
+                        url: '{{ route('admin.settings.save') }}',
+                        method: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function() {
+                            let $toast = $('<div class="text-white fw-bold shadow-lg position-fixed" style="bottom: 25px; right: 25px; font-size: 0.95rem; z-index: 10600; background: #10b981; padding: 12px 22px; border-radius: 8px; display: none;"><i class="fa fa-check-circle me-2"></i>Loyalty rules saved!</div>');
+                            $('body').append($toast);
+                            $toast.fadeIn(300);
+                            setTimeout(() => {
+                                $toast.fadeOut(400, function() { $(this).remove(); });
+                            }, 3000);
+                        },
+                        error: function() {
+                            let $toast = $('<div class="text-white fw-bold shadow-lg position-fixed" style="bottom: 25px; right: 25px; font-size: 0.95rem; z-index: 10600; background: #ef4444; padding: 12px 22px; border-radius: 8px; display: none;"><i class="fa fa-times-circle me-2"></i>Error saving rules!</div>');
+                            $('body').append($toast);
+                            $toast.fadeIn(300);
+                            setTimeout(() => {
+                                $toast.fadeOut(400, function() { $(this).remove(); });
+                            }, 3000);
+                        }
+                    });
+                };
+
                 let updateModalContent = () => {
                     $('#loyalty_rules_list_container').html(renderRulesList(rules));
+                    if (editingIndex !== null) {
+                        $('#swal_add_rule_form').slideUp(200);
+                    } else {
+                        $('#swal_add_rule_form').slideDown(200);
+                    }
                 };
 
                 Swal.fire({
                     html: `
-                        <style>.swal2-icon { display: none !important; }</style>
-                        <div class="text-start mb-4">
-                            <h4 class="fw-bold text-dark mb-1">Configure Loyalty</h4>
-                            <p class="text-muted small mb-0">Set order targets and rewards for <b>${brand}</b>.</p>
+                        <style>
+                            .swal2-icon { display: none !important; }
+                            .premium-loyalty-card {
+                                background: linear-gradient(145deg, #ffffff, #f8fafc);
+                                border: 1px solid rgba(0, 73, 122, 0.1);
+                                border-radius: 16px;
+                                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+                                transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+                                position: relative;
+                                overflow: hidden;
+                                display: flex;
+                                align-items: center;
+                                padding: 14px 16px;
+                            }
+                            .premium-loyalty-card:hover {
+                                transform: translateY(-4px);
+                                box-shadow: 0 12px 24px rgba(0, 73, 122, 0.1);
+                                border-color: rgba(0, 73, 122, 0.3);
+                            }
+                            .premium-loyalty-card::before {
+                                content: '';
+                                position: absolute;
+                                top: 0; left: 0; width: 5px; height: 100%;
+                                background: linear-gradient(180deg, var(--med-primary, #00497a), #00a8ff);
+                                border-radius: 16px 0 0 16px;
+                            }
+                            .premium-loyalty-img-wrapper {
+                                border-radius: 50%;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                flex-shrink: 0;
+                            }
+                            .premium-loyalty-content {
+                                flex-grow: 1;
+                                padding-left: 14px;
+                                padding-right: 14px;
+                                overflow: hidden;
+                            }
+                            .premium-target-text {
+                                font-size: 1.15rem;
+                                font-weight: 700;
+                                color: var(--med-primary, #00497a);
+                                line-height: 1.2;
+                                margin-bottom: 2px;
+                            }
+                            .premium-reward-text {
+                                font-size: 0.95rem;
+                                font-weight: 600;
+                                color: #1e293b;
+                                display: flex;
+                                align-items: center;
+                            }
+                            .premium-reward-text i {
+                                color: #f59e0b;
+                                margin-right: 6px;
+                                font-size: 0.9rem;
+                            }
+                            .premium-action-btns {
+                                flex-shrink: 0;
+                                display: flex;
+                                flex-direction: column;
+                                gap: 6px;
+                            }
+                            .premium-btn-icon {
+                                background: #ffffff;
+                                border: 1px solid #e2e8f0;
+                                border-radius: 8px;
+                                width: 32px;
+                                height: 32px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                color: #64748b;
+                                cursor: pointer;
+                                transition: all 0.2s;
+                            }
+                            .premium-btn-icon:hover {
+                                background: #f1f5f9;
+                                color: var(--med-primary, #00497a);
+                                border-color: #cbd5e1;
+                            }
+                            .premium-btn-icon.delete:hover {
+                                color: #ef4444;
+                                background: #fef2f2;
+                                border-color: #fecaca;
+                            }
+                            body.dark-only .premium-loyalty-card {
+                                background: #1e293b;
+                                border-color: #334155;
+                            }
+                            body.dark-only .premium-target-text { color: #38bdf8; }
+                            body.dark-only .premium-reward-text { color: #f8fafc; }
+                            body.dark-only .premium-btn-icon {
+                                background: #0f172a;
+                                border-color: #334155;
+                                color: #94a3b8;
+                            }
+                            body.dark-only .premium-btn-icon:hover {
+                                background: #1e293b;
+                                color: #38bdf8;
+                            }
+                            body.dark-only .premium-btn-icon.delete:hover {
+                                color: #f87171;
+                            }
+                            .premium-add-form {
+                                background: #f8fafc;
+                                border: 1px dashed #cbd5e1;
+                                border-radius: 12px;
+                                padding: 16px;
+                                margin-top: 10px;
+                            }
+                            body.dark-only .premium-add-form {
+                                background: #0f172a;
+                                border-color: #334155;
+                            }
+                            #loyalty_rules_list_container::-webkit-scrollbar {
+                                width: 6px;
+                            }
+                            #loyalty_rules_list_container::-webkit-scrollbar-track {
+                                background: transparent; 
+                            }
+                            #loyalty_rules_list_container::-webkit-scrollbar-thumb {
+                                background: #cbd5e1; 
+                                border-radius: 10px;
+                            }
+                            body.dark-only #loyalty_rules_list_container::-webkit-scrollbar-thumb {
+                                background: #475569;
+                            }
+                        </style>
+                        <div class="text-start mb-4 px-2">
+                            <h4 class="fw-bold text-dark mb-1" style="font-size: 1.6rem; letter-spacing: -0.5px;">Configure Loyalty</h4>
+                            <p class="text-muted mb-0" style="font-size: 0.95rem;">Set order targets and rewards for <b class="text-primary">${brand}</b>.</p>
                         </div>
-                        <div id="loyalty_rules_list_container" class="text-start mb-3" style="max-height: 280px; overflow-y: auto; overflow-x: hidden;">
+                        <div id="loyalty_rules_list_container" class="text-start mb-3 px-2 py-1" style="max-height: 320px; overflow-y: auto; overflow-x: hidden;">
                             ${renderRulesList(rules)}
                         </div>
-                        <div class="p-3 border rounded-3 bg-white shadow-sm">
-                            <h6 class="fw-bold small mb-2 text-start text-primary" id="swal_rule_form_title">Add New Reward Level</h6>
-                            <div class="row g-2">
-                                <div class="col-12 col-md-4">
-                                    <input type="number" id="swal_rule_threshold" class="form-control form-control-sm" placeholder="Target (e.g. 2000)" min="1">
+                        <div id="swal_add_rule_form" class="premium-add-form mx-2 text-start">
+                            <h6 class="fw-bold mb-3" style="color: #3b82f6; font-size: 1.05rem;" id="swal_rule_form_title">Add New Reward Level</h6>
+                            <div class="row g-3">
+                                <div class="col-12 col-md-5">
+                                    <input type="number" id="swal_rule_threshold" class="form-control" placeholder="Target ₹ (e.g. 2000)" min="1">
                                 </div>
-                                <div class="col-12 col-md-8">
-                                    <input type="text" id="swal_rule_reward" class="form-control form-control-sm" placeholder="Reward (e.g. 1 Gold Coin)">
+                                <div class="col-12 col-md-7">
+                                    <input type="text" id="swal_rule_reward" class="form-control" placeholder="Reward (e.g. 1 Gold Coin)">
                                 </div>
-                                <div class="col-12 col-md-12">
-                                    <input type="text" id="swal_rule_description" class="form-control form-control-sm" placeholder="Description (Optional)">
-                                </div>
-                                <div class="col-12 col-md-12 d-flex gap-2">
-                                    <input type="file" id="swal_rule_image" class="form-control form-control-sm" accept="image/*">
-                                    <button type="button" class="btn btn-sm btn-primary" id="swal_add_rule_btn" style="min-width:40px;"><i class="fa fa-plus"></i></button>
+                                <div class="col-12 col-md-12 d-flex gap-3 align-items-center">
+                                    <div class="flex-grow-1">
+                                        <input type="text" id="swal_rule_description" class="form-control" placeholder="Description (Optional)">
+                                    </div>
+                                    <button type="button" class="btn btn-primary shadow-sm" id="swal_add_rule_btn" style="border-radius: 10px; padding: 10px 20px; font-weight: 600;"><i class="fa fa-plus me-1"></i> Add</button>
                                 </div>
                             </div>
                         </div>
                     `,
-                    width: '600px',
+                    width: '750px',
+                    showConfirmButton: false,
                     showCancelButton: true,
-                    confirmButtonText: 'Save Rules',
-                    cancelButtonText: 'Cancel',
+                    cancelButtonText: 'Close',
                     buttonsStyling: true,
                     customClass: {
-                        confirmButton: 'btn btn-primary px-4 shadow-sm',
                         cancelButton: 'btn btn-light px-4 shadow-sm ms-2'
                     },
                     didOpen: () => {
@@ -621,7 +860,6 @@
                             let threshold = parseFloat($('#swal_rule_threshold').val());
                             let reward = $('#swal_rule_reward').val().trim();
                             let description = $('#swal_rule_description').val().trim();
-                            let imageFile = document.getElementById('swal_rule_image').files[0];
                             
                             if (isNaN(threshold) || threshold <= 0) {
                                 Swal.showValidationMessage('Please enter a valid order target amount.');
@@ -634,24 +872,29 @@
                             
                             Swal.resetValidationMessage();
                             
-                            rules.push({ threshold: threshold, reward: reward, description: description, imageFile: imageFile });
+                            rules.push({ threshold: threshold, reward: reward, description: description, is_active: true });
                             
                             rules.sort((a, b) => a.threshold - b.threshold);
                             updateModalContent();
+                            saveLoyaltyRulesDynamically();
                             
                             $('#swal_rule_threshold').val('');
                             $('#swal_rule_reward').val('');
                             $('#swal_rule_description').val('');
-                            $('#swal_rule_image').val('');
                         });
 
                         $(document).off('click', '.btn-remove-rule').on('click', '.btn-remove-rule', function() {
                             let idx = $(this).data('index');
                             rules.splice(idx, 1);
-                            if (editingIndex === idx) {
-                                editingIndex = null;
-                            }
                             updateModalContent();
+                            saveLoyaltyRulesDynamically();
+                        });
+
+                        $(document).off('change', '.rule-active-toggle').on('change', '.rule-active-toggle', function() {
+                            let idx = $(this).data('index');
+                            rules[idx].is_active = $(this).is(':checked');
+                            updateModalContent();
+                            saveLoyaltyRulesDynamically();
                         });
 
                         $(document).off('click', '.btn-edit-rule').on('click', '.btn-edit-rule', function() {
@@ -671,7 +914,6 @@
                             let threshold = parseFloat($card.find('.inline-threshold').val());
                             let reward = $card.find('.inline-reward').val().trim();
                             let description = $card.find('.inline-description').val().trim();
-                            let imageFile = $card.find('.inline-image')[0].files[0];
                             
                             if (isNaN(threshold) || threshold <= 0 || reward === '') {
                                 Swal.showValidationMessage('Valid target and reward are required to update.');
@@ -682,66 +924,11 @@
                             rules[idx].threshold = threshold;
                             rules[idx].reward = reward;
                             rules[idx].description = description;
-                            if (imageFile) {
-                                rules[idx].imageFile = imageFile;
-                                rules[idx].image_url = null;
-                                rules[idx].image_path = null;
-                            }
                             
                             editingIndex = null;
                             rules.sort((a, b) => a.threshold - b.threshold);
                             updateModalContent();
-                        });
-                    },
-                    preConfirm: () => {
-                        let threshold = parseFloat($('#swal_rule_threshold').val());
-                        let reward = $('#swal_rule_reward').val() ? $('#swal_rule_reward').val().trim() : '';
-                        let description = $('#swal_rule_description').val() ? $('#swal_rule_description').val().trim() : '';
-                        let imageFile = document.getElementById('swal_rule_image') ? document.getElementById('swal_rule_image').files[0] : null;
-                        
-                        if (!isNaN(threshold) && threshold > 0 && reward !== '') {
-                            rules.push({ threshold: threshold, reward: reward, description: description, imageFile: imageFile });
-                            rules.sort((a, b) => a.threshold - b.threshold);
-                        }
-                        
-                        return rules;
-                    }
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        loyaltyRules[brand] = result.value;
-                        
-                        // We do NOT stringify loyaltyRules back to a hidden input containing File objects,
-                        // we just trigger the save logic via FormData.
-                        let formData = new FormData();
-                        formData.append('_token', '{{ csrf_token() }}');
-                        formData.append('slug', 'loyalty_rules');
-                        
-                        let rulesPayload = JSON.parse(JSON.stringify(loyaltyRules, function(key, val) {
-                            return val; 
-                        }));
-                        
-                        Object.keys(loyaltyRules).forEach(b => {
-                            loyaltyRules[b].forEach((r) => {
-                                if (r.imageFile) {
-                                    formData.append(`images[${b}_${r.threshold}]`, r.imageFile);
-                                }
-                            });
-                        });
-                        
-                        formData.append('value', JSON.stringify(rulesPayload));
-                        
-                        $.ajax({
-                            url: '{{ route('admin.settings.save') }}',
-                            method: 'POST',
-                            data: formData,
-                            processData: false,
-                            contentType: false,
-                            success: function() {
-                                showToast('success', 'Saved', 'Loyalty rules updated for ' + brand);
-                            },
-                            error: function() {
-                                showToast('error', 'Error', 'Could not save loyalty rules.');
-                            }
+                            saveLoyaltyRulesDynamically();
                         });
                     }
                 });

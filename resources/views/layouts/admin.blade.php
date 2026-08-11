@@ -542,6 +542,31 @@
         .footer {
             background-color: transparent !important;
             backdrop-filter: none !important;
+            border-top: none !important;
+            box-shadow: none !important;
+            margin-bottom: 0 !important;
+            padding-bottom: 1rem !important;
+        }
+        
+        /* Custom Sidebar & Main Content Width Adjustments */
+        @media (min-width: 992px) {
+            .page-wrapper.compact-wrapper .page-body-wrapper div.sidebar-wrapper {
+                width: 260px !important;
+            }
+            .page-wrapper.compact-wrapper .page-body-wrapper .page-body,
+            .page-wrapper.compact-wrapper .page-body-wrapper .footer,
+            .page-wrapper.compact-wrapper .page-header {
+                margin-left: 260px !important;
+            }
+            .page-wrapper.compact-wrapper .page-header {
+                width: calc(100% - 260px) !important;
+            }
+            .page-wrapper.compact-wrapper .page-header.close_icon,
+            .page-wrapper.compact-wrapper .page-body-wrapper .sidebar-wrapper.close_icon ~ .page-body,
+            .page-wrapper.compact-wrapper .page-body-wrapper .sidebar-wrapper.close_icon ~ .footer {
+                margin-left: 0 !important;
+                width: 100% !important;
+            }
         }
 
         .page-header .header-wrapper h4 {

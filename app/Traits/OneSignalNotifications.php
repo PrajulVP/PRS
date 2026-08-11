@@ -39,6 +39,8 @@ trait OneSignalNotifications
             'headings' => ['en' => $title],
             'data' => $data,
             'priority' => 10, // High priority to wake up device
+            'android_sound' => 'default', // Request default sound on Android
+            'ios_sound' => 'default', // Request default sound on iOS
         ];
 
         if (!empty($playerIds)) {

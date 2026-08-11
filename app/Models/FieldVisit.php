@@ -51,4 +51,37 @@ class FieldVisit extends Model
         
         return null;
     }
+
+    public function getDistanceKmAttribute()
+    {
+        if (!$this->start_at || !$this->end_at) return 0;
+        
+        $logs = \App\Models\LocationLog::where('user_id', $this->user_id)
+            ->whereBetween('created_at', [$this->start_at, $this->end_at])
+            ->orderBy('created_at', 'asc')
+            ->get();
+            
+        $distance = 0;
+        for ($i = 0; $i < count($logs) - 1; $i++) {
+            $distance += \App\Http\Controllers\Admin\FieldStaffVisitController::calculateHaversineDistance(
+                $logs[$i]->latitude, $logs[$i]->longitude,
+                $logs[$i+1]->latitude, $logs[$i+1]->longitude
+            );
+        }
+        return round($distance, 2);
+    }
+
+    public function getIsRepeatAttribute()
+    {
+        if (!$this->start_at || !$this->party_id || !$this->party_type) return false;
+
+        $previousVisits = self::where('user_id', $this->user_id)
+            ->where('party_type', $this->party_type)
+            ->where('party_id', $this->party_id)
+            ->whereDate('start_at', $this->start_at->format('Y-m-d'))
+            ->where('id', '<', $this->id)
+            ->count();
+
+        return $previousVisits > 0;
+    }
 }

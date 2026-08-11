@@ -135,10 +135,11 @@ Route::middleware('auth:api')->group(function () {
         Route::get('leave-types', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'getLeaveTypes']);
         Route::post('leaves', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'requestLeave']);
         Route::post('visits/report-location', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'reportLocation']);
+        Route::post('sync-offline-logs', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'syncOfflineLogs']);
     });
 
     // Manager Tracking & Actions
-    Route::prefix('Manager')->group(function () {
+    Route::prefix('manager')->group(function () {
         Route::get('punch', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'getPunchStatus']);
         Route::post('punch', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'punch']);
         Route::post('ping', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'pingLocation']);

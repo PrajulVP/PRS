@@ -13,6 +13,7 @@ use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use App\Models\OfflineLog;
 use App\Models\User;
 
 class FieldStaffActionApiController extends Controller
@@ -74,6 +75,25 @@ class FieldStaffActionApiController extends Controller
         $deviceId = $request->header('X-Device-ID');
         if ($user->device_uuid && $user->device_uuid !== $deviceId) {
             return response()->json(['error' => 'Device mismatch. Use registered device.'], 403);
+        }
+
+        // Attendance Geofence
+        $fieldStaff = $user->fieldStaff;
+        if ($fieldStaff && $fieldStaff->latitude && $fieldStaff->longitude) {
+            $radiusMeters = (float) \App\Models\Setting::getValue('geofence_radius', 20);
+            $radiusKm = $radiusMeters / 1000;
+            
+            $distance = $this->calculateDistance(
+                $request->latitude, $request->longitude,
+                $fieldStaff->latitude, $fieldStaff->longitude
+            );
+
+            if ($distance > $radiusKm) {
+                return response()->json([
+                    'error' => "Geofence violation. You must be within {$radiusMeters} meters of your registered base location.",
+                    'current_distance' => round($distance * 1000, 2) . ' meters'
+                ], 403);
+            }
         }
 
         $lastPunch = AttendanceLog::where('user_id', $user->id)
@@ -359,20 +379,35 @@ class FieldStaffActionApiController extends Controller
         
         // Geofencing Check
         $isFlagged = false;
-        if ($request->customer_id && $request->customer_category === 'Retailer') {
-            $retailer = \App\Models\Retailer::find($request->customer_id);
-            if ($retailer && $retailer->latitude && $retailer->longitude) {
-                $distance = $this->calculateDistance(
-                    $request->latitude, $request->longitude,
-                    $retailer->latitude, $retailer->longitude
-                );
-                
-                // radius: 10 meters (0.01 KM)
-                if ($distance > 0.01) { 
-                    return response()->json([
-                        'error' => 'Geofence violation. You must be within 10 meters of the customer location.',
-                        'current_distance' => round($distance * 1000, 2) . ' meters'
-                    ], 403);
+        $radiusMeters = (float) \App\Models\Setting::getValue('geofence_radius', 20);
+        $radiusKm = $radiusMeters / 1000;
+
+        if ($request->customer_id) {
+            $party = null;
+            if ($request->customer_category === 'Retailer') {
+                $party = \App\Models\Retailer::find($request->customer_id);
+            } elseif ($request->customer_category === 'Distributor/Wholesaler') {
+                $party = \App\Models\Distributor::find($request->customer_id);
+            } // Expand to other models if they exist in the future
+
+            if ($party) {
+                if ($party->latitude && $party->longitude) {
+                    $distance = $this->calculateDistance(
+                        $request->latitude, $request->longitude,
+                        $party->latitude, $party->longitude
+                    );
+                    
+                    if ($distance > $radiusKm) { 
+                        return response()->json([
+                            'error' => "Geofence violation. You must be within {$radiusMeters} meters of the customer location.",
+                            'current_distance' => round($distance * 1000, 2) . ' meters'
+                        ], 403);
+                    }
+                } else {
+                    // Auto-learn location since it's missing
+                    $party->latitude = $request->latitude;
+                    $party->longitude = $request->longitude;
+                    $party->save();
                 }
             }
         }
@@ -407,6 +442,63 @@ class FieldStaffActionApiController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/field-staff/checkout-visit",
+     *     summary="Check out of a logged visit",
+     *     tags={"Field Staff"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="visit_id", type="integer")
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="X-Device-ID",
+     *         in="header",
+     *         required=true,
+     *         description="Unique Device identifier for binding",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(response=200, description="Visit checked out successfully")
+     * )
+     */
+    public function checkoutVisit(Request $request)
+    {
+        $request->validate([
+            'visit_id' => 'required|integer|exists:visit_logs,id',
+        ]);
+
+        $user = auth('api')->user();
+
+        // Extra security: Verify Device ID if bound
+        $deviceId = $request->header('X-Device-ID');
+        if ($user->device_uuid && $user->device_uuid !== $deviceId) {
+            return response()->json(['error' => 'Device mismatch. Use registered device.'], 403);
+        }
+
+        $visit = VisitLog::where('id', $request->visit_id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$visit) {
+            return response()->json(['error' => 'Visit not found or unauthorized.'], 404);
+        }
+
+        if ($visit->check_out_at) {
+            return response()->json(['error' => 'Visit already checked out.'], 400);
+        }
+
+        $visit->check_out_at = now();
+        $visit->save();
+
+        return response()->json([
+            'message' => 'Checked out successfully.',
+            'visit' => $visit
+        ]);
+    }
+
     private function calculateDistance($lat1, $lon1, $lat2, $lon2)
     {
         $theta = $lon1 - $lon2;
@@ -415,6 +507,62 @@ class FieldStaffActionApiController extends Controller
         $dist = rad2deg($dist);
         $miles = $dist * 60 * 1.1515;
         return ($miles * 1.609344); // Distance in KM
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/field-staff/sync-offline-logs",
+     *     summary="Sync offline logs when internet is restored",
+     *     tags={"Field Staff"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="logs", type="array", @OA\Items(
+     *                 @OA\Property(property="from_time", type="string", format="date-time"),
+     *                 @OA\Property(property="to_time", type="string", format="date-time"),
+     *                 @OA\Property(property="latitude", type="number", nullable=true),
+     *                 @OA\Property(property="longitude", type="number", nullable=true),
+     *                 @OA\Property(property="reason", type="string", example="Mobile Data Off")
+     *             ))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200, 
+     *         description="Logs synced successfully"
+     *     )
+     * )
+     */
+    public function syncOfflineLogs(Request $request)
+    {
+        $request->validate([
+            'logs' => 'required|array',
+            'logs.*.from_time' => 'required|date',
+            'logs.*.to_time' => 'required|date',
+            'logs.*.latitude' => 'nullable|numeric',
+            'logs.*.longitude' => 'nullable|numeric',
+            'logs.*.reason' => 'nullable|string',
+        ]);
+
+        $user = auth('api')->user();
+        $insertedCount = 0;
+
+        foreach ($request->logs as $logData) {
+            OfflineLog::create([
+                'user_id' => $user->id,
+                'from_time' => Carbon::parse($logData['from_time']),
+                'to_time' => Carbon::parse($logData['to_time']),
+                'latitude' => $logData['latitude'] ?? null,
+                'longitude' => $logData['longitude'] ?? null,
+                'reason' => $logData['reason'] ?? null,
+            ]);
+            $insertedCount++;
+        }
+
+        return response()->json([
+            'message' => 'Offline logs synced successfully',
+            'synced_count' => $insertedCount,
+        ]);
     }
 
     /**

@@ -4,6 +4,18 @@
 
 @push('styles')
     <style>
+        @media print {
+            body { background-color: #fff !important; }
+            .sidebar, .navbar, .page-header, .page-title, .breadcrumb, .footer { display: none !important; }
+            .col-xl-8.col-lg-7, #map, .legend, .btn, form, .row.mb-4.g-3, .user-profile-block { display: none !important; }
+            .col-xl-4.col-lg-5 { width: 100% !important; max-width: 100% !important; flex: 0 0 100% !important; }
+            .tracking-info-card { height: auto !important; overflow: visible !important; border: none !important; }
+            .container-fluid { padding: 0 !important; }
+            .card { box-shadow: none !important; border: none !important; }
+            .card-header { display: none !important; }
+            .page-body-wrapper { margin-left: 0 !important; }
+        }
+
         #map {
             height: 600px;
             border-radius: 12px;
@@ -175,7 +187,7 @@
                                             style="height: 32px; border: none; background: #1a3a63; font-size: 0.8rem;">
                                             <span class="fw-bold">CSV</span>
                                         </a>
-                                        <a href="{{ route('admin.field-staff.tracking.export', ['user_id' => $user->id, 'date' => $date, 'format' => 'csv']) }}"
+                                        <a href="{{ route('admin.field-staff.tracking.export', ['user_id' => $user->id, 'date' => $date, 'format' => 'excel']) }}"
                                             class="btn btn-success shadow-sm rounded-3 d-flex align-items-center px-2"
                                             style="height: 32px; border: none; background: #28a745; font-size: 0.8rem;">
                                             <span class="fw-bold">Excel</span>
@@ -274,6 +286,7 @@
                                     <div class="mb-1"><i style="background: #51bb25"></i> Punch In</div>
                                     <div class="mb-1"><i style="background: #f73164"></i> Punch Out</div>
                                     <div class="mb-1"><i style="background: #7366ff"></i> Customer Visit</div>
+                                    <div class="mb-1"><i style="background: #dc3545"></i> Stop (> 5 mins)</div>
                                     <div><i
                                             style="background: #7366ff; border-radius: 0; height: 2px; margin-top: 11px;"></i>
                                         Route</div>
@@ -292,48 +305,132 @@
                                             $punches->each(fn($p) => $allEvents->push(['type' => 'punch', 'time' => $p->timestamp, 'data' => $p]));
                                             $visits->each(fn($v) => $allEvents->push(['type' => 'visit', 'time' => $v->check_in_at, 'data' => $v]));
                                             $locations->whereNotNull('remarks')->each(fn($l) => $allEvents->push(['type' => 'alert', 'time' => $l->timestamp, 'data' => $l]));
+                                            $offlineLogs->each(fn($o) => $allEvents->push(['type' => 'offline', 'time' => $o->from_time, 'data' => $o]));
                                             $sortedEvents = $allEvents->sortBy('time');
                                         @endphp
 
-                                        @if($sortedEvents->isEmpty())
-                                            <div class="text-center py-5 no-activity">
-                                                <i class="fa fa-walking-light fa-3x text-light mb-3"></i>
-                                                <p class="text-muted">No activity recorded yet.</p>
-                                            </div>
-                                        @else
-                                            @foreach($sortedEvents as $event)
-                                                <div class="timeline-item {{ $event['type'] }}"
-                                                    onclick="flyToLocation({{ $event['data']->latitude }}, {{ $event['data']->longitude }})">
-                                                    <div class="d-flex justify-content-between">
-                                                        <span class="small fw-bold">{{ $event['time']->format('h:i A') }}</span>
-                                                        @if($event['type'] == 'punch')
-                                                            <span class="badge badge-light-{{ $event['data']->type == 'punch_in' ? 'success' : 'danger' }} small">
-                                                                {{ str_replace('_', ' ', $event['data']->type) }}
-                                                            </span>
-                                                        @elseif($event['type'] == 'alert')
-                                                            <span class="badge badge-light-danger small">System Alert</span>
-                                                        @else
-                                                            <span class="badge badge-light-warning small">Visit</span>
-                                                        @endif
-                                                    </div>
-                                                    <div class="mt-1">
-                                                        @if($event['type'] == 'punch')
-                                                            <p class="mb-0 small text-dark">Punched at location</p>
-                                                            @if($event['data']->is_mock_location)
-                                                                <div class="badge badge-light-danger small mt-1"><i
-                                                                        class="fa fa-exclamation-triangle me-1"></i>Mock GPS!</div>
-                                                            @endif
-                                                        @elseif($event['type'] == 'alert')
-                                                            <p class="mb-0 fw-bold small text-danger"><i class="fa fa-info-circle me-1"></i>{{ $event['data']->remarks }}</p>
-                                                        @else
-                                                            <p class="mb-0 fw-bold small text-primary">
-                                                                {{ $event['data']->customer_name }}</p>
-                                                            <p class="mb-0 text-muted small">{{ $event['data']->customer_category }}</p>
-                                                        @endif
-                                                    </div>
+                                        <div class="d-print-none">
+                                            @if($sortedEvents->isEmpty())
+                                                <div class="text-center py-5 no-activity">
+                                                    <i class="fa fa-walking-light fa-3x text-light mb-3"></i>
+                                                    <p class="text-muted">No activity recorded yet.</p>
                                                 </div>
-                                            @endforeach
-                                        @endif
+                                            @else
+                                                @foreach($sortedEvents as $event)
+                                                    <div class="timeline-item {{ $event['type'] }}"
+                                                        @if(isset($event['data']->latitude) && isset($event['data']->longitude))
+                                                            onclick="flyToLocation({{ $event['data']->latitude }}, {{ $event['data']->longitude }})"
+                                                        @endif>
+                                                        <div class="d-flex justify-content-between">
+                                                            <span class="small fw-bold">{{ $event['time']->format('h:i A') }}</span>
+                                                            @if($event['type'] == 'punch')
+                                                                <span class="badge badge-light-{{ $event['data']->type == 'punch_in' ? 'success' : 'danger' }} small">
+                                                                    {{ str_replace('_', ' ', $event['data']->type) }}
+                                                                </span>
+                                                            @elseif($event['type'] == 'alert')
+                                                                <span class="badge badge-light-danger small">System Alert</span>
+                                                            @elseif($event['type'] == 'offline')
+                                                                <span class="badge badge-light-secondary small">Offline</span>
+                                                            @else
+                                                                <span class="badge badge-light-warning small">Visit</span>
+                                                            @endif
+                                                        </div>
+                                                        <div class="mt-1">
+                                                            @if($event['type'] == 'punch')
+                                                                <p class="mb-0 small text-dark">Punched at location</p>
+                                                                @if($event['data']->is_mock_location)
+                                                                    <div class="badge badge-light-danger small mt-1"><i
+                                                                            class="fa fa-exclamation-triangle me-1"></i>Mock GPS!</div>
+                                                                @endif
+                                                            @elseif($event['type'] == 'alert')
+                                                                <p class="mb-0 fw-bold small text-danger"><i class="fa fa-info-circle me-1"></i>{{ $event['data']->remarks }}</p>
+                                                            @elseif($event['type'] == 'offline')
+                                                                <p class="mb-0 fw-bold small text-secondary">
+                                                                    <i class="fa fa-wifi me-1" style="text-decoration: line-through;"></i>Offline Period
+                                                                </p>
+                                                                <p class="mb-0 text-muted small">
+                                                                    {{ $event['data']->from_time->format('h:i A') }} - {{ $event['data']->to_time ? $event['data']->to_time->format('h:i A') : 'Ongoing' }}
+                                                                    @if($event['data']->reason)
+                                                                        <br>Reason: {{ $event['data']->reason }}
+                                                                    @endif
+                                                                </p>
+                                                            @else
+                                                                <p class="mb-0 fw-bold small text-primary">
+                                                                    {{ $event['data']->customer_name }}</p>
+                                                                <p class="mb-0 text-muted small">{{ $event['data']->customer_category }}</p>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            @endif
+                                        </div>
+
+                                        <div class="d-none d-print-block mt-4">
+                                            <table class="table table-bordered table-sm mb-4">
+                                                <tr>
+                                                    <th>Staff Name</th><td>{{ $user->name }}</td>
+                                                    <th>Date</th><td>{{ \Carbon\Carbon::parse($date)->format('M d, Y') }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Total Distance</th><td>{{ number_format($totalDistance, 2) }} KM</td>
+                                                    <th>Visits Completed</th><td>{{ $visits->count() }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Attendance Logs</th><td>{{ $punches->count() }}</td>
+                                                    <th>Status</th><td>{{ $isOnline ? 'Online' : 'Offline' }}</td>
+                                                </tr>
+                                            </table>
+
+                                            <h6 class="fw-bold mb-2">Activity Timeline</h6>
+                                            <table class="table table-bordered table-sm">
+                                                <thead>
+                                                    <tr style="background: #f8f9fa;">
+                                                        <th>Time</th>
+                                                        <th>Type</th>
+                                                        <th>Details</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @if($sortedEvents->isEmpty())
+                                                        <tr>
+                                                            <td colspan="3" class="text-center text-muted py-3">No activity recorded yet.</td>
+                                                        </tr>
+                                                    @else
+                                                        @foreach($sortedEvents as $event)
+                                                            <tr>
+                                                                <td class="fw-bold" style="white-space: nowrap;">{{ $event['time']->format('h:i A') }}</td>
+                                                                <td>
+                                                                    @if($event['type'] == 'punch')
+                                                                        {{ strtoupper(str_replace('_', ' ', $event['data']->type)) }}
+                                                                    @elseif($event['type'] == 'alert')
+                                                                        ALERT
+                                                                    @elseif($event['type'] == 'offline')
+                                                                        OFFLINE
+                                                                    @else
+                                                                        VISIT
+                                                                    @endif
+                                                                </td>
+                                                                <td>
+                                                                    @if($event['type'] == 'punch')
+                                                                        Punched at location
+                                                                        @if($event['data']->is_mock_location)
+                                                                            - Mock GPS!
+                                                                        @endif
+                                                                    @elseif($event['type'] == 'alert')
+                                                                        {{ $event['data']->remarks }}
+                                                                    @elseif($event['type'] == 'offline')
+                                                                        Offline Period @if(!empty($event['data']->reason)) ({{ $event['data']->reason }}) @endif<br>
+                                                                        {{ $event['data']->from_time->format('h:i A') }} - {{ $event['data']->to_time ? $event['data']->to_time->format('h:i A') : 'Ongoing' }}
+                                                                    @else
+                                                                        {{ $event['data']->customer_name }} ({{ $event['data']->customer_category }})
+                                                                    @endif
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    @endif
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -497,6 +594,12 @@
                 bounds.extend({ lat: {{ $v->latitude }}, lng: {{ $v->longitude }} });
             @endforeach
 
+            // 5. Plot Stops (> 5 mins)
+            @foreach($stops as $stop)
+                addStopMarker({{ $stop['lat'] }}, {{ $stop['lng'] }}, {{ $stop['duration'] }}, '{{ \Carbon\Carbon::parse($stop['start_time'])->format('h:i A') }}', '{{ \Carbon\Carbon::parse($stop['end_time'])->format('h:i A') }}');
+                bounds.extend({ lat: {{ $stop['lat'] }}, lng: {{ $stop['lng'] }} });
+            @endforeach
+
                 if (!bounds.isEmpty()) {
                 map.fitBounds(bounds);
                 
@@ -521,6 +624,34 @@
                     strokeColor: "#fff",
                     strokeWeight: 2
                 }
+            });
+        }
+
+        function addStopMarker(lat, lng, duration, startTime, endTime) {
+            const marker = new google.maps.Marker({
+                position: { lat: parseFloat(lat), lng: parseFloat(lng) },
+                map: map,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 6,
+                    fillColor: "#dc3545", // Red
+                    fillOpacity: 1,
+                    strokeColor: "#fff",
+                    strokeWeight: 2
+                },
+                title: `Stop: ${duration} mins`
+            });
+            
+            const infoWindow = new google.maps.InfoWindow({
+                content: `<div class="custom-info-window">
+                            <h6 class="text-danger fw-bold mb-1"><i class="fa fa-hand-paper text-danger me-2"></i>Stop Detected</h6>
+                            <div class="small"><b>Duration:</b> ${duration} Minutes</div>
+                            <div class="small text-muted">${startTime} to ${endTime}</div>
+                          </div>`
+            });
+            
+            marker.addListener('click', () => {
+                infoWindow.open(map, marker);
             });
         }
 

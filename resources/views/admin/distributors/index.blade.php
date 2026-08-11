@@ -213,6 +213,17 @@
                                 <label class="form-label">Address</label>
                                 <textarea name="address" class="form-control" rows="2" required></textarea>
                             </div>
+                            <div class="col-12">
+                                <label class="form-label">Location (Map)</label>
+                                <div class="input-group mb-2">
+                                    <input type="text" id="create_map_search" class="form-control" placeholder="Search location...">
+                                    <button class="btn text-white" style="background-color: #1e3a5f; border-color: #1e3a5f;" type="button" id="create_map_current_btn"><i class="fa fa-crosshairs"></i> Get Current Location</button>
+                                </div>
+                                <div id="create_map" style="height: 300px; width: 100%; border: 1px solid #ccc; border-radius: 4px;"></div>
+                                <input type="hidden" name="latitude" id="create_latitude">
+                                <input type="hidden" name="longitude" id="create_longitude">
+                                <span class="text-danger small error-text" id="create_map_error"></span>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -305,8 +316,18 @@
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Address</label>
-                                <textarea name="address" id="edit_address" class="form-control" rows="2"
-                                    required></textarea>
+                                <textarea name="address" id="edit_address" class="form-control" rows="2" required></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Location (Map)</label>
+                                <div class="input-group mb-2">
+                                    <input type="text" id="edit_map_search" class="form-control" placeholder="Search location...">
+                                    <button class="btn text-white" style="background-color: #1e3a5f; border-color: #1e3a5f;" type="button" id="edit_map_current_btn"><i class="fa fa-crosshairs"></i> Get Current Location</button>
+                                </div>
+                                <div id="edit_map" style="height: 300px; width: 100%; border: 1px solid #ccc; border-radius: 4px;"></div>
+                                <input type="hidden" name="latitude" id="edit_latitude">
+                                <input type="hidden" name="longitude" id="edit_longitude">
+                                <span class="text-danger small error-text" id="edit_map_error"></span>
                             </div>
                         </div>
                     </div>
@@ -451,6 +472,86 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
+        var createMap, editMap, showMap;
+        var createMarker, editMarker, showMarker;
+
+        function initMap() {
+            const createMapDiv = document.getElementById("create_map");
+            const editMapDiv = document.getElementById("edit_map");
+
+            if (!createMapDiv && !editMapDiv) return;
+
+            const defaultLoc = { lat: 20.5937, lng: 78.9629 };
+
+            if (createMapDiv) {
+                createMap = new google.maps.Map(createMapDiv, { center: defaultLoc, zoom: 12 });
+                createMarker = new google.maps.Marker({ position: defaultLoc, map: createMap, draggable: true });
+                google.maps.event.addListener(createMarker, 'dragend', function () {
+                    $('#create_latitude').val(createMarker.getPosition().lat());
+                    $('#create_longitude').val(createMarker.getPosition().lng());
+                });
+
+                const createSearchBox = new google.maps.places.SearchBox(document.getElementById('create_map_search'));
+                createMap.addListener('bounds_changed', () => createSearchBox.setBounds(createMap.getBounds()));
+                createSearchBox.addListener('places_changed', () => {
+                    const places = createSearchBox.getPlaces();
+                    if (places.length === 0 || !places[0].geometry) return;
+                    const loc = places[0].geometry.location;
+                    createMap.setCenter(loc);
+                    createMap.setZoom(15);
+                    createMarker.setPosition(loc);
+                    $('#create_latitude').val(loc.lat());
+                    $('#create_longitude').val(loc.lng());
+                });
+            }
+
+            if (editMapDiv) {
+                editMap = new google.maps.Map(editMapDiv, { center: defaultLoc, zoom: 12 });
+                editMarker = new google.maps.Marker({ position: defaultLoc, map: editMap, draggable: true });
+                google.maps.event.addListener(editMarker, 'dragend', function () {
+                    $('#edit_latitude').val(editMarker.getPosition().lat());
+                    $('#edit_longitude').val(editMarker.getPosition().lng());
+                });
+
+                const editSearchBox = new google.maps.places.SearchBox(document.getElementById('edit_map_search'));
+                editMap.addListener('bounds_changed', () => editSearchBox.setBounds(editMap.getBounds()));
+                editSearchBox.addListener('places_changed', () => {
+                    const places = editSearchBox.getPlaces();
+                    if (places.length === 0 || !places[0].geometry) return;
+                    const loc = places[0].geometry.location;
+                    editMap.setCenter(loc);
+                    editMap.setZoom(15);
+                    editMarker.setPosition(loc);
+                    $('#edit_latitude').val(loc.lat());
+                    $('#edit_longitude').val(loc.lng());
+                });
+            }
+        }
+        window.initMap = initMap;
+
+        function getGeoLocation(latId, longId, mapType) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    let lat = position.coords.latitude;
+                    let lng = position.coords.longitude;
+                    document.getElementById(latId).value = lat;
+                    document.getElementById(longId).value = lng;
+                    let pos = { lat: lat, lng: lng };
+
+                    if (mapType === 'create' && createMap) {
+                        createMarker.setPosition(pos);
+                        createMap.setCenter(pos);
+                        createMap.setZoom(15);
+                    } else if (mapType === 'edit' && editMap) {
+                        editMarker.setPosition(pos);
+                        editMap.setCenter(pos);
+                        editMap.setZoom(15);
+                    }
+                }, function (error) {
+                    alert("Error getting location: " + error.message);
+                });
+            }
+        }
         function fetchAreas(districtId, areaSelect, selectedAreaId = null) {
             areaSelect.html('<option value="">Loading...</option>');
             if (!districtId) {
@@ -467,6 +568,19 @@
         }
 
         $(document).ready(function () {
+            $('#create_map_current_btn').on('click', function() {
+                getGeoLocation('create_latitude', 'create_longitude', 'create');
+            });
+            $('#edit_map_current_btn').on('click', function() {
+                getGeoLocation('edit_latitude', 'edit_longitude', 'edit');
+            });
+
+            $('#createDistributorModal').on('shown.bs.modal', function () {
+                if (createMap) google.maps.event.trigger(createMap, 'resize');
+                if (!$('#create_latitude').val()) {
+                    getGeoLocation('create_latitude', 'create_longitude', 'create');
+                }
+            });
             var table = $('#distributors-table').DataTable({
                 processing: true,
                 serverSide: true,
@@ -557,6 +671,11 @@
                 var data = $(this).data('row');
                 $('#edit_name').val(data.name);
                 $('#edit_email').val(data.user.email);
+                $('#edit_password').val('');
+                $('#edit_password_confirmation').val('');
+                $('#edit_password').removeClass('is-invalid');
+                $('#edit_password_confirmation').removeClass('is-invalid');
+                $('.pass-error, .confirm-error').removeClass('d-block').text('');
                 $('#edit_gst').val(data.gst);
                 $('#edit_drug_license_no').val(data.drug_license_no);
                 $('#edit_contact_no').val(data.contact_no);
@@ -569,6 +688,18 @@
                 $('#edit_status').val(data.user?.status || '');
                 $('#editDistributorForm').attr('action', "{{ route('admin.distributors.update', ':id') }}".replace(':id', data.id));
                 $('#editDistributorModal').modal('show');
+                
+                setTimeout(() => {
+                    if (editMap && editMarker) {
+                        google.maps.event.trigger(editMap, 'resize');
+                        if (data.latitude && data.longitude) {
+                            let pos = { lat: parseFloat(data.latitude), lng: parseFloat(data.longitude) };
+                            editMarker.setPosition(pos);
+                            editMap.setCenter(pos);
+                            editMap.setZoom(15);
+                        }
+                    }
+                }, 300);
             });
 
             $('#distributors-table').on('click', '.view-btn', function () {
