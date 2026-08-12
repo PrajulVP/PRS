@@ -33,7 +33,7 @@ class FieldStaffSettingsController extends Controller
     /**
      * Store/Update a visit purpose via AJAX
      */
-    public function saveVisitPurpose(Request $request)
+    public function savePurpose(Request $request)
     {
         $request->validate([
             'id' => 'nullable|integer|exists:visit_purposes,id',
@@ -55,7 +55,7 @@ class FieldStaffSettingsController extends Controller
     /**
      * Delete a visit purpose via AJAX
      */
-    public function deleteVisitPurpose(Request $request)
+    public function deletePurpose(Request $request)
     {
         $request->validate([
             'id' => 'required|integer|exists:visit_purposes,id',
