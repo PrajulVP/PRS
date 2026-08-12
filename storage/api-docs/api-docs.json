@@ -2428,6 +2428,16 @@
                                     },
                                     "area_id": {
                                         "type": "integer"
+                                    },
+                                    "latitude": {
+                                        "description": "Latitude of the retailer",
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "longitude": {
+                                        "description": "Longitude of the retailer",
+                                        "type": "number",
+                                        "format": "float"
                                     }
                                 },
                                 "type": "object"

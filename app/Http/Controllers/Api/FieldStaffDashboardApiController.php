@@ -319,7 +319,9 @@ class FieldStaffDashboardApiController extends Controller
      *             @OA\Property(property="gst", type="string"),
      *             @OA\Property(property="drug_license_no", type="string"),
      *             @OA\Property(property="district_id", type="integer"),
-     *             @OA\Property(property="area_id", type="integer")
+     *             @OA\Property(property="area_id", type="integer"),
+     *             @OA\Property(property="latitude", type="number", format="float", description="Latitude of the retailer"),
+     *             @OA\Property(property="longitude", type="number", format="float", description="Longitude of the retailer")
      *         )
      *     ),
      *     @OA\Response(response=201, description="Retailer created successfully")
@@ -348,6 +350,8 @@ class FieldStaffDashboardApiController extends Controller
             'address' => 'required',
             'district_id' => 'required|exists:districts,id',
             'area_id' => 'required|exists:areas,id',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
         ]);
 
         try {

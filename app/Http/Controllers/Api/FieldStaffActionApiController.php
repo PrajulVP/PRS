@@ -362,7 +362,7 @@ class FieldStaffActionApiController extends Controller
         $type = $request->query('party_type');
         
         if ($type === 'retailer') {
-            $parties = \App\Models\Retailer::select('id', 'shop_name as name', 'owner_name')->get();
+            $parties = \App\Models\Retailer::select('id', 'shop_name as name')->get();
         } elseif ($type === 'distributor') {
             $parties = \App\Models\Distributor::select('id', 'name')->get();
         } else {
