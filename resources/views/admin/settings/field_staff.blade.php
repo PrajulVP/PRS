@@ -212,24 +212,7 @@
                                          </div>
                                          
                                          <div id="purposes_container" class="d-flex flex-wrap gap-2 p-3 rounded-3 shadow-sm border" style="min-height: 80px; background-color: #f8fafc;">
-                                             @foreach($visitPurposes as $purpose)
-                                                 <div class="d-inline-flex align-items-center justify-content-between rounded px-3 py-2 shadow-sm border" style="background-color: #ffffff; border-color: #e2e8f0; transition: all 0.2s ease;">
-                                                     <div class="d-flex align-items-center me-3">
-                                                         <span class="fw-medium" style="color: #334155; font-size: 0.95rem;">{{ $purpose->name }}</span>
-                                                     </div>
-                                                     <div class="d-flex gap-1">
-                                                         <button type="button" class="btn btn-sm btn-link text-primary p-0 d-flex align-items-center justify-content-center edit-purpose" data-id="{{ $purpose->id }}" data-name="{{ $purpose->name }}" style="width: 24px; height: 24px; text-decoration: none;">
-                                                             <i class="fa fa-edit" style="font-size: 0.85rem;"></i>
-                                                         </button>
-                                                         <button type="button" class="btn btn-sm btn-link text-danger p-0 d-flex align-items-center justify-content-center delete-purpose" data-id="{{ $purpose->id }}" style="width: 24px; height: 24px; text-decoration: none;">
-                                                             <i class="fa fa-trash" style="font-size: 0.85rem;"></i>
-                                                         </button>
-                                                     </div>
-                                                 </div>
-                                             @endforeach
-                                             @if($visitPurposes->isEmpty())
-                                                 <span class="text-muted small w-100 text-center py-2">No purposes configured yet.</span>
-                                             @endif
+                                             <!-- Rendered by JS -->
                                          </div>
                                     </div>
                                 </div>
@@ -452,6 +435,36 @@
                 });
             });
             // Visit Purpose Management
+            let visitPurposesData = @json($visitPurposes);
+
+            function renderPurposes() {
+                let html = '';
+                if (visitPurposesData.length === 0) {
+                    html = '<span class="text-muted small w-100 text-center py-2">No purposes configured yet.</span>';
+                } else {
+                    visitPurposesData.forEach((purpose, index) => {
+                        html += `
+                            <div class="d-inline-flex align-items-center justify-content-between rounded px-3 py-2 shadow-sm border" style="background-color: #ffffff; border-color: #e2e8f0; transition: all 0.2s ease;">
+                                <div class="d-flex align-items-center me-3">
+                                    <span class="fw-medium" style="color: #334155; font-size: 0.95rem;">${purpose.name}</span>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    <button type="button" class="btn btn-sm btn-link text-primary p-0 d-flex align-items-center justify-content-center edit-purpose" data-index="${index}" data-id="${purpose.id}" data-name="${purpose.name}" style="width: 24px; height: 24px; text-decoration: none;">
+                                        <i class="fa fa-edit" style="font-size: 0.85rem;"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-link text-danger p-0 d-flex align-items-center justify-content-center delete-purpose" data-index="${index}" data-id="${purpose.id}" style="width: 24px; height: 24px; text-decoration: none;">
+                                        <i class="fa fa-trash" style="font-size: 0.85rem;"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                $('#purposes_container').html(html);
+            }
+
+            renderPurposes();
+
             $('#add_purpose_btn').on('click', function() {
                 Swal.fire({
                     title: 'Add New Visit Purpose',
@@ -465,7 +478,7 @@
                     }
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        savePurpose(null, result.value);
+                        savePurpose(null, result.value, -1);
                     }
                 });
             });
@@ -473,6 +486,7 @@
             $(document).on('click', '.edit-purpose', function() {
                 let id = $(this).data('id');
                 let name = $(this).data('name');
+                let index = $(this).data('index');
                 Swal.fire({
                     title: 'Edit Visit Purpose',
                     input: 'text',
@@ -485,13 +499,14 @@
                     }
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        savePurpose(id, result.value);
+                        savePurpose(id, result.value, index);
                     }
                 });
             });
 
             $(document).on('click', '.delete-purpose', function() {
                 let id = $(this).data('id');
+                let index = $(this).data('index');
                 Swal.fire({
                     title: 'Are you sure?',
                     text: "You won't be able to revert this!",
@@ -510,15 +525,16 @@
                                 id: id
                             },
                             success: function(res) {
+                                visitPurposesData.splice(index, 1);
+                                renderPurposes();
                                 showToast('success', 'Deleted', res.message);
-                                setTimeout(() => location.reload(), 1000);
                             }
                         });
                     }
                 });
             });
 
-            function savePurpose(id, name) {
+            function savePurpose(id, name, index) {
                 $.ajax({
                     url: '{{ route('admin.settings.field-staff.save-purpose') }}',
                     method: 'POST',
@@ -528,8 +544,13 @@
                         name: name
                     },
                     success: function(res) {
+                        if (id) {
+                            visitPurposesData[index] = res.purpose;
+                        } else {
+                            visitPurposesData.push(res.purpose);
+                        }
+                        renderPurposes();
                         showToast('success', 'Saved', res.message);
-                        setTimeout(() => location.reload(), 1000);
                     },
                     error: function(xhr) {
                         showToast('error', 'Error', xhr.responseJSON?.message || 'Could not save purpose.');
