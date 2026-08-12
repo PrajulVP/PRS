@@ -383,7 +383,7 @@ class FieldStaffActionApiController extends Controller
      */
     public function purposes()
     {
-        $purposes = VisitPurpose::all();
+        $purposes = VisitPurpose::select('id', 'name')->get();
         return response()->json(['purposes' => $purposes]);
     }
 
