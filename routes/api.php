@@ -180,6 +180,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('purposes', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'purposes']);
         Route::post('start', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'start']);
         Route::post('stop', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'stop']);
+        Route::get('status', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'status']);
         Route::get('history', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'history']);
     });
 });

@@ -207,6 +207,7 @@ class FieldStaffActionApiController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="status", type="string", enum={"punched_in", "punched_out"}),
      *             @OA\Property(property="message", type="string", example="The user has been punched out."),
+     *             @OA\Property(property="admin_approved", type="boolean", description="Whether the admin has granted permission for an additional punch-in today"),
      *             @OA\Property(property="last_log", type="object")
      *         )
      *     )
@@ -236,6 +237,7 @@ class FieldStaffActionApiController extends Controller
         return response()->json([
             'status' => $status,
             'message' => $message,
+            'admin_approved' => (bool) $user->clock_in_permission,
             'last_log' => $lastPunch
         ]);
     }
@@ -452,9 +454,10 @@ class FieldStaffActionApiController extends Controller
                 );
                 
                 if ($distance > $radiusKm) { 
+                    $distanceInMeters = round($distance * 1000, 2);
                     return response()->json([
-                        'error' => "Geofence violation. You must be within {$radiusMeters} meters of the customer location.",
-                        'current_distance' => round($distance * 1000, 2) . ' meters'
+                        'error' => "You are {$distanceInMeters} meters away from the location. Please be inside {$radiusMeters} m.",
+                        'current_distance' => "{$distanceInMeters} meters"
                     ], 403);
                 }
             } else {
@@ -585,6 +588,50 @@ class FieldStaffActionApiController extends Controller
         return response()->json([
             'message' => 'Visit stopped successfully',
             'visit' => $visit
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/field-visits/status",
+     *     summary="Get current field visit status",
+     *     tags={"Field Staff"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="X-Device-ID",
+     *         in="header",
+     *         required=true,
+     *         description="Unique Device identifier for binding",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Current visit status retrieved",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="has_active_visit", type="boolean"),
+     *             @OA\Property(property="active_visit", type="object", nullable=true)
+     *         )
+     *     )
+     * )
+     */
+    public function status(Request $request)
+    {
+        $user = auth('api')->user();
+        
+        // Device Binding Security
+        $deviceId = $request->header('X-Device-ID');
+        if ($user->device_uuid && $user->device_uuid !== $deviceId) {
+            return response()->json(['error' => 'Device mismatch.'], 403);
+        }
+
+        $activeVisit = FieldVisit::where('user_id', $user->id)
+            ->where('status', '!=', 'completed')
+            ->latest()
+            ->first();
+
+        return response()->json([
+            'has_active_visit' => $activeVisit ? true : false,
+            'active_visit' => $activeVisit
         ]);
     }
 

@@ -1601,6 +1601,14 @@
                                                 "punched_out"
                                             ]
                                         },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The user has been punched out."
+                                        },
+                                        "admin_approved": {
+                                            "description": "Whether the admin has granted permission for an additional punch-in today",
+                                            "type": "boolean"
+                                        },
                                         "last_log": {
                                             "type": "object"
                                         }
@@ -1940,6 +1948,52 @@
                 "responses": {
                     "200": {
                         "description": "Visit stopped successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/field-visits/status": {
+            "get": {
+                "tags": [
+                    "Field Staff"
+                ],
+                "summary": "Get current field visit status",
+                "operationId": "2175c68a1e0d0d90ff6e46c0d37fc52a",
+                "parameters": [
+                    {
+                        "name": "X-Device-ID",
+                        "in": "header",
+                        "description": "Unique Device identifier for binding",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Current visit status retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "has_active_visit": {
+                                            "type": "boolean"
+                                        },
+                                        "active_visit": {
+                                            "type": "object",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -3327,6 +3381,10 @@
                                                 "punched_in",
                                                 "punched_out"
                                             ]
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The user has been punched out."
                                         },
                                         "last_log": {
                                             "type": "object"
