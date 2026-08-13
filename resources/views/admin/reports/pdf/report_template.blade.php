@@ -117,8 +117,7 @@
             <tr style="border: none;">
                 <td style="border: none; width: 60%;">
                     <div style="display: flex; align-items: center;">
-                        <img src="{{ public_path('assets/images/logo/logo.png') }}" style="height: 50px; margin-right: 15px;">
-                        <span class="logo-text" style="vertical-align: middle;">Atomed Wellness</span>
+                        <img src="{{ public_path('admin/assets/images/logo/atom-logo-main.png') }}" style="height: 50px; margin-right: 15px;">
                     </div>
                 </td>
                 <td style="border: none; width: 40%;">
@@ -221,6 +220,18 @@
                     <th class="text-right">AOV (₹)</th>
                     <th class="text-right">Orders</th>
                     <th class="text-right">Revenue (₹)</th>
+                </tr>
+            @elseif($type === 'visits')
+                <tr>
+                    <th>Rank</th>
+                    <th>Fieldstaff</th>
+                    <th class="text-right">Total Visits</th>
+                    <th class="text-right">Unique Shops</th>
+                    <th class="text-right">Repeat Visits</th>
+                    <th class="text-right">Avg Duration</th>
+                    <th class="text-right">Status Split (Completed | Ongoing)</th>
+                    <th class="text-right">Coverage</th>
+                    <th class="text-right">Productivity %</th>
                 </tr>
             @elseif($type === 'areas')
                 <tr>
@@ -387,6 +398,45 @@
                         <td class="text-right fw-bold text-primary">₹{{ $row->total_orders ? number_format($row->total_revenue / $row->total_orders, 2) : '0.00' }}</td>
                         <td class="text-right">{{ $row->total_orders ?? 0 }}</td>
                         <td class="text-right fw-bold">{{ number_format($row->total_revenue ?? 0, 2) }}</td>
+                    @elseif($type === 'visits')
+                        @php
+                            $totalVisits = $row->user->fieldVisits->count() ?? 0;
+                            $uniqueShops = $row->user->fieldVisits->unique(function($visit) {
+                                return $visit->party_type . '-' . $visit->party_id;
+                            })->count();
+                            $repeatVisits = $totalVisits - $uniqueShops;
+                            
+                            $validVisits = $row->user->fieldVisits->filter(function($v) {
+                                return $v->start_at && $v->end_at;
+                            });
+                            $avgMins = 0;
+                            if (!$validVisits->isEmpty()) {
+                                $totalMins = $validVisits->sum(function($v) {
+                                    return \Carbon\Carbon::parse($v->start_at)->diffInMinutes(\Carbon\Carbon::parse($v->end_at));
+                                });
+                                $avgMins = round($totalMins / $validVisits->count());
+                            }
+                            
+                            $hours = floor($avgMins / 60);
+                            $mins = $avgMins % 60;
+                            $avgDuration = ($hours > 0 ? $hours . 'h ' : '') . $mins . 'm';
+                            $avgDuration = $validVisits->isEmpty() ? '-' : $avgDuration;
+
+                            $completed = $row->user->fieldVisits->where('status', 'completed')->count();
+                            $ongoing = $row->user->fieldVisits->where('status', 'ongoing')->count();
+                            
+                            $coverage = "{$uniqueShops} / {$row->total_assigned_retailers}";
+                            $productivity = $row->total_assigned_retailers == 0 ? '0%' : number_format(($uniqueShops / $row->total_assigned_retailers) * 100, 1) . '%';
+                        @endphp
+                        <td>{{ $index + 1 }}</td>
+                        <td class="fw-bold">{{ $row->user->name ?? 'N/A' }}</td>
+                        <td class="text-right">{{ $totalVisits }}</td>
+                        <td class="text-right">{{ $uniqueShops }}</td>
+                        <td class="text-right">{{ $repeatVisits }}</td>
+                        <td class="text-right">{{ $avgDuration }}</td>
+                        <td class="text-right"><span style="color: green;">{{ $completed }}</span> | <span style="color: orange;">{{ $ongoing }}</span></td>
+                        <td class="text-right">{{ $coverage }}</td>
+                        <td class="text-right fw-bold">{{ $productivity }}</td>
                     @elseif($type === 'areas')
                         <td>{{ $index + 1 }}</td>
                         <td class="fw-bold">{{ $row->name }}</td>

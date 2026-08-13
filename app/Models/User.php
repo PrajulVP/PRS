@@ -112,6 +112,11 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(UserLeaveBalance::class);
     }
 
+    public function fieldVisits()
+    {
+        return $this->hasMany(FieldVisit::class);
+    }
+
     public function expenses()
     {
         return $this->hasMany(Expense::class);

@@ -1,6 +1,11 @@
 <table border="1">
     <thead>
         <tr>
+            <th colspan="11" style="text-align: center; font-size: 16px; font-weight: bold;">
+                Staff Visits Report ({{ $reportTitle ?? date('Y-m-d') }})
+            </th>
+        </tr>
+        <tr>
             <th>Date</th>
             <th>Time</th>
             <th>Staff Name</th>

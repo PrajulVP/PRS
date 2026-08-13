@@ -834,30 +834,66 @@ class ReportController extends Controller
 
             [$f, $t] = $this->getFilterDates($request);
 
-            $query->withCount(['visitLogs as total_visits' => function($q) use ($f, $t) {
-                if ($f && $t) $q->whereBetween('check_in_at', [$f, $t]);
+            $query->with(['user.fieldVisits' => function($q) use ($f, $t) {
+                if ($f && $t) $q->whereBetween('start_at', [$f, $t]);
             }])
             ->withCount(['retailers as total_assigned_retailers']);
 
             return DataTables::of($query)
                 ->addColumn('name', fn($fs) => $fs->user->name ?? 'N/A')
+                ->addColumn('total_visits', function($fs) {
+                    return $fs->user->fieldVisits->count() ?? 0;
+                })
+                ->addColumn('unique_shops', function($fs) {
+                    return $fs->user->fieldVisits->unique(function($visit) {
+                        return $visit->party_type . '-' . $visit->party_id;
+                    })->count();
+                })
+                ->addColumn('repeat_visits', function($fs) {
+                    $totalVisits = $fs->user->fieldVisits->count() ?? 0;
+                    $uniqueShops = $fs->user->fieldVisits->unique(function($visit) {
+                        return $visit->party_type . '-' . $visit->party_id;
+                    })->count();
+                    return $totalVisits - $uniqueShops;
+                })
+                ->addColumn('avg_duration', function($fs) {
+                    $validVisits = $fs->user->fieldVisits->filter(function($v) {
+                        return $v->start_at && $v->end_at;
+                    });
+                    $avgMins = 0;
+                    if (!$validVisits->isEmpty()) {
+                        $totalMins = $validVisits->sum(function($v) {
+                            return \Carbon\Carbon::parse($v->start_at)->diffInMinutes(\Carbon\Carbon::parse($v->end_at));
+                        });
+                        $avgMins = round($totalMins / $validVisits->count());
+                    }
+                    $hours = floor($avgMins / 60);
+                    $mins = $avgMins % 60;
+                    $avgDuration = ($hours > 0 ? $hours . 'h ' : '') . $mins . 'm';
+                    return $validVisits->isEmpty() ? '-' : $avgDuration;
+                })
+                ->addColumn('distance', function($fs) {
+                    return number_format($fs->user->fieldVisits->sum('distance_km'), 2) . ' Km';
+                })
+                ->addColumn('status_split', function($fs) {
+                    $completed = $fs->user->fieldVisits->where('status', 'completed')->count();
+                    $ongoing = $fs->user->fieldVisits->where('status', 'ongoing')->count();
+                    return "<span style='color: green;'>{$completed}</span> | <span style='color: orange;'>{$ongoing}</span>";
+                })
                 ->addColumn('coverage', function($fs) {
-                    $visitedUnique = \App\Models\VisitLog::where('user_id', $fs->user_id)
-                        ->where('customer_category', 'retailer')
-                        ->count(\DB::raw('DISTINCT customer_id'));
-                        
-                    return "{$visitedUnique} / {$fs->total_assigned_retailers} Outlets";
+                    $uniqueShops = $fs->user->fieldVisits->unique(function($visit) {
+                        return $visit->party_type . '-' . $visit->party_id;
+                    })->count();
+                    return "{$uniqueShops} / {$fs->total_assigned_retailers} Outlets";
                 })
                 ->addColumn('productivity', function($fs) {
                     if ($fs->total_assigned_retailers == 0) return '0%';
-                    // Use customer_id and filter by category if necessary
-                    $visitedUnique = \App\Models\VisitLog::where('user_id', $fs->user_id)
-                        ->where('customer_category', 'retailer')
-                        ->count(\DB::raw('DISTINCT customer_id'));
-                    $percent = ($visitedUnique / $fs->total_assigned_retailers) * 100;
-                    return number_format($percent, 1) . '% Coverage';
+                    $uniqueShops = $fs->user->fieldVisits->unique(function($visit) {
+                        return $visit->party_type . '-' . $visit->party_id;
+                    })->count();
+                    return number_format(($uniqueShops / $fs->total_assigned_retailers) * 100, 1) . '%';
                 })
-                ->addColumn('visit_count', fn($fs) => $fs->total_visits . ' Visits')
+                ->rawColumns(['status_split'])
                 ->make(true);
         }
 
@@ -1646,7 +1682,13 @@ class ReportController extends Controller
             elseif ($period === 'yesterday') $filterContext['Report Period'] = "Daily: " . $f->format('M d, Y');
             elseif ($period === 'this_month') $filterContext['Report Period'] = "Monthly: " . $f->format('F Y');
             elseif ($period === '7days') $filterContext['Report Period'] = "Last 7 Days (Until " . $t->format('M d') . ")";
-            else $filterContext['Custom Range'] = $f->format('d/m/Y') . ' - ' . $t->format('d/m/Y');
+            else {
+                if ($f->copy()->startOfMonth()->isSameDay($f) && $t->copy()->endOfMonth()->isSameDay($t) && $f->isSameMonth($t)) {
+                    $filterContext['Report Period'] = "Monthly: " . $f->format('F Y');
+                } else {
+                    $filterContext['Custom Range'] = $f->format('d/m/Y') . ' - ' . $t->format('d/m/Y');
+                }
+            }
         } else {
             $filterContext['Report Period'] = "Historical (All Time)";
         }
@@ -1688,6 +1730,14 @@ class ReportController extends Controller
                     ]);
                 }
                 return $this->applyGlobalFilters($query, $request);
+            case 'visits':
+                $query = FieldStaff::with(['user', 'salesManager.user'])->select('fieldstaffs.*');
+                $this->applyGlobalFilters($query, $request);
+                [$f, $t] = $this->getFilterDates($request);
+                $query->with(['user.fieldVisits' => function($q) use ($f, $t) {
+                    if ($f && $t) $q->whereBetween('start_at', [$f, $t]);
+                }])->withCount(['retailers as total_assigned_retailers']);
+                return $query;
             case 'distributors':
                 $query = Distributor::with('user');
                 if ($request->sales_manager_id) {
@@ -1872,6 +1922,8 @@ class ReportController extends Controller
                     2 => 'districts.name',
                     3 => 'retailers_count'
                 ];
+            case 'visits':
+                return [];
             default:
                 return [];
         }
@@ -2150,6 +2202,61 @@ class ReportController extends Controller
                         $row->district_name ?? 'N/A',
                         $row->retailers_count . ' Outlets',
                         '₹' . number_format($total, 2)
+                    ]);
+                }
+            } elseif ($type === 'visits') {
+                fputcsv($file, [
+                    'Rank',
+                    'Fieldstaff',
+                    'Total Visits',
+                    'Unique Shops',
+                    'Repeat Visits',
+                    'Avg Duration',
+                    'Status Split (Completed | Ongoing)',
+                    'Coverage',
+                    'Productivity %'
+                ]);
+
+                foreach ($data as $index => $fs) {
+                    $totalVisits = $fs->user->fieldVisits->count() ?? 0;
+                    $uniqueShops = $fs->user->fieldVisits->unique(function($visit) {
+                        return $visit->party_type . '-' . $visit->party_id;
+                    })->count();
+                    $repeatVisits = $totalVisits - $uniqueShops;
+                    
+                    $validVisits = $fs->user->fieldVisits->filter(function($v) {
+                        return $v->start_at && $v->end_at;
+                    });
+                    $avgMins = 0;
+                    if (!$validVisits->isEmpty()) {
+                        $totalMins = $validVisits->sum(function($v) {
+                            return \Carbon\Carbon::parse($v->start_at)->diffInMinutes(\Carbon\Carbon::parse($v->end_at));
+                        });
+                        $avgMins = round($totalMins / $validVisits->count());
+                    }
+                    
+                    $hours = floor($avgMins / 60);
+                    $mins = $avgMins % 60;
+                    $avgDuration = ($hours > 0 ? $hours . 'h ' : '') . $mins . 'm';
+                    $avgDuration = $validVisits->isEmpty() ? '-' : $avgDuration;
+                    
+                    $completed = $fs->user->fieldVisits->where('status', 'completed')->count();
+                    $ongoing = $fs->user->fieldVisits->where('status', 'ongoing')->count();
+                    $statusSplit = "$completed | $ongoing";
+                    
+                    $coverage = "{$uniqueShops} / {$fs->total_assigned_retailers} Outlets";
+                    $productivity = $fs->total_assigned_retailers == 0 ? '0%' : number_format(($uniqueShops / $fs->total_assigned_retailers) * 100, 1) . '%';
+
+                    fputcsv($file, [
+                        $index + 1,
+                        $fs->user->name ?? 'N/A',
+                        $totalVisits,
+                        $uniqueShops,
+                        $repeatVisits,
+                        $avgDuration,
+                        $statusSplit,
+                        $coverage,
+                        $productivity
                     ]);
                 }
             }

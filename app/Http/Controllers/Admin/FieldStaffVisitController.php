@@ -45,6 +45,22 @@ class FieldStaffVisitController extends Controller
             $query->where('status', $request->status);
         }
 
+        // Filtering by Repeat Visit
+        if ($request->filled('is_repeat')) {
+            $isRepeat = $request->is_repeat == 1;
+            $operator = $isRepeat ? '> 1' : '= 1';
+            
+            $query->whereRaw("(
+                SELECT COUNT(*) 
+                FROM field_visits AS fv2 
+                WHERE fv2.user_id = field_visits.user_id 
+                AND fv2.party_type = field_visits.party_type 
+                AND fv2.party_id = field_visits.party_id 
+                AND DATE(fv2.start_at) = DATE(field_visits.start_at) 
+                AND fv2.deleted_at IS NULL
+            ) " . $operator);
+        }
+
         // Filtering by Date Range
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $startDate = Carbon::parse($request->start_date)->startOfDay();
@@ -160,14 +176,37 @@ class FieldStaffVisitController extends Controller
         return view('admin.field_staff.visits', compact('managers', 'staffUsers', 'purposes'));
     }
 
+    private function getReportTitle($request)
+    {
+        $fromDate = $request->from_date ?? $request->start_date;
+        $toDate = $request->to_date ?? $request->end_date;
+
+        if ($fromDate && $toDate) {
+            try {
+                $from = \Carbon\Carbon::parse($fromDate);
+                $to = \Carbon\Carbon::parse($toDate);
+                
+                if ($from->isSameMonth($to) && $from->day === 1 && $to->day === $to->daysInMonth) {
+                    return $from->format('F Y');
+                }
+                
+                return $from->format('d M Y') . ' to ' . $to->format('d M Y');
+            } catch (\Exception $e) {
+                // Ignore parse errors
+            }
+        }
+        return 'All Time';
+    }
+
     /**
      * Export visits query to CSV
      */
     private function exportCsv($query, $request)
     {
         $visits = $query->get();
+        $reportTitle = $this->getReportTitle($request);
         
-        $fileName = 'Staff_Visits_' . date('Y-m-d') . '.csv';
+        $fileName = 'Staff_Visits_' . str_replace(' ', '_', $reportTitle) . '.csv';
 
         $headers = [
             "Content-type"        => "text/csv",
@@ -231,8 +270,9 @@ class FieldStaffVisitController extends Controller
     private function exportExcel($query, $request)
     {
         $visits = $query->get();
-        $fileName = 'Staff_Visits_' . date('Y-m-d') . '.xls';
-        return response(view('admin.field_staff.exports.excel', compact('visits')))
+        $reportTitle = $this->getReportTitle($request);
+        $fileName = 'Staff_Visits_' . str_replace(' ', '_', $reportTitle) . '.xls';
+        return response(view('admin.field_staff.exports.excel', compact('visits', 'reportTitle')))
             ->header('Content-Type', 'application/vnd.ms-excel')
             ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"');
     }
@@ -243,8 +283,9 @@ class FieldStaffVisitController extends Controller
     private function exportPdf($query, $request)
     {
         $visits = $query->get();
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.field_staff.exports.pdf', compact('visits'))->setPaper('a4', 'landscape');
-        return $pdf->download('Staff_Visits_' . date('Y-m-d') . '.pdf');
+        $reportTitle = $this->getReportTitle($request);
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.field_staff.exports.pdf', compact('visits', 'reportTitle'))->setPaper('a4', 'landscape');
+        return $pdf->download('Staff_Visits_' . str_replace(' ', '_', $reportTitle) . '.pdf');
     }
 
     /**
@@ -253,7 +294,8 @@ class FieldStaffVisitController extends Controller
     private function printView($query, $request)
     {
         $visits = $query->get();
-        return view('admin.field_staff.exports.print', compact('visits'));
+        $reportTitle = $this->getReportTitle($request);
+        return view('admin.field_staff.exports.print', compact('visits', 'reportTitle'));
     }
 
     private function exportDailyVisitReport($query, $request) {

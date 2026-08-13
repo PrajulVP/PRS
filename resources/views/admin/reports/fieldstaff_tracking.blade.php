@@ -284,7 +284,7 @@
                                 <div id="map"></div>
                                 <div class="legend">
                                     <div class="mb-1"><i style="background: #51bb25"></i> Punch In</div>
-                                    <div class="mb-1"><i style="background: #f73164"></i> Punch Out</div>
+                                    <div class="mb-1"><i style="background: #ff9800"></i> Punch Out</div>
                                     <div class="mb-1"><i style="background: #7366ff"></i> Customer Visit</div>
                                     <div class="mb-1"><i style="background: #dc3545"></i> Stopped</div>
                                     <div><i
@@ -713,7 +713,7 @@
 
             // 3. Plot Punches
             @foreach($punches as $p)
-                addSpecialMarker({{ $p->latitude }}, {{ $p->longitude }}, "{{ $p->type == 'punch_in' ? '#51bb25' : '#f73164' }}", "fa-user");
+                addSpecialMarker({{ $p->latitude }}, {{ $p->longitude }}, "{{ $p->type == 'punch_in' ? '#51bb25' : '#ff9800' }}", "fa-user");
                 bounds.extend({ lat: {{ $p->latitude }}, lng: {{ $p->longitude }} });
             @endforeach
 

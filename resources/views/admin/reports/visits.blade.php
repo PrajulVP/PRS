@@ -1,5 +1,74 @@
 @extends('layouts.admin')
 
+@push('styles')
+<style>
+    /* Premium Export Buttons styling */
+    .export-buttons-wrapper .btn-custom-export {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 100px !important;
+        padding: 6px 16px !important;
+        font-size: 13px !important;
+        font-weight: 700 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+        transition: all 0.2s ease-in-out !important;
+        color: #334155 !important;
+    }
+
+    .export-buttons-wrapper .btn-custom-export:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 6px 15px rgba(0, 73, 122, 0.08) !important;
+        background: #f8fafc !important;
+    }
+
+    .btn-csv-custom {
+        color: #475569 !important;
+        border-color: #e2e8f0 !important;
+    }
+    .btn-csv-custom i { color: #475569 !important; }
+    .btn-csv-custom:hover { border-color: #94a3b8 !important; }
+
+    .btn-excel-custom {
+        color: #15803d !important;
+        border-color: rgba(21, 128, 61, 0.15) !important;
+    }
+    .btn-excel-custom i { color: #15803d !important; }
+    .btn-excel-custom:hover {
+        background: #f0fdf4 !important;
+        border-color: #15803d !important;
+    }
+
+    .btn-pdf-custom {
+        color: #b91c1c !important;
+        border-color: rgba(185, 28, 28, 0.15) !important;
+    }
+    .btn-pdf-custom i { color: #b91c1c !important; }
+    .btn-pdf-custom:hover {
+        background: #fef2f2 !important;
+        border-color: #b91c1c !important;
+    }
+
+    .btn-print-custom {
+        color: #1d4ed8 !important;
+        border-color: rgba(29, 78, 216, 0.15) !important;
+    }
+    .btn-print-custom i { color: #1d4ed8 !important; }
+    .btn-print-custom:hover {
+        background: #eff6ff !important;
+        border-color: #1d4ed8 !important;
+    }
+
+    .dataTables_filter {
+        margin-top: 1rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+</style>
+@endpush
+
 @section('page-body')
 <div class="container-fluid">
     <div class="page-title text-start mb-4">
@@ -27,7 +96,8 @@
         'showDistributor' => false,
         'showRetailer' => false,
         'showStaff' => false,
-        'showStatus' => false
+        'showStatus' => false,
+        'showExports' => false
     ])
 
     <!-- Report Table -->
@@ -39,82 +109,165 @@
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive px-4 pb-4">
+                        <div class="d-none" id="export-buttons-source">
+                            <div class="export-buttons-wrapper d-inline-flex gap-2 align-items-center">
+                                <button type="button" id="exportCsv" class="btn btn-sm btn-custom-export btn-csv-custom" title="Export to CSV"><i class="fa fa-file-text-o"></i> CSV</button>
+                                <button type="button" id="exportExcel" class="btn btn-sm btn-custom-export btn-excel-custom" title="Export to Excel"><i class="fa fa-file-excel-o"></i> Excel</button>
+                                <button type="button" id="exportPdf" class="btn btn-sm btn-custom-export btn-pdf-custom" title="Download PDF"><i class="fa fa-file-pdf-o"></i> PDF</button>
+                                <button type="button" id="exportPrint" class="btn btn-sm btn-custom-export btn-print-custom" title="Print"><i class="fa fa-print"></i> Print</button>
+                            </div>
+                        </div>
                         <table class="table table-hover w-100" id="visitReportTable">
                             <thead>
-                                <tr>
-                                    <th style="width: 50px;">Rank</th>
-                                    <th>Field Personnel</th>
-                                    <th>Total Visits</th>
-                                    <th>Shop Coverage</th>
-                                    <th>Productivity %</th>
-                                </tr>
-                            </thead>
-                        </table>
+                                        <tr>
+                                            <th style="width: 50px;">Rank</th>
+                                            <th>Fieldstaff</th>
+                                            <th class="text-center">Total Visits</th>
+                                            <th class="text-center">Unique Shops</th>
+                                            <th class="text-center">Repeat Visits</th>
+                                            <th class="text-center">Avg Duration</th>
+                                            <th class="text-center">Done / Ongoing</th>
+                                            <th class="text-center">Shop Coverage</th>
+                                            <th class="text-center">Productivity %</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
-@push('scripts')
-<script>
-    $(document).ready(function() {
-        const table = $('#visitReportTable').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: {
-                url: "{{ route('admin.reports.visits') }}",
-                data: function(d) {
-                    d.from_date = $('#from_date').val();
-                    d.to_date = $('#to_date').val();
-                    d.sales_manager_id = $('#sales_manager_id').val();
-                    d.period = $('.preset-btn.active').data('range');
-                }
-            },
-            columns: [
-                { 
-                    data: null, 
-                    orderable: false, 
-                    searchable: false,
-                    className: 'text-center fw-bold text-muted bg-light-soft',
-                    render: (data, type, row, meta) => meta.row + meta.settings._iDisplayStart + 1
-                },
-                { data: 'name', name: 'user.name', className: 'fw-bold' },
-                { data: 'visit_count', name: 'visit_count', className: 'text-center fw-bold', searchable: false },
-                { data: 'coverage', name: 'coverage', className: 'text-center', searchable: false },
-                { data: 'productivity', name: 'productivity', className: 'text-center fw-bold text-info', searchable: false }
-            ],
-            dom: '<"row mb-3 align-items-center"<"col-sm-12 col-md-6"B><"col-sm-12 col-md-6 text-end"f>>t<"row mt-3"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
-            buttons: [
-                {
-                    extend: 'print',
-                    text: '<i class="fa fa-print me-1"></i> Print',
-                    className: 'btn btn-sm btn-info',
-                    orientation: 'landscape',
-                    pageSize: 'A4',
-                    exportOptions: { columns: ':visible' },
-                    title: 'Visit Productivity Report - ' + new Date().toLocaleDateString(),
-                    customize: function (win) {
-                        $(win.document.body).addClass('landscape');
-                        $(win.document.body).find('.dataTables_paginate, .pagination, .dataTables_info').hide();
+        @push('scripts')
+        <script>
+            $(document).ready(function() {
+                const table = $('#visitReportTable').DataTable({
+                    processing: true,
+                    serverSide: true,
+                    ajax: {
+                        url: "{{ route('admin.reports.visits') }}",
+                        data: function(d) {
+                            d.from_date = $('#from_date').val();
+                            d.to_date = $('#to_date').val();
+                            d.sales_manager_id = $('#sales_manager_id').val();
+                            d.period = $('.preset-btn.active').data('range');
+                        }
+                    },
+                    columns: [
+                        { 
+                            data: null, 
+                            orderable: false, 
+                            searchable: false,
+                            className: 'text-center fw-bold text-muted bg-light-soft',
+                            render: (data, type, row, meta) => meta.row + meta.settings._iDisplayStart + 1
+                        },
+                        { data: 'name', name: 'user.name', className: 'fw-bold' },
+                        { data: 'total_visits', name: 'total_visits', className: 'text-center fw-bold text-primary', searchable: false },
+                        { data: 'unique_shops', name: 'unique_shops', className: 'text-center fw-bold text-success', searchable: false },
+                        { data: 'repeat_visits', name: 'repeat_visits', className: 'text-center fw-bold text-warning', searchable: false },
+                        { data: 'avg_duration', name: 'avg_duration', className: 'text-center text-muted', searchable: false },
+                        { data: 'status_split', name: 'status_split', className: 'text-center', searchable: false },
+                        { data: 'coverage', name: 'coverage', className: 'text-center', searchable: false },
+                        { data: 'productivity', name: 'productivity', className: 'text-center fw-bold text-info', searchable: false }
+                    ],
+                    dom: '<"row mb-3 align-items-center"<"col-sm-12 col-md-6 custom-export-container"><"col-sm-12 col-md-6 text-end"f>>t<"row mt-3"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                    buttons: [
+                        {
+                            extend: 'csv',
+                            className: 'd-none buttons-csv',
+                            exportOptions: { columns: ':visible' },
+                            title: 'Visit Productivity Report - ' + new Date().toLocaleDateString()
+                        },
+                        {
+                            extend: 'excel',
+                            className: 'd-none buttons-excel',
+                            exportOptions: { columns: ':visible' },
+                            title: 'Visit Productivity Report - ' + new Date().toLocaleDateString()
+                        },
+                        {
+                            extend: 'pdf',
+                            className: 'd-none buttons-pdf',
+                            orientation: 'landscape',
+                            pageSize: 'A4',
+                            exportOptions: { columns: ':visible' },
+                            title: 'Visit Productivity Report - ' + new Date().toLocaleDateString()
+                        },
+                        {
+                            extend: 'print',
+                            className: 'd-none buttons-print',
+                            orientation: 'landscape',
+                            pageSize: 'A4',
+                            exportOptions: { columns: ':visible' },
+                            title: 'Visit Productivity Report - ' + new Date().toLocaleDateString(),
+                            customize: function (win) {
+                                $(win.document.body).addClass('landscape');
+                                $(win.document.body).find('.dataTables_paginate, .pagination, .dataTables_info').hide();
+                            }
+                        }
+                    ],
+                    pageLength: 25,
+                    order: [[2, 'desc']],
+                    language: {
+                        processing: '<div class="spinner-border text-info" role="status"></div>',
+                        search: "_INPUT_",
+                        searchPlaceholder: "Search report data..."
+                    },
+                    initComplete: function() {
+                        $('.custom-export-container').html($('#export-buttons-source').html());
+                        $('#export-buttons-source').remove();
+                        
+                        // Rebind events since we copied HTML
+                        $('.custom-export-container #exportCsv').on('click', function(e) {
+                            e.preventDefault();
+                            const type = 'visits';
+                            let params = $('#filterForm').serialize();
+                            if (window.reportsTable) {
+                                const order = window.reportsTable.order()[0];
+                                if (order) {
+                                    params += `&order_col=${order[0]}&order_dir=${order[1]}`;
+                                }
+                            }
+                            window.location.href = "{{ route('admin.reports.export', ['format' => 'csv']) }}?report_type=" + type + "&" + params;
+                        });
+                        
+                        $('.custom-export-container #exportExcel').on('click', function(e) {
+                            $('.custom-export-container #exportCsv').trigger('click');
+                        });
+                        
+                        $('.custom-export-container #exportPdf').on('click', function(e) {
+                            e.preventDefault();
+                            const type = 'visits';
+                            let params = $('#filterForm').serialize();
+                            if (window.reportsTable) {
+                                const order = window.reportsTable.order()[0];
+                                if (order) {
+                                    params += `&order_col=${order[0]}&order_dir=${order[1]}`;
+                                }
+                            }
+                            window.location.href = "{{ route('admin.reports.export', ['format' => 'pdf']) }}?report_type=" + type + "&" + params;
+                        });
+                        
+                        $('.custom-export-container #exportPrint').on('click', function (e) {
+                            e.preventDefault();
+                            const tableElement = $('.dataTable:visible');
+                            if (tableElement.length > 0) {
+                                const table = tableElement.DataTable();
+                                const oldLen = table.page.len();
+                                table.page.len(-1).draw();
+                                const paginationElements = $('.dataTables_paginate, .pagination, .paging_simple_numbers, [id$="_paginate"]');
+                                paginationElements.hide();
+                                setTimeout(function() {
+                                    window.print();
+                                    paginationElements.show();
+                                    table.page.len(oldLen).draw();
+                                }, 800);
+                            } else {
+                                window.print();
+                            }
+                        });
                     }
-                },
-                {
-                    extend: 'excel',
-                    text: '<i class="fa fa-file-excel-o me-1"></i> Excel',
-                    className: 'btn btn-sm btn-success',
-                    exportOptions: { columns: ':visible' }
-                }
-            ],
-            pageLength: 25,
-            order: [[2, 'desc']],
-            language: {
-                processing: '<div class="spinner-border text-info" role="status"></div>',
-                search: "_INPUT_",
-                searchPlaceholder: "Search report data..."
-            }
-        });
+                });
 
         window.reportsTable = table;
 
@@ -134,6 +287,8 @@
         letter-spacing: 0.5px;
     }
     .bg-light-soft { background-color: rgba(0, 150, 136, 0.03) !important; }
+    
+    .dt-buttons { display: none !important; }
 
     /* Search Filter Styling */
     .dataTables_filter {

@@ -44,10 +44,15 @@
     <div class="card border-0 shadow-sm rounded-4 mb-4 filter-container overflow-visible">
     <div class="card-body p-0">
         @if(!($showMonthPicker ?? false))
+        @php
+            $showPresetsHeader = (($reportType ?? '') !== 'visits' || ($showExports ?? true));
+        @endphp
+        @if($showPresetsHeader)
         <!-- Quick Presets Header -->
         <div class="presets-header p-4 border-bottom bg-light-soft rounded-top-4">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
                 <div class="d-flex align-items-center gap-2">
+                    @if(($reportType ?? '') !== 'visits')
                     <label class="fw-bold small text-muted text-uppercase mb-0 me-2"><i class="fa fa-clock-o me-1"></i>
                         Quick Timeline:</label>
                     <div class="preset-toggle-group">
@@ -58,6 +63,7 @@
                         <button type="button" class="preset-btn" data-range="this_year">This Year</button>
                         <button type="button" class="preset-btn active" data-range="all">All Time</button>
                     </div>
+                    @endif
                 </div>
 
                 @if($showExports ?? true)
@@ -80,9 +86,10 @@
             </div>
         </div>
         @endif
+        @endif
 
         <!-- Manual Filters Body -->
-        <div class="p-4 border-top">
+        <div class="p-4 {{ ($showPresetsHeader ?? false) ? 'border-top' : '' }}">
             <div class="row g-3 align-items-end">
                 @if($showMonthPicker ?? false)
                 <div class="col-xl-3 col-md-6">
@@ -95,8 +102,8 @@
                 </div>
                 @else
                 <!-- Manual Date Range Redesign -->
-                <div class="col-xl-3 col-md-6">
-                    <label class="form-label fw-bold small text-muted text-uppercase mb-2"><i class="fa fa-calendar me-1"></i> Analysis Range</label>
+                <div class="col-xl-4 col-md-6">
+                    <label class="form-label fw-bold small text-muted text-uppercase mb-2"><i class="fa fa-calendar me-1"></i> Date Range</label>
                     <div class="modern-range-container shadow-sm">
                         <div class="range-field">
                             <i class="fa fa-calendar icon"></i>
@@ -387,7 +394,10 @@
         opacity: 0.8;
     }
 
-    .range-input, .range-input + input {
+    .range-input, .range-input + input,
+    .modern-range-container input.range-input,
+    .modern-range-container input.flatpickr-input,
+    .modern-range-container input {
         width: 100%;
         border: none !important; /* Explicitly remove input borders */
         background: transparent !important;
@@ -395,13 +405,18 @@
         font-weight: 700 !important;
         color: var(--med-text-main, #334155) !important;
         padding: 0 !important;
-        cursor: pointer;
-        text-align: center;
+        margin: 0 !important;
+        cursor: pointer !important;
+        text-align: center !important;
         box-shadow: none !important; /* Remove any shadows that might look like borders */
+        outline: none !important;
     }
 
-    .range-input:focus, .range-input + input:focus {
+    .range-input:focus, .range-input + input:focus,
+    .modern-range-container input:focus {
         outline: none !important;
+        border: none !important;
+        box-shadow: none !important;
     }
 
     .range-divider {
@@ -775,13 +790,24 @@
         // Flatpickr Initialization - Modern Skin
         const fpConfig = {
             altInput: true,
+            altInputClass: "range-input",
             altFormat: "F j, Y",
             dateFormat: "Y-m-d",
             disableMobile: "true",
-            animate: true
+            animate: true,
+            defaultDate: "{{ request('from_date') }}"
+        };
+        const fpConfig2 = {
+            altInput: true,
+            altInputClass: "range-input",
+            altFormat: "F j, Y",
+            dateFormat: "Y-m-d",
+            disableMobile: "true",
+            animate: true,
+            defaultDate: "{{ request('to_date') }}"
         };
         const fromPicker = flatpickr("#from_date", fpConfig);
-        const toPicker = flatpickr("#to_date", fpConfig);
+        const toPicker = flatpickr("#to_date", fpConfig2);
 
         // Select2 Industrial
         $('.select2-industrial').select2({
@@ -798,33 +824,51 @@
             const today = new Date();
             let fromDate, toDate = today;
 
+            const formatDate = (date) => {
+                if (!date) return '';
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            };
+
             switch (range) {
                 case 'today':
                     fromDate = today;
+                    toDate = today;
                     break;
                 case 'yesterday':
-                    fromDate = new Date();
+                    fromDate = new Date(today);
                     fromDate.setDate(today.getDate() - 1);
-                    toDate = fromDate;
+                    toDate = new Date(today);
+                    toDate.setDate(today.getDate() - 1);
                     break;
-                case '7days':
-                    fromDate = new Date();
-                    fromDate.setDate(today.getDate() - 7);
+                case 'this_week':
+                    fromDate = new Date(today);
+                    fromDate.setDate(today.getDate() - today.getDay());
+                    toDate = today;
                     break;
                 case 'this_month':
                     fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                    toDate = today;
                     break;
                 case 'this_year':
                     fromDate = new Date(today.getFullYear(), 0, 1);
+                    toDate = today;
                     break;
                 case 'all':
+                default:
                     fromDate = null;
                     toDate = null;
                     break;
             }
 
-            fromPicker.setDate(fromDate);
-            toPicker.setDate(toDate);
+            if (fromDate) fromPicker.setDate(fromDate);
+            else fromPicker.clear();
+            
+            if (toDate) toPicker.setDate(toDate);
+            else toPicker.clear();
+            
             $('#applyFilters').trigger('click');
         });
 
