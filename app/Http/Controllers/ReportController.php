@@ -875,10 +875,13 @@ class ReportController extends Controller
                 ->addColumn('distance', function($fs) {
                     return number_format($fs->user->fieldVisits->sum('distance_km'), 2) . ' Km';
                 })
-                ->addColumn('status_split', function($fs) {
+                ->addColumn('completed_visits', function($fs) {
                     $completed = $fs->user->fieldVisits->where('status', 'completed')->count();
+                    return "<span class='text-success fw-bold'>{$completed}</span>";
+                })
+                ->addColumn('ongoing_visits', function($fs) {
                     $ongoing = $fs->user->fieldVisits->where('status', 'ongoing')->count();
-                    return "<span style='color: green;'>{$completed}</span> | <span style='color: orange;'>{$ongoing}</span>";
+                    return "<span class='text-warning fw-bold'>{$ongoing}</span>";
                 })
                 ->addColumn('coverage', function($fs) {
                     $uniqueShops = $fs->user->fieldVisits->unique(function($visit) {
@@ -893,7 +896,7 @@ class ReportController extends Controller
                     })->count();
                     return number_format(($uniqueShops / $fs->total_assigned_retailers) * 100, 1) . '%';
                 })
-                ->rawColumns(['status_split'])
+                ->rawColumns(['completed_visits', 'ongoing_visits'])
                 ->make(true);
         }
 

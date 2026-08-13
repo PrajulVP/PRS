@@ -401,7 +401,7 @@
                                                             @elseif($event['type'] == 'alert')
                                                                 <span class="badge bg-danger text-white small timeline-badge">System Alert</span>
                                                             @elseif($event['type'] == 'offline')
-                                                                <span class="badge bg-secondary text-white small timeline-badge">Offline</span>
+                                                                <span class="badge text-white small timeline-badge" style="background-color: #6c757d !important;">Offline</span>
                                                             @elseif($event['type'] == 'stop')
                                                                 <span class="badge bg-orange small timeline-badge">Stopped</span>
                                                             @else
