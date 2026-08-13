@@ -766,13 +766,13 @@
 
             // 3. Plot Punches
             @foreach($punches as $p)
-                addSpecialMarker({{ $p->latitude }}, {{ $p->longitude }}, "{{ $p->type == 'punch_in' ? '#51bb25' : '#f73164' }}", "fa-user");
+                addSpecialMarker({{ $p->latitude }}, {{ $p->longitude }}, "{{ $p->type == 'punch_in' ? '#51bb25' : '#f73164' }}", "fa-user", 1000, 6);
                 bounds.extend({ lat: {{ $p->latitude }}, lng: {{ $p->longitude }} });
             @endforeach
 
             // 4. Plot Visits
             @foreach($visits as $v)
-                addSpecialMarker({{ $v->latitude }}, {{ $v->longitude }}, "#7366ff", "fa-store");
+                addSpecialMarker({{ $v->latitude }}, {{ $v->longitude }}, "#7366ff", "fa-store", 500, 7);
                 bounds.extend({ lat: {{ $v->latitude }}, lng: {{ $v->longitude }} });
             @endforeach
 
@@ -794,13 +794,14 @@
             }
         }
 
-        function addSpecialMarker(lat, lng, color, icon) {
+        function addSpecialMarker(lat, lng, color, icon, zIndexParam = 500, scaleParam = 7) {
             new google.maps.Marker({
                 position: { lat: lat, lng: lng },
                 map: map,
+                zIndex: zIndexParam,
                 icon: {
                     path: google.maps.SymbolPath.CIRCLE,
-                    scale: 7,
+                    scale: scaleParam,
                     fillColor: color,
                     fillOpacity: 1,
                     strokeColor: "#fff",
@@ -813,9 +814,10 @@
             const marker = new google.maps.Marker({
                 position: { lat: parseFloat(lat), lng: parseFloat(lng) },
                 map: map,
+                zIndex: 100,
                 icon: {
                     path: google.maps.SymbolPath.CIRCLE,
-                    scale: 6,
+                    scale: 8,
                     fillColor: "#ff9800", // Orange
                     fillOpacity: 1,
                     strokeColor: "#fff",
