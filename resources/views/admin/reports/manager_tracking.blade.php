@@ -5,16 +5,36 @@
 @push('styles')
     <style>
         #map {
-            height: 600px;
+            height: 700px;
             border-radius: 12px;
             z-index: 1;
             border: 1px solid var(--med-border, #e2e8f0);
         }
 
         .tracking-info-card {
-            height: 600px;
-            overflow-y: auto;
             background-color: transparent !important;
+        }
+
+        .timeline-scroll-container {
+            height: 640px;
+            overflow-y: auto;
+            padding-right: 5px; /* space for scrollbar */
+        }
+
+        /* Custom Scrollbar for Timeline */
+        .timeline-scroll-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .timeline-scroll-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 8px;
+        }
+        .timeline-scroll-container::-webkit-scrollbar-thumb {
+            background: rgba(108, 117, 125, 0.3);
+            border-radius: 8px;
+        }
+        .timeline-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(108, 117, 125, 0.5);
         }
 
         /* Custom Marker Info Window Styling */
@@ -29,50 +49,88 @@
 
         /* Timeline refinement */
         .timeline-item {
-            border-left: 2px solid #e0e0e0;
+            border-left: 2px dashed #e2e8f0;
             position: relative;
-            padding-left: 20px;
-            padding-bottom: 15px;
+            padding-left: 24px;
+            padding-right: 20px;
+            padding-bottom: 20px;
+            padding-top: 5px;
             cursor: pointer;
             transition: all 0.2s ease;
-            border-radius: 0 8px 8px 0;
+        }
+
+        .timeline-badge {
+            min-width: 90px;
         }
 
         .timeline-item:hover {
-            background: rgba(115, 102, 255, 0.05);
             transform: translateX(5px);
+        }
+
+        .timeline-item:last-child {
+            margin-bottom: 20px;
+            border-left-color: transparent;
         }
 
         .timeline-item::before {
             content: '';
             position: absolute;
-            left: -6px;
+            left: -7px;
             top: 10px;
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
             background: #7366ff;
             border: 2px solid #fff;
-            box-shadow: 0 0 0 2px rgba(115, 102, 255, 0.2);
+            box-shadow: 0 0 0 4px rgba(115, 102, 255, 0.15);
             z-index: 2;
-        }
-
-        .timeline-item.punch {
-            border-left-color: #51bb25;
         }
 
         .timeline-item.punch::before {
             background: #51bb25;
-            box-shadow: 0 0 0 2px rgba(81, 187, 37, 0.2);
+            box-shadow: 0 0 0 4px rgba(81, 187, 37, 0.15);
         }
 
-        .timeline-item.visit {
-            border-left-color: #f8d62b;
+        .timeline-item.punch_out::before {
+            background: #e53935;
+            box-shadow: 0 0 0 4px rgba(229, 57, 53, 0.15);
+        }
+
+        .timeline-item.alert::before {
+            background: #dc3545;
+            box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.15);
         }
 
         .timeline-item.visit::before {
-            background: #f8d62b;
-            box-shadow: 0 0 0 2px rgba(248, 214, 43, 0.2);
+            background: #7366ff;
+            box-shadow: 0 0 0 4px rgba(115, 102, 255, 0.15);
+        }
+
+        .timeline-item.stop::before {
+            background: #ff9800;
+            box-shadow: 0 0 0 4px rgba(255, 152, 0, 0.15);
+        }
+
+        .timeline-item.offline::before {
+            background: #6c757d;
+            box-shadow: 0 0 0 4px rgba(108, 117, 125, 0.15);
+        }
+
+        .text-orange { color: #ff9800 !important; }
+        .badge-light-orange {
+            background-color: rgba(255, 152, 0, 0.1) !important;
+            color: #ff9800 !important;
+        }
+        .bg-orange {
+            background-color: #ff9800 !important;
+            color: #ffffff !important;
+        }
+        .timeline-item.stop {
+            border-left-color: #ff9800;
+        }
+        .timeline-item.stop::before {
+            background: #ff9800;
+            box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.2);
         }
 
         .legend {
@@ -272,7 +330,7 @@
                                 <div id="map"></div>
                                 <div class="legend">
                                     <div class="mb-1"><i style="background: #51bb25"></i> Punch In</div>
-                                    <div class="mb-1"><i style="background: #ff9800"></i> Punch Out</div>
+                                    <div class="mb-1"><i style="background: #f73164"></i> Punch Out</div>
                                     <div class="mb-1"><i style="background: #7366ff"></i> Customer Visit</div>
                                     <div><i
                                             style="background: #7366ff; border-radius: 0; height: 2px; margin-top: 11px;"></i>
@@ -286,7 +344,7 @@
                                     <div class="card-header bg-transparent pb-2 ps-0">
                                         <h6 class="mb-0">Activity Timeline</h6>
                                     </div>
-                                    <div class="card-body p-0 pt-3" id="timelineContainer">
+                                    <div class="card-body p-4 timeline-scroll-container" id="timelineContainer">
                                         @php
                                             $allEvents = collect();
                                             $punches->each(fn($p) => $allEvents->push(['type' => 'punch', 'time' => $p->timestamp, 'data' => $p]));
@@ -302,18 +360,19 @@
                                             </div>
                                         @else
                                             @foreach($sortedEvents as $event)
-                                                <div class="timeline-item {{ $event['type'] }}"
+                                                <div class="timeline-item {{ $event['type'] }} {{ $event['type'] == 'punch' ? $event['data']->type : '' }}"
                                                     onclick="flyToLocation({{ $event['data']->latitude }}, {{ $event['data']->longitude }})">
                                                     <div class="d-flex justify-content-between">
                                                         <span class="small fw-bold">{{ $event['time']->format('h:i A') }}</span>
                                                         @if($event['type'] == 'punch')
-                                                            <span class="badge badge-light-{{ $event['data']->type == 'punch_in' ? 'success' : 'danger' }} small">
+                                                            <span class="badge {{ $event['data']->type == 'punch_in' ? 'bg-success' : '' }} text-white small timeline-badge" 
+                                                                  @if($event['data']->type != 'punch_in') style="background-color: #e53935 !important;" @endif>
                                                                 {{ str_replace('_', ' ', $event['data']->type) }}
                                                             </span>
                                                         @elseif($event['type'] == 'alert')
-                                                            <span class="badge badge-light-danger small">System Alert</span>
+                                                            <span class="badge bg-danger text-white small timeline-badge">System Alert</span>
                                                         @else
-                                                            <span class="badge badge-light-warning small">Visit</span>
+                                                            <span class="badge bg-primary text-white small timeline-badge">Visit</span>
                                                         @endif
                                                     </div>
                                                     <div class="mt-1">
@@ -486,7 +545,7 @@
 
             // 3. Plot Punches
             @foreach($punches as $p)
-                addSpecialMarker({{ $p->latitude }}, {{ $p->longitude }}, "{{ $p->type == 'punch_in' ? '#51bb25' : '#ff9800' }}", "fa-user");
+                addSpecialMarker({{ $p->latitude }}, {{ $p->longitude }}, "{{ $p->type == 'punch_in' ? '#51bb25' : '#f73164' }}", "fa-user");
                 bounds.extend({ lat: {{ $p->latitude }}, lng: {{ $p->longitude }} });
             @endforeach
 
