@@ -11,6 +11,108 @@ use Yajra\DataTables\Facades\DataTables;
 
 class LoyaltyPointsController extends Controller
 {
+    public function calculateUpcomingRewards($retailer, $type = 'global')
+    {
+        if ($type === 'brand') {
+            $loyaltyRulesCollection = \App\Models\LoyaltySlab::orderBy('type')->orderBy('min_points')->get()->groupBy('type');
+            
+            $brandTotalsQuery = \App\Models\RetailerOrderItem::join('retailer_orders', 'retailer_order_items.retailer_order_id', '=', 'retailer_orders.id')
+                ->join('products', 'retailer_order_items.product_id', '=', 'products.id')
+                ->where('retailer_orders.retailer_id', $retailer->id)
+                ->where('retailer_orders.status', \App\Models\RetailerOrder::STATUS_DELIVERED)
+                ->selectRaw('products.brand, SUM(retailer_order_items.quantity * retailer_order_items.unit_price) as total_amount')
+                ->groupBy('products.brand')
+                ->get();
+                
+            $brandTotals = $brandTotalsQuery->pluck('total_amount', 'brand')->toArray();
+            
+            $redemptions = \Illuminate\Support\Facades\DB::table('loyalty_redemptions')
+                ->join('loyalty_slabs', 'loyalty_redemptions.loyalty_slab_id', '=', 'loyalty_slabs.id')
+                ->where('loyalty_redemptions.retailer_id', $retailer->id)
+                ->select('loyalty_slabs.id', 'loyalty_slabs.type', 'loyalty_slabs.min_points')
+                ->get();
+
+            $upcomingRewards = [];
+            foreach ($loyaltyRulesCollection as $brand => $rules) {
+                $brandRedemptions = $redemptions->where('type', $brand);
+                $redeemedSlabIds = $brandRedemptions->pluck('id')->toArray();
+                $totalSpent = $brandRedemptions->sum('min_points');
+                
+                $currentTotal = ($brandTotals[$brand] ?? 0) - $totalSpent;
+                if ($currentTotal < 0) $currentTotal = 0;
+                
+                $achievedRules = [];
+                $nextRule = null;
+                
+                foreach ($rules as $rule) {
+                    if ($currentTotal >= $rule->min_points) {
+                        $achievedRules[] = [
+                            'slab_id' => $rule->id,
+                            'threshold' => $rule->min_points, 
+                            'reward' => $rule->gift_name,
+                            'is_redeemed' => false // Since points are deducted, any rule they can still reach is achievable again
+                        ];
+                    } else {
+                        if (!$nextRule) {
+                            $nextRule = $rule;
+                        }
+                    }
+                }
+                
+                $upcomingRewards[] = [
+                    'brand' => $brand,
+                    'current_total' => $currentTotal,
+                    'next_target' => $nextRule ? $nextRule->min_points : null,
+                    'next_reward' => $nextRule ? $nextRule->gift_name : null,
+                    'achieved_rewards' => collect($achievedRules)->where('is_redeemed', false)->values()->toArray()
+                ];
+            }
+            return $upcomingRewards;
+        }
+
+        $loyaltyRules = \App\Models\LoyaltySlab::orderBy('min_points')->get();
+        
+        $totalEarned = \App\Models\RetailerOrder::where('retailer_id', $retailer->id)
+            ->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED)
+            ->sum('loyalty_points_earned');
+            
+        $totalSpent = \Illuminate\Support\Facades\DB::table('loyalty_redemptions')
+            ->join('loyalty_slabs', 'loyalty_redemptions.loyalty_slab_id', '=', 'loyalty_slabs.id')
+            ->where('loyalty_redemptions.retailer_id', $retailer->id)
+            ->sum('loyalty_slabs.min_points');
+
+        $availablePoints = $totalEarned - $totalSpent;
+        
+        $achievedRewards = [];
+        $nextRule = null;
+        
+        foreach ($loyaltyRules as $rule) {
+            if ($availablePoints >= $rule->min_points) {
+                $achievedRewards[] = [
+                    'slab_id' => $rule->id,
+                    'threshold' => $rule->min_points, 
+                    'reward' => $rule->gift_name,
+                    'image_url' => $rule->gift_image ? asset($rule->gift_image) : null,
+                ];
+            } else {
+                if (!$nextRule) {
+                    $nextRule = $rule;
+                }
+            }
+        }
+        
+        return [
+            [
+                'brand' => 'Global Rewards',
+                'current_total' => $availablePoints,
+                'next_target' => $nextRule ? $nextRule->min_points : null,
+                'next_reward' => $nextRule ? $nextRule->gift_name : null,
+                'next_reward_image' => $nextRule && $nextRule->gift_image ? asset($nextRule->gift_image) : null,
+                'achieved_rewards' => $achievedRewards,
+            ]
+        ];
+    }
+
     /**
      * Display a listing of loyalty points.
      */
@@ -78,13 +180,34 @@ class LoyaltyPointsController extends Controller
                 ];
             });
 
-            $unifiedHistory = $history->concat($creditHistory)->sortByDesc('date');
+            $redemptions = \Illuminate\Support\Facades\DB::table('loyalty_redemptions')
+                ->join('loyalty_slabs', 'loyalty_redemptions.loyalty_slab_id', '=', 'loyalty_slabs.id')
+                ->where('loyalty_redemptions.retailer_id', $retailer->id)
+                ->select('loyalty_redemptions.*', 'loyalty_slabs.gift_name', 'loyalty_slabs.min_points')
+                ->get();
+            
+            $redemptionHistory = $redemptions->map(function ($r) {
+                return (object)[
+                    'id' => $r->id,
+                    'date' => $r->created_at,
+                    'reference' => 'REW-' . $r->id,
+                    'details' => 'Redeemed: ' . $r->gift_name,
+                    'amount' => -$r->min_points,
+                    'status' => $r->status,
+                    'type' => 'REWARD'
+                ];
+            });
 
-            return view('admin.loyalty_points.retailer_view', [
+            $unifiedHistory = $creditHistory->concat($redemptionHistory)->sortByDesc('date');
+
+            $upcomingRewards = $this->calculateUpcomingRewards($retailer, 'brand');
+
+            return view('retailer.loyalty_points.index', [
                 'retailer' => $retailer,
                 'totalPoints' => $totalPoints,
                 'creditBalance' => $creditBalance,
-                'unifiedHistory' => $unifiedHistory
+                'unifiedHistory' => $unifiedHistory,
+                'upcomingRewards' => $upcomingRewards
             ]);
         }
 
@@ -131,14 +254,7 @@ class LoyaltyPointsController extends Controller
                     return response()->json(['error' => 'Unauthorized access.'], 403);
                 }
 
-                $orders = $targetRetailer->retailerOrders()
-                    ->with('items.product')
-                    ->whereIn('status', ['approved', 'delivered'])
-                    ->get()
-                    ->map(function($o) {
-                        $o->type = 'order';
-                        return $o;
-                    });
+                // Orders removed as per request
 
                 $credits = \App\Models\CreditNote::where('user_id', $targetRetailer->user_id)
                     ->with('returnRequest')
@@ -174,14 +290,49 @@ class LoyaltyPointsController extends Controller
                         ];
                     });
 
-                $merged = $orders->concat($credits)->sortByDesc('updated_at');
+                $redemptions = \Illuminate\Support\Facades\DB::table('loyalty_redemptions')
+                    ->join('loyalty_slabs', 'loyalty_redemptions.loyalty_slab_id', '=', 'loyalty_slabs.id')
+                    ->where('loyalty_redemptions.retailer_id', $targetRetailer->id)
+                    ->select(
+                        'loyalty_redemptions.id',
+                        'loyalty_redemptions.updated_at',
+                        'loyalty_redemptions.status',
+                        'loyalty_slabs.gift_name',
+                        'loyalty_slabs.min_points as amount'
+                    )
+                    ->get()
+                    ->map(function($r) {
+                        return (object)[
+                            'id' => $r->id,
+                            'order_code' => 'REWARD-' . str_pad($r->id, 5, '0', STR_PAD_LEFT),
+                            'updated_at' => \Carbon\Carbon::parse($r->updated_at),
+                            'loyalty_points_earned' => -($r->amount),
+                            'status' => $r->status,
+                            'type' => 'reward',
+                            'product_summary' => '<div class="text-success fw-bold"><i class="fa fa-gift me-1"></i> Reward Redeemed</div><div class="small mt-1">' . $r->gift_name . '</div>'
+                        ];
+                    });
+
+                $merged = $credits->concat($redemptions)->sortByDesc('updated_at');
 
                 return DataTables::of($merged)
                     ->addIndexColumn()
+                    ->addColumn('type_label', function($row) {
+                        if (isset($row->type) && $row->type === 'credit') {
+                            return '<span class="badge bg-info text-dark px-3 py-2 fs-6 shadow-sm"><i class="fa fa-undo me-1"></i>Return / Credit</span>';
+                        }
+                        if (isset($row->type) && $row->type === 'reward') {
+                            return '<span class="badge bg-warning text-dark px-3 py-2 fs-6 shadow-sm"><i class="fa fa-gift me-1"></i>Reward Claim</span>';
+                        }
+                        return '';
+                    })
                     ->addColumn('product_summary', function ($row) {
                         if (isset($row->type) && $row->type === 'credit') {
                             $notes = !empty($row->notes) ? '<div class="small text-muted mt-1">Notes: '.$row->notes.'</div>' : '';
                             return '<div class="text-info fw-bold"><i class="fa fa-receipt me-1"></i> Credit Note Issued</div>' . ($row->product_summary ?? '') . $notes;
+                        }
+                        if (isset($row->type) && $row->type === 'reward') {
+                            return $row->product_summary;
                         }
                         return $row->items->map(function ($item) {
                             $pName = $item->product->product_name ?? 'Product';
@@ -205,18 +356,18 @@ class LoyaltyPointsController extends Controller
                     ->editColumn('updated_at', function ($row) {
                         return $row->updated_at->format('d M Y, h:i A');
                     })
-                    ->editColumn('loyalty_points_earned', function ($row) {
-                        $prefix = (isset($row->type) && $row->type === 'credit') ? '+' : '';
-                        return $prefix . number_format($row->loyalty_points_earned ?? 0, 2);
-                    })
                     ->editColumn('status', function ($row) {
                         if (isset($row->type) && $row->type === 'credit') {
                             return '<span class="badge bg-info text-white">CREDIT</span>';
                         }
+                        if (isset($row->type) && $row->type === 'reward') {
+                            $statusClass = $row->status === 'delivered' ? 'success' : 'warning';
+                            return '<span class="badge bg-'.$statusClass.' text-white">'.strtoupper($row->status).'</span>';
+                        }
                         $statusClass = $row->status === 'delivered' ? 'success' : 'primary';
                         return '<span class="badge bg-'.$statusClass.' text-white">'.strtoupper($row->status).'</span>';
                     })
-                    ->rawColumns(['product_summary', 'status'])
+                    ->rawColumns(['type_label', 'product_summary', 'status'])
                     ->make(true);
             }
 
@@ -246,13 +397,31 @@ class LoyaltyPointsController extends Controller
                 ->addColumn('last_order', function ($row) {
                     return $row->last_order_date ? \Carbon\Carbon::parse($row->last_order_date)->format('d M Y') : '<span class="text-muted">N/A</span>';
                 })
-                ->editColumn('dynamic_loyalty_points', function ($row) {
-                    $pts = number_format($row->loyalty_points ?? 0, 2);
+                ->addColumn('wallet_credits', function ($row) {
                     $credits = number_format($row->credit_balance ?? 0, 2);
-                    return '<div class="text-center">
-                                <span class="badge-points px-3 py-2 mb-1 d-block" style="font-size: 0.9rem;" title="Loyalty Points">'.$pts.' LP</span>
-                                <span class="badge bg-info text-white px-2 py-1" style="font-size: 0.7rem;" title="Credit Balance">₹'.$credits.' Cr</span>
-                            </div>';
+                    return '<div class="text-center fw-bold text-dark" style="font-size: 0.95rem;">₹'.$credits.' Cr</div>';
+                })
+                ->addColumn('upcoming_reward', function ($row) {
+                    $upcomingRewards = $this->calculateUpcomingRewards($row);
+                    $globalReward = $upcomingRewards[0] ?? null;
+                    if ($globalReward && count($globalReward['achieved_rewards']) > 0) {
+                        return '<div class="text-center"><span class="badge bg-danger px-2 py-1 shadow-sm"><i class="fa fa-exclamation-circle me-1"></i>Action Required</span></div>';
+                    } elseif ($globalReward && $globalReward['next_target']) {
+                        $progress = min(100, ($globalReward['current_total'] / $globalReward['next_target']) * 100);
+                        return '<div class="text-start d-inline-block" style="min-width: 140px;">
+                                    <div class="fw-bold text-dark" style="font-size: 0.85rem;"><i class="fa fa-gift text-primary me-1"></i>'.$globalReward['next_reward'].'</div>
+                                    <div class="d-flex justify-content-between align-items-center mt-1" style="font-size: 0.75rem;">
+                                        <span class="text-muted">'.number_format($globalReward['current_total'], 0).' / '.number_format($globalReward['next_target'], 0).'</span>
+                                        <span class="fw-bold text-primary">'.round($progress).'%</span>
+                                    </div>
+                                    <div class="progress mt-1" style="height: 5px; border-radius: 3px; background-color: rgba(0,73,122,0.1);">
+                                        <div class="progress-bar bg-primary" role="progressbar" style="width: '.$progress.'%;"></div>
+                                    </div>
+                                </div>';
+                    } elseif ($globalReward && !$globalReward['next_target']) {
+                        return '<div class="text-center"><span class="badge bg-success px-2 py-1 shadow-sm"><i class="fa fa-star me-1"></i>Max Level</span></div>';
+                    }
+                    return '<div class="text-center text-muted small">N/A</div>';
                 })
                 ->addColumn('action', function ($row) {
                     $url = route('admin.loyalty-points.detail', $row->id);
@@ -287,7 +456,7 @@ class LoyaltyPointsController extends Controller
                         $q->where('name', 'like', "%{$keyword}%");
                     });
                 })
-                ->rawColumns(['shop_name', 'owner_name', 'sales_manager', 'field_staff', 'region_area', 'total_orders', 'last_order', 'dynamic_loyalty_points', 'action'])
+                ->rawColumns(['shop_name', 'owner_name', 'sales_manager', 'field_staff', 'region_area', 'total_orders', 'last_order', 'wallet_credits', 'upcoming_reward', 'action'])
                 ->make(true);
         }
 
@@ -319,57 +488,54 @@ class LoyaltyPointsController extends Controller
 
         $selectedRetailer = $retailer;
         $upcomingRewards = [];
+        $retailerPendingRedemptions = collect();
 
         // 2. If a retailer is selected, calculate their rewards directly for the inline view
         if ($selectedRetailer) {
-            $loyaltyRulesCollection = \App\Models\LoyaltySlab::orderBy('type')->orderBy('min_points')->get()->groupBy('type');
+            $upcomingRewards = $this->calculateUpcomingRewards($selectedRetailer, 'brand');
             
-            $brandTotalsQuery = \App\Models\RetailerOrderItem::join('retailer_orders', 'retailer_order_items.retailer_order_id', '=', 'retailer_orders.id')
-                ->join('products', 'retailer_order_items.product_id', '=', 'products.id')
-                ->where('retailer_orders.retailer_id', $selectedRetailer->id)
-                ->where('retailer_orders.status', \App\Models\RetailerOrder::STATUS_DELIVERED)
-                ->selectRaw('products.brand, SUM(retailer_order_items.quantity * retailer_order_items.unit_price) as total_amount')
-                ->groupBy('products.brand')
+            $retailerPendingRedemptions = \Illuminate\Support\Facades\DB::table('loyalty_redemptions')
+                ->join('loyalty_slabs', 'loyalty_redemptions.loyalty_slab_id', '=', 'loyalty_slabs.id')
+                ->where('loyalty_redemptions.retailer_id', $selectedRetailer->id)
+                ->where('loyalty_redemptions.status', 'pending')
+                ->select(
+                    'loyalty_redemptions.id as redemption_id',
+                    'loyalty_slabs.gift_name',
+                    'loyalty_slabs.min_points as threshold',
+                    'loyalty_slabs.type as brand',
+                    'loyalty_redemptions.created_at'
+                )
                 ->get();
-                
-            $brandTotals = $brandTotalsQuery->pluck('total_amount', 'brand')->toArray();
-            
-            $redemptions = \Illuminate\Support\Facades\DB::table('loyalty_redemptions')
-                ->where('retailer_id', $selectedRetailer->id)
-                ->pluck('loyalty_slab_id')
-                ->toArray();
-
-            foreach ($loyaltyRulesCollection as $brand => $rules) {
-                $currentTotal = $brandTotals[$brand] ?? 0;
-                $achievedRules = [];
-                $nextRule = null;
-                
-                foreach ($rules as $rule) {
-                    if ($currentTotal >= $rule->min_points) {
-                        $achievedRules[] = [
-                            'slab_id' => $rule->id,
-                            'threshold' => $rule->min_points, 
-                            'reward' => $rule->gift_name,
-                            'is_redeemed' => in_array($rule->id, $redemptions)
-                        ];
-                    } else {
-                        if (!$nextRule) {
-                            $nextRule = $rule;
-                        }
-                    }
-                }
-                
-                $upcomingRewards[] = [
-                    'brand' => $brand,
-                    'current_total' => $currentTotal,
-                    'next_target' => $nextRule ? $nextRule->min_points : null,
-                    'next_reward' => $nextRule ? $nextRule->gift_name : null,
-                    'achieved_rewards' => $achievedRules
-                ];
-            }
         }
 
-        return view('admin.loyalty_points.index', compact('retailers', 'globalLoyaltyPoints', 'salesManagers', 'fieldStaffs', 'selectedRetailer', 'topAchievers', 'upcomingRewards'));
+        // 3. Fetch Priority Actions: Pending Rewards
+        $pendingRedemptions = [];
+        if ($user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
+            $pendingQuery = \Illuminate\Support\Facades\DB::table('loyalty_redemptions')
+                ->join('retailers', 'loyalty_redemptions.retailer_id', '=', 'retailers.id')
+                ->leftJoin('users', 'retailers.user_id', '=', 'users.id')
+                ->join('loyalty_slabs', 'loyalty_redemptions.loyalty_slab_id', '=', 'loyalty_slabs.id')
+                ->where('loyalty_redemptions.status', 'pending')
+                ->select(
+                    'loyalty_redemptions.id as redemption_id',
+                    'loyalty_redemptions.created_at',
+                    'retailers.id as retailer_id',
+                    'retailers.shop_name',
+                    'users.name as owner_name',
+                    'loyalty_slabs.gift_name',
+                    'loyalty_slabs.type as brand',
+                    'loyalty_slabs.min_points as threshold'
+                )
+                ->orderBy('loyalty_redemptions.created_at', 'asc');
+                
+            if ($user->hasRole('salesmanager')) {
+                $pendingQuery->where('retailers.sales_manager_id', $user->salesManager->id);
+            }
+            
+            $pendingRedemptions = $pendingQuery->get();
+        }
+
+        return view('admin.loyalty_points.index', compact('retailers', 'globalLoyaltyPoints', 'salesManagers', 'fieldStaffs', 'selectedRetailer', 'topAchievers', 'upcomingRewards', 'pendingRedemptions', 'retailerPendingRedemptions'));
     }
 
     /**
@@ -437,18 +603,67 @@ class LoyaltyPointsController extends Controller
      */
     public function markRewardGiven(Request $request, Retailer $retailer)
     {
+        if ($request->filled('redemption_id')) {
+            $request->validate([
+                'redemption_id' => 'required|exists:loyalty_redemptions,id'
+            ]);
+            
+            \Illuminate\Support\Facades\DB::table('loyalty_redemptions')
+                ->where('id', $request->redemption_id)
+                ->update([
+                    'status' => 'delivered',
+                    'updated_at' => now(),
+                ]);
+        } else {
+            $request->validate([
+                'slab_id' => 'required|exists:loyalty_slabs,id'
+            ]);
+
+            \Illuminate\Support\Facades\DB::table('loyalty_redemptions')->insert([
+                'retailer_id' => $retailer->id,
+                'loyalty_slab_id' => $request->slab_id,
+                'status' => 'delivered',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Reward marked as given successfully.');
+    }
+
+    /**
+     * Retailer claims a reward
+     */
+    public function claimReward(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user->hasRole('retailer')) {
+            return response()->json(['error' => 'Unauthorized Access'], 403);
+        }
+
         $request->validate([
             'slab_id' => 'required|exists:loyalty_slabs,id'
         ]);
 
+        $retailer = $user->retailer;
+        
+        $slab = \App\Models\LoyaltySlab::find($request->slab_id);
+        
+        $upcomingRewards = $this->calculateUpcomingRewards($retailer, 'brand');
+        $targetReward = collect($upcomingRewards)->firstWhere('brand', $slab->type);
+        
+        if (!$targetReward || $targetReward['current_total'] < $slab->min_points) {
+            return redirect()->back()->with('error', 'Not enough points to claim this reward.');
+        }
+
         \Illuminate\Support\Facades\DB::table('loyalty_redemptions')->insert([
             'retailer_id' => $retailer->id,
-            'loyalty_slab_id' => $request->slab_id,
-            'status' => 'delivered',
+            'loyalty_slab_id' => $slab->id,
+            'status' => 'pending',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        return redirect()->back()->with('success', 'Reward marked as given successfully.');
+        return redirect()->back()->with('success', 'Reward claimed successfully! Pending approval.');
     }
 }

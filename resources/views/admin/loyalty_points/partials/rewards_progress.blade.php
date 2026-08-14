@@ -4,7 +4,7 @@
                 <div class="card border-0 shadow-sm h-100" style="border-radius: 15px; border-top: 4px solid var(--med-primary) !important; background: #fff;">
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="fw-800 mb-0 text-primary text-uppercase">{{ $reward['brand'] }}</h6>
+                            <h6 class="fw-800 mb-0 text-primary text-uppercase">Loyalty Rewards</h6>
                             @if($reward['next_reward'])
                                 <span class="badge bg-soft-success text-success fw-bold" style="font-size: 11px;"><i class="fa fa-gift me-1"></i>{{ $reward['next_reward'] }}</span>
                             @else
@@ -13,9 +13,9 @@
                         </div>
                         
                         <div class="d-flex justify-content-between text-muted mb-1 fw-600" style="font-size: 12px;">
-                            <span>Current: ₹{{ number_format($reward['current_total'], 2) }}</span>
+                            <span>Current: {{ number_format($reward['current_total'], 2) }}</span>
                             @if($reward['next_target'])
-                                <span>Target: ₹{{ number_format($reward['next_target'], 2) }}</span>
+                                <span>Target: {{ number_format($reward['next_target'], 2) }}</span>
                             @endif
                         </div>
                         
@@ -27,7 +27,7 @@
                                 <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: {{ $progress }}%"></div>
                             </div>
                             <div class="mt-2 text-end text-muted fw-bold" style="font-size: 11px;">
-                                ₹{{ number_format($reward['next_target'] - $reward['current_total'], 2) }} more for next reward!
+                                {{ number_format($reward['next_target'] - $reward['current_total'], 2) }} more for next reward!
                             </div>
                         @else
                             <div class="progress" style="height: 8px; border-radius: 10px; background-color: rgba(16, 185, 129, 0.1);">
@@ -40,20 +40,15 @@
                         
                         @if(isset($reward['achieved_rewards']) && count($reward['achieved_rewards']) > 0)
                             <div class="mt-3 pt-2 border-top border-light">
-                                <p class="mb-1 text-muted fw-bold" style="font-size: 11px;">Rewards Earned:</p>
+                                <p class="mb-1 text-muted fw-bold" style="font-size: 11px;">Available to Claim (Unclaimed):</p>
                                 <div class="d-flex flex-wrap gap-1">
                                     @foreach($reward['achieved_rewards'] as $achieved)
                                         <div class="d-flex justify-content-between align-items-center w-100 bg-light rounded px-2 py-1 mb-1">
-                                            <span class="badge bg-soft-primary text-primary" style="font-size: 10px;"><i class="fa fa-check-circle me-1"></i>{{ $achieved['reward'] }}</span>
-                                            @if($achieved['is_redeemed'])
-                                                <span class="badge bg-success text-white" style="font-size: 10px;">Given</span>
-                                            @else
-                                                <form action="{{ route('admin.loyalty-points.mark-reward-given', $selectedRetailer->id) }}" method="POST" class="d-inline">
-                                                    @csrf
-                                                    <input type="hidden" name="slab_id" value="{{ $achieved['slab_id'] }}">
-                                                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-2 py-0" style="font-size: 10px;">Mark Given</button>
-                                                </form>
-                                            @endif
+                                            <div>
+                                                <span class="badge bg-soft-primary text-primary" style="font-size: 10px;"><i class="fa fa-check-circle me-1"></i>{{ $achieved['reward'] }}</span>
+                                                <span class="text-muted small ms-1" style="font-size: 10px;">Cost: {{ number_format($achieved['threshold'], 2) }}</span>
+                                            </div>
+                                            <span class="badge bg-secondary" style="font-size: 9px;">Unclaimed</span>
                                         </div>
                                     @endforeach
                                 </div>
@@ -63,6 +58,33 @@
                 </div>
             </div>
         @endforeach
+        
+        @if(isset($retailerPendingRedemptions) && $retailerPendingRedemptions->count() > 0)
+            <div class="col-12 mt-3">
+                <div class="card border-0 shadow-sm border-primary">
+                    <div class="card-body p-3">
+                        <p class="mb-2 text-primary fw-bold" style="font-size: 12px;"><i class="fa fa-clock-o me-1"></i>Pending Claims (Action Required):</p>
+                        <div class="d-flex flex-column gap-2">
+                            @foreach($retailerPendingRedemptions as $pending)
+                                <div class="d-flex justify-content-between align-items-center w-100 bg-white border border-primary rounded px-3 py-2">
+                                    <div>
+                                        <span class="badge bg-primary text-white" style="font-size: 11px;">{{ $pending->gift_name }} <span class="badge bg-light text-dark ms-1">{{ $pending->brand }}</span></span>
+                                        <div class="text-muted small mt-1" style="font-size: 11px;">Cost: {{ number_format($pending->threshold, 2) }} Points | Claimed on: {{ \Carbon\Carbon::parse($pending->created_at)->format('d M, Y') }}</div>
+                                    </div>
+                                    <form action="{{ route('admin.loyalty-points.mark-reward-given', $selectedRetailer->id) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <input type="hidden" name="redemption_id" value="{{ $pending->redemption_id }}">
+                                        <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-bold" onclick="return confirm('Mark this reward as given?');">Mark Given</button>
+                                    </form>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+        
+
     @else
         <div class="col-12">
             <div class="text-center p-4">

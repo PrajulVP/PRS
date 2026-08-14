@@ -96,7 +96,7 @@
         @if (Auth::user()->hasPermissionToCategory('loyalty_points', 'view') || Auth::user()->hasAnyRole(['retailer', 'distributor']))
           @if (Auth::user()->hasRole('retailer'))
             <li class="sidebar-list">
-              <a class="sidebar-link sidebar-title link-nav" href="{{ route('admin.loyalty-points.index') }}">
+              <a class="sidebar-link sidebar-title link-nav" href="{{ route('retailer.loyalty-points.index') }}">
                 <svg class="stroke-icon">
                   <use href="{{ $iconSprite }}#stroke-bookmark"></use>
                 </svg>
@@ -129,7 +129,7 @@
               </a>
               <ul class="sidebar-submenu">
                 <li><a href="{{ route('admin.loyalty-points.index') }}">Retailer</a></li>
-                <li><a href="{{ route('admin.distributor-wallet.index') }}">Distributor</a></li>
+                {{-- <li><a href="{{ route('admin.distributor-wallet.index') }}">Distributor</a></li> --}}
               </ul>
             </li>
           @endif

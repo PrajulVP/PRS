@@ -50,13 +50,9 @@
                                 <th>Staff Member</th>
                                 <th>Sales Manager</th>
                                 <th>Location</th>
-                                <th>Outlets</th>
                                 <th>Visits</th>
                                 <th>Punches</th>
                                 <th>Distance</th>
-                                <th class="text-center">Orders</th>
-                                <th class="text-end">AOV</th>
-                                <th class="text-end">Revenue</th>
                                 <th class="text-center actions-column">Actions</th>
                             </tr>
                         </thead>
@@ -99,18 +95,9 @@
                 },
                 { data: 'manager', name: 'salesManager.user.name', className: 'text-muted small' },
                 { data: 'location', name: 'location', searchable: false },
-                { data: 'total_retailers', name: 'total_retailers', className: 'text-center', searchable: false },
                 { data: 'total_visits', name: 'total_visits', className: 'text-center', searchable: false },
                 { data: 'total_punches', name: 'total_punches', className: 'text-center', searchable: false },
                 { data: 'distance_val', name: 'distance_val', className: 'text-center', searchable: false },
-                { data: 'total_orders', name: 'total_orders', className: 'text-center fw-bold', searchable: false },
-                { data: 'aov', name: 'aov', className: 'text-end fw-bold text-info', searchable: false },
-                { 
-                    data: 'total_revenue', 
-                    name: 'total_revenue', 
-                    className: 'fw-bold text-primary text-end',
-                    searchable: false
-                },
                 { data: 'actions', name: 'actions', orderable: false, searchable: false, className: 'text-center actions-column' },
                 { 
                     data: 'is_online', 
@@ -154,7 +141,7 @@
                 }
             ],
             pageLength: 20,
-            order: [[12, 'desc']], 
+            order: [[8, 'desc']], 
             language: {
                 processing: '<div class="spinner-border text-primary" role="status"></div>',
                 search: "_INPUT_",

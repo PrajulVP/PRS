@@ -755,9 +755,8 @@ class ReportController extends Controller
                 })
                 ->addColumn('manager', fn($fs) => $fs->salesManager->user->name ?? 'N/A')
                 ->addColumn('location', function($fs) {
-                    $district = $fs->district->name ?? $fs->user->city ?? 'N/A';
                     $area = $fs->area->name ?? $fs->user->address ?? 'N/A';
-                    return "<div class='fw-bold'>{$district}</div><div class='small text-muted'>{$area}</div>";
+                    return "<div>{$area}</div>";
                 })
                 ->addColumn('total_retailers', function($fs) {
                     return "<div class='fw-bold text-center'>{$fs->total_retailers}</div>";

@@ -166,26 +166,8 @@
 
     <div class="container-fluid">
         <div class="row">
-            <!-- Total Points Card -->
-            <div class="col-xl-3 col-md-6 mb-4 entrance-animate delay-1">
-                <div class="card shadow-sm border-0 overflow-hidden" style="background: linear-gradient(135deg, #00497a 0%, #002b5c 100%); border-radius: 24px !important;">
-                    <div class="card-body p-4 position-relative">
-                        <div class="d-flex align-items-center justify-content-between mb-4">
-                            <div class="d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.15);">
-                                <i data-feather="star" class="text-white" style="width: 22px; height: 22px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.4));"></i>
-                            </div>
-                            <span class="badge rounded-pill px-3 py-1 fw-bold" style="font-size: 10px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); color: #fff; letter-spacing: 0.5px;">POINTS</span>
-                        </div>
-                        <div class="flex-grow-1 text-white">
-                            <h1 class="fw-300 mb-0 display-6" style="line-height: 1; color: #fff !important; letter-spacing: -1px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">{{ number_format($totalPoints, 2) }}</h1>
-                            <p class="text-white opacity-75 small mb-0 fw-600 mt-2">Earned from orders</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Credit Balance Card -->
-            <div class="col-xl-3 col-md-6 mb-4 entrance-animate delay-1">
+            <div class="col-xl-6 col-md-6 mb-4 entrance-animate delay-1">
                 <div class="card shadow-sm border-0 overflow-hidden" style="background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); border-radius: 24px !important;">
                     <div class="card-body p-4 position-relative">
                         <div class="d-flex align-items-center justify-content-between mb-4">
@@ -252,14 +234,20 @@
                                         
                                         @if(count($reward['achieved_rewards']) > 0)
                                             <hr>
-                                            <h6 class="fw-bold mb-3">Available to Claim (Unclaimed by Retailer):</h6>
+                                            <h6 class="fw-bold mb-3">Claimable Rewards:</h6>
                                             @foreach($reward['achieved_rewards'] as $achieved)
-                                                <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded mb-2 border">
+                                                <div class="d-flex justify-content-between align-items-center bg-white p-3 rounded shadow-sm mb-2 border">
                                                     <div>
                                                         <span class="fw-bold text-dark d-block">{{ $achieved['reward'] }}</span>
                                                         <span class="small text-muted">Cost: {{ number_format($achieved['threshold'], 2) }} Points</span>
                                                     </div>
-                                                    <span class="badge bg-secondary">Unclaimed</span>
+                                                    <form action="{{ route('retailer.loyalty-points.claim') }}" method="POST">
+                                                        @csrf
+                                                        <input type="hidden" name="slab_id" value="{{ $achieved['slab_id'] }}">
+                                                        <button type="submit" class="btn btn-sm rounded-pill px-4 fw-bold shadow-sm" style="background: linear-gradient(135deg, #FFB75E 0%, #ED8F03 100%); color: white; border: none; letter-spacing: 0.5px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" onclick="return confirm('Are you sure you want to spend {{ number_format($achieved['threshold'], 2) }} points to claim this reward?');">
+                                                            <i class="fa fa-gift me-1"></i> Claim Now
+                                                        </button>
+                                                    </form>
                                                 </div>
                                             @endforeach
                                         @endif
@@ -268,27 +256,6 @@
                             @empty
                                 <div class="col-12 text-center text-muted py-4">No reward slabs configured yet.</div>
                             @endforelse
-
-                            @if($retailerPendingRedemptions->count() > 0)
-                                <div class="col-12 mt-4">
-                                    <h6 class="fw-bold mb-3 text-primary"><i class="fa fa-clock-o me-2"></i>Pending Claims (Action Required):</h6>
-                                    @foreach($retailerPendingRedemptions as $pending)
-                                        <div class="d-flex justify-content-between align-items-center bg-white p-3 rounded shadow-sm mb-2 border border-primary">
-                                            <div>
-                                                <span class="fw-bold text-dark d-block">{{ $pending->gift_name }} <span class="badge bg-light text-dark ms-2">{{ $pending->brand }}</span></span>
-                                                <span class="small text-muted">Cost: {{ number_format($pending->threshold, 2) }} Points | Claimed on: {{ \Carbon\Carbon::parse($pending->created_at)->format('d M, Y') }}</span>
-                                            </div>
-                                            <form action="{{ route('admin.loyalty-points.mark-given', $selectedRetailer->id) }}" method="POST">
-                                                @csrf
-                                                <input type="hidden" name="redemption_id" value="{{ $pending->redemption_id }}">
-                                                <button type="submit" class="btn btn-sm btn-primary rounded-pill px-4 fw-bold shadow-sm" onclick="return confirm('Mark this reward as given?');">
-                                                    Mark Given
-                                                </button>
-                                            </form>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @endif
                         </div>
                     </div>
                 </div>
@@ -309,9 +276,9 @@
                                 <thead class="bg-light">
                                     <tr>
                                         <th class="text-muted small text-uppercase">Finalized Date</th>
+                                        <th class="text-muted small text-uppercase">Type</th>
                                         <th class="text-muted small text-uppercase">Reference #</th>
                                         <th class="text-muted small text-uppercase">Items Summary</th>
-                                        <th class="text-muted small text-uppercase">Loyalty Points</th>
                                         <th class="text-center text-muted small text-uppercase">Status</th>
                                     </tr>
                                 </thead>
@@ -319,12 +286,16 @@
                                     @forelse($unifiedHistory as $item)
                                         <tr>
                                             <td>{{ \Carbon\Carbon::parse($item->date)->format('d M Y, h:i A') }}</td>
+                                            <td>
+                                                @if($item->type === 'CR')
+                                                    <span class="badge bg-info text-dark px-3 py-2 fs-6 shadow-sm"><i class="fa fa-undo me-1"></i>Return / Credit</span>
+                                                @elseif($item->type === 'REWARD')
+                                                    <span class="badge bg-warning text-dark px-3 py-2 fs-6 shadow-sm"><i class="fa fa-gift me-1"></i>Reward Claim</span>
+                                                @endif
+                                            </td>
                                             <td><span class="fw-bold {{ $item->type === 'CR' ? 'text-info' : 'text-primary' }}">{{ $item->reference }}</span></td>
                                             <td class="small">
                                                 {{ $item->details }}
-                                            </td>
-                                            <td class="fw-bold">
-                                                {{ $item->type === 'CR' ? '₹' : '' }}{{ number_format($item->amount, 2) }}
                                             </td>
                                             <td class="text-center">
                                                 @php

@@ -238,89 +238,62 @@
     <div class="container-fluid">
         <div class="row">
             @if(!$selectedRetailer)
-            <!-- TOP ACHIEVERS SHOWCASE -->
-            @if(isset($topAchievers) && $topAchievers->count() > 0)
+            <!-- PRIORITY ACTIONS: PENDING REWARDS -->
+            @if(isset($pendingRedemptions) && $pendingRedemptions->count() > 0)
             <div class="col-12 mb-4 entrance-fade">
-                <div class="d-flex align-items-center mb-3">
-                    <h5 class="fw-800 text-primary mb-0"><i class="fa fa-trophy me-2 text-warning"></i>Top Performers</h5>
-                    <div class="ms-3 flex-grow-1 border-bottom border-light"></div>
-                </div>
-                <div class="row g-3">
-                    @foreach($topAchievers as $index => $achiever)
-                        <div class="col-xl-3 col-md-6">
-                            <div class="card border-0 shadow-sm h-100" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 16px; border: 1px solid var(--med-primary);">
-                                <div class="card-body p-3 text-center position-relative overflow-hidden">
-                                    @if($index === 0)
-                                        <div class="position-absolute top-0 end-0 pt-2 pe-3">
-                                            <i class="fa fa-crown text-warning fs-4" style="filter: drop-shadow(0 2px 4px rgba(218,165,32,0.4));"></i>
-                                        </div>
-                                    @endif
-                                    <div class="d-flex justify-content-center mb-2">
-                                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center fw-800 text-primary" style="width: 50px; height: 50px; font-size: 20px; border: 2px solid var(--med-primary);">
-                                            {{ substr($achiever->shop_name, 0, 1) }}
-                                        </div>
-                                    </div>
-                                    <h6 class="fw-bold text-primary mb-1 text-truncate" title="{{ $achiever->shop_name }}">{{ $achiever->shop_name }}</h6>
-                                    <p class="text-muted small mb-2">{{ $achiever->district->name ?? 'Unknown Region' }}</p>
-                                    <div class="bg-glass-primary rounded-pill py-1 px-3 d-inline-block">
-                                        <span class="fw-800 text-primary">{{ number_format($achiever->loyalty_points, 0) }} LP</span>
-                                    </div>
-                                    <a href="{{ route('admin.loyalty-points.detail', $achiever->id) }}" class="stretched-link"></a>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-            @endif
-
-            <!-- COMPACT GLOBAL STATS BAR -->
-            <div class="col-12 mb-4 entrance-fade">
-                <div class="card border-0 shadow-sm" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 16px; border: 1px solid rgba(0, 73, 122, 0.05);">
-                    <div class="card-body py-3 px-4">
-                        <div class="row align-items-center text-center text-md-start">
-                            <!-- Total Retailers -->
-                            <div class="col-md-4 mb-3 mb-md-0">
-                                <div class="d-flex align-items-center justify-content-center justify-content-md-start">
-                                    <div class="bg-glass-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background: rgba(0, 73, 122, 0.08);">
-                                        <i data-feather="users" class="text-primary" style="width: 18px; height: 18px;"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-muted small fw-bold mb-0 text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Network Reach</p>
-                                        <h5 class="fw-800 mb-0 heading-theme">{{ count($retailers) }} <span class="small fw-600 text-muted" style="font-size: 0.75rem;">Retailers</span></h5>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Total Loyalty Points -->
-                            <div class="col-md-4 mb-3 mb-md-0">
-                                <div class="d-flex align-items-center justify-content-center justify-content-md-start">
-                                    <div class="bg-glass-warning rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background: rgba(218, 165, 32, 0.1);">
-                                        <i data-feather="star" style="width: 18px; height: 18px; color: #daa520;"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-muted small fw-bold mb-0 text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">System Liability</p>
-                                        <h5 class="fw-800 mb-0 heading-theme">{{ number_format($globalLoyaltyPoints, 2) }} <span class="small fw-600 text-muted" style="font-size: 0.75rem;">Points</span></h5>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Total Wallet Credits -->
-                            <div class="col-md-4">
-                                <div class="d-flex align-items-center justify-content-center justify-content-md-start">
-                                    <div class="bg-glass-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background: rgba(46, 204, 113, 0.1);">
-                                        <i data-feather="credit-card" class="text-success" style="width: 18px; height: 18px;"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-muted small fw-bold mb-0 text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Refund Pool</p>
-                                        <h5 class="fw-800 mb-0 heading-theme">₹{{ number_format($retailers->sum('credit_balance'), 2) }} <span class="small fw-600 text-muted" style="font-size: 0.75rem;">Credits</span></h5>
-                                    </div>
-                                </div>
-                            </div>
+                <div class="card shadow-sm border-0 rounded-4" style="border-left: 4px solid var(--med-danger, #e11d48) !important; background: #fff;">
+                    <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
+                        <h5 class="fw-bold mb-0" style="color: var(--med-danger, #e11d48);"><i class="fa fa-exclamation-circle me-2"></i>Priority Actions: Pending Reward Claims</h5>
+                        <p class="small text-muted mt-1">These retailers have claimed a reward and are waiting for fulfillment.</p>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="small text-muted text-uppercase">Claimed On</th>
+                                        <th class="small text-muted text-uppercase">Retailer</th>
+                                        <th class="small text-muted text-uppercase">Brand</th>
+                                        <th class="small text-muted text-uppercase">Reward Claimed</th>
+                                        <th class="small text-muted text-uppercase text-end">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($pendingRedemptions as $pending)
+                                        <tr>
+                                            <td class="small">{{ \Carbon\Carbon::parse($pending->created_at)->format('d M Y, h:i A') }}</td>
+                                            <td>
+                                                <div class="fw-bold text-dark">{{ $pending->shop_name }}</div>
+                                                <div class="small text-muted">{{ $pending->owner_name }}</div>
+                                            </td>
+                                            <td><span class="badge bg-soft-primary text-primary">{{ $pending->brand }}</span></td>
+                                            <td>
+                                                <div class="fw-bold">{{ $pending->gift_name }}</div>
+                                                <div class="small text-muted">Cost: {{ number_format($pending->threshold, 2) }} Points</div>
+                                            </td>
+                                            <td class="text-end">
+                                                <form action="{{ route('admin.loyalty-points.mark-reward-given', $pending->retailer_id) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    <input type="hidden" name="redemption_id" value="{{ $pending->redemption_id }}">
+                                                    <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 shadow-sm" onclick="return confirm('Mark this reward as fulfilled?');">
+                                                        <i class="fa fa-check me-1"></i> Fulfill Reward
+                                                    </button>
+                                                </form>
+                                                <a href="{{ route('admin.loyalty-points.detail', $pending->retailer_id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 ms-1 shadow-sm">
+                                                    View Details
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
+            @endif
+
+
 
             <!-- OVERVIEW LIST VIEW (Shown by Default) -->
             <div id="overview-view" class="col-12 entrance-fade">
@@ -415,7 +388,8 @@
                                         <th>Region & Area</th>
                                         <th class="text-center">Total Orders</th>
                                         <th>Last Order</th>
-                                        <th class="text-center py-3">Accumulated Points</th>
+                                        <th class="text-center py-3">Wallet Credits</th>
+                                        <th class="text-center py-3">Upcoming Reward</th>
                                         <th class="text-center">Action</th>
                                     </tr>
                                 </thead>
@@ -501,26 +475,8 @@
                         </div>
                     </div>
 
-                    <!-- Loyalty Points Card -->
-                    <div class="col-xl-3 col-md-6 mb-3">
-                        <div class="card shadow-sm border-0 h-100 overflow-hidden summary-card" style="background: linear-gradient(135deg, #00497a 0%, #002b5c 100%); border-radius: 20px !important;">
-                            <div class="card-body p-4 position-relative">
-                                <div class="d-flex align-items-center justify-content-between mb-4">
-                                    <div class="d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.15);">
-                                        <i data-feather="star" class="text-white" style="width: 22px; height: 22px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.4));"></i>
-                                    </div>
-                                    <span class="badge rounded-pill px-3 py-1 fw-bold" style="font-size: 10px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); color: #fff; letter-spacing: 0.5px;">POINTS</span>
-                                </div>
-                                <div class="flex-grow-1 text-white">
-                                    <h1 id="display_total_points" class="fw-300 mb-0 display-6" style="line-height: 1; color: #fff !important; letter-spacing: -1px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">0.00</h1>
-                                    <p class="text-white opacity-75 small mb-0 fw-600 mt-2">Earned from orders</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Credit Balance Card -->
-                    <div class="col-xl-3 col-md-6 mb-3">
+                    <div class="col-xl-6 col-md-6 mb-3">
                         <div class="card shadow-sm border-0 h-100 overflow-hidden summary-card" style="background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); border-radius: 20px !important;">
                             <div class="card-body p-4 position-relative">
                                 <div class="d-flex align-items-center justify-content-between mb-4">
@@ -570,9 +526,9 @@
                                     <thead class="bg-light">
                                         <tr>
                                             <th>Date</th>   
+                                            <th>Type</th>
                                             <th>Reference</th>
                                             <th>Details</th>
-                                            <th class="py-3">Points Earned</th>
                                             <th class="text-center">Status</th>
                                         </tr>
                                     </thead>
@@ -655,7 +611,8 @@
                     { data: 'region_area', name: 'region_area' },
                     { data: 'total_orders', name: 'total_orders', className: 'text-center', searchable: false },
                     { data: 'last_order', name: 'last_order', className: 'text-center', searchable: false },
-                    { data: 'dynamic_loyalty_points', name: 'dynamic_loyalty_points', className: 'text-center', orderable: false, searchable: false },
+                    { data: 'wallet_credits', name: 'wallet_credits', className: 'text-center', orderable: false, searchable: false },
+                    { data: 'upcoming_reward', name: 'upcoming_reward', className: 'text-center', orderable: false, searchable: false },
                     { data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center' }
                 ],
                 buttons: [
@@ -835,14 +792,9 @@
                     },
                     columns: [
                         { data: 'updated_at', name: 'updated_at' },
+                        { data: 'type_label', name: 'type_label', orderable: false, searchable: false },
                         { data: 'order_code', name: 'order_code', render: d => `<strong class="text-primary">#${d}</strong>` },
                         { data: 'product_summary', name: 'product_summary', orderable: false, className: 'small' },
-                        {
-                            data: 'loyalty_points_earned',
-                            name: 'loyalty_points_earned',
-                            className: 'text-center fw-bold',
-                            render: data => parseFloat(data).toFixed(2)
-                        },
                         {
                             data: 'status',
                             name: 'status',
