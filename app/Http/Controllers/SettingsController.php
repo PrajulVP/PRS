@@ -37,10 +37,8 @@ class SettingsController extends Controller
             }
             $loyalty_rules_array[$brand][] = [
                 'threshold' => $slab->min_points,
-                'reward' => $slab->gift_name,
+                'reward_options' => json_decode($slab->reward_options, true) ?: [$slab->gift_name],
                 'description' => $slab->description,
-                'image_url' => $slab->gift_image ? asset($slab->gift_image) : null,
-                'image_path' => $slab->gift_image,
                 'is_active' => $slab->is_active
             ];
         }
@@ -143,16 +141,10 @@ class SettingsController extends Controller
                                 'min_points' => $rule['threshold']
                             ]);
                             $slab->slab_name = $brand . ' - ₹' . $rule['threshold'];
-                            $slab->gift_name = $rule['reward'];
+                            $slab->gift_name = $rule['reward_options'][0] ?? 'Reward';
+                            $slab->reward_options = json_encode($rule['reward_options'] ?? []);
                             $slab->description = $rule['description'] ?? null;
                             $slab->is_active = $rule['is_active'] ?? true;
-                            
-                            if ($images && isset($images[$key])) {
-                                $file = $images[$key];
-                                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                                $file->move(public_path('uploads/loyalty_gifts'), $filename);
-                                $slab->gift_image = 'uploads/loyalty_gifts/' . $filename;
-                            }
                             
                             $slab->save();
                         }

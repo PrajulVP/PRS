@@ -2621,7 +2621,7 @@
         "/api/field-staff/retailer-orders": {
             "get": {
                 "tags": [
-                    "Field Staff Retailer Orders"
+                    "Field Staff Dashboard"
                 ],
                 "summary": "List retailer orders assigned to the logged-in field staff",
                 "operationId": "d4300b1d349722a5ccc18c4847ebf19f",
@@ -2648,7 +2648,7 @@
             },
             "post": {
                 "tags": [
-                    "Field Staff Retailer Orders"
+                    "Field Staff Dashboard"
                 ],
                 "summary": "Place new retailer order(s)",
                 "description": "Items will be grouped by distributor_id into separate orders.",
@@ -2728,7 +2728,7 @@
         "/api/field-staff/retailer-orders/{id}": {
             "get": {
                 "tags": [
-                    "Field Staff Retailer Orders"
+                    "Field Staff Dashboard"
                 ],
                 "summary": "Get a single retailer order detail",
                 "operationId": "e6443e590080fabe35ea971a3dae3f13",
@@ -2755,7 +2755,7 @@
             },
             "put": {
                 "tags": [
-                    "Field Staff Retailer Orders"
+                    "Field Staff Dashboard"
                 ],
                 "summary": "Edit a retailer order",
                 "description": "Allows Field Staff to edit items and delivery notes of a retailer order assigned to them (status must be pending or processing).",
@@ -2869,7 +2869,7 @@
         "/api/field-staff/retailer-orders/calculate-price": {
             "get": {
                 "tags": [
-                    "Field Staff Retailer Orders"
+                    "Field Staff Dashboard"
                 ],
                 "summary": "Calculate price for a product before placing an order",
                 "operationId": "d46bae267c86c45eafd0c458c6663afa",
@@ -2914,7 +2914,7 @@
         "/api/field-staff/retailer-orders/{id}/update-status": {
             "post": {
                 "tags": [
-                    "Field Staff Retailer Orders"
+                    "Field Staff Dashboard"
                 ],
                 "summary": "Accept, reject, or cancel a retailer order",
                 "description": "Field Staff can accept (moves to processing), reject, or cancel (if they placed it).",
@@ -2967,7 +2967,7 @@
         "/api/field-staff/retailer-orders/{id}/accept": {
             "post": {
                 "tags": [
-                    "Field Staff Retailer Orders"
+                    "Field Staff Dashboard"
                 ],
                 "summary": "Accept/Approve a retailer order on behalf of the distributor",
                 "operationId": "b20b497bcca39a1b3e3582c8744c798b",
@@ -3369,6 +3369,206 @@
                         "description": "List of areas"
                     }
                 }
+            }
+        },
+        "/api/retailer/loyalty-rewards": {
+            "get": {
+                "tags": [
+                    "Retailer Loyalty"
+                ],
+                "summary": "Get available loyalty rewards for the retailer",
+                "operationId": "44581866f112ac88d481e9c54a54b6a7",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/retailer/loyalty-rewards/claim": {
+            "post": {
+                "tags": [
+                    "Retailer Loyalty"
+                ],
+                "summary": "Claim a loyalty reward",
+                "operationId": "fbfbdac5012c62792eb3909d247dbc77",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "slab_id",
+                                    "selected_reward"
+                                ],
+                                "properties": {
+                                    "slab_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "selected_reward": {
+                                        "type": "string",
+                                        "example": "1 Gold Coin"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Reward claimed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Reward claimed successfully! Pending approval."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or not enough points"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/fieldstaff/loyalty-redemptions": {
+            "get": {
+                "tags": [
+                    "Field Staff Dashboard"
+                ],
+                "summary": "Get approved loyalty redemptions to deliver",
+                "operationId": "e2d79ab83d47538e56a2c2f18a64a84f",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter redemptions by status. Default is 'approved'. Pass 'all' to see history.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "approved",
+                                "all"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/fieldstaff/loyalty-redemptions/{id}/confirm": {
+            "post": {
+                "tags": [
+                    "Field Staff Dashboard"
+                ],
+                "summary": "Confirm delivery of a loyalty reward",
+                "operationId": "8df23f79aa82ef3d0d2b27f91a6da068",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reward delivery confirmed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Reward delivery confirmed successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/manager/punch": {
@@ -4384,10 +4584,6 @@
                                             "type": "integer",
                                             "example": 2
                                         },
-                                        "total_loyalty_points": {
-                                            "type": "string",
-                                            "example": "500"
-                                        },
                                         "credit_balance": {
                                             "type": "string",
                                             "example": "1500.50"
@@ -4395,46 +4591,6 @@
                                         "credit_limit": {
                                             "type": "string",
                                             "example": "5000.00"
-                                        },
-                                        "upcoming_rewards": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "brand": {
-                                                        "type": "string",
-                                                        "example": "Brand X"
-                                                    },
-                                                    "current_total": {
-                                                        "type": "number",
-                                                        "example": 250
-                                                    },
-                                                    "next_target": {
-                                                        "type": "number",
-                                                        "example": 500
-                                                    },
-                                                    "next_reward": {
-                                                        "type": "string",
-                                                        "example": "Gift Card"
-                                                    },
-                                                    "achieved_rewards": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "properties": {
-                                                                "threshold": {
-                                                                    "type": "number",
-                                                                    "example": 100
-                                                                },
-                                                                "reward": {
-                                                                    "type": "string",
-                                                                    "example": "Coupon"
-                                                                }
-                                                            },
-                                                            "type": "object"
-                                                        }
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
                                         }
                                     },
                                     "type": "object"
@@ -6348,16 +6504,16 @@
             "description": "Field Staff Dashboard"
         },
         {
-            "name": "Field Staff Retailer Orders",
-            "description": "Field Staff Retailer Orders"
-        },
-        {
             "name": "Inventory",
             "description": "Inventory"
         },
         {
             "name": "Locations",
             "description": "Locations"
+        },
+        {
+            "name": "Retailer Loyalty",
+            "description": "Retailer Loyalty"
         },
         {
             "name": "Sales Manager",
@@ -6390,10 +6546,6 @@
         {
             "name": "Retailer Dashboard",
             "description": "Retailer Dashboard"
-        },
-        {
-            "name": "Retailer Loyalty",
-            "description": "Retailer Loyalty"
         },
         {
             "name": "Retailer Orders",

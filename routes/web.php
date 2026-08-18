@@ -200,6 +200,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('loyalty-points/claim', [LoyaltyPointsController::class, 'claimReward'])->name('loyalty-points.claim');
         Route::get('loyalty-points/{retailer}', [LoyaltyPointsController::class, 'index'])->name('loyalty-points.detail');
         
+        // Retailer Wallet Dashboard
+        Route::get('retailer-wallets', [\App\Http\Controllers\RetailerWalletController::class, 'index'])->name('retailer-wallets.index');
+        Route::get('retailer-wallets/{retailer}', [\App\Http\Controllers\RetailerWalletController::class, 'index'])->name('retailer-wallets.detail');
+        Route::get('retailer-wallets/{retailer}/summary', [\App\Http\Controllers\RetailerWalletController::class, 'getSummary'])->name('retailer-wallets.summary');
+
         // Distributor Wallet Dashboard
         Route::get('distributor-wallet', [\App\Http\Controllers\DistributorWalletController::class, 'index'])->name('distributor-wallet.index');
         Route::get('distributor-wallet/{distributor}', [\App\Http\Controllers\DistributorWalletController::class, 'index'])->name('distributor-wallet.detail');

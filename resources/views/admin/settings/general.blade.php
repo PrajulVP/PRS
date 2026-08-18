@@ -586,16 +586,43 @@
                     let html = '<div class="row g-2 mb-3">';
                     rulesList.forEach((r, idx) => {
                         if (editingIndex === idx) {
+                            let optionsHtml = (r.reward_options || []).map((opt, oIdx) => `
+                                <div class="input-group input-group-sm mb-2 inline-option-row shadow-sm" style="border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
+                                    <input type="text" class="form-control inline-reward-option border-0" value="${opt}" placeholder="Reward Option ${oIdx+1}" style="background-color: #f8fafc; padding: 0.5rem 0.75rem;">
+                                    <button class="btn remove-inline-option-btn shadow-none px-2" type="button" ${oIdx===0 && r.reward_options.length===1 ? 'disabled' : ''} style="background-color: #007c89; border: none; ${oIdx===0 && r.reward_options.length===1 ? 'opacity: 0.5;' : ''}"><i class="fa fa-times text-white"></i></button>
+                                </div>
+                            `).join('');
+                            if (optionsHtml === '') {
+                                optionsHtml = `
+                                <div class="input-group input-group-sm mb-2 inline-option-row shadow-sm" style="border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
+                                    <input type="text" class="form-control inline-reward-option border-0" value="" placeholder="Reward Option 1" style="background-color: #f8fafc; padding: 0.5rem 0.75rem;">
+                                    <button class="btn remove-inline-option-btn shadow-none px-2" type="button" disabled style="background-color: #007c89; border: none; opacity: 0.5;"><i class="fa fa-times text-white"></i></button>
+                                </div>
+                                `;
+                            }
+
                             html += `
-                            <div class="col-12 col-md-6 mb-2 d-flex align-items-stretch">
-                                <div class="card h-100 w-100 border-primary shadow rounded-3 bg-white overflow-hidden">
-                                    <div class="card-body p-2 d-flex flex-column gap-2 justify-content-center">
-                                        <input type="number" class="form-control form-control-sm inline-threshold" value="${r.threshold}" placeholder="Target ₹" min="1">
-                                        <input type="text" class="form-control form-control-sm inline-reward" value="${r.reward}" placeholder="Reward">
-                                        <input type="text" class="form-control form-control-sm inline-description" value="${r.description || ''}" placeholder="Description">
-                                        <div class="d-flex gap-1 justify-content-end mt-1">
-                                            <button type="button" class="btn btn-sm btn-success btn-save-inline shadow-sm px-3" data-index="${idx}" title="Save"><i class="fa fa-check"></i> Save</button>
-                                            <button type="button" class="btn btn-sm btn-light btn-cancel-inline border shadow-sm px-2" title="Cancel"><i class="fa fa-times"></i></button>
+                            <div class="col-12 mb-3 d-flex align-items-stretch">
+                                <div class="card w-100 border-primary shadow rounded-3 bg-white overflow-hidden">
+                                    <div class="card-body p-3">
+                                        <div class="row g-2">
+                                            <div class="col-12 col-md-5">
+                                                <input type="number" class="form-control form-control-sm inline-threshold shadow-sm" value="${r.threshold}" placeholder="Target ₹ (e.g. 2000)" min="1" style="background-color: #f8fafc; border-radius: 8px; padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0;">
+                                            </div>
+                                            <div class="col-12 col-md-7">
+                                                <div class="inline-options-container">
+                                                    ${optionsHtml}
+                                                </div>
+                                            </div>
+                                            <div class="col-12 d-flex justify-content-end mt-0" style="padding-top: 0;">
+                                                <div class="col-12 col-md-7 d-flex justify-content-end">
+                                                    <button type="button" class="btn btn-sm text-white shadow-sm add-inline-option-btn" style="background-color: #007c89; border-radius: 6px; font-weight: 500;"><i class="fa fa-plus me-1"></i>Add Another Option</button>
+                                                </div>
+                                            </div>
+                                            <div class="col-12 col-md-12 d-flex justify-content-end gap-2 mt-2">
+                                                <button type="button" class="btn btn-light btn-sm btn-cancel-inline border shadow-sm px-3" style="border-radius: 8px;">Cancel</button>
+                                                <button type="button" class="btn btn-primary btn-sm btn-save-inline shadow-sm px-4 fw-bold" data-index="${idx}" style="border-radius: 8px; background-color: #00497a;"><i class="fa fa-check me-1"></i> Save</button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -614,7 +641,7 @@
                                     </div>
                                     <div class="premium-loyalty-content text-start">
                                         <div class="premium-target-text"><i class="fa fa-bullseye me-1 text-primary" style="font-size: 1rem; vertical-align: middle;"></i>₹${r.threshold}</div>
-                                        <div class="premium-reward-text"><i class="fa fa-gem"></i>${r.reward}</div>
+                                        <div class="premium-reward-text"><i class="fa fa-gem"></i> ${(r.reward_options || []).join(', ')}</div>
                                         ${descHtml}
                                     </div>
                                     <div class="premium-action-btns d-flex flex-column align-items-center gap-2">
@@ -835,16 +862,21 @@
                             <h6 class="fw-bold mb-3" style="color: #3b82f6; font-size: 1.05rem;" id="swal_rule_form_title">Add New Reward Level</h6>
                             <div class="row g-3">
                                 <div class="col-12 col-md-5">
-                                    <input type="number" id="swal_rule_threshold" class="form-control" placeholder="Target ₹ (e.g. 2000)" min="1">
+                                    <input type="number" id="swal_rule_threshold" class="form-control shadow-sm" placeholder="Target ₹ (e.g. 2000)" min="1" style="background-color: #f8fafc; border-radius: 8px; padding: 0.6rem 1rem; border: 1px solid #e2e8f0;">
                                 </div>
-                                <div class="col-12 col-md-7">
-                                    <input type="text" id="swal_rule_reward" class="form-control" placeholder="Reward (e.g. 1 Gold Coin)">
-                                </div>
-                                <div class="col-12 col-md-12 d-flex gap-3 align-items-center">
-                                    <div class="flex-grow-1">
-                                        <input type="text" id="swal_rule_description" class="form-control" placeholder="Description (Optional)">
+                                <div class="col-12 col-md-7" id="swal_options_container">
+                                    <div class="input-group mb-2 option-row shadow-sm" style="border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
+                                        <input type="text" class="form-control swal_rule_reward_option border-0" placeholder="Reward Option 1" style="background-color: #f8fafc; padding: 0.6rem 1rem;">
+                                        <button class="btn remove-option-btn shadow-none px-2" type="button" disabled style="background-color: #007c89; border: none; opacity: 0.5;"><i class="fa fa-times text-white"></i></button>
                                     </div>
-                                    <button type="button" class="btn btn-primary shadow-sm" id="swal_add_rule_btn" style="border-radius: 10px; padding: 10px 20px; font-weight: 600;"><i class="fa fa-plus me-1"></i> Add</button>
+                                </div>
+                                <div class="col-12 d-flex justify-content-end mt-0" style="padding-top: 0;">
+                                    <div class="col-12 col-md-7 d-flex justify-content-end">
+                                        <button type="button" class="btn btn-sm text-white shadow-sm" id="swal_add_option_btn" style="background-color: #007c89; border-radius: 6px; font-weight: 500;"><i class="fa fa-plus me-1"></i>Add Another Option</button>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-12 d-flex justify-content-end mt-3">
+                                    <button type="button" class="btn btn-primary shadow-sm px-4" id="swal_add_rule_btn" style="border-radius: 8px; font-weight: 600; background-color: #00497a;"><i class="fa fa-plus me-1"></i> Add</button>
                                 </div>
                             </div>
                         </div>
@@ -858,30 +890,87 @@
                         cancelButton: 'btn btn-light px-4 shadow-sm ms-2'
                     },
                     didOpen: () => {
+                        $(document).off('click', '#swal_add_option_btn').on('click', '#swal_add_option_btn', function() {
+                            let count = $('#swal_options_container .option-row').length + 1;
+                            $('#swal_options_container').append(`
+                                <div class="input-group mb-2 option-row shadow-sm" style="border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
+                                    <input type="text" class="form-control swal_rule_reward_option border-0" placeholder="Reward Option ${count}" style="background-color: #f8fafc; padding: 0.6rem 1rem;">
+                                    <button class="btn remove-option-btn shadow-none px-2" type="button" style="background-color: #007c89; border: none;"><i class="fa fa-times text-white"></i></button>
+                                </div>
+                            `);
+                            $('#swal_options_container .remove-option-btn').prop('disabled', false).css('opacity', '1');
+                        });
+                        
+                        $(document).off('click', '.remove-option-btn').on('click', '.remove-option-btn', function() {
+                            $(this).closest('.option-row').remove();
+                            let count = $('#swal_options_container .option-row').length;
+                            if (count <= 1) {
+                                $('#swal_options_container .remove-option-btn').prop('disabled', true).css('opacity', '0.5');
+                            }
+                            $('#swal_options_container .swal_rule_reward_option').each(function(index) {
+                                $(this).attr('placeholder', 'Reward Option ' + (index + 1));
+                            });
+                        });
+                        
+                        // Inline edit add/remove options
+                        $(document).off('click', '.add-inline-option-btn').on('click', '.add-inline-option-btn', function() {
+                            let $container = $(this).closest('.row').find('.inline-options-container');
+                            let count = $container.find('.inline-option-row').length + 1;
+                            $container.append(`
+                                <div class="input-group input-group-sm mb-2 inline-option-row shadow-sm" style="border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
+                                    <input type="text" class="form-control inline-reward-option border-0" placeholder="Reward Option ${count}" style="background-color: #f8fafc; padding: 0.5rem 0.75rem;">
+                                    <button class="btn remove-inline-option-btn shadow-none px-2" type="button" style="background-color: #007c89; border: none;"><i class="fa fa-times text-white"></i></button>
+                                </div>
+                            `);
+                            $container.find('.remove-inline-option-btn').prop('disabled', false).css('opacity', '1');
+                        });
+
+                        $(document).off('click', '.remove-inline-option-btn').on('click', '.remove-inline-option-btn', function() {
+                            let $container = $(this).closest('.inline-options-container');
+                            $(this).closest('.inline-option-row').remove();
+                            let count = $container.find('.inline-option-row').length;
+                            if (count <= 1) {
+                                $container.find('.remove-inline-option-btn').prop('disabled', true).css('opacity', '0.5');
+                            }
+                            $container.find('.inline-reward-option').each(function(index) {
+                                $(this).attr('placeholder', 'Reward Option ' + (index + 1));
+                            });
+                        });
+
                         $(document).off('click', '#swal_add_rule_btn').on('click', '#swal_add_rule_btn', function() {
                             let threshold = parseFloat($('#swal_rule_threshold').val());
-                            let reward = $('#swal_rule_reward').val().trim();
-                            let description = $('#swal_rule_description').val().trim();
+                            let description = '';
+                            
+                            let options = [];
+                            $('.swal_rule_reward_option').each(function() {
+                                let val = $(this).val().trim();
+                                if(val !== '') options.push(val);
+                            });
                             
                             if (isNaN(threshold) || threshold <= 0) {
                                 Swal.showValidationMessage('Please enter a valid order target amount.');
                                 return;
                             }
-                            if (reward === '') {
-                                Swal.showValidationMessage('Please enter a reward gift name.');
+                            if (options.length === 0) {
+                                Swal.showValidationMessage('Please enter at least one reward option.');
                                 return;
                             }
                             
                             Swal.resetValidationMessage();
                             
-                            rules.push({ threshold: threshold, reward: reward, description: description, is_active: true });
+                            rules.push({ threshold: threshold, reward_options: options, description: description, is_active: true });
                             
                             rules.sort((a, b) => a.threshold - b.threshold);
                             updateModalContent();
                             saveLoyaltyRulesDynamically();
                             
                             $('#swal_rule_threshold').val('');
-                            $('#swal_rule_reward').val('');
+                            $('#swal_options_container').html(`
+                                <div class="input-group mb-2 option-row shadow-sm" style="border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
+                                    <input type="text" class="form-control swal_rule_reward_option border-0" placeholder="Reward Option 1" style="background-color: #f8fafc; padding: 0.6rem 1rem;">
+                                    <button class="btn remove-option-btn shadow-none px-2" type="button" disabled style="background-color: #007c89; border: none; opacity: 0.5;"><i class="fa fa-times text-white"></i></button>
+                                </div>
+                            `);
                             $('#swal_rule_description').val('');
                         });
 
@@ -914,17 +1003,21 @@
                             let $card = $(this).closest('.card-body');
                             
                             let threshold = parseFloat($card.find('.inline-threshold').val());
-                            let reward = $card.find('.inline-reward').val().trim();
-                            let description = $card.find('.inline-description').val().trim();
+                            let options = [];
+                            $card.find('.inline-reward-option').each(function() {
+                                let val = $(this).val().trim();
+                                if(val !== '') options.push(val);
+                            });
+                            let description = '';
                             
-                            if (isNaN(threshold) || threshold <= 0 || reward === '') {
-                                Swal.showValidationMessage('Valid target and reward are required to update.');
+                            if (isNaN(threshold) || threshold <= 0 || options.length === 0) {
+                                Swal.showValidationMessage('Valid target and at least one reward are required to update.');
                                 return;
                             }
                             Swal.resetValidationMessage();
                             
                             rules[idx].threshold = threshold;
-                            rules[idx].reward = reward;
+                            rules[idx].reward_options = options;
                             rules[idx].description = description;
                             
                             editingIndex = null;

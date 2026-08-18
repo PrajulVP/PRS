@@ -225,13 +225,13 @@
         <div class="page-title">
             <div class="row align-items-center">
                 <div class="col-sm-6">
-                    <h3 class="fw-bold m-0 heading-theme">Retailer Loyalty</h3>
-                    <p class="text-muted small m-0">Track points and manage reward redemptions for retailers</p>
+                    <h3 class="fw-bold m-0 heading-theme">Retailer Wallets</h3>
+                    <p class="text-muted small m-0">Manage credit ledgers and refunds for retailers</p>
                 </div>
                 <div class="col-sm-6 text-end">
                     @if($selectedRetailer)
                         <div id="detail-export-container" class="d-inline-flex gap-2 me-3"></div>
-                        <a href="{{ route('admin.loyalty-points.index') }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-bold">
+                        <a href="{{ route('admin.retailer-wallets.index') }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-bold">
                             <i class="fa fa-arrow-left me-2"></i>Back to Overview
                         </a>
                     @else
@@ -249,133 +249,20 @@
     <div class="container-fluid">
         <div class="row">
             @if(!$selectedRetailer)
-            <!-- PRIORITY ACTIONS: PENDING REWARDS -->
-            @if(isset($pendingRedemptions) && $pendingRedemptions->count() > 0)
-            <div class="col-12 mb-4 entrance-fade">
-                <div class="card shadow-sm border-0 rounded-4" style="border: 1px solid #e2e8f0 !important; background: #fff;">
-                    <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
-                        <h5 class="fw-bold mb-0 text-danger"><i class="fa fa-exclamation-circle me-2 text-danger"></i>Action Required: Pending Claims</h5>
-                        <p class="small text-muted mt-1">These retailers are waiting for reward fulfillment.</p>
-                    </div>
-                    <div class="card-body p-4">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="bg-light">
-                                    <tr>
-                                        <th class="small text-muted text-uppercase">Claimed On</th>
-                                        <th class="small text-muted text-uppercase">Retailer</th>
-                                        <th class="small text-muted text-uppercase">Brand</th>
-                                        <th class="small text-muted text-uppercase">Reward Claimed</th>
-                                        <th class="small text-muted text-uppercase text-end">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($pendingRedemptions as $pending)
-                                        <tr>
-                                            <td class="small">{{ \Carbon\Carbon::parse($pending->created_at)->format('d M Y, h:i A') }}</td>
-                                            <td>
-                                                <div class="fw-bold text-dark">{{ $pending->shop_name }}</div>
-                                                <div class="small text-muted">{{ $pending->owner_name }}</div>
-                                            </td>
-                                            <td><span class="badge bg-soft-primary text-primary">{{ $pending->brand }}</span></td>
-                                            <td>
-                                                <div class="fw-bold">{{ $pending->selected_reward ?? $pending->gift_name }}</div>
-                                                <div class="small text-muted">Cost: {{ number_format($pending->threshold, 2) }} Points</div>
-                                            </td>
-                                            <td class="text-end">
-                                                <form action="{{ route('admin.loyalty-points.mark-reward-given', $pending->retailer_id) }}" method="POST" class="d-inline">
-                                                    @csrf
-                                                    <input type="hidden" name="redemption_id" value="{{ $pending->redemption_id }}">
-                                                    <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 shadow-sm" onclick="return confirm('Approve this reward?');">
-                                                        <i class="fa fa-check me-1"></i> Approve
-                                                    </button>
-                                                </form>
-                                                <a href="{{ route('admin.loyalty-points.detail', $pending->retailer_id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 ms-1 shadow-sm">
-                                                    View Details
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            @endif
-
-            <!-- RECENTLY COMPLETED REWARDS -->
-            @if(isset($completedRedemptions) && $completedRedemptions->count() > 0)
-            <div class="col-12 mb-4 entrance-fade">
-                <div class="card shadow-sm border-0 rounded-4" style="border: 1px solid #e2e8f0 !important; background: #fff;">
-                    <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
-                        <h5 class="fw-bold mb-0 text-success"><i class="fa fa-history me-2 text-success"></i>Latest Redeemed Rewards</h5>
-                        <p class="small text-muted mt-1">Recently approved and delivered rewards.</p>
-                    </div>
-                    <div class="card-body p-4">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="bg-light">
-                                    <tr>
-                                        <th class="small text-muted text-uppercase">Redeemed On</th>
-                                        <th class="small text-muted text-uppercase">Retailer</th>
-                                        <th class="small text-muted text-uppercase">Brand</th>
-                                        <th class="small text-muted text-uppercase">Reward Claimed</th>
-                                        <th class="small text-muted text-uppercase">Status</th>
-                                        <th class="small text-muted text-uppercase text-end">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($completedRedemptions as $completed)
-                                        <tr>
-                                            <td class="small">{{ \Carbon\Carbon::parse($completed->updated_at)->format('d M Y, h:i A') }}</td>
-                                            <td>
-                                                <div class="fw-bold text-dark">{{ $completed->shop_name }}</div>
-                                                <div class="small text-muted">{{ $completed->owner_name }}</div>
-                                            </td>
-                                            <td><span class="badge bg-soft-primary text-primary">{{ $completed->brand }}</span></td>
-                                            <td>
-                                                <div class="fw-bold">{{ $completed->selected_reward ?? $completed->gift_name }}</div>
-                                                <div class="small text-muted">Cost: {{ number_format($completed->threshold, 2) }} Points</div>
-                                            </td>
-                                            <td>
-                                                @if($completed->status == 'approved')
-                                                    <span class="badge bg-warning text-dark"><i class="fa fa-clock-o me-1"></i> Waiting for Delivery</span>
-                                                @elseif($completed->status == 'delivered')
-                                                    <span class="badge bg-success"><i class="fa fa-check-circle me-1"></i> Delivered</span>
-                                                @else
-                                                    <span class="badge bg-secondary">{{ ucfirst($completed->status) }}</span>
-                                                @endif
-                                            </td>
-                                            <td class="text-end">
-                                                <a href="{{ route('admin.loyalty-points.detail', $completed->retailer_id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 shadow-sm">
-                                                    View Details
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            @endif
-
             <!-- OVERVIEW LIST VIEW (Shown by Default) -->
             <div id="overview-view" class="col-12 entrance-fade">
                 <div class="card shadow-sm border-0" style="border-radius: 20px; overflow: hidden; background: var(--med-bg-card);">
                     <div class="card-header loyalty-card-header py-4 px-4 d-flex justify-content-between align-items-center">
                         <div>
-                            <h5 class="fw-bold mb-1 heading-theme">Retailer Loyalty Points</h5>
-                            <p class="text-muted small mb-0">Monitor loyalty points and reward eligibility across all retailers.</p>
+                            <h5 class="fw-bold mb-1 heading-theme">Retailer Wallet Ledger</h5>
+                            <p class="text-muted small mb-0">Monitor wallet credits and refund history across all retailers.</p>
                         </div>
                         <div class="d-flex gap-3 align-items-center" style="width: 50%;">
                              <div class="flex-grow-1">
                                 <select id="retailer_selector" class="form-select select2">
                                     <option value="">-- Quick Search Retailer --</option>
                                     @foreach($retailers as $r)
-                                        <option value="{{ $r->id }}" data-points="{{ number_format($r->loyalty_points, 2) }}">
+                                        <option value="{{ $r->id }}" data-credits="{{ number_format($r->credit_balance, 2) }}">
                                             {{ $r->shop_name }} ({{ $r->user->name }})
                                         </option>
                                     @endforeach
@@ -386,7 +273,7 @@
                     <div id="overview-table-controls" class="table-controls-row">
                         @if(auth()->user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
                         <div class="d-flex align-items-center gap-3">
-                            <form id="filter-form" action="{{ route('admin.loyalty-points.index') }}" method="GET" class="d-flex align-items-center gap-3 mb-0">
+                            <form id="filter-form" action="{{ route('admin.retailer-wallets.index') }}" method="GET" class="d-flex align-items-center gap-3 mb-0">
                                 @if(auth()->user()->hasAnyRole(['admin', 'superadmin']))
                                 <div class="position-relative" style="min-width: 200px;">
                                     <select id="sm-filter" name="sales_manager_id" class="form-select select2-basic filter-select">
@@ -419,7 +306,7 @@
                                         </button>
                                     @endif
                                 </div>
-                                <a href="{{ route('admin.loyalty-points.index') }}" class="btn reset-filter-btn">
+                                <a href="{{ route('admin.retailer-wallets.index') }}" class="btn reset-filter-btn">
                                     <i class="fa fa-undo"></i> Reset
                                 </a>
                             </form>
@@ -453,8 +340,7 @@
                                             <th>Field Staff</th>
                                         @endif
                                         <th>Region & Area</th>
-                                        <th class="text-center" style="min-width: 120px;">Available Points</th>
-                                        <th class="text-center" style="min-width: 200px;">Reward Progress</th>
+                                        <th class="text-center py-3">Wallet Credits</th>
                                         <th class="text-center">Action</th>
                                     </tr>
                                 </thead>
@@ -507,15 +393,15 @@
                 <div class="row g-3">
                     <!-- Retailer Profile Card -->
                     <div class="col-xl-6 mb-3">
-                        <div class="card shadow-sm border-0 h-100" style="background: #fff; border: 1px solid #e2e8f0 !important; border-radius: 12px !important;">
+                        <div class="card shadow-sm border-0 h-100" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(0, 73, 122, 0.1); border-radius: 20px !important;">
                             <div class="card-body p-3">
                                 <div class="d-flex align-items-center mb-3 pb-2 border-bottom border-light">
-                                    <div class="d-flex align-items-center justify-content-center bg-soft-primary rounded-circle me-3" style="width: 42px; height: 42px; border: 1px solid rgba(13, 110, 253, 0.2);">
+                                    <div class="d-flex align-items-center justify-content-center bg-glass-primary rounded-circle me-3" style="width: 42px; height: 42px; background: rgba(0, 73, 122, 0.05); border: 1px solid rgba(0, 73, 122, 0.1);">
                                         <i data-feather="shopping-bag" class="text-primary" style="width: 20px; height: 20px;"></i>
                                     </div>
                                     <div class="text-truncate">
-                                        <h6 id="display_shop_name" class="fw-bold mb-0 text-dark text-truncate" style="letter-spacing: -0.3px;">...</h6>
-                                        <p id="display_owner_name" class="text-muted mb-0 small fw-semibold" style="font-size: 0.75rem;">...</p>
+                                        <h6 id="display_shop_name" class="fw-800 mb-0 heading-theme text-truncate" style="letter-spacing: -0.3px;">...</h6>
+                                        <p id="display_owner_name" class="text-muted mb-0 small fw-600" style="font-size: 0.75rem;">...</p>
                                     </div>
                                 </div>
                                 <div class="row g-2">
@@ -540,25 +426,56 @@
                         </div>
                     </div>
 
-                    </div>        
-
-                <!-- INLINE BRAND REWARDS PROGRESS -->
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <div class="card shadow-sm border-0" style="border-radius: 12px; background: #fff; border: 1px solid #e2e8f0 !important;">
-                            <div class="card-header py-3 px-4 d-flex justify-content-between align-items-center bg-white border-bottom" style="border-radius: 12px 12px 0 0;">
-                                <h5 class="fw-bold mb-0 text-primary"><i class="fa fa-gift me-2 text-primary"></i>Brand Rewards Progress</h5>
-                            </div>
-                            <div class="card-body p-4 bg-white" style="border-radius: 0 0 12px 12px;">
-                                <div class="row g-3">
-                                    @include('admin.loyalty_points.partials.rewards_progress', ['retailer' => $selectedRetailer, 'upcomingRewards' => $upcomingRewards])
+                    <!-- Credit Balance Card -->
+                    <div class="col-xl-6 col-md-6 mb-3">
+                        <div class="card shadow-sm border-0 h-100 overflow-hidden summary-card" style="background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); border-radius: 20px !important;">
+                            <div class="card-body p-4 position-relative">
+                                <div class="d-flex align-items-center justify-content-between mb-4">
+                                    <div class="d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.15);">
+                                        <i data-feather="credit-card" class="text-white" style="width: 22px; height: 22px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.4));"></i>
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-1 fw-bold" style="font-size: 10px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); color: #fff; letter-spacing: 0.5px;">CREDITS</span>
+                                </div>
+                                <div class="flex-grow-1 text-white">
+                                    <h1 id="display_credit_balance" class="fw-300 mb-0 display-6" style="line-height: 1; color: #fff !important; letter-spacing: -1px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">₹0.00</h1>
+                                    <p class="text-white opacity-75 small mb-0 fw-600 mt-2">Refunds & credits</p>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </div>        
+
+                    </div>        
 
 
+                    <!-- Transaction Logs -->
+                    <div class="col-12 mb-4">
+                        <div class="card shadow-sm border-0 overflow-hidden" style="border-radius: 20px; background: var(--med-bg-card);">
+                            <div class="card-header loyalty-card-header py-4 px-4 d-flex justify-content-between align-items-center">
+                                <h5 class="fw-bold mb-0 heading-theme">Transaction Statement</h5>
+                            </div>
+                            <div id="detail-table-controls" class="table-controls-row d-flex justify-content-between align-items-center">
+                                <div class="left-controls d-flex align-items-center gap-3"></div>
+                                <div class="right-controls d-flex align-items-center gap-3"></div>
+                            </div>
+                            <div class="card-body p-0">
+                                <table class="table table-hover align-middle mb-0" id="points-table" style="width: 100%;">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th>Date</th>   
+                                            <th>Type</th>
+                                            <th>Reference</th>
+                                            <th>Details</th>
+                                            <th class="text-center">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="heading-theme">
+                                        <!-- AJAX Loaded -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             @endif
@@ -611,7 +528,7 @@
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: "{{ route('admin.loyalty-points.index') }}",
+                    url: "{{ route('admin.retailer-wallets.index') }}",
                     data: function (d) {
                         d.sales_manager_id = $('#sm-filter').val();
                         d.field_staff_id = $('#fs-filter').val();
@@ -629,8 +546,13 @@
                         { data: 'field_staff', name: 'field_staff' },
                     @endif
                     { data: 'region_area', name: 'region_area' },
-                    { data: 'total_points', name: 'loyalty_points', className: 'text-center', searchable: false },
-                    { data: 'upcoming_reward', name: 'upcoming_reward', className: 'text-center', searchable: false },
+                    { data: 'wallet_credits', name: 'wallet_credits', className: 'text-center', orderable: false, searchable: false, render: function(data) {
+                        if(parseFloat(data) > 0) {
+                            return `<span class="badge rounded-pill shadow-sm" style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); color: #0369a1; padding: 6px 14px; font-weight: 700; border: 1px solid #7dd3fc; letter-spacing: 0.3px;">₹${data} Cr</span>`;
+                        } else {
+                            return `<span class="badge rounded-pill text-muted bg-light border" style="padding: 6px 14px; font-weight: 600;">₹0.00</span>`;
+                        }
+                    } },
                     { data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center' }
                 ],
                 buttons: [
@@ -709,11 +631,13 @@
             function formatRetailer(state) {
                 if (!state.id) return state.text;
                 let points = $(state.element).data('points') || '0.00';
+                let credits = $(state.element).data('credits') || '0.00';
                 return $(
                     `<div class="d-flex justify-content-between align-items-center">
                         <div class="fw-bold">${state.text}</div>
                         <div class="d-flex gap-2">
                             <div class="points-box-simple">${points} Pts</div>
+                            <div class="points-box-simple" style="background: #e0f2fe; color: #0369a1;">₹${credits} Cr</div>
                         </div>
                     </div>`
                 );
@@ -722,11 +646,13 @@
             function formatRetailerSelection(state) {
                 if (!state.id) return state.text;
                 let points = $(state.element).data('points') || '0.00';
+                let credits = $(state.element).data('credits') || '0.00';
                 return $(
                     `<div class="d-flex justify-content-between align-items-center w-100">
                         <span class="fw-bold text-truncate" style="max-width: 60%">${state.text}</span>
                         <div class="d-flex gap-1">
                             <div class="points-box-simple">${points} Pts</div>
+                            <div class="points-box-simple" style="background: #e0f2fe; color: #0369a1;">₹${credits}</div>
                         </div>
                     </div>`
                 );
@@ -736,7 +662,15 @@
             $('#retailer_selector').on('change', function () {
                 let id = $(this).val();
                 if (id) {
-                    window.location.href = "{{ route('admin.loyalty-points.detail', ':id') }}".replace(':id', id);
+                    window.location.href = "{{ route('admin.retailer-wallets.detail', ':id') }}".replace(':id', id);
+                }
+            });
+
+            // Handle DataTables 'View Ledger' Button
+            $('#overview-table').on('click', '.detail-btn', function () {
+                let id = $(this).data('id');
+                if (id) {
+                    window.location.href = "{{ route('admin.retailer-wallets.detail', ':id') }}".replace(':id', id);
                 }
             });
             @endif
@@ -747,7 +681,7 @@
             @endif
 
             function fetchData(retailerId) {
-                $.get("{{ route('admin.loyalty-points.summary', ':id') }}".replace(':id', retailerId), function (data) {
+                $.get("{{ route('admin.retailer-wallets.summary', ':id') }}".replace(':id', retailerId), function (data) {
                     $('#display_shop_name').text(data.shop_name);
                     $('#display_owner_name').text(data.owner_name);
                     $('#display_phone').text(data.phone);
@@ -755,6 +689,7 @@
                     $('#display_region').text(data.district + ', ' + data.area);
                     $('#display_joined').text(data.joined_date);
                     $('#display_total_points, #available_points').text(parseFloat(data.total_points).toFixed(2));
+                    $('#display_credit_balance, #available_credits').text('₹' + parseFloat(data.credit_balance).toFixed(2));
                     
                     // Show trophy if top retailer
                     if (data.is_top_retailer) {
@@ -774,7 +709,7 @@
                     processing: true,
                     serverSide: true,
                     ajax: {
-                        url: "{{ route('admin.loyalty-points.index') }}",
+                        url: "{{ route('admin.retailer-wallets.index') }}",
                         data: function (d) { d.retailer_id = retailerId; }
                     },
                     dom: "Bfrtip", // We'll move them manually for better control

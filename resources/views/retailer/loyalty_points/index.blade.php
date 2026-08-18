@@ -166,23 +166,7 @@
 
     <div class="container-fluid">
         <div class="row">
-            <!-- Credit Balance Card -->
-            <div class="col-xl-6 col-md-6 mb-4 entrance-animate delay-1">
-                <div class="card shadow-sm border-0 overflow-hidden" style="background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); border-radius: 24px !important;">
-                    <div class="card-body p-4 position-relative">
-                        <div class="d-flex align-items-center justify-content-between mb-4">
-                            <div class="d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.15);">
-                                <i data-feather="credit-card" class="text-white" style="width: 22px; height: 22px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.4));"></i>
-                            </div>
-                            <span class="badge rounded-pill px-3 py-1 fw-bold" style="font-size: 10px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); color: #fff; letter-spacing: 0.5px;">CREDITS</span>
-                        </div>
-                        <div class="flex-grow-1 text-white">
-                            <h1 class="fw-300 mb-0 display-6" style="line-height: 1; color: #fff !important; letter-spacing: -1px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">₹{{ number_format($creditBalance, 2) }}</h1>
-                            <p class="text-white opacity-75 small mb-0 fw-600 mt-2">Refunds & credits</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+
 
             <!-- Upcoming Rewards -->
             <div class="col-xl-12 entrance-animate delay-2 mb-4">
@@ -194,16 +178,23 @@
                         <div class="row">
                             @forelse($upcomingRewards as $reward)
                                 <div class="col-md-6 mb-4">
-                                    <div class="border rounded-4 p-4 h-100" style="background: rgba(0,0,0,0.02);">
-                                        <div class="d-flex justify-content-between align-items-end mb-2">
+                                    <div class="border p-4 h-100 position-relative bg-white" style="border-radius: 12px; border-color: #e2e8f0 !important; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                                        <!-- Brand Banner -->
+                                        <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                                            <h6 class="mb-0 fw-bold text-primary text-uppercase" style="letter-spacing: 1px;">{{ $reward['brand'] }}</h6>
+                                            <span class="badge bg-soft-primary text-primary rounded-pill px-2 py-1" style="font-size: 0.65rem; letter-spacing: 0.5px; border: 1px solid rgba(13, 110, 253, 0.2);">BRAND</span>
+                                        </div>
+                                        
+                                        <!-- Points Info -->
+                                        <div class="d-flex justify-content-between align-items-end mb-4">
                                             <div>
-                                                <span class="text-muted small">Available Points</span>
-                                                <h4 class="mb-0 fw-bold text-dark">{{ number_format($reward['current_total'], 2) }}</h4>
+                                                <span class="text-muted small fw-semibold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.7rem;">Points</span>
+                                                <h3 class="mb-0 fw-bold text-dark">{{ number_format($reward['current_total'], 2) }}</h3>
                                             </div>
                                             @if($reward['next_target'])
                                                 <div class="text-end">
-                                                    <span class="text-muted small">Next Target: {{ number_format($reward['next_target'], 2) }}</span><br>
-                                                    <span class="badge bg-warning text-dark"><i class="fa fa-star me-1"></i>{{ $reward['next_reward'] }}</span>
+                                                    <span class="text-muted small fw-semibold" style="font-size: 0.7rem;">Target: <span class="text-dark">{{ number_format($reward['next_target'], 2) }}</span></span><br>
+                                                    <span class="text-dark mt-1 d-inline-block fw-bold" style="font-size: 0.8rem;"><i class="fa fa-gift me-1 text-muted"></i>{{ $reward['next_reward'] }}</span>
                                                 </div>
                                             @endif
                                         </div>
@@ -212,21 +203,13 @@
                                             @php
                                                 $progress = min(100, ($reward['current_total'] / $reward['next_target']) * 100);
                                             @endphp
-                                            <div class="progress mb-3" style="height: 10px; border-radius: 5px;">
-                                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ $progress }}%"></div>
+                                            <div class="progress mb-3 bg-light" style="height: 6px; border-radius: 3px;">
+                                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ $progress }}%;"></div>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center mb-4">
                                                 @if($progress < 100)
-                                                    <div class="d-flex align-items-center bg-light rounded px-3 py-2 border border-light w-100">
-                                                        <div class="me-3">
-                                                            <div class="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 32px; height: 32px;">
-                                                                <i class="fa fa-lock text-muted" style="font-size: 0.85rem;"></i>
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <p class="mb-0 fw-bold text-dark" style="font-size: 0.9rem;">Locked</p>
-                                                            <p class="small text-muted mb-0">Earn <strong>{{ number_format($reward['next_target'] - $reward['current_total'], 2) }}</strong> more points to unlock</p>
-                                                        </div>
+                                                    <div class="text-muted w-100 text-end">
+                                                        <p class="small mb-0" style="font-size: 0.75rem;">Requires <strong>{{ number_format($reward['next_target'] - $reward['current_total'], 2) }}</strong> more</p>
                                                     </div>
                                                 @endif
                                             </div>
@@ -236,16 +219,49 @@
                                             <hr>
                                             <h6 class="fw-bold mb-3">Claimable Rewards:</h6>
                                             @foreach($reward['achieved_rewards'] as $achieved)
-                                                <div class="d-flex justify-content-between align-items-center bg-white p-3 rounded shadow-sm mb-2 border">
-                                                    <div>
-                                                        <span class="fw-bold text-dark d-block">{{ $achieved['reward'] }}</span>
-                                                        <span class="small text-muted">Cost: {{ number_format($achieved['threshold'], 2) }} Points</span>
+                                                <div class="d-flex flex-column align-items-start bg-white rounded-3 p-3 mb-2 shadow-sm border border-light position-relative overflow-hidden" style="transition: all 0.2s;">
+                                                    <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(45deg, rgba(237, 143, 3, 0.05) 0%, transparent 100%); z-index: 0; pointer-events: none;"></div>
+                                                    
+                                                    <div class="d-flex justify-content-between align-items-center w-100 mb-2" style="z-index: 1;">
+                                                        <div class="fw-bold text-dark d-flex align-items-center">
+                                                            <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 28px; height: 28px; font-size: 0.75rem;">
+                                                                <i class="fa fa-star"></i>
+                                                            </div>
+                                                            {{ number_format($achieved['threshold'], 2) }} Points Slab
+                                                        </div>
                                                     </div>
-                                                    <form action="{{ route('retailer.loyalty-points.claim') }}" method="POST">
+                                                    
+                                                    <form action="{{ route('retailer.loyalty-points.claim') }}" method="POST" class="d-flex flex-column w-100 m-0 p-0" style="z-index: 1;">
                                                         @csrf
                                                         <input type="hidden" name="slab_id" value="{{ $achieved['slab_id'] }}">
-                                                        <button type="submit" class="btn btn-sm rounded-pill px-4 fw-bold shadow-sm" style="background: linear-gradient(135deg, #FFB75E 0%, #ED8F03 100%); color: white; border: none; letter-spacing: 0.5px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" onclick="return confirm('Are you sure you want to spend {{ number_format($achieved['threshold'], 2) }} points to claim this reward?');">
-                                                            <i class="fa fa-gift me-1"></i> Claim Now
+                                                        <div class="flex-grow-1 w-100">
+                                                            @if(isset($achieved['reward_options']) && count($achieved['reward_options']) > 0)
+                                                                    <div class="mt-2 mb-3">
+                                                                        <p class="small text-muted mb-3 fw-semibold"><i class="fa fa-magic me-1 text-primary"></i>Choose your reward:</p>
+                                                                        <div class="reward-options-container">
+                                                                            @foreach($achieved['reward_options'] as $index => $option)
+                                                                                <label class="d-block m-0 p-0 w-100">
+                                                                                    <input type="radio" name="selected_reward" value="{{ $option }}" class="d-none premium-reward-input" required>
+                                                                                    <div class="premium-reward-option">
+                                                                                        <div class="reward-icon">
+                                                                                            <i class="fa fa-gift"></i>
+                                                                                        </div>
+                                                                                        <span class="reward-text text-dark">{{ $option }}</span>
+                                                                                        <div class="check-icon">
+                                                                                            <i class="fa fa-check-circle"></i>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </label>
+                                                                            @endforeach
+                                                                        </div>
+                                                                    </div>
+                                                            @else
+                                                                <input type="hidden" name="selected_reward" value="{{ $achieved['reward'] }}">
+                                                                <span class="fw-bold text-dark d-block mb-3">{{ $achieved['reward'] }}</span>
+                                                            @endif
+                                                        </div>
+                                                        <button type="submit" class="btn btn-sm rounded-pill px-4 fw-bold shadow-sm w-100 mt-2" style="background: linear-gradient(135deg, #FFB75E 0%, #ED8F03 100%); color: white; border: none; letter-spacing: 0.5px; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 8px 15px rgba(237,143,3,0.3)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';" onclick="var selected = this.form.querySelector('input[name=\'selected_reward\']:checked, input[type=\'hidden\'][name=\'selected_reward\']'); if(!selected) { alert('Please choose a reward option above.'); return false; } return confirm('Are you sure you want to spend {{ number_format($achieved['threshold'], 2) }} points to claim this reward?');">
+                                                            <i class="fa fa-check me-1"></i> Confirm & Claim Reward
                                                         </button>
                                                     </form>
                                                 </div>
@@ -283,7 +299,7 @@
                                     </tr>
                                 </thead>
                                 <tbody style="color: var(--med-text-main);">
-                                    @forelse($unifiedHistory as $item)
+                                    @foreach($unifiedHistory as $item)
                                         <tr>
                                             <td>{{ \Carbon\Carbon::parse($item->date)->format('d M Y, h:i A') }}</td>
                                             <td>
@@ -317,9 +333,7 @@
                                                 @endif
                                             </td>
                                         </tr>
-                                    @empty
-                                        <tr><td colspan="5" class="text-center py-5">No loyalty points or credits recorded yet.</td></tr>
-                                    @endforelse
+                                    @endforeach
                                 </tbody>
                             </table>
                         </div>
@@ -329,6 +343,8 @@
         </div>
     </div>
 @endsection
+
+
 
 @push('scripts')
     <script>
@@ -354,4 +370,73 @@
             });
         });
     </script>
+
+    <style>
+        /* Premium Reward Options */
+        .premium-reward-option {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #ffffff;
+            margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        .premium-reward-option:hover {
+            border-color: #cbd5e1;
+            background: #f8fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        .premium-reward-input:checked + .premium-reward-option {
+            border-color: #0ea5e9;
+            background: #f0f9ff;
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.15);
+        }
+        .premium-reward-input:checked + .premium-reward-option .reward-text {
+            font-weight: 700;
+            color: #0369a1;
+        }
+        .premium-reward-input:checked + .premium-reward-option .check-icon {
+            opacity: 1;
+            transform: scale(1);
+            color: #0ea5e9;
+        }
+        .premium-reward-input:checked + .premium-reward-option::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background-color: #0ea5e9;
+        }
+        .check-icon {
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-left: auto;
+            font-size: 1.1rem;
+        }
+        .reward-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            margin-right: 12px;
+            transition: all 0.25s;
+        }
+        .premium-reward-input:checked + .premium-reward-option .reward-icon {
+            background: #e0f2fe;
+            color: #0ea5e9;
+        }
+    </style>
 @endpush

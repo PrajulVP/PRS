@@ -92,6 +92,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('retailers', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getRetailers']);
         Route::get('retailers/{id}/loyalty-points', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getRetailerLoyaltyDetails']);
         Route::get('retailers/loyalty-points', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getRetailersLoyaltyPoints']);
+        Route::get('loyalty-redemptions', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getLoyaltyRedemptions']);
         Route::post('retailers/{id}/approve', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'approveRetailer']);
 
         // Manage Retailer Orders
@@ -136,6 +137,9 @@ Route::middleware('auth:api')->group(function () {
         Route::post('leaves', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'requestLeave']);
         Route::post('visits/report-location', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'reportLocation']);
         Route::post('sync-offline-logs', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'syncOfflineLogs']);
+        
+        Route::get('loyalty-redemptions', [\App\Http\Controllers\Api\LoyaltyApiController::class, 'getFieldstaffRedemptions']);
+        Route::post('loyalty-redemptions/{id}/confirm', [\App\Http\Controllers\Api\LoyaltyApiController::class, 'confirmFieldstaffRedemption']);
     });
 
     // Manager Tracking & Actions
@@ -155,6 +159,8 @@ Route::middleware('auth:api')->group(function () {
     Route::prefix('retailer')->group(function () {
         Route::get('dashboard/statistics', [\App\Http\Controllers\Api\RetailerDashboardApiController::class, 'getStatistics']);
         Route::get('loyalty-points', [\App\Http\Controllers\Api\RetailerDashboardApiController::class, 'getLoyaltyPoints']);
+        Route::get('loyalty-rewards', [\App\Http\Controllers\Api\LoyaltyApiController::class, 'getRetailerRewards']);
+        Route::post('loyalty-rewards/claim', [\App\Http\Controllers\Api\LoyaltyApiController::class, 'claimRetailerReward']);
         Route::post('rate-staff', [\App\Http\Controllers\Api\RatingApiController::class, 'rateStaff']);
         Route::get('my-ratings', [\App\Http\Controllers\Api\RatingApiController::class, 'getMyRatings']);
     });

@@ -190,6 +190,7 @@ class User extends Authenticatable implements JWTSubject
             'inactive_distributors' => 0,
             'inactive_field_staff' => 0,
             'inactive_retailers' => 0,
+            'loyalty_redemptions' => 0,
         ];
 
         // 1. Retailer Approvals (Retailer Orders in pending states)
@@ -291,6 +292,18 @@ class User extends Authenticatable implements JWTSubject
             $returnQuery->whereRaw('1=0');
         }
         $counts['pending_returns'] = $returnQuery->count();
+
+        // 7. Loyalty Redemptions (Admin/Superadmin/Salesmanager)
+        if ($this->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
+            $query = \Illuminate\Support\Facades\DB::table('loyalty_redemptions')
+                ->join('retailers', 'loyalty_redemptions.retailer_id', '=', 'retailers.id')
+                ->where('loyalty_redemptions.status', 'pending');
+                
+            if ($this->hasRole('salesmanager') && $this->salesManager) {
+                $query->where('retailers.sales_manager_id', $this->salesManager->id);
+            }
+            $counts['loyalty_redemptions'] = $query->count();
+        }
 
         return $counts;
     }

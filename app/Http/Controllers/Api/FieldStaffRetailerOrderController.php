@@ -18,7 +18,7 @@ class FieldStaffRetailerOrderController extends Controller
      * @OA\Get(
      *     path="/api/field-staff/retailer-orders",
      *     summary="List retailer orders assigned to the logged-in field staff",
-     *     tags={"Field Staff Retailer Orders"},
+     *     tags={"Field Staff Dashboard"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="status", in="query", required=false, @OA\Schema(type="string")),
      *     @OA\Response(response=200, description="List of assigned retailer orders")
@@ -96,7 +96,7 @@ class FieldStaffRetailerOrderController extends Controller
      * @OA\Get(
      *     path="/api/field-staff/retailer-orders/{id}",
      *     summary="Get a single retailer order detail",
-     *     tags={"Field Staff Retailer Orders"},
+     *     tags={"Field Staff Dashboard"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
      *     @OA\Response(response=200, description="Order Details")
@@ -180,7 +180,7 @@ class FieldStaffRetailerOrderController extends Controller
      * @OA\Get(
      *     path="/api/field-staff/retailer-orders/calculate-price",
      *     summary="Calculate price for a product before placing an order",
-     *     tags={"Field Staff Retailer Orders"},
+     *     tags={"Field Staff Dashboard"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="product_id", in="query", required=true, @OA\Schema(type="integer")),
      *     @OA\Parameter(name="quantity", in="query", required=true, @OA\Schema(type="integer")),
@@ -237,7 +237,7 @@ class FieldStaffRetailerOrderController extends Controller
      *     path="/api/field-staff/retailer-orders",
      *     summary="Place new retailer order(s)",
      *     description="Items will be grouped by distributor_id into separate orders.",
-     *     tags={"Field Staff Retailer Orders"},
+     *     tags={"Field Staff Dashboard"},
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
@@ -513,7 +513,7 @@ class FieldStaffRetailerOrderController extends Controller
      *     path="/api/field-staff/retailer-orders/{id}/update-status",
      *     summary="Accept, reject, or cancel a retailer order",
      *     description="Field Staff can accept (moves to processing), reject, or cancel (if they placed it).",
-     *     tags={"Field Staff Retailer Orders"},
+     *     tags={"Field Staff Dashboard"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
      *     @OA\RequestBody(
@@ -593,7 +593,7 @@ class FieldStaffRetailerOrderController extends Controller
      *     path="/api/field-staff/retailer-orders/{id}",
      *     summary="Edit a retailer order",
      *     description="Allows Field Staff to edit items and delivery notes of a retailer order assigned to them (status must be pending or processing).",
-     *     tags={"Field Staff Retailer Orders"},
+     *     tags={"Field Staff Dashboard"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
      *     @OA\RequestBody(
@@ -840,7 +840,7 @@ class FieldStaffRetailerOrderController extends Controller
      * @OA\Post(
      *     path="/api/field-staff/retailer-orders/{id}/accept",
      *     summary="Accept/Approve a retailer order on behalf of the distributor",
-     *     tags={"Field Staff Retailer Orders"},
+     *     tags={"Field Staff Dashboard"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
      *     @OA\RequestBody(
