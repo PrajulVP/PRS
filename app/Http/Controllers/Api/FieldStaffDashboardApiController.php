@@ -93,30 +93,32 @@ class FieldStaffDashboardApiController extends Controller
         $month = now()->format('F');
         $year = now()->year;
         
-        $target = $fieldStaff->getCurrentMonthTarget();
-
-        // Achievement (Sum of unit_price * quantity for delivered orders this month)
-        $achievementValue = RetailerOrder::join('retailer_order_items', 'retailer_orders.id', '=', 'retailer_order_items.retailer_order_id')
-            ->where(function ($q) use ($fieldStaffId) {
-                $q->where('retailer_orders.fieldstaff_id', $fieldStaffId)
-                    ->orWhereHas('retailer', function ($qr) use ($fieldStaffId) {
-                        $qr->where('field_staff_id', $fieldStaffId);
-                    });
-            })
-            ->where('retailer_orders.status', RetailerOrder::STATUS_DELIVERED)
-            ->whereMonth('retailer_orders.delivered_at', now()->month)
-            ->whereYear('retailer_orders.delivered_at', now()->year)
-            ->sum(DB::raw('retailer_order_items.unit_price * retailer_order_items.quantity'));
-
-        $targetAmount = $target ? $target->amount : 0;
+        $targets = $fieldStaff->getCurrentMonthTargets();
+        $targetAmount = $targets->sum('amount');
+        $achievementValue = $fieldStaff->getCurrentMonthAchieved();
         $achievementPercent = $targetAmount > 0 ? ($achievementValue / $targetAmount) * 100 : 0;
+
+        $brand_targets = [];
+        $uniqueBrands = \App\Models\Product::select('brand')->distinct()->pluck('brand');
+        foreach ($uniqueBrands as $brand) {
+            $bTarget = $targets->where('brand', $brand)->first();
+            $bTargetAmount = $bTarget ? $bTarget->amount : 0;
+            $bAchieved = $fieldStaff->getCurrentMonthAchieved($brand);
+            $brand_targets[] = [
+                'brand' => $brand,
+                'target' => number_format($bTargetAmount, 2, '.', ''),
+                'achievement' => number_format($bAchieved, 2, '.', ''),
+                'remaining' => number_format(max(0, $bTargetAmount - $bAchieved), 2, '.', ''),
+                'achievement_percent' => $bTargetAmount > 0 ? round(($bAchieved / $bTargetAmount) * 100, 2) : 0
+            ];
+        }
 
         // 3. Global Ranking (Top Performers by Achievement %)
         $allStaffStats = FieldStaff::with(['user'])->get()->map(function ($staff) use ($month, $year) {
             $staffTarget = SalesTarget::where('field_staff_id', $staff->id)
                 ->where('month', $month)
                 ->where('year', $year)
-                ->value('amount') ?? 0;
+                ->sum('amount');
 
             $staffAchievementValue = $staff->getAchievedAmountForMonth(
                 \Carbon\Carbon::parse("1 {$month} {$year}")->month, 
@@ -160,6 +162,7 @@ class FieldStaffDashboardApiController extends Controller
                 'achievement' => number_format($achievementValue, 2, '.', ''),
                 'remaining' => number_format(max(0, $targetAmount - $achievementValue), 2, '.', ''),
                 'achievement_percent' => round($achievementPercent, 2),
+                'brand_targets' => $brand_targets,
                 'global_rank' => $myRank,
                 'is_top_5' => $myRank > 0 && $myRank <= 5,
                 'total_staff' => $allStaffStats->count(),

@@ -458,24 +458,10 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="d-flex align-items-start gap-2 p-3 rounded"
-                                            style="background: var(--med-bg-body);">
-                                            <i class="fa fa-bullseye mt-1 text-primary"></i>
-                                            <div>
-                                                <div class="text-muted small">Target (This Month)</div>
-                                                <div class="fw-semibold" id="fs_view_monthly_target"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="d-flex align-items-start gap-2 p-3 rounded"
-                                            style="background: var(--med-bg-body);">
-                                            <i class="fa fa-line-chart mt-1 text-success"></i>
-                                            <div>
-                                                <div class="text-muted small">Achieved (This Month)</div>
-                                                <div class="fw-semibold" id="fs_view_achieved_target"></div>
-                                            </div>
+                                    <div class="col-md-12">
+                                        <div class="d-flex flex-column gap-2 p-3 rounded" style="background: var(--med-bg-body);">
+                                            <div class="text-muted small fw-bold mb-2"><i class="fa fa-bullseye me-1"></i> Targets (This Month)</div>
+                                            <div id="fs_view_brand_targets" class="row g-2"></div>
                                         </div>
                                     </div>
                                     <div class="col-12">
@@ -929,8 +915,44 @@
                         $('#fs_view_pincode').text(fs.pincode || 'N/A');
                         $('#fs_view_address').text(fs.address || 'N/A');
                         
-                        $('#fs_view_monthly_target').text('₹' + parseFloat(fs.current_month_target_amount || 0).toFixed(2));
-                        $('#fs_view_achieved_target').text('₹' + parseFloat(fs.achieved_target || 0).toFixed(2));
+                        let brandTargetsHtml = '';
+                        if (fs.brand_targets && fs.brand_targets.length > 0) {
+                            brandTargetsHtml = fs.brand_targets.map(bt => `
+                                <div class="col-sm-4">
+                                    <div class="p-2 border rounded h-100" style="background: var(--med-bg-card);">
+                                        <div class="fw-bold small mb-1" style="color: var(--med-text-main);">${bt.brand}</div>
+                                        <div class="d-flex justify-content-between small">
+                                            <span class="text-muted">Target:</span>
+                                            <span class="fw-semibold" style="color: var(--med-text-main);">₹${parseFloat(bt.target).toFixed(2)}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between small">
+                                            <span class="text-muted">Achieved:</span>
+                                            <span class="fw-semibold text-${bt.achieved >= bt.target && bt.target > 0 ? 'success' : 'primary'}">₹${parseFloat(bt.achieved).toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('');
+                            // Add overall total
+                            brandTargetsHtml += `
+                                <div class="col-sm-4">
+                                    <div class="p-2 border rounded border-primary h-100" style="background: var(--med-bg-body);">
+                                        <div class="fw-bold small mb-1 text-primary">Total Overall</div>
+                                        <div class="d-flex justify-content-between small">
+                                            <span class="text-muted">Target:</span>
+                                            <span class="fw-semibold" style="color: var(--med-text-main);">₹${parseFloat(fs.current_month_target_amount || 0).toFixed(2)}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between small">
+                                            <span class="text-muted">Achieved:</span>
+                                            <span class="fw-semibold text-success">₹${parseFloat(fs.achieved_target || 0).toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            brandTargetsHtml = '<div class="text-muted small">No targets set for this month.</div>';
+                        }
+                        $('#fs_view_brand_targets').html(brandTargetsHtml);
+
                         $('#fs_view_device').text(fs.user.device_uuid || 'Not Bound');
 
 

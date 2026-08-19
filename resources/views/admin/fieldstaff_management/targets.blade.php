@@ -44,32 +44,46 @@
                                     <tr>
                                         <th>Field Staff</th>
                                         <th>Sales Manager</th>
-                                        <th>Current Target for {{ $monthName }} {{ $yearStr }}</th>
-                                        <th>Achieved for {{ $monthName }} {{ $yearStr }}</th>
-                                        <th>Update Target Amount</th>
+                                        @foreach($brands as $brand)
+                                            <th>{{ $brand }} Target <br><small class="text-muted">Achieved / Target</small></th>
+                                        @endforeach
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse($fieldStaffs as $fs)
-                                        @php
-                                            $targetRecord = $fs->salesTargets->first();
-                                            $targetAmount = $fs->default_target_amount ?? 0;
-                                            $achievedAmount = $targetRecord ? $targetRecord->achieved_amount : 0;
-                                        @endphp
                                         <tr>
                                             <td>
                                                 <div class="fw-bold text-dark">{{ $fs->user->name ?? 'N/A' }}</div>
                                                 <div class="small text-muted">{{ $fs->user->email ?? '' }}</div>
                                             </td>
                                             <td>{{ $fs->salesManager->user->name ?? 'N/A' }}</td>
-                                            <td>₹{{ number_format($targetAmount, 2) }}</td>
-                                            <td>₹{{ number_format($achievedAmount, 2) }}</td>
-                                            <td>
-                                                <div class="input-group">
-                                                    <span class="input-group-text">₹</span>
-                                                    <input type="number" step="0.01" min="0" name="targets[{{ $fs->id }}]" class="form-control target-input" value="{{ $targetAmount }}">
-                                                </div>
-                                            </td>
+                                            @foreach($brands as $brand)
+                                                @php
+                                                    $targetRecord = $fs->salesTargets->where('brand', $brand)->first();
+                                                    $targetAmount = $targetRecord ? $targetRecord->amount : 0;
+                                                    // Get dynamic achieved amount from the query result
+                                                    $achievedAmount = 0;
+                                                    if (isset($achievedData[$fs->id])) {
+                                                        $brandAchieved = collect($achievedData[$fs->id])->where('brand', $brand)->first();
+                                                        if ($brandAchieved) {
+                                                            $achievedAmount = $brandAchieved->total_achieved;
+                                                        }
+                                                    }
+                                                @endphp
+                                                <td>
+                                                    <div class="d-flex flex-column gap-2">
+                                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                                            <span class="badge bg-{{ $achievedAmount >= $targetAmount && $targetAmount > 0 ? 'success' : 'secondary' }}">
+                                                                Achieved: ₹{{ number_format($achievedAmount, 2) }}
+                                                            </span>
+                                                        </div>
+                                                        <div class="input-group input-group-sm">
+                                                            <span class="input-group-text">₹</span>
+                                                            <input type="number" step="0.01" min="0" name="targets[{{ $fs->id }}][{{ $brand }}]" class="form-control target-input" value="{{ $targetAmount }}">
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            @endforeach
                                         </tr>
                                     @empty
                                     @endforelse
@@ -77,10 +91,15 @@
                             </table>
                         </div>
                         @if($fieldStaffs->count() > 0)
-                            <div class="text-end">
-                                <button type="button" id="save-targets-btn" class="btn btn-success px-4" style="border-radius: 8px;">
-                                    <i class="fa fa-save me-2"></i> Save All Targets
-                                </button>
+                            <div class="card shadow-sm border-0 sticky-bottom mt-4" style="bottom: 1rem; z-index: 1020; border-radius: 12px;">
+                                <div class="card-body p-3 d-flex justify-content-between align-items-center bg-white rounded-3 shadow-sm border border-primary border-opacity-25">
+                                    <div class="text-muted small">
+                                        <i class="fa fa-info-circle me-1 text-primary"></i> Bulk update all field staff targets and click save.
+                                    </div>
+                                    <button type="button" id="save-targets-btn" class="btn btn-primary px-4 fw-bold shadow-sm" style="border-radius: 8px;">
+                                        <i class="fa fa-save me-2"></i> Save All Targets
+                                    </button>
+                                </div>
                             </div>
                         @endif
                     </form>
@@ -96,6 +115,14 @@
 <style>
     #targets-table td {
         vertical-align: middle;
+    }
+    
+    /* Fix for SweetAlert2 Icon Box Sizing Conflict */
+    .swal2-icon {
+        box-sizing: content-box !important;
+    }
+    .swal2-icon-content {
+        box-sizing: content-box !important;
     }
 </style>
 @endpush
@@ -118,10 +145,8 @@
         $('#save-targets-btn').click(function() {
             var btn = $(this);
             var originalHtml = btn.html();
+            
             btn.html('<i class="fa fa-spinner fa-spin me-2"></i> Saving...').prop('disabled', true);
-
-            // Important: if there is pagination in DataTables, a regular serialize() will only get the inputs of the current page.
-            // We need to get all inputs across all pages. DataTables provides `table.$('input')`.
             
             var data = {
                 _token: "{{ csrf_token() }}",
@@ -129,14 +154,20 @@
                 targets: {}
             };
             
+            // Get all inputs from datatable (including paginated pages)
             table.$('input.target-input').each(function() {
                 var name = $(this).attr('name');
                 var val = $(this).val();
                 
-                // name format is targets[ID]
-                var matches = name.match(/targets\[(\d+)\]/);
+                // name format is targets[ID][BRAND]
+                var matches = name.match(/targets\[(\d+)\]\[([^\]]+)\]/);
                 if (matches) {
-                    data.targets[matches[1]] = val;
+                    var fsId = matches[1];
+                    var brand = matches[2];
+                    if (!data.targets[fsId]) {
+                        data.targets[fsId] = {};
+                    }
+                    data.targets[fsId][brand] = val;
                 }
             });
 
@@ -148,8 +179,8 @@
                     if (response.success) {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Success',
-                            text: response.message,
+                            title: 'Saved!',
+                            text: 'All targets have been updated successfully.',
                             timer: 2000,
                             showConfirmButton: false
                         }).then(() => {

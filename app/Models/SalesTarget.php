@@ -9,8 +9,10 @@ class SalesTarget extends Model
 {
     protected $fillable = [
         'field_staff_id',
+        'distributor_id',
         'month',
         'year',
+        'brand',
         'amount',
         'achieved_amount',
     ];

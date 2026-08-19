@@ -120,7 +120,7 @@ class FieldStaffController extends Controller
         $todaysDistance = \App\Models\LocationLog::calculateDailyDistance($field_staff->user_id, date('Y-m-d'));
         
         // Ensure the current month target is initialized
-        $currentMonthTarget = $field_staff->getCurrentMonthTarget();
+        $currentMonthTargets = $field_staff->getCurrentMonthTargets();
         // Refresh salesTargets after ensuring current month is initialized
         $field_staff->load(['salesTargets' => function ($q) {
             $q->orderBy('year', 'desc')->orderByRaw("STR_TO_DATE(CONCAT('1 ', month, ' ', year), '%d %M %Y') DESC");
@@ -128,11 +128,25 @@ class FieldStaffController extends Controller
         
         $achievedTarget = $field_staff->getCurrentMonthAchieved();
         
+        $brand_targets = [];
+        $uniqueBrands = \App\Models\Product::select('brand')->distinct()->pluck('brand');
+        foreach ($uniqueBrands as $brand) {
+            $bTarget = $currentMonthTargets->where('brand', $brand)->first();
+            $bTargetAmount = $bTarget ? $bTarget->amount : 0;
+            $bAchieved = $field_staff->getCurrentMonthAchieved($brand);
+            $brand_targets[$brand] = [
+                'brand' => $brand,
+                'target' => round($bTargetAmount, 2),
+                'achieved' => round($bAchieved, 2)
+            ];
+        }
+        
         // Append additional details to the field staff object
         $field_staff->setAttribute('latest_location', $latestLocation);
         $field_staff->setAttribute('todays_distance_km', round($todaysDistance, 2));
         $field_staff->setAttribute('achieved_target', round($achievedTarget, 2));
-        $field_staff->setAttribute('current_month_target_amount', $currentMonthTarget ? $currentMonthTarget->amount : 0);
+        $field_staff->setAttribute('current_month_target_amount', round($currentMonthTargets->sum('amount'), 2));
+        $field_staff->setAttribute('brand_targets', array_values($brand_targets));
 
         return response()->json([
             'success' => true,

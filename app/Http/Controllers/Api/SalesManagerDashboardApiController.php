@@ -135,6 +135,16 @@ class SalesManagerDashboardApiController extends Controller
 
         $totalTarget = 0;
         $totalAchieved = 0;
+        $brand_targets = [];
+        $uniqueBrands = \App\Models\Product::select('brand')->distinct()->pluck('brand');
+        
+        foreach ($uniqueBrands as $brand) {
+            $brand_targets[$brand] = [
+                'brand' => $brand,
+                'target' => 0,
+                'achieved' => 0,
+            ];
+        }
         
         $fieldStaffs = \App\Models\FieldStaff::whereIn('id', $fieldStaffIds)->get();
         foreach ($fieldStaffs as $fs) {
@@ -142,17 +152,32 @@ class SalesManagerDashboardApiController extends Controller
             $totalAchieved += $fs->getAchievedAmountForMonth($monthStr, $yearStr);
             
             // Target
-            $targetObj = $fs->salesTargets()
+            $fsTargets = $fs->salesTargets()
                 ->where('year', $yearStr)
                 ->where('month', $startDate->format('F'))
-                ->first();
+                ->get();
+            $totalTarget += $fsTargets->sum('amount');
+            
+            foreach ($uniqueBrands as $brand) {
+                $bTarget = $fsTargets->where('brand', $brand)->first();
+                $bTargetAmount = $bTarget ? $bTarget->amount : 0;
+                $bAchieved = $fs->getAchievedAmountForMonth($monthStr, $yearStr, $brand);
                 
-            if ($targetObj) {
-                $totalTarget += $targetObj->amount;
-            } else {
-                $latest = \App\Models\SalesTarget::where('field_staff_id', $fs->id)->latest('id')->first();
-                $totalTarget += $latest ? $latest->amount : 0;
+                $brand_targets[$brand]['target'] += $bTargetAmount;
+                $brand_targets[$brand]['achieved'] += $bAchieved;
             }
+        }
+        
+        // Format brand_targets array
+        $formatted_brand_targets = [];
+        foreach ($brand_targets as $bt) {
+            $formatted_brand_targets[] = [
+                'brand' => $bt['brand'],
+                'target' => number_format($bt['target'], 2, '.', ''),
+                'achievement' => number_format($bt['achieved'], 2, '.', ''),
+                'remaining' => number_format(max(0, $bt['target'] - $bt['achieved']), 2, '.', ''),
+                'achievement_percent' => $bt['target'] > 0 ? round(($bt['achieved'] / $bt['target']) * 100, 2) : 0
+            ];
         }
 
         return response()->json([
@@ -160,6 +185,7 @@ class SalesManagerDashboardApiController extends Controller
             'target' => round($totalTarget, 2),
             'achieved' => round($totalAchieved, 2),
             'remaining' => max(0, round($totalTarget - $totalAchieved, 2)),
+            'brand_targets' => $formatted_brand_targets,
             'retailer_order_stats' => $retailerOrderStats,
             'distributor_order_stats' => $distributorOrderStats,
             'counts' => $counts,

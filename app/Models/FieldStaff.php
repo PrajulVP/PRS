@@ -79,37 +79,24 @@ class FieldStaff extends Model
         return $this->hasMany(Rating::class, 'field_staff_id');
     }
 
-    public function getCurrentMonthTarget()
+    public function getCurrentMonthTargets()
     {
         $currentMonth = date('F');
         $currentYear = date('Y');
 
-        $salesTarget = $this->salesTargets()->where('month', $currentMonth)->where('year', $currentYear)->first();
+        $salesTargets = $this->salesTargets()->where('month', $currentMonth)->where('year', $currentYear)->get();
 
-        if (!$salesTarget) {
-            // Get the most recent target created for this user
-            $latestTarget = $this->salesTargets()->latest('id')->first();
-            $amount = $latestTarget ? $latestTarget->amount : 0;
-
-            $salesTarget = $this->salesTargets()->create([
-                'month' => $currentMonth, 
-                'year' => $currentYear,
-                'amount' => $amount, 
-                'achieved_amount' => 0
-            ]);
-        }
-
-        return $salesTarget;
+        return $salesTargets;
     }
 
-    public function getCurrentMonthAchieved()
+    public function getCurrentMonthAchieved($brand = null)
     {
-        return $this->getAchievedAmountForMonth(now()->month, now()->year);
+        return $this->getAchievedAmountForMonth(now()->month, now()->year, $brand);
     }
 
-    public function getAchievedAmountForMonth($month, $year)
+    public function getAchievedAmountForMonth($month, $year, $brand = null)
     {
-        return \App\Models\RetailerOrder::join('retailer_order_items', 'retailer_orders.id', '=', 'retailer_order_items.retailer_order_id')
+        $query = \App\Models\RetailerOrder::join('retailer_order_items', 'retailer_orders.id', '=', 'retailer_order_items.retailer_order_id')
             ->where(function ($q) {
                 $q->where('retailer_orders.fieldstaff_id', $this->id)
                     ->orWhereHas('retailer', function ($qr) {
@@ -118,7 +105,13 @@ class FieldStaff extends Model
             })
             ->where('retailer_orders.status', \App\Models\RetailerOrder::STATUS_DELIVERED)
             ->whereMonth('retailer_orders.delivered_at', $month)
-            ->whereYear('retailer_orders.delivered_at', $year)
-            ->sum(\Illuminate\Support\Facades\DB::raw('retailer_order_items.unit_price * retailer_order_items.quantity'));
+            ->whereYear('retailer_orders.delivered_at', $year);
+            
+        if ($brand) {
+            $query->join('products', 'retailer_order_items.product_id', '=', 'products.id')
+                ->where('products.brand', $brand);
+        }
+
+        return $query->sum(\Illuminate\Support\Facades\DB::raw('retailer_order_items.unit_price * retailer_order_items.quantity'));
     }
 }

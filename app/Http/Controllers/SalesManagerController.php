@@ -63,15 +63,36 @@ class SalesManagerController extends Controller
         $totalTarget = 0;
         $totalAchieved = 0;
         
+        $brand_targets = [];
+        $uniqueBrands = \App\Models\Product::select('brand')->distinct()->pluck('brand');
+        foreach ($uniqueBrands as $brand) {
+            $brand_targets[$brand] = ['brand' => $brand, 'target' => 0, 'achieved' => 0];
+        }
+        
         foreach ($sales_manager->fieldStaffs as $fs) {
-            $targetObj = $fs->getCurrentMonthTarget();
-            $fs->setAttribute('current_month_target_amount', $targetObj ? $targetObj->amount : 0);
-            $totalTarget += $targetObj ? $targetObj->amount : 0;
+            $fsTargets = $fs->getCurrentMonthTargets();
+            $fsTargetSum = $fsTargets->sum('amount');
+            $fs->setAttribute('current_month_target_amount', round($fsTargetSum, 2));
+            $totalTarget += $fsTargetSum;
             $totalAchieved += $fs->getCurrentMonthAchieved();
+            
+            foreach ($uniqueBrands as $brand) {
+                $bTarget = $fsTargets->where('brand', $brand)->first();
+                $bTargetAmount = $bTarget ? $bTarget->amount : 0;
+                $bAchieved = $fs->getCurrentMonthAchieved($brand);
+                $brand_targets[$brand]['target'] += $bTargetAmount;
+                $brand_targets[$brand]['achieved'] += $bAchieved;
+            }
+        }
+        
+        foreach ($brand_targets as $key => $bt) {
+             $brand_targets[$key]['target'] = round($bt['target'], 2);
+             $brand_targets[$key]['achieved'] = round($bt['achieved'], 2);
         }
 
         $sales_manager->setAttribute('monthly_target', round($totalTarget, 2));
         $sales_manager->setAttribute('achieved_target', round($totalAchieved, 2));
+        $sales_manager->setAttribute('brand_targets', array_values($brand_targets));
 
         return response()->json([
             'success' => true,

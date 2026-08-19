@@ -192,22 +192,27 @@ class FieldStaffManagementController extends Controller
             $query->where('sales_manager_id', $request->sales_manager_id);
         }
 
-        $fieldStaffs = $query->get();
+        $brands = \App\Models\Product::select('brand')->distinct()->pluck('brand')->toArray();
 
-        foreach ($fieldStaffs as $fs) {
-            if ($fs->salesTargets->isEmpty()) {
-                $latest = \App\Models\SalesTarget::where('field_staff_id', $fs->id)->latest('id')->first();
-                $fs->default_target_amount = $latest ? $latest->amount : 0;
-            } else {
-                $fs->default_target_amount = $fs->salesTargets->first()->amount;
-            }
-        }
+        $achievedData = \Illuminate\Support\Facades\DB::table('retailer_order_items')
+            ->join('retailer_orders', 'retailer_order_items.retailer_order_id', '=', 'retailer_orders.id')
+            ->join('retailers', 'retailer_orders.retailer_id', '=', 'retailers.id')
+            ->join('products', 'retailer_order_items.product_id', '=', 'products.id')
+            ->where('retailer_orders.status', 'delivered')
+            ->whereYear('retailer_orders.created_at', $yearStr)
+            ->whereMonth('retailer_orders.created_at', $monthStr)
+            ->select('retailers.field_staff_id', 'products.brand', \Illuminate\Support\Facades\DB::raw('SUM(retailer_order_items.quantity * retailer_order_items.unit_price) as total_achieved'))
+            ->groupBy('retailers.field_staff_id', 'products.brand')
+            ->get()
+            ->groupBy('field_staff_id');
+
+        $fieldStaffs = $query->get();
 
         $salesManagers = \App\Models\SalesManager::with('user')->whereHas('user', function($q) {
             $q->where('status', 'active');
         })->get();
 
-        return view('admin.fieldstaff_management.targets', compact('fieldStaffs', 'salesManagers', 'month', 'yearStr', 'monthName'));
+        return view('admin.fieldstaff_management.targets', compact('fieldStaffs', 'salesManagers', 'month', 'yearStr', 'monthName', 'brands', 'achievedData'));
     }
 
     /**
@@ -217,28 +222,31 @@ class FieldStaffManagementController extends Controller
     {
         $request->validate([
             'month' => 'required',
-            'targets' => 'required|array',
-            'targets.*' => 'nullable|numeric|min:0'
+            'targets' => 'required|array'
         ]);
 
         $month = $request->month;
         $yearStr = substr($month, 0, 4);
         $monthStr = substr($month, 5, 2);
         $monthName = date('F', mktime(0, 0, 0, $monthStr, 10));
+        
+        foreach ($request->targets as $field_staff_id => $brandsData) {
+            if (!is_array($brandsData)) continue;
+            foreach ($brandsData as $brand => $amount) {
+                if ($amount === null || $amount === '') continue;
 
-        foreach ($request->targets as $field_staff_id => $amount) {
-            if ($amount === null || $amount === '') continue;
-
-            \App\Models\SalesTarget::updateOrCreate(
-                [
-                    'field_staff_id' => $field_staff_id,
-                    'month' => $monthName,
-                    'year' => $yearStr
-                ],
-                [
-                    'amount' => $amount
-                ]
-            );
+                \App\Models\SalesTarget::updateOrCreate(
+                    [
+                        'field_staff_id' => $field_staff_id,
+                        'brand' => $brand,
+                        'month' => $monthName,
+                        'year' => $yearStr
+                    ],
+                    [
+                        'amount' => $amount
+                    ]
+                );
+            }
         }
 
         return response()->json(['success' => true, 'message' => 'Targets saved successfully.']);
