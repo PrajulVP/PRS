@@ -92,17 +92,13 @@ class FieldStaffVisitController extends Controller
                     $managerName = optional(optional(optional($visit->user)->fieldStaff)->salesManager)->user->name ?? 'N/A';
                     return '<div class="text-muted">' . $managerName . '</div>';
                 })
-                ->addColumn('party_details', function ($visit) {
-                    if ($visit->party_type === 'retailer' || $visit->party_type === 'distributor') {
-                        $partyName = optional($visit->party)->shop_name ?? optional($visit->party)->name ?? 'Unknown';
-                        return '<div class="mb-1"><span class="badge bg-primary text-white small">' . ucfirst($visit->party_type) . '</span></div>
-                                <div class="fw-bold text-dark">' . $partyName . '</div>';
-                    } else {
-                        return '<div class="mb-1"><span class="badge bg-secondary text-white small">' . ucfirst($visit->party_type) . '</span></div>
-                                <div class="text-muted small">Party ID: ' . ($visit->party_id ?? 'N/A') . '</div>';
-                    }
-                })
-                ->addColumn('purpose', function ($visit) {
+                  ->addColumn('party_type', function ($visit) {
+                      return '<div class="text-muted">' . ucfirst($visit->party_type) . '</div>';
+                  })
+                  ->addColumn('party_details', function ($visit) {
+                      return '<div class="fw-bold text-dark">' . $visit->party_name . '</div>';
+                  })
+                  ->addColumn('purpose', function ($visit) {
                     $html = '<div class="text-dark">' . (optional($visit->purpose)->name ?? 'N/A') . '</div>';
                     if ($visit->is_repeat) {
                         $html .= '<div class="mt-1"><span class="badge bg-warning text-dark"><i class="fa fa-redo-alt"></i> Repeat Visit</span></div>';
@@ -149,7 +145,7 @@ class FieldStaffVisitController extends Controller
                         <div class="d-flex align-items-center justify-content-center gap-2">
                             <button class="btn btn-sm btn-light border shadow-sm view-visit-btn" data-visit=\'' . htmlspecialchars(json_encode([
                                 'staff_name' => $visit->user->name ?? 'N/A',
-                                'manager_name' => $visit->user->manager->name ?? 'None',
+                                'manager_name' => optional(optional(optional($visit->user)->fieldStaff)->salesManager)->user->name ?? 'None',
                                 'date' => $visit->start_at ? $visit->start_at->format('d M, Y') : 'N/A',
                                 'start_time' => $visit->start_at ? $visit->start_at->format('h:i A') : 'N/A',
                                 'end_time' => $visit->end_at ? $visit->end_at->format('h:i A') : 'Ongoing',
@@ -164,7 +160,7 @@ class FieldStaffVisitController extends Controller
                             </button>
                         </div>';
                 })
-                ->rawColumns(['staff_member', 'manager', 'party_details', 'purpose', 'duration', 'date_time', 'remarks', 'action'])
+                ->rawColumns(['staff_member', 'manager', 'party_type', 'party_details', 'purpose', 'duration', 'date_time', 'remarks', 'action'])
                 ->make(true);
         }
 
@@ -457,7 +453,7 @@ class FieldStaffVisitController extends Controller
                     $prevLog = null;
                     foreach ($staffLogs as $log) {
                         if ($prevLog && $log->latitude && $log->longitude && $prevLog->latitude && $prevLog->longitude) {
-                            $totalKm += $this->calculateHaversineDistance($prevLog->latitude, $prevLog->longitude, $log->latitude, $log->longitude);
+                            $totalKm += self::calculateHaversineDistance($prevLog->latitude, $prevLog->longitude, $log->latitude, $log->longitude);
                         }
                         $prevLog = $log;
                     }
@@ -470,7 +466,7 @@ class FieldStaffVisitController extends Controller
         return response()->stream($callback, 200, $headers);
     }
     
-    private function calculateHaversineDistance($lat1, $lon1, $lat2, $lon2) {
+    public static function calculateHaversineDistance($lat1, $lon1, $lat2, $lon2) {
         $earthRadius = 6371; // km
         $dLat = deg2rad($lat2 - $lat1);
         $dLon = deg2rad($lon2 - $lon1);

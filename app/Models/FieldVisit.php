@@ -20,6 +20,7 @@ class FieldVisit extends Model
         'remarks',
         'location_lat',
         'location_lng',
+        'image',
         'status',
     ];
 
@@ -50,6 +51,15 @@ class FieldVisit extends Model
         }
         
         return null;
+    }
+
+    public function getPartyNameAttribute()
+    {
+        $party = $this->party;
+        if ($party) {
+            return $party->shop_name ?? $party->name ?? 'Unknown';
+        }
+        return 'Party ID: ' . $this->party_id;
     }
 
     public function getDistanceKmAttribute()

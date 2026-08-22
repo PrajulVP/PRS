@@ -506,12 +506,16 @@ class FieldStaffActionApiController extends Controller
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(
-     *             required={"purpose_id", "remarks"},
-     *             @OA\Property(property="purpose_id", type="integer"),
-     *             @OA\Property(property="remarks", type="string"),
-     *             @OA\Property(property="location_lat", type="number", format="float"),
-     *             @OA\Property(property="location_lng", type="number", format="float")
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"purpose_id", "remarks", "location_lat", "location_lng"},
+     *                 @OA\Property(property="purpose_id", type="integer"),
+     *                 @OA\Property(property="remarks", type="string"),
+     *                 @OA\Property(property="location_lat", type="number", format="float"),
+     *                 @OA\Property(property="location_lng", type="number", format="float"),
+     *                 @OA\Property(property="image", type="string", format="binary", description="Optional visit image")
+     *             )
      *         )
      *     ),
      *     @OA\Parameter(
@@ -529,8 +533,9 @@ class FieldStaffActionApiController extends Controller
         $request->validate([
             'purpose_id' => 'required|exists:visit_purposes,id',
             'remarks' => 'required|string',
-            'location_lat' => 'nullable|numeric',
-            'location_lng' => 'nullable|numeric',
+            'location_lat' => 'required|numeric',
+            'location_lng' => 'required|numeric',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
         $user = $request->user();
@@ -555,19 +560,20 @@ class FieldStaffActionApiController extends Controller
             return response()->json(['message' => 'Visit is already completed'], 400);
         }
 
+        $imagePath = $visit->image;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('visits', 'public');
+        }
+
         $visit->update([
             'end_at' => Carbon::now(),
             'purpose_id' => $request->purpose_id,
             'remarks' => $request->remarks,
             'status' => 'completed',
+            'image' => $imagePath,
+            'location_lat' => $request->location_lat,
+            'location_lng' => $request->location_lng,
         ]);
-
-        // We can update location if stopped at a slightly different location
-        if ($request->has('location_lat') && $request->has('location_lng')) {
-             $visit->location_lat = $request->location_lat;
-             $visit->location_lng = $request->location_lng;
-             $visit->save();
-        }
 
         // Sync with VisitLog
         // We find the VisitLog created around the same time for this user and party

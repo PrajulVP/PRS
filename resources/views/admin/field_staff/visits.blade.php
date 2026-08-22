@@ -128,7 +128,8 @@
                                         </th>
                                         <th class="py-3 text-secondary fw-bold">Staff Member</th>
                                         <th class="py-3 text-secondary fw-bold">Manager</th>
-                                        <th class="py-3 text-secondary fw-bold">Party Details</th>
+                                        <th class="py-3 text-secondary fw-bold">Party Type</th>
+                                        <th class="py-3 text-secondary fw-bold">Party Name</th>
                                         <th class="py-3 text-secondary fw-bold">Purpose</th>
                                         <th class="py-3 text-secondary fw-bold">Duration</th>
                                         <th class="py-3 text-secondary fw-bold" style="min-width: 250px;">Remarks</th>
@@ -159,69 +160,72 @@
                     </button>
                 </div>
 
-                <div class="modal-body p-4" style="background-color: var(--med-bg-body);">
-
-                    <h6 class="mb-3 fw-bold text-primary" style="font-size: 14px;"><i class="fa fa-info-circle me-1"></i>
-                        Basic Information</h6>
-
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <div class="p-3 rounded border h-100" style="background-color: var(--med-bg-card);">
-                                <p class="text-muted mb-1" style="font-size: 12px;"><i
-                                        class="fa fa-user text-primary me-1"></i> Staff Member</p>
-                                <h6 class="mb-0 fw-bold" id="modal_staff_name"></h6>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="p-3 rounded border h-100" style="background-color: var(--med-bg-card);">
-                                <p class="text-muted mb-1" style="font-size: 12px;"><i
-                                        class="fa fa-user-shield text-success me-1"></i> Manager</p>
-                                <h6 class="mb-0 fw-bold" id="modal_manager_name"></h6>
-                            </div>
-                        </div>
-                    </div>
-
-                    <h6 class="mb-3 fw-bold text-primary" style="font-size: 14px;"><i class="fa fa-calendar-alt me-1"></i>
-                        Visit Data</h6>
-
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-4">
-                            <div class="p-3 rounded border h-100" style="background-color: var(--med-bg-card);">
-                                <p class="text-muted mb-1" style="font-size: 12px;"><i
-                                        class="far fa-clock text-info me-1"></i> Date & Time</p>
-                                <h6 class="mb-1 fw-bold" id="modal_date"></h6>
-                                <small class="text-muted d-block" style="font-size: 11px;"><span
-                                        id="modal_start_time"></span> - <span id="modal_end_time"></span></small>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="p-3 rounded border h-100" style="background-color: var(--med-bg-card);">
-                                <p class="text-muted mb-1" style="font-size: 12px;"><i
-                                        class="fa fa-store text-secondary me-1"></i> Party Details</p>
-                                <h6 class="mb-2 fw-bold" id="modal_party_name"></h6>
-                                <span class="badge border px-2 py-1 fw-normal text-muted" id="modal_party_type"
-                                    style="background-color: var(--med-bg-body);"></span>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="p-3 rounded border h-100" style="background-color: var(--med-bg-card);">
-                                <p class="text-muted mb-1" style="font-size: 12px;"><i
-                                        class="fa fa-bullseye text-warning me-1"></i> Purpose & Status</p>
-                                <h6 class="mb-2 fw-bold" id="modal_purpose"></h6>
-                                <span class="badge border px-2 py-1 fw-normal text-muted" id="modal_status"
-                                    style="background-color: var(--med-bg-body);"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <h6 class="mb-3 fw-bold text-primary" style="font-size: 14px;"><i class="fa fa-comment-dots me-1"></i>
-                        Remarks</h6>
-
-                    <div class="p-3 rounded shadow-sm border mb-1" style="background-color: var(--med-bg-card);">
-                        <p class="m-0" id="modal_remarks" style="min-height: 20px; font-size: 13px;"></p>
-                    </div>
-
-                </div>
+                  <div class="modal-body p-4" style="background-color: var(--med-bg-body);">
+  
+                      <h6 class="mb-3 fw-bold" style="font-size: 14px; color: var(--med-font-color);"><i class="fa fa-info-circle me-1 text-primary"></i>
+                          Basic Information</h6>
+  
+                      <div class="row g-3 mb-4">
+                          <div class="col-md-6">
+                              <div class="p-3 rounded border h-100" style="background-color: var(--med-bg-card);">
+                                  <p class="text-muted mb-1" style="font-size: 12px;"><i
+                                          class="fa fa-user text-primary me-1"></i> Staff Member</p>
+                                  <h6 class="mb-0 fw-bold" id="modal_staff_name" style="color: var(--med-font-color);"></h6>
+                              </div>
+                          </div>
+                          <div class="col-md-6">
+                              <div class="p-3 rounded border h-100" style="background-color: var(--med-bg-card);">
+                                  <p class="text-muted mb-1" style="font-size: 12px;"><i
+                                          class="fa fa-user-shield text-success me-1"></i> Manager</p>
+                                  <h6 class="mb-0 fw-bold" id="modal_manager_name" style="color: var(--med-font-color);"></h6>
+                              </div>
+                          </div>
+                      </div>
+  
+                      <h6 class="mb-3 fw-bold" style="font-size: 14px; color: var(--med-font-color);"><i class="fa fa-calendar-alt me-1 text-primary"></i>
+                          Visit Data</h6>
+  
+                      <div class="row g-3 mb-4">
+                          <div class="col-sm-6 col-lg-3">
+                              <div class="p-3 rounded border h-100 shadow-sm" style="background-color: var(--med-bg-card);">
+                                  <p class="text-muted mb-2" style="font-size: 12px;"><i class="far fa-clock text-info me-1"></i> Date & Time</p>
+                                  <h6 class="mb-2 fw-bold" id="modal_date" style="color: var(--med-font-color);"></h6>
+                                  <div class="d-flex align-items-center rounded px-2 py-1" style="background-color: var(--med-bg-body); display: inline-flex !important; font-size: 11px;">
+                                      <i class="fa fa-play text-success me-1" style="font-size: 9px;"></i> <span class="fw-bold" id="modal_start_time" style="color: var(--med-font-color);"></span>
+                                      <i class="fa fa-arrow-right mx-2 text-muted" style="font-size: 9px;"></i> 
+                                      <i class="fa fa-stop text-danger me-1" style="font-size: 9px;"></i> <span class="fw-bold" id="modal_end_time" style="color: var(--med-font-color);"></span>
+                                  </div>
+                              </div>
+                          </div>
+                          <div class="col-sm-6 col-lg-3">
+                              <div class="p-3 rounded border h-100 shadow-sm" style="background-color: var(--med-bg-card);">
+                                  <p class="text-muted mb-2" style="font-size: 12px;"><i class="fa fa-store text-secondary me-1"></i> Party Details</p>
+                                  <h6 class="mb-2 fw-bold" id="modal_party_name" style="color: var(--med-font-color);"></h6>
+                                  <p class="mb-0 text-muted" id="modal_party_type" style="font-size: 12px;"></p>
+                              </div>
+                          </div>
+                          <div class="col-sm-6 col-lg-3">
+                              <div class="p-3 rounded border h-100 shadow-sm" style="background-color: var(--med-bg-card);">
+                                  <p class="text-muted mb-2" style="font-size: 12px;"><i class="fa fa-bullseye text-warning me-1"></i> Purpose</p>
+                                  <h6 class="mb-0 fw-bold" id="modal_purpose" style="color: var(--med-font-color);"></h6>
+                              </div>
+                          </div>
+                          <div class="col-sm-6 col-lg-3">
+                              <div class="p-3 rounded border h-100 shadow-sm" style="background-color: var(--med-bg-card);">
+                                  <p class="text-muted mb-2" style="font-size: 12px;"><i class="fa fa-tasks text-primary me-1"></i> Status</p>
+                                  <span class="badge px-3 py-2 mt-1" id="modal_status" style="font-weight: 500; font-size: 12px; letter-spacing: 0.5px;"></span>
+                              </div>
+                          </div>
+                      </div>
+  
+                      <h6 class="mb-3 fw-bold" style="font-size: 14px; color: var(--med-font-color);"><i class="fa fa-comment-dots me-1 text-primary"></i>
+                          Remarks</h6>
+  
+                      <div class="p-3 rounded shadow-sm border mb-1" style="background-color: var(--med-bg-card);">
+                          <p class="m-0" id="modal_remarks" style="min-height: 20px; font-size: 13px; color: var(--med-font-color);"></p>
+                      </div>
+  
+                  </div>
                 <div class="modal-footer border-top-0 px-4 py-3" style="background-color: var(--med-bg-body);">
                     <button type="button" class="btn btn-secondary px-4 btn-sm" data-bs-dismiss="modal">Close</button>
                 </div>
@@ -555,6 +559,7 @@
                     { data: 'date_time', name: 'start_at' },
                     { data: 'staff_member', name: 'user.name', orderable: false },
                     { data: 'manager', name: 'manager', orderable: false, searchable: false },
+                    { data: 'party_type', name: 'party_type', orderable: false, searchable: false },
                     { data: 'party_details', name: 'party_type', orderable: false, searchable: false },
                     { data: 'purpose', name: 'purpose.name', orderable: false },
                     { data: 'duration', name: 'duration', orderable: false, searchable: false },
@@ -615,13 +620,17 @@
                     $('#modal_date').text(data.date);
                     $('#modal_start_time').text(data.start_time);
                     $('#modal_end_time').text(data.end_time);
-                    $('#modal_duration').text(data.duration);
 
                     $('#modal_party_name').text(data.party_name);
                     $('#modal_party_type').text(data.party_type);
 
                     $('#modal_purpose').text(data.purpose);
                     $('#modal_status').text(data.status);
+                    if (data.status === 'Completed') {
+                        $('#modal_status').removeClass('bg-warning text-dark border').addClass('bg-success text-white border-0');
+                    } else {
+                        $('#modal_status').removeClass('bg-success text-white border-0').addClass('bg-warning text-dark border-0');
+                    }
 
                     $('#modal_remarks').text(data.remarks);
 
