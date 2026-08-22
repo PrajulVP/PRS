@@ -30,7 +30,8 @@
         'showStaff' => false,
         'showStatus' => false,
         'showExports' => false,
-        'showMonthPicker' => true
+        'showMonthPicker' => true,
+        'showBrand' => true
     ])
 
     <!-- Report Table -->
@@ -81,6 +82,7 @@
                 url: "{{ route('admin.reports.manager-targets') }}",
                 data: function(d) {
                     d.month = $('#analysis_month').val();
+                    d.brand = $('#brand').val();
                 }
             },
             columns: [

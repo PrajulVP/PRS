@@ -5,8 +5,13 @@
     <div class="row">
         <div class="col-sm-12">
             <div class="card">
-                <div class="card-header pb-0 d-flex justify-content-between align-items-center">
-                    <h5><i class="fa fa-bullseye me-2"></i>Field Staff Monthly Targets</h5>
+                <div class="card-header pb-3 pt-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fa fa-bullseye me-2"></i>Field Staff Monthly Targets</h5>
+                    @if($fieldStaffs->count() > 0)
+                        <button type="button" id="save-targets-btn" class="btn btn-primary px-4 fw-bold shadow-sm" style="border-radius: 8px;">
+                            <i class="fa fa-save me-2"></i> Save All Targets
+                        </button>
+                    @endif
                 </div>
                 <div class="card-body">
                     <form action="{{ route('admin.field-staff.targets') }}" method="GET" class="row g-3 mb-4 align-items-end" id="filter-form">
@@ -90,18 +95,7 @@
                                 </tbody>
                             </table>
                         </div>
-                        @if($fieldStaffs->count() > 0)
-                            <div class="card shadow-sm border-0 sticky-bottom mt-4" style="bottom: 1rem; z-index: 1020; border-radius: 12px;">
-                                <div class="card-body p-3 d-flex justify-content-between align-items-center bg-white rounded-3 shadow-sm border border-primary border-opacity-25">
-                                    <div class="text-muted small">
-                                        <i class="fa fa-info-circle me-1 text-primary"></i> Bulk update all field staff targets and click save.
-                                    </div>
-                                    <button type="button" id="save-targets-btn" class="btn btn-primary px-4 fw-bold shadow-sm" style="border-radius: 8px;">
-                                        <i class="fa fa-save me-2"></i> Save All Targets
-                                    </button>
-                                </div>
-                            </div>
-                        @endif
+                        <!-- Save button moved to header -->
                     </form>
                 </div>
             </div>
@@ -124,6 +118,17 @@
     .swal2-icon-content {
         box-sizing: content-box !important;
     }
+    
+    /* Premium Dirty State for Modified Inputs */
+    .input-dirty {
+        border-color: #f39c12 !important;
+        background-color: #fffdf7 !important;
+        box-shadow: 0 0 0 0.2rem rgba(243, 156, 18, 0.15) !important;
+    }
+    .badge-dirty {
+        background-color: #f39c12 !important;
+        color: white !important;
+    }
 </style>
 @endpush
 
@@ -139,6 +144,23 @@
             "language": {
                 "search": "_INPUT_",
                 "searchPlaceholder": "Search..."
+            }
+        });
+
+        // Track dirty state
+        $('#targets-table').on('input', '.target-input', function() {
+            var input = $(this);
+            var defaultValue = input.prop('defaultValue');
+            var currentValue = input.val();
+            
+            if (currentValue !== defaultValue) {
+                input.addClass('input-dirty');
+                $('#save-targets-btn').removeClass('btn-primary').addClass('btn-warning text-dark').html('<i class="fa fa-save me-2"></i> Save Changes');
+            } else {
+                input.removeClass('input-dirty');
+                if ($('.input-dirty').length === 0) {
+                    $('#save-targets-btn').removeClass('btn-warning text-dark').addClass('btn-primary').html('<i class="fa fa-save me-2"></i> Save All Targets');
+                }
             }
         });
 

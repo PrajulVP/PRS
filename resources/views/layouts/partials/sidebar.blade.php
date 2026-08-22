@@ -378,42 +378,42 @@
               @if (Auth::user()->hasAnyRole(['admin', 'superadmin']))
               <li>
                 <a class="{{ (request()->routeIs('admin.manager.tracking') || request()->routeIs('admin.manager.tracking-map')) ? 'active' : '' }}" href="{{ route('admin.manager.tracking') }}">
-                   <span>Manager Tracking</span>
+                   Manager Tracking
                 </a>
               </li>
               @endif
               @if (Auth::user()->hasPermissionToCategory('field_staff_reports', 'view') || Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
               <li>
                 <a class="{{ (request()->routeIs('admin.field-staff.tracking') || request()->routeIs('admin.field-staff.tracking-map')) ? 'active' : '' }}" href="{{ route('admin.field-staff.tracking') }}">
-                   <span>Staff Tracking</span>
+                   Staff Tracking
                 </a>
               </li>
               <li>
                 <a class="{{ request()->routeIs('admin.field-staff.visits') ? 'active' : '' }}" href="{{ route('admin.field-staff.visits') }}">
-                   <span>Staff Visits</span>
+                   Staff Visits
                 </a>
               </li>
               @endif
               <li><a href="{{ route('admin.field-staff.expenses') }}">
-                <span>Staff Expenses</span>
+                Staff Expenses
                 @if($actionCounts['staff_expenses'] > 0)
                     <span id="badge-staff-expenses" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; margin-left: 8px;">{{ $actionCounts['staff_expenses'] }}</span>
                 @endif
               </a></li>
               <li><a href="{{ route('admin.field-staff.leaves') }}">
-                <span>Staff Leaves</span>
+                Staff Leaves
                 @if($actionCounts['staff_leaves'] > 0)
                     <span id="badge-staff-leaves" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; margin-left: 8px;">{{ $actionCounts['staff_leaves'] }}</span>
                 @endif
               </a></li>
               @if (Auth::user()->hasPermissionToCategory('field_staff', 'edit') || Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
               <li><a class="{{ request()->routeIs('admin.field-staff.targets') ? 'active' : '' }}" href="{{ route('admin.field-staff.targets') }}">
-                <span>Staff Targets</span>
+                Staff Targets
               </a></li>
               @endif
               @if (Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
               <li><a class="{{ request()->routeIs('admin.staff-ratings.*') ? 'active' : '' }}" href="{{ route('admin.staff-ratings.index') }}">
-                <span>Staff Ratings</span>
+                Staff Ratings
               </a></li>
               @endif
           </ul>
@@ -543,16 +543,16 @@
           </a>
           <ul class="sidebar-submenu">
             @if (Auth::user()->hasPermissionToCategory('districts', 'view') || Auth::user()->hasPermissionToCategory('districts', 'add'))
-            <li><a href="{{ route('districts.index') }}"><span>Districts</span></a></li>
+            <li><a href="{{ route('districts.index') }}">Districts</a></li>
             @endif
             @if (Auth::user()->hasPermissionToCategory('areas', 'view') || Auth::user()->hasPermissionToCategory('areas', 'add'))
-            <li><a href="{{ route('areas.index') }}"><span>Areas</span></a></li>
+            <li><a href="{{ route('areas.index') }}">Areas</a></li>
             @endif
-            <li><a href="{{ route('admin.settings.field-staff') }}"><span>Field Staff Settings</span></a></li>
-            <li><a href="{{ route('admin.permissions.index') }}"><span>Roles & Permissions</span></a></li>
-            <li><a href="{{ route('admin.settings.general') }}"><span>General Settings</span></a></li>
+            <li><a href="{{ route('admin.settings.field-staff') }}">Field Staff Settings</a></li>
+            <li><a href="{{ route('admin.permissions.index') }}">Roles & Permissions</a></li>
+            <li><a href="{{ route('admin.settings.general') }}">General Settings</a></li>
             @if (Auth::user()->hasAnyRole(['admin', 'superadmin']))
-            <li><a href="{{ route('admin.backups.index') }}"><span>Database Backups</span></a></li>
+            <li><a href="{{ route('admin.backups.index') }}">Database Backups</a></li>
             @endif
           </ul>
         </li>

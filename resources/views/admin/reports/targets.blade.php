@@ -29,7 +29,8 @@
         'showStaff' => false,
         'showStatus' => false,
         'showExports' => false,
-        'showMonthPicker' => true
+        'showMonthPicker' => true,
+        'showBrand' => true
     ])
 
     <!-- Report Table -->
@@ -80,6 +81,7 @@
                 data: function(d) {
                     d.month = $('#analysis_month').val();
                     d.sales_manager_id = $('#sales_manager_id').val();
+                    d.brand = $('#brand').val();
                 }
             },
             columns: [

@@ -176,6 +176,18 @@
                 @endif
 
                 <!-- Status & Actions (Master Orders Only) -->
+                @if($showBrand ?? false)
+                    <div class="col-xl col-md-6">
+                        <label class="form-label fw-bold small text-muted text-uppercase mb-2"><i class="fa fa-tag me-1"></i>Brand</label>
+                        <select name="brand" id="brand" class="form-select form-select-sm select2-industrial">
+                            <option value="">All Brands</option>
+                            @foreach(\App\Models\Brand::orderBy('name')->get() as $b)
+                                <option value="{{ $b->name }}">{{ $b->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
+
                 @if($showStatus ?? true)
                     <div class="col-xl col-md-6">
                         <label class="form-label fw-bold small text-muted text-uppercase mb-2"><i class="fa fa-tag me-1"></i>Status</label>

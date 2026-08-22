@@ -990,30 +990,40 @@ class ReportController extends Controller
             $monthStr = substr($month, 5, 2);
             $monthName = date('F', mktime(0, 0, 0, $monthStr, 10));
 
-            $query->with(['salesTargets' => function($q) use ($yearStr, $monthName) {
+            $query->with(['salesTargets' => function($q) use ($yearStr, $monthName, $request) {
                 $q->where('year', $yearStr)->where('month', $monthName);
+                if ($request->brand) {
+                    $q->where('brand', $request->brand);
+                }
             }]);
 
             return DataTables::of($query)
                 ->addColumn('name', fn($fs) => $fs->user->name ?? 'N/A')
-                ->addColumn('achievement_display', fn($fs) => '₹' . number_format($fs->achievement ?? 0, 2))
-                ->addColumn('target_display', function($fs) {
+                ->addColumn('achievement_display', function($fs) use ($monthStr, $yearStr, $request) {
+                    $achieved = $fs->getAchievedAmountForMonth($monthStr, $yearStr, $request->brand);
+                    return '₹' . number_format($achieved, 2);
+                })
+                ->addColumn('target_display', function($fs) use ($request) {
                     $targetObj = $fs->salesTargets->first();
                     if ($targetObj) {
                         $targetAmount = $targetObj->amount;
                     } else {
-                        $latest = \App\Models\SalesTarget::where('field_staff_id', $fs->id)->latest('id')->first();
+                        $latestQuery = \App\Models\SalesTarget::where('field_staff_id', $fs->id);
+                        if ($request->brand) $latestQuery->where('brand', $request->brand);
+                        $latest = $latestQuery->latest('id')->first();
                         $targetAmount = $latest ? $latest->amount : 0;
                     }
                     return '₹' . number_format($targetAmount, 2);
                 })
-                ->addColumn('variance', function($fs) {
-                    $achieved = $fs->achievement ?? 0;
+                ->addColumn('variance', function($fs) use ($monthStr, $yearStr, $request) {
+                    $achieved = $fs->getAchievedAmountForMonth($monthStr, $yearStr, $request->brand);
                     $targetObj = $fs->salesTargets->first();
                     if ($targetObj) {
                         $target = $targetObj->amount;
                     } else {
-                        $latest = \App\Models\SalesTarget::where('field_staff_id', $fs->id)->latest('id')->first();
+                        $latestQuery = \App\Models\SalesTarget::where('field_staff_id', $fs->id);
+                        if ($request->brand) $latestQuery->where('brand', $request->brand);
+                        $latest = $latestQuery->latest('id')->first();
                         $target = $latest ? $latest->amount : 0;
                     }
                     
@@ -1023,13 +1033,15 @@ class ReportController extends Controller
                     $color = ($percent >= 100) ? 'text-success' : (($percent >= 70) ? 'text-warning' : 'text-danger');
                     return "<span class='{$color} fw-bold'>" . number_format($percent, 1) . "%</span>";
                 })
-                ->addColumn('progress_bar', function($fs) use ($monthStr, $yearStr) {
-                    $achieved = $fs->getAchievedAmountForMonth($monthStr, $yearStr);
+                ->addColumn('progress_bar', function($fs) use ($monthStr, $yearStr, $request) {
+                    $achieved = $fs->getAchievedAmountForMonth($monthStr, $yearStr, $request->brand);
                     $targetObj = $fs->salesTargets->first();
                     if ($targetObj) {
                         $target = $targetObj->amount;
                     } else {
-                        $latest = \App\Models\SalesTarget::where('field_staff_id', $fs->id)->latest('id')->first();
+                        $latestQuery = \App\Models\SalesTarget::where('field_staff_id', $fs->id);
+                        if ($request->brand) $latestQuery->where('brand', $request->brand);
+                        $latest = $latestQuery->latest('id')->first();
                         $target = $latest ? $latest->amount : 0;
                     }
                     
@@ -1061,45 +1073,52 @@ class ReportController extends Controller
             $monthStr = substr($month, 5, 2);
             $monthName = date('F', mktime(0, 0, 0, $monthStr, 10));
 
-            $query->with(['fieldStaffs' => function($q) use ($yearStr, $monthStr, $monthName) {
-                $q->with(['salesTargets' => function($sq) use ($yearStr, $monthName) {
+            $query->with(['fieldStaffs' => function($q) use ($yearStr, $monthStr, $monthName, $request) {
+                $q->with(['salesTargets' => function($sq) use ($yearStr, $monthName, $request) {
                     $sq->where('year', $yearStr)->where('month', $monthName);
+                    if ($request->brand) {
+                        $sq->where('brand', $request->brand);
+                    }
                 }]);
             }]);
 
             return DataTables::of($query)
                 ->addColumn('name', fn($sm) => $sm->user->name ?? 'N/A')
                 ->addColumn('team_size', fn($sm) => $sm->fieldStaffs->count())
-                ->addColumn('target_display', function($sm) {
+                ->addColumn('target_display', function($sm) use ($request) {
                     $totalTarget = 0;
                     foreach($sm->fieldStaffs as $fs) {
                         $targetObj = $fs->salesTargets->first();
                         if ($targetObj) {
                             $totalTarget += $targetObj->amount;
                         } else {
-                            $latest = \App\Models\SalesTarget::where('field_staff_id', $fs->id)->latest('id')->first();
+                            $latestQuery = \App\Models\SalesTarget::where('field_staff_id', $fs->id);
+                            if ($request->brand) $latestQuery->where('brand', $request->brand);
+                            $latest = $latestQuery->latest('id')->first();
                             $totalTarget += $latest ? $latest->amount : 0;
                         }
                     }
                     return '₹' . number_format($totalTarget, 2);
                 })
-                ->addColumn('achievement_display', function($sm) use ($monthStr, $yearStr) {
+                ->addColumn('achievement_display', function($sm) use ($monthStr, $yearStr, $request) {
                     $totalAchieved = 0;
                     foreach($sm->fieldStaffs as $fs) {
-                        $totalAchieved += $fs->getAchievedAmountForMonth($monthStr, $yearStr);
+                        $totalAchieved += $fs->getAchievedAmountForMonth($monthStr, $yearStr, $request->brand);
                     }
                     return '₹' . number_format($totalAchieved, 2);
                 })
-                ->addColumn('variance', function($sm) use ($monthStr, $yearStr) {
+                ->addColumn('variance', function($sm) use ($monthStr, $yearStr, $request) {
                     $achieved = 0;
                     $target = 0;
                     foreach($sm->fieldStaffs as $fs) {
-                        $achieved += $fs->getAchievedAmountForMonth($monthStr, $yearStr);
+                        $achieved += $fs->getAchievedAmountForMonth($monthStr, $yearStr, $request->brand);
                         $targetObj = $fs->salesTargets->first();
                         if ($targetObj) {
                             $target += $targetObj->amount;
                         } else {
-                            $latest = \App\Models\SalesTarget::where('field_staff_id', $fs->id)->latest('id')->first();
+                            $latestQuery = \App\Models\SalesTarget::where('field_staff_id', $fs->id);
+                            if ($request->brand) $latestQuery->where('brand', $request->brand);
+                            $latest = $latestQuery->latest('id')->first();
                             $target += $latest ? $latest->amount : 0;
                         }
                     }
@@ -1109,16 +1128,18 @@ class ReportController extends Controller
                     $color = ($percent >= 100) ? 'text-success' : (($percent >= 70) ? 'text-warning' : 'text-danger');
                     return "<span class='{$color} fw-bold'>" . number_format($percent, 1) . "%</span>";
                 })
-                ->addColumn('progress_bar', function($sm) use ($monthStr, $yearStr) {
+                ->addColumn('progress_bar', function($sm) use ($monthStr, $yearStr, $request) {
                     $achieved = 0;
                     $target = 0;
                     foreach($sm->fieldStaffs as $fs) {
-                        $achieved += $fs->getAchievedAmountForMonth($monthStr, $yearStr);
+                        $achieved += $fs->getAchievedAmountForMonth($monthStr, $yearStr, $request->brand);
                         $targetObj = $fs->salesTargets->first();
                         if ($targetObj) {
                             $target += $targetObj->amount;
                         } else {
-                            $latest = \App\Models\SalesTarget::where('field_staff_id', $fs->id)->latest('id')->first();
+                            $latestQuery = \App\Models\SalesTarget::where('field_staff_id', $fs->id);
+                            if ($request->brand) $latestQuery->where('brand', $request->brand);
+                            $latest = $latestQuery->latest('id')->first();
                             $target += $latest ? $latest->amount : 0;
                         }
                     }
