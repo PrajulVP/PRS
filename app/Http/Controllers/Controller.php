@@ -21,6 +21,13 @@ namespace App\Http\Controllers;
  *     scheme="bearer",
  *     bearerFormat="JWT"
  * )
+ * @OA\SecurityScheme(
+ *     securityScheme="deviceIdAuth",
+ *     type="apiKey",
+ *     in="header",
+ *     name="device-id",
+ *     description="Optional Device ID for Field Staff"
+ * )
  */
 
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;

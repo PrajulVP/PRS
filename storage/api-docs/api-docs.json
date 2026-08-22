@@ -6474,6 +6474,12 @@
                 "type": "http",
                 "scheme": "bearer",
                 "bearerFormat": "JWT"
+            },
+            "deviceIdAuth": {
+                "type": "apiKey",
+                "description": "Optional Device ID for Field Staff",
+                "name": "device-id",
+                "in": "header"
             }
         }
     },
