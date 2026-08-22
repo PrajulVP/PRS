@@ -256,6 +256,10 @@
         }
 
         /* Fix flatpickr input borders */
+        .modern-range-container .range-field {
+            min-width: 0;
+        }
+        
         .modern-range-container input.range-input,
         .modern-range-container input.range-input.form-control,
         .modern-range-container input.flatpickr-input {
@@ -270,6 +274,7 @@
             font-weight: 700 !important;
             color: #334155 !important;
             cursor: pointer !important;
+            width: 100% !important;
         }
 
 
