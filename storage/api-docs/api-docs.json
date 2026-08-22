@@ -2523,6 +2523,9 @@
                 "security": [
                     {
                         "bearerAuth": []
+                    },
+                    {
+                        "deviceIdAuth": []
                     }
                 ]
             }
@@ -3479,13 +3482,13 @@
                 ]
             }
         },
-        "/api/fieldstaff/loyalty-redemptions": {
+        "/api/field-staff/loyalty-redemptions": {
             "get": {
                 "tags": [
                     "Field Staff Dashboard"
                 ],
                 "summary": "Get approved loyalty redemptions to deliver",
-                "operationId": "e2d79ab83d47538e56a2c2f18a64a84f",
+                "operationId": "eecd0c9c3429f8ab192116165de71db5",
                 "parameters": [
                     {
                         "name": "status",
@@ -3528,17 +3531,20 @@
                 "security": [
                     {
                         "bearerAuth": []
+                    },
+                    {
+                        "deviceIdAuth": []
                     }
                 ]
             }
         },
-        "/api/fieldstaff/loyalty-redemptions/{id}/confirm": {
+        "/api/field-staff/loyalty-redemptions/{id}/confirm": {
             "post": {
                 "tags": [
                     "Field Staff Dashboard"
                 ],
                 "summary": "Confirm delivery of a loyalty reward",
-                "operationId": "8df23f79aa82ef3d0d2b27f91a6da068",
+                "operationId": "cefe96a27469b1fcb68532c623550b86",
                 "parameters": [
                     {
                         "name": "id",
@@ -3574,6 +3580,9 @@
                 "security": [
                     {
                         "bearerAuth": []
+                    },
+                    {
+                        "deviceIdAuth": []
                     }
                 ]
             }

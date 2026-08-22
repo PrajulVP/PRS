@@ -413,7 +413,7 @@ class FieldStaffDashboardApiController extends Controller
      *     path="/api/field-staff/performance-trend",
      *     summary="Get performance trend chart data for mobile",
      *     tags={"Field Staff Dashboard"},
-     *     security={{"bearerAuth":{}}},
+     *     security={{"bearerAuth":{}}, {"deviceIdAuth":{}}},
      *     @OA\Parameter(name="period", in="query", required=false, @OA\Schema(type="string", enum={"weekly", "monthly", "yearly"})),
      *     @OA\Response(response=200, description="Chart labels and counts")
      * )
