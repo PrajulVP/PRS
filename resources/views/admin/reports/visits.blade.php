@@ -128,8 +128,9 @@
                                             <th class="text-center">Avg Duration</th>
                                             <th class="text-center">Completed</th>
                                             <th class="text-center">Ongoing</th>
-                                            <th class="text-center">Shop Coverage</th>
-                                            <th class="text-center">Productivity %</th>
+                                            <th class="py-3 text-secondary fw-bold text-center">Shop Coverage</th>
+                                            <th class="py-3 text-secondary fw-bold text-center">Productivity %</th>
+                                            <th class="py-3 text-secondary fw-bold text-center">Action</th>
                                         </tr>
                                     </thead>
                                 </table>
@@ -171,7 +172,8 @@
                         { data: 'completed_visits', name: 'completed_visits', className: 'text-center', searchable: false },
                         { data: 'ongoing_visits', name: 'ongoing_visits', className: 'text-center', searchable: false },
                         { data: 'coverage', name: 'coverage', className: 'text-center', searchable: false },
-                        { data: 'productivity', name: 'productivity', className: 'text-center fw-bold text-info', searchable: false }
+                        { data: 'productivity', name: 'productivity', className: 'text-center fw-bold text-info', searchable: false },
+                        { data: 'action', name: 'action', className: 'text-center', searchable: false, orderable: false }
                     ],
                     dom: '<"d-none"B><"row mb-3 align-items-center"<"col-sm-12 col-md-6 custom-export-container"><"col-sm-12 col-md-6 text-end"f>>t<"row mt-3"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
                     buttons: [

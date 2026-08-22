@@ -895,7 +895,11 @@ class ReportController extends Controller
                     })->count();
                     return number_format(($uniqueShops / $fs->total_assigned_retailers) * 100, 1) . '%';
                 })
-                ->rawColumns(['completed_visits', 'ongoing_visits'])
+                ->addColumn('action', function($fs) {
+                    $url = route('admin.field-staff.visits') . '?user_id=' . $fs->user_id;
+                    return '<a href="'.$url.'" class="btn btn-sm btn-primary shadow-sm"><i class="fa fa-list me-1"></i> View Visits</a>';
+                })
+                ->rawColumns(['completed_visits', 'ongoing_visits', 'action'])
                 ->make(true);
         }
 
