@@ -86,17 +86,17 @@ class FieldStaffVisitController extends Controller
             return \Yajra\DataTables\Facades\DataTables::of($query)
                 ->addColumn('staff_member', function ($visit) {
                     $name = optional($visit->user)->name ?? 'Unknown Staff';
-                    return '<div class="fw-bold text-dark">' . $name . '</div>';
+                    return '<div class="text-dark">' . $name . '</div>';
                 })
                 ->addColumn('manager', function ($visit) {
                     $managerName = optional(optional(optional($visit->user)->fieldStaff)->salesManager)->user->name ?? 'N/A';
-                    return '<div class="text-muted">' . $managerName . '</div>';
+                    return '<div class="text-dark">' . $managerName . '</div>';
                 })
                   ->addColumn('party_type', function ($visit) {
-                      return '<div class="text-muted">' . ucfirst($visit->party_type) . '</div>';
+                      return '<div class="text-dark">' . ucfirst($visit->party_type) . '</div>';
                   })
                   ->addColumn('party_details', function ($visit) {
-                      return '<div class="fw-bold text-dark">' . $visit->party_name . '</div>';
+                      return '<div class="text-dark">' . $visit->party_name . '</div>';
                   })
                   ->addColumn('purpose', function ($visit) {
                     $html = '<div class="text-dark">' . (optional($visit->purpose)->name ?? 'N/A') . '</div>';
@@ -113,25 +113,24 @@ class FieldStaffVisitController extends Controller
                         $mins = $duration % 60;
                         $durationHtml = ($hours > 0 ? $hours . 'h ' : '') . $mins . 'm';
                     }
-                    return '<div class="fw-bold text-dark">' . $durationHtml . '</div>';
+                    return '<div class="text-dark">' . $durationHtml . '</div>';
                 })
-                ->addColumn('date_time', function ($visit) {
-                    $date = $visit->start_at ? $visit->start_at->format('d M, Y') : 'N/A';
-                    $time = $visit->start_at ? $visit->start_at->format('h:i A') : 'N/A';
-                    $endTime = '';
-                    
+                ->addColumn('date', function ($visit) {
+                    return $visit->start_at ? '<div style="color: #004085;">' . $visit->start_at->format('d M, Y') . '</div>' : 'N/A';
+                })
+                ->addColumn('start_time', function ($visit) {
+                    return $visit->start_at ? '<div class="text-dark">' . $visit->start_at->format('h:i A') . '</div>' : 'N/A';
+                })
+                ->addColumn('end_time', function ($visit) {
                     if ($visit->end_at) {
-                        $endTime = '- ' . $visit->end_at->format('h:i A');
+                        return '<div class="text-dark">' . $visit->end_at->format('h:i A') . '</div>';
                     } elseif ($visit->status == 'ongoing') {
-                        $endTime = '<span class="badge bg-warning text-dark ms-1">Ongoing</span>';
+                        return '<span class="badge bg-warning text-dark ms-1">Ongoing</span>';
                     }
-                    
-                    return '
-                        <div class="fw-bold">' . $date . '</div>
-                        <div class="small text-muted">' . $time . ' ' . $endTime . '</div>';
+                    return '<div class="text-dark">-</div>';
                 })
                 ->editColumn('remarks', function ($visit) {
-                    return '<div class="text-muted" style="max-width: 220px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; white-space: normal; line-height: 1.4;" title="' . htmlspecialchars($visit->remarks ?? '') . '">' . htmlspecialchars($visit->remarks ?: '-') . '</div>';
+                    return '<div class="text-dark" style="max-width: 220px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; white-space: normal; line-height: 1.4;" title="' . htmlspecialchars($visit->remarks ?? '') . '">' . htmlspecialchars($visit->remarks ?: '-') . '</div>';
                 })
                 ->addColumn('action', function ($visit) {
                     $durationHtml = '-';
@@ -160,7 +159,7 @@ class FieldStaffVisitController extends Controller
                             </button>
                         </div>';
                 })
-                ->rawColumns(['staff_member', 'manager', 'party_type', 'party_details', 'purpose', 'duration', 'date_time', 'remarks', 'action'])
+                ->rawColumns(['staff_member', 'manager', 'party_type', 'party_details', 'purpose', 'duration', 'date', 'start_time', 'end_time', 'remarks', 'action'])
                 ->make(true);
         }
 
@@ -213,7 +212,7 @@ class FieldStaffVisitController extends Controller
         ];
 
         $columns = [
-            'Date', 'Time', 'Staff Name', 'Manager Name', 'Party Type', 'Party Name', 
+            'Date', 'Start Time', 'End Time', 'Staff Name', 'Manager Name', 'Party Type', 'Party Name', 
             'Purpose', 'Status', 'Duration (Mins)', 'Repeat Visit', 'Remarks'
         ];
 
@@ -241,6 +240,7 @@ class FieldStaffVisitController extends Controller
                 $row = [
                     $visit->start_at ? $visit->start_at->format('Y-m-d') : '',
                     $visit->start_at ? $visit->start_at->format('h:i A') : '',
+                    $visit->end_at ? $visit->end_at->format('h:i A') : '',
                     optional($visit->user)->name,
                     optional(optional(optional($visit->user)->fieldStaff)->salesManager)->user->name ?? 'N/A',
                     $partyType,

@@ -124,8 +124,9 @@
                                 style="width:100%">
                                 <thead class="table-light border-bottom">
                                     <tr>
-                                        <th class="py-3 ps-4 text-secondary fw-bold" style="min-width: 140px;">Date & Time
-                                        </th>
+                                        <th class="py-3 ps-4 text-secondary fw-bold" style="min-width: 100px;">Date</th>
+                                        <th class="py-3 text-secondary fw-bold" style="min-width: 100px;">Start Time</th>
+                                        <th class="py-3 text-secondary fw-bold" style="min-width: 100px;">End Time</th>
                                         <th class="py-3 text-secondary fw-bold">Staff Member</th>
                                         <th class="py-3 text-secondary fw-bold">Manager</th>
                                         <th class="py-3 text-secondary fw-bold">Party Type</th>
@@ -168,14 +169,14 @@
                       <div class="row g-3 mb-4">
                           <div class="col-md-6">
                               <div class="p-3 rounded border h-100" style="background-color: var(--med-bg-card);">
-                                  <p class="text-muted mb-1" style="font-size: 12px;"><i
+                                  <p class="mb-1" style="font-size: 12px; font-weight: 500; color: var(--med-font-color);"><i
                                           class="fa fa-user text-primary me-1"></i> Staff Member</p>
                                   <h6 class="mb-0 fw-bold" id="modal_staff_name" style="color: var(--med-font-color);"></h6>
                               </div>
                           </div>
                           <div class="col-md-6">
                               <div class="p-3 rounded border h-100" style="background-color: var(--med-bg-card);">
-                                  <p class="text-muted mb-1" style="font-size: 12px;"><i
+                                  <p class="mb-1" style="font-size: 12px; font-weight: 500; color: var(--med-font-color);"><i
                                           class="fa fa-user-shield text-success me-1"></i> Manager</p>
                                   <h6 class="mb-0 fw-bold" id="modal_manager_name" style="color: var(--med-font-color);"></h6>
                               </div>
@@ -186,33 +187,38 @@
                           Visit Data</h6>
   
                       <div class="row g-3 mb-4">
-                          <div class="col-sm-6 col-lg-3">
+                          <div class="col-sm-6 col-lg-4">
                               <div class="p-3 rounded border h-100 shadow-sm" style="background-color: var(--med-bg-card);">
-                                  <p class="text-muted mb-2" style="font-size: 12px;"><i class="far fa-clock text-info me-1"></i> Date & Time</p>
+                                  <p class="mb-2" style="font-size: 12px; font-weight: 500; color: var(--med-font-color);"><i class="far fa-clock text-info me-1"></i> Date & Time</p>
                                   <h6 class="mb-2 fw-bold" id="modal_date" style="color: var(--med-font-color);"></h6>
-                                  <div class="d-flex align-items-center rounded px-2 py-1" style="background-color: var(--med-bg-body); display: inline-flex !important; font-size: 11px;">
-                                      <i class="fa fa-play text-success me-1" style="font-size: 9px;"></i> <span class="fw-bold" id="modal_start_time" style="color: var(--med-font-color);"></span>
-                                      <i class="fa fa-arrow-right mx-2 text-muted" style="font-size: 9px;"></i> 
-                                      <i class="fa fa-stop text-danger me-1" style="font-size: 9px;"></i> <span class="fw-bold" id="modal_end_time" style="color: var(--med-font-color);"></span>
+                                  <div class="d-flex align-items-center mt-2" style="gap: 8px;">
+                                      <div class="rounded px-2 py-1 d-flex flex-column" style="flex: 1; background-color: var(--med-bg-body); border: 1px solid rgba(0,0,0,0.1);">
+                                          <span style="font-size: 10px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; color: var(--med-font-color);">Start</span>
+                                          <span class="fw-bold" id="modal_start_time" style="color: var(--med-font-color); font-size: 13px;"></span>
+                                      </div>
+                                      <div class="rounded px-2 py-1 d-flex flex-column" style="flex: 1; background-color: var(--med-bg-body); border: 1px solid rgba(0,0,0,0.1);">
+                                          <span style="font-size: 10px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; color: var(--med-font-color);">End</span>
+                                          <span class="fw-bold" id="modal_end_time" style="color: var(--med-font-color); font-size: 13px;"></span>
+                                      </div>
                                   </div>
                               </div>
                           </div>
-                          <div class="col-sm-6 col-lg-3">
+                          <div class="col-sm-6 col-lg">
                               <div class="p-3 rounded border h-100 shadow-sm" style="background-color: var(--med-bg-card);">
-                                  <p class="text-muted mb-2" style="font-size: 12px;"><i class="fa fa-store text-secondary me-1"></i> Party Details</p>
+                                  <p class="mb-2" style="font-size: 12px; font-weight: 500; color: var(--med-font-color);"><i class="fa fa-store text-secondary me-1"></i> Party Details</p>
                                   <h6 class="mb-2 fw-bold" id="modal_party_name" style="color: var(--med-font-color);"></h6>
-                                  <p class="mb-0 text-muted" id="modal_party_type" style="font-size: 12px;"></p>
+                                  <p class="mb-0" id="modal_party_type" style="font-size: 12px; font-weight: 500; color: var(--med-font-color);"></p>
                               </div>
                           </div>
-                          <div class="col-sm-6 col-lg-3">
+                          <div class="col-sm-6 col-lg">
                               <div class="p-3 rounded border h-100 shadow-sm" style="background-color: var(--med-bg-card);">
-                                  <p class="text-muted mb-2" style="font-size: 12px;"><i class="fa fa-bullseye text-warning me-1"></i> Purpose</p>
+                                  <p class="mb-2" style="font-size: 12px; font-weight: 500; color: var(--med-font-color);">Purpose</p>
                                   <h6 class="mb-0 fw-bold" id="modal_purpose" style="color: var(--med-font-color);"></h6>
                               </div>
                           </div>
-                          <div class="col-sm-6 col-lg-3">
+                          <div class="col-sm-6 col-lg">
                               <div class="p-3 rounded border h-100 shadow-sm" style="background-color: var(--med-bg-card);">
-                                  <p class="text-muted mb-2" style="font-size: 12px;"><i class="fa fa-tasks text-primary me-1"></i> Status</p>
+                                  <p class="mb-2" style="font-size: 12px; font-weight: 500; color: var(--med-font-color);"><i class="fa fa-tasks text-primary me-1"></i> Status</p>
                                   <span class="badge px-3 py-2 mt-1" id="modal_status" style="font-weight: 500; font-size: 12px; letter-spacing: 0.5px;"></span>
                               </div>
                           </div>
@@ -561,7 +567,9 @@
                     }
                 },
                 columns: [
-                    { data: 'date_time', name: 'start_at' },
+                    { data: 'date', name: 'start_at' },
+                    { data: 'start_time', name: 'start_at', orderable: false, searchable: false },
+                    { data: 'end_time', name: 'end_at', orderable: false, searchable: false },
                     { data: 'staff_member', name: 'user.name', orderable: false },
                     { data: 'manager', name: 'manager', orderable: false, searchable: false },
                     { data: 'party_type', name: 'party_type', orderable: false, searchable: false },

@@ -1,13 +1,14 @@
 <table border="1">
     <thead>
         <tr>
-            <th colspan="11" style="text-align: center; font-size: 16px; font-weight: bold;">
+            <th colspan="12" style="text-align: center; font-size: 16px; font-weight: bold;">
                 Staff Visits Report ({{ $reportTitle ?? date('Y-m-d') }})
             </th>
         </tr>
         <tr>
             <th>Date</th>
-            <th>Time</th>
+            <th>Start Time</th>
+            <th>End Time</th>
             <th>Staff Name</th>
             <th>Manager Name</th>
             <th>Party Type</th>
@@ -24,6 +25,7 @@
         <tr>
             <td>{{ $visit->start_at ? $visit->start_at->format('Y-m-d') : '' }}</td>
             <td>{{ $visit->start_at ? $visit->start_at->format('h:i A') : '' }}</td>
+            <td>{{ $visit->end_at ? $visit->end_at->format('h:i A') : '' }}</td>
             <td>{{ optional($visit->user)->name }}</td>
             <td>{{ optional(optional(optional($visit->user)->fieldStaff)->salesManager)->user->name ?? 'N/A' }}</td>
             <td>{{ ucfirst($visit->party_type) }}</td>

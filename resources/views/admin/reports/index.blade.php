@@ -144,10 +144,10 @@
                             <span class="fw-bold text-white" style="font-size: 13px;"><i class="fa fa-users me-3"></i>Manager Target vs Achievement</span>
                             <i class="fa fa-arrow-right text-white opacity-75 small"></i>
                         </a>
-                        <a href="{{ route('admin.reports.visits') }}" class="btn btn-primary border-0 text-white text-start px-4 py-2 rounded-3 d-flex align-items-center justify-content-between shadow-sm hover-elevate" style="background: linear-gradient(135deg, #00497a 0%, #0067ab 100%) !important;">
+                        {{-- <a href="{{ route('admin.reports.visits') }}" class="btn btn-primary border-0 text-white text-start px-4 py-2 rounded-3 d-flex align-items-center justify-content-between shadow-sm hover-elevate" style="background: linear-gradient(135deg, #00497a 0%, #0067ab 100%) !important;">
                             <span class="fw-bold text-white" style="font-size: 13px;"><i class="fa fa-map-marker me-3"></i>Field Visit Reports</span>
                             <i class="fa fa-arrow-right text-white opacity-75 small"></i>
-                        </a>
+                        </a> --}}
                     </div>
                 </div>
             </div>

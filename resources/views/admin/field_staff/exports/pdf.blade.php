@@ -85,7 +85,8 @@
         <thead>
             <tr>
                 <th>Date</th>
-                <th>Time</th>
+                <th>Start Time</th>
+                <th>End Time</th>
                 <th>Staff Name</th>
                 <th>Party Type</th>
                 <th>Party Name</th>
@@ -101,6 +102,7 @@
             <tr>
                 <td>{{ $visit->start_at ? $visit->start_at->format('Y-m-d') : '' }}</td>
                 <td>{{ $visit->start_at ? $visit->start_at->format('h:i A') : '' }}</td>
+                <td>{{ $visit->end_at ? $visit->end_at->format('h:i A') : '' }}</td>
                 <td>{{ optional($visit->user)->name }}</td>
                 <td>{{ ucfirst($visit->party_type) }}</td>
                 <td>

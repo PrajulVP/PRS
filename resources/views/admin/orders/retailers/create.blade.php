@@ -1715,7 +1715,39 @@
                 
                 if (action === 'plus') {
                     if (allocated < freeAmt) {
-                        item.free_selections[attr][val] = currentQty + 1;
+                        let maxStock = null;
+                        if (currentFreeVariantAvailable) {
+                            maxStock = 0;
+                            currentFreeVariantAvailable.forEach(v => {
+                                if (attr.toLowerCase() === 'size' && v.size && v.size.toUpperCase() === val.toUpperCase()) {
+                                    maxStock += parseFloat(v.stock);
+                                } else if (attr.toLowerCase() === 'side' && v.side && v.side.toUpperCase() === val.toUpperCase()) {
+                                    maxStock += parseFloat(v.stock);
+                                }
+                            });
+                            
+                            // Subtract paid quantity if the free product draws from the same stock
+                            let fpInfo = eligibleFreeProducts.find(p => p.id == item.id);
+                            let fpId = fpInfo ? fpInfo.id : item.id;
+                            if (fpId == item.id && item.variants) {
+                                let paidQty = 0;
+                                let mul = item.multiplier || 1;
+                                item.variants.forEach(v => {
+                                    if (attr.toLowerCase() === 'size' && v.size && v.size.toUpperCase() === val.toUpperCase()) {
+                                        paidQty += (parseFloat(v.qty) || 0) * mul;
+                                    } else if (attr.toLowerCase() === 'side' && v.side && v.side.toUpperCase() === val.toUpperCase()) {
+                                        paidQty += (parseFloat(v.qty) || 0) * mul;
+                                    }
+                                });
+                                maxStock -= paidQty;
+                            }
+                        }
+                        
+                        if (maxStock !== null && (currentQty + 1) > maxStock) {
+                            if (typeof showToast === 'function') showToast('error', `Only ${maxStock} available in stock for this free variant.`);
+                        } else {
+                            item.free_selections[attr][val] = currentQty + 1;
+                        }
                     } else {
                         if (typeof showToast === 'function') showToast('error', `You only have ${freeAmt} free items available.`);
                     }
