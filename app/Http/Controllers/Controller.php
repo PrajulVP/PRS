@@ -25,7 +25,7 @@ namespace App\Http\Controllers;
  *     securityScheme="deviceIdAuth",
  *     type="apiKey",
  *     in="header",
- *     name="device-id",
+ *     name="X-Device-ID",
  *     description="Optional Device ID for Field Staff"
  * )
  */
