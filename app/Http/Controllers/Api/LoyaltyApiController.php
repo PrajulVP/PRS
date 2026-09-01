@@ -119,7 +119,7 @@ class LoyaltyApiController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/field-staff/loyalty-redemptions",
+     *     path="/api/fieldstaff/loyalty-redemptions",
      *     tags={"Field Staff Dashboard"},
      *     summary="Get approved loyalty redemptions to deliver",
      *     security={{"bearerAuth":{}}, {"deviceIdAuth":{}}},
@@ -183,7 +183,7 @@ class LoyaltyApiController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/field-staff/loyalty-redemptions/{id}/confirm",
+     *     path="/api/fieldstaff/loyalty-redemptions/{id}/confirm",
      *     tags={"Field Staff Dashboard"},
      *     summary="Confirm delivery of a loyalty reward",
      *     security={{"bearerAuth":{}}, {"deviceIdAuth":{}}},

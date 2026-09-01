@@ -137,7 +137,10 @@ Route::middleware('auth:api')->group(function () {
         Route::post('leaves', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'requestLeave']);
         Route::post('visits/report-location', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'reportLocation']);
         Route::post('sync-offline-logs', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'syncOfflineLogs']);
-        
+    });
+
+    // Field Staff Loyalty (uses 'fieldstaff' prefix as per client requirements)
+    Route::prefix('fieldstaff')->middleware(['device.binding'])->group(function () {
         Route::get('loyalty-redemptions', [\App\Http\Controllers\Api\LoyaltyApiController::class, 'getFieldstaffRedemptions']);
         Route::post('loyalty-redemptions/{id}/confirm', [\App\Http\Controllers\Api\LoyaltyApiController::class, 'confirmFieldstaffRedemption']);
     });
