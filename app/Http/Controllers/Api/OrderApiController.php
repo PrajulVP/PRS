@@ -42,7 +42,24 @@ class OrderApiController extends Controller
      *             ))
      *         )
      *     ),
-     *     @OA\Response(response=200, description="Order created successfully with eligible free items returned for Step 2 selection.")
+     *     @OA\Response(
+     *         response=200,
+     *         description="Order created successfully with eligible free items returned for Step 2 selection.",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="eligible_free_items", type="array", @OA\Items(
+     *                     @OA\Property(property="quantity_allowed", type="integer", example=2),
+     *                     @OA\Property(property="allowed_variants", type="object", description="Sizes and sides available"),
+     *                     @OA\Property(property="available_stock", type="array", description="Detailed stock quantities per variant", @OA\Items(
+     *                         @OA\Property(property="side", type="string", example="Left"),
+     *                         @OA\Property(property="size", type="string", example="M"),
+     *                         @OA\Property(property="stock", type="integer", example=5)
+     *                     ))
+     *                 ))
+     *             )
+     *         )
+     *     )
      * )
      */
     public function store(Request $request)
@@ -195,7 +212,7 @@ class OrderApiController extends Controller
                 }
 
                 if ($freeQty > 0) {
-                    $variants = [];
+                    $availableStockDetails = [];
                     if ($product->has_variants && !empty($product->variant_options)) {
                         $variants = $product->variant_options;
                         
@@ -206,6 +223,14 @@ class OrderApiController extends Controller
                             ->get();
 
                         if ($availableInventory->count() > 0) {
+                            foreach ($availableInventory as $inv) {
+                                $availableStockDetails[] = [
+                                    'side' => $inv->side,
+                                    'size' => $inv->size,
+                                    'stock' => $inv->stock
+                                ];
+                            }
+
                             $filteredVariants = [];
                             foreach ($variants as $type => $options) {
                                 $validOptions = [];
@@ -235,7 +260,8 @@ class OrderApiController extends Controller
                         'unit' => $this->getAvailableUnits($product)[0] ?? 'Nos',
                         'quantity_allowed' => $freeQty,
                         'requires_variants' => $product->has_variants ? true : false,
-                        'allowed_variants' => $variants
+                        'allowed_variants' => $variants,
+                        'available_stock' => $availableStockDetails
                     ];
                 }
             }

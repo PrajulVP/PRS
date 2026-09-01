@@ -170,7 +170,9 @@ class LoyaltyApiController extends Controller
                 'loyalty_redemptions.selected_reward',
                 'loyalty_slabs.gift_name as fallback_reward',
                 'loyalty_slabs.type as brand',
-                'loyalty_slabs.min_points as threshold'
+                'loyalty_slabs.min_points as threshold',
+                'users.device_uuid as device_id',
+                'users.player_id'
             )
             ->orderBy('loyalty_redemptions.created_at', 'desc')
             ->get();
