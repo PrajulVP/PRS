@@ -192,17 +192,18 @@ class FieldStaffManagementController extends Controller
             $query->where('sales_manager_id', $request->sales_manager_id);
         }
 
-        $brands = \App\Models\Product::select('brand')->distinct()->pluck('brand')->toArray();
+        $brands = \Illuminate\Support\Facades\DB::table('brands')->pluck('name')->toArray();
 
         $achievedData = \Illuminate\Support\Facades\DB::table('retailer_order_items')
             ->join('retailer_orders', 'retailer_order_items.retailer_order_id', '=', 'retailer_orders.id')
             ->join('retailers', 'retailer_orders.retailer_id', '=', 'retailers.id')
             ->join('products', 'retailer_order_items.product_id', '=', 'products.id')
+            ->join('brands', 'products.brand_id', '=', 'brands.id')
             ->where('retailer_orders.status', 'delivered')
             ->whereYear('retailer_orders.created_at', $yearStr)
             ->whereMonth('retailer_orders.created_at', $monthStr)
-            ->select('retailers.field_staff_id', 'products.brand', \Illuminate\Support\Facades\DB::raw('SUM(retailer_order_items.quantity * retailer_order_items.unit_price) as total_achieved'))
-            ->groupBy('retailers.field_staff_id', 'products.brand')
+            ->select('retailers.field_staff_id', 'brands.name as brand', \Illuminate\Support\Facades\DB::raw('SUM(retailer_order_items.quantity * retailer_order_items.unit_price) as total_achieved'))
+            ->groupBy('retailers.field_staff_id', 'brands.name')
             ->get()
             ->groupBy('field_staff_id');
 

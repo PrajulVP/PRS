@@ -92,11 +92,11 @@ class LoyaltyApiController extends Controller
             'selected_reward' => 'required|string|max:255'
         ]);
 
-        $slab = LoyaltySlab::find($request->slab_id);
+        $slab = LoyaltySlab::with('brand')->find($request->slab_id);
         
         $controller = new \App\Http\Controllers\LoyaltyPointsController();
         $upcomingRewards = $controller->calculateUpcomingRewards($retailer, 'brand');
-        $targetReward = collect($upcomingRewards)->firstWhere('brand', $slab->type);
+        $targetReward = collect($upcomingRewards)->firstWhere('brand', $slab->brand->name ?? '');
         
         if (!$targetReward || $targetReward['current_total'] < $slab->min_points) {
             return response()->json(['status' => false, 'message' => 'Not enough points to claim this reward.'], 400);
@@ -154,6 +154,7 @@ class LoyaltyApiController extends Controller
             ->join('retailers', 'loyalty_redemptions.retailer_id', '=', 'retailers.id')
             ->join('users', 'retailers.user_id', '=', 'users.id')
             ->join('loyalty_slabs', 'loyalty_redemptions.loyalty_slab_id', '=', 'loyalty_slabs.id')
+            ->join('brands', 'loyalty_slabs.brand_id', '=', 'brands.id')
             ->where('retailers.field_staff_id', $fieldStaff->id);
             
         if ($request->status !== 'all') {
@@ -169,7 +170,7 @@ class LoyaltyApiController extends Controller
                 'users.name as owner_name',
                 'loyalty_redemptions.selected_reward',
                 'loyalty_slabs.gift_name as fallback_reward',
-                'loyalty_slabs.type as brand',
+                'brands.name as brand',
                 'loyalty_slabs.min_points as threshold',
                 'users.device_uuid as device_id',
                 'users.player_id'

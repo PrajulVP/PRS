@@ -362,10 +362,11 @@ class DashboardController extends Controller
                     $brandTotals = \Illuminate\Support\Facades\DB::table('retailer_order_items')
                         ->join('retailer_orders', 'retailer_order_items.retailer_order_id', '=', 'retailer_orders.id')
                         ->join('products', 'retailer_order_items.product_id', '=', 'products.id')
+                        ->join('brands', 'products.brand_id', '=', 'brands.id')
                         ->where('retailer_orders.retailer_id', $retailer->id)
                         ->where('retailer_orders.status', \App\Models\RetailerOrder::STATUS_DELIVERED)
-                        ->select('products.brand', \Illuminate\Support\Facades\DB::raw('SUM(retailer_order_items.unit_price * retailer_order_items.quantity) as total_ptr'))
-                        ->groupBy('products.brand')
+                        ->select('brands.name as brand', \Illuminate\Support\Facades\DB::raw('SUM(retailer_order_items.unit_price * retailer_order_items.quantity) as total_ptr'))
+                        ->groupBy('brands.name')
                         ->pluck('total_ptr', 'brand')
                         ->toArray();
 
@@ -513,12 +514,13 @@ class DashboardController extends Controller
     private function getBrandSalesDistribution($startDate, $endDate, $user = null)
     {
         // Get all unique brands in the system
-        $allBrands = \App\Models\Product::distinct('brand')->pluck('brand')
+        $allBrands = \Illuminate\Support\Facades\DB::table('brands')->pluck('name')
             ->map(fn($b) => $b ?: 'Standard')
             ->unique()
             ->values();
 
         $query = \App\Models\RetailerOrderItem::join('products', 'retailer_order_items.product_id', '=', 'products.id')
+            ->join('brands', 'products.brand_id', '=', 'brands.id')
             ->join('retailer_orders', 'retailer_order_items.retailer_order_id', '=', 'retailer_orders.id')
             ->where('retailer_orders.status', 'delivered')
             ->whereBetween('retailer_orders.created_at', [$startDate, $endDate]);
@@ -528,8 +530,8 @@ class DashboardController extends Controller
             $query->whereIn('retailer_orders.fieldstaff_id', $fieldStaffIds);
         }
 
-        $distribution = $query->select('products.brand', DB::raw('SUM(retailer_order_items.total_amount) as revenue'))
-            ->groupBy('products.brand')
+        $distribution = $query->select('brands.name as brand', DB::raw('SUM(retailer_order_items.total_amount) as revenue'))
+            ->groupBy('brands.name')
             ->get()
             ->keyBy(fn($item) => $item->brand ?: 'Standard');
 

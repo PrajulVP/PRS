@@ -14,14 +14,20 @@ class LoyaltyPointsController extends Controller
     public function calculateUpcomingRewards($retailer, $type = 'global')
     {
         if ($type === 'brand') {
-            $loyaltyRulesCollection = \App\Models\LoyaltySlab::orderBy('type')->orderBy('min_points')->get()->groupBy('type');
+            $loyaltyRulesCollection = \App\Models\LoyaltySlab::join('brands', 'loyalty_slabs.brand_id', '=', 'brands.id')
+                ->select('loyalty_slabs.*', 'brands.name as type')
+                ->orderBy('brands.name')
+                ->orderBy('min_points')
+                ->get()
+                ->groupBy('type');
             
             $brandTotalsQuery = \App\Models\RetailerOrderItem::join('retailer_orders', 'retailer_order_items.retailer_order_id', '=', 'retailer_orders.id')
                 ->join('products', 'retailer_order_items.product_id', '=', 'products.id')
+                ->join('brands', 'products.brand_id', '=', 'brands.id')
                 ->where('retailer_orders.retailer_id', $retailer->id)
                 ->where('retailer_orders.status', \App\Models\RetailerOrder::STATUS_DELIVERED)
-                ->selectRaw('products.brand, SUM(retailer_order_items.quantity * retailer_order_items.unit_price) as total_amount')
-                ->groupBy('products.brand')
+                ->selectRaw('brands.name as brand, SUM(retailer_order_items.quantity * retailer_order_items.unit_price) as total_amount')
+                ->groupBy('brands.name')
                 ->get();
                 
             // Make the array keys fully uppercase and trimmed to prevent case-sensitivity bugs
@@ -33,8 +39,9 @@ class LoyaltyPointsController extends Controller
             
             $redemptions = \Illuminate\Support\Facades\DB::table('loyalty_redemptions')
                 ->join('loyalty_slabs', 'loyalty_redemptions.loyalty_slab_id', '=', 'loyalty_slabs.id')
+                ->join('brands', 'loyalty_slabs.brand_id', '=', 'brands.id')
                 ->where('loyalty_redemptions.retailer_id', $retailer->id)
-                ->select('loyalty_slabs.id', 'loyalty_slabs.type', 'loyalty_slabs.min_points')
+                ->select('loyalty_slabs.id', 'brands.name as type', 'loyalty_slabs.min_points')
                 ->get();
 
             $upcomingRewards = [];
@@ -506,13 +513,14 @@ class LoyaltyPointsController extends Controller
             
             $retailerPendingRedemptions = \Illuminate\Support\Facades\DB::table('loyalty_redemptions')
                 ->join('loyalty_slabs', 'loyalty_redemptions.loyalty_slab_id', '=', 'loyalty_slabs.id')
+                ->join('brands', 'loyalty_slabs.brand_id', '=', 'brands.id')
                 ->where('loyalty_redemptions.retailer_id', $selectedRetailer->id)
                 ->where('loyalty_redemptions.status', 'pending')
                 ->select(
                     'loyalty_redemptions.id as redemption_id',
                     'loyalty_slabs.gift_name',
                     'loyalty_slabs.min_points as threshold',
-                    'loyalty_slabs.type as brand',
+                    'brands.name as brand',
                     'loyalty_redemptions.created_at'
                 )
                 ->get();
@@ -526,6 +534,7 @@ class LoyaltyPointsController extends Controller
                 ->join('retailers', 'loyalty_redemptions.retailer_id', '=', 'retailers.id')
                 ->leftJoin('users', 'retailers.user_id', '=', 'users.id')
                 ->join('loyalty_slabs', 'loyalty_redemptions.loyalty_slab_id', '=', 'loyalty_slabs.id')
+                ->join('brands', 'loyalty_slabs.brand_id', '=', 'brands.id')
                 ->where('loyalty_redemptions.status', 'pending')
                 ->select(
                     'loyalty_redemptions.id as redemption_id',
@@ -534,7 +543,7 @@ class LoyaltyPointsController extends Controller
                     'retailers.shop_name',
                     'users.name as owner_name',
                     'loyalty_slabs.gift_name',
-                    'loyalty_slabs.type as brand',
+                    'brands.name as brand',
                     'loyalty_slabs.min_points as threshold',
                     'loyalty_redemptions.selected_reward'
                 )
@@ -551,6 +560,7 @@ class LoyaltyPointsController extends Controller
                 ->join('retailers', 'loyalty_redemptions.retailer_id', '=', 'retailers.id')
                 ->leftJoin('users', 'retailers.user_id', '=', 'users.id')
                 ->join('loyalty_slabs', 'loyalty_redemptions.loyalty_slab_id', '=', 'loyalty_slabs.id')
+                ->join('brands', 'loyalty_slabs.brand_id', '=', 'brands.id')
                 ->whereIn('loyalty_redemptions.status', ['approved', 'delivered'])
                 ->select(
                     'loyalty_redemptions.id as redemption_id',
@@ -560,7 +570,7 @@ class LoyaltyPointsController extends Controller
                     'retailers.shop_name',
                     'users.name as owner_name',
                     'loyalty_slabs.gift_name',
-                    'loyalty_slabs.type as brand',
+                    'brands.name as brand',
                     'loyalty_slabs.min_points as threshold',
                     'loyalty_redemptions.selected_reward'
                 )
@@ -711,10 +721,10 @@ class LoyaltyPointsController extends Controller
 
         $retailer = $user->retailer;
         
-        $slab = \App\Models\LoyaltySlab::find($request->slab_id);
+        $slab = \App\Models\LoyaltySlab::with('brand')->find($request->slab_id);
         
         $upcomingRewards = $this->calculateUpcomingRewards($retailer, 'brand');
-        $targetReward = collect($upcomingRewards)->firstWhere('brand', $slab->type);
+        $targetReward = collect($upcomingRewards)->firstWhere('brand', $slab->brand->name ?? '');
         
         if (!$targetReward || $targetReward['current_total'] < $slab->min_points) {
             return redirect()->back()->with('error', 'Not enough points to claim this reward.');

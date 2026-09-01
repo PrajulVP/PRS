@@ -11,12 +11,13 @@ class LoyaltySlab extends Model
 
     protected $fillable = [
         'slab_name',
-        'type',
+        'brand_id',
         'min_points',
         'gift_name',
         'gift_image',
         'description',
-        'is_active'
+        'is_active',
+        'reward_options'
     ];
 
     protected $casts = [
@@ -25,5 +26,10 @@ class LoyaltySlab extends Model
     public function redemptions()
     {
         return $this->hasMany(LoyaltyRedemption::class);
+    }
+    
+    public function brand()
+    {
+        return $this->belongsTo(Brand::class);
     }
 }

@@ -141,7 +141,9 @@ class RetailerDashboardApiController extends Controller
             ->sum('loyalty_points_earned');
 
         // Upcoming Rewards Logic based on brand totals
-        $loyaltyRulesCollection = \App\Models\LoyaltySlab::orderBy('type')
+        $loyaltyRulesCollection = \App\Models\LoyaltySlab::join('brands', 'loyalty_slabs.brand_id', '=', 'brands.id')
+            ->select('loyalty_slabs.*', 'brands.name as type')
+            ->orderBy('brands.name')
             ->orderBy('min_points')
             ->get()
             ->groupBy('type');
@@ -150,10 +152,11 @@ class RetailerDashboardApiController extends Controller
         $brandTotals = \Illuminate\Support\Facades\DB::table('retailer_order_items')
             ->join('retailer_orders', 'retailer_order_items.retailer_order_id', '=', 'retailer_orders.id')
             ->join('products', 'retailer_order_items.product_id', '=', 'products.id')
+            ->join('brands', 'products.brand_id', '=', 'brands.id')
             ->where('retailer_orders.retailer_id', $retailer->id)
             ->where('retailer_orders.status', RetailerOrder::STATUS_DELIVERED)
-            ->select('products.brand', \Illuminate\Support\Facades\DB::raw('SUM(retailer_order_items.unit_price * retailer_order_items.quantity) as total_ptr'))
-            ->groupBy('products.brand')
+            ->select('brands.name as brand', \Illuminate\Support\Facades\DB::raw('SUM(retailer_order_items.unit_price * retailer_order_items.quantity) as total_ptr'))
+            ->groupBy('brands.name')
             ->pluck('total_ptr', 'brand')
             ->toArray();
 

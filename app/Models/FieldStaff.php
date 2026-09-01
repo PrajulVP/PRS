@@ -109,7 +109,8 @@ class FieldStaff extends Model
             
         if ($brand) {
             $query->join('products', 'retailer_order_items.product_id', '=', 'products.id')
-                ->where('products.brand', $brand);
+                ->join('brands', 'products.brand_id', '=', 'brands.id')
+                ->where('brands.name', $brand);
         }
 
         return $query->sum(\Illuminate\Support\Facades\DB::raw('retailer_order_items.unit_price * retailer_order_items.quantity'));
