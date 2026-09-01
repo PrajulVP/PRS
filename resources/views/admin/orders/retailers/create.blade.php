@@ -1013,9 +1013,8 @@
                 else if (unit === 'Nos') mul = 1 / (parseInt(currentProductDetails.units_per_strip || 1));
 
                 let totalProposedStrips = qty * mul;
-                let existingQtyStrips = addedItems[key] ? (addedItems[key].qty * addedItems[key].multiplier) : 0;
 
-                if ((existingQtyStrips + totalProposedStrips) > maxStockRaw) {
+                if (totalProposedStrips > maxStockRaw) {
                     return showToast('error', `You cannot select a quantity greater than the available stock in the selected distributor.`);
                 }
 
