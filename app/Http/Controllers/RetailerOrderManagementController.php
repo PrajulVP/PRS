@@ -1966,6 +1966,11 @@ class RetailerOrderManagementController extends Controller
                 $retailerOrder->invoice_no = trim($request->invoice_no);
             }
 
+            // Automatically approve the order when the admin uploads an invoice
+            if (!in_array($retailerOrder->status, ['approved', 'delivered', 'cancelled', 'rejected'])) {
+                $retailerOrder->status = 'approved';
+            }
+
             $retailerOrder->save();
 
             return response()->json([

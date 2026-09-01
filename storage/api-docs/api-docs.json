@@ -3482,13 +3482,13 @@
                 ]
             }
         },
-        "/api/field-staff/loyalty-redemptions": {
+        "/api/fieldstaff/loyalty-redemptions": {
             "get": {
                 "tags": [
                     "Field Staff Dashboard"
                 ],
                 "summary": "Get approved loyalty redemptions to deliver",
-                "operationId": "eecd0c9c3429f8ab192116165de71db5",
+                "operationId": "e2d79ab83d47538e56a2c2f18a64a84f",
                 "parameters": [
                     {
                         "name": "status",
@@ -3538,13 +3538,13 @@
                 ]
             }
         },
-        "/api/field-staff/loyalty-redemptions/{id}/confirm": {
+        "/api/fieldstaff/loyalty-redemptions/{id}/confirm": {
             "post": {
                 "tags": [
                     "Field Staff Dashboard"
                 ],
                 "summary": "Confirm delivery of a loyalty reward",
-                "operationId": "cefe96a27469b1fcb68532c623550b86",
+                "operationId": "8df23f79aa82ef3d0d2b27f91a6da068",
                 "parameters": [
                     {
                         "name": "id",
@@ -4003,7 +4003,62 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Order created successfully with eligible free items returned for Step 2 selection."
+                        "description": "Order created successfully with eligible free items returned for Step 2 selection.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "eligible_free_items": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "quantity_allowed": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "allowed_variants": {
+                                                                "description": "Sizes and sides available",
+                                                                "type": "object"
+                                                            },
+                                                            "available_stock": {
+                                                                "description": "Detailed stock quantities per variant",
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "side": {
+                                                                            "type": "string",
+                                                                            "example": "Left"
+                                                                        },
+                                                                        "size": {
+                                                                            "type": "string",
+                                                                            "example": "M"
+                                                                        },
+                                                                        "stock": {
+                                                                            "type": "integer",
+                                                                            "example": 5
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -6487,7 +6542,7 @@
             "deviceIdAuth": {
                 "type": "apiKey",
                 "description": "Optional Device ID for Field Staff",
-                "name": "device-id",
+                "name": "X-Device-ID",
                 "in": "header"
             }
         }
