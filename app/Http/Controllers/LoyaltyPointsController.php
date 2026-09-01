@@ -24,7 +24,12 @@ class LoyaltyPointsController extends Controller
                 ->groupBy('products.brand')
                 ->get();
                 
-            $brandTotals = $brandTotalsQuery->pluck('total_amount', 'brand')->toArray();
+            // Make the array keys fully uppercase and trimmed to prevent case-sensitivity bugs
+            $brandTotals = [];
+            foreach ($brandTotalsQuery as $row) {
+                $cleanBrand = strtoupper(trim($row->brand));
+                $brandTotals[$cleanBrand] = ($brandTotals[$cleanBrand] ?? 0) + $row->total_amount;
+            }
             
             $redemptions = \Illuminate\Support\Facades\DB::table('loyalty_redemptions')
                 ->join('loyalty_slabs', 'loyalty_redemptions.loyalty_slab_id', '=', 'loyalty_slabs.id')
@@ -33,8 +38,13 @@ class LoyaltyPointsController extends Controller
                 ->get();
 
             $upcomingRewards = [];
-            foreach ($loyaltyRulesCollection as $brand => $rules) {
-                $brandRedemptions = $redemptions->where('type', $brand);
+            foreach ($loyaltyRulesCollection as $rawBrand => $rules) {
+                $brand = strtoupper(trim($rawBrand));
+                
+                $brandRedemptions = $redemptions->filter(function($item) use ($brand) {
+                    return strtoupper(trim($item->type)) === $brand;
+                });
+                
                 $redeemedSlabIds = $brandRedemptions->pluck('id')->toArray();
                 $totalSpent = $brandRedemptions->sum('min_points');
                 
@@ -61,7 +71,7 @@ class LoyaltyPointsController extends Controller
                 }
                 
                 $upcomingRewards[] = [
-                    'brand' => $brand,
+                    'brand' => $rawBrand,
                     'current_total' => $currentTotal,
                     'next_target' => $nextRule ? $nextRule->min_points : null,
                     'next_reward' => $nextRule ? $nextRule->gift_name : null,
