@@ -54,18 +54,36 @@ class RetailerOrderObserver
     {
         $totalPoints = 0;
         $retailerOrder->loadMissing('items.product');
+        
+        // $globalInrPerPoint = (float) \App\Models\Setting::getValue('loyalty_point_inr', '0');
 
         foreach ($retailerOrder->items as $item) {
             if ($item->product) {
-                $ptr = (float) ($item->product->ptr ?? 0);
-                $percentage = (float) $item->product->loyalty_point_percentage;
+                // Use the locked-in PTR from the order item, fallback to product PTR if missing
+                $ptr = (float) ($item->unit_price > 0 ? $item->unit_price : ($item->product->ptr ?? 0));
+                
+                // Client Request: Comment out product-specific percentage logic
+                // $percentage = (float) $item->product->loyalty_point_percentage;
                 
                 // Use trait helper for correct base quantity (strips)
                 $totalQtyStrips = $this->convertQuantityToStrips($item->product, $item->quantity, $item->unit);
+                $itemTotal = $totalQtyStrips * $ptr;
 
-                if ($percentage > 0 && $ptr > 0) {
-                    $totalPoints += ($totalQtyStrips * $ptr) * ($percentage / 100);
+                // Client Request: 1 Rupee = 1 Point (Direct 1:1 mapping based on PTR)
+                if ($itemTotal > 0) {
+                    $totalPoints += $itemTotal;
                 }
+
+                /* 
+                // Old logic commented out:
+                if ($percentage > 0 && $ptr > 0) {
+                    // Product-specific percentage overrides global setting
+                    $totalPoints += $itemTotal * ($percentage / 100);
+                } elseif ($globalInrPerPoint > 0 && $itemTotal > 0) {
+                    // Fallback to global INR per point setting
+                    $totalPoints += ($itemTotal / $globalInrPerPoint);
+                }
+                */
             }
         }
 
