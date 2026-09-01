@@ -542,7 +542,19 @@
                             // Deduct quantity already in the bundle (cart)
                             let key = prodId + '-' + d.id;
                             if (addedItems[key]) {
-                                stock -= (addedItems[key].qty * addedItems[key].multiplier);
+                                if (side || size) {
+                                    // Deduct only the specific variant's quantity
+                                    let variantQty = 0;
+                                    addedItems[key].variants.forEach(v => {
+                                        if (v.side === side && v.size === size) {
+                                            variantQty += v.qty;
+                                        }
+                                    });
+                                    stock -= (variantQty * addedItems[key].multiplier);
+                                } else {
+                                    // Deduct total product quantity
+                                    stock -= (addedItems[key].qty * addedItems[key].multiplier);
+                                }
                             }
                             
                             if (stock > 0 && stock >= requiredStock) {
