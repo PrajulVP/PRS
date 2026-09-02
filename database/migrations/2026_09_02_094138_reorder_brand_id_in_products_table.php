@@ -10,8 +10,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Use raw SQL to reorder the column without doctrine/dbal requirement
-        DB::statement('ALTER TABLE products MODIFY COLUMN brand_id BIGINT UNSIGNED AFTER product_name');
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('products', 'brand_id')) {
+            \Illuminate\Support\Facades\Schema::table('products', function (\Illuminate\Database\Schema\Blueprint $table) {
+                $table->unsignedBigInteger('brand_id')->nullable()->after('product_name');
+            });
+        } else {
+            // Use raw SQL to reorder the column without doctrine/dbal requirement
+            DB::statement('ALTER TABLE products MODIFY COLUMN brand_id BIGINT UNSIGNED AFTER product_name');
+        }
     }
 
     /**
