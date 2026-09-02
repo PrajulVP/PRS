@@ -20,7 +20,6 @@ class FieldStaff extends Model
         'longitude',
         'contact_no',
         'address',
-        'status',
         'monthly_target',
     ];
 

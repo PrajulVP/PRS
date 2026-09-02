@@ -101,6 +101,26 @@ class SystemController extends Controller
         }
     }
 
+    public function repairProfiles(Request $request)
+    {
+        if ($request->header('X-Maintenance-Key') !== env('MAINTENANCE_KEY') && $request->input('key') !== env('MAINTENANCE_KEY')) {
+             return response()->json(['status' => 'error', 'message' => 'Unauthorized key.'], 403);
+        }
+        try {
+            Artisan::call('repair:profiles');
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Profiles repaired successfully.',
+                'output' => Artisan::output()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function getOcrLogs()
     {
         try {

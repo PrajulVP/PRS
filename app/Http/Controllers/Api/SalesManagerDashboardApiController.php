@@ -209,6 +209,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
+        if (!$salesManager) {
+            return response()->json(['error' => 'Sales Manager profile not found.'], 404);
+        }
         $fieldStaffIds = \App\Models\FieldStaff::where(function ($q) use ($salesManager) {
             $q->where('sales_manager_id', $salesManager->id)
                 ->orWhere('sales_manager_id', $salesManager->user_id);
@@ -340,6 +343,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
+        if (!$salesManager) {
+            return response()->json(['error' => 'Sales Manager profile not found.'], 404);
+        }
 
         $query = \App\Models\FieldStaff::with(['user', 'salesManager.user'])
             ->where(function ($q) use ($salesManager) {
@@ -511,6 +517,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
+        if (!$salesManager) {
+            return response()->json(['error' => 'Sales Manager profile not found.'], 404);
+        }
         $fieldStaffIds = \App\Models\FieldStaff::where(function ($q) use ($salesManager) {
             $q->where('sales_manager_id', $salesManager->id)
                 ->orWhere('sales_manager_id', $salesManager->user_id);
@@ -547,6 +556,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
+        if (!$salesManager) {
+            return response()->json(['error' => 'Sales Manager profile not found.'], 404);
+        }
         $fieldStaffs = \App\Models\FieldStaff::with('user')
             ->where(function ($q) use ($salesManager) {
                 $q->where('sales_manager_id', $salesManager->id)
@@ -583,6 +595,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
+        if (!$salesManager) {
+            return response()->json(['error' => 'Sales Manager profile not found.'], 404);
+        }
         $fieldStaffIds = \App\Models\FieldStaff::where(function ($q) use ($salesManager) {
             $q->where('sales_manager_id', $salesManager->id)
                 ->orWhere('sales_manager_id', $salesManager->user_id);
@@ -611,6 +626,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
+        if (!$salesManager) {
+            return response()->json(['error' => 'Sales Manager profile not found.'], 404);
+        }
         $fieldStaffIds = \App\Models\FieldStaff::where(function ($q) use ($salesManager) {
             $q->where('sales_manager_id', $salesManager->id)
                 ->orWhere('sales_manager_id', $salesManager->user_id);
@@ -661,6 +679,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
+        if (!$salesManager) {
+            return response()->json(['error' => 'Sales Manager profile not found.'], 404);
+        }
         $fieldStaffIds = $salesManager->fieldStaffs->pluck('id');
 
         $retailer = Retailer::whereIn('field_staff_id', $fieldStaffIds)->findOrFail($id);
@@ -734,6 +755,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
+        if (!$salesManager) {
+            return response()->json(['error' => 'Sales Manager profile not found.'], 404);
+        }
         $fieldStaffIds = $salesManager->fieldStaffs->pluck('id');
 
         $query = RetailerOrder::with(['retailer.user', 'fieldStaff.user', 'items.product', 'distributor.user', 'distributor.area', 'distributor.district'])
@@ -817,6 +841,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
+        if (!$salesManager) {
+            return response()->json(['error' => 'Sales Manager profile not found.'], 404);
+        }
         $distributors = \App\Models\Distributor::with('user')
             ->where('sales_manager_id', $salesManager->id)
             ->get()
@@ -851,6 +878,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
+        if (!$salesManager) {
+            return response()->json(['error' => 'Sales Manager profile not found.'], 404);
+        }
         $distributor = \App\Models\Distributor::with('user')
             ->where('sales_manager_id', $salesManager->id)
             ->findOrFail($id);
@@ -997,6 +1027,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
+        if (!$salesManager) {
+            return response()->json(['error' => 'Sales Manager profile not found.'], 404);
+        }
         $distributors = \App\Models\Distributor::with(['user', 'district', 'area'])
             ->where('sales_manager_id', $salesManager->id)
             ->get();
@@ -1021,6 +1054,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
+        if (!$salesManager) {
+            return response()->json(['error' => 'Sales Manager profile not found.'], 404);
+        }
         $query = DistributorOrder::with(['distributor.user', 'items.product'])
             ->whereHas('distributor', function ($q) use ($salesManager) {
                 $q->where('sales_manager_id', $salesManager->id);
@@ -1053,6 +1089,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
+        if (!$salesManager) {
+            return response()->json(['error' => 'Sales Manager profile not found.'], 404);
+        }
         $order = DistributorOrder::whereHas('distributor', function ($q) use ($salesManager) {
             $q->where('sales_manager_id', $salesManager->id);
         })->findOrFail($id);
@@ -1096,6 +1135,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
+        if (!$salesManager) {
+            return response()->json(['error' => 'Sales Manager profile not found.'], 404);
+        }
         $fieldStaffUserIds = FieldStaff::where('sales_manager_id', $salesManager->id)->pluck('user_id');
 
         $leaves = LeaveRequest::with('user')
@@ -1124,6 +1166,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
+        if (!$salesManager) {
+            return response()->json(['error' => 'Sales Manager profile not found.'], 404);
+        }
         $fieldStaffUserIds = FieldStaff::where('sales_manager_id', $salesManager->id)->pluck('user_id');
 
         $leave = LeaveRequest::whereIn('user_id', $fieldStaffUserIds)->findOrFail($id);
@@ -1152,6 +1197,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
+        if (!$salesManager) {
+            return response()->json(['error' => 'Sales Manager profile not found.'], 404);
+        }
         $fieldStaffUserIds = FieldStaff::where('sales_manager_id', $salesManager->id)->pluck('user_id');
 
         $expenses = Expense::with('user')
@@ -1180,6 +1228,9 @@ class SalesManagerDashboardApiController extends Controller
         if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
 
         $salesManager = $user->salesManager;
+        if (!$salesManager) {
+            return response()->json(['error' => 'Sales Manager profile not found.'], 404);
+        }
         $fieldStaffUserIds = FieldStaff::where('sales_manager_id', $salesManager->id)->pluck('user_id');
 
         $expense = Expense::whereIn('user_id', $fieldStaffUserIds)->findOrFail($id);

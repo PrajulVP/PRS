@@ -11,8 +11,6 @@ class SalesManager extends Model
 
     protected $fillable = [
         'user_id',
-        'name',
-        'email',
         'contact_no',
         'address',
         'pincode',
