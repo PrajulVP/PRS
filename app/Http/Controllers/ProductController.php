@@ -585,6 +585,7 @@ class ProductController extends Controller
                             'product_code' => $productCode,
                             'product_name' => trim($productData['product_name']),
                             'generic_name' => !empty($productData['generic_name']) ? trim($productData['generic_name']) : null,
+                            'brand' => $importedBrand,
                             'brand_id' => $brandId,
                             'pack' => !empty($productData['pack']) ? trim($productData['pack']) : null,
                             'strip_size' => !empty($productData['strip_size']) ? trim($productData['strip_size']) : null,

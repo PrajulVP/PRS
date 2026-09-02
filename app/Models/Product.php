@@ -12,6 +12,7 @@ class Product extends Model
     protected $fillable = [
         'product_code',
         'product_name',
+        'brand',
         'brand_id',
         'generic_name',
         'pack',
@@ -116,9 +117,6 @@ class Product extends Model
         return $this->belongsTo(Brand::class, 'brand_id');
     }
 
-    public function getBrandAttribute()
-    {
-        return $this->brandModel ? $this->brandModel->name : null;
-    }
+    
 }
 
