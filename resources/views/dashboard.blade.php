@@ -1048,30 +1048,101 @@
                             </div>
                         </div>
 
-                        <!-- Order Performance Activity Section -->
-                        <div class="col-lg-6 mb-4">
-                            <div class="card p-4 border-0 shadow-sm h-100" style="border-radius: 20px;">
-                                <div class="mb-4 d-flex align-items-center justify-content-between">
-                                    <h6 class="fw-800 text-uppercase mb-0" style="font-size: 0.8rem; letter-spacing: 1px; color: var(--med-primary);">Retailer Order Activity</h6>
-                                </div>
-                                <div id="retailerOrderFlowChart"></div>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-6 mb-4">
-                            <div class="card p-4 border-0 shadow-sm h-100" style="border-radius: 20px;">
-                                <div class="mb-4 d-flex align-items-center justify-content-between">
-                                    <h6 class="fw-800 text-uppercase mb-0" style="font-size: 0.8rem; letter-spacing: 1px; color: var(--med-primary);">Distributor Order Volume</h6>
-                                </div>
-                                @if(isset($monthlyDistributorOrdersChart))
-                                    <div id="monthlyDistOrdersChart"></div>
-                                @else
-                                    <div class="text-center py-5 text-muted">
-                                        <i data-feather="bar-chart-2"></i><br>Insufficient Data
+                        @if(Auth::user()->hasRole('salesmanager'))
+                            <!-- SALES MANAGER TARGETS WIDGET -->
+                            <div class="col-lg-12 mb-4">
+                                <div class="card p-4 border-0 shadow-sm h-100" style="border-radius: 20px;">
+                                    <div class="mb-4 d-flex align-items-center justify-content-between">
+                                        <h6 class="fw-800 text-uppercase mb-0" style="font-size: 0.8rem; letter-spacing: 1px; color: var(--med-primary);">My Sales Performance</h6>
                                     </div>
-                                @endif
+                                    <div class="row text-center mb-4">
+                                        <div class="col-md-3">
+                                            <div class="text-muted small fw-bold text-uppercase">Total Target</div>
+                                            <h4 class="fw-800 text-dark">₹{{ number_format($data_extra['target'] ?? 0) }}</h4>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-muted small fw-bold text-uppercase">Achieved</div>
+                                            <h4 class="fw-800 text-success">₹{{ number_format($data_extra['achieved'] ?? 0) }}</h4>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-muted small fw-bold text-uppercase">Remaining</div>
+                                            <h4 class="fw-800 text-warning">₹{{ number_format($data_extra['remaining'] ?? 0) }}</h4>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-muted small fw-bold text-uppercase">Completion</div>
+                                            <h4 class="fw-800 text-primary">{{ $data_extra['achievement_percent'] ?? 0 }}%</h4>
+                                        </div>
+                                    </div>
+
+                                    <h6 class="fw-800 text-uppercase mt-4 mb-3" style="font-size: 0.75rem; letter-spacing: 1px; color: var(--med-primary);">Field Staff Performance</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="bg-light">
+                                                <tr>
+                                                    <th class="px-4 py-2 border-0 small fw-800 text-uppercase text-muted" style="font-size: 9px;">Field Staff</th>
+                                                    <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted text-end" style="font-size: 9px;">Target</th>
+                                                    <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted text-end" style="font-size: 9px;">Achieved</th>
+                                                    <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted text-end" style="font-size: 9px;">Remaining</th>
+                                                    <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted text-end" style="font-size: 9px;">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @forelse($data_extra['field_staff_performance'] ?? [] as $fs)
+                                                <tr>
+                                                    <td class="px-4 py-2 fw-700 small">
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <div class="icon-circle-sm bg-soft-primary" style="width: 30px; height: 30px; border-radius: 8px;">
+                                                                <i data-feather="user" class="text-primary" style="width: 14px;"></i>
+                                                            </div>
+                                                            <div class="text-dark">{{ $fs['name'] }}</div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-3 py-2 text-end text-dark fw-bold small">₹{{ number_format($fs['target']) }}</td>
+                                                    <td class="px-3 py-2 text-end text-success fw-bold small">₹{{ number_format($fs['achieved']) }}</td>
+                                                    <td class="px-3 py-2 text-end text-warning fw-bold small">₹{{ number_format($fs['remaining']) }}</td>
+                                                    <td class="px-3 py-2 text-end" style="width: 20%;">
+                                                        <div class="progress mb-1" style="height: 6px; border-radius: 3px;">
+                                                            <div class="progress-bar {{ $fs['achievement_percent'] >= 100 ? 'bg-success' : 'bg-primary' }}" role="progressbar" style="width: {{ min(100, $fs['achievement_percent']) }}%"></div>
+                                                        </div>
+                                                        <div class="text-muted" style="font-size: 9px;">{{ $fs['achievement_percent'] }}%</div>
+                                                    </td>
+                                                </tr>
+                                                @empty
+                                                <tr>
+                                                    <td colspan="5" class="text-center py-4 text-muted small">No active field staff targets found.</td>
+                                                </tr>
+                                                @endforelse
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        @else
+                            <!-- Order Performance Activity Section -->
+                            <div class="col-lg-6 mb-4">
+                                <div class="card p-4 border-0 shadow-sm h-100" style="border-radius: 20px;">
+                                    <div class="mb-4 d-flex align-items-center justify-content-between">
+                                        <h6 class="fw-800 text-uppercase mb-0" style="font-size: 0.8rem; letter-spacing: 1px; color: var(--med-primary);">Retailer Order Activity</h6>
+                                    </div>
+                                    <div id="retailerOrderFlowChart"></div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-6 mb-4">
+                                <div class="card p-4 border-0 shadow-sm h-100" style="border-radius: 20px;">
+                                    <div class="mb-4 d-flex align-items-center justify-content-between">
+                                        <h6 class="fw-800 text-uppercase mb-0" style="font-size: 0.8rem; letter-spacing: 1px; color: var(--med-primary);">Distributor Order Volume</h6>
+                                    </div>
+                                    @if(isset($monthlyDistributorOrdersChart))
+                                        <div id="monthlyDistOrdersChart"></div>
+                                    @else
+                                        <div class="text-center py-5 text-muted">
+                                            <i data-feather="bar-chart-2"></i><br>Insufficient Data
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
 
                         <div class="col-lg-6 mb-4">
                             <div class="card p-4 border-0 shadow-sm h-100" style="border-radius: 20px;">

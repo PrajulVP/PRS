@@ -206,6 +206,70 @@ class DashboardController extends Controller
                     ->groupBy('fieldstaff_id')->orderByDesc('total_orders')->take(5)
                     ->with('fieldStaff.user')->get();
 
+                // Targets Logic
+                $monthStr = $startDate->format('m');
+                $yearStr = $startDate->format('Y');
+
+                $totalTarget = 0;
+                $totalAchieved = 0;
+                $brand_targets = [];
+                $uniqueBrands = \App\Models\Brand::pluck('name');
+                
+                foreach ($uniqueBrands as $brand) {
+                    $brand_targets[$brand] = [
+                        'brand' => $brand,
+                        'target' => 0,
+                        'achieved' => 0,
+                    ];
+                }
+                
+                $fieldStaffs = FieldStaff::whereIn('id', $fieldStaffIds)->get();
+                $fieldStaffPerformance = [];
+                
+                foreach ($fieldStaffs as $fs) {
+                    // Achievement
+                    $fsAchieved = $fs->getAchievedAmountForMonth($monthStr, $yearStr);
+                    $totalAchieved += $fsAchieved;
+                    
+                    // Target
+                    $fsTargets = $fs->salesTargets()
+                        ->where('year', $yearStr)
+                        ->where('month', $startDate->format('F'))
+                        ->get();
+                    $fsTargetSum = $fsTargets->sum('amount');
+                    $totalTarget += $fsTargetSum;
+                    
+                    $fieldStaffPerformance[] = [
+                        'id' => $fs->id,
+                        'name' => $fs->user ? $fs->user->name : 'Unknown',
+                        'target' => $fsTargetSum,
+                        'achieved' => $fsAchieved,
+                        'remaining' => max(0, $fsTargetSum - $fsAchieved),
+                        'achievement_percent' => $fsTargetSum > 0 ? round(($fsAchieved / $fsTargetSum) * 100, 1) : 0
+                    ];
+                    
+                    foreach ($uniqueBrands as $brand) {
+                        $bTarget = $fsTargets->where('brand', $brand)->first();
+                        $bTargetAmount = $bTarget ? $bTarget->amount : 0;
+                        $bAchieved = $fs->getAchievedAmountForMonth($monthStr, $yearStr, $brand);
+                        
+                        $brand_targets[$brand]['target'] += $bTargetAmount;
+                        $brand_targets[$brand]['achieved'] += $bAchieved;
+                    }
+                }
+                
+                // Sort fieldstaff performance by highest achievement percent
+                usort($fieldStaffPerformance, function($a, $b) {
+                    return $b['achievement_percent'] <=> $a['achievement_percent'];
+                });
+                
+                $data_extra['target'] = $totalTarget;
+                $data_extra['achieved'] = $totalAchieved;
+                $data_extra['remaining'] = max(0, $totalTarget - $totalAchieved);
+                $data_extra['achievement_percent'] = $totalTarget > 0 ? round(($totalAchieved / $totalTarget) * 100, 1) : 0;
+                $data_extra['brand_targets'] = $brand_targets;
+                $data_extra['field_staff_performance'] = $fieldStaffPerformance;
+
                 // Top Areas for Sales Manager
                 $topAreas = \App\Models\Area::withCount('retailers')
                     ->with(['district'])
