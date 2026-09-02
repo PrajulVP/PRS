@@ -106,7 +106,7 @@ class FieldStaffDashboardApiController extends Controller
         $achievementPercent = $targetAmount > 0 ? ($achievementValue / $targetAmount) * 100 : 0;
 
         $brand_targets = [];
-        $uniqueBrands = \App\Models\Product::select('brand')->distinct()->pluck('brand');
+        $uniqueBrands = \App\Models\Brand::pluck('name');
         foreach ($uniqueBrands as $brand) {
             $bTarget = $targets->where('brand', $brand)->first();
             $bTargetAmount = $bTarget ? $bTarget->amount : 0;
